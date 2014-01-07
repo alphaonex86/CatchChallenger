@@ -435,7 +435,7 @@ bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &
         emit error("NULL pointer for other monster at fightCollision()");
         return false;
     }
-    qDebug() << QStringLiteral("You are in front of monster id: %1 level: %2").arg(otherMonster->monster).arg(otherMonster->level);
+    qDebug() << QStringLiteral("You are in front of monster id: %1 level: %2 with hp: %3").arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonster->hp);
     return true;
 }
 
@@ -686,6 +686,22 @@ void BaseWindow::updateCurrentMonsterInformation()
     ui->frameFightBottom->setVisible(true);
     ui->frameFightBottom->show();
     currentMonsterLevel=monster->level;
+    updateAttackList();
+}
+
+void BaseWindow::updateAttackList()
+{
+    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+    {
+        newError(tr("Internal error"),"Try update the monster when have not any ready monster");
+        return;
+    }
+    PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(monster==NULL)
+    {
+        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        return;
+    }
     //list the attack
     fight_attacks_graphical.clear();
     ui->listWidgetFightAttack->clear();
@@ -708,6 +724,7 @@ void BaseWindow::updateCurrentMonsterInformation()
                     );
         item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[skill.skill].description);
         item->setData(99,skill.endurance);
+        item->setData(98,skill.skill);
         if(skill.endurance>0)
             useTheRescueSkill=false;
         fight_attacks_graphical[item]=skill.skill;
@@ -1033,7 +1050,9 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         QMessageBox::warning(this,tr("Selection error"),tr("You need select an attack"));
         return;
     }
-    if(itemsList.first()->data(99).toUInt()<=0 && !useTheRescueSkill)
+    const quint32 skillEndurance=itemsList.first()->data(99).toUInt();
+    const quint32 skillUsed=fight_attacks_graphical[itemsList.first()];
+    if(skillEndurance<=0 && !useTheRescueSkill)
     {
         QMessageBox::warning(this,tr("No endurance"),tr("You have no more endurance to use this skill"));
         return;
@@ -1051,7 +1070,8 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
     if(useTheRescueSkill)
         CatchChallenger::ClientFightEngine::fightEngine.useSkill(0);
     else
-        CatchChallenger::ClientFightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()]);
+        CatchChallenger::ClientFightEngine::fightEngine.useSkill(skillUsed);
+    updateAttackList();
     displayAttackProgression=0;
     attack_quantity_changed=0;
     if(battleType!=BattleType_OtherPlayer)
@@ -1477,7 +1497,7 @@ void BaseWindow::doNextAction()
             if(currentMonster!=NULL)
                 if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
                 {
-                    emit error(QStringLiteral("Current monster damage don't match with the internal value (end && currentMonster): %1!=%2")
+                    emit error(QStringLiteral("Current monster hp don't match with the internal value (do next action): %1!=%2")
                                .arg(currentMonster->hp)
                                .arg(ui->progressBarFightBottomHP->value())
                                );
@@ -1486,7 +1506,7 @@ void BaseWindow::doNextAction()
             if(otherMonster!=NULL)
                 if((int)otherMonster->hp!=ui->progressBarFightTopHP->value())
                 {
-                    emit error(QStringLiteral("Current monster damage don't match with the internal value (end && otherMonster): %1!=%2")
+                    emit error(QStringLiteral("Other monster hp don't match with the internal value (do next action): %1!=%2")
                                .arg(otherMonster->hp)
                                .arg(ui->progressBarFightTopHP->value())
                                );
@@ -2218,13 +2238,16 @@ void BaseWindow::displayExperienceGain()
             mLastGivenXP=0;
 
         const Monster::Stat &oldStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
-        const Monster::Stat &newStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
+        const Monster::Stat &newStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel+1);
         if(oldStat.hp<newStat.hp)
         {
+            qDebug() << QStringLiteral("Now the old hp: %1/%2 increased of %3 for the old level %4").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()).arg(newStat.hp-oldStat.hp).arg(currentMonsterLevel);
             ui->progressBarFightBottomHP->setMaximum(ui->progressBarFightBottomHP->maximum()+(newStat.hp-oldStat.hp));
             ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+(newStat.hp-oldStat.hp));
             ui->labelFightBottomHP->setText(QStringLiteral("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
         }
+        else
+            qDebug() << QStringLiteral("The hp at level change is untouched: %1/%2 for the old level %3").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()).arg(currentMonsterLevel);
         ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.monsters[currentMonster->monster].level_to_xp.at(currentMonsterLevel-1));
         ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->maximum());
         #ifdef CATCHCHALLENGER_EXTRA_CHECK

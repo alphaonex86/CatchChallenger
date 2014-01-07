@@ -1341,10 +1341,109 @@ bool CommonFightEngine::doTheOtherMonsterTurn()
 
 void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 0)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 0)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return;
+        }
+    }
+    #endif
     bool turnIsEnd=false;
     if(currentMonsterStatIsFirstToAttack)
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            PlayerMonster * currentMonster=getCurrentMonster();
+            if(currentMonster==NULL)
+            {
+                emit error("Unable to locate the current monster");
+                return;
+            }
+            if(currentMonsterIsKO())
+            {
+                emit error("Can't attack with KO monster");
+                return;
+            }
+            const PublicPlayerMonster * otherMonster=getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("Unable to locate the other monster");
+                return;
+            }
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                return;
+            }
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                return;
+            }
+        }
+        #endif
         doTheCurrentMonsterAttack(skill,skillLevel);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            PlayerMonster * currentMonster=getCurrentMonster();
+            if(currentMonster==NULL)
+            {
+                emit error("Unable to locate the current monster");
+                return;
+            }
+            if(currentMonsterIsKO())
+            {
+                emit error("Can't attack with KO monster");
+                return;
+            }
+            const PublicPlayerMonster * otherMonster=getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("Unable to locate the other monster");
+                return;
+            }
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                return;
+            }
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                return;
+            }
+        }
+        #endif
         if(currentMonsterIsKO())
             turnIsEnd=true;
         else
@@ -1356,16 +1455,214 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             }
         }
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 4)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 4)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return;
+        }
+    }
+    #endif
     //do the other monster attack
     if(!turnIsEnd)
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            PlayerMonster * currentMonster=getCurrentMonster();
+            if(currentMonster==NULL)
+            {
+                emit error("Unable to locate the current monster");
+                return;
+            }
+            if(currentMonsterIsKO())
+            {
+                emit error("Can't attack with KO monster");
+                return;
+            }
+            const PublicPlayerMonster * otherMonster=getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("Unable to locate the other monster");
+                return;
+            }
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                return;
+            }
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                return;
+            }
+        }
+        #endif
         if(doTheOtherMonsterTurn())
             turnIsEnd=true;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            PlayerMonster * currentMonster=getCurrentMonster();
+            if(currentMonster==NULL)
+            {
+                emit error("Unable to locate the current monster");
+                return;
+            }
+            if(currentMonsterIsKO())
+            {
+                emit error("Can't attack with KO monster");
+                return;
+            }
+            const PublicPlayerMonster * otherMonster=getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("Unable to locate the other monster");
+                return;
+            }
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                return;
+            }
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                return;
+            }
+        }
+        #endif
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 5)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 5)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return;
+        }
+    }
+    #endif
     //do the current monster attack
     if(!turnIsEnd && !currentMonsterStatIsFirstToAttack)
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            PlayerMonster * currentMonster=getCurrentMonster();
+            if(currentMonster==NULL)
+            {
+                emit error("Unable to locate the current monster");
+                return;
+            }
+            if(currentMonsterIsKO())
+            {
+                emit error("Can't attack with KO monster");
+                return;
+            }
+            const PublicPlayerMonster * otherMonster=getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("Unable to locate the other monster");
+                return;
+            }
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 3)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                return;
+            }
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 3)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                return;
+            }
+        }
+        #endif
         doTheCurrentMonsterAttack(skill,skillLevel);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            PlayerMonster * currentMonster=getCurrentMonster();
+            if(currentMonster==NULL)
+            {
+                emit error("Unable to locate the current monster");
+                return;
+            }
+            if(currentMonsterIsKO())
+            {
+                emit error("Can't attack with KO monster");
+                return;
+            }
+            const PublicPlayerMonster * otherMonster=getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("Unable to locate the other monster");
+                return;
+            }
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 3)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                return;
+            }
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 3)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                return;
+            }
+        }
+        #endif
         if(currentMonsterIsKO())
             turnIsEnd=true;
         else
@@ -1377,6 +1674,39 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             }
         }
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 6)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 6)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return;
+        }
+    }
+    #endif
 }
 
 bool CommonFightEngine::buffIsValid(const Skill::BuffEffect &buffEffect)
@@ -1540,19 +1870,37 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     }
     else
         decreaseSkillEndurance(skill);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return false;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return false;
+        }
+    }
+    #endif
     doTheTurn(skill,skillLevel,currentMonsterAttackFirst(currentMonster,otherMonster));
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
-    if(currentMonster->hp>currentMonsterStat.hp)
     {
-        emit error(QStringLiteral("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
-        return false;
-    }
-    if(otherMonster->hp>otherMonsterStat.hp)
-    {
-        emit error(QStringLiteral("The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
-        return false;
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return false;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return false;
+        }
     }
     #endif
     return true;
@@ -1820,6 +2168,39 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.attack=skill;
     attackReturn.success=false;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return attackReturn;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return attackReturn;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return attackReturn;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return attackReturn;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return attackReturn;
+        }
+    }
+    #endif
     const Skill &skillDef=CommonDatapack::commonDatapack.monsterSkills[skill];
     const Skill::SkillList &skillList=skillDef.level.at(skillLevel-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
@@ -1874,6 +2255,39 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             index++;
         }
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return attackReturn;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return attackReturn;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return attackReturn;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return attackReturn;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return attackReturn;
+        }
+    }
+    #endif
     //do the buff
     if(!genericMonsterIsKO(currentMonster))
     {
@@ -1914,6 +2328,39 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             index++;
         }
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return attackReturn;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return attackReturn;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return attackReturn;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 3)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return attackReturn;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 3)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return attackReturn;
+        }
+    }
+    #endif
     //apply the effect of current buff
     if(!genericMonsterIsKO(currentMonster))
     {
@@ -1949,6 +2396,39 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     }
     if(genericMonsterIsKO(currentMonster) && !genericMonsterIsKO(otherMonster))
         doTurnIfChangeOfMonster=false;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        if(currentMonster==NULL)
+        {
+            emit error("Unable to locate the current monster");
+            return attackReturn;
+        }
+        if(currentMonsterIsKO())
+        {
+            emit error("Can't attack with KO monster");
+            return attackReturn;
+        }
+        const PublicPlayerMonster * otherMonster=getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("Unable to locate the other monster");
+            return attackReturn;
+        }
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 4)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            return attackReturn;
+        }
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 4)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            return attackReturn;
+        }
+    }
+    #endif
     return attackReturn;
 }
 
