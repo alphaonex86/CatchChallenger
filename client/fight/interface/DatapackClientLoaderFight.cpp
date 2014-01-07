@@ -253,6 +253,7 @@ void DatapackClientLoader::parseMonstersExtra()
                             if(monsterExtraEntry.thumb.isNull())
                                 monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
                         }
+                        monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
                         DatapackClientLoader::datapackLoader.monsterExtra[id]=monsterExtraEntry;
                     }
                 }
@@ -278,6 +279,7 @@ void DatapackClientLoader::parseMonstersExtra()
             monsterExtraEntry.front=QPixmap(QStringLiteral(":/images/monsters/default/front.png"));
             monsterExtraEntry.back=QPixmap(QStringLiteral(":/images/monsters/default/back.png"));
             monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
+            monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
             DatapackClientLoader::datapackLoader.monsterExtra[i.key()]=monsterExtraEntry;
         }
     }

@@ -256,6 +256,7 @@ private slots:
     void moveFightMonsterBottom();
     void updateCurrentMonsterInformation();
     void updateCurrentMonsterInformationXp();
+    void updateAttackList();
     void moveFightMonsterTop();
     void moveFightMonsterBoth();
     void updateOtherMonsterInformation();
