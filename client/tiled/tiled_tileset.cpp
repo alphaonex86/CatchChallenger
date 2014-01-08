@@ -92,6 +92,27 @@ bool Tileset::loadFromImage(const QImage &image, const QString &fileName)
             ++tileNum;
         }
     }
+    /*QImage newImage=image;
+    if(mTransparentColor.isValid())
+    {
+        QPixmap pixmap = QPixmap::fromImage(image);
+        const QImage mask =
+                image.createMaskFromColor(mTransparentColor.rgb());
+        pixmap.setMask(QBitmap::fromImage(mask));
+        newImage=pixmap.toImage();
+    }
+    for (int y = mMargin; y <= stopHeight; y += mTileHeight + mTileSpacing) {
+        for (int x = mMargin; x <= stopWidth; x += mTileWidth + mTileSpacing) {
+            const QPixmap &tilePixmap = QPixmap::fromImage(newImage.copy(x, y, mTileWidth, mTileHeight));
+
+            if (tileNum < oldTilesetSize) {
+                mTiles.at(tileNum)->setImage(tilePixmap);
+            } else {
+                mTiles.append(new Tile(tilePixmap, tileNum, this));
+            }
+            ++tileNum;
+        }
+    }*/
     /*for (int y = mMargin; y <= stopHeight; y += mTileHeight + mTileSpacing) {
         for (int x = mMargin; x <= stopWidth; x += mTileWidth + mTileSpacing) {
             const QImage tileImage = image.copy(x, y, mTileWidth, mTileHeight);
