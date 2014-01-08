@@ -200,12 +200,12 @@
     <message>
         <location filename="../../solo/SoloWindow.cpp" line="515"/>
         <source>New name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nouveau nom</translation>
     </message>
     <message>
         <location filename="../../solo/SoloWindow.cpp" line="515"/>
         <source>Write the new name</source>
-        <translation type="unfinished"></translation>
+        <translation>Écrire le nouveau nom</translation>
     </message>
     <message>
         <location filename="../../solo/SoloWindow.cpp" line="553"/>
