@@ -82,7 +82,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         mLastError=map_loader.errorString();
         qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString());
         int index=0;
-        while(index<tempMapObject->tiledMap->tilesets().size())
+        const int &listSize=tempMapObject->tiledMap->tilesets().size();
+        while(index<listSize)
         {
             delete tempMapObject->tiledMap->tilesets().at(index);
             index++;
@@ -134,12 +135,15 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
 
     //load the string
     tempMapObject->logicalMap.teleport_semi.clear();
-    int index=0;
-    while(index<map_loader.map_to_send.teleport.size())
     {
-        tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
-        tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map).absoluteFilePath();
-        index++;
+        int index=0;
+        const int &listSize=map_loader.map_to_send.teleport.size();
+        while(index<listSize)
+        {
+            tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
+            tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map).absoluteFilePath();
+            index++;
+        }
     }
 
     tempMapObject->logicalMap.rescue_points            = map_loader.map_to_send.rescue_points;
@@ -175,7 +179,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     }
     else //remove the hidden tags, and unknow layer
     {
-        index=0;
+        int index=0;
         while(index<tempMapObject->tiledMap->layerCount())
         {
             if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
@@ -228,193 +232,202 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     }
 
     //search WalkBehind layer
-    index=0;
-    while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("WalkBehind"))
+        int index=0;
+        const int &listSize=tempMapObject->tiledMap->layerCount();
+        while(index<listSize)
         {
-            tempMapObject->objectGroupIndex=index;
-            tempMapObject->tiledMap->insertLayer(index,tempMapObject->objectGroup);
-            break;
-        }
-        index++;
-    }
-    if(index==tempMapObject->tiledMap->layerCount())
-    {
-        //search Collisions layer
-        index=0;
-        while(index<tempMapObject->tiledMap->layerCount())
-        {
-            if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("Collisions"))
+            if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("WalkBehind"))
             {
-                tempMapObject->objectGroupIndex=index+1;
-                tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
+                tempMapObject->objectGroupIndex=index;
+                tempMapObject->tiledMap->insertLayer(index,tempMapObject->objectGroup);
                 break;
             }
             index++;
         }
-        if(index==tempMapObject->tiledMap->layerCount())
+        if(index==listSize)
         {
-            qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(resolvedFileName);
-            tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
+            //search Collisions layer
+            index=listSize-1;
+            while(index>=0)
+            {
+                if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("Collisions"))
+                {
+                    tempMapObject->objectGroupIndex=index+1;
+                    tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
+                    break;
+                }
+                index--;
+            }
+            if(index<0)
+            {
+                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(resolvedFileName);
+                tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
+            }
         }
     }
 
     //move the Moving layer on dyna layer
-    index=0;
-    while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
+        int index=0;
+        while(index<tempMapObject->tiledMap->layerCount())
         {
-            if(objectGroup->name()==QStringLiteral("Moving"))
+            if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
             {
-                Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
-                if(tempMapObject->objectGroupIndex-1<=0)
-                    tempMapObject->tiledMap->insertLayer(0,layer);
-                else
+                if(objectGroup->name()==QStringLiteral("Moving"))
                 {
-                    if(index>tempMapObject->objectGroupIndex)
-                        tempMapObject->objectGroupIndex++;
-                    tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,layer);
+                    Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
+                    if(tempMapObject->objectGroupIndex-1<=0)
+                        tempMapObject->tiledMap->insertLayer(0,layer);
+                    else
+                    {
+                        if(index>tempMapObject->objectGroupIndex)
+                            tempMapObject->objectGroupIndex++;
+                        tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,layer);
+                    }
                 }
             }
-        }
-        else if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
-        {
-            if(tileLayer->name()==QStringLiteral("Grass"))
+            else if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
             {
-                /*grass = tempMapObject->tiledMap->takeLayerAt(index);
-                if(tempMapObject->objectGroupIndex-1<=0)
-                    tempMapObject->tiledMap->insertLayer(0,grass);
-                else
+                if(tileLayer->name()==QStringLiteral("Grass"))
                 {
-                    if(index>tempMapObject->objectGroupIndex)
-                        tempMapObject->objectGroupIndex++;
-                    tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,grass);
-                }
-                grassOver = grass->clone();
-                grassOver->setName("Grass over");
-                tempMapObject->tiledMap->addLayer(grassOver);
+                    /*grass = tempMapObject->tiledMap->takeLayerAt(index);
+                    if(tempMapObject->objectGroupIndex-1<=0)
+                        tempMapObject->tiledMap->insertLayer(0,grass);
+                    else
+                    {
+                        if(index>tempMapObject->objectGroupIndex)
+                            tempMapObject->objectGroupIndex++;
+                        tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,grass);
+                    }
+                    grassOver = grass->clone();
+                    grassOver->setName("Grass over");
+                    tempMapObject->tiledMap->addLayer(grassOver);
 
-                QSet<Tiled::Tileset*> tilesets=grassOver->usedTilesets();
-                QSet<Tiled::Tileset*>::const_iterator i = tilesets.constBegin();
-                while (i != tilesets.constEnd()) {
-                     Tiled::Tileset* oldTileset=*i;
-                     Tiled::MapReader mapReader;
-                     QFile tsxFile(oldTileset->fileName());
-                     if(tsxFile.open(QIODevice::ReadOnly))
-                     {
-                         Tiled::Tileset* newTileset=mapReader.readTileset(&tsxFile,QFileInfo(tsxFile).absoluteFilePath());
-                         if(newTileset!=NULL)
+                    QSet<Tiled::Tileset*> tilesets=grassOver->usedTilesets();
+                    QSet<Tiled::Tileset*>::const_iterator i = tilesets.constBegin();
+                    while (i != tilesets.constEnd()) {
+                         Tiled::Tileset* oldTileset=*i;
+                         Tiled::MapReader mapReader;
+                         QFile tsxFile(oldTileset->fileName());
+                         if(tsxFile.open(QIODevice::ReadOnly))
                          {
-                             Tiled::Tile * currentTile;
-                             QSet<Tiled::Tile *> tileUsed;
-                             int indexTile=0;
-                             while(indexTile<=newTileset->tileCount())
+                             Tiled::Tileset* newTileset=mapReader.readTileset(&tsxFile,QFileInfo(tsxFile).absoluteFilePath());
+                             if(newTileset!=NULL)
                              {
-                                 currentTile=newTileset->tileAt(indexTile);
-                                 if(currentTile!=NULL)
-                                     if(!tileUsed.contains(currentTile))
-                                     {
-                                         qDebug() << "New tile" << tileUsed;
-                                         QPixmap pixmap=currentTile->image();
-                                         pixmap.fill();
-                                         currentTile->setImage(pixmap);
-                                         tileUsed << currentTile;
-                                     }
-                                 indexTile++;
+                                 Tiled::Tile * currentTile;
+                                 QSet<Tiled::Tile *> tileUsed;
+                                 int indexTile=0;
+                                 while(indexTile<=newTileset->tileCount())
+                                 {
+                                     currentTile=newTileset->tileAt(indexTile);
+                                     if(currentTile!=NULL)
+                                         if(!tileUsed.contains(currentTile))
+                                         {
+                                             qDebug() << "New tile" << tileUsed;
+                                             QPixmap pixmap=currentTile->image();
+                                             pixmap.fill();
+                                             currentTile->setImage(pixmap);
+                                             tileUsed << currentTile;
+                                         }
+                                     indexTile++;
+                                 }
+                                 grassOver->replaceReferencesToTileset(*i,newTileset);
                              }
-                             grassOver->replaceReferencesToTileset(*i,newTileset);
+                             else
+                                 qDebug() << "Unable to load the tileset:" << oldTileset->fileName() << ", error:" << mapReader.errorString();
                          }
                          else
-                             qDebug() << "Unable to load the tileset:" << oldTileset->fileName() << ", error:" << mapReader.errorString();
-                     }
-                     else
-                         qDebug() << "Unable to open the tsx file:" << tsxFile.fileName() << ", error:" << tsxFile.errorString();
-                     ++i;
-                 }*/
+                             qDebug() << "Unable to open the tsx file:" << tsxFile.fileName() << ", error:" << tsxFile.errorString();
+                         ++i;
+                     }*/
+                }
             }
+            index++;
         }
-        index++;
     }
     //load the animation into tile layer
-    index=0;
-    while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
+        int index=0;
+        while(index<tempMapObject->tiledMap->layerCount())
         {
-            int x=0,y;
-            while(x<tileLayer->width())
+            if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
             {
-                y=0;
-                while(y<tileLayer->height())
+                const int &width=tileLayer->width();
+                const int &height=tileLayer->height();
+                int x=0,y;
+                while(x<width)
                 {
-                    Tiled::Cell cell=tileLayer->cellAt(x,y);
-                    Tiled::Tile *tile=cell.tile;
-                    if(tile!=NULL)
+                    y=0;
+                    while(y<height)
                     {
-                        QString animation=tile->property(QStringLiteral("animation"));
-                        if(!animation.isEmpty())
+                        Tiled::Cell cell=tileLayer->cellAt(x,y);
+                        Tiled::Tile *tile=cell.tile;
+                        if(tile!=NULL)
                         {
-                            QStringList animationList=animation.split(QStringLiteral(";"));
-                            if(animationList.size()==2)
+                            const QString &animation=tile->property(QStringLiteral("animation"));
+                            if(!animation.isEmpty())
                             {
-                                if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
+                                const QStringList &animationList=animation.split(QStringLiteral(";"));
+                                if(animationList.size()==2)
                                 {
-                                    QString msString=animationList.at(0);
-                                    QString framesString=animationList.at(1);
-                                    msString.remove(QStringLiteral("ms"));
-                                    framesString.remove(QStringLiteral("frames"));
-                                    quint16 ms=msString.toUShort();
-                                    quint8 frames=framesString.toUShort();
-                                    if(ms>0 && frames>1)
+                                    if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
                                     {
+                                        QString msString=animationList.at(0);
+                                        QString framesString=animationList.at(1);
+                                        msString.remove(QStringLiteral("ms"));
+                                        framesString.remove(QStringLiteral("frames"));
+                                        quint16 ms=msString.toUShort();
+                                        quint8 frames=framesString.toUShort();
+                                        if(ms>0 && frames>1)
                                         {
-                                            Tiled::Cell cell;
-                                            cell.tile=NULL;
-                                            tileLayer->setCell(x,y,cell);
+                                            {
+                                                Tiled::Cell cell;
+                                                cell.tile=NULL;
+                                                tileLayer->setCell(x,y,cell);
+                                            }
+                                            Tiled::ObjectGroup *objectGroup=NULL;
+                                            if(index<(tempMapObject->tiledMap->layerCount()))
+                                                if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
+                                                    objectGroup=objectGroupTemp;
+                                            if(objectGroup==NULL)
+                                            {
+                                                objectGroup=new Tiled::ObjectGroup;
+                                                tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
+                                            }
+                                            Tiled::MapObject *object=new Tiled::MapObject();
+                                            objectGroup->addObject(object);
+                                            object->setPosition(QPointF(x,y+1));
+                                            Tiled::Cell cell=object->cell();
+                                            cell.tile=tile;
+                                            object->setCell(cell);
+                                            if(!tempMapObject->animatedObject.contains(ms))
+                                            {
+                                                Map_animation tempAnimationDescriptor;
+                                                tempAnimationDescriptor.count=0;
+                                                tempAnimationDescriptor.frames=frames;
+                                                tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
+                                            }
+                                            /// \todo control the animation is not out of rame
+                                            tempMapObject->animatedObject[ms].animatedObject << object;
                                         }
-                                        Tiled::ObjectGroup *objectGroup=NULL;
-                                        if(index<(tempMapObject->tiledMap->layerCount()))
-                                            if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
-                                                objectGroup=objectGroupTemp;
-                                        if(objectGroup==NULL)
-                                        {
-                                            objectGroup=new Tiled::ObjectGroup;
-                                            tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
-                                        }
-                                        Tiled::MapObject *object=new Tiled::MapObject();
-                                        objectGroup->addObject(object);
-                                        object->setPosition(QPointF(x,y+1));
-                                        Tiled::Cell cell=object->cell();
-                                        cell.tile=tile;
-                                        object->setCell(cell);
-                                        if(!tempMapObject->animatedObject.contains(ms))
-                                        {
-                                            Map_animation tempAnimationDescriptor;
-                                            tempAnimationDescriptor.count=0;
-                                            tempAnimationDescriptor.frames=frames;
-                                            tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
-                                        }
-                                        /// \todo control the animation is not out of rame
-                                        tempMapObject->animatedObject[ms].animatedObject << object;
+                                        else
+                                            qDebug() << "ms is 0 or frame is <=1";
                                     }
                                     else
-                                        qDebug() << "ms is 0 or frame is <=1";
+                                        qDebug() << "Wrong animation tile args regex match";
                                 }
                                 else
-                                    qDebug() << "Wrong animation tile args regex match";
+                                    qDebug() << "Wrong animation tile args count";
                             }
-                            else
-                                qDebug() << "Wrong animation tile args count";
                         }
+                        y++;
                     }
-                    y++;
+                    x++;
                 }
-                x++;
             }
+            index++;
         }
-        index++;
     }
 
     if(stopIt)
