@@ -6,7 +6,13 @@ then
 	do
 		echo "compress the file ${VARIABLE}"
 		cat "${VARIABLE}" | /usr/bin/pngquant - --speed 1 > /tmp/tmp${TEMPRANDOM}.png
-		mv /tmp/tmp${TEMPRANDOM}.png "${VARIABLE}"
+		RETURNCODE=$?
+		if [ ${RETURNCODE} -ne 0 ]
+		then
+			echo "Png creation failed ${RETURNCODE} for ${VARIABLE}"
+		else
+			mv /tmp/tmp${TEMPRANDOM}.png "${VARIABLE}"
+		fi
 	done
 fi
 
