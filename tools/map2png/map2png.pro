@@ -1,13 +1,11 @@
-INCLUDEPATH += ../../general/libtiled/
-DEPENDPATH += ../../general/libtiled/
-LIBS *= -ltiled
+include(../../client/tiled/tiled.pri)
 
 TEMPLATE = app
-TARGET = map2png
+TARGET = map2pngGUI
 
 QT += xml
-QT += gui
-CONFIG   += console
+
+include(../../general/general.pri)
 
 win32:RC_FILE += resources-windows.rc
 
@@ -17,22 +15,10 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 
 SOURCES += main.cpp \
          map2png.cpp \
-    ../../general/base/MoveOnTheMap.cpp \
-    ../../general/base/Map_loader.cpp \
-    ../../general/base/Map.cpp \
-    ../../general/base/DebugClass.cpp \
-    ../../general/base/FacilityLib.cpp \
     ../../client/base/Map_client.cpp
 
 HEADERS += map2png.h \
-    ../../general/base/Map_loader.h \
-    ../../general/base/Map.h \
-    ../../general/base/GeneralVariable.h \
-    ../../general/base/GeneralStructures.h \
-    ../../general/base/MoveOnTheMap.h \
     ../../client/base/ClientStructures.h \
-    ../../general/base/DebugClass.h \
-    ../../general/base/FacilityLib.h \
     ../../client/base/Map_client.h
 
 RESOURCES += \
