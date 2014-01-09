@@ -32,38 +32,12 @@
 #include <QDebug>
 #include <QFileDialog>
 
-namespace {
-
-struct CommandLineOptions {
-    CommandLineOptions()
-    {}
-
-    QString fileToOpen;
-};
-
-} // anonymous namespace
-
-static void parseCommandLineArguments(CommandLineOptions &options)
-{
-    const QStringList arguments = QCoreApplication::arguments();
-
-    for (int i = 1; i < arguments.size(); ++i) {
-        const QString &arg = arguments.at(i);
-        if (arg.at(0) == QLatin1Char('-')) {
-            qWarning() << "Unknown option" << arg;
-        } else {
-            options.fileToOpen = arg;
-        }
-    }
-}
-
 int main(int argc, char *argv[])
 {
     // Avoid performance issues with X11 engine when rendering objects
 #ifdef Q_WS_X11
     QApplication::setGraphicsSystem(QLatin1String("raster"));
 #endif
-    QString help="The arguement to open it: [map.tmx]";
 
     QApplication a(argc, argv);
 
@@ -71,17 +45,36 @@ int main(int argc, char *argv[])
     a.setApplicationName(QLatin1String("map2png"));
     a.setApplicationVersion(QLatin1String("1.0"));
 
-    CommandLineOptions options;
-    parseCommandLineArguments(options);
-
-    if (options.fileToOpen.isEmpty())
+    const QStringList &arguments=QCoreApplication::arguments();
+    QString fileToOpen;
     {
-        qDebug() << help;
-        return 0;
+        int index=0;
+        while(index<arguments.size())
+        {
+            if(arguments.at(index).endsWith(".tmx"))
+            {
+                fileToOpen=arguments.at(index);
+                break;
+            }
+            index++;
+        }
+    }
+    if (fileToOpen.isEmpty())
+    {
+        QString source = QFileDialog::getOpenFileName(NULL,"Select map");
+        if(source.isEmpty() || source.isNull() || source=="")
+            return 0;
+        fileToOpen=source;
     }
 
     Map2Png w;
-    w.viewMap(options.fileToOpen);
-
-    return a.exec();
+    w.viewMap(fileToOpen);
+    if(arguments.size()!=3)
+    {
+        w.show();
+        w.setWindowIcon(QIcon(":/icon.png"));
+        return a.exec();
+    }
+    else
+        return 0;
 }

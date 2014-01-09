@@ -26,22 +26,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mapobject.h"
-#include "objectgroup.h"
+#include "../../client/tiled/tiled_mapobject.h"
+#include "../../client/tiled/tiled_objectgroup.h"
 
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "../../client/base/Map_client.h"
 #include "../../general/base/Map_loader.h"
 
-#include "isometricrenderer.h"
-#include "map.h"
-#include "mapobject.h"
-#include "mapreader.h"
-#include "objectgroup.h"
-#include "orthogonalrenderer.h"
-#include "tilelayer.h"
-#include "tileset.h"
+#include "../../client/tiled/tiled_isometricrenderer.h"
+#include "../../client/tiled/tiled_map.h"
+#include "../../client/tiled/tiled_mapobject.h"
+#include "../../client/tiled/tiled_mapreader.h"
+#include "../../client/tiled/tiled_objectgroup.h"
+#include "../../client/tiled/tiled_orthogonalrenderer.h"
+#include "../../client/tiled/tiled_tilelayer.h"
+#include "../../client/tiled/tiled_tileset.h"
 
 #ifndef MAP_VISUALISER_H
 #define MAP_VISUALISER_H
@@ -104,6 +104,7 @@ private:
 
     QHash<QString,Map_full *> other_map;
 private slots:
+    Tiled::Tileset * getTileset(Tiled::Map * map,const QString &file);
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap(const QString &fileName,qint32 x, qint32 y);
 };
