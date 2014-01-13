@@ -61,6 +61,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknow-object.png"));
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
+    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     parseTypesExtra();
     parseItemsExtra();
     parseMaps();
@@ -77,7 +78,6 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseZoneExtra();
     parseTileset();
     parseReputationExtra();
-    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     inProgress=false;
     emit datapackParsed();
 }

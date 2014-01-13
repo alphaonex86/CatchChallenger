@@ -556,6 +556,16 @@ QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) con
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }
+    {
+        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKINBOT+skinName+QStringLiteral("/%1.png").arg(type));
+        if(pnfFile.exists())
+            return pnfFile.absoluteFilePath();
+    }
+    {
+        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKINBOT+skinName+QStringLiteral("/%1.gif").arg(type));
+        if(gifFile.exists())
+            return gifFile.absoluteFilePath();
+    }
     return QString();
 }
 
@@ -739,7 +749,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             QList<Quest::ReputationRewards> reputationRewards=CommonDatapack::commonDatapack.quests[questId].rewards.reputation;
             QStringList reputations;
             int index=0;
-            while(index<items.size())
+            while(index<reputationRewards.size())
             {
                 if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputationRewards.at(index).type))
                 {
@@ -762,7 +772,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             QList<ActionAllow> allowRewards=CommonDatapack::commonDatapack.quests[questId].rewards.allow;
             QStringList allows;
             int index=0;
-            while(index<items.size())
+            while(index<allowRewards.size())
             {
                 if(allowRewards.contains(ActionAllow_Clan))
                     allows << tr("Add permission to create clan");
@@ -827,6 +837,8 @@ void BaseWindow::updateTheWareHouseContent()
                 ui->warehousePlayerInventory->addItem(itemToGraphic(j.key(),j.value()));
         }
     }
+
+    qDebug() << QStringLiteral("ui->warehousePlayerInventory icon size").arg(ui->warehousePlayerInventory->iconSize().width()).arg(ui->warehousePlayerInventory->iconSize().height());
 
     //inventory warehouse
     {

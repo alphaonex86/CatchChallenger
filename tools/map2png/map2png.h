@@ -85,6 +85,7 @@ public:
     ~Map2Png();
     void viewMap(const QString &fileName);
     void displayMap();
+    QString baseDatapack;
 private:
     struct Map_full
     {

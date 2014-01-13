@@ -181,7 +181,17 @@ void BaseServerCrafting::preload_shop()
                                         if(!CommonDatapack::commonDatapack.items.item.contains(itemId))
                                             DebugClass::debugConsole(QStringLiteral("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                         else
+                                        {
+                                            quint32 price=CommonDatapack::commonDatapack.items.item[itemId].price;
+                                            if(product.hasAttribute(QStringLiteral("overridePrice")))
+                                            {
+                                                price=product.attribute(QStringLiteral("overridePrice")).toUInt(&ok);
+                                                if(!ok)
+                                                    price=CommonDatapack::commonDatapack.items.item[itemId].price;
+                                            }
+                                            shop.prices << price;
                                             shop.items << itemId;
+                                        }
                                     }
                                 }
                                 else

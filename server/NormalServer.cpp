@@ -737,3 +737,4 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("workingPath","0:0");
     settings->endGroup();
 }
+
