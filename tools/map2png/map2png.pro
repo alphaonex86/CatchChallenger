@@ -1,7 +1,7 @@
 include(../../client/tiled/tiled.pri)
 
 TEMPLATE = app
-TARGET = map2pngGUI
+TARGET = map2png
 
 QT += xml
 

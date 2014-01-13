@@ -1630,6 +1630,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     }
     //send the shop items (no taxes from now)
     QList<quint32> items=GlobalServerData::serverPrivateVariables.shops[shopId].items;
+    QList<quint32> prices=GlobalServerData::serverPrivateVariables.shops[shopId].prices;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -1640,10 +1641,10 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     int objectCount=0;
     while(index<items.size())
     {
-        if(CommonDatapack::commonDatapack.items.item[items.at(index)].price>0)
+        if(prices.at(index)>0)
         {
             out2 << (quint32)items.at(index);
-            out2 << (quint32)CommonDatapack::commonDatapack.items.item[items.at(index)].price;
+            out2 << (quint32)prices.at(index);
             out2 << (quint32)0;
             objectCount++;
         }
@@ -1743,36 +1744,38 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
     }
     //send the shop items (no taxes from now)
     QList<quint32> items=GlobalServerData::serverPrivateVariables.shops[shopId].items;
+    int priceIndex=items.indexOf(objectId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    if(!items.contains(objectId))
+    if(priceIndex==-1)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
         emit postReply(query_id,outputData);
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item[objectId].price==0)
+    const quint32 &realprice=GlobalServerData::serverPrivateVariables.shops[shopId].prices.at(priceIndex);
+    if(realprice==0)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
         emit postReply(query_id,outputData);
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item[objectId].price>price)
+    if(realprice>price)
     {
         out << (quint8)BuyStat_PriceHaveChanged;
         emit postReply(query_id,outputData);
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item[objectId].price<price)
+    if(realprice<price)
     {
         out << (quint8)BuyStat_BetterPrice;
-        out << (quint32)CommonDatapack::commonDatapack.items.item[objectId].price;
+        out << (quint32)price;
     }
     else
         out << (quint8)BuyStat_Done;
-    if(player_informations->public_and_private_informations.cash>=(CommonDatapack::commonDatapack.items.item[objectId].price*quantity))
-        removeCash(CommonDatapack::commonDatapack.items.item[objectId].price*quantity);
+    if(player_informations->public_and_private_informations.cash>=(realprice*quantity))
+        removeCash(realprice*quantity);
     else
     {
         emit error(QStringLiteral("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));

@@ -220,6 +220,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
 QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
 {
     CatchChallenger::Quest quest;
+    quest.id=0;
     QDomDocument domDocument;
     if(xmlLoadedFile.contains(file))
         domDocument=xmlLoadedFile[file];

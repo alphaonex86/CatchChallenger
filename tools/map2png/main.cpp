@@ -59,6 +59,8 @@ int main(int argc, char *argv[])
             index++;
         }
     }
+    Map2Png w;
+    QString previousFolder;
     if (fileToOpen.isEmpty())
     {
         QString source = QFileDialog::getOpenFileName(NULL,"Select map");
@@ -66,8 +68,23 @@ int main(int argc, char *argv[])
             return 0;
         fileToOpen=source;
     }
+    {
+        bool found=true;
+        QFileInfo dir(QFileInfo(fileToOpen).absolutePath());
+        while(!QFileInfo(dir.absoluteFilePath()+"/informations.xml").exists())
+        {
+            previousFolder=dir.absoluteFilePath();
+            dir=QFileInfo(dir.absolutePath());
+            if(previousFolder==dir.absoluteFilePath())
+            {
+                found=false;
+                break;
+            }
+        }
+        if(found)
+            w.baseDatapack=dir.absoluteFilePath();
+    }
 
-    Map2Png w;
     w.viewMap(fileToOpen);
     if(arguments.size()!=3)
     {

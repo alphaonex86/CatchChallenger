@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>13</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -4744,7 +4744,7 @@ padding-bottom:3px;
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_20">
+            <widget class="QLabel" name="warehouseBotPseudo">
              <property name="text">
               <string>Warehouse</string>
              </property>
@@ -4877,6 +4877,12 @@ padding-bottom:3px;
           <layout class="QHBoxLayout" name="horizontalLayout_43">
            <item>
             <widget class="QListWidget" name="warehousePlayerInventory">
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
              <property name="movement">
               <enum>QListView::Static</enum>
              </property>
@@ -4959,6 +4965,12 @@ padding-bottom:3px;
            </item>
            <item>
             <widget class="QListWidget" name="warehousePlayerStoredInventory">
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
              <property name="movement">
               <enum>QListView::Static</enum>
              </property>

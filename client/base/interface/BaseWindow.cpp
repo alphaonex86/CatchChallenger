@@ -309,11 +309,24 @@ void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const quint8 &skinIn
     ui->tradeAddMonster->setEnabled(true);
     ui->tradeValidate->setEnabled(true);
 
-    QPixmap otherFrontImage=getFrontSkin(skinInt);
-
-    //reset the other player info
-    ui->tradeOtherImage->setPixmap(otherFrontImage);
-    ui->tradeOtherPseudo->setText(pseudo);
+    const QPixmap skin(getFrontSkinPath(skinInt));
+    if(!skin.isNull())
+    {
+        //reset the other player info
+        ui->tradePlayerImage->setVisible(true);
+        ui->tradePlayerPseudo->setVisible(true);
+        ui->tradeOtherImage->setVisible(true);
+        ui->tradeOtherPseudo->setVisible(true);
+        ui->tradeOtherImage->setPixmap(skin);
+        ui->tradeOtherPseudo->setText(pseudo);
+    }
+    else
+    {
+        ui->tradePlayerImage->setVisible(false);
+        ui->tradePlayerPseudo->setVisible(false);
+        ui->tradeOtherImage->setVisible(false);
+        ui->tradeOtherPseudo->setVisible(false);
+    }
     ui->tradeOtherCash->setValue(0);
     ui->tradeOtherItems->clear();
     ui->tradeOtherMonsters->clear();
@@ -1931,13 +1944,19 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("The shop call, but wrong shop id"));
             return;
         }
-        QPixmap pixmap;
         if(actualBot.properties.contains("skin"))
-            pixmap=getFrontSkin(actualBot.properties["skin"]);
+        {
+            QPixmap skin=getFrontSkinPath(actualBot.properties["skin"]);
+            if(!skin.isNull())
+            {
+                ui->shopSellerImage->setPixmap(skin.scaled(160,160));
+                ui->shopSellerImage->setVisible(true);
+            }
+            else
+                ui->shopSellerImage->setVisible(false);
+        }
         else
-            pixmap=QPixmap(":/images/player_default/front.png");
-        pixmap=pixmap.scaled(160,160);
-        ui->shopSellerImage->setPixmap(pixmap);
+            ui->shopSellerImage->setVisible(false);
         ui->stackedWidget->setCurrentWidget(ui->page_shop);
         ui->shopItemList->clear();
         on_shopItemList_itemSelectionChanged();
@@ -1961,13 +1980,19 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("The shop call, but wrong shop id"));
             return;
         }
-        QPixmap pixmap;
         if(actualBot.properties.contains("skin"))
-            pixmap=getFrontSkin(actualBot.properties["skin"]);
+        {
+            QPixmap skin=getFrontSkinPath(actualBot.properties["skin"]);
+            if(!skin.isNull())
+            {
+                ui->shopSellerImage->setPixmap(skin.scaled(160,160));
+                ui->shopSellerImage->setVisible(true);
+            }
+            else
+                ui->shopSellerImage->setVisible(false);
+        }
         else
-            pixmap=QPixmap(":/images/player_default/front.png");
-        pixmap=pixmap.scaled(160,160);
-        ui->shopSellerImage->setPixmap(pixmap);
+            ui->shopSellerImage->setVisible(false);
         waitToSell=true;
         selectObject(ObjectType_Sell);
         return;
@@ -2033,10 +2058,30 @@ void BaseWindow::goToBotStep(const quint8 &step)
         temp_warehouse_cash=0;
         QPixmap pixmap;
         if(actualBot.properties.contains("skin"))
-            pixmap=getFrontSkin(actualBot.properties["skin"]);
+        {
+            ui->warehousePlayerImage->setVisible(true);
+            ui->warehousePlayerPseudo->setVisible(true);
+            ui->warehouseBotImage->setVisible(true);
+            ui->warehouseBotPseudo->setVisible(true);
+            pixmap=getFrontSkinPath(actualBot.properties["skin"]);
+            if(pixmap.isNull())
+            {
+                ui->warehousePlayerImage->setVisible(false);
+                ui->warehousePlayerPseudo->setVisible(false);
+                ui->warehouseBotImage->setVisible(false);
+                ui->warehouseBotPseudo->setVisible(false);
+            }
+            else
+                ui->warehouseBotImage->setPixmap(pixmap);
+        }
         else
+        {
+            ui->warehousePlayerImage->setVisible(false);
+            ui->warehousePlayerPseudo->setVisible(false);
+            ui->warehouseBotImage->setVisible(false);
+            ui->warehouseBotPseudo->setVisible(false);
             pixmap=QPixmap(":/images/player_default/front.png");
-        ui->warehouseBotImage->setPixmap(pixmap);
+        }
         ui->stackedWidget->setCurrentWidget(ui->page_warehouse);
         updateTheWareHouseContent();
         return;
@@ -2076,12 +2121,19 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->factoryResources->clear();
         ui->factoryProducts->clear();
         ui->factoryStatus->setText(tr("Waiting of status"));
-        QPixmap pixmap;
         if(actualBot.properties.contains("skin"))
-            pixmap=getFrontSkin(actualBot.properties["skin"]);
+        {
+            QPixmap skin=getFrontSkinPath(actualBot.properties["skin"]);
+            if(!skin.isNull())
+            {
+                ui->factoryBotImage->setPixmap(skin.scaled(80,80));
+                ui->factoryBotImage->setVisible(true);
+            }
+            else
+                ui->factoryBotImage->setVisible(false);
+        }
         else
-            pixmap=QPixmap(":/images/player_default/front.png");
-        ui->factoryBotImage->setPixmap(pixmap);
+            ui->factoryBotImage->setVisible(false);
         ui->stackedWidget->setCurrentWidget(ui->page_factory);
         CatchChallenger::Api_client_real::client->getFactoryList(factoryId);
         return;

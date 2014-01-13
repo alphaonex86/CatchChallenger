@@ -278,12 +278,12 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                     else
                     {
                         Tiled::Tileset * tileset=NULL;
-                        QString tilesetPath=QStringLiteral("%2/../skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
+                        QString tilesetPath=QStringLiteral("%2/skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(baseDatapack);
                         if(QFile(tilesetPath).exists())
                             tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
                         else
                         {
-                            tilesetPath=QStringLiteral("%2/../skin/bot/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
+                            tilesetPath=QStringLiteral("%2/skin/bot/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(baseDatapack);
                             if(QFile(tilesetPath).exists())
                                 tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
                         }
