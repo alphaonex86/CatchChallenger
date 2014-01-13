@@ -406,6 +406,7 @@ struct CrafingRecipe
 
 struct Shop
 {
+    QList<quint32> prices;
     QList<quint32> items;
 };
 

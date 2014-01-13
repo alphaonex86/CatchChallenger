@@ -45,7 +45,7 @@ QStringList FacilityLib::listFolder(const QString& folder,const QString& suffix)
 QString FacilityLib::randomPassword(const QString& string,const quint8& length)
 {
     if(string.size()<2)
-        return "";
+        return QStringLiteral("");
     QString randomPassword;
     int index=0;
     while(index<length)
