@@ -455,6 +455,8 @@ QImage MapReaderPrivate::readImage()
         QImage image = p->readExternalImage(source);
         if (image.isNull())
             xml.raiseError(tr("Error loading image:\n'%1'").arg(source));
+        if(image.format()!=QImage::Format_ARGB32 || image.format()!=QImage::Format_RGB32)
+            image=image.convertToFormat(QImage::Format_ARGB32);
         return image;
     }
     return QImage();

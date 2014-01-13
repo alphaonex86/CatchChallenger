@@ -282,4 +282,5 @@ void BaseWindow::on_warehouseValidate_clicked()
     }
     load_monsters();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("You have correctly withdraw/deposit your properties"));
 }
