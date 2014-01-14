@@ -127,6 +127,7 @@ private slots:
     void error(QString error);
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
+    void send_player_direction(const CatchChallenger::Direction &the_direction);
 
     //player UI
     void on_pushButton_interface_bag_clicked();
