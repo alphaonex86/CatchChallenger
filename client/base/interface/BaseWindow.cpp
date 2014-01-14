@@ -98,6 +98,7 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error);
     connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap);
     connect(MapController::mapController,&MapController::repelEffectIsOver,     this,&BaseWindow::repelEffectIsOver);
+    connect(MapController::mapController,&MapController::send_player_direction, this,&BaseWindow::send_player_direction,Qt::QueuedConnection);
 
     //fight
     connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
@@ -1009,6 +1010,12 @@ void BaseWindow::repelEffectIsOver()
     showTip(tr("The repel effect is over"));
 }
 
+void BaseWindow::send_player_direction(const CatchChallenger::Direction &the_direction)
+{
+    Q_UNUSED(the_direction);
+    ui->IG_dialog->setVisible(false);
+}
+
 void BaseWindow::on_pushButton_interface_bag_clicked()
 {
     if(inSelection)
@@ -1233,10 +1240,7 @@ void BaseWindow::actionOnNothing()
 void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
 {
     if(ui->IG_dialog->isVisible())
-    {
         ui->IG_dialog->setVisible(false);
-        return;
-    }
     if(actionOnCheckBot(map,x,y))
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
