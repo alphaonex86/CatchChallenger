@@ -24,11 +24,13 @@ void ClientHeavyLoad::loadMonsters()
 
     bool warehouse;
     bool ok;
+    Monster monster;
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monstersQuery.exec(queryText))
         emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
     while(monstersQuery.next())
     {
+        monster.give_sp=88889;
         PlayerMonster playerMonster;
         playerMonster.id=monstersQuery.value(0).toUInt(&ok);
         if(!ok)
@@ -43,6 +45,8 @@ void ClientHeavyLoad::loadMonsters()
                     ok=false;
                     emit message(QStringLiteral("monster: %1 is not into monster list").arg(playerMonster.monster));
                 }
+                else
+                    monster=CommonDatapack::commonDatapack.monsters[playerMonster.monster];
             }
             else
                 emit message(QStringLiteral("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
@@ -66,9 +70,14 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.remaining_xp=monstersQuery.value(4).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1))
+                if(playerMonster.level>=monster.level_to_xp.size())
                 {
-                    emit message(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
+                    emit message(QStringLiteral("monster level: %1 greater than loaded level %2").arg(playerMonster.level).arg(monster.level_to_xp.size()));
+                    ok=false;
+                }
+                else if(playerMonster.remaining_xp>monster.level_to_xp.at(playerMonster.level-1))
+                {
+                    emit message(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(monster.level_to_xp.at(playerMonster.level-1)));
                     playerMonster.remaining_xp=0;
                 }
             }
@@ -154,7 +163,7 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters[playerMonster.monster],playerMonster.level);
+                const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
                 if(playerMonster.hp>stat.hp)
                 {
                     emit message(QStringLiteral("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
