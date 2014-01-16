@@ -483,99 +483,108 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     }
     while(index<profile.monsters.size())
     {
-        QString gender=QStringLiteral("unknown");
-        if(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender!=-1)
+        const quint32 &monsterId=profile.monsters.at(index).id;
+        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monsterId))
         {
-            if(rand()%101<CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender)
-                gender=QStringLiteral("female");
-            else
-                gender=QStringLiteral("male");
-        }
-        CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
-        QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
-        QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].learn;
-        int sub_index=0;
-        while(sub_index<attack.size())
-        {
-            if(attack[sub_index].learnAtLevel<=profile.monsters.at(index).level)
+            QString gender=QStringLiteral("unknown");
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId].ratio_gender!=-1)
             {
-                CatchChallenger::PlayerMonster::PlayerSkill temp;
-                temp.level=attack[sub_index].learnSkillLevel;
-                temp.skill=attack[sub_index].learnSkill;
-                temp.endurance=0;
-                skills << temp;
+                if(rand()%101<CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId].ratio_gender)
+                    gender=QStringLiteral("female");
+                else
+                    gender=QStringLiteral("male");
             }
-            sub_index++;
-        }
-        quint32 monster_id;
-        {
-            QMutexLocker(&GlobalServerData::serverPrivateVariables.monsterIdMutex);
-            GlobalServerData::serverPrivateVariables.maxMonsterId++;
-            monster_id=GlobalServerData::serverPrivateVariables.maxMonsterId;
-        }
-        while(skills.size()>4)
-            skills.removeFirst();
-        {
-            switch(GlobalServerData::serverSettings.database.type)
+            CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId],profile.monsters.at(index).level);
+            QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
+            QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId].learn;
+            int sub_index=0;
+            while(sub_index<attack.size())
             {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
-                       .arg(monster_id)
-                       .arg(stat.hp)
-                       .arg(characterId)
-                       .arg(profile.monsters.at(index).id)
-                       .arg(profile.monsters.at(index).level)
-                       .arg(profile.monsters.at(index).captured_with)
-                       .arg(gender)
-                       .arg(monster_position)
-                        );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
-                       .arg(monster_id)
-                       .arg(stat.hp)
-                       .arg(characterId)
-                       .arg(profile.monsters.at(index).id)
-                       .arg(profile.monsters.at(index).level)
-                       .arg(profile.monsters.at(index).captured_with)
-                       .arg(gender)
-                       .arg(monster_position)
-                        );
-                break;
+                if(attack[sub_index].learnAtLevel<=profile.monsters.at(index).level)
+                {
+                    CatchChallenger::PlayerMonster::PlayerSkill temp;
+                    temp.level=attack[sub_index].learnSkillLevel;
+                    temp.skill=attack[sub_index].learnSkill;
+                    temp.endurance=0;
+                    skills << temp;
+                }
+                sub_index++;
             }
-            monster_position++;
-        }
-        sub_index=0;
-        while(sub_index<skills.size())
-        {
-            quint8 endurance=0;
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills[sub_index].skill))
-                if(skills[sub_index].level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.size() && skills[sub_index].level>0)
-                    endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.at(skills[sub_index].level-1).endurance;
-            switch(GlobalServerData::serverSettings.database.type)
+            quint32 monster_id;
             {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
-                       .arg(monster_id)
-                       .arg(skills[sub_index].skill)
-                       .arg(skills[sub_index].level)
-                       .arg(endurance)
+                QMutexLocker(&GlobalServerData::serverPrivateVariables.monsterIdMutex);
+                GlobalServerData::serverPrivateVariables.maxMonsterId++;
+                monster_id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+            }
+            while(skills.size()>4)
+                skills.removeFirst();
+            {
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
+                           .arg(monster_id)
+                           .arg(stat.hp)
+                           .arg(characterId)
+                           .arg(monsterId)
+                           .arg(profile.monsters.at(index).level)
+                           .arg(profile.monsters.at(index).captured_with)
+                           .arg(gender)
+                           .arg(monster_position)
                             );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
-                       .arg(monster_id)
-                       .arg(skills[sub_index].skill)
-                       .arg(skills[sub_index].level)
-                       .arg(endurance)
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
+                           .arg(monster_id)
+                           .arg(stat.hp)
+                           .arg(characterId)
+                           .arg(monsterId)
+                           .arg(profile.monsters.at(index).level)
+                           .arg(profile.monsters.at(index).captured_with)
+                           .arg(gender)
+                           .arg(monster_position)
                             );
-                break;
+                    break;
+                }
+                monster_position++;
             }
-            sub_index++;
+            sub_index=0;
+            while(sub_index<skills.size())
+            {
+                quint8 endurance=0;
+                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills[sub_index].skill))
+                    if(skills[sub_index].level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.size() && skills[sub_index].level>0)
+                        endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.at(skills[sub_index].level-1).endurance;
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
+                           .arg(monster_id)
+                           .arg(skills[sub_index].skill)
+                           .arg(skills[sub_index].level)
+                           .arg(endurance)
+                                );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
+                           .arg(monster_id)
+                           .arg(skills[sub_index].skill)
+                           .arg(skills[sub_index].level)
+                           .arg(endurance)
+                                );
+                    break;
+                }
+                sub_index++;
+            }
+            index++;
         }
-        index++;
+        else
+        {
+            emit error(QStringLiteral("monster not found to start: %1 is not into profile forced skin list: %2").arg(monsterId));
+            return;
+        }
     }
     index=0;
     while(index<profile.reputation.size())
