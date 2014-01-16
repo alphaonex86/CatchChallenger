@@ -507,9 +507,17 @@ int createBorder(QString file)
                 tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
                 if(botList.at(index).fightMonsterId.isEmpty())
                 {
-                    tempFile.write(QStringLiteral("    <step id=\"1\" type=\"text\">\n").toUtf8());
-                    tempFile.write(QStringLiteral("      <text><![CDATA[%1]]></text>\n").arg(botList.at(index).text.join("<br />")).toUtf8());
-                    tempFile.write(QStringLiteral("    </step>\n").toUtf8());
+                    int sub_index=0;
+                    while(sub_index<botList.at(index).text.size())
+                    {
+                        tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n").arg(sub_index+1).toUtf8());
+                        if(sub_index<(botList.at(index).text.size()-1))
+                            tempFile.write(QStringLiteral("      <text><![CDATA[%1<br /><br /><a href=\"%2\">[Next]</a>]]></text>\n").arg(botList.at(index).text.at(sub_index).arg(sub_index+2).toUtf8()));
+                        else
+                            tempFile.write(QStringLiteral("      <text><![CDATA[%1]]></text>\n").arg(botList.at(index).text.at(sub_index).toUtf8()));
+                        tempFile.write(QStringLiteral("    </step>\n").toUtf8());
+                        sub_index++;
+                    }
                 }
                 else
                 {
