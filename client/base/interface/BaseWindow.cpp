@@ -1938,14 +1938,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
     {
         if(!actualBot.step[step].hasAttribute(QStringLiteral("shop")))
         {
-            showTip(tr("The shop call, but missing informations"));
+            showTip(tr("Shop called but missing informations"));
             return;
         }
         bool ok;
         shopId=actualBot.step[step].attribute("shop").toUInt(&ok);
         if(!ok)
         {
-            showTip(tr("The shop call, but wrong shop id"));
+            showTip(tr("Shop called but wrong id"));
             return;
         }
         if(actualBot.properties.contains(QStringLiteral("skin")))
@@ -1974,14 +1974,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
     {
         if(!actualBot.step[step].hasAttribute(QStringLiteral("shop")))
         {
-            showTip(tr("The shop call, but missing informations"));
+            showTip(tr("Shop called but missing informations"));
             return;
         }
         bool ok;
         shopId=actualBot.step[step].attribute(QStringLiteral("shop")).toUInt(&ok);
         if(!ok)
         {
-            showTip(tr("The shop call, but wrong shop id"));
+            showTip(tr("Shop called but wrong id"));
             return;
         }
         if(actualBot.properties.contains(QStringLiteral("skin")))
@@ -2106,7 +2106,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
     {
         if(!actualBot.step[step].hasAttribute(QStringLiteral("industry")))
         {
-            showTip(tr("The industry call, but missing informations"));
+            showTip(tr("Industry called but missing informations"));
             return;
         }
 
@@ -2114,7 +2114,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         factoryId=actualBot.step[step].attribute(QStringLiteral("industry")).toUInt(&ok);
         if(!ok)
         {
-            showTip(tr("The industry call, but wrong shop id"));
+            showTip(tr("Industry called but wrong id"));
             return;
         }
         if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
