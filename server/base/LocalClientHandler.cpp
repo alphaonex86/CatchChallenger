@@ -181,24 +181,24 @@ QString LocalClientHandler::directionToStringToSave(const Direction &direction)
     {
         case Direction_look_at_top:
         case Direction_move_at_top:
-            return "top";
+            return QStringLiteral("top");
         break;
         case Direction_look_at_right:
         case Direction_move_at_right:
-            return "right";
+            return QStringLiteral("right");
         break;
         case Direction_look_at_bottom:
         case Direction_move_at_bottom:
-            return "bottom";
+            return QStringLiteral("bottom");
         break;
         case Direction_look_at_left:
         case Direction_move_at_left:
-            return "left";
+            return QStringLiteral("left");
         break;
         default:
         break;
     }
-    return "bottom";
+    return QStringLiteral("bottom");
 }
 
 QString LocalClientHandler::orientationToStringToSave(const Orientation &orientation)
@@ -206,21 +206,21 @@ QString LocalClientHandler::orientationToStringToSave(const Orientation &orienta
     switch(orientation)
     {
         case Orientation_top:
-            return "top";
+            return QStringLiteral("top");
         break;
         case Orientation_bottom:
-            return "bottom";
+            return QStringLiteral("bottom");
         break;
         case Orientation_right:
-            return "right";
+            return QStringLiteral("right");
         break;
         case Orientation_left:
-            return "left";
+            return QStringLiteral("left");
         break;
         default:
         break;
     }
-    return "bottom";
+    return QStringLiteral("bottom");
 }
 
 void LocalClientHandler::savePosition()
@@ -419,7 +419,7 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     }
     if(captureCityInProgress())
     {
-        emit error("Try move when is in capture city");
+        emit error(QStringLiteral("Try move when is in capture city"));
         return false;
     }
     COORD_TYPE x=this->x,y=this->y;
@@ -1095,84 +1095,84 @@ bool LocalClientHandler::wareHouseStoreCheck(const qint64 &cash, const QList<QPa
 
 void LocalClientHandler::sendHandlerCommand(const QString &command,const QString &extraText)
 {
-    if(command=="give")
+    if(command==QStringLiteral("give"))
     {
         bool ok;
-        QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(QStringLiteral(" "),QString::SkipEmptyParts);
         if(arguments.size()==2)
-            arguments << "1";
+            arguments << QStringLiteral("1");
         if(arguments.size()!=3)
         {
-            emit receiveSystemText("Wrong arguments number for the command, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /give objectId player [quantity=1]"));
             return;
         }
-        quint32 objectId=arguments.first().toUInt(&ok);
+        const quint32 &objectId=arguments.first().toUInt(&ok);
         if(!ok)
         {
-            emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("objectId is not a number, usage: /give objectId player [quantity=1]"));
             return;
         }
         if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
         {
-            emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("objectId is not a valid item, usage: /give objectId player [quantity=1]"));
             return;
         }
-        quint32 quantity=arguments.last().toUInt(&ok);
+        const quint32 &quantity=arguments.last().toUInt(&ok);
         if(!ok)
         {
-            emit receiveSystemText("quantity is not a number, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
             return;
         }
         if(!playerByPseudo.contains(arguments.at(1)))
         {
-            emit receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("player is not connected, usage: /give objectId player [quantity=1]"));
             return;
         }
         emit message(QStringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo[arguments.at(1)]->addObjectAndSend(objectId,quantity);
     }
-    else if(command=="take")
+    else if(command==QStringLiteral("take"))
     {
         bool ok;
-        QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(QStringLiteral(" "),QString::SkipEmptyParts);
         if(arguments.size()==2)
-            arguments << "1";
+            arguments << QStringLiteral("1");
         if(arguments.size()!=3)
         {
-            emit receiveSystemText("Wrong arguments number for the command, usage: /take objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /take objectId player [quantity=1]"));
             return;
         }
         quint32 objectId=arguments.first().toUInt(&ok);
         if(!ok)
         {
-            emit receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("objectId is not a number, usage: /take objectId player [quantity=1]"));
             return;
         }
         if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
         {
-            emit receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("objectId is not a valid item, usage: /take objectId player [quantity=1]"));
             return;
         }
         quint32 quantity=arguments.last().toUInt(&ok);
         if(!ok)
         {
-            emit receiveSystemText("quantity is not a number, usage: /take objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("quantity is not a number, usage: /take objectId player [quantity=1]"));
             return;
         }
         if(!playerByPseudo.contains(arguments.at(1)))
         {
-            emit receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
+            emit receiveSystemText(QStringLiteral("player is not connected, usage: /take objectId player [quantity=1]"));
             return;
         }
         emit message(QStringLiteral("%1 have take to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo[arguments.at(1)]->sendRemoveObject(objectId,playerByPseudo[arguments.at(1)]->removeObject(objectId,quantity));
     }
-    else if(command=="tp")
+    else if(command==QStringLiteral("tp"))
     {
-        QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(QStringLiteral(" "),QString::SkipEmptyParts);
         if(arguments.size()==3)
         {
-            if(arguments.at(1)!="to")
+            if(arguments.at(1)!=QStringLiteral("to"))
             {
                 emit receiveSystemText(QStringLiteral("wrong second arguement: %1, usage: /tp player1 to player2").arg(arguments.at(1)));
                 return;
@@ -1191,11 +1191,11 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         }
         else
         {
-            emit receiveSystemText("Wrong arguments number for the command, usage: /tp player1 to player2");
+            emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /tp player1 to player2"));
             return;
         }
     }
-    else if(command=="trade")
+    else if(command==QStringLiteral("trade"))
     {
         if(extraText.isEmpty())
         {
@@ -1238,12 +1238,12 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message("Trade requested");
+        emit message(QStringLiteral("Trade requested"));
         #endif
         otherPlayerTrade=playerByPseudo[extraText];
         otherPlayerTrade->registerTradeRequest(this);
     }
-    else if(command=="battle")
+    else if(command==QStringLiteral("battle"))
     {
         if(extraText.isEmpty())
         {
@@ -1287,31 +1287,31 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         }
         if(!playerByPseudo[extraText]->localClientHandlerFight.getAbleToFight())
         {
-            emit receiveSystemText("The other player can't fight");
+            emit receiveSystemText(QStringLiteral("The other player can't fight"));
             return;
         }
         if(!localClientHandlerFight.getAbleToFight())
         {
-            emit receiveSystemText("You can't fight");
+            emit receiveSystemText(QStringLiteral("You can't fight"));
             return;
         }
         if(playerByPseudo[extraText]->localClientHandlerFight.isInFight())
         {
-            emit receiveSystemText("The other player is in fight");
+            emit receiveSystemText(QStringLiteral("The other player is in fight"));
             return;
         }
         if(localClientHandlerFight.isInFight())
         {
-            emit receiveSystemText("You are in fight");
+            emit receiveSystemText(QStringLiteral("You are in fight"));
             return;
         }
         if(captureCityInProgress())
         {
-            emit error("Try battle when is in capture city");
+            emit error(QStringLiteral("Try battle when is in capture city"));
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message("Battle requested");
+        emit message(QStringLiteral("Battle requested"));
         #endif
         playerByPseudo[extraText]->localClientHandlerFight.registerBattleRequest(&localClientHandlerFight);
     }
@@ -1343,12 +1343,12 @@ bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skil
             }
             else
             {
-                emit error("No valid map in this direction");
+                emit error(QStringLiteral("No valid map in this direction"));
                 return false;
             }
         break;
         default:
-        emit error("Wrong direction to use a learn skill");
+        emit error(QStringLiteral("Wrong direction to use a learn skill"));
         return false;
     }
     if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
@@ -1369,7 +1369,7 @@ bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skil
                 }
                 else
                 {
-                    emit error("No valid map in this direction");
+                    emit error(QStringLiteral("No valid map in this direction"));
                     return false;
                 }
             break;
@@ -1378,7 +1378,7 @@ bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skil
         }
         if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
         {
-            emit error("not learn skill into this direction");
+            emit error(QStringLiteral("not learn skill into this direction"));
             return false;
         }
     }
@@ -1580,12 +1580,12 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
             }
             else
             {
-                emit error("No valid map in this direction");
+                emit error(QStringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        emit error("Wrong direction to use a shop");
+        emit error(QStringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
@@ -1610,7 +1610,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
                     }
                     else
                     {
-                        emit error("No valid map in this direction");
+                        emit error(QStringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
@@ -1622,7 +1622,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
                 QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
                 if(!shops.contains(shopId))
                 {
-                    emit error("not shop into this direction");
+                    emit error(QStringLiteral("not shop into this direction"));
                     return;
                 }
             }
@@ -1691,12 +1691,12 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
             }
             else
             {
-                emit error("No valid map in this direction");
+                emit error(QStringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        emit error("Wrong direction to use a shop");
+        emit error(QStringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
@@ -1723,12 +1723,12 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
                     }
                     else
                     {
-                        emit error("No valid map in this direction");
+                        emit error(QStringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
                 default:
-                emit error("Wrong direction to use a shop");
+                emit error(QStringLiteral("Wrong direction to use a shop"));
                 return;
             }
             if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
@@ -1736,7 +1736,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
                 QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
                 if(!shops.contains(shopId))
                 {
-                    emit error("not shop into this direction");
+                    emit error(QStringLiteral("not shop into this direction"));
                     return;
                 }
             }
@@ -1822,12 +1822,12 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
             }
             else
             {
-                emit error("No valid map in this direction");
+                emit error(QStringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        emit error("Wrong direction to use a shop");
+        emit error(QStringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
@@ -1854,12 +1854,12 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
                     }
                     else
                     {
-                        emit error("No valid map in this direction");
+                        emit error(QStringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
                 default:
-                emit error("Wrong direction to use a shop");
+                emit error(QStringLiteral("Wrong direction to use a shop"));
                 return;
             }
             if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
@@ -1867,7 +1867,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
                 QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
                 if(!shops.contains(shopId))
                 {
-                    emit error("not shop into this direction");
+                    emit error(QStringLiteral("not shop into this direction"));
                     return;
                 }
             }
@@ -1879,12 +1879,12 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     out.setVersion(QDataStream::Qt_4_4);
     if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
-        emit error("this item don't exists");
+        emit error(QStringLiteral("this item don't exists"));
         return;
     }
     if(objectQuantity(objectId)<quantity)
     {
-        emit error("you have not this quantity to sell");
+        emit error(QStringLiteral("you have not this quantity to sell"));
         return;
     }
     quint32 realPrice=CommonDatapack::commonDatapack.items.item[objectId].price/2;
@@ -1983,17 +1983,17 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
 {
     if(localClientHandlerFight.isInFight())
     {
-        emit error("Try do inventory action when is in fight");
+        emit error(QStringLiteral("Try do inventory action when is in fight"));
         return;
     }
     if(captureCityInProgress())
     {
-        emit error("Try do inventory action when is in capture city");
+        emit error(QStringLiteral("Try do inventory action when is in capture city"));
         return;
     }
     if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
     {
-        emit error("factory id not found");
+        emit error(QStringLiteral("factory id not found"));
         return;
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
@@ -2085,27 +2085,27 @@ void LocalClientHandler::buyFactoryProduct(const quint32 &query_id,const quint32
 {
     if(localClientHandlerFight.isInFight())
     {
-        emit error("Try do inventory action when is in fight");
+        emit error(QStringLiteral("Try do inventory action when is in fight"));
         return;
     }
     if(captureCityInProgress())
     {
-        emit error("Try do inventory action when is in capture city");
+        emit error(QStringLiteral("Try do inventory action when is in capture city"));
         return;
     }
     if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
     {
-        emit error("factory id not found");
+        emit error(QStringLiteral("factory id not found"));
         return;
     }
     if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
-        emit error("object id not found into the factory product list");
+        emit error(QStringLiteral("object id not found into the factory product list"));
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
-        emit error("factory id not found in active list");
+        emit error(QStringLiteral("factory id not found in active list"));
         return;
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
@@ -2132,13 +2132,13 @@ void LocalClientHandler::buyFactoryProduct(const quint32 &query_id,const quint32
         }
         if(index==industry.products.size())
         {
-            emit error("internal bug, product for the factory not found");
+            emit error(QStringLiteral("internal bug, product for the factory not found"));
             return;
         }
     }
     if(player_informations->public_and_private_informations.cash<(actualPrice*quantity))
     {
-        emit error("have not the cash to buy into this factory");
+        emit error(QStringLiteral("have not the cash to buy into this factory"));
         return;
     }
     if(quantity>quantityInStock)
@@ -2178,27 +2178,27 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
 {
     if(localClientHandlerFight.isInFight())
     {
-        emit error("Try do inventory action when is in fight");
+        emit error(QStringLiteral("Try do inventory action when is in fight"));
         return;
     }
     if(captureCityInProgress())
     {
-        emit error("Try do inventory action when is in capture city");
+        emit error(QStringLiteral("Try do inventory action when is in capture city"));
         return;
     }
     if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
     {
-        emit error("factory id not found");
+        emit error(QStringLiteral("factory id not found"));
         return;
     }
     if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
-        emit error("object id not found");
+        emit error(QStringLiteral("object id not found"));
         return;
     }
     if(objectQuantity(objectId)<quantity)
     {
-        emit error("you have not the object quantity to sell at this factory");
+        emit error(QStringLiteral("you have not the object quantity to sell at this factory"));
         return;
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
@@ -2264,7 +2264,7 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
         }
         if(index==industry.resources.size())
         {
-            emit error("internal bug, resource for the factory not found");
+            emit error(QStringLiteral("internal bug, resource for the factory not found"));
             return;
         }
     }
@@ -2469,7 +2469,7 @@ bool LocalClientHandler::tryEscape()
         return localClientHandlerFight.tryEscape();
     else
     {
-        emit error("Try escape when not allowed");
+        emit error(QStringLiteral("Try escape when not allowed"));
         return false;
     }
 }
@@ -2483,7 +2483,7 @@ void LocalClientHandler::heal()
 {
     if(localClientHandlerFight.isInFight())
     {
-        emit error("Try do heal action when is in fight");
+        emit error(QStringLiteral("Try do heal action when is in fight"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -2511,12 +2511,12 @@ void LocalClientHandler::heal()
             }
             else
             {
-                emit error("No valid map in this direction");
+                emit error(QStringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        emit error("Wrong direction to use a heal");
+        emit error(QStringLiteral("Wrong direction to use a heal"));
         return;
     }
     //check if is shop
@@ -2540,17 +2540,17 @@ void LocalClientHandler::heal()
                 }
                 else
                 {
-                    emit error("No valid map in this direction");
+                    emit error(QStringLiteral("No valid map in this direction"));
                     return;
                 }
             break;
             default:
-            emit error("Wrong direction to use a heal");
+            emit error(QStringLiteral("Wrong direction to use a heal"));
             return;
         }
         if(!static_cast<MapServer*>(this->map)->heal.contains(QPair<quint8,quint8>(x,y)))
         {
-            emit error("no heal point in this direction");
+            emit error(QStringLiteral("no heal point in this direction"));
             return;
         }
     }
@@ -2603,12 +2603,12 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
             }
             else
             {
-                emit error("No valid map in this direction");
+                emit error(QStringLiteral("No valid map in this direction"));
                 return;
             }
         break;
         default:
-        emit error("Wrong direction to use a shop");
+        emit error(QStringLiteral("Wrong direction to use a shop"));
         return;
     }
     //check if is shop
@@ -2639,12 +2639,12 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
                 }
                 else
                 {
-                    emit error("No valid map in this direction");
+                    emit error(QStringLiteral("No valid map in this direction"));
                     return;
                 }
             break;
             default:
-            emit error("Wrong direction to use a shop");
+            emit error(QStringLiteral("Wrong direction to use a shop"));
             return;
         }
         if(static_cast<MapServer*>(this->map)->botsFight.contains(QPair<quint8,quint8>(x,y)))
@@ -2671,17 +2671,17 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
         {
             if(player_informations->public_and_private_informations.clan>0)
             {
-                emit error("You are already in clan");
+                emit error(QStringLiteral("You are already in clan"));
                 return;
             }
             if(text.isEmpty())
             {
-                emit error("You can't create clan with empty name");
+                emit error(QStringLiteral("You can't create clan with empty name"));
                 return;
             }
             if(!player_informations->public_and_private_informations.allow.contains(ActionAllow_Clan))
             {
-                emit error("You have not the right to create clan");
+                emit error(QStringLiteral("You have not the right to create clan"));
                 return;
             }
             GlobalServerData::serverPrivateVariables.maxClanId++;
@@ -2722,12 +2722,12 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
         {
             if(player_informations->public_and_private_informations.clan==0)
             {
-                emit error("You have not a clan");
+                emit error(QStringLiteral("You have not a clan"));
                 return;
             }
             if(player_informations->public_and_private_informations.clan_leader)
             {
-                emit error("You can't leave if you are the leader");
+                emit error(QStringLiteral("You can't leave if you are the leader"));
                 return;
             }
             removeFromClan();
@@ -2759,17 +2759,17 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
         {
             if(player_informations->public_and_private_informations.clan==0)
             {
-                emit error("You have not a clan");
+                emit error(QStringLiteral("You have not a clan"));
                 return;
             }
             if(!player_informations->public_and_private_informations.clan_leader)
             {
-                emit error("You are not a leader to dissolve the clan");
+                emit error(QStringLiteral("You are not a leader to dissolve the clan"));
                 return;
             }
             if(!clan->captureCityInProgress.isEmpty())
             {
-                emit error("You can't disolv the clan if is in city capture");
+                emit error(QStringLiteral("You can't disolv the clan if is in city capture"));
                 return;
             }
             const QList<LocalClientHandler *> &players=clanList[player_informations->public_and_private_informations.clan]->players;
@@ -2851,12 +2851,12 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
         {
             if(player_informations->public_and_private_informations.clan==0)
             {
-                emit error("You have not a clan");
+                emit error(QStringLiteral("You have not a clan"));
                 return;
             }
             if(!player_informations->public_and_private_informations.clan_leader)
             {
-                emit error("You are not a leader to invite into the clan");
+                emit error(QStringLiteral("You are not a leader to invite into the clan"));
                 return;
             }
             bool haveAClan=true;
@@ -2890,17 +2890,17 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
         {
             if(player_informations->public_and_private_informations.clan==0)
             {
-                emit error("You have not a clan");
+                emit error(QStringLiteral("You have not a clan"));
                 return;
             }
             if(!player_informations->public_and_private_informations.clan_leader)
             {
-                emit error("You are not a leader to invite into the clan");
+                emit error(QStringLiteral("You are not a leader to invite into the clan"));
                 return;
             }
             if(player_informations->public_and_private_informations.public_informations.pseudo==text)
             {
-                emit error("You can't eject your self");
+                emit error(QStringLiteral("You can't eject your self"));
                 return;
             }
             bool isIntoTheClan=false;
@@ -2948,7 +2948,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
         }
         break;
         default:
-            emit error("Action on the clan not found");
+            emit error(QStringLiteral("Action on the clan not found"));
         return;
     }
 }
@@ -3014,14 +3014,14 @@ void LocalClientHandler::clanInvite(const bool &accept)
 {
     if(!accept)
     {
-        emit message("You have refused the clan invitation");
+        emit message(QStringLiteral("You have refused the clan invitation"));
         inviteToClanList.removeFirst();
         return;
     }
-    emit message("You have accepted the clan invitation");
+    emit message(QStringLiteral("You have accepted the clan invitation"));
     if(inviteToClanList.isEmpty())
     {
-        emit error("Can't responde to clan invite, because no in suspend");
+        emit error(QStringLiteral("Can't responde to clan invite, because no in suspend"));
         return;
     }
     player_informations->public_and_private_informations.clan_leader=false;
@@ -3041,9 +3041,9 @@ void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
     //add into db
     QString clan_leader;
     if(player_informations->public_and_private_informations.clan_leader)
-        clan_leader="1";
+        clan_leader=QStringLiteral("1");
     else
-        clan_leader="0";
+        clan_leader=QStringLiteral("0");
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
@@ -3099,19 +3099,19 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
 {
     if(clan==NULL)
     {
-        emit error("Try capture city when is not in clan");
+        emit error(QStringLiteral("Try capture city when is not in clan"));
         return;
     }
     if(!cancel)
     {
         if(captureCityInProgress())
         {
-            emit error("Try capture city when is already into that's");
+            emit error(QStringLiteral("Try capture city when is already into that's"));
             return;
         }
         if(localClientHandlerFight.isInFight())
         {
-            emit error("Try capture city when is in fight");
+            emit error(QStringLiteral("Try capture city when is in fight"));
             return;
         }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -3139,7 +3139,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
                 }
                 else
                 {
-                    emit error("No valid map in this direction");
+                    emit error(QStringLiteral("No valid map in this direction"));
                     return;
                 }
             break;
@@ -3168,17 +3168,17 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
                     }
                     else
                     {
-                        emit error("No valid map in this direction");
+                        emit error(QStringLiteral("No valid map in this direction"));
                         return;
                     }
                 break;
                 default:
-                emit error("Wrong direction to use a zonecapture");
+                emit error(QStringLiteral("Wrong direction to use a zonecapture"));
                 return;
             }
             if(!static_cast<MapServer*>(this->map)->zonecapture.contains(QPair<quint8,quint8>(x,y)))
             {
-                emit error("no zonecapture point in this direction");
+                emit error(QStringLiteral("no zonecapture point in this direction"));
                 return;
             }
         }
@@ -3213,7 +3213,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
         }
         if(captureCity.count(zoneName)>0)
         {
-            emit error("already in capture city");
+            emit error(QStringLiteral("already in capture city"));
             return;
         }
         captureCity[zoneName] << this;
@@ -3223,12 +3223,12 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
     {
         if(clan->captureCityInProgress.isEmpty())
         {
-            emit error("your clan is not in capture city");
+            emit error(QStringLiteral("your clan is not in capture city"));
             return;
         }
         if(!captureCity[clan->captureCityInProgress].removeOne(this))
         {
-            emit error("not in capture city");
+            emit error(QStringLiteral("not in capture city"));
             return;
         }
         leaveTheCityCapture();
@@ -3613,7 +3613,7 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
@@ -3712,12 +3712,12 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     if(quantity<=0)
     {
-        emit error("You can't use the market with null quantity");
+        emit error(QStringLiteral("You can't use the market with null quantity"));
         return;
     }
     QByteArray outputData;
@@ -3747,12 +3747,12 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
             {
                 if(!bitcoinEnabled())
                 {
-                    emit error("Try put in bitcoin but don't have bitcoin access");
+                    emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
                     return;
                 }
                 if(!playerById[marketItem.player]->bitcoinEnabled())
                 {
-                    emit message("The other have not the bitcoin enabled to buy their object");
+                    emit message(QStringLiteral("The other have not the bitcoin enabled to buy their object"));
                     out << (quint8)0x03;
                     emit postReply(query_id,outputData);
                     return;
@@ -3813,7 +3813,7 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
             if(playerById.contains(marketItem.player))
             {
                 if(!playerById[marketItem.player]->addMarketCashWithoutSave(quantity*marketItem.cash,quantity*marketItem.bitcoin))
-                    emit message("Problem at market cash adding");
+                    emit message(QStringLiteral("Problem at market cash adding"));
             }
             switch(GlobalServerData::serverSettings.database.type)
             {
@@ -3848,7 +3848,7 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
@@ -3878,12 +3878,12 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
             {
                 if(!bitcoinEnabled())
                 {
-                    emit error("Try put in bitcoin but don't have bitcoin access");
+                    emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
                     return;
                 }
                 if(!playerById[marketPlayerMonster.player]->bitcoinEnabled())
                 {
-                    emit message("The other have not the bitcoin enabled to buy their object");
+                    emit message(QStringLiteral("The other have not the bitcoin enabled to buy their object"));
                     out << (quint8)0x03;
                     emit postReply(query_id,outputData);
                     return;
@@ -3903,7 +3903,7 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
             if(playerById.contains(marketPlayerMonster.player))
             {
                 if(!playerById[marketPlayerMonster.player]->addMarketCashWithoutSave(marketPlayerMonster.cash,marketPlayerMonster.bitcoin))
-                    emit message("Problem at market cash adding");
+                    emit message(QStringLiteral("Problem at market cash adding"));
             }
             switch(GlobalServerData::serverSettings.database.type)
             {
@@ -3956,17 +3956,17 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     if(!bitcoinEnabled() && bitcoin>0)
     {
-        emit error("Try put in bitcoin but don't have bitcoin access");
+        emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
         return;
     }
     if(quantity<=0)
     {
-        emit error("You can't use the market with null quantity");
+        emit error(QStringLiteral("You can't use the market with null quantity"));
         return;
     }
     QByteArray outputData;
@@ -4021,7 +4021,7 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
     {
         out << (quint8)0x02;
         emit postReply(query_id,outputData);
-        emit message("No more id into marketObjectIdList");
+        emit message(QStringLiteral("No more id into marketObjectIdList"));
         return;
     }
     //append to the market
@@ -4065,12 +4065,12 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     if(!bitcoinEnabled() && bitcoin>0)
     {
-        emit error("Try put in bitcoin but don't have bitcoin access");
+        emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
         return;
     }
     QByteArray outputData;
@@ -4084,7 +4084,7 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
         {
             if(!localClientHandlerFight.remainMonstersToFight(monsterId))
             {
-                emit message("You can't put in market this msonter because you will be without monster to fight");
+                emit message(QStringLiteral("You can't put in market this msonter because you will be without monster to fight"));
                 out << (quint8)0x02;
                 emit postReply(query_id,outputData);
                 return;
@@ -4154,7 +4154,7 @@ void LocalClientHandler::recoverMarketCash(const quint32 &query_id)
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     bool bitcoin_enabled=bitcoinEnabled();
@@ -4217,12 +4217,12 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     if(quantity<=0)
     {
-        emit error("You can't use the market with null quantity");
+        emit error(QStringLiteral("You can't use the market with null quantity"));
         return;
     }
     QByteArray outputData;
@@ -4307,7 +4307,7 @@ void LocalClientHandler::withdrawMarketMonster(const quint32 &query_id,const qui
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
-        emit error("You can't use the market in trade/fight");
+        emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
     QByteArray outputData;
