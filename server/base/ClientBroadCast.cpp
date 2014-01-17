@@ -68,7 +68,7 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 {
     if(this->player_informations->public_and_private_informations.public_informations.pseudo==pseudo)
     {
-        emit error("Can't send them self the PM");
+        emit error(QStringLiteral("Can't send them self the PM"));
         return;
     }
     if(!playerByPseudo.contains(pseudo))
@@ -128,7 +128,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     if(chatType==Chat_type_clan)
     {
         if(clan==0)
-            emit error("Unable to chat with clan, you have not clan");
+            emit error(QStringLiteral("Unable to chat with clan, you have not clan"));
         else
         {
             if(!GlobalServerData::serverSettings.anonymous)

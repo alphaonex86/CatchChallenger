@@ -13,7 +13,7 @@ void LocalClientHandler::registerTradeRequest(LocalClientHandler * otherPlayerTr
 {
     if(getInTrade())
     {
-        emit message("Already in trade, internal error");
+        emit message(QStringLiteral("Already in trade, internal error"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -65,12 +65,12 @@ void LocalClientHandler::tradeFinished()
 {
     if(!tradeIsValidated)
     {
-        emit error("Trade not valid");
+        emit error(QStringLiteral("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error("Trade is freezed, unable to re-free");
+        emit error(QStringLiteral("Trade is freezed, unable to re-free"));
         return;
     }
     tradeIsFreezed=true;
@@ -124,7 +124,7 @@ void LocalClientHandler::tradeFinished()
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message("Trade freezed");
+        emit message(QStringLiteral("Trade freezed"));
         #endif
         emit otherPlayerTrade->sendFullPacket(0xD0,0x0007);
     }
@@ -171,22 +171,22 @@ void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
 {
     if(!tradeIsValidated)
     {
-        emit error("Trade not valid");
+        emit error(QStringLiteral("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error("Trade is freezed, unable to change something");
+        emit error(QStringLiteral("Trade is freezed, unable to change something"));
         return;
     }
     if(cash==0)
     {
-        emit error("Can't add 0 cash!");
+        emit error(QStringLiteral("Can't add 0 cash!"));
         return;
     }
     if(cash>player_informations->public_and_private_informations.cash)
     {
-        emit error("Trade cash superior to the actual cash");
+        emit error(QStringLiteral("Trade cash superior to the actual cash"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -206,17 +206,17 @@ void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &
 {
     if(!tradeIsValidated)
     {
-        emit error("Trade not valid");
+        emit error(QStringLiteral("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error("Trade is freezed, unable to change something");
+        emit error(QStringLiteral("Trade is freezed, unable to change something"));
         return;
     }
     if(quantity==0)
     {
-        emit error("Can add 0 of quantity");
+        emit error(QStringLiteral("Can add 0 of quantity"));
         return;
     }
     if(quantity>objectQuantity(item))
@@ -247,22 +247,22 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
 {
     if(!tradeIsValidated)
     {
-        emit error("Trade not valid");
+        emit error(QStringLiteral("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error("Trade is freezed, unable to change something");
+        emit error(QStringLiteral("Trade is freezed, unable to change something"));
         return;
     }
     if(player_informations->public_and_private_informations.playerMonster.size()<=1)
     {
-        emit error("Unable to trade your last monster");
+        emit error(QStringLiteral("Unable to trade your last monster"));
         return;
     }
     if(localClientHandlerFight.isInFight())
     {
-        emit error("You can't trade monster because you are in fight");
+        emit error(QStringLiteral("You can't trade monster because you are in fight"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -275,7 +275,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
         {
             if(!localClientHandlerFight.remainMonstersToFight(monsterId))
             {
-                emit error("You can't trade this msonter because you will be without monster to fight");
+                emit error(QStringLiteral("You can't trade this msonter because you will be without monster to fight"));
                 return;
             }
             tradeMonster << player_informations->public_and_private_informations.playerMonster.at(index);
@@ -339,7 +339,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
         }
         index++;
     }
-    emit error("Trade monster not found");
+    emit error(QStringLiteral("Trade monster not found"));
 }
 
 void LocalClientHandler::internalTradeCanceled(const bool &send)
@@ -350,7 +350,7 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message("Trade canceled");
+    emit message(QStringLiteral("Trade canceled"));
     #endif
     if(tradeIsValidated)
     {
@@ -384,16 +384,16 @@ void LocalClientHandler::internalTradeAccepted(const bool &send)
 {
     if(otherPlayerTrade==NULL)
     {
-        emit message("Can't accept trade if not in trade");
+        emit message(QStringLiteral("Can't accept trade if not in trade"));
         return;
     }
     if(tradeIsValidated)
     {
-        emit message("Trade already validated");
+        emit message(QStringLiteral("Trade already validated"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message("Trade accepted");
+    emit message(QStringLiteral("Trade accepted"));
     #endif
     tradeIsValidated=true;
     tradeIsFreezed=false;

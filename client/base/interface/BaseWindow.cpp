@@ -1325,7 +1325,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, quint8 x, q
         newError(tr("Internal error"),"Bot trigged but no step found");
         return;
     }
-    if(actualBot.step[step].attribute("type")=="fight")
+    if(actualBot.step[step].attribute(QStringLiteral("type"))=="fight")
     {
         if(!actualBot.step[step].hasAttribute("fightid"))
         {
@@ -1901,14 +1901,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
         showTip(tr("Error into the bot, repport this error please"));
         return;
     }
-    if(actualBot.step[step].attribute("type")=="text")
+    if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("text"))
     {
         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        QDomElement text = actualBot.step[step].firstChildElement("text");
-        if(!language.isEmpty() && language!="en")
+        QDomElement text = actualBot.step[step].firstChildElement(QStringLiteral("text"));
+        if(!language.isEmpty() && language!=QStringLiteral("en"))
             while(!text.isNull())
             {
-                if(text.hasAttribute("lang") && text.attribute("lang")==language)
+                if(text.hasAttribute(QStringLiteral("lang")) && text.attribute(QStringLiteral("lang"))==language)
                 {
                     QString textToShow=text.text();
                     textToShow=parseHtmlToDisplay(textToShow);
@@ -1916,12 +1916,12 @@ void BaseWindow::goToBotStep(const quint8 &step)
                     ui->IG_dialog->setVisible(true);
                     return;
                 }
-                text = text.nextSiblingElement("text");
+                text = text.nextSiblingElement(QStringLiteral("text"));
             }
-        text = actualBot.step[step].firstChildElement("text");
+        text = actualBot.step[step].firstChildElement(QStringLiteral("text"));
         while(!text.isNull())
         {
-            if(!text.hasAttribute("lang") || text.attribute("lang")=="en")
+            if(!text.hasAttribute(QStringLiteral("lang")) || text.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
             {
                 QString textToShow=text.text();
                 textToShow=parseHtmlToDisplay(textToShow);
@@ -1929,14 +1929,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 ui->IG_dialog->setVisible(true);
                 return;
             }
-            text = text.nextSiblingElement("text");
+            text = text.nextSiblingElement(QStringLiteral("text"));
         }
         showTip(tr("Bot text not found, repport this error please"));
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="shop")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("shop"))
     {
-        if(!actualBot.step[step].hasAttribute("shop"))
+        if(!actualBot.step[step].hasAttribute(QStringLiteral("shop")))
         {
             showTip(tr("The shop call, but missing informations"));
             return;
@@ -1948,9 +1948,9 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("The shop call, but wrong shop id"));
             return;
         }
-        if(actualBot.properties.contains("skin"))
+        if(actualBot.properties.contains(QStringLiteral("skin")))
         {
-            QPixmap skin=getFrontSkinPath(actualBot.properties["skin"]);
+            QPixmap skin=getFrontSkinPath(actualBot.properties[QStringLiteral("skin")]);
             if(!skin.isNull())
             {
                 ui->shopSellerImage->setPixmap(skin.scaled(160,160));
@@ -1970,23 +1970,23 @@ void BaseWindow::goToBotStep(const quint8 &step)
         CatchChallenger::Api_client_real::client->getShopList(shopId);
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="sell")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("sell"))
     {
-        if(!actualBot.step[step].hasAttribute("shop"))
+        if(!actualBot.step[step].hasAttribute(QStringLiteral("shop")))
         {
             showTip(tr("The shop call, but missing informations"));
             return;
         }
         bool ok;
-        shopId=actualBot.step[step].attribute("shop").toUInt(&ok);
+        shopId=actualBot.step[step].attribute(QStringLiteral("shop")).toUInt(&ok);
         if(!ok)
         {
             showTip(tr("The shop call, but wrong shop id"));
             return;
         }
-        if(actualBot.properties.contains("skin"))
+        if(actualBot.properties.contains(QStringLiteral("skin")))
         {
-            QPixmap skin=getFrontSkinPath(actualBot.properties["skin"]);
+            QPixmap skin=getFrontSkinPath(actualBot.properties[QStringLiteral("skin")]);
             if(!skin.isNull())
             {
                 ui->shopSellerImage->setPixmap(skin.scaled(160,160));
@@ -2001,12 +2001,12 @@ void BaseWindow::goToBotStep(const quint8 &step)
         selectObject(ObjectType_Sell);
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="learn")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("learn"))
     {
         selectObject(ObjectType_MonsterToLearn);
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="heal")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("heal"))
     {
         ClientFightEngine::fightEngine.healAllMonsters();
         CatchChallenger::Api_client_real::client->heal();
@@ -2014,15 +2014,15 @@ void BaseWindow::goToBotStep(const quint8 &step)
         showTip(tr("You are healed"));
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="quests")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("quests"))
     {
         QString textToShow;
         QList<QPair<quint32,QString> > quests=BaseWindow::getQuestList(actualBot.botId);
         if(quests.isEmpty())
-            textToShow+="No quests at the moment or you don't meat the requirements";
+            textToShow+=tr("No quests at the moment or you don't meat the requirements");
         else
         {
-            textToShow+="<ul>";
+            textToShow+=QStringLiteral("<ul>");
             int index=0;
             while(index<quests.size())
             {
@@ -2031,14 +2031,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 index++;
             }
             if(quests.isEmpty())
-                textToShow+="No quests at the moment or you don't meat the requirements";
-            textToShow+="</ul>";
+                textToShow+=tr("No quests at the moment or you don't meat the requirements");
+            textToShow+=QStringLiteral("</ul>");
         }
         ui->IG_dialog_text->setText(textToShow);
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="clan")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("clan"))
     {
         QString textToShow;
         if(clan==0)
@@ -2054,20 +2054,20 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="warehouse")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("warehouse"))
     {
         monster_to_withdraw.clear();
         monster_to_deposit.clear();
         change_warehouse_items.clear();
         temp_warehouse_cash=0;
         QPixmap pixmap;
-        if(actualBot.properties.contains("skin"))
+        if(actualBot.properties.contains(QStringLiteral("skin")))
         {
             ui->warehousePlayerImage->setVisible(true);
             ui->warehousePlayerPseudo->setVisible(true);
             ui->warehouseBotImage->setVisible(true);
             ui->warehouseBotPseudo->setVisible(true);
-            pixmap=getFrontSkinPath(actualBot.properties["skin"]);
+            pixmap=getFrontSkinPath(actualBot.properties[QStringLiteral("skin")]);
             if(pixmap.isNull())
             {
                 ui->warehousePlayerImage->setVisible(false);
@@ -2084,13 +2084,13 @@ void BaseWindow::goToBotStep(const quint8 &step)
             ui->warehousePlayerPseudo->setVisible(false);
             ui->warehouseBotImage->setVisible(false);
             ui->warehouseBotPseudo->setVisible(false);
-            pixmap=QPixmap(":/images/player_default/front.png");
+            pixmap=QPixmap(QStringLiteral(":/images/player_default/front.png"));
         }
         ui->stackedWidget->setCurrentWidget(ui->page_warehouse);
         updateTheWareHouseContent();
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="market")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("market"))
     {
         ui->marketMonster->clear();
         ui->marketObject->clear();
@@ -2102,19 +2102,19 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->stackedWidget->setCurrentWidget(ui->page_market);
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="industry")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("industry"))
     {
-        if(!actualBot.step[step].hasAttribute("industry"))
+        if(!actualBot.step[step].hasAttribute(QStringLiteral("industry")))
         {
-            showTip(tr("The shop call, but missing informations"));
+            showTip(tr("The industry call, but missing informations"));
             return;
         }
 
         bool ok;
-        factoryId=actualBot.step[step].attribute("industry").toUInt(&ok);
+        factoryId=actualBot.step[step].attribute(QStringLiteral("industry")).toUInt(&ok);
         if(!ok)
         {
-            showTip(tr("The shop call, but wrong shop id"));
+            showTip(tr("The industry call, but wrong shop id"));
             return;
         }
         if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
@@ -2125,9 +2125,9 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->factoryResources->clear();
         ui->factoryProducts->clear();
         ui->factoryStatus->setText(tr("Waiting of status"));
-        if(actualBot.properties.contains("skin"))
+        if(actualBot.properties.contains(QStringLiteral("skin")))
         {
-            QPixmap skin=getFrontSkinPath(actualBot.properties["skin"]);
+            QPixmap skin=getFrontSkinPath(actualBot.properties[QStringLiteral("skin")]);
             if(!skin.isNull())
             {
                 ui->factoryBotImage->setPixmap(skin.scaled(80,80));
@@ -2142,9 +2142,9 @@ void BaseWindow::goToBotStep(const quint8 &step)
         CatchChallenger::Api_client_real::client->getFactoryList(factoryId);
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="zonecapture")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("zonecapture"))
     {
-        if(!actualBot.step[step].hasAttribute("zone"))
+        if(!actualBot.step[step].hasAttribute(QStringLiteral("zone")))
         {
             showTip(tr("Missing attribute for the step"));
             return;
@@ -2154,7 +2154,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("You can't try capture if you are not in a clan"));
             return;
         }
-        QString zone=actualBot.step[step].attribute("zone");
+        QString zone=actualBot.step[step].attribute(QStringLiteral("zone"));
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
         {
             zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra[zone].name;
@@ -2173,11 +2173,11 @@ void BaseWindow::goToBotStep(const quint8 &step)
         updatePageZoneCatch();
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="script")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("script"))
     {
         QScriptEngine engine;
         QString contents = actualBot.step[step].text();
-        contents="function getTextEntryPoint()\n{\n"+contents+"\n}";
+        contents=QStringLiteral("function getTextEntryPoint()\n{\n")+contents+QStringLiteral("\n}");
         QScriptValue result = engine.evaluate(contents);
         if (result.isError()) {
             qDebug() << "script error:" << QString::fromLatin1("%1: %2")
@@ -2189,7 +2189,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             return;
         }
 
-        QScriptValue getTextEntryPoint = engine.globalObject().property("getTextEntryPoint");
+        QScriptValue getTextEntryPoint = engine.globalObject().property(QStringLiteral("getTextEntryPoint"));
         if(getTextEntryPoint.isError())
         {
             qDebug() << "script error:" << QString::fromLatin1("%1: %2")
@@ -2208,22 +2208,22 @@ void BaseWindow::goToBotStep(const quint8 &step)
                         .arg(returnValue.property("lineNumber").toInt32())
                         .arg(returnValue.toString());
             showTip(QString::fromLatin1("%1: %2")
-            .arg(returnValue.property("lineNumber").toInt32())
+            .arg(returnValue.property(QStringLiteral("lineNumber")).toInt32())
             .arg(returnValue.toString()));
             return;
         }
-        qDebug() << "textEntryPoint:" << textEntryPoint;
+        qDebug() << QStringLiteral("textEntryPoint:") << textEntryPoint;
         return;
     }
-    else if(actualBot.step[step].attribute("type")=="fight")
+    else if(actualBot.step[step].attribute(QStringLiteral("type"))==QStringLiteral("fight"))
     {
-        if(!actualBot.step[step].hasAttribute("fightid"))
+        if(!actualBot.step[step].hasAttribute(QStringLiteral("fightid")))
         {
             showTip(tr("Bot step missing data error, repport this error please"));
             return;
         }
         bool ok;
-        quint32 fightId=actualBot.step[step].attribute("fightid").toUInt(&ok);
+        quint32 fightId=actualBot.step[step].attribute(QStringLiteral("fightid")).toUInt(&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));
