@@ -25,7 +25,7 @@ void ClientHeavyLoad::loadRecipes()
     quint32 recipeId;
     QSqlQuery recipesQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!recipesQuery.exec(queryText))
-        emit message(recipesQuery.lastQuery()+": "+recipesQuery.lastError().text());
+        emit message(recipesQuery.lastQuery()+QStringLiteral(": ")+recipesQuery.lastError().text());
     while(recipesQuery.next())
     {
         recipeId=recipesQuery.value(0).toUInt(&ok);
@@ -60,7 +60,7 @@ void ClientHeavyLoad::loadItems()
     bool ok;
     QSqlQuery itemQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!itemQuery.exec(queryText))
-        emit message(itemQuery.lastQuery()+": "+itemQuery.lastError().text());
+        emit message(itemQuery.lastQuery()+QStringLiteral(": ")+itemQuery.lastError().text());
     //parse the result
     while(itemQuery.next())
     {
@@ -82,13 +82,13 @@ void ClientHeavyLoad::loadItems()
             continue;
         }
         bool warehouse;
-        if(itemQuery.value(2).toString()=="warehouse")
+        if(itemQuery.value(2).toString()==QStringLiteral("warehouse"))
             warehouse=true;
         else
         {
-            if(itemQuery.value(2).toString()=="wear")
+            if(itemQuery.value(2).toString()==QStringLiteral("wear"))
                 warehouse=false;
-            else if(itemQuery.value(2).toString()=="market")
+            else if(itemQuery.value(2).toString()==QStringLiteral("market"))
                 continue;
             else
             {
