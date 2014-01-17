@@ -486,17 +486,18 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         const quint32 &monsterId=profile.monsters.at(index).id;
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monsterId))
         {
+            const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId];
             QString gender=QStringLiteral("unknown");
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId].ratio_gender!=-1)
+            if(monster.ratio_gender!=-1)
             {
-                if(rand()%101<CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId].ratio_gender)
+                if(rand()%101<monster.ratio_gender)
                     gender=QStringLiteral("female");
                 else
                     gender=QStringLiteral("male");
             }
-            CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId],profile.monsters.at(index).level);
+            CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profile.monsters.at(index).level);
             QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
-            QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId].learn;
+            QList<CatchChallenger::Monster::AttackToLearn> attack=monster.learn;
             int sub_index=0;
             while(sub_index<attack.size())
             {
@@ -723,47 +724,47 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!characterQuery.exec(queryText))
     {
-        characterSelectionIsWrong(query_id,"Character not found",characterQuery.lastQuery()+": "+characterQuery.lastError().text());
+        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),characterQuery.lastQuery()+QStringLiteral(": ")+characterQuery.lastError().text());
         return;
     }
     if(!characterQuery.next())
     {
-        characterSelectionIsWrong(query_id,"Character not found","Result return query wrong");
+        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),QStringLiteral("Result return query wrong"));
         return;
     }
     bool ok;
     const quint32 &account_id=characterQuery.value(0).toUInt(&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,"Character not found",QStringLiteral("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
+        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),QStringLiteral("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
         return;
     }
     if(player_informations->account_id!=account_id)
     {
-        characterSelectionIsWrong(query_id,"Character not found",QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
+        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
         return;
     }
     if(player_informations->character_loaded)
     {
-        characterSelectionIsWrong(query_id,"Already logged","character_loaded already to true");
+        characterSelectionIsWrong(query_id,QStringLiteral("Already logged"),QStringLiteral("character_loaded already to true"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.connected_players_id_list.contains(characterId))
     {
-        characterSelectionIsWrong(query_id,"Already logged","Already logged");
+        characterSelectionIsWrong(query_id,QStringLiteral("Already logged"),QStringLiteral("Already logged"));
         return;
     }
     if(simplifiedIdList.size()<=0)
     {
-        characterSelectionIsWrong(query_id,"Not free id to login","Not free id to login");
+        characterSelectionIsWrong(query_id,QStringLiteral("Not free id to login"),QStringLiteral("Not free id to login"));
         return;
     }
     if(!loadTheRawUTF8String())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QStringLiteral("Unable to convert the pseudo to utf8 for character id: %1").arg(player_informations->character_id));
+            characterSelectionIsWrong(query_id,QStringLiteral("Convert into utf8 have wrong size"),QStringLiteral("Unable to convert the pseudo to utf8 for character id: %1").arg(player_informations->character_id));
         else
-            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+            characterSelectionIsWrong(query_id,QStringLiteral("Convert into utf8 have wrong size"),QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return;
     }
     if(GlobalServerData::serverSettings.anonymous)
@@ -817,13 +818,13 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         player_informations->public_and_private_informations.public_informations.skinId=0;
     }
     QString type=characterQuery.value(7).toString();
-    if(type=="normal")
+    if(type==QStringLiteral("normal"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
-    else if(type=="premium")
+    else if(type==QStringLiteral("premium"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_premium;
-    else if(type=="gm")
+    else if(type==QStringLiteral("gm"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_gm;
-    else if(type=="dev")
+    else if(type==QStringLiteral("dev"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_dev;
     else
     {
@@ -867,7 +868,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
             if(process.state()!=QProcess::NotRunning)
             {
                 player_informations->public_and_private_informations.bitcoin=-1.0;
-                emit message("Have been to kill the bitcoin requester client");
+                emit message(QStringLiteral("Have been to kill the bitcoin requester client"));
                 process.terminate();
                 process.kill();
             }
@@ -924,7 +925,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
                 if(process.state()!=QProcess::NotRunning)
                 {
                     player_informations->public_and_private_informations.bitcoin=-1.0;
-                    emit message("Have been to kill the bitcoin requester client");
+                    emit message(QStringLiteral("Have been to kill the bitcoin requester client"));
                     process.terminate();
                     process.kill();
                 }
@@ -986,13 +987,13 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     }
     QString orientationString=characterQuery.value(5).toString();
     Orientation orentation;
-    if(orientationString=="top")
+    if(orientationString==QStringLiteral("top"))
         orentation=Orientation_top;
-    else if(orientationString=="bottom")
+    else if(orientationString==QStringLiteral("bottom"))
         orentation=Orientation_bottom;
-    else if(orientationString=="left")
+    else if(orientationString==QStringLiteral("left"))
         orentation=Orientation_left;
-    else if(orientationString=="right")
+    else if(orientationString==QStringLiteral("right"))
         orentation=Orientation_right;
     else
     {
@@ -1006,23 +1007,23 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         quint8 x=characterQuery.value(3).toUInt(&ok);
         if(!ok)
         {
-            loginIsWrong(query_id,"Wrong account data","x coord is not a number");
+            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("x coord is not a number"));
             return;
         }
         quint8 y=characterQuery.value(4).toUInt(&ok);
         if(!ok)
         {
-            loginIsWrong(query_id,"Wrong account data","y coord is not a number");
+            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y coord is not a number"));
             return;
         }
         if(x>=GlobalServerData::serverPrivateVariables.map_list[characterQuery.value(6).toString()]->width)
         {
-            loginIsWrong(query_id,"Wrong account data","x to out of map");
+            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("x to out of map"));
             return;
         }
         if(y>=GlobalServerData::serverPrivateVariables.map_list[characterQuery.value(6).toString()]->height)
         {
-            loginIsWrong(query_id,"Wrong account data","y to out of map");
+            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y to out of map"));
             return;
         }
         loginIsRightWithRescue(query_id,
@@ -1042,7 +1043,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         );
     }
     else
-        loginIsWrong(query_id,"Map not found","Map not found: "+characterQuery.value(6).toString());
+        loginIsWrong(query_id,QStringLiteral("Map not found"),QStringLiteral("Map not found: ")+characterQuery.value(6).toString());
 }
 
 void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId, Map* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
@@ -1085,13 +1086,13 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     }
     QString orientationString=rescue_orientation.toString();
     Orientation rescue_new_orientation;
-    if(orientationString=="top")
+    if(orientationString==QStringLiteral("top"))
         rescue_new_orientation=Orientation_top;
-    else if(orientationString=="bottom")
+    else if(orientationString==QStringLiteral("bottom"))
         rescue_new_orientation=Orientation_bottom;
-    else if(orientationString=="left")
+    else if(orientationString==QStringLiteral("left"))
         rescue_new_orientation=Orientation_left;
-    else if(orientationString=="right")
+    else if(orientationString==QStringLiteral("right"))
         rescue_new_orientation=Orientation_right;
     else
     {
@@ -1132,13 +1133,13 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     }
     QString unvalidated_orientationString=unvalidated_rescue_orientation.toString();
     Orientation unvalidated_rescue_new_orientation;
-    if(unvalidated_orientationString=="top")
+    if(unvalidated_orientationString==QStringLiteral("top"))
         unvalidated_rescue_new_orientation=Orientation_top;
-    else if(unvalidated_orientationString=="bottom")
+    else if(unvalidated_orientationString==QStringLiteral("bottom"))
         unvalidated_rescue_new_orientation=Orientation_bottom;
-    else if(unvalidated_orientationString=="left")
+    else if(unvalidated_orientationString==QStringLiteral("left"))
         unvalidated_rescue_new_orientation=Orientation_left;
-    else if(unvalidated_orientationString=="right")
+    else if(unvalidated_orientationString==QStringLiteral("right"))
         unvalidated_rescue_new_orientation=Orientation_right;
     else
     {
@@ -1216,12 +1217,12 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
                 if(!ok)
                 {
                     cash=0;
-                    emit message("Warning: clan linked: %1 have wrong cash value, then reseted to 0");
+                    emit message(QStringLiteral("Warning: clan linked: %1 have wrong cash value, then reseted to 0"));
                 }
                 emit haveClanInfo(player_informations->public_and_private_informations.clan,clanQuery.value(0).toString(),cash);
             }
             else
-                emit message("Warning: clan linked: %1 is not found into db");
+                emit message(QStringLiteral("Warning: clan linked: %1 is not found into db"));
         }
     }
     if(player_informations->public_and_private_informations.clan_leader)
@@ -1672,7 +1673,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
 
 QString ClientHeavyLoad::SQL_text_quote(QString text)
 {
-    return text.replace("'","\\'");
+    return text.replace(QStringLiteral("'"),QStringLiteral("\\'"));
 }
 
 void ClientHeavyLoad::dbQuery(const QString &queryText)
@@ -1683,11 +1684,11 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    emit message("Do mysql query: "+queryText);
+    emit message(QStringLiteral("Do mysql query: ")+queryText);
     #endif
     QSqlQuery sqlQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!sqlQuery.exec(queryText))
-        emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
+        emit message(sqlQuery.lastQuery()+QStringLiteral(": ")+sqlQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
 }
 
@@ -1710,7 +1711,7 @@ void ClientHeavyLoad::loadReputation()
     bool ok;
     QSqlQuery reputationQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!reputationQuery.exec(queryText))
-        emit message(reputationQuery.lastQuery()+": "+reputationQuery.lastError().text());
+        emit message(reputationQuery.lastQuery()+QStringLiteral(": ")+reputationQuery.lastError().text());
     //parse the result
     while(reputationQuery.next())
     {

@@ -103,11 +103,11 @@ void ClientHeavyLoad::loadMonsters()
         }
         if(ok)
         {
-            if(monstersQuery.value(7).toString()=="male")
+            if(monstersQuery.value(7).toString()==QStringLiteral("male"))
                 playerMonster.gender=Gender_Male;
-            else if(monstersQuery.value(7).toString()=="female")
+            else if(monstersQuery.value(7).toString()==QStringLiteral("female"))
                 playerMonster.gender=Gender_Female;
-            else if(monstersQuery.value(7).toString()=="unknown")
+            else if(monstersQuery.value(7).toString()==QStringLiteral("unknown"))
                 playerMonster.gender=Gender_Unknown;
             else
             {
@@ -124,13 +124,13 @@ void ClientHeavyLoad::loadMonsters()
         }
         if(ok)
         {
-            if(monstersQuery.value(9).toString()=="warehouse")
+            if(monstersQuery.value(9).toString()==QStringLiteral("warehouse"))
                 warehouse=true;
             else
             {
-                if(monstersQuery.value(9).toString()=="wear")
+                if(monstersQuery.value(9).toString()==QStringLiteral("wear"))
                     warehouse=false;
-                else if(monstersQuery.value(9).toString()=="market")
+                else if(monstersQuery.value(9).toString()==QStringLiteral("market"))
                     continue;
                 else
                 {
@@ -270,7 +270,7 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
     bool ok;
     QSqlQuery monsterSkillsQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monsterSkillsQuery.exec(queryText))
-        emit message(monsterSkillsQuery.lastQuery()+": "+monsterSkillsQuery.lastError().text());
+        emit message(monsterSkillsQuery.lastQuery()+QStringLiteral(": ")+monsterSkillsQuery.lastError().text());
     while(monsterSkillsQuery.next())
     {
         PlayerMonster::PlayerSkill skill;
@@ -353,7 +353,7 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
     bool ok;
     QSqlQuery botAlreadyBeatenQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!botAlreadyBeatenQuery.exec(queryText))
-        emit message(botAlreadyBeatenQuery.lastQuery()+": "+botAlreadyBeatenQuery.lastError().text());
+        emit message(botAlreadyBeatenQuery.lastQuery()+QStringLiteral(": ")+botAlreadyBeatenQuery.lastError().text());
     //parse the result
     while(botAlreadyBeatenQuery.next())
     {

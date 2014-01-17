@@ -422,7 +422,7 @@ PublicPlayerMonster *LocalClientHandlerFight::getOtherMonster() const
         if(otherPlayerBattleCurrentMonster!=NULL)
             return otherPlayerBattleCurrentMonster;
         else
-            emit error("Is in battle but the other monster is null");
+            emit error(QStringLiteral("Is in battle but the other monster is null"));
     }
     return CommonFightEngine::getOtherMonster();
 }
@@ -597,7 +597,7 @@ void LocalClientHandlerFight::registerBattleRequest(LocalClientHandlerFight * ot
 {
     if(isInBattle())
     {
-        emit message("Already in battle, internal error");
+        emit message(QStringLiteral("Already in battle, internal error"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -646,7 +646,7 @@ void LocalClientHandlerFight::battleFinished()
     if(otherPlayerBattle==NULL)
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message("Battle finished");
+    emit message(QStringLiteral("Battle finished"));
     #endif
     otherPlayerBattle->resetBattleAction();
     resetBattleAction();
@@ -679,11 +679,11 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
 {
     if(otherPlayerBattle==NULL)
     {
-        //emit message("Battle already canceled");
+        //emit message(QStringLiteral("Battle already canceled"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message("Battle canceled");
+    emit message(QStringLiteral("Battle canceled"));
     #endif
     bool needUpdateCanDoFight=false;
     if(battleIsValidated)
@@ -705,26 +705,26 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
 {
     if(otherPlayerBattle==NULL)
     {
-        emit message("Can't accept battle if not in battle");
+        emit message(QStringLiteral("Can't accept battle if not in battle"));
         return;
     }
     if(battleIsValidated)
     {
-        emit message("Battle already validated");
+        emit message(QStringLiteral("Battle already validated"));
         return;
     }
     if(!otherPlayerBattle->getAbleToFight())
     {
-        emit error("The other player can't fight");
+        emit error(QStringLiteral("The other player can't fight"));
         return;
     }
     if(!getAbleToFight())
     {
-        emit error("You can't fight");
+        emit error(QStringLiteral("You can't fight"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message("Battle accepted");
+    emit message(QStringLiteral("Battle accepted"));
     #endif
     startTheFight();
     battleIsValidated=true;
@@ -995,7 +995,7 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
     {
         if(haveBattleAction())
         {
-            emit error("Have already a battle action");
+            emit error(QStringLiteral("Have already a battle action"));
             return false;
         }
         mHaveCurrentSkill=true;
@@ -1563,12 +1563,12 @@ void LocalClientHandlerFight::confirmEvolution(const quint32 &monsterId)
                 }
                 sub_index++;
             }
-            emit error("Evolution not found");
+            emit error(QStringLiteral("Evolution not found"));
             return;
         }
         index++;
     }
-    emit error("Monster for evolution not found");
+    emit error(QStringLiteral("Monster for evolution not found"));
 }
 
 void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
