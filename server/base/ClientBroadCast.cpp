@@ -83,7 +83,7 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
     if(!GlobalServerData::serverSettings.anonymous)
         emit message(QStringLiteral("[chat PM]: %1 -> %2: %3").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QStringLiteral("to %1: %2").arg(pseudo).arg(text));
-    playerByPseudo[pseudo]->receiveChatText(Chat_type_pm,text,this->player_informations);
+    playerByPseudo.value(pseudo)->receiveChatText(Chat_type_pm,text,this->player_informations);
 }
 
 void ClientBroadCast::askIfIsReadyToStop()
@@ -263,13 +263,13 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             return;
         }
         if(list.last()==QStringLiteral("normal"))
-            playerByPseudo[extraText]->setRights(Player_type_normal);
+            playerByPseudo.value(extraText)->setRights(Player_type_normal);
         else if(list.last()==QStringLiteral("premium"))
-            playerByPseudo[extraText]->setRights(Player_type_premium);
+            playerByPseudo.value(extraText)->setRights(Player_type_premium);
         else if(list.last()==QStringLiteral("gm"))
-            playerByPseudo[extraText]->setRights(Player_type_gm);
+            playerByPseudo.value(extraText)->setRights(Player_type_gm);
         else if(list.last()==QStringLiteral("dev"))
-            playerByPseudo[extraText]->setRights(Player_type_dev);
+            playerByPseudo.value(extraText)->setRights(Player_type_dev);
         else
         {
             receiveSystemText(QStringLiteral("unable to found this rights level: \"%1\"").arg(list.last()));
@@ -312,7 +312,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             emit message(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
             return;
         }
-        playerByPseudo[extraText]->kick();
+        playerByPseudo.value(extraText)->kick();
         sendSystemMessage(QStringLiteral("%1 have been kicked by %2").arg(extraText).arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return;
     }

@@ -40,6 +40,8 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
+/// \todo support (sub)folder to group the tilset loading
+
 using namespace Tiled;
 
 /**
@@ -138,7 +140,7 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
     int index=0;
     while(index<map->layers().size())
     {
-        if(map->layers().at(index)->name()=="Collisions")
+        if(map->layers().at(index)->name()==QStringLiteral("Collisions"))
             break;
         index++;
     }
@@ -250,26 +252,26 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     int index=0;
     while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(tempMapObject->tiledMap->layerAt(index)->name()=="Moving" && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
+        if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("Moving") && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
         {
             QList<MapObject *> objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
             int index2=0;
             while(index2<objects.size())
             {
-                if(objects.at(index2)->type()!="door" || hideTheDoors)
+                if(objects.at(index2)->type()!=QStringLiteral("door") || hideTheDoors)
                     tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
                 index2++;
             }
         }
-        if(tempMapObject->tiledMap->layerAt(index)->name()=="Object" && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
+        if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("Object") && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
         {
             QList<MapObject *> objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
             int index2=0;
             while(index2<objects.size())
             {
-                if(objects.at(index2)->type()=="bot")
+                if(objects.at(index2)->type()==QStringLiteral("bot"))
                 {
-                    if(objects.at(index2)->property("skin").isEmpty())
+                    if(objects.at(index2)->property(QStringLiteral("skin")).isEmpty())
                     {
                         tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
                         objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
@@ -278,31 +280,31 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                     else
                     {
                         Tiled::Tileset * tileset=NULL;
-                        QString tilesetPath=QStringLiteral("%2/skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(baseDatapack);
+                        QString tilesetPath=QStringLiteral("%2/skin/fighter/%1/trainer.png").arg(objects.at(index2)->property(QStringLiteral("skin"))).arg(baseDatapack);
                         if(QFile(tilesetPath).exists())
                             tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
                         else
                         {
-                            tilesetPath=QStringLiteral("%2/skin/bot/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(baseDatapack);
+                            tilesetPath=QStringLiteral("%2/skin/bot/%1/trainer.png").arg(objects.at(index2)->property(QStringLiteral("skin"))).arg(baseDatapack);
                             if(QFile(tilesetPath).exists())
                                 tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
                         }
                         if(tileset!=NULL)
                         {
-                            QString lookAt=objects.at(index2)->property("lookAt");
+                            QString lookAt=objects.at(index2)->property(QStringLiteral("lookAt"));
                             QPointF position=objects.at(index2)->position();
                             objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
                             tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
-                            MapObject *object=new MapObject("","",position,QSizeF(1,1));
+                            MapObject *object=new MapObject(QStringLiteral(""),QStringLiteral(""),position,QSizeF(1,1));
                             tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->addObject(object);
                             objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
                             index2--;
                             Cell cell=object->cell();
-                            if(lookAt=="top")
+                            if(lookAt==QStringLiteral("top"))
                                 cell.tile=tileset->tileAt(1);
-                            else if(lookAt=="right")
+                            else if(lookAt==QStringLiteral("right"))
                                 cell.tile=tileset->tileAt(4);
-                            else if(lookAt=="left")
+                            else if(lookAt==QStringLiteral("left"))
                                 cell.tile=tileset->tileAt(10);
                             else
                                 cell.tile=tileset->tileAt(7);
@@ -338,13 +340,13 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     //load the string
     tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
     if(!map_loader.map_to_send.border.bottom.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName).absoluteFilePath();
+        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+QStringLiteral("/")+tempMapObject->logicalMap.border_semi.bottom.fileName).absoluteFilePath();
     if(!map_loader.map_to_send.border.top.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.top.fileName).absoluteFilePath();
+        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+QStringLiteral("/")+tempMapObject->logicalMap.border_semi.top.fileName).absoluteFilePath();
     if(!map_loader.map_to_send.border.right.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.right.fileName).absoluteFilePath();
+        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+QStringLiteral("/")+tempMapObject->logicalMap.border_semi.right.fileName).absoluteFilePath();
     if(!map_loader.map_to_send.border.left.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.left.fileName).absoluteFilePath();
+        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+QStringLiteral("/")+tempMapObject->logicalMap.border_semi.left.fileName).absoluteFilePath();
 
     //load the render
     switch (tempMapObject->tiledMap->orientation()) {
@@ -362,7 +364,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     index=0;
     while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
+        if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("Collisions"))
         {
             tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
             break;
@@ -377,7 +379,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
 
 void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
 {
-    qDebug() << QStringLiteral("loadCurrentMap(%1)").arg(fileName);
+    //qDebug() << QStringLiteral("loadCurrentMap(%1)").arg(fileName);
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
     {
@@ -385,7 +387,7 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
         return;
     }
     else
-        tempMapObject=other_map[fileName];
+        tempMapObject=other_map.value(fileName);
 
     tempMapObject->x=x;
     tempMapObject->y=y;
@@ -405,10 +407,10 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(!mapIndex.isEmpty())
                 {
                     //if both border match
-                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
+                    if(fileName==other_map.value(mapIndex)->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
                     {
                         tempMapObject->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
-                        int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map[mapIndex]->logicalMap.border_semi.top.x_offset;
+                        int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map.value(mapIndex)->logicalMap.border_semi.top.x_offset;
                         tempMapObject->logicalMap.border.bottom.x_offset=offset;
                         other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
                         loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y+tempMapObject->logicalMap.height);
@@ -427,13 +429,13 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(!mapIndex.isEmpty())
                 {
                     //if both border match
-                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
+                    if(fileName==other_map.value(mapIndex)->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
                     {
                         tempMapObject->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
-                        int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
+                        int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map.value(mapIndex)->logicalMap.border_semi.bottom.x_offset;
                         tempMapObject->logicalMap.border.top.x_offset=offset;
                         other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
-                        loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y-other_map[mapIndex]->logicalMap.height);
+                        loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y-other_map.value(mapIndex)->logicalMap.height);
                     }
                 }
             }
@@ -449,13 +451,13 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(!mapIndex.isEmpty())
                 {
                     //if both border match
-                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
+                    if(fileName==other_map.value(mapIndex)->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
                     {
                         tempMapObject->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
-                        int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map[mapIndex]->logicalMap.border_semi.right.y_offset;
+                        int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map.value(mapIndex)->logicalMap.border_semi.right.y_offset;
                         tempMapObject->logicalMap.border.left.y_offset=offset;
                         other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
-                        loadCurrentMap(mapIndex,tempMapObject->x-other_map[mapIndex]->logicalMap.width,tempMapObject->y+offset);
+                        loadCurrentMap(mapIndex,tempMapObject->x-other_map.value(mapIndex)->logicalMap.width,tempMapObject->y+offset);
                     }
                 }
             }
@@ -471,10 +473,10 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(!mapIndex.isEmpty())
                 {
                     //if both border match
-                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
+                    if(fileName==other_map.value(mapIndex)->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
                     {
                         tempMapObject->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
-                        int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map[mapIndex]->logicalMap.border_semi.left.y_offset;
+                        int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map.value(mapIndex)->logicalMap.border_semi.left.y_offset;
                         tempMapObject->logicalMap.border.right.y_offset=offset;
                         other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
                         loadCurrentMap(mapIndex,tempMapObject->x+tempMapObject->logicalMap.width,tempMapObject->y+offset);
@@ -487,8 +489,8 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
 
 void Map2Png::viewMap(const QString &fileName)
 {
-    QTime startTime;
-    startTime.restart();
+    /*QTime startTime;
+    startTime.restart();*/
 
     mapItem=new MapItem();
     mScene->clear();
@@ -497,13 +499,13 @@ void Map2Png::viewMap(const QString &fileName)
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
     {
-        QMessageBox::critical(this,"Error",mLastError);
+        QMessageBox::critical(this,QStringLiteral("Error"),mLastError);
         return;
     }
     loadCurrentMap(current_map_fileName,0,0);
 
     displayMap();
-    qDebug() << startTime.elapsed();
+    //qDebug() << startTime.elapsed();
     mScene->addItem(mapItem);
 
     QSizeF size=mScene->sceneRect().size();
@@ -511,7 +513,7 @@ void Map2Png::viewMap(const QString &fileName)
     newImage.fill(Qt::transparent);
     QPainter painter(&newImage);
     mScene->render(&painter);//,mScene->sceneRect()
-    qDebug() << QStringLiteral("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
+    //qDebug() << QStringLiteral("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
 
     QString destination;
     const QStringList &arguments=QCoreApplication::arguments();
@@ -519,7 +521,7 @@ void Map2Png::viewMap(const QString &fileName)
         int index=0;
         while(index<arguments.size())
         {
-            if(arguments.at(index).endsWith(".png"))
+            if(arguments.at(index).endsWith(QStringLiteral(".png")))
             {
                 destination=arguments.at(index);
                 break;
@@ -529,13 +531,13 @@ void Map2Png::viewMap(const QString &fileName)
     }
     if(destination.isEmpty())
     {
-        destination = QFileDialog::getSaveFileName(NULL,"Save the render",QString(),"Png Images (*.png)");
-        if(destination.isEmpty() || destination.isNull() || destination=="")
+        destination = QFileDialog::getSaveFileName(NULL,tr("Save the render"),QString(),tr("Png Images (*.png)"));
+        if(destination.isEmpty() || destination.isNull() || destination==QStringLiteral(""))
             return;
     }
-    qDebug() << QStringLiteral("save as: %1").arg(destination);
-    if(!destination.endsWith(".png"))
-        destination+=".png";
+    //qDebug() << QStringLiteral("save as: %1").arg(destination);
+    if(!destination.endsWith(QStringLiteral(".png")))
+        destination+=QStringLiteral(".png");
     if(!newImage.save(destination))
     {
         QMessageBox::critical(NULL,"Error","Unable to save the image");
@@ -545,11 +547,11 @@ void Map2Png::viewMap(const QString &fileName)
 
 void Map2Png::displayMap()
 {
-    qDebug() << QStringLiteral("displayMap()");
+    //qDebug() << QStringLiteral("displayMap()");
 
     QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
      while (i != other_map.constEnd()) {
-         qDebug() << QStringLiteral("displayMap(): %1 at %2,%3").arg(i.key()).arg(i.value()->x).arg(i.value()->y);
+         //qDebug() << QStringLiteral("displayMap(): %1 at %2,%3").arg(i.key()).arg(i.value()->x).arg(i.value()->y);
          mapItem->addMap(i.value()->tiledMap,i.value()->tiledRender);
          mapItem->setMapPosition(i.value()->tiledMap,i.value()->x,i.value()->y);
          ++i;

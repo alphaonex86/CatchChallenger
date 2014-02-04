@@ -70,10 +70,10 @@ void MapObject::flip(FlipDirection direction)
 
         if (direction == FlipHorizontally) {
             for (int i = 0; i < mPolygon.size(); ++i)
-                mPolygon[i].setX(center2.x() - mPolygon[i].x());
+                mPolygon[i].setX(center2.x() - mPolygon.at(i).x());
         } else if (direction == FlipVertically) {
             for (int i = 0; i < mPolygon.size(); ++i)
-                mPolygon[i].setY(center2.y() - mPolygon[i].y());
+                mPolygon[i].setY(center2.y() - mPolygon.at(i).y());
         }
     }
 }

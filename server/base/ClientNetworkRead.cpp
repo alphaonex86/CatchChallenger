@@ -209,7 +209,9 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
         return;
     if(!player_informations->character_loaded)
     {
-        parseError(QStringLiteral("is not logged, parseMessage(%1)").arg(mainCodeType));
+        //wrong protocol
+        emit needDisconnectTheClient();
+        //parseError(QStringLiteral("is not logged, parseMessage(%1)").arg(mainCodeType));
         return;
     }
     //do the work here
@@ -273,7 +275,9 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
         return;
     if(!player_informations->character_loaded)
     {
-        parseError(QStringLiteral("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
+        //wrong protocol
+        emit needDisconnectTheClient();
+        //parseError(QStringLiteral("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
     }
     //do the work here

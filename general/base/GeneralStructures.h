@@ -76,6 +76,11 @@ enum MonsterItemEffectType
     MonsterItemEffectType_RemoveBuff = 0x02
 };
 
+enum MonsterItemEffectTypeOutOfFight
+{
+    MonsterItemEffectTypeOutOfFight_AddLevel = 0x01
+};
+
 enum RecipeUsage
 {
     RecipeUsage_ok=0x01,
@@ -121,10 +126,18 @@ struct MonsterItemEffect
     qint32 value;
 };
 
+struct MonsterItemEffectOutOfFight
+{
+    MonsterItemEffectTypeOutOfFight type;
+    qint32 value;
+};
+
 struct ItemFull
 {
     QMultiHash<quint32, MonsterItemEffect> monsterItemEffect;
-    QHash<quint32, QHash<quint32,quint32> > evolutionItem;
+    QMultiHash<quint32, MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight;
+    QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > evolutionItem;
+    QHash<quint32/*item*/, QSet<quint32/*monster*/> > itemToLearn;
     QHash<quint32, quint32> repel;
     QHash<quint32, Item> item;
     QHash<quint32, Trap> trap;
@@ -551,7 +564,13 @@ struct Monster
         quint32 learnSkill;
         quint8 learnSkillLevel;
     };
+    struct AttackToLearnByItem
+    {
+        quint32 learnSkill;
+        quint8 learnSkillLevel;
+    };
     QList<AttackToLearn> learn;
+    QHash<quint32/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
     QList<Evolution> evolutions;
 };
 

@@ -370,7 +370,7 @@ void MapReaderPrivate::readTilesetTile(Tileset *tileset)
         QStringList quadrants = terrain.split(QStringLiteral(","));
         if (quadrants.size() == 4) {
             for (int i = 0; i < 4; ++i) {
-                int t = quadrants[i].isEmpty() ? -1 : quadrants[i].toInt();
+                int t = quadrants.at(i).isEmpty() ? -1 : quadrants.at(i).toInt();
                 tile->setCornerTerrain(i, t);
             }
         }
@@ -948,7 +948,7 @@ Tileset *MapReader::readTileset(const QString &fileName)
 
     const QString &fileNameAbsolutePath=QFileInfo(fileName).absolutePath();
     if(Tileset::preloadedTileset.contains(fileNameAbsolutePath))
-        return Tileset::preloadedTileset[fileNameAbsolutePath];
+        return Tileset::preloadedTileset.value(fileNameAbsolutePath);
 
     Tileset *tileset = readTileset(&file, fileNameAbsolutePath);
     if (tileset)

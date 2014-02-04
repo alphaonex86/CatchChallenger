@@ -73,22 +73,22 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
     quint32 quantity=0;
     quint32 id=item->data(99).toUInt();
     if(items.contains(id))
-        quantity+=items[id];
+        quantity+=items.value(id);
     if(change_warehouse_items.contains(id))
-        quantity+=change_warehouse_items[id];
+        quantity+=change_warehouse_items.value(id);
     bool ok=true;
     int i;
     if(quantity==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
     if(change_warehouse_items.contains(id))
         change_warehouse_items[id]-=i;
     else
         change_warehouse_items[id]=-i;
-    if(change_warehouse_items[id]==0)
+    if(change_warehouse_items.value(id)==0)
         change_warehouse_items.remove(id);
     updateTheWareHouseContent();
 }
@@ -98,23 +98,23 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
     quint32 quantity=0;
     quint32 id=item->data(99).toUInt();
     if(items.contains(id))
-        quantity+=items[id];
+        quantity+=items.value(id);
     if(change_warehouse_items.contains(id))
-        if(change_warehouse_items[id]<0)
-            quantity-=change_warehouse_items[id];
+        if(change_warehouse_items.value(id)<0)
+            quantity-=change_warehouse_items.value(id);
     bool ok=true;
     int i;
     if(quantity==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount %1 to withdraw:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount %1 to withdraw:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
     if(change_warehouse_items.contains(id))
         change_warehouse_items[id]+=i;
     else
         change_warehouse_items[id]=i;
-    if(change_warehouse_items[id]==0)
+    if(change_warehouse_items.value(id)==0)
         change_warehouse_items.remove(id);
     updateTheWareHouseContent();
 }
@@ -223,13 +223,13 @@ void BaseWindow::on_warehouseValidate_clicked()
                 else
                     items[i.key()]=i.value();
                 warehouse_items[i.key()]-=i.value();
-                if(warehouse_items[i.key()]==0)
+                if(warehouse_items.value(i.key())==0)
                     warehouse_items.remove(i.key());
             }
             if(i.value()<0)
             {
                 items[i.key()]+=i.value();
-                if(items[i.key()]==0)
+                if(items.value(i.key())==0)
                     items.remove(i.key());
                 if(warehouse_items.contains(i.key()))
                     warehouse_items[i.key()]-=i.value();

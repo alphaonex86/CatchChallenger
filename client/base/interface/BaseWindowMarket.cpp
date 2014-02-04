@@ -47,9 +47,9 @@ void BaseWindow::marketList(const quint64 &price,const double &bitcoin,const QLi
             price=tr("Price: Free");
         if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].thumb);
-            item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
-            item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].description);
+            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).thumb);
+            item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).name).arg(marketMonster.level).arg(price));
+            item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).description);
         }
         else
         {
@@ -96,9 +96,9 @@ void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
         price=tr("Price: Free");
     if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].thumb);
-        item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
-        item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].description);
+        item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).thumb);
+        item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).name).arg(marketMonster.level).arg(price));
+        item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).description);
     }
     else
     {
@@ -267,9 +267,9 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
         quantity=QStringLiteral(", ")+tr("quantity: %1").arg(marketObject.quantity);
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.objectId))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].image);
-        item->setText(QStringLiteral("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].name).arg(quantity).arg(price));
-        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].description);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.objectId).image);
+        item->setText(QStringLiteral("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.objectId).name).arg(quantity).arg(price));
+        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.objectId).description);
     }
     else
     {

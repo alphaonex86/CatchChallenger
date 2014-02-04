@@ -91,6 +91,7 @@ protected:
     virtual void wildDrop(const quint32 &monster);
     virtual bool checkKOOtherMonstersForGain();
     virtual bool giveXPSP(int xp,int sp);
+    virtual bool addLevel(PlayerMonster * monster,const quint8 &numberOfLevel=1);
     virtual void levelUp(const quint8 &level,const quint8 &monsterIndex);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const quint32 &skill, const quint8 &skillLevel);

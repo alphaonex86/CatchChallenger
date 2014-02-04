@@ -14,7 +14,7 @@ int Quest::currentQuestStep() const
     if(!quests.contains(quest))
         return 0;
     else
-        return quests[quest].step;
+        return quests.value(quest).step;
 }
 
 int Quest::currentBot() const
@@ -32,7 +32,7 @@ bool Quest::finishOneTime() const
     if(!quests.contains(quest))
         return false;
     else
-        return quests[quest].finish_one_time;
+        return quests.value(quest).finish_one_time;
 }
 
 bool Quest::haveQuestStepRequirements() const
@@ -42,9 +42,9 @@ bool Quest::haveQuestStepRequirements() const
         return false;
     else
     {
-        if(quests[quest].step<=0)
+        if(quests.value(quest).step<=0)
             return false;
-        if(CatchChallenger::BaseWindow::baseWindow->haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests[quest]))
+        if(CatchChallenger::BaseWindow::baseWindow->haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests.value(quest)))
             return true;
         return false;
     }

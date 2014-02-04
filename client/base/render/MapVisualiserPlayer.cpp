@@ -105,7 +105,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_left)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map.value(current_map)->logicalMap,x,y,true))
                 return;//Can't do at the left!
             //the first step
             direction=CatchChallenger::Direction_move_at_left;
@@ -132,7 +132,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_right)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map.value(current_map)->logicalMap,x,y,true))
                 return;//Can't do at the right!
             //the first step
             direction=CatchChallenger::Direction_move_at_right;
@@ -159,7 +159,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_top)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map.value(current_map)->logicalMap,x,y,true))
                 return;//Can't do at the top!
             //the first step
             direction=CatchChallenger::Direction_move_at_top;
@@ -186,7 +186,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_bottom)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map.value(current_map)->logicalMap,x,y,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=CatchChallenger::Direction_move_at_bottom;
@@ -281,7 +281,7 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         break;
         case 1:
-        MapObjectItem::objectLink[playerMapObject]->setZValue(qCeil(playerMapObject->y()));
+        MapObjectItem::objectLink.value(playerMapObject)->setZValue(qCeil(playerMapObject->y()));
         break;
         //transition step
         case 2:
@@ -306,7 +306,7 @@ void MapVisualiserPlayer::moveStepSlot()
     }
 
     if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink[playerMapObject]);
+        centerOn(MapObjectItem::objectLink.value(playerMapObject));
     loadGrassTile();
 
     moveStep++;
@@ -314,7 +314,7 @@ void MapVisualiserPlayer::moveStepSlot()
     //if have finish the step
     if(moveStep>5)
     {
-        CatchChallenger::Map * map=&all_map[current_map]->logicalMap;
+        CatchChallenger::Map * map=&all_map.value(current_map)->logicalMap;
         const CatchChallenger::Map * old_map=map;
         //set the final value (direction, position, ...)
         switch(direction)
@@ -382,7 +382,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return;
     }
-    const MapVisualiserThread::Map_full * current_map_pointer=all_map[current_map];
+    const MapVisualiserThread::Map_full * current_map_pointer=all_map.value(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -390,11 +390,11 @@ void MapVisualiserPlayer::finalPlayerStep()
     }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
-    MapObjectItem::objectLink[playerMapObject]->setZValue(y);
+    MapObjectItem::objectLink.value(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
     {
         //playerMapObject->set
-        centerOn(MapObjectItem::objectLink[playerMapObject]);
+        centerOn(MapObjectItem::objectLink.value(playerMapObject));
     }
     //stopGrassAnimation();
 
@@ -543,7 +543,7 @@ bool MapVisualiserPlayer::haveStopTileAction()
 
 void MapVisualiserPlayer::parseStop()
 {
-    CatchChallenger::Map * map=&all_map[current_map]->logicalMap;
+    CatchChallenger::Map * map=&all_map.value(current_map)->logicalMap;
     quint8 x=this->x;
     quint8 y=this->y;
     switch(direction)
@@ -591,7 +591,7 @@ void MapVisualiserPlayer::parseStop()
 
 void MapVisualiserPlayer::parseAction()
 {
-    CatchChallenger::Map * map=&all_map[current_map]->logicalMap;
+    CatchChallenger::Map * map=&all_map.value(current_map)->logicalMap;
     quint8 x=this->x;
     quint8 y=this->y;
     switch(direction)
@@ -647,7 +647,7 @@ void MapVisualiserPlayer::transformLookToMove()
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
-        if(keyPressed.contains(Qt::Key_Left) && canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Left) && canGoTo(CatchChallenger::Direction_move_at_left,all_map.value(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_left;
             inMove=true;
@@ -658,7 +658,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_right:
-        if(keyPressed.contains(Qt::Key_Right) && canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Right) && canGoTo(CatchChallenger::Direction_move_at_right,all_map.value(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_right;
             inMove=true;
@@ -669,7 +669,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_top:
-        if(keyPressed.contains(Qt::Key_Up) && canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Up) && canGoTo(CatchChallenger::Direction_move_at_top,all_map.value(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_top;
             inMove=true;
@@ -680,7 +680,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
-        if(keyPressed.contains(Qt::Key_Down) && canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Down) && canGoTo(CatchChallenger::Direction_move_at_bottom,all_map.value(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_bottom;
             inMove=true;
@@ -733,12 +733,12 @@ QString MapVisualiserPlayer::currentMapType() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map[current_map]->tiledMap->properties().contains(QStringLiteral("type")))
-        if(!all_map[current_map]->tiledMap->properties().value("type").isEmpty())
-            return all_map[current_map]->tiledMap->properties().value(QStringLiteral("type"));
-    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute(QStringLiteral("type")))
-        if(!all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("type")).isEmpty())
-            return all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("type"));
+    if(all_map.value(current_map)->tiledMap->properties().contains(QStringLiteral("type")))
+        if(!all_map.value(current_map)->tiledMap->properties().value("type").isEmpty())
+            return all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("type"));
+    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(QStringLiteral("type")))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("type")).isEmpty())
+            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("type"));
     return QString();
 }
 
@@ -746,12 +746,12 @@ QString MapVisualiserPlayer::currentZone() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map[current_map]->tiledMap->properties().contains(QStringLiteral("zone")))
-        if(!all_map[current_map]->tiledMap->properties().value(QStringLiteral("zone")).isEmpty())
-            return all_map[current_map]->tiledMap->properties().value(QStringLiteral("zone"));
-    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute(QStringLiteral("zone")))
-        if(!all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("zone")).isEmpty())
-            return all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("zone"));
+    if(all_map.value(current_map)->tiledMap->properties().contains(QStringLiteral("zone")))
+        if(!all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("zone")).isEmpty())
+            return all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("zone"));
+    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(QStringLiteral("zone")))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("zone")).isEmpty())
+            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("zone"));
     return QString();
 }
 
@@ -759,12 +759,12 @@ QString MapVisualiserPlayer::currentBackgroundsound() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map[current_map]->tiledMap->properties().contains(QStringLiteral("backgroundsound")))
-        if(!all_map[current_map]->tiledMap->properties().value(QStringLiteral("backgroundsound")).isEmpty())
-            return all_map[current_map]->tiledMap->properties().value(QStringLiteral("backgroundsound"));
-    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute(QStringLiteral("backgroundsound")))
-        if(!all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound")).isEmpty())
-            return all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound"));
+    if(all_map.value(current_map)->tiledMap->properties().contains(QStringLiteral("backgroundsound")))
+        if(!all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("backgroundsound")).isEmpty())
+            return all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("backgroundsound"));
+    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(QStringLiteral("backgroundsound")))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound")).isEmpty())
+            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound"));
     return QString();
 }
 
@@ -844,22 +844,22 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
     if(currentGroup!=NULL)
     {
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
-            ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
+            ObjectGroupItem::objectGroupLink.value(currentGroup)->removeObject(playerMapObject);
         //currentGroup->removeObject(playerMapObject);
-        if(currentGroup!=all_map[current_map]->objectGroup)
+        if(currentGroup!=all_map.value(current_map)->objectGroup)
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
-    if(ObjectGroupItem::objectGroupLink.contains(all_map[current_map]->objectGroup))
-        ObjectGroupItem::objectGroupLink[all_map[current_map]->objectGroup]->addObject(playerMapObject);
+    if(ObjectGroupItem::objectGroupLink.contains(all_map.value(current_map)->objectGroup))
+        ObjectGroupItem::objectGroupLink.value(all_map.value(current_map)->objectGroup)->addObject(playerMapObject);
     else
         qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
-    mLastLocation=all_map[current_map]->logicalMap.map_file;
+    mLastLocation=all_map.value(current_map)->logicalMap.map_file;
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
-    MapObjectItem::objectLink[playerMapObject]->setZValue(y);
+    MapObjectItem::objectLink.value(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink[playerMapObject]);
+        centerOn(MapObjectItem::objectLink.value(playerMapObject));
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -870,7 +870,7 @@ void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
         return;
     //unload the player sprite
     if(ObjectGroupItem::objectGroupLink.contains(playerMapObject->objectGroup()))
-        ObjectGroupItem::objectGroupLink[playerMapObject->objectGroup()]->removeObject(playerMapObject);
+        ObjectGroupItem::objectGroupLink.value(playerMapObject->objectGroup())->removeObject(playerMapObject);
     else
         qDebug() << QStringLiteral("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 }
@@ -890,12 +890,12 @@ void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
 
     if(!haveGrassCurrentObject)
     {
-        haveGrassCurrentObject=CatchChallenger::MoveOnTheMap::haveGrass(all_map[current_map]->logicalMap,x,y);
+        haveGrassCurrentObject=CatchChallenger::MoveOnTheMap::haveGrass(all_map.value(current_map)->logicalMap,x,y);
         if(haveGrassCurrentObject)
         {
-            ObjectGroupItem::objectGroupLink[all_map[current_map]->objectGroup]->addObject(grassCurrentObject);
+            ObjectGroupItem::objectGroupLink.value(all_map.value(current_map)->objectGroup)->addObject(grassCurrentObject);
             grassCurrentObject->setPosition(QPoint(x,y+1));
-            MapObjectItem::objectLink[playerMapObject]->setZValue(y);
+            MapObjectItem::objectLink.value(playerMapObject)->setZValue(y);
             Tiled::Cell cell=grassCurrentObject->cell();
             cell.tile=animationTileset->tileAt(2);
             grassCurrentObject->setCell(cell);
@@ -907,7 +907,7 @@ void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
     if(!haveNextCurrentObject)
     {
         haveNextCurrentObject=false;
-        CatchChallenger::Map * map_destination=&all_map[current_map]->logicalMap;
+        CatchChallenger::Map * map_destination=&all_map.value(current_map)->logicalMap;
         COORD_TYPE x_destination=x;
         COORD_TYPE y_destination=y;
         if(CatchChallenger::MoveOnTheMap::move(direction,&map_destination,&x_destination,&y_destination))
@@ -915,9 +915,9 @@ void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
                 haveNextCurrentObject=CatchChallenger::MoveOnTheMap::haveGrass(*map_destination,x_destination,y_destination);
         if(haveNextCurrentObject)
         {
-            ObjectGroupItem::objectGroupLink[all_map[map_destination->map_file]->objectGroup]->addObject(nextCurrentObject);
+            ObjectGroupItem::objectGroupLink.value(all_map.value(map_destination->map_file)->objectGroup)->addObject(nextCurrentObject);
             nextCurrentObject->setPosition(QPoint(x_destination,y_destination+1));
-            MapObjectItem::objectLink[playerMapObject]->setZValue(y_destination);
+            MapObjectItem::objectLink.value(playerMapObject)->setZValue(y_destination);
             Tiled::Cell cell=nextCurrentObject->cell();
             cell.tile=animationTileset->tileAt(1);
             nextCurrentObject->setCell(cell);
@@ -931,12 +931,12 @@ void MapVisualiserPlayer::stopGrassAnimation()
 {
     if(haveGrassCurrentObject)
     {
-        ObjectGroupItem::objectGroupLink[grassCurrentObject->objectGroup()]->removeObject(grassCurrentObject);
+        ObjectGroupItem::objectGroupLink.value(grassCurrentObject->objectGroup())->removeObject(grassCurrentObject);
         haveGrassCurrentObject=false;
     }
     if(haveNextCurrentObject)
     {
-        ObjectGroupItem::objectGroupLink[nextCurrentObject->objectGroup()]->removeObject(nextCurrentObject);
+        ObjectGroupItem::objectGroupLink.value(nextCurrentObject->objectGroup())->removeObject(nextCurrentObject);
         haveNextCurrentObject=false;
     }
 }*/
@@ -999,7 +999,7 @@ quint8 MapVisualiserPlayer::getY()
 CatchChallenger::Map_client * MapVisualiserPlayer::getMapObject()
 {
     if(all_map.contains(current_map))
-        return &all_map[current_map]->logicalMap;
+        return &all_map.value(current_map)->logicalMap;
     else
         return NULL;
 }

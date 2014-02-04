@@ -59,8 +59,8 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(fightMonster!=NULL)
     {
-        QList<quint32> botFightList=all_map[current_map]->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
-        QList<QPair<quint8,quint8> > botFightRemotePointList=all_map[current_map]->logicalMap.botsFightTriggerExtra.values(QPair<quint8,quint8>(x,y));
+        QList<quint32> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+        QList<QPair<quint8,quint8> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<quint8,quint8>(x,y));
         int index=0;
         while(index<botFightList.size())
         {
@@ -73,7 +73,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                     keyPressed.clear();
                 }
                 parseStop();
-                emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
+                emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
                 return true;
             }
             index++;
@@ -83,13 +83,13 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         {
             if(inMove)
             {
-                if(CatchChallenger::ClientFightEngine::fightEngine.generateWildFightIfCollision(&all_map[current_map]->logicalMap,x,y))
+                if(CatchChallenger::ClientFightEngine::fightEngine.generateWildFightIfCollision(&all_map.value(current_map)->logicalMap,x,y))
                 {
                     inMove=false;
                     emit send_player_direction(direction);
                     keyPressed.clear();
                     parseStop();
-                    emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
+                    emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),x,y);
                     return true;
                 }
             }

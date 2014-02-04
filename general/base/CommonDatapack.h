@@ -51,6 +51,7 @@ private slots:
     void parseSkills();
     void parseMonsters();
     void parseMonstersEvolutionItems();
+    void parseMonstersItemToLearn();
     void parseReputation();
     void parseBotFights();
     void parseProfileList();

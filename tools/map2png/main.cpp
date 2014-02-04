@@ -29,21 +29,22 @@
 #include "map2png.h"
 
 #include <QApplication>
-#include <QDebug>
 #include <QFileDialog>
+
+/// \todo support (sub)folder to group the tilset loading
 
 int main(int argc, char *argv[])
 {
     // Avoid performance issues with X11 engine when rendering objects
 #ifdef Q_WS_X11
-    QApplication::setGraphicsSystem(QLatin1String("raster"));
+    QApplication::setGraphicsSystem(QStringLiteral("raster"));
 #endif
 
     QApplication a(argc, argv);
 
-    a.setOrganizationDomain(QLatin1String("catchchallenger"));
-    a.setApplicationName(QLatin1String("map2png"));
-    a.setApplicationVersion(QLatin1String("1.0"));
+    a.setOrganizationDomain(QStringLiteral("catchchallenger"));
+    a.setApplicationName(QStringLiteral("map2png"));
+    a.setApplicationVersion(QStringLiteral("1.0"));
 
     const QStringList &arguments=QCoreApplication::arguments();
     QString fileToOpen;
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
         int index=0;
         while(index<arguments.size())
         {
-            if(arguments.at(index).endsWith(".tmx"))
+            if(arguments.at(index).endsWith(QStringLiteral(".tmx")))
             {
                 fileToOpen=arguments.at(index);
                 break;
@@ -63,15 +64,15 @@ int main(int argc, char *argv[])
     QString previousFolder;
     if (fileToOpen.isEmpty())
     {
-        QString source = QFileDialog::getOpenFileName(NULL,"Select map");
-        if(source.isEmpty() || source.isNull() || source=="")
+        QString source = QFileDialog::getOpenFileName(NULL,QStringLiteral("Select map"));
+        if(source.isEmpty() || source.isNull())
             return 0;
         fileToOpen=source;
     }
     {
         bool found=true;
         QFileInfo dir(QFileInfo(fileToOpen).absolutePath());
-        while(!QFileInfo(dir.absoluteFilePath()+"/informations.xml").exists())
+        while(!QFileInfo(dir.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
         {
             previousFolder=dir.absoluteFilePath();
             dir=QFileInfo(dir.absolutePath());
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
     if(arguments.size()!=3)
     {
         w.show();
-        w.setWindowIcon(QIcon(":/icon.png"));
+        w.setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
         return a.exec();
     }
     else

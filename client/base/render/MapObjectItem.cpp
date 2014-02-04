@@ -14,7 +14,7 @@ QRectF MapObjectItem::boundingRect() const
 {
     Tiled::ObjectGroup * objectGroup=mMapObject->objectGroup();
     if(mRendererList.contains(objectGroup))
-        return mRendererList[objectGroup]->boundingRect(mMapObject);
+        return mRendererList.value(objectGroup)->boundingRect(mMapObject);
     else
         return QRectF();
 }
@@ -28,6 +28,6 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         return;
 
     const QColor &color = mMapObject->objectGroup()->color();
-    mRendererList[mMapObject->objectGroup()]->drawMapObject(p, mMapObject,
+    mRendererList.value(mMapObject->objectGroup())->drawMapObject(p, mMapObject,
                              color.isValid() ? color : Qt::transparent);
 }
