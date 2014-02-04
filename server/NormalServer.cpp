@@ -540,7 +540,7 @@ void NormalServer::newConnection()
             connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
             if(socket!=NULL)
             {
-                DebugClass::debugConsole(QStringLiteral("new client connected by tcp socket"));
+                //DebugClass::debugConsole(QStringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
                 connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
             }
             else

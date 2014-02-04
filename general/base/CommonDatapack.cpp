@@ -36,6 +36,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseSkills();
     parseMonsters();
     parseMonstersEvolutionItems();
+    parseMonstersItemToLearn();
     parseReputation();
     parseQuests();
     parseBotFights();
@@ -116,6 +117,12 @@ void CommonDatapack::parseMonstersEvolutionItems()
     qDebug() << QStringLiteral("%1 monster evolution items(s) loaded").arg(items.evolutionItem.size());
 }
 
+void CommonDatapack::parseMonstersItemToLearn()
+{
+    items.itemToLearn=FightLoader::loadMonsterItemToLearn(monsters,items.evolutionItem);
+    qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(items.itemToLearn.size());
+}
+
 void CommonDatapack::parseBotFights()
 {
     botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT), monsters, monsterSkills);
@@ -124,7 +131,7 @@ void CommonDatapack::parseBotFights()
 
 void CommonDatapack::parseProfileList()
 {
-    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml")).second;
+    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml"),items.item,monsters,reputation).second;
     qDebug() << QStringLiteral("%1 profile(s) loaded").arg(profileList.size());
 }
 

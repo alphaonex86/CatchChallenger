@@ -44,7 +44,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists: %1").arg(map));
             continue;
         }
-        if(static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->plants.size()>=255)
+        if(static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map))->plants.size()>=255)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(map));
             continue;
@@ -55,9 +55,9 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x is not a number"));
             continue;
         }
-        if(x>=GlobalServerData::serverPrivateVariables.map_list[map]->width)
+        if(x>=GlobalServerData::serverPrivateVariables.map_list.value(map)->width)
         {
-            DebugClass::debugConsole(QStringLiteral("Plant ignored because the x>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map]->width).arg(map).arg(x));
+            DebugClass::debugConsole(QStringLiteral("Plant ignored because the x>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->width).arg(map).arg(x));
             continue;
         }
         quint8 y=plantOnMapQuery.value(2).toUInt(&ok);
@@ -66,9 +66,9 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y is not a number"));
             continue;
         }
-        if(y>=GlobalServerData::serverPrivateVariables.map_list[map]->height)
+        if(y>=GlobalServerData::serverPrivateVariables.map_list.value(map)->height)
         {
-            DebugClass::debugConsole(QStringLiteral("Plant ignored because the y>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map]->height).arg(map).arg(y));
+            DebugClass::debugConsole(QStringLiteral("Plant ignored because the y>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->height).arg(map).arg(y));
             continue;
         }
         quint8 plant=plantOnMapQuery.value(3).toUInt(&ok);
@@ -83,7 +83,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
         quint32 character=plantOnMapQuery.value(4).toUInt(&ok);
         if(!ok)
             continue;
-        if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list[map],x,y))
+        if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list.value(map),x,y))
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(map).arg(x).arg(y));
             continue;
@@ -101,15 +101,15 @@ void BaseServerCrafting::preload_the_plant_on_map()
         plantOnMap.y=y;
         plantOnMap.plant=plant;
         plantOnMap.character=character;
-        plantOnMap.mature_at=plant_timestamps+CommonDatapack::commonDatapack.plants[plant].fruits_seconds;
-        plantOnMap.player_owned_expire_at=plant_timestamps+CommonDatapack::commonDatapack.plants[plant].fruits_seconds+60*60*24;
+        plantOnMap.mature_at=plant_timestamps+CommonDatapack::commonDatapack.plants.value(plant).fruits_seconds;
+        plantOnMap.player_owned_expire_at=plant_timestamps+CommonDatapack::commonDatapack.plants.value(plant).fruits_seconds+60*60*24;
         static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->plants << plantOnMap;
         #ifdef DEBUG_MESSAGE_MAP_PLANTS
         DebugClass::debugConsole(QStringLiteral("put on the map: %1 (%2,%3) the plant: %4, owned by played id: %5, mature at: %6 (%7+%8)")
                                  .arg(map).arg(x).arg(y)
                                  .arg(plant)
                                  .arg(character)
-                                 .arg(plantOnMap.mature_at).arg(plant_timestamps).arg(CommonDatapack::commonDatapack.plants[plant].fruits_seconds)
+                                 .arg(plantOnMap.mature_at).arg(plant_timestamps).arg(CommonDatapack::commonDatapack.plants.value(plant).fruits_seconds)
                                  );
         #endif
         plant_on_the_map++;
@@ -124,7 +124,7 @@ void BaseServerCrafting::preload_shop()
     QDomDocument domDocument;
     //open and quick check the file
     if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile shopFile(file);
@@ -182,12 +182,12 @@ void BaseServerCrafting::preload_shop()
                                             DebugClass::debugConsole(QStringLiteral("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                         else
                                         {
-                                            quint32 price=CommonDatapack::commonDatapack.items.item[itemId].price;
+                                            quint32 price=CommonDatapack::commonDatapack.items.item.value(itemId).price;
                                             if(product.hasAttribute(QStringLiteral("overridePrice")))
                                             {
                                                 price=product.attribute(QStringLiteral("overridePrice")).toUInt(&ok);
                                                 if(!ok)
-                                                    price=CommonDatapack::commonDatapack.items.item[itemId].price;
+                                                    price=CommonDatapack::commonDatapack.items.item.value(itemId).price;
                                             }
                                             shop.prices << price;
                                             shop.items << itemId;

@@ -232,7 +232,7 @@ void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &
     else
         tradeObjects[item]=quantity;
     player_informations->public_and_private_informations.items[item]-=quantity;
-    if(player_informations->public_and_private_informations.items[item]==0)
+    if(player_informations->public_and_private_informations.items.value(item)==0)
         player_informations->public_and_private_informations.items.remove(item);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);

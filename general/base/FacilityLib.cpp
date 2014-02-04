@@ -50,7 +50,7 @@ QString FacilityLib::randomPassword(const QString& string,const quint8& length)
     int index=0;
     while(index<length)
     {
-        randomPassword+=string[rand()%string.size()];
+        randomPassword+=string.at(rand()%string.size());
         index++;
     }
     return randomPassword;
@@ -112,8 +112,8 @@ QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &p
     int index=0;
     while(index<publicPlayerMonster.buffs.size())
     {
-        out << (quint32)publicPlayerMonster.buffs[index].buff;
-        out << (quint8)publicPlayerMonster.buffs[index].level;
+        out << (quint32)publicPlayerMonster.buffs.at(index).buff;
+        out << (quint8)publicPlayerMonster.buffs.at(index).level;
         index++;
     }
     return outputData;
@@ -327,7 +327,7 @@ bool FacilityLib::factoryProductionStarted(const IndustryStatus &industryStatus,
         const Industry::Resource &resource=industry.resources.at(index);
         quint32 quantityInStock=0;
         if(industryStatus.resources.contains(resource.item))
-            quantityInStock=industryStatus.resources[resource.item];
+            quantityInStock=industryStatus.resources.value(resource.item);
         const quint32 tempCycleCount=quantityInStock/resource.quantity;
         if(tempCycleCount<=0)
             return false;
@@ -339,7 +339,7 @@ bool FacilityLib::factoryProductionStarted(const IndustryStatus &industryStatus,
         const Industry::Product &product=industry.products.at(index);
         quint32 quantityInStock=0;
         if(industryStatus.products.contains(product.item))
-            quantityInStock=industryStatus.products[product.item];
+            quantityInStock=industryStatus.products.value(product.item);
         const quint32 tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
         if(tempCycleCount<=0)
             return false;
@@ -366,7 +366,7 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
-        const quint32 &quantityInStock=industryStatusCopy.resources[resource.item];
+        const quint32 &quantityInStock=industryStatusCopy.resources.value(resource.item);
         const quint32 tempCycleCount=quantityInStock/resource.quantity;
         if(tempCycleCount<=0)
             return industryStatusCopy;
@@ -378,7 +378,7 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
     while(index<industry.products.size())
     {
         const Industry::Product &product=industry.products.at(index);
-        const quint32 &quantityInStock=industryStatusCopy.products[product.item];
+        const quint32 &quantityInStock=industryStatusCopy.products.value(product.item);
         const quint32 tempCycleCount=(product.quantity*industry.cycletobefull-quantityInStock)/product.quantity;
         if(tempCycleCount<=0)
             return industryStatusCopy;
@@ -410,7 +410,7 @@ quint32 FacilityLib::getFactoryResourcePrice(const quint32 &quantityInStock,cons
         price_temp_change=0;
     else
         price_temp_change=((max_items-quantityInStock)*CommonSettings::commonSettings.factoryPriceChange*2)/max_items;
-    return CommonDatapack::commonDatapack.items.item[resource.item].price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
+    return CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
 }
 
 quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, const Industry::Product &product, const Industry &industry)
@@ -421,7 +421,7 @@ quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, cons
         price_temp_change=0;
     else
         price_temp_change=((max_items-quantityInStock)*CommonSettings::commonSettings.factoryPriceChange*2)/max_items;
-    return CommonDatapack::commonDatapack.items.item[product.item].price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
+    return CommonDatapack::commonDatapack.items.item.value(product.item).price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
 }
 
 

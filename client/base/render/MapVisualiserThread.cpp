@@ -25,7 +25,7 @@ void MapVisualiserThread::loadOtherMapAsync(const QString &fileName)
     /*cash due to the pointerif(mapCache.contains(fileName))
     {
         MapVisualiserThread::Map_full *tempMapObject=new MapVisualiserThread::Map_full();
-        *tempMapObject=mapCache[fileName];
+        *tempMapObject=mapCache.value(fileName);
         emit asyncMapLoaded(fileName,tempMapObject);
         return;
     }*/
@@ -528,10 +528,10 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                     }
                                     if(property_parsed.contains(QStringLiteral("file")) && property_parsed.contains(QStringLiteral("id")))
                                     {
-                                        quint32 botId=property_parsed[QStringLiteral("id")].toUInt(&ok);
+                                        quint32 botId=property_parsed.value(QStringLiteral("id")).toUInt(&ok);
                                         if(ok)
                                         {
-                                            QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+QStringLiteral("/")+property_parsed[QStringLiteral("file")]).absoluteFilePath();
+                                            QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+QStringLiteral("/")+property_parsed.value(QStringLiteral("file"))).absoluteFilePath();
                                             if(!botFile.endsWith(QStringLiteral(".xml")))
                                                 botFile+=QStringLiteral(".xml");
                                             if(bot.attribute(QStringLiteral("type"))==QStringLiteral("bot"))
@@ -543,12 +543,12 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                         return false;
                                                 if(botFiles.contains(botFile))
                                                 {
-                                                    if(botFiles[botFile].contains(botId))
+                                                    if(botFiles.value(botFile).contains(botId))
                                                     {
                                                         #ifdef DEBUG_CLIENT_BOT
                                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
                                                         #endif
-                                                        parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
+                                                        parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles.value(botFile).value(botId);
                                                         property_parsed.remove(QStringLiteral("file"));
                                                         property_parsed.remove(QStringLiteral("id"));
                                                         parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].properties=property_parsed;
@@ -626,7 +626,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
             quint32 botId=child.attribute(QStringLiteral("id")).toUInt(&ok);
             if(ok)
             {
-                if(botFiles[fileName].contains(botId))
+                if(botFiles.value(fileName).contains(botId))
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("bot already found with this id: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
                 else
                 {

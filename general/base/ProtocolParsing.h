@@ -54,8 +54,8 @@ protected:
     static QSet<quint8> replyComressionOnlyMainCodePacketClientToServer;
     static QSet<quint8> replyComressionOnlyMainCodePacketServerToClient;
 signals:
-    void error(const QString &error);
-    void message(const QString &message);
+    void error(const QString &error) const;
+    void message(const QString &message) const;
 private slots:
     virtual void reset() = 0;
 };
@@ -66,8 +66,8 @@ class ProtocolParsingInput : public ProtocolParsing
 public:
     ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
     friend class ProtocolParsing;
-    bool checkStringIntegrity(const QByteArray & data);
-    quint64 getRXSize();
+    bool checkStringIntegrity(const QByteArray & data) const;
+    quint64 getRXSize() const;
 protected slots:
     void parseIncommingData();
 protected:
@@ -104,8 +104,8 @@ protected:
 private slots:
     void reset();
 signals:
-    void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
+    void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
 public slots:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
@@ -126,10 +126,10 @@ public:
     bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data);
     //send reply
     bool postReplyData(const quint8 &queryNumber, QByteArray data);
-    quint64 getTXSize();
+    quint64 getTXSize() const;
 private:
     bool internalPackOutcommingData(QByteArray data);
-    QByteArray encodeSize(quint32 size);
+    static QByteArray encodeSize(quint32 size);
 
     quint64 TXSize;
     bool isClient;
@@ -142,8 +142,8 @@ private:
     QSet<quint8> queryReceived;
     #endif
 signals:
-    void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
+    void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
 public slots:
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);

@@ -141,7 +141,7 @@ void ClientLocalBroadcast::seedValidated()
     {
         if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
         {
-            emit addObjectAndSend(CommonDatapack::commonDatapack.plants[plant_list_in_waiting.first().plant_id].itemUsed);
+            emit addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
             QByteArray data;
             data[0]=0x02;
             emit postReply(plant_list_in_waiting.first().query_id,data);
@@ -160,8 +160,8 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
     plantOnMap.character=player_informations->character_id;
-    plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants[plantOnMap.plant].fruits_seconds;
-    plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants[plantOnMap.plant].fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
+    plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds;
+    plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -460,14 +460,14 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 }
 
                 //add into the inventory
-                float quantity=CommonDatapack::commonDatapack.plants[plant.plant].fix_quantity;
-                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants[plant.plant].random_quantity)
+                float quantity=CommonDatapack::commonDatapack.plants.value(plant.plant).fix_quantity;
+                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants.value(plant.plant).random_quantity)
                     quantity++;
 
                 QByteArray data;
                 data[0]=Plant_collect_correctly_collected;
                 emit postReply(query_id,data);
-                emit addObjectAndSend(CommonDatapack::commonDatapack.plants[plant.plant].itemUsed,quantity);
+                emit addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
 
                 static_cast<MapServer *>(map)->plants.removeAt(index);
                 return;

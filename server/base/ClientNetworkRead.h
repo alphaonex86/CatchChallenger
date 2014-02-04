@@ -54,6 +54,7 @@ private:
     void receiveSystemText(const QString &text);
 signals:
     //normal signals
+    void needDisconnectTheClient();
     void sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainCodeType,const QByteArray &data=QByteArray()) const;
     void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data) const;

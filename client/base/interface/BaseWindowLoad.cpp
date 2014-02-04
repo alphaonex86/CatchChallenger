@@ -323,10 +323,10 @@ void BaseWindow::load_inventory()
             items_graphical[item]=i.key();
             if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
             {
-                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
+                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).image);
                 if(i.value()>1)
                     item->setText(QString::number(i.value()));
-                item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name);
+                item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).name);
             }
             else
             {
@@ -428,43 +428,43 @@ bool BaseWindow::check_senddata()
         }
         if(i.value().level>=0)
         {
-            if(i.value().level>=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size())
+            if(i.value().level>=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_positive.size())
             {
-                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size()));
+                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_positive.size()));
                 return false;
             }
         }
         else
         {
-            if((-i.value().level)>CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size())
+            if((-i.value().level)>CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_negative.size())
             {
-                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size()));
+                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_negative.size()));
                 return false;
             }
         }
         if(i.value().point>0)
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size()==i.value().level)//start at level 0 in positive
+            if(CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_positive.size()==i.value().level)//start at level 0 in positive
             {
                 emit message(QStringLiteral("The reputation level is already at max, drop point"));
                 return false;
             }
-            if(i.value().point>=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.at(i.value().level+1))//start at level 0 in positive
+            if(i.value().point>=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_positive.at(i.value().level+1))//start at level 0 in positive
             {
-                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.at(i.value().level)));
+                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_positive.at(i.value().level)));
                 return false;
             }
         }
         else if(i.value().point<0)
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size()==-i.value().level)//start at level -1 in negative
+            if(CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_negative.size()==-i.value().level)//start at level -1 in negative
             {
                 error(QStringLiteral("The reputation level is already at min, drop point"));
                 return false;
             }
-            if(i.value().point<CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.at(-i.value().level))//start at level -1 in negative
+            if(i.value().point<CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_negative.at(-i.value().level))//start at level -1 in negative
             {
-                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.at(i.value().level)));
+                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_negative.at(i.value().level)));
                 return false;
             }
         }
@@ -481,35 +481,35 @@ void BaseWindow::show_reputation()
         i.next();
         if(i.value().level>=0)
         {
-            if((i.value().level+1)==CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size())
+            if((i.value().level+1)==CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_positive.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_positive.last());
+                    .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(i.key()).reputation_positive.last());
             else
             {
-                qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.at(i.value().level+1);
+                qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_positive.at(i.value().level+1);
                 if(next_level_xp==0)
                 {
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_positive.at(i.value().level);
+                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(i.key()).reputation_positive.at(i.value().level);
                 html+=QStringLiteral("<li>%1% %2</li>").arg((i.value().point*100)/next_level_xp).arg(text);
             }
         }
         else
         {
-            if((-i.value().level)==CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size())
+            if((-i.value().level)==CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_negative.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_negative.last());
+                    .arg(DatapackClientLoader::datapackLoader.reputationExtra.value(i.key()).reputation_negative.last());
             else
             {
-                qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.at(-i.value().level);
+                qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(i.key()).reputation_negative.at(-i.value().level);
                 if(next_level_xp==0)
                 {
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_negative.at(-i.value().level-1);
+                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(i.key()).reputation_negative.at(-i.value().level-1);
                 html+=QStringLiteral("<li>%1% %2</li>")
                     .arg((i.value().point*100)/next_level_xp)
                     .arg(text);
@@ -623,12 +623,12 @@ void BaseWindow::updateDisplayedQuests()
         i.next();
         if(DatapackClientLoader::datapackLoader.questsExtra.contains(i.key()) && i.value().step>0)
         {
-            QListWidgetItem * item=new QListWidgetItem(DatapackClientLoader::datapackLoader.questsExtra[i.key()].name);
+            QListWidgetItem * item=new QListWidgetItem(DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name);
             quests_to_id_graphical[item]=i.key();
             ui->questsList->addItem(item);
         }
         else
-            html+="<li>"+DatapackClientLoader::datapackLoader.questsExtra[i.key()].name+"</li>";
+            html+="<li>"+DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name+"</li>";
     }
     html+="</ul>";
     if(html=="<ul></ul>")
@@ -651,23 +651,23 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    quint32 questId=quests_to_id_graphical[items.first()];
+    quint32 questId=quests_to_id_graphical.value(items.first());
     if(!quests.contains(questId))
     {
         qDebug() << "Selected quest is not into the player list";
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    if(quests[questId].step==0 || quests[questId].step>DatapackClientLoader::datapackLoader.questsExtra[questId].steps.size())
+    if(quests.value(questId).step==0 || quests.value(questId).step>DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.size())
     {
         qDebug() << "Selected quest step is out of range";
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra[questId].steps[quests[questId].step-1]+"<br />";
+    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(quests.value(questId).step-1)+"<br />";
     QString stepRequirements;
     {
-        QList<Quest::Item> items=CommonDatapack::commonDatapack.quests[questId].steps[quests[questId].step-1].requirements.items;
+        QList<Quest::Item> items=CommonDatapack::commonDatapack.quests.value(questId).steps.value(quests.value(questId).step-1).requirements.items;
         QStringList objects;
         int index=0;
         while(index<items.size())
@@ -676,8 +676,8 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             QString name;
             if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).item))
             {
-                image=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].image;
-                name=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].name;
+                image=DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).item).image;
+                name=DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).item).name;
             }
             else
             {
@@ -703,7 +703,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         stepRequirements+=tr("Step requirements: ")+QStringLiteral("%1<br />").arg(objects.join(", "));
     }
     QString finalRewards;
-    if(DatapackClientLoader::datapackLoader.questsExtra[questId].showRewards
+    if(DatapackClientLoader::datapackLoader.questsExtra.value(questId).showRewards
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
             || true
         #endif
@@ -711,7 +711,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     {
         finalRewards+=tr("Final rewards: ");
         {
-            QList<Quest::Item> items=CommonDatapack::commonDatapack.quests[questId].rewards.items;
+            QList<Quest::Item> items=CommonDatapack::commonDatapack.quests.value(questId).rewards.items;
             QStringList objects;
             int index=0;
             while(index<items.size())
@@ -720,8 +720,8 @@ void BaseWindow::on_questsList_itemSelectionChanged()
                 QString name;
                 if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).item))
                 {
-                    image=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].image;
-                    name=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].name;
+                    image=DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).item).image;
+                    name=DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).item).name;
                 }
                 else
                 {
@@ -746,7 +746,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=objects.join(", ")+"<br />";
         }
         {
-            QList<Quest::ReputationRewards> reputationRewards=CommonDatapack::commonDatapack.quests[questId].rewards.reputation;
+            QList<Quest::ReputationRewards> reputationRewards=CommonDatapack::commonDatapack.quests.value(questId).rewards.reputation;
             QStringList reputations;
             int index=0;
             while(index<reputationRewards.size())
@@ -754,9 +754,9 @@ void BaseWindow::on_questsList_itemSelectionChanged()
                 if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputationRewards.at(index).type))
                 {
                     if(reputationRewards.at(index).point<0)
-                        reputations << tr("Less reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra[reputationRewards.at(index).type].name);
+                        reputations << tr("Less reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(reputationRewards.at(index).type).name);
                     if(reputationRewards.at(index).point>0)
-                        reputations << tr("More reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra[reputationRewards.at(index).type].name);
+                        reputations << tr("More reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(reputationRewards.at(index).type).name);
                 }
                 index++;
             }
@@ -769,7 +769,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=reputations.join(", ")+"<br />";
         }
         {
-            QList<ActionAllow> allowRewards=CommonDatapack::commonDatapack.quests[questId].rewards.allow;
+            QList<ActionAllow> allowRewards=CommonDatapack::commonDatapack.quests.value(questId).rewards.allow;
             QStringList allows;
             int index=0;
             while(index<allowRewards.size())
@@ -797,10 +797,10 @@ QListWidgetItem * BaseWindow::itemToGraphic(const quint32 &id,const quint32 &qua
     item->setData(99,id);
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(id))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[id].image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(id).image);
         if(quantity>1)
             item->setText(QString::number(quantity));
-        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[id].name);
+        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name);
     }
     else
     {
@@ -826,7 +826,7 @@ void BaseWindow::updateTheWareHouseContent()
             i.next();
             qint64 quantity=i.value();
             if(change_warehouse_items.contains(i.key()))
-                quantity+=change_warehouse_items[i.key()];
+                quantity+=change_warehouse_items.value(i.key());
             if(quantity>0)
                 ui->warehousePlayerInventory->addItem(itemToGraphic(i.key(),quantity));
         }
@@ -848,7 +848,7 @@ void BaseWindow::updateTheWareHouseContent()
             i.next();
             qint64 quantity=i.value();
             if(change_warehouse_items.contains(i.key()))
-                quantity-=change_warehouse_items[i.key()];
+                quantity-=change_warehouse_items.value(i.key());
             if(quantity>0)
                 ui->warehousePlayerStoredInventory->addItem(itemToGraphic(i.key(),quantity));
         }
@@ -877,11 +877,11 @@ void BaseWindow::updateTheWareHouseContent()
             {
                 QListWidgetItem *item=new QListWidgetItem();
                 item->setText(tr("%1, level: %2")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].name)
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
                         .arg(monster.level)
                         );
-                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].description);
-                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].front);
+                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
+                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
                 item->setData(99,monster.id);
                 if(!monster_to_deposit.contains(monster.id))
                     ui->warehousePlayerMonster->addItem(item);
@@ -904,11 +904,11 @@ void BaseWindow::updateTheWareHouseContent()
             {
                 QListWidgetItem *item=new QListWidgetItem();
                 item->setText(tr("%1, level: %2")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].name)
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
                         .arg(monster.level)
                         );
-                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].description);
-                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].front);
+                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
+                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
                 item->setData(99,monster.id);
                 if(!monster_to_withdraw.contains(monster.id))
                     ui->warehousePlayerStoredMonster->addItem(item);

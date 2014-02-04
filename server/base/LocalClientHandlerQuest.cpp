@@ -13,7 +13,7 @@ void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 
         emit error(QStringLiteral("unknow questId: %1").arg(questId));
         return;
     }
-    const Quest &quest=CommonDatapack::commonDatapack.quests[questId];
+    const Quest &quest=CommonDatapack::commonDatapack.quests.value(questId);
     switch(action)
     {
         case QuestAction_Start:
@@ -64,10 +64,10 @@ bool LocalClientHandler::addQuestStepDrop(Player_internal_informations *player_i
 
     if(!CommonDatapack::commonDatapack.quests.contains(questId))
         return false;
-    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests[questId];
+    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests.value(questId);
     if(step<=0 || step>quest.steps.size())
         return false;
-    Quest::Step stepFull=quest.steps[step-1];
+    Quest::Step stepFull=quest.steps.value(step-1);
     int index=0;
     int sub_index;
     while(index<stepFull.itemsMonster.size())
@@ -89,10 +89,10 @@ bool LocalClientHandler::removeQuestStepDrop(Player_internal_informations *playe
 {
     if(!CommonDatapack::commonDatapack.quests.contains(questId))
         return false;
-    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests[questId];
+    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests.value(questId);
     if(step<=0 || step>quest.steps.size())
         return false;
-    Quest::Step stepFull=quest.steps[step-1];
+    Quest::Step stepFull=quest.steps.value(step-1);
     int index=0;
     int sub_index;
     while(index<stepFull.itemsMonster.size())
@@ -130,7 +130,7 @@ bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Qu
         emit message(QStringLiteral("player quest not found: %1").arg(quest.id));
         return false;
     }
-    quint8 step=player_informations->public_and_private_informations.quests[quest.id].step;
+    const quint8 &step=player_informations->public_and_private_informations.quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         emit message(QStringLiteral("step out of range for: %1").arg(quest.id));
@@ -169,12 +169,12 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
     #endif
     if(player_informations->public_and_private_informations.quests.contains(quest.id))
     {
-        if(player_informations->public_and_private_informations.quests[quest.id].step!=0)
+        if(player_informations->public_and_private_informations.quests.value(quest.id).step!=0)
         {
             emit message(QStringLiteral("can start the quest because is already running: %1").arg(quest.id));
             return false;
         }
-        if(player_informations->public_and_private_informations.quests[quest.id].finish_one_time && !quest.repeatable)
+        if(player_informations->public_and_private_informations.quests.value(quest.id).finish_one_time && !quest.repeatable)
         {
             emit message(QStringLiteral("done one time and no repeatable: %1").arg(quest.id));
             return false;
@@ -189,7 +189,7 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
             emit message(QStringLiteral("have never started the quest: %1").arg(questId));
             return false;
         }
-        if(!player_informations->public_and_private_informations.quests[questId].finish_one_time)
+        if(!player_informations->public_and_private_informations.quests.value(questId).finish_one_time)
         {
             emit message(QStringLiteral("quest never finished: %1").arg(questId));
             return false;
@@ -202,7 +202,7 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
         const CatchChallenger::Quest::ReputationRequirements &reputation=quest.requirements.reputation.at(index);
         if(player_informations->public_and_private_informations.reputation.contains(reputation.type))
         {
-            const PlayerReputation &playerReputation=player_informations->public_and_private_informations.reputation[reputation.type];
+            const PlayerReputation &playerReputation=player_informations->public_and_private_informations.reputation.value(reputation.type);
             if(!reputation.positif)
             {
                 if(-reputation.level<playerReputation.level)
@@ -241,7 +241,7 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         emit message(QStringLiteral("step out of range for: %1").arg(quest.id));
         return false;
     }
-    quint8 step=player_informations->public_and_private_informations.quests[quest.id].step;
+    quint8 step=player_informations->public_and_private_informations.quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         emit message(QStringLiteral("step out of range for: %1").arg(quest.id));
@@ -255,9 +255,9 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         removeObject(item.item,item.quantity);
         index++;
     }
-    removeQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests[quest.id].step);
+    removeQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests.value(quest.id).step);
     player_informations->public_and_private_informations.quests[quest.id].step++;
-    if(player_informations->public_and_private_informations.quests[quest.id].step>quest.steps.size())
+    if(player_informations->public_and_private_informations.quests.value(quest.id).step>quest.steps.size())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         emit message(QStringLiteral("finish the quest: %1").arg(quest.id));
@@ -283,13 +283,13 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         index=0;
         while(index<quest.rewards.items.size())
         {
-            addObjectAndSend(quest.rewards.items[index].item,quest.rewards.items[index].quantity);
+            addObjectAndSend(quest.rewards.items.value(index).item,quest.rewards.items.value(index).quantity);
             index++;
         }
         index=0;
         while(index<quest.rewards.reputation.size())
         {
-            appendReputationPoint(quest.rewards.reputation[index].type,quest.rewards.reputation[index].point);
+            appendReputationPoint(quest.rewards.reputation.value(index).type,quest.rewards.reputation.value(index).point);
             index++;
         }
         index=0;
@@ -311,18 +311,18 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
                 emit dbQuery(QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND `quest`=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
-                             .arg(player_informations->public_and_private_informations.quests[quest.id].step)
+                             .arg(player_informations->public_and_private_informations.quests.value(quest.id).step)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
-                             .arg(player_informations->public_and_private_informations.quests[quest.id].step)
+                             .arg(player_informations->public_and_private_informations.quests.value(quest.id).step)
                              );
             break;
         }
-        addQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests[quest.id].step);
+        addQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests.value(quest.id).step);
     }
     return true;
 }

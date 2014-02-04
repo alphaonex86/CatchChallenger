@@ -18,41 +18,41 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 {
     if(!waitToSell)
     {
-        if(cash<itemsIntoTheShop[shop_items_graphical[item]].price)
+        if(cash<itemsIntoTheShop.value(shop_items_graphical.value(item)).price)
         {
             QMessageBox::information(this,tr("Buy"),tr("You have not the cash to buy this item"));
             return;
         }
         bool ok=true;
         ItemToSellOrBuy itemToSellOrBuy;
-        if(cash/itemsIntoTheShop[shop_items_graphical[item]].price>1)
-            itemToSellOrBuy.quantity=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
+        if(cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price>1)
+            itemToSellOrBuy.quantity=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price,1,&ok);
         else
             itemToSellOrBuy.quantity=1;
         if(!ok)
             return;
-        itemToSellOrBuy.object=shop_items_graphical[item];
-        CatchChallenger::Api_client_real::client->buyObject(shopId,itemToSellOrBuy.object,itemToSellOrBuy.quantity,itemsIntoTheShop[itemToSellOrBuy.object].price);
-        itemToSellOrBuy.price=itemsIntoTheShop[itemToSellOrBuy.object].price*itemToSellOrBuy.quantity;
+        itemToSellOrBuy.object=shop_items_graphical.value(item);
+        CatchChallenger::Api_client_real::client->buyObject(shopId,itemToSellOrBuy.object,itemToSellOrBuy.quantity,itemsIntoTheShop.value(itemToSellOrBuy.object).price);
+        itemToSellOrBuy.price=itemsIntoTheShop.value(itemToSellOrBuy.object).price*itemToSellOrBuy.quantity;
         itemsToBuy << itemToSellOrBuy;
         removeCash(itemToSellOrBuy.price);
         showTip(tr("Buying the object..."));
     }
     else
     {
-        if(!items.contains(shop_items_graphical[item]))
+        if(!items.contains(shop_items_graphical.value(item)))
             return;
-        quint32 objectItem=shop_items_graphical[item];
+        quint32 objectItem=shop_items_graphical.value(item);
         bool ok=true;
-        if(items[objectItem]>1)
-            tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items[objectItem],1,&ok);
+        if(items.value(objectItem)>1)
+            tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items.value(objectItem),1,&ok);
         else
             tempQuantityForSell=1;
         if(!ok)
             return;
         if(!items.contains(objectItem))
             return;
-        if(items[objectItem]<tempQuantityForSell)
+        if(items.value(objectItem)<tempQuantityForSell)
             return;
         objectSelection(true,objectItem,tempQuantityForSell);
         showTip(tr("Selling the object..."));
@@ -72,14 +72,14 @@ void BaseWindow::on_shopItemList_itemSelectionChanged()
     }
     ui->shopBuy->setVisible(true);
     QListWidgetItem *item=items.first();
-    if(!DatapackClientLoader::datapackLoader.itemsExtra.contains(shop_items_graphical[item]))
+    if(!DatapackClientLoader::datapackLoader.itemsExtra.contains(shop_items_graphical.value(item)))
     {
         ui->shopImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->shopName->setText(tr("Unknown name"));
         ui->shopDescription->setText(tr("Unknown description"));
         return;
     }
-    const DatapackClientLoader::ItemExtra &content=DatapackClientLoader::datapackLoader.itemsExtra[shop_items_graphical[item]];
+    const DatapackClientLoader::ItemExtra &content=DatapackClientLoader::datapackLoader.itemsExtra.value(shop_items_graphical.value(item));
 
     ui->shopImage->setPixmap(content.image);
     ui->shopName->setText(content.name);
@@ -117,11 +117,11 @@ void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
         shop_items_graphical[item]=items.at(index).object;
         if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).object))
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).object].image);
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).object).image);
             if(items.at(index).quantity==0)
-                item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).object].name).arg(items.at(index).price));
+                item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).object).name).arg(items.at(index).price));
             else
-                item->setText(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).object].name).arg(items.at(index).price).arg(items.at(index).quantity));
+                item->setText(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).object).name).arg(items.at(index).price).arg(items.at(index).quantity));
         }
         else
         {
@@ -160,17 +160,17 @@ void BaseWindow::displaySellList()
             QListWidgetItem *item=new QListWidgetItem();
             shop_items_to_graphical[i.key()]=item;
             shop_items_graphical[item]=i.key();
-            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).image);
             if(i.value()>1)
                 item->setText(tr("%1\nPrice: %2$, quantity: %3")
-                        .arg(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name)
-                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item[i.key()].price/2)
+                        .arg(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).name)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.value(i.key()).price/2)
                         .arg(i.value())
                         );
             else
                 item->setText(tr("%1\nPrice: %2$")
-                        .arg(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name)
-                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item[i.key()].price/2)
+                        .arg(DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).name)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.value(i.key()).price/2)
                         );
             ui->shopItemList->addItem(item);
         }

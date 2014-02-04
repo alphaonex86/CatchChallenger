@@ -208,7 +208,7 @@ void BaseServer::preload_zone()
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath();
         if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-            domDocument=DatapackGeneralLoader::xmlLoadedFile[file];
+            domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
         else
         {
             QFile itemsFile(file);
@@ -370,7 +370,7 @@ void BaseServer::preload_industries()
                     ok=false;
                     break;
                 }
-                const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[id]];
+                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id));
                 int indexItem=0;
                 const int &resourceslistsize=industry.resources.size();
                 while(indexItem<resourceslistsize)
@@ -422,7 +422,8 @@ void BaseServer::preload_industries()
                     DebugClass::debugConsole(QStringLiteral("preload_industries: item already set"));
                     ok=false;
                     break;
-                }const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[id]];
+                }
+                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id));
                 int indexItem=0;
                 const int &productlistsize=industry.products.size();
                 while(indexItem<productlistsize)
@@ -528,9 +529,9 @@ void BaseServer::preload_market_monsters()
              playerMonster.remaining_xp=monstersQuery.value(4).toUInt(&ok);
              if(ok)
              {
-                 if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1))
+                 if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1))
                  {
-                     DebugClass::debugConsole(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
+                     DebugClass::debugConsole(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1)));
                      playerMonster.remaining_xp=0;
                  }
              }
@@ -587,7 +588,7 @@ void BaseServer::preload_market_monsters()
              playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
              if(ok)
              {
-                 const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters[playerMonster.monster],playerMonster.level);
+                 const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster),playerMonster.level);
                  if(playerMonster.hp>stat.hp)
                  {
                      DebugClass::debugConsole(QStringLiteral("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
@@ -722,7 +723,7 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
             buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
+                if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.size())
                 {
                     ok=false;
                     DebugClass::debugConsole(QStringLiteral("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
@@ -733,7 +734,7 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
         }
         if(ok)
         {
-            if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.at(buff.level-1).duration!=Buff::Duration_Always)
+            if(CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
             {
                 ok=false;
                 DebugClass::debugConsole(QStringLiteral("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
@@ -783,7 +784,7 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
             skill.level=monsterSkillsQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(skill.level>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.size())
+                if(skill.level>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.size())
                 {
                     ok=false;
                     DebugClass::debugConsole(QStringLiteral("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
@@ -797,9 +798,9 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
             skill.endurance=monsterSkillsQuery.value(2).toUInt(&ok);
             if(ok)
             {
-                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance)
+                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance)
                 {
-                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance;
+                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance;
                     ok=false;
                     DebugClass::debugConsole(QStringLiteral("endurance of skill %1 for monsterId: %2 have been fixed by lower at ").arg(skill.endurance));
                 }
@@ -877,7 +878,7 @@ void BaseServer::preload_the_map()
                 parseJustLoadedMap(map_temp.map_to_send,fileName);
 
                 Map_semi map_semi;
-                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list[fileName];
+                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list.value(fileName);
 
                 if(!map_temp.map_to_send.border.top.fileName.isEmpty())
                 {
@@ -925,22 +926,22 @@ void BaseServer::preload_the_map()
     while(index<size)
     {
         if(!semi_loaded_map.at(index).border.bottom.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
-            semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.bottom.fileName];
+            semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.bottom.fileName);
         else
             semi_loaded_map[index].map->border.bottom.map=NULL;
 
         if(!semi_loaded_map.at(index).border.top.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
-            semi_loaded_map[index].map->border.top.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.top.fileName];
+            semi_loaded_map[index].map->border.top.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.top.fileName);
         else
             semi_loaded_map[index].map->border.top.map=NULL;
 
         if(!semi_loaded_map.at(index).border.left.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
-            semi_loaded_map[index].map->border.left.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.left.fileName];
+            semi_loaded_map[index].map->border.left.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.left.fileName);
         else
             semi_loaded_map[index].map->border.left.map=NULL;
 
         if(!semi_loaded_map.at(index).border.right.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
-            semi_loaded_map[index].map->border.right.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.right.fileName];
+            semi_loaded_map[index].map->border.right.map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.at(index).border.right.fileName);
         else
             semi_loaded_map[index].map->border.right.map=NULL;
 
@@ -953,57 +954,57 @@ void BaseServer::preload_the_map()
     while(index<size)
     {
         int sub_index=0;
-        while(sub_index<semi_loaded_map[index].old_map.teleport.size())
+        while(sub_index<semi_loaded_map.value(index).old_map.teleport.size())
         {
-            if(GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map[index].old_map.teleport.at(sub_index).map))
+            if(GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map))
             {
-                if(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->width
-                        && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->height)
+                if(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)->width
+                        && semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)->height)
                 {
-                    int virtual_position=semi_loaded_map[index].old_map.teleport.at(sub_index).source_x+semi_loaded_map[index].old_map.teleport.at(sub_index).source_y*semi_loaded_map[index].map->width;
-                    if(semi_loaded_map[index].map->teleporter.contains(virtual_position))
+                    int virtual_position=semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x+semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y*semi_loaded_map.value(index).map->width;
+                    if(semi_loaded_map.value(index).map->teleporter.contains(virtual_position))
                     {
                         DebugClass::debugConsole(QStringLiteral("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
-                             .arg(semi_loaded_map[index].map->map_file)
-                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
-                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
-                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
-                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
-                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+                             .arg(semi_loaded_map.value(index).map->map_file)
+                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
+                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
+                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
+                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
                     }
                     else
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
                         DebugClass::debugConsole(QStringLiteral("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
-                                     .arg(semi_loaded_map[index].map->map_file)
-                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
-                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
-                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
-                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
-                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+                                     .arg(semi_loaded_map.value(index).map->map_file)
+                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
+                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
+                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
+                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
                         #endif
-                        semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
-                        semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
-                        semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
+                        semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map);
+                        semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x;
+                        semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y;
                     }
                 }
                 else
                     DebugClass::debugConsole(QStringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the tp is out of range")
-                         .arg(semi_loaded_map[index].map->map_file)
-                         .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
-                         .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
-                         .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
-                         .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
-                         .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+                         .arg(semi_loaded_map.value(index).map->map_file)
+                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
+                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
+                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
+                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
             }
             else
                 DebugClass::debugConsole(QStringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the map is not found")
-                     .arg(semi_loaded_map[index].map->map_file)
-                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
-                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
-                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
-                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
-                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+                     .arg(semi_loaded_map.value(index).map->map_file)
+                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
+                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
+                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
+                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
 
             sub_index++;
         }
@@ -1017,36 +1018,36 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map==NULL)
-                DebugClass::debugConsole(QStringLiteral("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map==NULL)
+                DebugClass::debugConsole(QStringLiteral("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file));
             else
-                DebugClass::debugConsole(QStringLiteral("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map->border.top.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map=NULL;
         }
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map==NULL)
-                DebugClass::debugConsole(QStringLiteral("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map==NULL)
+                DebugClass::debugConsole(QStringLiteral("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file));
             else
-                DebugClass::debugConsole(QStringLiteral("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map->border.bottom.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map=NULL;
         }
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map==NULL)
-                DebugClass::debugConsole(QStringLiteral("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map==NULL)
+                DebugClass::debugConsole(QStringLiteral("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file));
             else
-                DebugClass::debugConsole(QStringLiteral("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map->border.right.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map=NULL;
         }
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL && GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->border.left.map!=GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index)))
         {
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map==NULL)
-                DebugClass::debugConsole(QStringLiteral("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->border.left.map==NULL)
+                DebugClass::debugConsole(QStringLiteral("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file));
             else
-                DebugClass::debugConsole(QStringLiteral("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->map_file).arg(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map=NULL;
         }
         index++;
@@ -1057,42 +1058,42 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)];
+        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index));
 
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map))
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map;
         }
 
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map))
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map;
         }
 
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map))
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
         }
 
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map))
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
-            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
         }
 
         index++;
@@ -1103,19 +1104,19 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL)
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL)
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.bottom.fileName)).border.top.x_offset-semi_loaded_map.at(index).border.bottom.x_offset;
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=0;
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL)
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.top.map!=NULL)
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.top.fileName)).border.bottom.x_offset-semi_loaded_map.at(index).border.top.x_offset;
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=0;
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL)
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.left.map!=NULL)
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.left.fileName)).border.right.y_offset-semi_loaded_map.at(index).border.left.y_offset;
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=0;
-        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL)
+        if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.right.map!=NULL)
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset-semi_loaded_map.at(index).border.right.y_offset;
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=0;
@@ -1128,9 +1129,9 @@ void BaseServer::preload_the_map()
     while(index<size)
     {
         sub_index=0;
-        while(sub_index<semi_loaded_map[index].old_map.rescue_points.size())
+        while(sub_index<semi_loaded_map.value(index).old_map.rescue_points.size())
         {
-            const Map_to_send::Map_Point &point=semi_loaded_map[index].old_map.rescue_points.at(sub_index);
+            const Map_to_send::Map_Point &point=semi_loaded_map.value(index).old_map.rescue_points.at(sub_index);
             QPair<quint8,quint8> coord;
             coord.first=point.x;
             coord.second=point.y;
@@ -1253,19 +1254,19 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     while(index<size)
     {
         int sub_index=0;
-        const int &botssize=semi_loaded_map[index].old_map.bots.size();
+        const int &botssize=semi_loaded_map.value(index).old_map.bots.size();
         while(sub_index<botssize)
         {
             bots_number++;
-            Map_to_send::Bot_Semi bot_Semi=semi_loaded_map[index].old_map.bots.at(sub_index);
+            Map_to_send::Bot_Semi bot_Semi=semi_loaded_map.value(index).old_map.bots.at(sub_index);
             loadBotFile(bot_Semi.file);
             if(botFiles.contains(bot_Semi.file))
-                if(botFiles[bot_Semi.file].contains(bot_Semi.id))
+                if(botFiles.value(bot_Semi.file).contains(bot_Semi.id))
                 {
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                     #endif
-                    QHashIterator<quint8,QDomElement> i(botFiles[bot_Semi.file][bot_Semi.id].step);
+                    QHashIterator<quint8,QDomElement> i(botFiles.value(bot_Semi.file).value(bot_Semi.id).step);
                     while (i.hasNext()) {
                         i.next();
                         QDomElement step = i.value();
@@ -1273,69 +1274,69 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         {
                             if(!step.hasAttribute(QStringLiteral("shop")))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 quint32 shop=step.attribute(QStringLiteral("shop")).toUInt(&ok);
                                 if(!ok)
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else if(!GlobalServerData::serverPrivateVariables.shops.contains(shop))
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP_LOAD
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop put at: %1 (%2,%3)")
-                                        .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                        .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     #endif
-                                    static_cast<MapServer *>(semi_loaded_map[index].map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
+                                    static_cast<MapServer *>(semi_loaded_map.value(index).map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
                                     shops_number++;
                                 }
                             }
                         }
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("learn"))
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("learn point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map[index].map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
                                 learnpoint_number++;
                             }
                         }
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("heal"))
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("heal point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map[index].map)->heal.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
                                 healpoint_number++;
                             }
                         }
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("market"))
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("market point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
-                                static_cast<MapServer *>(semi_loaded_map[index].map)->market.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
                                 marketpoint_number++;
                             }
                         }
@@ -1343,15 +1344,15 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         {
                             if(!step.hasAttribute(QStringLiteral("zone")))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                            else if(static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("zonecapture point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture[QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)]=step.attribute("zone");
                                 zonecapturepoint_number++;
@@ -1359,9 +1360,9 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         }
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("fight"))
                         {
-                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                            if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 quint32 fightid=step.attribute(QStringLiteral("fightid")).toUInt(&ok);
@@ -1372,33 +1373,33 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                         if(bot_Semi.property_text.contains(QStringLiteral("lookAt")))
                                         {
                                             Direction direction;
-                                            if(bot_Semi.property_text[QStringLiteral("lookAt")]==QStringLiteral("left"))
+                                            if(bot_Semi.property_text.value(QStringLiteral("lookAt"))==QStringLiteral("left"))
                                                 direction=CatchChallenger::Direction_move_at_left;
-                                            else if(bot_Semi.property_text[QStringLiteral("lookAt")]==QStringLiteral("right"))
+                                            else if(bot_Semi.property_text.value(QStringLiteral("lookAt"))==QStringLiteral("right"))
                                                 direction=CatchChallenger::Direction_move_at_right;
-                                            else if(bot_Semi.property_text[QStringLiteral("lookAt")]==QStringLiteral("top"))
+                                            else if(bot_Semi.property_text.value(QStringLiteral("lookAt"))==QStringLiteral("top"))
                                                 direction=CatchChallenger::Direction_move_at_top;
                                             else
                                             {
-                                                if(bot_Semi.property_text[QStringLiteral("lookAt")]!=QStringLiteral("bottom"))
+                                                if(bot_Semi.property_text.value(QStringLiteral("lookAt"))!=QStringLiteral("bottom"))
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Wrong direction for the bot at %1 (%2,%3)")
-                                                        .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                                        .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                                 direction=CatchChallenger::Direction_move_at_bottom;
                                             }
                                             #ifdef DEBUG_MESSAGE_MAP_LOAD
                                             CatchChallenger::DebugClass::debugConsole(QStringLiteral("botsFight point put at: %1 (%2,%3)")
-                                                .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                                .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                             #endif
                                             static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),fightid);
                                             botfights_number++;
 
                                             //load the botsFightTrigger
                                             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
-                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
+                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
                                             #endif
                                             quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
                                             int index_botfight_range=0;
-                                            CatchChallenger::Map *map=semi_loaded_map[index].map;
+                                            CatchChallenger::Map *map=semi_loaded_map.value(index).map;
                                             CatchChallenger::Map *old_map=map;
                                             while(index_botfight_range<CATCHCHALLENGER_BOTFIGHT_RANGE)
                                             {
@@ -1414,13 +1415,13 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             }
                                         }
                                         else
-                                            DebugClass::debugConsole(QStringLiteral("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                            DebugClass::debugConsole(QStringLiteral("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     }
                                     else
-                                        DebugClass::debugConsole(QStringLiteral("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                        DebugClass::debugConsole(QStringLiteral("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 }
                                 else
-                                    DebugClass::debugConsole(QStringLiteral("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    DebugClass::debugConsole(QStringLiteral("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                             }
                         }
                     }
@@ -1506,7 +1507,7 @@ void BaseServer::loadBotFile(const QString &file)
     botFiles[file];//create the entry
     QDomDocument domDocument;
     if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile mapFile(file);
@@ -1567,7 +1568,7 @@ void BaseServer::loadBotFile(const QString &file)
                     }
                     step = step.nextSiblingElement(QStringLiteral("step"));
                 }
-                if(!botFiles[file][id].step.contains(1))
+                if(!botFiles.value(file).value(id).step.contains(1))
                     botFiles[file].remove(id);
             }
             else

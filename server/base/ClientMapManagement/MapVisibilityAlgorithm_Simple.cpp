@@ -267,7 +267,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
     }
     //go into over move
     else if(unlikely(
-                ((quint32)to_send_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
+                ((quint32)to_send_move.value(player_id).size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
                 >=
                     //size of on insert
                     (quint32)GlobalServerData::serverPrivateVariables.sizeofInsertRequest+player_informations->rawPseudo.size()
@@ -282,16 +282,16 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
     }
     #endif
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_STOP_MOVE
-    if(to_send_move.contains(player_id) && !to_send_move[player_id].isEmpty())
+    if(to_send_move.contains(player_id) && !to_send_move.value(player_id).isEmpty())
     {
-        switch(to_send_move[player_id].last().direction)
+        switch(to_send_move.value(player_id).last().direction)
         {
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-                emit message(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, compressed move").arg(player_id).arg(to_send_move[player_id].last().movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+                emit message(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, compressed move").arg(player_id).arg(to_send_move.value(player_id).last().movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
                 #endif
                 to_send_move[player_id].last().direction=direction;
             return;

@@ -19,7 +19,7 @@ void DatapackClientLoader::parseMonstersExtra()
     QDomDocument domDocument;
     //open and quick check the file
     if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -293,7 +293,7 @@ void DatapackClientLoader::parseTypesExtra()
     QDomDocument domDocument;
     //open and quick check the file
     if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
@@ -395,7 +395,7 @@ void DatapackClientLoader::parseBuffExtra()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("buff.xml");
     //open and quick check the file
     if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -566,7 +566,7 @@ void DatapackClientLoader::parseSkillsExtra()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("skill.xml");
     QDomDocument domDocument;
     if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -737,7 +737,7 @@ void DatapackClientLoader::parseBotFightsExtra()
             QDomDocument domDocument;
             //open and quick check the file
             if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-                domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+                domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
             else
             {
                 QFile xmlFile(file);

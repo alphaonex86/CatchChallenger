@@ -93,7 +93,7 @@ void DatapackClientLoader::parseReputationExtra()
     //open and quick check the file
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("reputation.xml");
     if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
@@ -354,7 +354,7 @@ void DatapackClientLoader::parseItemsExtra()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+QStringLiteral("items.xml");
     //open and quick check the file
     if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
@@ -420,7 +420,7 @@ void DatapackClientLoader::parseItemsExtra()
                             DatapackClientLoader::itemsExtra[id].imagePath=QStringLiteral(":/images/inventory/unknow-object.png");
                         }
                         // base size: 24x24
-                        DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra[id].image.scaled(72,72);//then zoom: 3x
+                        DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra.value(id).image.scaled(72,72);//then zoom: 3x
 
                         //load the name
                         {
@@ -614,7 +614,7 @@ void DatapackClientLoader::parseQuestsExtra()
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath()+QStringLiteral("/definition.xml");
         if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-            domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+            domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
         else
         {
             QFile itemsFile(file);
@@ -780,7 +780,7 @@ void DatapackClientLoader::parseQuestsExtra()
         {
             if(!steps.contains(indexLoop))
                 break;
-            quest.steps << steps[indexLoop];
+            quest.steps << steps.value(indexLoop);
             indexLoop++;
         }
         if(indexLoop>=(steps.size()+1))
@@ -897,9 +897,9 @@ void DatapackClientLoader::parseQuestsText()
             client_logic = client_logic.nextSiblingElement(QStringLiteral("client_logic"));
         }
         #ifdef DEBUG_CLIENT_QUEST
-        qDebug() << QStringLiteral("%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId[entryList.at(index).absoluteFilePath()]);
+        qDebug() << QStringLiteral("%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
         #endif
-        questsText[questsPathToId[entryList.at(index).absoluteFilePath()]].text=client_logic_texts;
+        questsText[questsPathToId.value(entryList.at(index).absoluteFilePath())].text=client_logic_texts;
         index++;
     }
 
@@ -912,7 +912,7 @@ void DatapackClientLoader::parseAudioAmbiance()
     QDomDocument domDocument;
     //open and quick check the file
     if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
