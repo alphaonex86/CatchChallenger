@@ -72,7 +72,7 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
             emit error(QStringLiteral("saveMonsterStat() The monster %1 is not into the monster list (%2)").arg(monster.monster).arg(CatchChallenger::CommonDatapack::commonDatapack.monsters.size()));
             return;
         }
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster],monster.level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster),monster.level);
         if(monster.hp>currentMonsterStat.hp)
         {
             emit error(QStringLiteral("saveMonsterStat() The hp %1 of current monster %2 is greater than the max %3").arg(monster.hp).arg(monster.monster).arg(currentMonsterStat.hp));
@@ -209,8 +209,8 @@ void LocalClientHandlerFight::healAllMonsters()
     {
         if(player_informations->public_and_private_informations.playerMonster.at(index).egg_step==0)
         {
-            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->public_and_private_informations.playerMonster.at(index).monster],player_informations->public_and_private_informations.playerMonster.at(index).level);
-            if(player_informations->public_and_private_informations.playerMonster[index].hp!=stat.hp)
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(player_informations->public_and_private_informations.playerMonster.at(index).monster),player_informations->public_and_private_informations.playerMonster.at(index).level);
+            if(player_informations->public_and_private_informations.playerMonster.value(index).hp!=stat.hp)
             {
                 player_informations->public_and_private_informations.playerMonster[index].hp=stat.hp;
                 switch(GlobalServerData::serverSettings.database.type)
@@ -218,44 +218,45 @@ void LocalClientHandlerFight::healAllMonsters()
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2;")
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                     .arg(player_informations->public_and_private_informations.playerMonster.value(index).hp)
+                                     .arg(player_informations->public_and_private_informations.playerMonster.value(index).id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                     .arg(player_informations->public_and_private_informations.playerMonster.value(index).hp)
+                                     .arg(player_informations->public_and_private_informations.playerMonster.value(index).id)
                                      );
                     break;
                 }
             }
-            if(!player_informations->public_and_private_informations.playerMonster[index].buffs.isEmpty())
+            if(!player_informations->public_and_private_informations.playerMonster.value(index).buffs.isEmpty())
             {
                 switch(GlobalServerData::serverSettings.database.type)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster.value(index).id)
                                  );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster.value(index).id)
                                  );
                     break;
                 }
                 player_informations->public_and_private_informations.playerMonster[index].buffs.clear();
             }
             sub_index=0;
-            while(sub_index<player_informations->public_and_private_informations.playerMonster[index].skills.size())
+            const int &list_size=player_informations->public_and_private_informations.playerMonster.value(index).skills.size();
+            while(sub_index<list_size)
             {
-                int endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[
-                        player_informations->public_and_private_informations.playerMonster[index].skills.at(sub_index).skill
-                        ]
-                        .level.at(player_informations->public_and_private_informations.playerMonster[index].skills.at(sub_index).level-1).endurance;
-                if(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance!=endurance)
+                int endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(
+                        player_informations->public_and_private_informations.playerMonster.value(index).skills.at(sub_index).skill
+                        )
+                        .level.at(player_informations->public_and_private_informations.playerMonster.value(index).skills.at(sub_index).level-1).endurance;
+                if(player_informations->public_and_private_informations.playerMonster.value(index).skills.value(sub_index).endurance!=endurance)
                 {
                     switch(GlobalServerData::serverSettings.database.type)
                     {
@@ -263,15 +264,15 @@ void LocalClientHandlerFight::healAllMonsters()
                         case ServerSettings::Database::DatabaseType_Mysql:
                             emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
                                          .arg(endurance)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
+                                         .arg(player_informations->public_and_private_informations.playerMonster.value(index).id)
+                                         .arg(player_informations->public_and_private_informations.playerMonster.value(index).skills.value(sub_index).skill)
                                          );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
                             emit dbQuery(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
                                          .arg(endurance)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
+                                         .arg(player_informations->public_and_private_informations.playerMonster.value(index).id)
+                                         .arg(player_informations->public_and_private_informations.playerMonster.value(index).skills.value(sub_index).skill)
                                          );
                         break;
                     }
@@ -304,8 +305,8 @@ void LocalClientHandlerFight::saveStat()
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
@@ -377,7 +378,7 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
         emit error(QStringLiteral("error: bot id %1 not found").arg(botFightId));
         return false;
     }
-    const BotFight &botFight=CommonDatapack::commonDatapack.botFights[botFightId];
+    const BotFight &botFight=CommonDatapack::commonDatapack.botFights.value(botFightId);
     if(botFight.monsters.isEmpty())
     {
         emit error(QStringLiteral("error: bot id %1 have no monster to fight").arg(botFightId));
@@ -389,7 +390,7 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
     while(index<botFight.monsters.size())
     {
         const BotFight::BotFightMonster &monster=botFight.monsters.at(index);
-        const Monster::Stat &stat=getStat(CommonDatapack::commonDatapack.monsters[monster.id],monster.level);
+        const Monster::Stat &stat=getStat(CommonDatapack::commonDatapack.monsters.value(monster.id),monster.level);
         botFightMonsters << FacilityLib::botFightMonsterToPlayerMonster(monster,stat);
         index++;
     }
@@ -496,14 +497,15 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                 sub_index2++;
             }
             int sub_index=0;
-            while(sub_index<CommonDatapack::commonDatapack.monsters[monster.monster].learn.size())
+            const int &list_size=CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size();
+            while(sub_index<list_size)
             {
-                const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.monsters[monster.monster].learn.at(sub_index);
+                const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.at(sub_index);
                 if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
                 {
-                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
+                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills.value(sub_index2).level+1)==learn.learnSkillLevel)
                     {
-                        quint32 sp=CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp_to_learn;
+                        const quint32 &sp=CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel).sp_to_learn;
                         if(sp>monster.sp)
                         {
                             emit error(QStringLiteral("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));
@@ -515,13 +517,13 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                             default:
                             case ServerSettings::Database::DatabaseType_Mysql:
                                 emit dbQuery(QStringLiteral("UPDATE `monster` SET `sp`=%1 WHERE `id`=%2;")
-                                             .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                             .arg(player_informations->public_and_private_informations.playerMonster.value(index).sp)
                                              .arg(monsterId)
                                              );
                             break;
                             case ServerSettings::Database::DatabaseType_SQLite:
                                 emit dbQuery(QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2;")
-                                             .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                             .arg(player_informations->public_and_private_informations.playerMonster.value(index).sp)
                                              .arg(monsterId)
                                              );
                             break;
@@ -531,7 +533,7 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                             PlayerMonster::PlayerSkill temp;
                             temp.skill=skill;
                             temp.level=1;
-                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[temp.skill].level.first().endurance;
+                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.first().endurance;
                             player_informations->public_and_private_informations.playerMonster[index].skills << temp;
                             switch(GlobalServerData::serverSettings.database.type)
                             {
@@ -560,14 +562,14 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                                 default:
                                 case ServerSettings::Database::DatabaseType_Mysql:
                                     emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index2].level)
+                                                 .arg(player_informations->public_and_private_informations.playerMonster.value(index).skills.value(sub_index2).level)
                                                  .arg(monsterId)
                                                  .arg(skill)
                                                  );
                                 break;
                                 case ServerSettings::Database::DatabaseType_SQLite:
                                     emit dbQuery(QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
-                                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index2].level)
+                                                 .arg(player_informations->public_and_private_informations.playerMonster.value(index).skills.value(sub_index2).level)
                                                  .arg(monsterId)
                                                  .arg(skill)
                                                  );
@@ -782,8 +784,8 @@ bool LocalClientHandlerFight::currentMonsterAttackFirst(const PlayerMonster * cu
 {
     if(isInBattle())
     {
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         bool currentMonsterStatIsFirstToAttack=false;
         if(currentMonsterStat.speed>otherMonsterStat.speed)
             currentMonsterStatIsFirstToAttack=true;
@@ -952,7 +954,7 @@ bool LocalClientHandlerFight::finishTheTurn(const bool &isBot)
             {
                 if(!isInCityCapture)
                 {
-                    addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
+                    addCash(CommonDatapack::commonDatapack.botFights.value(botFightId).cash);
                     player_informations->public_and_private_informations.bot_already_beaten << botFightId;
                     switch(GlobalServerData::serverSettings.database.type)
                     {
@@ -1227,7 +1229,7 @@ int LocalClientHandlerFight::addCurrentBuffEffect(const Skill::BuffEffect &effec
     const int &returnCode=CommonFightEngine::addCurrentBuffEffect(effect);
     if(returnCode==-2)
         return returnCode;
-    if(CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.at(effect.level-1).duration==Buff::Duration_Always)
+    if(CommonDatapack::commonDatapack.monsterBuffs.value(effect.buff).level.at(effect.level-1).duration==Buff::Duration_Always)
     {
         if(returnCode==-1)
             switch(effect.on)
@@ -1339,8 +1341,8 @@ bool LocalClientHandlerFight::moveUpMonster(const quint8 &number)
         return false;
     if(GlobalServerData::serverSettings.database.fightSync!=ServerSettings::Database::FightSync_AtTheDisconnexion)
     {
-        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number-1].id,number);
-        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number].id,number+1);
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster.value(number-1).id,number);
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster.value(number).id,number+1);
     }
     return true;
 }
@@ -1354,8 +1356,8 @@ bool LocalClientHandlerFight::moveDownMonster(const quint8 &number)
     }
     if(GlobalServerData::serverSettings.database.fightSync!=ServerSettings::Database::FightSync_AtTheDisconnexion)
     {
-        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number].id,number+1);
-        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number+1].id,number+2);
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster.value(number).id,number+1);
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster.value(number+1).id,number+2);
     }
     return true;
 
@@ -1505,8 +1507,8 @@ void LocalClientHandlerFight::confirmEvolutionTo(PlayerMonster * playerMonster,c
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     PlayerMonster * currentMonster=getCurrentMonster();
     PublicPlayerMonster * otherMonster=getOtherMonster();
-    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
     if(currentMonster!=NULL)
         if(currentMonster->hp>currentMonsterStat.hp)
         {
@@ -1548,7 +1550,7 @@ void LocalClientHandlerFight::confirmEvolution(const quint32 &monsterId)
     {
         if(player_informations->public_and_private_informations.playerMonster.at(index).id==monsterId)
         {
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[player_informations->public_and_private_informations.playerMonster.at(index).monster];
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(player_informations->public_and_private_informations.playerMonster.at(index).monster);
             int sub_index=0;
             while(sub_index<monsterInformations.evolutions.size())
             {
@@ -1577,8 +1579,8 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
@@ -1598,8 +1600,8 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
@@ -1678,4 +1680,29 @@ bool LocalClientHandlerFight::removeAllBuffOnMonster(PlayerMonster * currentMons
         }
     }
     return returnVal;
+}
+
+bool LocalClientHandlerFight::addLevel(PlayerMonster * monster, const quint8 &numberOfLevel)
+{
+    if(!CommonFightEngine::addLevel(monster,numberOfLevel))
+        return false;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%1,`xp`=0,`level`=%2 WHERE `id`=%3;")
+                         .arg(monster->hp)
+                         .arg(monster->level)
+                         .arg(monster->id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("UPDATE monster SET hp=%1,xp=0,level=%2 WHERE id=%3;")
+                         .arg(monster->hp)
+                         .arg(monster->level)
+                         .arg(monster->id)
+                         );
+        break;
+    }
+    return true;
 }

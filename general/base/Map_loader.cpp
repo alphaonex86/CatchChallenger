@@ -209,7 +209,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     {
                                         if(type==QStringLiteral("border-left"))//border left
                                         {
-                                            map_to_send.border.left.fileName=property_text[QStringLiteral("map")].toString();
+                                            map_to_send.border.left.fileName=property_text.value(QStringLiteral("map")).toString();
                                             if(!map_to_send.border.left.fileName.endsWith(QStringLiteral(".tmx")) && !map_to_send.border.left.fileName.isEmpty())
                                                 map_to_send.border.left.fileName+=QStringLiteral(".tmx");
                                             map_to_send.border.left.y_offset=object_y;
@@ -219,7 +219,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                         }
                                         else if(type==QStringLiteral("border-right"))//border right
                                         {
-                                            map_to_send.border.right.fileName=property_text[QStringLiteral("map")].toString();
+                                            map_to_send.border.right.fileName=property_text.value(QStringLiteral("map")).toString();
                                             if(!map_to_send.border.right.fileName.endsWith(QStringLiteral(".tmx")) && !map_to_send.border.right.fileName.isEmpty())
                                                 map_to_send.border.right.fileName+=QStringLiteral(".tmx");
                                             map_to_send.border.right.y_offset=object_y;
@@ -229,7 +229,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                         }
                                         else if(type==QStringLiteral("border-top"))//border top
                                         {
-                                            map_to_send.border.top.fileName=property_text[QStringLiteral("map")].toString();
+                                            map_to_send.border.top.fileName=property_text.value(QStringLiteral("map")).toString();
                                             if(!map_to_send.border.top.fileName.endsWith(QStringLiteral(".tmx")) && !map_to_send.border.top.fileName.isEmpty())
                                                 map_to_send.border.top.fileName+=QStringLiteral(".tmx");
                                             map_to_send.border.top.x_offset=object_x;
@@ -239,7 +239,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                         }
                                         else if(type==QStringLiteral("border-bottom"))//border bottom
                                         {
-                                            map_to_send.border.bottom.fileName=property_text[QStringLiteral("map")].toString();
+                                            map_to_send.border.bottom.fileName=property_text.value(QStringLiteral("map")).toString();
                                             if(!map_to_send.border.bottom.fileName.endsWith(QStringLiteral(".tmx")) && !map_to_send.border.bottom.fileName.isEmpty())
                                                 map_to_send.border.bottom.fileName+=QStringLiteral(".tmx");
                                             map_to_send.border.bottom.x_offset=object_x;
@@ -269,15 +269,15 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     if(property_text.contains(QStringLiteral("map")) && property_text.contains(QStringLiteral("x")) && property_text.contains(QStringLiteral("y")))
                                     {
                                         Map_semi_teleport new_tp;
-                                        new_tp.destination_x = property_text[QStringLiteral("x")].toUInt(&ok);
+                                        new_tp.destination_x = property_text.value(QStringLiteral("x")).toUInt(&ok);
                                         if(ok)
                                         {
-                                            new_tp.destination_y = property_text[QStringLiteral("y")].toUInt(&ok);
+                                            new_tp.destination_y = property_text.value(QStringLiteral("y")).toUInt(&ok);
                                             if(ok)
                                             {
                                                 new_tp.source_x=object_x;
                                                 new_tp.source_y=object_y;
-                                                new_tp.map=property_text[QStringLiteral("map")].toString();
+                                                new_tp.map=property_text.value(QStringLiteral("map")).toString();
                                                 if(!new_tp.map.endsWith(QStringLiteral(".tmx")) && !new_tp.map.isEmpty())
                                                     new_tp.map+=QStringLiteral(".tmx");
                                                 map_to_send.teleport << new_tp;
@@ -286,10 +286,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                                 #endif
                                             }
                                             else
-                                                DebugClass::debugConsole(QStringLiteral("Bad convertion to int for y, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text["y"].toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Bad convertion to int for y, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QStringLiteral("y")).toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
                                         }
                                         else
-                                            DebugClass::debugConsole(QStringLiteral("Bad convertion to int for x, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text["x"].toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
+                                            DebugClass::debugConsole(QStringLiteral("Bad convertion to int for x, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QStringLiteral("x")).toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
                                     }
                                     else
                                         DebugClass::debugConsole(QStringLiteral("Missing map,x or y, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
@@ -404,8 +404,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     if(property_text.contains(QStringLiteral("file")) && property_text.contains(QStringLiteral("id")))
                                     {
                                         Map_to_send::Bot_Semi bot_semi;
-                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+QStringLiteral("/")+property_text[QStringLiteral("file")].toString()).absoluteFilePath();
-                                        bot_semi.id=property_text[QStringLiteral("id")].toUInt(&ok);
+                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+QStringLiteral("/")+property_text.value(QStringLiteral("file")).toString()).absoluteFilePath();
+                                        bot_semi.id=property_text.value(QStringLiteral("id")).toUInt(&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
@@ -517,7 +517,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         int index=0;
                         while(index<layersize)
                         {
-                            Walkable[index]=Walkable[index] || data[index];
+                            Walkable[index]=Walkable.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -532,7 +532,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=Collisions.size();
                         while(index<layersize)
                         {
-                            Collisions[index]=Collisions[index] || data[index];
+                            Collisions[index]=Collisions.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -547,7 +547,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=Water.size();
                         while(index<layersize)
                         {
-                            Water[index]=Water[index] || data[index];
+                            Water[index]=Water.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -562,7 +562,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=Grass.size();
                         while(index<layersize)
                         {
-                            Grass[index]=Grass[index] || data[index];
+                            Grass[index]=Grass.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -577,7 +577,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=Dirt.size();
                         while(index<layersize)
                         {
-                            Dirt[index]=Dirt[index] || data[index];
+                            Dirt[index]=Dirt.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -592,7 +592,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=LedgesRight.size();
                         while(index<layersize)
                         {
-                            LedgesRight[index]=LedgesRight[index] || data[index];
+                            LedgesRight[index]=LedgesRight.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -607,7 +607,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=LedgesLeft.size();
                         while(index<layersize)
                         {
-                            LedgesLeft[index]=LedgesLeft[index] || data[index];
+                            LedgesLeft[index]=LedgesLeft.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -622,7 +622,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=LedgesBottom.size();
                         while(index<layersize)
                         {
-                            LedgesBottom[index]=LedgesBottom[index] || data[index];
+                            LedgesBottom[index]=LedgesBottom.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -637,7 +637,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         const int &layersize=LedgesTop.size();
                         while(index<layersize)
                         {
-                            LedgesTop[index]=LedgesTop[index] || data[index];
+                            LedgesTop[index]=LedgesTop.at(index) || data.at(index);
                             index++;
                         }
                     }
@@ -967,7 +967,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 x=0;
                 while(x<map_to_send.width)
                 {
-                    line += QString::number(map_to_send.parsed_layer.ledges[x+y*map_to_send.width]);
+                    line += QString::number(map_to_send.parsed_layer.ledges.value(x+y*map_to_send.width);
                     x++;
                 }
                 line+=" ";
@@ -975,7 +975,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             x=0;
             while(x<map_to_send.width)
             {
-                line += QString::number(map_to_send.parsed_layer.walkable[x+y*map_to_send.width]);
+                line += QString::number(map_to_send.parsed_layer.walkable.value(x+y*map_to_send.width);
                 x++;
             }
             line.replace("0","_");

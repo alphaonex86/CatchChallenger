@@ -53,7 +53,7 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
         return false;
     CatchChallenger::Map *new_map=&map;
     CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    if(all_map[new_map->map_file]->logicalMap.bots.contains(QPair<quint8,quint8>(x,y)))
+    if(all_map.value(new_map->map_file)->logicalMap.bots.contains(QPair<quint8,quint8>(x,y)))
         return false;
     return true;
 }
@@ -100,26 +100,26 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     if(!QFile(skinPath).exists())
     {
         qDebug() << "Unable the load the bot tileset (not found):" << skinPath;
-        if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
+        if(!parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
-    else if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(skinPath),skinPath))
+    else if(!parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->loadFromImage(QImage(skinPath),skinPath))
     {
         qDebug() << "Unable the load the bot tileset";
-        if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
+        if(!parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
-    Tiled::Cell cell=parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->cell();
-    cell.tile=parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->tileAt(baseTile);
-    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->setCell(cell);
-    ObjectGroupItem::objectGroupLink[parsedMap->objectGroup]->addObject(parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject);
+    Tiled::Cell cell=parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject->cell();
+    cell.tile=parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->tileAt(baseTile);
+    parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject->setCell(cell);
+    ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject);
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->setPosition(QPoint(x,y+1));
-    MapObjectItem::objectLink[parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject]->setZValue(y);
+    parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject->setPosition(QPoint(x,y+1));
+    MapObjectItem::objectLink.value(parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject)->setZValue(y);
 
-    if(parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].step.contains(1))
+    if(parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).step.contains(1))
     {
-        QDomElement stepBot=parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].step[1];
+        QDomElement stepBot=parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).step.value(1);
         if(stepBot.hasAttribute(QStringLiteral("type")) && stepBot.attribute(QStringLiteral("type"))==QStringLiteral("fight") && stepBot.hasAttribute(QStringLiteral("fightid")))
         {
             bool ok;

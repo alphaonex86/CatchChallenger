@@ -116,7 +116,7 @@ MapVisualiser::~MapVisualiser()
 MapVisualiserThread::Map_full * MapVisualiser::getMap(QString map)
 {
     if(all_map.contains(map))
-        return all_map[map];
+        return all_map.value(map);
     return NULL;
 }
 

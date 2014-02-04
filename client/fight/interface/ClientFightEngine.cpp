@@ -266,7 +266,7 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
     emit message("applyCurrentLifeEffectReturn on: "+QString::number(effectReturn.on));
     #endif
     qint32 quantity;
-    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
+    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster),playerMonster->level);
     switch(effectReturn.on)
     {
         case ApplyOn_AloneEnemy:
@@ -527,7 +527,7 @@ bool ClientFightEngine::doTheOtherMonsterTurn()
 void ClientFightEngine::levelUp(const quint8 &level, const quint8 &monsterIndex)
 {
     const PlayerMonster &monster=player_informations->playerMonster.at(monsterIndex);
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster.monster];
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster.monster);
     int index=0;
     while(index<monsterInformations.evolutions.size())
     {

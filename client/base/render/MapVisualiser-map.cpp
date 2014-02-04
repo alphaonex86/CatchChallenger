@@ -74,7 +74,7 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
     //previously loaded
     if(old_all_map.contains(resolvedFileName))
     {
-        MapVisualiserThread::Map_full * tempMapObject=old_all_map[resolvedFileName];
+        MapVisualiserThread::Map_full * tempMapObject=old_all_map.value(resolvedFileName);
         tempMapObject->displayed=false;
         old_all_map.remove(resolvedFileName);
         tempMapObject->logicalMap.border.bottom.map=NULL;
@@ -103,7 +103,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
     }
     QRect current_map_rect;
     if(!current_map.isEmpty() && all_map.contains(current_map))
-        current_map_rect=QRect(0,0,all_map[current_map]->logicalMap.width,all_map[current_map]->logicalMap.height);
+        current_map_rect=QRect(0,0,all_map.value(current_map)->logicalMap.width,all_map.value(current_map)->logicalMap.height);
     else
     {
         qDebug() << "The current map is not set, crash prevented";
@@ -124,12 +124,12 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
             i.next();
             QString skin;
             if(i.value().properties.contains(QStringLiteral("skin")))
-                skin=i.value().properties[QStringLiteral("skin")];
+                skin=i.value().properties.value(QStringLiteral("skin"));
             else
                 skin=QString();
             QString direction;
             if(i.value().properties.contains(QStringLiteral("lookAt")))
-                direction=i.value().properties[QStringLiteral("lookAt")];
+                direction=i.value().properties.value(QStringLiteral("lookAt"));
             else
             {
                 if(!skin.isEmpty())
@@ -196,12 +196,12 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
             QRect current_map_rect;
             if(!current_map.isEmpty() && all_map.contains(current_map))
             {
-                current_map_rect=QRect(0,0,all_map[current_map]->logicalMap.width,all_map[current_map]->logicalMap.height);
+                current_map_rect=QRect(0,0,all_map.value(current_map)->logicalMap.width,all_map.value(current_map)->logicalMap.height);
                 if(all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
                 {
-                    if(all_map[tempMapObject->logicalMap.border_semi.top.fileName]->displayed)
+                    if(all_map.value(tempMapObject->logicalMap.border_semi.top.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.top.fileName];
+                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.top.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
                         {
@@ -228,9 +228,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 }
                 if(all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
                 {
-                    if(all_map[tempMapObject->logicalMap.border_semi.bottom.fileName]->displayed)
+                    if(all_map.value(tempMapObject->logicalMap.border_semi.bottom.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.bottom.fileName];
+                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.bottom.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
                         {
@@ -257,9 +257,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 }
                 if(all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
                 {
-                    if(all_map[tempMapObject->logicalMap.border_semi.right.fileName]->displayed)
+                    if(all_map.value(tempMapObject->logicalMap.border_semi.right.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.right.fileName];
+                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.right.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
                         {
@@ -286,9 +286,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 }
                 if(all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
                 {
-                    if(all_map[tempMapObject->logicalMap.border_semi.left.fileName]->displayed)
+                    if(all_map.value(tempMapObject->logicalMap.border_semi.left.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.left.fileName];
+                        MapVisualiserThread::Map_full *border_map=all_map.value(tempMapObject->logicalMap.border_semi.left.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
                         {
@@ -339,17 +339,17 @@ void MapVisualiser::applyTheAnimationTimer()
         {
             if(tempMap->animatedObject.contains(interval))
             {
-                if(tempMap->animatedObject[interval].frames>1)
+                if(tempMap->animatedObject.value(interval).frames>1)
                 {
                     isUsed=true;
                     tempMap->animatedObject[interval].count++;
                     qint8 frameOffset=1;
-                    if(tempMap->animatedObject[interval].count>=tempMap->animatedObject[interval].frames)
+                    if(tempMap->animatedObject.value(interval).count>=tempMap->animatedObject.value(interval).frames)
                     {
-                        frameOffset+=-tempMap->animatedObject[interval].frames;
+                        frameOffset+=-tempMap->animatedObject.value(interval).frames;
                         tempMap->animatedObject[interval].count=0;
                     }
-                    QList<Tiled::MapObject *> animatedObject=tempMap->animatedObject[interval].animatedObject;
+                    QList<Tiled::MapObject *> animatedObject=tempMap->animatedObject.value(interval).animatedObject;
                     int index=0;
                     while(index<animatedObject.size())
                     {
@@ -432,7 +432,7 @@ void MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
     int index=0;
     while(index<map->logicalMap.teleport_semi.size())
     {
-        loadOtherMap(map->logicalMap.teleport_semi[index].map);
+        loadOtherMap(map->logicalMap.teleport_semi.value(index).map);
         index++;
     }
 }

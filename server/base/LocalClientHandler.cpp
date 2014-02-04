@@ -70,7 +70,7 @@ void LocalClientHandler::removeFromClan()
         {
             if(captureCity[clan->captureCityInProgress].removeOne(this))
             {
-                if(captureCity[clan->captureCityInProgress].isEmpty())
+                if(captureCity.value(clan->captureCityInProgress).isEmpty())
                     captureCity.remove(clan->captureCityInProgress);
             }
         }
@@ -367,10 +367,10 @@ void LocalClientHandler::createMemoryClan()
         clan->clanId=player_informations->public_and_private_informations.clan;
         clanList[player_informations->public_and_private_informations.clan]=clan;
         if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.contains(clan->clanId))
-            clan->capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId];
+            clan->capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse.value(clan->clanId);
     }
     else
-        clan=clanList[player_informations->public_and_private_informations.clan];
+        clan=clanList.value(player_informations->public_and_private_informations.clan);
     clan->players << this;
 }
 
@@ -397,12 +397,12 @@ bool LocalClientHandler::captureCityInProgress()
         return false;
     //search in capture not validated
     if(captureCity.contains(clan->captureCityInProgress))
-        if(captureCity[clan->captureCityInProgress].contains(this))
+        if(captureCity.value(clan->captureCityInProgress).contains(this))
             return true;
     //search in capture validated
     if(captureCityValidatedList.contains(clan->captureCityInProgress))
     {
-        const CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
+        const CaptureCityValidated &captureCityValidated=captureCityValidatedList.value(clan->captureCityInProgress);
         //check if this player is into the capture city with the other player of the team
         if(captureCityValidated.players.contains(this))
             return true;
@@ -442,7 +442,7 @@ bool LocalClientHandler::singleMove(const Direction &direction)
         player_informations->unvalidated_rescue.map=map;
         player_informations->unvalidated_rescue.x=x;
         player_informations->unvalidated_rescue.y=y;
-        player_informations->unvalidated_rescue.orientation=static_cast<Map_server_MapVisibility_simple*>(map)->rescue[QPair<quint8,quint8>(x,y)];
+        player_informations->unvalidated_rescue.orientation=static_cast<Map_server_MapVisibility_simple*>(map)->rescue.value(QPair<quint8,quint8>(x,y));
     }
     if(localClientHandlerFight.botFightCollision(map,x,y))
         return true;
@@ -487,14 +487,14 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='wear';")
-                             .arg(player_informations->public_and_private_informations.items[item])
+                             .arg(player_informations->public_and_private_informations.items.value(item))
                              .arg(item)
                              .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
-                         .arg(player_informations->public_and_private_informations.items[item])
+                         .arg(player_informations->public_and_private_informations.items.value(item))
                          .arg(item)
                          .arg(player_informations->character_id)
                          );
@@ -535,14 +535,14 @@ void LocalClientHandler::addWarehouseObject(const quint32 &item,const quint32 &q
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND place='warehouse';")
-                             .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                             .arg(player_informations->public_and_private_informations.warehouse_items.value(item))
                              .arg(item)
                              .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='warehouse';")
-                         .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                         .arg(player_informations->public_and_private_informations.warehouse_items.value(item))
                          .arg(item)
                          .arg(player_informations->character_id)
                          );
@@ -577,7 +577,7 @@ quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quin
 {
     if(player_informations->public_and_private_informations.warehouse_items.contains(item))
     {
-        if(player_informations->public_and_private_informations.warehouse_items[item]>quantity)
+        if(player_informations->public_and_private_informations.warehouse_items.value(item)>quantity)
         {
             player_informations->public_and_private_informations.warehouse_items[item]-=quantity;
             switch(GlobalServerData::serverSettings.database.type)
@@ -585,14 +585,14 @@ quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quin
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
                     emit dbQuery(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='warehouse';")
-                                 .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                                 .arg(player_informations->public_and_private_informations.warehouse_items.value(item))
                                  .arg(item)
                                  .arg(player_informations->character_id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
                     emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='warehouse';")
-                                 .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                                 .arg(player_informations->public_and_private_informations.warehouse_items.value(item))
                                  .arg(item)
                                  .arg(player_informations->character_id)
                              );
@@ -602,7 +602,7 @@ quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quin
         }
         else
         {
-            quint32 removed_quantity=player_informations->public_and_private_informations.warehouse_items[item];
+            quint32 removed_quantity=player_informations->public_and_private_informations.warehouse_items.value(item);
             player_informations->public_and_private_informations.warehouse_items.remove(item);
             switch(GlobalServerData::serverSettings.database.type)
             {
@@ -636,14 +636,14 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='wear';")
-                             .arg(player_informations->public_and_private_informations.items[item])
+                             .arg(player_informations->public_and_private_informations.items.value(item))
                              .arg(item)
                              .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
-                             .arg(player_informations->public_and_private_informations.items[item])
+                             .arg(player_informations->public_and_private_informations.items.value(item))
                              .arg(item)
                              .arg(player_informations->character_id)
                          );
@@ -675,7 +675,7 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
 {
     if(player_informations->public_and_private_informations.items.contains(item))
     {
-        if(player_informations->public_and_private_informations.items[item]>quantity)
+        if(player_informations->public_and_private_informations.items.value(item)>quantity)
         {
             player_informations->public_and_private_informations.items[item]-=quantity;
             switch(GlobalServerData::serverSettings.database.type)
@@ -683,14 +683,14 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
                     emit dbQuery(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='wear';")
-                                 .arg(player_informations->public_and_private_informations.items[item])
+                                 .arg(player_informations->public_and_private_informations.items.value(item))
                                  .arg(item)
                                  .arg(player_informations->character_id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
                     emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
-                                 .arg(player_informations->public_and_private_informations.items[item])
+                                 .arg(player_informations->public_and_private_informations.items.value(item))
                                  .arg(item)
                                  .arg(player_informations->character_id)
                              );
@@ -700,7 +700,7 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
         }
         else
         {
-            quint32 removed_quantity=player_informations->public_and_private_informations.items[item];
+            quint32 removed_quantity=player_informations->public_and_private_informations.items.value(item);
             player_informations->public_and_private_informations.items.remove(item);
             switch(GlobalServerData::serverSettings.database.type)
             {
@@ -740,7 +740,7 @@ void LocalClientHandler::sendRemoveObject(const quint32 &item,const quint32 &qua
 quint32 LocalClientHandler::objectQuantity(const quint32 &item)
 {
     if(player_informations->public_and_private_informations.items.contains(item))
-        return player_informations->public_and_private_informations.items[item];
+        return player_informations->public_and_private_informations.items.value(item);
     else
         return 0;
 }
@@ -1018,7 +1018,7 @@ bool LocalClientHandler::wareHouseStoreCheck(const qint64 &cash, const QList<QPa
                     emit error("warehouse item transfer is wrong due to missing");
                     return false;
                 }
-                if((qint64)player_informations->public_and_private_informations.warehouse_items[item.first]<item.second)
+                if((qint64)player_informations->public_and_private_informations.warehouse_items.value(item.first)<item.second)
                 {
                     emit error("warehouse item transfer is wrong due to wrong quantity");
                     return false;
@@ -1031,7 +1031,7 @@ bool LocalClientHandler::wareHouseStoreCheck(const qint64 &cash, const QList<QPa
                     emit error("item transfer is wrong due to missing");
                     return false;
                 }
-                if((qint64)player_informations->public_and_private_informations.items[item.first]<-item.second)
+                if((qint64)player_informations->public_and_private_informations.items.value(item.first)<-item.second)
                 {
                     emit error("item transfer is wrong due to wrong quantity");
                     return false;
@@ -1129,7 +1129,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             return;
         }
         emit message(QStringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
-        playerByPseudo[arguments.at(1)]->addObjectAndSend(objectId,quantity);
+        playerByPseudo.value(arguments.at(1))->addObjectAndSend(objectId,quantity);
     }
     else if(command==QStringLiteral("take"))
     {
@@ -1165,7 +1165,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             return;
         }
         emit message(QStringLiteral("%1 have take to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
-        playerByPseudo[arguments.at(1)]->sendRemoveObject(objectId,playerByPseudo[arguments.at(1)]->removeObject(objectId,quantity));
+        playerByPseudo.value(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.value(arguments.at(1))->removeObject(objectId,quantity));
     }
     else if(command==QStringLiteral("tp"))
     {
@@ -1187,7 +1187,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
                 emit receiveSystemText(QStringLiteral("%1 is not connected, usage: /tp player1 to player2").arg(arguments.last()));
                 return;
             }
-            playerByPseudo[arguments.first()]->receiveTeleportTo(playerByPseudo[arguments.last()]->map,playerByPseudo[arguments.last()]->x,playerByPseudo[arguments.last()]->y,MoveOnTheMap::directionToOrientation(playerByPseudo[arguments.last()]->getLastDirection()));
+            playerByPseudo.value(arguments.first())->receiveTeleportTo(playerByPseudo.value(arguments.last())->map,playerByPseudo.value(arguments.last())->x,playerByPseudo.value(arguments.last())->y,MoveOnTheMap::directionToOrientation(playerByPseudo.value(arguments.last())->getLastDirection()));
         }
         else
         {
@@ -1222,17 +1222,17 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QStringLiteral("you are already in battle"));
             return;
         }
-        if(playerByPseudo[extraText]->getInTrade())
+        if(playerByPseudo.value(extraText)->getInTrade())
         {
             emit receiveSystemText(QStringLiteral("%1 is already in trade").arg(extraText));
             return;
         }
-        if(playerByPseudo[extraText]->localClientHandlerFight.isInBattle())
+        if(playerByPseudo.value(extraText)->localClientHandlerFight.isInBattle())
         {
             emit receiveSystemText(QStringLiteral("%1 is already in battle").arg(extraText));
             return;
         }
-        if(!otherPlayerIsInRange(playerByPseudo[extraText]))
+        if(!otherPlayerIsInRange(playerByPseudo.value(extraText)))
         {
             emit receiveSystemText(QStringLiteral("%1 is not in range").arg(extraText));
             return;
@@ -1240,7 +1240,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QStringLiteral("Trade requested"));
         #endif
-        otherPlayerTrade=playerByPseudo[extraText];
+        otherPlayerTrade=playerByPseudo.value(extraText);
         otherPlayerTrade->registerTradeRequest(this);
     }
     else if(command==QStringLiteral("battle"))
@@ -1270,22 +1270,22 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QStringLiteral("you are already in trade"));
             return;
         }
-        if(playerByPseudo[extraText]->localClientHandlerFight.isInBattle())
+        if(playerByPseudo.value(extraText)->localClientHandlerFight.isInBattle())
         {
             emit receiveSystemText(QStringLiteral("%1 is already in battle").arg(extraText));
             return;
         }
-        if(playerByPseudo[extraText]->getInTrade())
+        if(playerByPseudo.value(extraText)->getInTrade())
         {
             emit receiveSystemText(QStringLiteral("%1 is already in battle").arg(extraText));
             return;
         }
-        if(!otherPlayerIsInRange(playerByPseudo[extraText]))
+        if(!otherPlayerIsInRange(playerByPseudo.value(extraText)))
         {
             emit receiveSystemText(QStringLiteral("%1 is not in range").arg(extraText));
             return;
         }
-        if(!playerByPseudo[extraText]->localClientHandlerFight.getAbleToFight())
+        if(!playerByPseudo.value(extraText)->localClientHandlerFight.getAbleToFight())
         {
             emit receiveSystemText(QStringLiteral("The other player can't fight"));
             return;
@@ -1295,7 +1295,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QStringLiteral("You can't fight"));
             return;
         }
-        if(playerByPseudo[extraText]->localClientHandlerFight.isInFight())
+        if(playerByPseudo.value(extraText)->localClientHandlerFight.isInFight())
         {
             emit receiveSystemText(QStringLiteral("The other player is in fight"));
             return;
@@ -1313,7 +1313,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QStringLiteral("Battle requested"));
         #endif
-        playerByPseudo[extraText]->localClientHandlerFight.registerBattleRequest(&localClientHandlerFight);
+        playerByPseudo.value(extraText)->localClientHandlerFight.registerBattleRequest(&localClientHandlerFight);
     }
 }
 
@@ -1415,7 +1415,7 @@ void LocalClientHandler::useObjectOnMonster(const quint32 &object,const quint32 
     }
     if(localClientHandlerFight.useObjectOnMonster(object,monster))
     {
-        if(CommonDatapack::commonDatapack.items.item[object].consumeAtUse)
+        if(CommonDatapack::commonDatapack.items.item.value(object).consumeAtUse)
             removeObject(object);
     }
 }
@@ -1435,12 +1435,12 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
         emit error(QStringLiteral("have not quantity to use this object: %1 because recipe already registred").arg(itemId));
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item[itemId].consumeAtUse)
+    if(CommonDatapack::commonDatapack.items.item.value(itemId).consumeAtUse)
         removeObject(itemId);
     //if is crafting recipe
     if(CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
     {
-        quint32 recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes[itemId];
+        const quint32 &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.value(itemId);
         if(player_informations->public_and_private_informations.recipes.contains(recipeId))
         {
             emit error(QStringLiteral("can't use the object: %1").arg(itemId));
@@ -1499,7 +1499,7 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
     //use repel into fight
     else if(CommonDatapack::commonDatapack.items.repel.contains(itemId))
     {
-        player_informations->public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.items.repel[itemId];
+        player_informations->public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.items.repel.value(itemId);
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1629,8 +1629,8 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
         }
     }
     //send the shop items (no taxes from now)
-    QList<quint32> items=GlobalServerData::serverPrivateVariables.shops[shopId].items;
-    QList<quint32> prices=GlobalServerData::serverPrivateVariables.shops[shopId].prices;
+    QList<quint32> items=GlobalServerData::serverPrivateVariables.shops.value(shopId).items;
+    QList<quint32> prices=GlobalServerData::serverPrivateVariables.shops.value(shopId).prices;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -1743,7 +1743,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         }
     }
     //send the shop items (no taxes from now)
-    QList<quint32> items=GlobalServerData::serverPrivateVariables.shops[shopId].items;
+    QList<quint32> items=GlobalServerData::serverPrivateVariables.shops.value(shopId).items;
     int priceIndex=items.indexOf(objectId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1754,7 +1754,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         emit postReply(query_id,outputData);
         return;
     }
-    const quint32 &realprice=GlobalServerData::serverPrivateVariables.shops[shopId].prices.at(priceIndex);
+    const quint32 &realprice=GlobalServerData::serverPrivateVariables.shops.value(shopId).prices.at(priceIndex);
     if(realprice==0)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
@@ -1887,7 +1887,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
         emit error(QStringLiteral("you have not this quantity to sell"));
         return;
     }
-    quint32 realPrice=CommonDatapack::commonDatapack.items.item[objectId].price/2;
+    const quint32 &realPrice=CommonDatapack::commonDatapack.items.item.value(objectId).price/2;
     if(realPrice<price)
     {
         out << (quint8)SoldStat_PriceHaveChanged;
@@ -1915,7 +1915,7 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
     while(index<industry.resources.size())
     {
         const Industry::Resource &resource=industry.resources.at(index);
-        const quint32 &quantityInStock=industryStatus.resources[resource.item];
+        const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
         resourcesStringList << QStringLiteral("%1->%2").arg(resource.item).arg(quantityInStock);
         index++;
     }
@@ -1924,7 +1924,7 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
     while(index<industry.products.size())
     {
         const Industry::Product &product=industry.products.at(index);
-        const quint32 &quantityInStock=industryStatus.products[product.item];
+        const quint32 &quantityInStock=industryStatus.products.value(product.item);
         productsStringList << QStringLiteral("%1->%2").arg(product.item).arg(quantityInStock);
         index++;
     }
@@ -1996,7 +1996,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         emit error(QStringLiteral("factory id not found"));
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
     //send the shop items (no taxes from now)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2010,7 +2010,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         {
             const Industry::Resource &resource=industry.resources.at(index);
             out << (quint32)resource.item;
-            out << (quint32)CommonDatapack::commonDatapack.items.item[resource.item].price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
+            out << (quint32)CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
             out << (quint32)resource.quantity*industry.cycletobefull;
             index++;
         }
@@ -2019,7 +2019,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
     else
     {
         int index,count_item;
-        const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
+        const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
         quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
         if(industryStatus.last_update>currentTime)
             out << (quint32)0;
@@ -2033,7 +2033,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            const quint32 &quantityInStock=industryStatus.resources[resource.item];
+            const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
                 count_item++;
             index++;
@@ -2043,7 +2043,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            const quint32 &quantityInStock=industryStatus.resources[resource.item];
+            const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
                 out << (quint32)resource.item;
@@ -2058,7 +2058,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         while(index<industry.products.size())
         {
             const Industry::Product &product=industry.products.at(index);
-            const quint32 &quantityInStock=industryStatus.products[product.item];
+            const quint32 &quantityInStock=industryStatus.products.value(product.item);
             if(quantityInStock>0)
                 count_item++;
             index++;
@@ -2068,7 +2068,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         while(index<industry.products.size())
         {
             const Industry::Product &product=industry.products.at(index);
-            const quint32 &quantityInStock=industryStatus.products[product.item];
+            const quint32 &quantityInStock=industryStatus.products.value(product.item);
             if(quantityInStock>0)
             {
                 out << (quint32)product.item;
@@ -2108,8 +2108,8 @@ void LocalClientHandler::buyFactoryProduct(const quint32 &query_id,const quint32
         emit error(QStringLiteral("factory id not found in active list"));
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
-    IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+    IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
     quint32 quantityInStock=0;
     quint32 actualPrice=0;
     QByteArray outputData;
@@ -2124,7 +2124,7 @@ void LocalClientHandler::buyFactoryProduct(const quint32 &query_id,const quint32
             product=industry.products.at(index);
             if(product.item==objectId)
             {
-                quantityInStock=industryStatus.products[product.item];
+                quantityInStock=industryStatus.products.value(product.item);
                 actualPrice=FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
                 break;
             }
@@ -2201,7 +2201,7 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
         emit error(QStringLiteral("you have not the object quantity to sell at this factory"));
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
     IndustryStatus industryStatus;
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
@@ -2225,7 +2225,7 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
         }
     }
     else
-        industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
+        industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -2238,20 +2238,20 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
             const Industry::Resource &resource=industry.resources.at(index);
             if(resource.item==objectId)
             {
-                if((resource.quantity*industry.cycletobefull-industryStatus.resources[resource.item])<quantity)
+                if((resource.quantity*industry.cycletobefull-industryStatus.resources.value(resource.item))<quantity)
                 {
                     out << (quint8)0x03;
                     emit postReply(query_id,outputData);
                     return;
                 }
-                resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources[resource.item],resource,industry);
+                resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources.value(resource.item),resource,industry);
                 if(price>resourcePrice)
                 {
                     out << (quint8)0x04;
                     emit postReply(query_id,outputData);
                     return;
                 }
-                if((industryStatus.resources[resource.item]+quantity)==resource.quantity)
+                if((industryStatus.resources.value(resource.item)+quantity)==resource.quantity)
                 {
                     industryStatus.resources[resource.item]+=quantity;
                     industryStatus=FacilityLib::factoryCheckProductionStart(industryStatus,industry);
@@ -2344,7 +2344,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
     playerReputation.point=0;
     playerReputation.level=0;
     if(player_informations->public_and_private_informations.reputation.contains(type))
-        playerReputation=player_informations->public_and_private_informations.reputation[type];
+        playerReputation=player_informations->public_and_private_informations.reputation.value(type);
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
@@ -2354,20 +2354,20 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         if(playerReputation.level<0 && playerReputation.point>0)
         {
             playerReputation.level++;
-            playerReputation.point+=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
+            playerReputation.point+=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
             continue;
         }
         if(playerReputation.level>0 && playerReputation.point<0)
         {
             playerReputation.level--;
-            playerReputation.point+=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
+            playerReputation.point+=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
             continue;
         }
-        if(playerReputation.level<=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level))
+        if(playerReputation.level<=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level))
         {
-            if((-playerReputation.level)<CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
+            if((-playerReputation.level)<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
             {
-                playerReputation.point-=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.point-=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
                 playerReputation.level--;
             }
             else
@@ -2375,15 +2375,15 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
                 emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
-                playerReputation.point=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.point=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
             }
             continue;
         }
-        if(playerReputation.level>=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(playerReputation.level))
+        if(playerReputation.level>=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(playerReputation.level))
         {
-            if(playerReputation.level<CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
+            if(playerReputation.level<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
             {
-                playerReputation.point-=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.point-=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
                 playerReputation.level++;
             }
             else
@@ -2391,7 +2391,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
                 emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
-                playerReputation.point=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.point=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
             }
             continue;
         }
@@ -2772,7 +2772,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 emit error(QStringLiteral("You can't disolv the clan if is in city capture"));
                 return;
             }
-            const QList<LocalClientHandler *> &players=clanList[player_informations->public_and_private_informations.clan]->players;
+            const QList<LocalClientHandler *> &players=clanList.value(player_informations->public_and_private_informations.clan)->players;
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2861,7 +2861,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             }
             bool haveAClan=true;
             if(playerByPseudo.contains(text))
-                if(!playerByPseudo[text]->haveAClan())
+                if(!playerByPseudo.value(text)->haveAClan())
                     haveAClan=false;
             bool isFound=playerByPseudo.contains(text);
             //send the network reply
@@ -2870,7 +2870,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             out.setVersion(QDataStream::Qt_4_4);
             if(isFound && !haveAClan)
             {
-                if(playerByPseudo[text]->inviteToClan(player_informations->public_and_private_informations.clan))
+                if(playerByPseudo.value(text)->inviteToClan(player_informations->public_and_private_informations.clan))
                     out << (quint8)0x01;
                 else
                     out << (quint8)0x02;
@@ -2905,7 +2905,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             }
             bool isIntoTheClan=false;
             if(playerByPseudo.contains(text))
-                if(playerByPseudo[text]->getClanId()==player_informations->public_and_private_informations.clan)
+                if(playerByPseudo.value(text)->getClanId()==player_informations->public_and_private_informations.clan)
                     isIntoTheClan=true;
             bool isFound=playerByPseudo.contains(text);
             //send the network reply
@@ -3183,7 +3183,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             }
         }
         //send the zone capture
-        const QString &zoneName=static_cast<MapServer*>(this->map)->zonecapture[QPair<quint8,quint8>(x,y)];
+        const QString &zoneName=static_cast<MapServer*>(this->map)->zonecapture.value(QPair<quint8,quint8>(x,y));
         if(!player_informations->public_and_private_informations.clan_leader)
         {
             if(clan->captureCityInProgress.isEmpty())
@@ -3244,7 +3244,7 @@ void LocalClientHandler::leaveTheCityCapture()
     if(captureCity[clan->captureCityInProgress].removeOne(this))
     {
         //drop all the capture because no body clam it
-        if(captureCity[clan->captureCityInProgress].isEmpty())
+        if(captureCity.value(clan->captureCityInProgress).isEmpty())
         {
             captureCity.remove(clan->captureCityInProgress);
             clan->captureCityInProgress.clear();
@@ -3253,13 +3253,14 @@ void LocalClientHandler::leaveTheCityCapture()
         {
             //drop the clan capture in no other player of the same clan is into it
             int index=0;
-            while(index<captureCity[clan->captureCityInProgress].size())
+            const int &list_size=captureCity.value(clan->captureCityInProgress).size();
+            while(index<list_size)
             {
-                if(captureCity[clan->captureCityInProgress].at(index)->clanId()==clanId())
+                if(captureCity.value(clan->captureCityInProgress).at(index)->clanId()==clanId())
                     break;
                 index++;
             }
-            if(index==captureCity[clan->captureCityInProgress].size())
+            if(index==captureCity.value(clan->captureCityInProgress).size())
                 clan->captureCityInProgress.clear();
         }
     }
@@ -3288,9 +3289,9 @@ void LocalClientHandler::startTheCityCapture()
             CaptureCityValidated tempCaptureCityValidated;
             if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(i.key()))
                 GlobalServerData::serverPrivateVariables.cityStatusList[i.key()].clan=0;
-            if(GlobalServerData::serverPrivateVariables.cityStatusList[i.key()].clan==0)
+            if(GlobalServerData::serverPrivateVariables.cityStatusList.value(i.key()).clan==0)
                 if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(i.key()))
-                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdList[i.key()];
+                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdList.value(i.key());
             tempCaptureCityValidated.players=i.value();
             int index;
             int sub_index;
@@ -3426,7 +3427,7 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                         otherCityPlayerBattle=NULL;
                     }
                     captureCityValidated.clanSize[clanId()]--;
-                    if(captureCityValidated.clanSize[clanId()]==0)
+                    if(captureCityValidated.clanSize.value(clanId())==0)
                         captureCityValidated.clanSize.remove(clanId());
                 }
                 quint16 player_count=cityCapturePlayerCount(captureCityValidated);
@@ -3459,7 +3460,7 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                         }
                         if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->captureCityInProgress))
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
-                        if(GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan!=0)
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList.value(clan->captureCityInProgress).clan!=0)
                             switch(GlobalServerData::serverSettings.database.type)
                             {
                                 default:
@@ -3750,7 +3751,7 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
                     emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
                     return;
                 }
-                if(!playerById[marketItem.player]->bitcoinEnabled())
+                if(!playerById.value(marketItem.player)->bitcoinEnabled())
                 {
                     emit message(QStringLiteral("The other have not the bitcoin enabled to buy their object"));
                     out << (quint8)0x03;
@@ -3812,7 +3813,7 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
                 removeBitcoin(quantity*marketItem.bitcoin);
             if(playerById.contains(marketItem.player))
             {
-                if(!playerById[marketItem.player]->addMarketCashWithoutSave(quantity*marketItem.cash,quantity*marketItem.bitcoin))
+                if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash,quantity*marketItem.bitcoin))
                     emit message(QStringLiteral("Problem at market cash adding"));
             }
             switch(GlobalServerData::serverSettings.database.type)
@@ -3881,7 +3882,7 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
                     emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
                     return;
                 }
-                if(!playerById[marketPlayerMonster.player]->bitcoinEnabled())
+                if(!playerById.value(marketPlayerMonster.player)->bitcoinEnabled())
                 {
                     emit message(QStringLiteral("The other have not the bitcoin enabled to buy their object"));
                     out << (quint8)0x03;
@@ -3902,7 +3903,7 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
                 removeBitcoin(marketPlayerMonster.bitcoin);
             if(playerById.contains(marketPlayerMonster.player))
             {
-                if(!playerById[marketPlayerMonster.player]->addMarketCashWithoutSave(marketPlayerMonster.cash,marketPlayerMonster.bitcoin))
+                if(!playerById.value(marketPlayerMonster.player)->addMarketCashWithoutSave(marketPlayerMonster.cash,marketPlayerMonster.bitcoin))
                     emit message(QStringLiteral("Problem at market cash adding"));
             }
             switch(GlobalServerData::serverSettings.database.type)
@@ -3996,7 +3997,7 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
                     emit dbQuery(QStringLiteral("UPDATE item SET `quantity`=%1,`market_price`=%2,`market_bitcoin`=%3 WHERE `item`=%4 AND `character`=%5 AND `place`='market';")
-                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                                  .arg(price)
                                  .arg(bitcoin)
                                  .arg(marketItem.item)
@@ -4005,7 +4006,7 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
                     emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1,market_price=%2,market_bitcoin=%3 WHERE item=%4 AND character=%5 AND place='market';")
-                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                                  .arg(price)
                                  .arg(bitcoin)
                                  .arg(marketItem.item)
@@ -4251,7 +4252,7 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
             out << marketItem.item;
             out << marketItem.quantity;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
-            if(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity==0)
+            if(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity==0)
             {
                 marketObjectIdList << marketItem.marketObjectId;
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
@@ -4279,14 +4280,14 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='market'")
-                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                                      .arg(objectId)
                                      .arg(player_informations->character_id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='market'")
-                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                                      .arg(objectId)
                                      .arg(player_informations->character_id)
                                      );

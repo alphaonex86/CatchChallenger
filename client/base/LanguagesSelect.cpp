@@ -167,9 +167,9 @@ QString LanguagesSelect::getTheRightLanguage() const
     else if(language.isEmpty() || !languagesByMainCode.contains(language))
     {
         if(languagesByShortName.contains(QLocale::languageToString(QLocale::system().language())))
-            return languagesByShortName[QLocale::languageToString(QLocale::system().language())];
+            return languagesByShortName.value(QLocale::languageToString(QLocale::system().language()));
         else if(languagesByShortName.contains(QLocale::system().name()))
-            return languagesByShortName[QLocale::system().name()];
+            return languagesByShortName.value(QLocale::system().name());
         else
             return "en";
     }
@@ -187,8 +187,8 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
     int indexTranslator=0;
     while(indexTranslator<installedTranslator.size())
     {
-        QCoreApplication::removeTranslator(installedTranslator[indexTranslator]);
-        delete installedTranslator[indexTranslator];
+        QCoreApplication::removeTranslator(installedTranslator.value(indexTranslator));
+        delete installedTranslator.value(indexTranslator);
         indexTranslator++;
     }
     installedTranslator.clear();
@@ -199,7 +199,7 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
     if(newLanguage==QStringLiteral("en"))
         dir=QDir(QStringLiteral(":/Languages/en/"));
     else
-        dir=QDir(languagesByMainCode[newLanguage].path);
+        dir=QDir(languagesByMainCode.value(newLanguage).path);
     QFileInfoList fileInfoList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int index=0;
     while(index<fileInfoList.size())

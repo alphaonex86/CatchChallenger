@@ -181,9 +181,9 @@ void SoloWindow::SoloWindowListEntryEnvoluedUpdate()
             savegame.at(index)->setStyleSheet(QStringLiteral("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}"));
         index++;
     }
-    ui->SaveGame_Play->setEnabled(selectedSavegame!=NULL && savegameWithMetaData[selectedSavegame]);
-    ui->SaveGame_Rename->setEnabled(selectedSavegame!=NULL && savegameWithMetaData[selectedSavegame]);
-    ui->SaveGame_Copy->setEnabled(selectedSavegame!=NULL && savegameWithMetaData[selectedSavegame]);
+    ui->SaveGame_Play->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.value(selectedSavegame));
+    ui->SaveGame_Rename->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.value(selectedSavegame));
+    ui->SaveGame_Copy->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.value(selectedSavegame));
     ui->SaveGame_Delete->setEnabled(selectedSavegame!=NULL);
 }
 
@@ -230,7 +230,7 @@ void SoloWindow::updateSavegameList()
     }
     QString lastSelectedPath;
     if(selectedSavegame!=NULL)
-        lastSelectedPath=savegamePathList[selectedSavegame];
+        lastSelectedPath=savegamePathList.value(selectedSavegame);
     selectedSavegame=NULL;
     int index=0;
     while(savegame.size()>0)
@@ -489,7 +489,7 @@ void SoloWindow::on_SaveGame_Delete_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    if(!CatchChallenger::FacilityLib::rmpath(savegamePathList[selectedSavegame]))
+    if(!CatchChallenger::FacilityLib::rmpath(savegamePathList.value(selectedSavegame)))
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to remove the savegame"));
         return;
@@ -503,8 +503,8 @@ void SoloWindow::on_SaveGame_Rename_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePathList[selectedSavegame];
-    if(!savegameWithMetaData[selectedSavegame])
+    QString savegamesPath=savegamePathList.value(selectedSavegame);
+    if(!savegameWithMetaData.value(selectedSavegame))
         return;
     QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
     if(!QFileInfo(savegamesPath+QStringLiteral("metadata.conf")).exists())
@@ -525,8 +525,8 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePathList[selectedSavegame];
-    if(!savegameWithMetaData[selectedSavegame])
+    QString savegamesPath=savegamePathList.value(selectedSavegame);
+    if(!savegameWithMetaData.value(selectedSavegame))
         return;
     int index=0;
     while(QDir(savegamePath+QString::number(index)+QStringLiteral("/")).exists())
@@ -559,8 +559,8 @@ void SoloWindow::on_SaveGame_Play_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePathList[selectedSavegame];
-    if(!savegameWithMetaData[selectedSavegame])
+    QString savegamesPath=savegamePathList.value(selectedSavegame);
+    if(!savegameWithMetaData.value(selectedSavegame))
         return;
 
     emit play(savegamesPath);

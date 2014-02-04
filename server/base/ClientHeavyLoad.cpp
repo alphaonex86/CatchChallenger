@@ -360,7 +360,7 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
             {
                 loginIsRight(query_id,
                      player_informations->character_id,
-                     GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).map],
+                     GlobalServerData::serverPrivateVariables.map_list.value(GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).map),
                      GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).x,
                      GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).y,
                      Orientation_bottom);
@@ -486,7 +486,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         const quint32 &monsterId=profile.monsters.at(index).id;
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monsterId))
         {
-            const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters[monsterId];
+            const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monsterId);
             QString gender=QStringLiteral("unknown");
             if(monster.ratio_gender!=-1)
             {
@@ -501,11 +501,11 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             int sub_index=0;
             while(sub_index<attack.size())
             {
-                if(attack[sub_index].learnAtLevel<=profile.monsters.at(index).level)
+                if(attack.value(sub_index).learnAtLevel<=profile.monsters.at(index).level)
                 {
                     CatchChallenger::PlayerMonster::PlayerSkill temp;
-                    temp.level=attack[sub_index].learnSkillLevel;
-                    temp.skill=attack[sub_index].learnSkill;
+                    temp.level=attack.value(sub_index).learnSkillLevel;
+                    temp.skill=attack.value(sub_index).learnSkill;
                     temp.endurance=0;
                     skills << temp;
                 }
@@ -554,25 +554,25 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             while(sub_index<skills.size())
             {
                 quint8 endurance=0;
-                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills[sub_index].skill))
-                    if(skills[sub_index].level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.size() && skills[sub_index].level>0)
-                        endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.at(skills[sub_index].level-1).endurance;
+                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills.value(sub_index).skill))
+                    if(skills.value(sub_index).level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.size() && skills.value(sub_index).level>0)
+                        endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.at(skills.value(sub_index).level-1).endurance;
                 switch(GlobalServerData::serverSettings.database.type)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
                            .arg(monster_id)
-                           .arg(skills[sub_index].skill)
-                           .arg(skills[sub_index].level)
+                           .arg(skills.value(sub_index).skill)
+                           .arg(skills.value(sub_index).level)
                            .arg(endurance)
                                 );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
                            .arg(monster_id)
-                           .arg(skills[sub_index].skill)
-                           .arg(skills[sub_index].level)
+                           .arg(skills.value(sub_index).skill)
+                           .arg(skills.value(sub_index).level)
                            .arg(endurance)
                                 );
                     break;
@@ -811,7 +811,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     player_informations->public_and_private_informations.public_informations.pseudo=characterQuery.value(1).toString();
     QString skinString=characterQuery.value(2).toString();
     if(GlobalServerData::serverPrivateVariables.skinList.contains(skinString))
-        player_informations->public_and_private_informations.public_informations.skinId=GlobalServerData::serverPrivateVariables.skinList[skinString];
+        player_informations->public_and_private_informations.public_informations.skinId=GlobalServerData::serverPrivateVariables.skinList.value(skinString);
     else
     {
         emit message(QStringLiteral("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
@@ -1016,19 +1016,19 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
             loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y coord is not a number"));
             return;
         }
-        if(x>=GlobalServerData::serverPrivateVariables.map_list[characterQuery.value(6).toString()]->width)
+        if(x>=GlobalServerData::serverPrivateVariables.map_list.value(characterQuery.value(6).toString())->width)
         {
             loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("x to out of map"));
             return;
         }
-        if(y>=GlobalServerData::serverPrivateVariables.map_list[characterQuery.value(6).toString()]->height)
+        if(y>=GlobalServerData::serverPrivateVariables.map_list.value(characterQuery.value(6).toString())->height)
         {
             loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y to out of map"));
             return;
         }
         loginIsRightWithRescue(query_id,
             characterId,
-            GlobalServerData::serverPrivateVariables.map_list[characterQuery.value(6).toString()],
+            GlobalServerData::serverPrivateVariables.map_list.value(characterQuery.value(6).toString()),
             x,
             y,
             (Orientation)orentation,
@@ -1072,13 +1072,13 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->width)
+    if(rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->width)
     {
         emit message(QStringLiteral("rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->height)
+    if(rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->height)
     {
         emit message(QStringLiteral("rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -1119,13 +1119,13 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->width)
+    if(unvalidated_rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->width)
     {
         emit message(QStringLiteral("unvalidated rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->height)
+    if(unvalidated_rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->height)
     {
         emit message(QStringLiteral("unvalidated rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -1147,8 +1147,8 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
         emit message(QStringLiteral("Wrong unvalidated rescue orientation corrected with bottom"));
     }
     loginIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,
-                                 GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()],rescue_new_x,rescue_new_y,rescue_new_orientation,
-                                 GlobalServerData::serverPrivateVariables.map_list[unvalidated_rescue_map.toString()],unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
+                                 GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString()),rescue_new_x,rescue_new_y,rescue_new_orientation,
+                                 GlobalServerData::serverPrivateVariables.map_list.value(unvalidated_rescue_map.toString()),unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
             );
 }
 
@@ -1389,7 +1389,7 @@ void ClientHeavyLoad::askIfIsReadyToStop()
         if(player_informations->public_and_private_informations.clan!=0)
         {
             clanConnectedCount[player_informations->public_and_private_informations.clan]--;
-            if(clanConnectedCount[player_informations->public_and_private_informations.clan]==0)
+            if(clanConnectedCount.value(player_informations->public_and_private_informations.clan)==0)
                 clanConnectedCount.remove(player_informations->public_and_private_informations.clan);
         }
     }
@@ -1434,7 +1434,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             if(filesList.contains(fileName))
             {
                 filesListInfo[fileName]=QFileInfo(GlobalServerData::serverSettings.datapack_basePath+fileName).lastModified().toTime_t();
-                if(filesListInfo[fileName]!=mtime)
+                if(filesListInfo.value(fileName)!=mtime)
                 {
                     datapckFileNumber++;
                     datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
@@ -1467,7 +1467,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             //the file on the client is already updated
             else
             {
-                const quint32 &fileInfoModTime=filesListInfo[fileName];
+                const quint32 &fileInfoModTime=filesListInfo.value(fileName);
                 if(fileInfoModTime==mtime)
                     addDatapackListReply(false);//found
                 else
@@ -1494,7 +1494,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     //send not in the list
     QSetIterator<QString> i(filesList);
     while (i.hasNext()) {
-        sendFile(i.peekNext(),filesListInfo[i.peekNext()]);
+        sendFile(i.peekNext(),filesListInfo.value(i.peekNext()));
         i.next();
     }
     sendFileContent();
@@ -1740,43 +1740,43 @@ void ClientHeavyLoad::loadReputation()
         }
         if(level>=0)
         {
-            if(level>=CommonDatapack::commonDatapack.reputation[type].reputation_positive.size())
+            if(level>=CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size())
             {
-                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.size()));
+                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size()));
                 continue;
             }
         }
         else
         {
-            if((-level)>CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
+            if((-level)>CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
             {
-                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.size()));
+                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size()));
                 continue;
             }
         }
         if(point>0)
         {
-            if(CommonDatapack::commonDatapack.reputation[type].reputation_positive.size()==(level+1))//start at level 0 in positive
+            if(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size()==(level+1))//start at level 0 in positive
             {
                 emit message(QStringLiteral("The reputation level is already at max, drop point"));
                 point=0;
             }
-            if(point>=CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(level+1))//start at level 0 in positive
+            if(point>=CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(level+1))//start at level 0 in positive
             {
-                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(level)));
+                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(level)));
                 continue;
             }
         }
         else if(point<0)
         {
-            if(CommonDatapack::commonDatapack.reputation[type].reputation_negative.size()==-level)//start at level -1 in negative
+            if(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size()==-level)//start at level -1 in negative
             {
                 emit message(QStringLiteral("The reputation level is already at min, drop point"));
                 point=0;
             }
-            if(point<CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-level))//start at level -1 in negative
+            if(point<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-level))//start at level -1 in negative
             {
-                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(level)));
+                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(level)));
                 continue;
             }
         }
@@ -1822,7 +1822,7 @@ void ClientHeavyLoad::loadQuests()
             emit message(QStringLiteral("quest is not into the quests list, skip: %1").arg(id));
             continue;
         }
-        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapack::commonDatapack.quests[id].steps.size())
+        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapack::commonDatapack.quests.value(id).steps.size())
         {
             emit message(QStringLiteral("step out of quest range, skip: %1").arg(id));
             continue;

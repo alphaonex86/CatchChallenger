@@ -287,7 +287,7 @@ bool MoveOnTheMap::teleport(Map ** map,COORD_TYPE *x,COORD_TYPE *y)
 {
     if((*map)->teleporter.contains(*x+*y*(*map)->width))
     {
-        const Map::Teleporter &teleporter=(*map)->teleporter[*x+*y*(*map)->width];
+        const Map::Teleporter &teleporter=(*map)->teleporter.value(*x+*y*(*map)->width);
         *x=teleporter.x;
         *y=teleporter.y;
         *map=teleporter.map;

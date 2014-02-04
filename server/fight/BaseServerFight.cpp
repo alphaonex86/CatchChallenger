@@ -121,7 +121,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
     QMultiHash<quint32,MonsterDrops> monsterDrops;
     //open and quick check the file
     if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile[file];
+        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);

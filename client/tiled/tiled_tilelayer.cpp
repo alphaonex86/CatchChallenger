@@ -271,7 +271,7 @@ void TileLayer::replaceReferencesToTileset(Tileset *oldTileset,
         const Tile *tile = mGrid.at(i).tile;
         if (tile && tile->tileset() == oldTileset) {
             mGrid[i].tile = newTileset->tileAt(tile->id());
-            adjustDrawMargins(mGrid[i]);
+            adjustDrawMargins(mGrid.at(i));
         }
     }
 }

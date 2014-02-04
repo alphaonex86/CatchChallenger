@@ -46,7 +46,7 @@ void ClientHeavyLoad::loadMonsters()
                     emit message(QStringLiteral("monster: %1 is not into monster list").arg(playerMonster.monster));
                 }
                 else
-                    monster=CommonDatapack::commonDatapack.monsters[playerMonster.monster];
+                    monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.monster);
             }
             else
                 emit message(QStringLiteral("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
@@ -229,7 +229,7 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
             buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
+                if(buff.level>CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.size())
                 {
                     ok=false;
                     emit message(QStringLiteral("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
@@ -240,7 +240,7 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
         }
         if(ok)
         {
-            if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.at(buff.level-1).duration!=Buff::Duration_Always)
+            if(CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
             {
                 ok=false;
                 DebugClass::debugConsole(QStringLiteral("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
@@ -290,7 +290,7 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
             skill.level=monsterSkillsQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(skill.level>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.size())
+                if(skill.level>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.size())
                 {
                     ok=false;
                     emit message(QStringLiteral("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
@@ -304,9 +304,9 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
             skill.endurance=monsterSkillsQuery.value(2).toUInt(&ok);
             if(ok)
             {
-                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance)
+                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance)
                 {
-                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance;
+                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance;
                     emit message(QStringLiteral("skill %1 for monsterId: %2 have too hight endurance, lowered to: %3").arg(skill.skill).arg(monsterId).arg(skill.endurance));
                 }
             }

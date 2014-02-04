@@ -2,10 +2,6 @@
 #include "GlobalServerData.h"
 #include "../../general/base/QFakeSocket.h"
 
-#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-#include <QTime>
-#endif
-
 using namespace CatchChallenger;
 
 /// \warning never cross the signals from and to the different client, complexity ^2
@@ -25,20 +21,12 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     player_informations.isConnected=true;
     player_informations.public_and_private_informations.repel_step=0;
 
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    QTime time;
-    time.restart();
-    #endif
     clientBroadCast=new ClientBroadCast();
     clientHeavyLoad=new ClientHeavyLoad();
     clientNetworkRead=new ClientNetworkRead(&player_informations,socket);
     clientNetworkWrite=new ClientNetworkWrite(&player_informations,socket);
     localClientHandler=new LocalClientHandler();
     clientLocalBroadcast=new ClientLocalBroadcast();
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("creating object time: %1").arg(time.elapsed()));
-    time.restart();
-    #endif
     this->clientMapManagement=clientMapManagement;
 
     if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
@@ -202,6 +190,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkWrite,	&ClientNetworkWrite::error,					this,	&Client::errorOutput,Qt::QueuedConnection);
     connect(localClientHandler,	&MapBasicMove::error,						this,	&Client::errorOutput,Qt::QueuedConnection);
     connect(clientLocalBroadcast,&ClientLocalBroadcast::error,				this,	&Client::errorOutput,Qt::QueuedConnection);
+    connect(clientNetworkRead,  &ClientNetworkRead::needDisconnectTheClient,this,	&Client::disconnectClient,Qt::QueuedConnection);
     connect(clientBroadCast,	&ClientBroadCast::message,					this,	&Client::normalOutput,Qt::QueuedConnection);
     connect(clientHeavyLoad,	&ClientHeavyLoad::message,					this,	&Client::normalOutput,Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::message,				this,	&Client::normalOutput,Qt::QueuedConnection);
@@ -225,10 +214,6 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(this,&Client::askIfIsReadyToStop,clientNetworkWrite,        &ClientNetworkWrite::askIfIsReadyToStop,    Qt::QueuedConnection);
     connect(this,&Client::askIfIsReadyToStop,localClientHandler,        &MapBasicMove::askIfIsReadyToStop,          Qt::QueuedConnection);
     connect(this,&Client::askIfIsReadyToStop,clientLocalBroadcast,      &MapBasicMove::askIfIsReadyToStop,          Qt::QueuedConnection);
-
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QStringLiteral("connecting object time: %1").arg(time.elapsed()));
-    #endif
 
     stopped_object=0;
 
@@ -283,13 +268,14 @@ void Client::connectionError(QAbstractSocket::SocketError error)
 /// \warning called in one other thread!!!
 void Client::disconnectClient()
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    if(player_informations.account_id!=0)
+        normalOutput("Disconnected client");
+    #endif
     player_informations.isConnected=false;
     if(ask_is_ready_to_stop)
         return;
     ask_is_ready_to_stop=true;
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Disconnected client");
-    #endif
     if(socket!=NULL)
     {
         socket->disconnectFromHost();
