@@ -69,6 +69,7 @@ private slots:
     void on_skillLifeEffectDelete_clicked();
     void on_skillBuffEffectAdd_clicked();
     void on_skillBuffEffectDelete_clicked();
+    void on_type_editingFinished();
 private:
     Ui::MainWindow *ui;
     QHash<quint32,QDomElement> skills;

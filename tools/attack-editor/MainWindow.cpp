@@ -151,6 +151,10 @@ void MainWindow::on_itemList_itemDoubleClicked(QListWidgetItem *item)
             description = description.nextSiblingElement("description");
         }
     }
+    if(!skills[selectedItem].hasAttribute("type"))
+        ui->type->setText(QString());
+    else
+        ui->type->setText(skills[selectedItem].attribute("type"));
     ui->stackedWidget->setCurrentWidget(ui->page_edit);
     ui->tabWidget->setCurrentWidget(ui->tabGeneral);
     loadingTheInformations=false;
@@ -573,12 +577,13 @@ void MainWindow::on_levelAdd_clicked()
     }
     else
     {
-        QDomElement effect=domDocument.createElement("effect");
+        effect=domDocument.createElement("effect");
         skills[selectedItem].appendChild(effect);
     }
     QDomElement newXmlElement=domDocument.createElement("level");
     newXmlElement.setAttribute("number",maxLevel);
-    domDocument.documentElement().appendChild(newXmlElement);
+    effect.appendChild(newXmlElement);
+    ui->stackedWidget->setCurrentWidget(ui->page_level);
     updateLevelList();
 }
 
@@ -1118,14 +1123,17 @@ void MainWindow::on_buff_apply_on_currentIndexChanged(int index)
 void MainWindow::on_level_level_editingFinished()
 {
     QDomElement currentLevelInfo=getCurrentLevelInfo();
-    quint32 oldNumber=currentLevelInfo.attribute("number").toUInt();
+    bool ok;
+    quint32 oldNumber=currentLevelInfo.attribute("number").toUInt(&ok);
+    if(!ok)
+        return;
     int index=0;
     while(index<ui->level->count())
     {
         const QListWidgetItem *item=ui->level->item(index);
-        if(item->data(99).toInt()==ui->level_level->value() && !item->isSelected())
+        if(item->data(99).toInt()==ui->level_level->value() && !item->isSelected() && oldNumber!=0)
         {
-            QMessageBox::warning(this,tr("Error"),tr("Sorry, but another level with same number"));
+            //QMessageBox::warning(this,tr("Error"),tr("Sorry, but another level with same number"));
             ui->level_level->setValue(oldNumber);
             return;
         }
@@ -1182,4 +1190,16 @@ void MainWindow::on_skillBuffEffectDelete_clicked()
     QDomElement currentBuffInfo=getCurrentBuffInfo();
     currentBuffInfo.parentNode().removeChild(currentBuffInfo);
     updateBuffList();
+}
+
+void MainWindow::on_type_editingFinished()
+{
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    if(ui->type->text().isEmpty())
+        skills[selectedItem].removeAttribute("type");
+    else
+        skills[selectedItem].setAttribute("type",ui->type->text());
 }

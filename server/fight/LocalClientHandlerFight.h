@@ -70,6 +70,7 @@ public:
     virtual void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
     bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
     bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
+    bool addLevel(PlayerMonster * monster, const quint8 &numberOfLevel=1);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();

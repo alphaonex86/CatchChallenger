@@ -20,7 +20,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
     QDomDocument domDocument;
     QHash<QString, Reputation> reputation;
     if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile[file];
+        domDocument=xmlLoadedFile.value(file);
     else
     {
         //open and quick check the file
@@ -570,7 +570,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
     {
         if(!steps.contains(indexLoop))
             break;
-        quest.steps << steps[indexLoop];
+        quest.steps << steps.value(indexLoop);
         indexLoop++;
     }
     if(indexLoop<(steps.size()+1))
@@ -584,7 +584,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
     QDomDocument domDocument;
     //open and quick check the file
     if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile[file];
+        domDocument=xmlLoadedFile.value(file);
     else
     {
         QFile plantsFile(file);
@@ -797,7 +797,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
     QDomDocument domDocument;
     //open and quick check the file
     if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile[file];
+        domDocument=xmlLoadedFile.value(file);
     else
     {
         QFile craftingRecipesFile(file);
@@ -973,7 +973,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                             if(itemToCrafingRecipes.contains(recipe.itemToLearn))
                             {
                                 ok=false;
-                                qDebug() << QStringLiteral("preload_crafting_recipes() itemToLearn already used to learn another recipe: %4: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()).arg(itemToCrafingRecipes[recipe.itemToLearn]);
+                                qDebug() << QStringLiteral("preload_crafting_recipes() itemToLearn already used to learn another recipe: %4: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()).arg(itemToCrafingRecipes.value(recipe.itemToLearn));
                             }
                         }
                         if(ok)
@@ -989,7 +989,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                             if(itemToCrafingRecipes.contains(recipe.doItemId))
                             {
                                 ok=false;
-                                qDebug() << QStringLiteral("preload_crafting_recipes() the product of the recipe can't be a recipe: %4: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()).arg(itemToCrafingRecipes[recipe.doItemId]);
+                                qDebug() << QStringLiteral("preload_crafting_recipes() the product of the recipe can't be a recipe: %4: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()).arg(itemToCrafingRecipes.value(recipe.doItemId));
                             }
                         }
                         if(ok)
@@ -1031,7 +1031,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
         const QString &file=fileList.at(file_index).absoluteFilePath();
         //open and quick check the file
         if(xmlLoadedFile.contains(file))
-            domDocument=xmlLoadedFile[file];
+            domDocument=xmlLoadedFile.value(file);
         else
         {
             QFile industryFile(file);
@@ -1282,7 +1282,7 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
     QDomDocument domDocument;
     //open and quick check the file
     if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile[file];
+        domDocument=xmlLoadedFile.value(file);
     else
     {
         QFile industriesLinkFile(file);
@@ -1353,7 +1353,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
     //open and quick check the file
     const QString &file=folder+QStringLiteral("items.xml");
     if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile[file];
+        domDocument=xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
@@ -1375,7 +1375,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
         xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="items")
+    if(root.tagName()!=QStringLiteral("items"))
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
         return items;
@@ -1572,6 +1572,35 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                             if(items.monsterItemEffect.contains(id))
                                 haveAnEffect=true;
                         }
+                        //load the monster offline effect
+                        if(!haveAnEffect)
+                        {
+                            QDomElement levelItem = item.firstChildElement(QStringLiteral("level"));
+                            while(!levelItem.isNull())
+                            {
+                                if(levelItem.isElement())
+                                {
+                                    if(levelItem.hasAttribute(QStringLiteral("up")))
+                                    {
+                                        const quint32 &levelUp=levelItem.attribute(QStringLiteral("up")).toUInt(&ok);
+                                        if(!ok)
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, level up is not possitive number: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
+                                        else if(levelUp<=0)
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, level up is greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
+                                        else
+                                        {
+                                            MonsterItemEffectOutOfFight monsterItemEffectOutOfFight;
+                                            monsterItemEffectOutOfFight.type=MonsterItemEffectTypeOutOfFight_AddLevel;
+                                            monsterItemEffectOutOfFight.value=levelUp;
+                                            items.monsterItemEffectOutOfFight.insert(id,monsterItemEffectOutOfFight);
+                                        }
+                                    }
+                                    else
+                                        qDebug() << QStringLiteral("Unable to open the file: %1, level have not the attribute up: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
+                                }
+                                levelItem = levelItem.nextSiblingElement(QStringLiteral("level"));
+                            }
+                        }
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
@@ -1589,13 +1618,13 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
     return items;
 }
 
-QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file)
+QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint32, Item> &items,const QHash<quint32,Monster> &monsters,const QHash<QString, Reputation> &reputations)
 {
     QPair<QList<QDomElement>, QList<Profile> > returnVar;
     QDomDocument domDocument;
     //open and quick check the file
     if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile[file];
+        domDocument=xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -1697,32 +1726,39 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 {
                     monster.id=monstersElement.attribute(QStringLiteral("id")).toUInt(&ok);
                     if(!ok)
-                    {
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                        monstersElement = monstersElement.nextSiblingElement(QStringLiteral("monster"));
-                        continue;
-                    }
-                    monster.level=monstersElement.attribute(QStringLiteral("level")).toUShort(&ok);
-                    if(!ok)
+                    if(ok)
                     {
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                        monstersElement = monstersElement.nextSiblingElement(QStringLiteral("monster"));
-                        continue;
+                        monster.level=monstersElement.attribute(QStringLiteral("level")).toUShort(&ok);
+                        if(!ok)
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
-                    if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                    if(ok)
                     {
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster level is not into the range: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                        monstersElement = monstersElement.nextSiblingElement(QStringLiteral("monster"));
-                        continue;
+                        if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster level is not into the range: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
-                    monster.captured_with=monstersElement.attribute(QStringLiteral("captured_with")).toUInt(&ok);
-                    if(!ok)
+                    if(ok)
                     {
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                        monstersElement = monstersElement.nextSiblingElement(QStringLiteral("monster"));
-                        continue;
+                        monster.captured_with=monstersElement.attribute(QStringLiteral("captured_with")).toUInt(&ok);
+                        if(!ok)
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
-                    profile.monsters << monster;
+                    if(ok)
+                    {
+                        if(!monsters.contains(monster.id))
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, starter don't found the monster %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
+                            ok=false;
+                        }
+                    }
+                    if(ok)
+                    {
+                        if(!items.contains(monster.captured_with))
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, starter don't found the monster capture item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
+                    }
+                    if(ok)
+                        profile.monsters << monster;
                 }
                 monstersElement = monstersElement.nextSiblingElement(QStringLiteral("monster"));
             }
@@ -1741,29 +1777,55 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                     reputationTemp.type=reputationElement.attribute(QStringLiteral("type"));
                     reputationTemp.level=reputationElement.attribute(QStringLiteral("level")).toShort(&ok);
                     if(!ok)
-                    {
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                        reputationElement = reputationElement.nextSiblingElement(QStringLiteral("reputation"));
-                        continue;
-                    }
-                    reputationTemp.point=0;
-                    if(reputationElement.hasAttribute(QStringLiteral("point")))
+                    if(ok)
                     {
-                        reputationTemp.point=reputationElement.attribute(QStringLiteral("point")).toInt(&ok);
-                        if(!ok)
+                        if(!reputations.contains(reputationTemp.type))
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                            reputationElement = reputationElement.nextSiblingElement(QStringLiteral("reputation"));
-                            continue;
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationTemp.type));
+                            ok=false;
                         }
-                        if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
+                        if(ok)
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation point is not negative/positive like the level: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                            reputationElement = reputationElement.nextSiblingElement(QStringLiteral("reputation"));
-                            continue;
+                            if(reputationTemp.level==0)
+                            {
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is useless if level 0: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                ok=false;
+                            }
+                            else if(reputationTemp.level<0)
+                            {
+                                if((-reputationTemp.level)>reputations.value(reputationTemp.type).reputation_negative.size())
+                                {
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationTemp.type));
+                                    ok=false;
+                                }
+                            }
+                            else// if(reputationTemp.level>0)
+                            {
+                                if((reputationTemp.level)>=reputations.value(reputationTemp.type).reputation_positive.size())
+                                {
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationTemp.type));
+                                    ok=false;
+                                }
+                            }
+                        }
+                        if(ok)
+                        {
+                            reputationTemp.point=0;
+                            if(reputationElement.hasAttribute(QStringLiteral("point")))
+                            {
+                                reputationTemp.point=reputationElement.attribute(QStringLiteral("point")).toInt(&ok);
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                if(ok)
+                                {
+                                    if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation point is not negative/positive like the level: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                }
+                            }
                         }
                     }
-                    profile.reputation << reputationTemp;
+                    if(ok)
+                        profile.reputation << reputationTemp;
                 }
                 reputationElement = reputationElement.nextSiblingElement(QStringLiteral("reputation"));
             }
@@ -1775,29 +1837,35 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 {
                     itemTemp.id=itemElement.attribute(QStringLiteral("id")).toUInt(&ok);
                     if(!ok)
-                    {
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                        itemElement = itemElement.nextSiblingElement(QStringLiteral("item"));
-                        continue;
-                    }
-                    itemTemp.quantity=0;
-                    if(itemElement.hasAttribute(QStringLiteral("quantity")))
+                    if(ok)
                     {
-                        itemTemp.quantity=itemElement.attribute(QStringLiteral("quantity")).toUInt(&ok);
-                        if(!ok)
+                        itemTemp.quantity=0;
+                        if(itemElement.hasAttribute(QStringLiteral("quantity")))
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                            itemElement = itemElement.nextSiblingElement(QStringLiteral("item"));
-                            continue;
-                        }
-                        if(itemTemp.quantity==0)
-                        {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item quantity is null: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                            itemElement = itemElement.nextSiblingElement(QStringLiteral("item"));
-                            continue;
+                            itemTemp.quantity=itemElement.attribute(QStringLiteral("quantity")).toUInt(&ok);
+                            if(!ok)
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            if(ok)
+                            {
+                                if(itemTemp.quantity==0)
+                                {
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item quantity is null: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                    ok=false;
+                                }
+                            }
+                            if(ok)
+                            {
+                                if(!items.contains(itemTemp.id))
+                                {
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item not found as know item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(itemTemp.id));
+                                    ok=false;
+                                }
+                            }
                         }
                     }
-                    profile.items << itemTemp;
+                    if(ok)
+                        profile.items << itemTemp;
                 }
                 itemElement = itemElement.nextSiblingElement(QStringLiteral("item"));
             }

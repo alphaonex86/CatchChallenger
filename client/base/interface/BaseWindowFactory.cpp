@@ -30,7 +30,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     if(cash>=(price*2) && quantity>1)
     {
         bool ok;
-        i = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
         if(!ok || i<=0)
             return;
     }
@@ -40,14 +40,14 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         delete item;
     else
     {
-        const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+        const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
         int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Product &product=industry.products.at(index);
             if(product.item==id)
             {
-                item->setData(98,FacilityLib::getFactoryProductPrice(quantity,product,CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]]));
+                item->setData(98,FacilityLib::getFactoryProductPrice(quantity,product,CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId))));
                 break;
             }
             index++;
@@ -82,13 +82,13 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         return;
     }
     int i=1;
-    if(items[id]>1 && quantity>1)
+    if(items.value(id)>1 && quantity>1)
     {
         quint32 quantityToSell=quantity;
-        if(items[id]<quantityToSell)
-            quantityToSell=items[id];
+        if(items.value(id)<quantityToSell)
+            quantityToSell=items.value(id);
         bool ok;
-        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantityToSell, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantityToSell, 1, &ok);
         if(!ok || i<=0)
             return;
     }
@@ -98,14 +98,14 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         delete item;
     else
     {
-        const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+        const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
         int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
             if(resource.item==id)
             {
-                item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]]));
+                item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId))));
                 break;
             }
             index++;
@@ -132,7 +132,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
             if(industryStatus.products.contains(itemToSellOrBuy.object))
             {
                 industryStatus.products[itemToSellOrBuy.object]-=itemToSellOrBuy.quantity;
-                if(industryStatus.products[itemToSellOrBuy.object]==0)
+                if(industryStatus.products.value(itemToSellOrBuy.object)==0)
                     industryStatus.products.remove(itemToSellOrBuy.object);
             }
             add_to_inventory(items);
@@ -149,7 +149,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
             if(industryStatus.products.contains(itemToSellOrBuy.object))
             {
                 industryStatus.products[itemToSellOrBuy.object]-=itemToSellOrBuy.quantity;
-                if(industryStatus.products[itemToSellOrBuy.object]==0)
+                if(industryStatus.products.value(itemToSellOrBuy.object)==0)
                     industryStatus.products.remove(itemToSellOrBuy.object);
             }
             add_to_inventory(items);
@@ -173,7 +173,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
         {
             if(factoryInProduction)
                 break;
-            const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+            const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
             industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
             updateFactoryStatProduction(industryStatus,industry);
         }
@@ -233,7 +233,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
         {
             if(factoryInProduction)
                 break;
-            const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+            const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
             industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
             updateFactoryStatProduction(industryStatus,industry);
         }
@@ -247,7 +247,7 @@ void BaseWindow::haveFactoryList(const quint32 &remainingProductionTime,const QL
 {
     industryStatus.products.clear();
     industryStatus.resources.clear();
-    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
     industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000+remainingProductionTime-industry.time;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";
@@ -337,11 +337,11 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).image);
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {
@@ -368,11 +368,11 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).image);
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {

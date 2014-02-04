@@ -63,8 +63,10 @@ public:
         ObjectType_MonsterToLearn,
         ObjectType_MonsterToFight,
         ObjectType_MonsterToFightKO,
+        ObjectType_ItemOnMonsterOutOfFight,
         ObjectType_ItemOnMonster,
         ObjectType_ItemEvolutionOnMonster,
+        ObjectType_ItemLearnOnMonster,
         ObjectType_UseInFight
     };
     enum ActionClan
