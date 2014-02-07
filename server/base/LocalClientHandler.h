@@ -56,6 +56,7 @@ public:
     static void resetAll();
     //market
     static QList<quint16> marketObjectIdList;
+    static QRegularExpression tmxRemove;
 private:
     bool checkCollision();
 

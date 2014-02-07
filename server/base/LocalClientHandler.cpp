@@ -16,6 +16,7 @@ QHash<QString,LocalClientHandler::CaptureCityValidated> LocalClientHandler::capt
 QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
 
 QList<quint16> LocalClientHandler::marketObjectIdList;
+QRegularExpression LocalClientHandler::tmxRemove=QRegularExpression(QStringLiteral("\\.tmx$"));
 
 LocalClientHandler::LocalClientHandler()
 {
@@ -241,22 +242,28 @@ void LocalClientHandler::savePosition()
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
     QString updateMapPositionQuery;
+    QString map_file_clean=map->map_file;
+    map_file_clean.remove(tmxRemove);
+    QString rescue_map_file_clean=player_informations->rescue.map->map_file;
+    rescue_map_file_clean.remove(tmxRemove);
+    QString unvalidated_rescue_map_file_clean=player_informations->unvalidated_rescue.map->map_file;
+    unvalidated_rescue_map_file_clean.remove(tmxRemove);
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
             updateMapPositionQuery=QStringLiteral("UPDATE `character` SET `map`=\"%1\",`x`=%2,`y`=%3,`orientation`=\"%4\",%5 WHERE `id`=%6")
-                .arg(SqlFunction::quoteSqlVariable(map->map_file))
+                .arg(SqlFunction::quoteSqlVariable(map_file_clean))
                 .arg(x)
                 .arg(y)
                 .arg(directionToStringToSave(getLastDirection()))
                 .arg(
                         QStringLiteral("`rescue_map`=\"%1\",`rescue_x`=%2,`rescue_y`=%3,`rescue_orientation`=\"%4\",`unvalidated_rescue_map`=\"%5\",`unvalidated_rescue_x`=%6,`unvalidated_rescue_y`=%7,`unvalidated_rescue_orientation`=\"%8\"")
-                        .arg(player_informations->rescue.map->map_file)
+                        .arg(rescue_map_file_clean)
                         .arg(player_informations->rescue.x)
                         .arg(player_informations->rescue.y)
                         .arg(orientationToStringToSave(player_informations->rescue.orientation))
-                        .arg(player_informations->unvalidated_rescue.map->map_file)
+                        .arg(unvalidated_rescue_map_file_clean)
                         .arg(player_informations->unvalidated_rescue.x)
                         .arg(player_informations->unvalidated_rescue.y)
                         .arg(orientationToStringToSave(player_informations->unvalidated_rescue.orientation))
@@ -265,17 +272,17 @@ void LocalClientHandler::savePosition()
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             updateMapPositionQuery=QStringLiteral("UPDATE character SET map=\"%1\",x=%2,y=%3,orientation=\"%4\",%5 WHERE id=%6")
-                .arg(SqlFunction::quoteSqlVariable(map->map_file))
+                .arg(SqlFunction::quoteSqlVariable(map_file_clean))
                 .arg(x)
                 .arg(y)
                 .arg(directionToStringToSave(getLastDirection()))
                 .arg(
                         QStringLiteral("rescue_map=\"%1\",rescue_x=%2,rescue_y=%3,rescue_orientation=\"%4\",unvalidated_rescue_map=\"%5\",unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=\"%8\"")
-                        .arg(player_informations->rescue.map->map_file)
+                        .arg(rescue_map_file_clean)
                         .arg(player_informations->rescue.x)
                         .arg(player_informations->rescue.y)
                         .arg(orientationToStringToSave(player_informations->rescue.orientation))
-                        .arg(player_informations->unvalidated_rescue.map->map_file)
+                        .arg(unvalidated_rescue_map_file_clean)
                         .arg(player_informations->unvalidated_rescue.x)
                         .arg(player_informations->unvalidated_rescue.y)
                         .arg(orientationToStringToSave(player_informations->unvalidated_rescue.orientation))
@@ -433,7 +440,54 @@ bool LocalClientHandler::singleMove(const Direction &direction)
         emit error(QStringLiteral("LocalClientHandler::singleMove(), can't go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
-    MoveOnTheMap::move(direction,&map,&x,&y);
+    if(!MoveOnTheMap::moveWithoutTeleport(direction,&map,&x,&y,false,true))
+    {
+        emit error(QStringLiteral("LocalClientHandler::singleMove(), can go but move failed into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        return false;
+    }
+
+    if(map->teleporter.contains(x+y*map->width))
+    {
+        const Map::Teleporter &teleporter=map->teleporter.value(x+y*map->width);
+        switch(teleporter.condition.type)
+        {
+            case CatchChallenger::MapConditionType_None:
+            case CatchChallenger::MapConditionType_Clan://not do for now
+            break;
+            case CatchChallenger::MapConditionType_FightBot:
+                if(!player_informations->public_and_private_informations.bot_already_beaten.contains(teleporter.condition.value))
+                {
+                    emit error(QStringLiteral("Need have FightBot win to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    return false;
+                }
+            break;
+            case CatchChallenger::MapConditionType_Item:
+                if(!player_informations->public_and_private_informations.items.contains(teleporter.condition.value))
+                {
+                    emit error(QStringLiteral("Need have item to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    return false;
+                }
+            break;
+            case CatchChallenger::MapConditionType_Quest:
+                if(!player_informations->public_and_private_informations.quests.contains(teleporter.condition.value))
+                {
+                    emit error(QStringLiteral("Need have quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    return false;
+                }
+                if(!player_informations->public_and_private_informations.quests.value(teleporter.condition.value).finish_one_time)
+                {
+                    emit error(QStringLiteral("Need have finish the quest to use this teleporter: %1 with map: %2(%3,%4)").arg(teleporter.condition.value).arg(map->map_file).arg(x).arg(y));
+                    return false;
+                }
+            break;
+            default:
+            break;
+        }
+        x=teleporter.x;
+        y=teleporter.y;
+        map=teleporter.map;
+    }
+
     this->map=static_cast<Map_server_MapVisibility_simple*>(map);
     this->x=x;
     this->y=y;

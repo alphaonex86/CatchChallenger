@@ -123,8 +123,8 @@ void BaseServerCrafting::preload_shop()
     const QString &file=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_SHOP)+QStringLiteral("shop.xml");
     QDomDocument domDocument;
     //open and quick check the file
-    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile shopFile(file);

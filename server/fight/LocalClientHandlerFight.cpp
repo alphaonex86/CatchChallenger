@@ -1706,3 +1706,78 @@ bool LocalClientHandlerFight::addLevel(PlayerMonster * monster, const quint8 &nu
     }
     return true;
 }
+
+bool LocalClientHandlerFight::addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill)
+{
+    if(!CommonFightEngine::addSkill(currentMonster,skill))
+        return false;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
+                         .arg(currentMonster->id)
+                         .arg(skill.skill)
+                         .arg(skill.level)
+                         .arg(skill.endurance)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
+                         .arg(currentMonster->id)
+                         .arg(skill.skill)
+                         .arg(skill.level)
+                         .arg(skill.endurance)
+                         );
+        break;
+    }
+    return true;
+}
+
+bool LocalClientHandlerFight::setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level)
+{
+    if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
+        return false;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                         .arg(level)
+                         .arg(currentMonster->id)
+                         .arg(currentMonster->skills.at(index).skill)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
+                         .arg(level)
+                         .arg(currentMonster->id)
+                         .arg(currentMonster->skills.at(index).skill)
+                         );
+        break;
+    }
+    return true;
+}
+
+bool LocalClientHandlerFight::removeSkill(PlayerMonster * currentMonster,const int &index)
+{
+    if(!CommonFightEngine::removeSkill(currentMonster,index))
+        return false;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QStringLiteral("DELETE FROM `monster_skill` WHERE `monster`=%1 AND `skill`=%2;")
+                         .arg(currentMonster->id)
+                         .arg(currentMonster->skills.at(index).skill)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2;")
+                         .arg(currentMonster->id)
+                         .arg(currentMonster->skills.at(index).skill)
+                     );
+        break;
+    }
+    return true;
+}

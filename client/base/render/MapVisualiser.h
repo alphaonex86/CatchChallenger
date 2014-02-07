@@ -25,6 +25,7 @@
 #include <QString>
 #include <QMultiMap>
 #include <QHash>
+#include <QTime>
 //#include <QGLWidget>
 
 #include "MapVisualiserThread.h"

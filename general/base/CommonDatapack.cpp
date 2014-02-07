@@ -157,7 +157,8 @@ void CommonDatapack::unload()
     industries.clear();
     profileList.clear();
     types.clear();
-    DatapackGeneralLoader::xmlLoadedFile.clear();
+    xmlLoadedFile.clear();
+    teleportConditionsUnparsed.clear();
     isParsed=false;
 }
 

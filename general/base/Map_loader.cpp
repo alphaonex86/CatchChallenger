@@ -1,7 +1,16 @@
 #include "Map_loader.h"
 #include "GeneralVariable.h"
 
+#include "CommonDatapack.h"
+
 #include <QDir>
+#include <QDomDocument>
+#include <QFile>
+#include <QCoreApplication>
+#include <QVariant>
+#include <QMutex>
+#include <QTime>
+#include <QMutexLocker>
 
 #include <zlib.h>
 
@@ -28,6 +37,67 @@ static void logZlibError(int error)
     }
 }
 
+QByteArray Map_loader::decompress(const QByteArray &data, int expectedSize)
+{
+    QByteArray out;
+    out.resize(expectedSize);
+    z_stream strm;
+
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.next_in = (Bytef *) data.data();
+    strm.avail_in = data.length();
+    strm.next_out = (Bytef *) out.data();
+    strm.avail_out = out.size();
+
+    int ret = inflateInit2(&strm, 15 + 32);
+
+    if (ret != Z_OK) {
+    logZlibError(ret);
+    return QByteArray();
+    }
+
+    do {
+    ret = inflate(&strm, Z_SYNC_FLUSH);
+
+    switch (ret) {
+        case Z_NEED_DICT:
+        case Z_STREAM_ERROR:
+        ret = Z_DATA_ERROR;
+        case Z_DATA_ERROR:
+        case Z_MEM_ERROR:
+        inflateEnd(&strm);
+        logZlibError(ret);
+        return QByteArray();
+    }
+
+    if (ret != Z_STREAM_END) {
+        if(out.size()>16*1024*1024)
+        {
+            logZlibError(Z_STREAM_ERROR);
+            return QByteArray();
+        }
+        int oldSize = out.size();
+        out.resize(out.size() * 2);
+
+        strm.next_out = (Bytef *)(out.data() + oldSize);
+        strm.avail_out = oldSize;
+    }
+    }
+    while (ret != Z_STREAM_END);
+
+    if (strm.avail_in != 0) {
+    logZlibError(Z_DATA_ERROR);
+    return QByteArray();
+    }
+
+    const int outLength = out.size() - strm.avail_out;
+    inflateEnd(&strm);
+
+    out.resize(outLength);
+    return out;
+}
 
 Map_loader::Map_loader()
 {
@@ -45,24 +115,31 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     map_to_send.border.top.x_offset=0;
     map_to_send.border.left.y_offset=0;
     map_to_send.border.right.y_offset=0;
-
-    QFile mapFile(fileName);
     QByteArray xmlContent,Walkable,Collisions,Water,Grass,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
-    if(!mapFile.open(QIODevice::ReadOnly))
-    {
-        error=mapFile.fileName()+": "+mapFile.errorString();
-        return false;
-    }
-    xmlContent=mapFile.readAll();
-    mapFile.close();
     bool ok;
     QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+
+    //open and quick check the file
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    else
     {
-        error=QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-        return false;
+        QFile mapFile(fileName);
+        if(!mapFile.open(QIODevice::ReadOnly))
+        {
+            error=mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
+            return false;
+        }
+        xmlContent=mapFile.readAll();
+        mapFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            error=QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            return false;
+        }
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("map"))
@@ -275,6 +352,18 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                             new_tp.destination_y = property_text.value(QStringLiteral("y")).toUInt(&ok);
                                             if(ok)
                                             {
+                                                if(property_text.contains(QStringLiteral("condition-file")) && property_text.contains(QStringLiteral("condition-id")))
+                                                {
+                                                    quint32 conditionId=property_text.value(QStringLiteral("condition-id")).toUInt(&ok);
+                                                    if(!ok)
+                                                        DebugClass::debugConsole(QStringLiteral("condition id is not a number, id: %1 (%2 at line: %3)").arg(property_text.value(QStringLiteral("condition-id")).toString()).arg(fileName).arg(SubChild.lineNumber()));
+                                                    else
+                                                    {
+                                                        const QString &conditionFile=QFileInfo(QFileInfo(fileName).absolutePath()+QStringLiteral("/")+property_text.value(QStringLiteral("condition-file")).toString()).absoluteFilePath();
+                                                        new_tp.conditionUnparsed=getXmlCondition(fileName,conditionFile,conditionId);
+                                                        new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);
+                                                    }
+                                                }
                                                 new_tp.source_x=object_x;
                                                 new_tp.source_y=object_y;
                                                 new_tp.map=property_text.value(QStringLiteral("map")).toString();
@@ -286,10 +375,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                                 #endif
                                             }
                                             else
-                                                DebugClass::debugConsole(QStringLiteral("Bad convertion to int for y, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QStringLiteral("y")).toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Bad convertion to int for y, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QStringLiteral("y")).toString()).arg(fileName).arg(SubChild.lineNumber()));
                                         }
                                         else
-                                            DebugClass::debugConsole(QStringLiteral("Bad convertion to int for x, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QStringLiteral("x")).toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
+                                            DebugClass::debugConsole(QStringLiteral("Bad convertion to int for x, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text.value(QStringLiteral("x")).toString()).arg(fileName).arg(SubChild.lineNumber()));
                                     }
                                     else
                                         DebugClass::debugConsole(QStringLiteral("Missing map,x or y, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
@@ -396,7 +485,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.contains(QStringLiteral("skin")) && property_text[QStringLiteral("skin")]!=QStringLiteral("") && !property_text.contains(QStringLiteral("lookAt")))
+                                    if(property_text.contains(QStringLiteral("skin")) && !property_text.value(QStringLiteral("skin")).toString().isEmpty() && !property_text.contains(QStringLiteral("lookAt")))
                                     {
                                         property_text[QStringLiteral("lookAt")]=QStringLiteral("bottom");
                                         DebugClass::debugConsole(QStringLiteral("skin but not lookAt, fixed by bottom: %1 (%2 at line: %3)").arg(SubChild.tagName()).arg(fileName).arg(SubChild.lineNumber()));
@@ -1001,23 +1090,31 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 
 bool Map_loader::loadMonsterMap(const QString &fileName)
 {
-    QFile mapFile(fileName);
-    QByteArray xmlContent;
-    if(!mapFile.open(QIODevice::ReadOnly))
-    {
-        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
-        return false;
-    }
-    xmlContent=mapFile.readAll();
-    mapFile.close();
     bool ok;
     QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+
+    //open and quick check the file
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    else
     {
-        qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-        return false;
+        QFile mapFile(fileName);
+        QByteArray xmlContent;
+        if(!mapFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
+            return false;
+        }
+        xmlContent=mapFile.readAll();
+        mapFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            return false;
+        }
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
     this->map_to_send.xmlRoot = domDocument.documentElement();
     if(this->map_to_send.xmlRoot.tagName()!=QStringLiteral("map"))
@@ -1401,65 +1498,138 @@ QString Map_loader::resolvRelativeMap(const QString &fileName,const QString &lin
     return link;
 }
 
-QByteArray Map_loader::decompress(const QByteArray &data, int expectedSize)
+QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &conditionFile,const quint32 &conditionId)
 {
-    QByteArray out;
-    out.resize(expectedSize);
-    z_stream strm;
-
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    strm.next_in = (Bytef *) data.data();
-    strm.avail_in = data.length();
-    strm.next_out = (Bytef *) out.data();
-    strm.avail_out = out.size();
-
-    int ret = inflateInit2(&strm, 15 + 32);
-
-    if (ret != Z_OK) {
-    logZlibError(ret);
-    return QByteArray();
+    if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.contains(conditionFile))
+    {
+        if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
+            return CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).value(conditionId);
+        else
+            return QDomElement();
     }
+    CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed[conditionFile][conditionId];
+    bool ok;
+    QDomDocument domDocument;
 
-    do {
-    ret = inflate(&strm, Z_SYNC_FLUSH);
-
-    switch (ret) {
-        case Z_NEED_DICT:
-        case Z_STREAM_ERROR:
-        ret = Z_DATA_ERROR;
-        case Z_DATA_ERROR:
-        case Z_MEM_ERROR:
-        inflateEnd(&strm);
-        logZlibError(ret);
-        return QByteArray();
-    }
-
-    if (ret != Z_STREAM_END) {
-        if(out.size()>16*1024*1024)
+    //open and quick check the file
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(conditionFile))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(conditionFile);
+    else
+    {
+        QFile mapFile(conditionFile);
+        QByteArray xmlContent;
+        if(!mapFile.open(QIODevice::ReadOnly))
         {
-            logZlibError(Z_STREAM_ERROR);
-            return QByteArray();
+            qDebug() << QStringLiteral("Into the file %1, unab le to open the condition file: ").arg(fileName)+mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
+            return QDomElement();
         }
-        int oldSize = out.size();
-        out.resize(out.size() * 2);
-
-        strm.next_out = (Bytef *)(out.data() + oldSize);
-        strm.avail_out = oldSize;
+        xmlContent=mapFile.readAll();
+        mapFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            return QDomElement();
+        }
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[conditionFile]=domDocument;
     }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!=QStringLiteral("conditions"))
+    {
+        qDebug() << QStringLiteral("\"conditions\" root balise not found for the xml file %1").arg(conditionFile);
+        return QDomElement();
     }
-    while (ret != Z_STREAM_END);
 
-    if (strm.avail_in != 0) {
-    logZlibError(Z_DATA_ERROR);
-    return QByteArray();
+    QDomElement item = root.firstChildElement(QStringLiteral("condition"));
+    while(!item.isNull())
+    {
+        if(item.isElement())
+        {
+            if(!item.hasAttribute(QStringLiteral("id")))
+                qDebug() << QStringLiteral("\"condition\" balise have not id attribute (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
+            else if(!item.hasAttribute(QStringLiteral("type")))
+                qDebug() << QStringLiteral("\"condition\" balise have not type attribute (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
+            else
+            {
+                quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                if(!ok)
+                    qDebug() << QStringLiteral("\"condition\" balise have id is not a number (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
+                else
+                    CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed[conditionFile][id]=item;
+            }
+        }
+        item = item.nextSiblingElement(QStringLiteral("condition"));
     }
-
-    const int outLength = out.size() - strm.avail_out;
-    inflateEnd(&strm);
-
-    out.resize(outLength);
-    return out;
+    if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.contains(conditionFile))
+        if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
+            return CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).value(conditionId);
+    return QDomElement();
 }
 
+MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile,const QDomElement &conditionContent)
+{
+    bool ok;
+    MapCondition condition;
+    condition.type=MapConditionType_None;
+    condition.value=0;
+    if(conditionContent.attribute(QStringLiteral("type"))==QStringLiteral("quest"))
+    {
+        if(!conditionContent.hasAttribute(QStringLiteral("quest")))
+            qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+        else
+        {
+            quint32 quest=conditionContent.attribute(QStringLiteral("quest")).toUInt(&ok);
+            if(!ok)
+                qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+            else if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(quest))
+                qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+            else
+            {
+                condition.type=MapConditionType_Quest;
+                condition.value=quest;
+            }
+        }
+    }
+    else if(conditionContent.attribute(QStringLiteral("type"))==QStringLiteral("item"))
+    {
+        if(!conditionContent.hasAttribute(QStringLiteral("item")))
+            qDebug() << QStringLiteral("\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+        else
+        {
+            quint32 item=conditionContent.attribute(QStringLiteral("item")).toUInt(&ok);
+            if(!ok)
+                qDebug() << QStringLiteral("\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+            else if(!CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
+                qDebug() << QStringLiteral("\"condition\" balise have type=item but item id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+            else
+            {
+                condition.type=MapConditionType_Item;
+                condition.value=item;
+            }
+        }
+    }
+    else if(conditionContent.attribute(QStringLiteral("type"))==QStringLiteral("fightBot"))
+    {
+        if(!conditionContent.hasAttribute(QStringLiteral("fightBot")))
+            qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+        else
+        {
+            quint32 fightBot=conditionContent.attribute(QStringLiteral("fightBot")).toUInt(&ok);
+            if(!ok)
+                qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+            else if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightBot))
+                qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+            else
+            {
+                condition.type=MapConditionType_FightBot;
+                condition.value=fightBot;
+            }
+        }
+    }
+    else if(conditionContent.attribute(QStringLiteral("type"))==QStringLiteral("clan"))
+        condition.type=MapConditionType_Clan;
+    else
+        qDebug() << QStringLiteral("\"condition\" balise have type but value is not quest, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
+    return condition;
+}

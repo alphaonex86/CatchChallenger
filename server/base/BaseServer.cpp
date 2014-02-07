@@ -207,8 +207,8 @@ void BaseServer::preload_zone()
         zoneCodeName.remove(QStringLiteral(".xml"));
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath();
-        if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-            domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
             QFile itemsFile(file);
@@ -229,7 +229,7 @@ void BaseServer::preload_zone()
                 index++;
                 continue;
             }
-            DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+            CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(zoneCodeName))
         {
@@ -983,9 +983,11 @@ void BaseServer::preload_the_map()
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
                         #endif
-                        semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map);
-                        semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x;
-                        semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y;
+                        Map::Teleporter *teleporter=&semi_loaded_map[index].map->teleporter[virtual_position];
+                        teleporter->map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map);
+                        teleporter->x=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x;
+                        teleporter->y=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y;
+                        teleporter->condition=semi_loaded_map.value(index).old_map.teleport.at(sub_index).condition;
                     }
                 }
                 else
@@ -1506,8 +1508,8 @@ void BaseServer::loadBotFile(const QString &file)
         return;
     botFiles[file];//create the entry
     QDomDocument domDocument;
-    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile mapFile(file);
@@ -1525,7 +1527,7 @@ void BaseServer::loadBotFile(const QString &file)
             qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return;
         }
-        DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     bool ok;
     QDomElement root = domDocument.documentElement();
