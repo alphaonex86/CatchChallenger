@@ -4,9 +4,9 @@
 
 using namespace CatchChallenger;
 
-QRegularExpression ClientNetworkRead::commandRegExp=QRegularExpression(QStringLiteral("^/([a-z]+)( [^ ].*)?$"));
-QRegularExpression ClientNetworkRead::commandRegExpWithArgs=QRegularExpression(QStringLiteral("^/([a-z]+)( [^ ].*)$"));
-QRegularExpression ClientNetworkRead::isolateTheMainCommand=QRegularExpression(QStringLiteral("^ (.*)$"));
+QRegularExpression ClientNetworkRead::commandRegExp=QRegularExpression(QLatin1String("^/([a-z]+)( [^ ].*)?$"));
+QRegularExpression ClientNetworkRead::commandRegExpWithArgs=QRegularExpression(QLatin1String("^/([a-z]+)( [^ ].*)$"));
+QRegularExpression ClientNetworkRead::isolateTheMainCommand=QRegularExpression(QLatin1String("^ (.*)$"));
 
 ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,ConnectedSocket * socket) :
     ProtocolParsingInput(socket,PacketModeTransmission_Server)
@@ -319,7 +319,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                         return;
                     QString pseudo;
                     in >> pseudo;
-                    emit message(QStringLiteral("/pm ")+pseudo+QStringLiteral(" ")+text);
+                    emit message(QStringLiteral("/pm ")+pseudo+QLatin1String(" ")+text);
                     emit sendPM(text,pseudo);
                 }
                 else
@@ -329,7 +329,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     QString text;
                     in >> text;
 
-                    if(!text.startsWith(QStringLiteral("/")))
+                    if(!text.startsWith(QLatin1String("/")))
                     {
                         if(chatType==Chat_type_local)
                             emit sendLocalChatText(text);
@@ -342,101 +342,101 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                         {
                             //isolate the main command (the first word)
                             QString command=text;
-                            command.replace(commandRegExp,QStringLiteral("\\1"));
+                            command.replace(commandRegExp,QLatin1String("\\1"));
 
                             //isolate the arguements
                             if(text.contains(commandRegExp))
                             {
-                                text.replace(commandRegExp,QStringLiteral("\\2"));
-                                text.replace(isolateTheMainCommand,QStringLiteral("\\1"));
+                                text.replace(commandRegExp,QLatin1String("\\2"));
+                                text.replace(isolateTheMainCommand,QLatin1String("\\1"));
                             }
                             else
-                                text=QStringLiteral("");
+                                text=QLatin1String("");
 
                             //the normal player command
                             {
-                                if(command==QStringLiteral("playernumber"))
+                                if(command==QLatin1String("playernumber"))
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                     return;
                                 }
-                                else if(command==QStringLiteral("playerlist"))
+                                else if(command==QLatin1String("playerlist"))
                                 {
                                     emit sendBroadCastCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
                                     return;
                                 }
-                                else if(command==QStringLiteral("trade"))
+                                else if(command==QLatin1String("trade"))
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                     return;
                                 }
-                                else if(command==QStringLiteral("battle"))
+                                else if(command==QLatin1String("battle"))
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                     return;
                                 }
                             }
                             //the admin command
                             if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
                             {
-                                if(command==QStringLiteral("give"))
+                                if(command==QLatin1String("give"))
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
-                                else if(command==QStringLiteral("take"))
+                                else if(command==QLatin1String("take"))
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
-                                else if(command==QStringLiteral("tp"))
+                                else if(command==QLatin1String("tp"))
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
-                                else if(command==QStringLiteral("kick"))
+                                else if(command==QLatin1String("kick"))
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
-                                else if(command==QStringLiteral("chat"))
+                                else if(command==QLatin1String("chat"))
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
-                                else if(command==QStringLiteral("setrights"))
+                                else if(command==QLatin1String("setrights"))
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
-                                else if(command==QStringLiteral("stop") || command==QStringLiteral("restart"))
+                                else if(command==QLatin1String("stop") || command==QLatin1String("restart"))
                                 {
                                     BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
-                                else if(command==QStringLiteral("addbots") || command==QStringLiteral("removebots"))
+                                else if(command==QLatin1String("addbots") || command==QLatin1String("removebots"))
                                 {
                                     BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QStringLiteral(" ")+text);
+                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
                                 }
                                 else
                                 {
-                                    emit message(QStringLiteral("unknown send command: /")+command+QStringLiteral(" and \"")+text+QStringLiteral("\""));
-                                    receiveSystemText(QStringLiteral("unknown send command: /")+command+QStringLiteral(" and \"")+text+QStringLiteral("\""));
+                                    emit message(QStringLiteral("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
+                                    receiveSystemText(QLatin1String("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
                                 }
                             }
                             else
                             {
-                                emit message(QStringLiteral("unknown send command: /")+command+QStringLiteral(" and \"")+text+QStringLiteral("\""));
-                                receiveSystemText(QStringLiteral("unknown send command: /")+command+QStringLiteral(" and \"")+text+QStringLiteral("\""));
+                                emit message(QStringLiteral("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
+                                receiveSystemText(QLatin1String("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
                             }
                         }
                         else
-                            emit message(QStringLiteral("commands seem not right: \"")+text+QStringLiteral("\""));
+                            emit message(QStringLiteral("commands seem not right: \"")+text+QLatin1String("\""));
                     }
                 }
                 return;
