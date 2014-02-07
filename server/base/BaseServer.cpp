@@ -55,11 +55,11 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.pvp                                    = true;
 
     GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
-    GlobalServerData::serverSettings.database.sqlite.file                       = QStringLiteral("");
+    GlobalServerData::serverSettings.database.sqlite.file                       = QLatin1String("");
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithm_none;
 
-    GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/");
-    GlobalServerData::serverSettings.server_ip                                  = QStringLiteral("");
+    GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QLatin1String("/datapack/");
+    GlobalServerData::serverSettings.server_ip                                  = QLatin1String("");
     GlobalServerData::serverSettings.server_port                                = 42489;
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.anonymous                                  = false;
@@ -90,13 +90,13 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
     GlobalServerData::serverSettings.city.capture.minute                        = 0;
-    GlobalServerData::serverSettings.bitcoin.address                            = QStringLiteral("1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ");
+    GlobalServerData::serverSettings.bitcoin.address                            = QLatin1String("1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ");
     #ifdef Q_OS_WIN32
-    GlobalServerData::serverSettings.bitcoin.binaryPath                         = QStringLiteral("%application_path%/bitcoin/bitcoind.exe");
-    GlobalServerData::serverSettings.bitcoin.workingPath                        = QStringLiteral("%application_path%/bitcoin-storage/");
+    GlobalServerData::serverSettings.bitcoin.binaryPath                         = QLatin1String("%application_path%/bitcoin/bitcoind.exe");
+    GlobalServerData::serverSettings.bitcoin.workingPath                        = QLatin1String("%application_path%/bitcoin-storage/");
     #else
-    GlobalServerData::serverSettings.bitcoin.binaryPath                         = QStringLiteral("/usr/bin/bitcoind");
-    GlobalServerData::serverSettings.bitcoin.workingPath                        = QDir::homePath()+QStringLiteral("/.config/CatchChallenger/server/bitcoin/");
+    GlobalServerData::serverSettings.bitcoin.binaryPath                         = QLatin1String("/usr/bin/bitcoind");
+    GlobalServerData::serverSettings.bitcoin.workingPath                        = QDir::homePath()+QLatin1String("/.config/CatchChallenger/server/bitcoin/");
     #endif
     GlobalServerData::serverSettings.bitcoin.enabled                            = false;
     GlobalServerData::serverSettings.bitcoin.fee                                = 1.0;
@@ -185,7 +185,7 @@ void BaseServer::preload_the_data()
 
 void BaseServer::preload_zone()
 {
-    QRegularExpression regexXmlFile(QStringLiteral("^[a-zA-Z0-9\\- _]+\\.xml$"));
+    QRegularExpression regexXmlFile(QLatin1String("^[a-zA-Z0-9\\- _]+\\.xml$"));
     //open and quick check the file
     QFileInfoList entryList=QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
@@ -204,7 +204,7 @@ void BaseServer::preload_zone()
             continue;
         }
         QString zoneCodeName=entryList.at(index).fileName();
-        zoneCodeName.remove(QStringLiteral(".xml"));
+        zoneCodeName.remove(QLatin1String(".xml"));
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath();
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
@@ -247,13 +247,13 @@ void BaseServer::preload_zone()
 
         //load capture
         QList<quint32> fightIdList;
-        QDomElement capture = root.firstChildElement(QStringLiteral("capture"));
+        QDomElement capture = root.firstChildElement(QLatin1String("capture"));
         if(!capture.isNull())
         {
-            if(capture.isElement() && capture.hasAttribute(QStringLiteral("fightId")))
+            if(capture.isElement() && capture.hasAttribute(QLatin1String("fightId")))
             {
                 bool ok;
-                const QStringList &fightIdStringList=capture.attribute(QStringLiteral("fightId")).split(QStringLiteral(";"));
+                const QStringList &fightIdStringList=capture.attribute(QLatin1String("fightId")).split(QLatin1String(";"));
                 int sub_index=0;
                 const int &listsize=fightIdStringList.size();
                 while(sub_index<listsize)
@@ -314,10 +314,10 @@ void BaseServer::preload_industries()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
+            queryText=QLatin1String("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT id,resources,products,last_update FROM factory");
+            queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
     }
     QSqlQuery industryStatusQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -340,12 +340,12 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            QStringList resourcesStringList=industryStatusQuery.value(1).toString().split(QStringLiteral(";"));
+            QStringList resourcesStringList=industryStatusQuery.value(1).toString().split(QLatin1String(";"));
             int index=0;
             const int &listsize=resourcesStringList.size();
             while(index<listsize)
             {
-                QStringList itemStringList=resourcesStringList.at(index).split(QStringLiteral("->"));
+                QStringList itemStringList=resourcesStringList.at(index).split(QLatin1String("->"));
                 if(itemStringList.size()!=2)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: wrong entry count"));
@@ -393,12 +393,12 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            QStringList productsStringList=industryStatusQuery.value(2).toString().split(QStringLiteral(";"));
+            QStringList productsStringList=industryStatusQuery.value(2).toString().split(QLatin1String(";"));
             int index=0;
             const int &listsize=productsStringList.size();
             while(index<listsize)
             {
-                QStringList itemStringList=productsStringList.at(index).split(QStringLiteral("->"));
+                QStringList itemStringList=productsStringList.at(index).split(QLatin1String("->"));
                 if(itemStringList.size()!=2)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: wrong entry count"));
@@ -479,10 +479,10 @@ void BaseServer::preload_market_monsters()
      {
          default:
          case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price`,`market_bitcoin` FROM `monster` WHERE `place`='market' ORDER BY `position` ASC");
+            queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price`,`market_bitcoin` FROM `monster` WHERE `place`='market' ORDER BY `position` ASC");
          break;
          case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
+            queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
          break;
      }
      bool ok;
@@ -557,11 +557,11 @@ void BaseServer::preload_market_monsters()
          }
          if(ok)
          {
-             if(monstersQuery.value(7).toString()==QStringLiteral("male"))
+             if(monstersQuery.value(7).toString()==QLatin1String("male"))
                  playerMonster.gender=Gender_Male;
-             else if(monstersQuery.value(7).toString()==QStringLiteral("female"))
+             else if(monstersQuery.value(7).toString()==QLatin1String("female"))
                  playerMonster.gender=Gender_Female;
-             else if(monstersQuery.value(7).toString()==QStringLiteral("unknown"))
+             else if(monstersQuery.value(7).toString()==QLatin1String("unknown"))
                  playerMonster.gender=Gender_Unknown;
              else
              {
@@ -630,10 +630,10 @@ void BaseServer::preload_market_items()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `item`,`quantity`,`character`,`market_price`,`market_bitcoin` FROM `item` WHERE `place`='market'");
+            queryText=QLatin1String("SELECT `item`,`quantity`,`character`,`market_price`,`market_bitcoin` FROM `item` WHERE `place`='market'");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
+            queryText=QLatin1String("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
         break;
     }
     bool ok;
@@ -841,11 +841,11 @@ void BaseServer::preload_the_map()
     int size=returnList.size();
     int index=0;
     int sub_index;
-    QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
+    QRegularExpression mapFilter(QLatin1String("\\.tmx$"));
     while(index<size)
     {
         QString fileName=returnList.at(index);
-        fileName.replace(QStringLiteral("\\"),QStringLiteral("/"));
+        fileName.replace(QLatin1String("\\"),QLatin1String("/"));
         if(fileName.contains(mapFilter) && GlobalServerData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
@@ -1176,9 +1176,9 @@ void BaseServer::preload_the_skin()
 
 void BaseServer::preload_the_datapack()
 {
-    QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED+QStringLiteral(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(QStringLiteral(";"));
+    QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED+QLatin1String(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(QLatin1String(";"));
     QSet<QString> extensionAllowed=extensionAllowedTemp.toSet();
-    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(QStringLiteral(";"));
+    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(QLatin1String(";"));
     ClientHeavyLoad::compressedExtension=compressedExtensionAllowedTemp.toSet();
     QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverSettings.datapack_basePath);
     int index=0;
@@ -1195,7 +1195,7 @@ void BaseServer::preload_the_datapack()
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        fileName.replace(QStringLiteral("\\"),QStringLiteral("/"));//remplace if is under windows server
+                        fileName.replace(QLatin1String("\\"),QLatin1String("/"));//remplace if is under windows server
                         GlobalServerData::serverPrivateVariables.filesList << fileName;
                         file.close();
                     }
@@ -1272,14 +1272,14 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                     while (i.hasNext()) {
                         i.next();
                         QDomElement step = i.value();
-                        if(step.attribute(QStringLiteral("type"))==QStringLiteral("shop"))
+                        if(step.attribute(QLatin1String("type"))==QLatin1String("shop"))
                         {
-                            if(!step.hasAttribute(QStringLiteral("shop")))
+                            if(!step.hasAttribute(QLatin1String("shop")))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
-                                quint32 shop=step.attribute(QStringLiteral("shop")).toUInt(&ok);
+                                quint32 shop=step.attribute(QLatin1String("shop")).toUInt(&ok);
                                 if(!ok)
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
@@ -1297,7 +1297,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("learn"))
+                        else if(step.attribute(QLatin1String("type"))==QLatin1String("learn"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -1312,7 +1312,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("heal"))
+                        else if(step.attribute(QLatin1String("type"))==QLatin1String("heal"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -1327,7 +1327,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
-                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("market"))
+                        else if(step.attribute(QLatin1String("type"))==QLatin1String("market"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -1342,9 +1342,9 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 marketpoint_number++;
                             }
                         }
-                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("zonecapture"))
+                        else if(step.attribute(QLatin1String("type"))==QLatin1String("zonecapture"))
                         {
-                            if(!step.hasAttribute(QStringLiteral("zone")))
+                            if(!step.hasAttribute(QLatin1String("zone")))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
@@ -1360,30 +1360,30 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("fight"))
+                        else if(step.attribute(QLatin1String("type"))==QLatin1String("fight"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map.value(index).map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
-                                quint32 fightid=step.attribute(QStringLiteral("fightid")).toUInt(&ok);
+                                quint32 fightid=step.attribute(QLatin1String("fightid")).toUInt(&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapack::commonDatapack.botFights.contains(fightid))
                                     {
-                                        if(bot_Semi.property_text.contains(QStringLiteral("lookAt")))
+                                        if(bot_Semi.property_text.contains(QLatin1String("lookAt")))
                                         {
                                             Direction direction;
-                                            if(bot_Semi.property_text.value(QStringLiteral("lookAt"))==QStringLiteral("left"))
+                                            if(bot_Semi.property_text.value(QLatin1String("lookAt"))==QLatin1String("left"))
                                                 direction=CatchChallenger::Direction_move_at_left;
-                                            else if(bot_Semi.property_text.value(QStringLiteral("lookAt"))==QStringLiteral("right"))
+                                            else if(bot_Semi.property_text.value(QLatin1String("lookAt"))==QLatin1String("right"))
                                                 direction=CatchChallenger::Direction_move_at_right;
-                                            else if(bot_Semi.property_text.value(QStringLiteral("lookAt"))==QStringLiteral("top"))
+                                            else if(bot_Semi.property_text.value(QLatin1String("lookAt"))==QLatin1String("top"))
                                                 direction=CatchChallenger::Direction_move_at_top;
                                             else
                                             {
-                                                if(bot_Semi.property_text.value(QStringLiteral("lookAt"))!=QStringLiteral("bottom"))
+                                                if(bot_Semi.property_text.value(QLatin1String("lookAt"))!=QLatin1String("bottom"))
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Wrong direction for the bot at %1 (%2,%3)")
                                                         .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                                 direction=CatchChallenger::Direction_move_at_bottom;
@@ -1537,38 +1537,38 @@ void BaseServer::loadBotFile(const QString &file)
         return;
     }
     //load the bots
-    QDomElement child = root.firstChildElement(QStringLiteral("bot"));
+    QDomElement child = root.firstChildElement(QLatin1String("bot"));
     while(!child.isNull())
     {
-        if(!child.hasAttribute(QStringLiteral("id")))
+        if(!child.hasAttribute(QLatin1String("id")))
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         else if(!child.isElement())
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
-            quint32 id=child.attribute(QStringLiteral("id")).toUInt(&ok);
+            quint32 id=child.attribute(QLatin1String("id")).toUInt(&ok);
             if(ok)
             {
                 if(botIdLoaded.contains(id))
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Bot %3 into file %4 have same id as another bot: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(id).arg(file));
                 botIdLoaded << id;
                 botFiles[file][id];
-                QDomElement step = child.firstChildElement(QStringLiteral("step"));
+                QDomElement step = child.firstChildElement(QLatin1String("step"));
                 while(!step.isNull())
                 {
-                    if(!step.hasAttribute(QStringLiteral("id")))
+                    if(!step.hasAttribute(QLatin1String("id")))
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
-                    else if(!step.hasAttribute(QStringLiteral("type")))
+                    else if(!step.hasAttribute(QLatin1String("type")))
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
                     else if(!step.isElement())
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute(QStringLiteral("type"))).arg(step.lineNumber())));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute(QLatin1String("type"))).arg(step.lineNumber())));
                     else
                     {
-                        quint32 stepId=step.attribute(QStringLiteral("id")).toUInt(&ok);
+                        quint32 stepId=step.attribute(QLatin1String("id")).toUInt(&ok);
                         if(ok)
                             botFiles[file][id].step[stepId]=step;
                     }
-                    step = step.nextSiblingElement(QStringLiteral("step"));
+                    step = step.nextSiblingElement(QLatin1String("step"));
                 }
                 if(!botFiles.value(file).value(id).step.contains(1))
                     botFiles[file].remove(id);
@@ -1576,7 +1576,7 @@ void BaseServer::loadBotFile(const QString &file)
             else
                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         }
-        child = child.nextSiblingElement(QStringLiteral("bot"));
+        child = child.nextSiblingElement(QLatin1String("bot"));
     }
 }
 
@@ -2009,10 +2009,10 @@ void BaseServer::load_clan_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QLatin1String("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
+            queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
         break;
     }
     QSqlQuery maxClanIdQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -2039,10 +2039,10 @@ void BaseServer::load_account_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QLatin1String("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
+            queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
         break;
     }
     QSqlQuery maxAccountIdQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -2069,15 +2069,15 @@ void BaseServer::load_character_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QLatin1String("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
+            queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
         break;
     }
     QSqlQuery maxCharacterIdQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!maxCharacterIdQuery.exec(queryText))
-        DebugClass::debugConsole(maxCharacterIdQuery.lastQuery()+QStringLiteral(": ")+maxCharacterIdQuery.lastError().text());
+        DebugClass::debugConsole(maxCharacterIdQuery.lastQuery()+QLatin1String(": ")+maxCharacterIdQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
     while(maxCharacterIdQuery.next())
     {
