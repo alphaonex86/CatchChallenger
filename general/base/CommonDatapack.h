@@ -36,6 +36,8 @@ public:
     QHash<quint32,quint32> industriesLink;
     QList<Profile> profileList;
     QList<Type> types;
+    QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
+    QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
 private:
     QMutex inProgress;
     bool isParsed;

@@ -390,6 +390,7 @@ void BaseWindow::updateConnectingStatus()
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
         warehouse_playerMonster=player_private_and_public_informations.warehouse_playerMonster;
         MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
+        MapController::mapController->setInformations(&items,&quests);
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();

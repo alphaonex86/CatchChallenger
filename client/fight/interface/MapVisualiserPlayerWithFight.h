@@ -14,6 +14,7 @@ public:
     void addBeatenBotFight(const quint32 &botFightId);
     bool haveBeatBot(const quint32 &botFightId) const;
     void addRepelStep(const quint32 &repel_step);
+    void setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests);
 protected slots:
     virtual void keyPressParse();
     virtual bool haveStopTileAction();
@@ -22,8 +23,11 @@ protected slots:
 protected:
     QSet<quint32> botAlreadyBeaten;
     quint32 repel_step;
+    QHash<quint32,quint32> *items;
+    QHash<quint32, CatchChallenger::PlayerQuest> *quests;
 signals:
     void repelEffectIsOver() const;
+    void teleportConditionNotRespected(const QString &text) const;
 };
 
 #endif

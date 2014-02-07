@@ -1,9 +1,11 @@
 #include "MapVisualiserThread.h"
 #include "MapItem.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/CommonDatapack.h"
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../ClientVariable.h"
+#include "../LanguagesSelect.h"
 
 MapVisualiserThread::MapVisualiserThread()
 {
@@ -12,6 +14,7 @@ MapVisualiserThread::MapVisualiserThread()
     hideTheDoors=true;
     regexMs=QRegularExpression(QStringLiteral("^[0-9]{1,5}ms$"));
     regexFrames=QRegularExpression(QStringLiteral("^[0-9]{1,3}frames$"));
+    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
 }
 
 MapVisualiserThread::~MapVisualiserThread()
@@ -142,6 +145,43 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         {
             tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
             tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map).absoluteFilePath();
+            QDomElement item=map_loader.map_to_send.teleport.at(index).conditionUnparsed;
+            QString conditionText;
+            {
+                bool text_found=false;
+                QDomElement blockedtext = item.firstChildElement(QStringLiteral("blockedtext"));
+                if(!language.isEmpty() && language!=QStringLiteral("en"))
+                    while(!blockedtext.isNull())
+                    {
+                        if(blockedtext.isElement())
+                        {
+                            if(blockedtext.hasAttribute(QStringLiteral("lang")) && blockedtext.attribute(QStringLiteral("lang"))==language)
+                            {
+                                conditionText=blockedtext.text();
+                                text_found=true;
+                                break;
+                            }
+                        }
+                        blockedtext = blockedtext.nextSiblingElement(QStringLiteral("blockedtext"));
+                    }
+                if(!text_found)
+                {
+                    blockedtext = item.firstChildElement(QStringLiteral("blockedtext"));
+                    while(!blockedtext.isNull())
+                    {
+                        if(blockedtext.isElement())
+                        {
+                            if(!blockedtext.hasAttribute(QStringLiteral("lang")) || blockedtext.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                            {
+                                conditionText=blockedtext.text();
+                                break;
+                            }
+                        }
+                        blockedtext = blockedtext.nextSiblingElement(QStringLiteral("blockedtext"));
+                    }
+                }
+            }
+            tempMapObject->logicalMap.teleport_condition_texts << conditionText;
             index++;
         }
     }
@@ -450,27 +490,35 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
 //drop and remplace by Map_loader info
 bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap)
 {
-    QString fileName=parsedMap->logicalMap.map_file;
-    QFile mapFile(fileName);
-    if(!mapFile.open(QIODevice::ReadOnly))
-    {
-        qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
-        return false;
-    }
-    QByteArray xmlContent=mapFile.readAll();
-    mapFile.close();
-    if(stopIt)
-            return false;
     QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    //open and quick check the file
+    const QString &fileName=parsedMap->logicalMap.map_file;
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    else
     {
-        qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-        return false;
+        QFile mapFile(fileName);
+        if(!mapFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
+            return false;
+        }
+        QByteArray xmlContent=mapFile.readAll();
+        mapFile.close();
+        if(stopIt)
+                return false;
+        QDomDocument domDocument;
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            return false;
+        }
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="map")
+    if(root.tagName()!=QStringLiteral("map"))
     {
         qDebug() << QStringLiteral("\"map\" root balise not found for the xml file");
         return false;
