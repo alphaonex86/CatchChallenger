@@ -50,7 +50,7 @@ QList<Type> FightLoader::loadTypes(const QString &file)
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("types"))
+    if(root.tagName()!=QLatin1String("types"))
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"types\" root balise not found for the xml file").arg(file);
         return types;
@@ -60,14 +60,14 @@ QList<Type> FightLoader::loadTypes(const QString &file)
     bool ok;
     {
         QSet<QString> duplicate;
-        QDomElement typeItem = root.firstChildElement(QStringLiteral("type"));
+        QDomElement typeItem = root.firstChildElement(QLatin1String("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
             {
-                if(typeItem.hasAttribute(QStringLiteral("name")))
+                if(typeItem.hasAttribute(QLatin1String("name")))
                 {
-                    QString name=typeItem.attribute(QStringLiteral("name"));
+                    QString name=typeItem.attribute(QLatin1String("name"));
                     if(!duplicate.contains(name))
                     {
                         duplicate << name;
@@ -84,31 +84,31 @@ QList<Type> FightLoader::loadTypes(const QString &file)
             }
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-            typeItem = typeItem.nextSiblingElement(QStringLiteral("type"));
+            typeItem = typeItem.nextSiblingElement(QLatin1String("type"));
         }
     }
     {
         QSet<QString> duplicate;
-        QDomElement typeItem = root.firstChildElement(QStringLiteral("type"));
+        QDomElement typeItem = root.firstChildElement(QLatin1String("type"));
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
             {
-                if(typeItem.hasAttribute(QStringLiteral("name")))
+                if(typeItem.hasAttribute(QLatin1String("name")))
                 {
-                    QString name=typeItem.attribute(QStringLiteral("name"));
+                    QString name=typeItem.attribute(QLatin1String("name"));
                     if(!duplicate.contains(name))
                     {
                         duplicate << name;
-                        QDomElement multiplicator = typeItem.firstChildElement(QStringLiteral("multiplicator"));
+                        QDomElement multiplicator = typeItem.firstChildElement(QLatin1String("multiplicator"));
                         while(!multiplicator.isNull())
                         {
                             if(multiplicator.isElement())
                             {
-                                if(multiplicator.hasAttribute(QStringLiteral("number")) && multiplicator.hasAttribute(QStringLiteral("to")))
+                                if(multiplicator.hasAttribute(QLatin1String("number")) && multiplicator.hasAttribute(QLatin1String("to")))
                                 {
-                                    float number=multiplicator.attribute(QStringLiteral("number")).toFloat(&ok);
-                                    QStringList to=multiplicator.attribute(QStringLiteral("to")).split(QStringLiteral(";"));
+                                    float number=multiplicator.attribute(QLatin1String("number")).toFloat(&ok);
+                                    QStringList to=multiplicator.attribute(QLatin1String("to")).split(QLatin1String(";"));
                                     if(ok && (number==2.0 || number==0.5 || number==0.0))
                                     {
                                         int index=0;
@@ -137,7 +137,7 @@ QList<Type> FightLoader::loadTypes(const QString &file)
                             }
                             else
                                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-                            multiplicator = multiplicator.nextSiblingElement(QStringLiteral("multiplicator"));
+                            multiplicator = multiplicator.nextSiblingElement(QLatin1String("multiplicator"));
                         }
                     }
                     else
@@ -148,7 +148,7 @@ QList<Type> FightLoader::loadTypes(const QString &file)
             }
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-            typeItem = typeItem.nextSiblingElement(QStringLiteral("type"));
+            typeItem = typeItem.nextSiblingElement(QLatin1String("type"));
         }
     }
     return types;
@@ -189,7 +189,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("list"))
+    if(root.tagName()!=QLatin1String("list"))
     {
         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return monsters;
@@ -197,68 +197,68 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
 
     //load the content
     bool ok,ok2;
-    QDomElement item = root.firstChildElement(QStringLiteral("monster"));
+    QDomElement item = root.firstChildElement(QLatin1String("monster"));
     while(!item.isNull())
     {
         if(item.isElement())
         {
             bool attributeIsOk=true;
-            if(!item.hasAttribute(QStringLiteral("id")))
+            if(!item.hasAttribute(QLatin1String("id")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"id\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("egg_step")))
+            if(!item.hasAttribute(QLatin1String("egg_step")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"egg_step\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("xp_for_max_level")) && !item.hasAttribute(QStringLiteral("xp_max")))
+            if(!item.hasAttribute(QLatin1String("xp_for_max_level")) && !item.hasAttribute(QLatin1String("xp_max")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"xp_for_max_level\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
             else
             {
-                if(!item.hasAttribute(QStringLiteral("xp_for_max_level")))
-                    item.setAttribute(QStringLiteral("xp_for_max_level"),item.attribute(QStringLiteral("xp_max")));
+                if(!item.hasAttribute(QLatin1String("xp_for_max_level")))
+                    item.setAttribute(QLatin1String("xp_for_max_level"),item.attribute(QLatin1String("xp_max")));
             }
-            if(!item.hasAttribute(QStringLiteral("hp")))
+            if(!item.hasAttribute(QLatin1String("hp")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"hp\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("attack")))
+            if(!item.hasAttribute(QLatin1String("attack")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"attack\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("defense")))
+            if(!item.hasAttribute(QLatin1String("defense")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"defense\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("special_attack")))
+            if(!item.hasAttribute(QLatin1String("special_attack")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"special_attack\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("special_defense")))
+            if(!item.hasAttribute(QLatin1String("special_defense")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"special_defense\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("speed")))
+            if(!item.hasAttribute(QLatin1String("speed")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"speed\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("give_sp")))
+            if(!item.hasAttribute(QLatin1String("give_sp")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"give_sp\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
             }
-            if(!item.hasAttribute(QStringLiteral("give_xp")))
+            if(!item.hasAttribute(QLatin1String("give_xp")))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"give_xp\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 attributeIsOk=false;
@@ -267,7 +267,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
             {
                 Monster monster;
                 monster.catch_rate=100;
-                quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                quint32 id=item.attribute(QLatin1String("id")).toUInt(&ok);
                 if(!ok)
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else if(monsters.contains(id))
@@ -277,10 +277,10 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                     #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                     DebugClass::debugConsole(QStringLiteral("monster loading: %1").arg(id));
                     #endif
-                    if(item.hasAttribute(QStringLiteral("catch_rate")))
+                    if(item.hasAttribute(QLatin1String("catch_rate")))
                     {
                         bool ok2;
-                        quint32 catch_rate=item.attribute(QStringLiteral("catch_rate")).toUInt(&ok2);
+                        quint32 catch_rate=item.attribute(QLatin1String("catch_rate")).toUInt(&ok2);
                         if(ok2)
                         {
                             if(catch_rate<=255)
@@ -291,38 +291,38 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                         else
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, catch_rate is not a number: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("catch_rate")));
                     }
-                    if(item.hasAttribute(QStringLiteral("type")))
+                    if(item.hasAttribute(QLatin1String("type")))
                     {
-                        const QStringList &typeList=item.attribute(QStringLiteral("type")).split(QStringLiteral(";"));
+                        const QStringList &typeList=item.attribute(QLatin1String("type")).split(QLatin1String(";"));
                         int index=0;
                         while(index<typeList.size())
                         {
                             if(typeNameToId.contains(typeList.at(index)))
                                 monster.type << typeNameToId.value(typeList.at(index));
                             else
-                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QStringLiteral("type"))));
+                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QLatin1String("type"))));
                             index++;
                         }
                     }
-                    if(item.hasAttribute(QStringLiteral("type2")))
+                    if(item.hasAttribute(QLatin1String("type2")))
                     {
-                        const QStringList &typeList=item.attribute(QStringLiteral("type2")).split(QStringLiteral(";"));
+                        const QStringList &typeList=item.attribute(QLatin1String("type2")).split(QLatin1String(";"));
                         int index=0;
                         while(index<typeList.size())
                         {
                             if(typeNameToId.contains(typeList.at(index)))
                                 monster.type << typeNameToId.value(typeList.at(index));
                             else
-                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QStringLiteral("type2"))));
+                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QLatin1String("type2"))));
                             index++;
                         }
                     }
                     qreal pow=1.0;
                     if(ok)
                     {
-                        if(item.hasAttribute(QStringLiteral("pow")))
+                        if(item.hasAttribute(QLatin1String("pow")))
                         {
-                            pow=item.attribute(QStringLiteral("pow")).toDouble(&ok);
+                            pow=item.attribute(QLatin1String("pow")).toDouble(&ok);
                             if(!ok)
                             {
                                 pow=1.0;
@@ -344,70 +344,70 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                     pow=qPow(pow,CommonSettings::commonSettings.rates_xp_pow);
                     if(ok)
                     {
-                        monster.egg_step=item.attribute(QStringLiteral("egg_step")).toUInt(&ok);
+                        monster.egg_step=item.attribute(QLatin1String("egg_step")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, egg_step is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.xp_for_max_level=item.attribute(QStringLiteral("xp_for_max_level")).toUInt(&ok);
+                        monster.xp_for_max_level=item.attribute(QLatin1String("xp_for_max_level")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, xp_for_max_level is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.stat.hp=item.attribute(QStringLiteral("hp")).toUInt(&ok);
+                        monster.stat.hp=item.attribute(QLatin1String("hp")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, hp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.stat.attack=item.attribute(QStringLiteral("attack")).toUInt(&ok);
+                        monster.stat.attack=item.attribute(QLatin1String("attack")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, attack is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.stat.defense=item.attribute(QStringLiteral("defense")).toUInt(&ok);
+                        monster.stat.defense=item.attribute(QLatin1String("defense")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, defense is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.stat.special_attack=item.attribute(QStringLiteral("special_attack")).toUInt(&ok);
+                        monster.stat.special_attack=item.attribute(QLatin1String("special_attack")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, special_attack is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.stat.special_defense=item.attribute(QStringLiteral("special_defense")).toUInt(&ok);
+                        monster.stat.special_defense=item.attribute(QLatin1String("special_defense")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, special_defense is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.stat.speed=item.attribute(QStringLiteral("speed")).toUInt(&ok);
+                        monster.stat.speed=item.attribute(QLatin1String("speed")).toUInt(&ok);
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, speed is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.give_xp=item.attribute(QStringLiteral("give_xp")).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
+                        monster.give_xp=item.attribute(QLatin1String("give_xp")).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, give_xp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.give_sp=item.attribute(QStringLiteral("give_sp")).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
+                        monster.give_sp=item.attribute(QLatin1String("give_sp")).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, give_sp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        if(item.hasAttribute(QStringLiteral("ratio_gender")))
+                        if(item.hasAttribute(QLatin1String("ratio_gender")))
                         {
-                            QString ratio_gender=item.attribute(QStringLiteral("ratio_gender"));
-                            ratio_gender.remove(QStringLiteral("%"));
+                            QString ratio_gender=item.attribute(QLatin1String("ratio_gender"));
+                            ratio_gender.remove(QLatin1String("%"));
                             monster.ratio_gender=ratio_gender.toInt(&ok2);
                             if(!ok2)
                             {
@@ -425,27 +425,27 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                     if(ok)
                     {
                         {
-                            QDomElement attack_list = item.firstChildElement(QStringLiteral("attack_list"));
+                            QDomElement attack_list = item.firstChildElement(QLatin1String("attack_list"));
                             if(!attack_list.isNull())
                             {
                                 if(attack_list.isElement())
                                 {
-                                    QDomElement attack = attack_list.firstChildElement(QStringLiteral("attack"));
+                                    QDomElement attack = attack_list.firstChildElement(QLatin1String("attack"));
                                     while(!attack.isNull())
                                     {
                                         if(attack.isElement())
                                         {
-                                            if(attack.hasAttribute(QStringLiteral("skill")) || attack.hasAttribute(QStringLiteral("id")))
+                                            if(attack.hasAttribute(QLatin1String("skill")) || attack.hasAttribute(QLatin1String("id")))
                                             {
                                                 ok=true;
-                                                if(!attack.hasAttribute(QStringLiteral("skill")))
-                                                    attack.setAttribute(QStringLiteral("skill"),attack.attribute(QStringLiteral("id")));
+                                                if(!attack.hasAttribute(QLatin1String("skill")))
+                                                    attack.setAttribute(QLatin1String("skill"),attack.attribute(QLatin1String("id")));
                                                 Monster::AttackToLearn attackVar;
-                                                if(attack.hasAttribute(QStringLiteral("skill_level")) || attack.hasAttribute(QStringLiteral("attack_level")))
+                                                if(attack.hasAttribute(QLatin1String("skill_level")) || attack.hasAttribute(QLatin1String("attack_level")))
                                                 {
-                                                    if(!attack.hasAttribute(QStringLiteral("skill_level")))
-                                                        attack.setAttribute(QStringLiteral("skill_level"),attack.attribute(QStringLiteral("attack_level")));
-                                                    attackVar.learnSkillLevel=attack.attribute(QStringLiteral("skill_level")).toUShort(&ok);
+                                                    if(!attack.hasAttribute(QLatin1String("skill_level")))
+                                                        attack.setAttribute(QLatin1String("skill_level"),attack.attribute(QLatin1String("attack_level")));
+                                                    attackVar.learnSkillLevel=attack.attribute(QLatin1String("skill_level")).toUShort(&ok);
                                                     if(!ok)
                                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skill_level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
                                                 }
@@ -453,7 +453,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                                     attackVar.learnSkillLevel=1;
                                                 if(ok)
                                                 {
-                                                    attackVar.learnSkill=attack.attribute(QStringLiteral("skill")).toUShort(&ok);
+                                                    attackVar.learnSkill=attack.attribute(QLatin1String("skill")).toUShort(&ok);
                                                     if(!ok)
                                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skill is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
                                                 }
@@ -492,11 +492,11 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                                             ok=false;
                                                         }
                                                     }
-                                                    if(attack.hasAttribute(QStringLiteral("level")))
+                                                    if(attack.hasAttribute(QLatin1String("level")))
                                                     {
                                                         if(ok)
                                                         {
-                                                            attackVar.learnAtLevel=attack.attribute(QStringLiteral("level")).toUShort(&ok);
+                                                            attackVar.learnAtLevel=attack.attribute(QLatin1String("level")).toUShort(&ok);
                                                             if(!ok)
                                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
                                                         }
@@ -530,14 +530,14 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                                         if(ok)
                                                             monster.learn<<attackVar;
                                                     }
-                                                    else if(attack.hasAttribute(QStringLiteral("byitem")))
+                                                    else if(attack.hasAttribute(QLatin1String("byitem")))
                                                     {
                                                         quint32 itemId;
                                                         if(ok)
                                                         {
-                                                            itemId=attack.attribute(QStringLiteral("byitem")).toUShort(&ok);
+                                                            itemId=attack.attribute(QLatin1String("byitem")).toUShort(&ok);
                                                             if(!ok)
-                                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item to learn is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(attack.attribute(QStringLiteral("byitem"))));
+                                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item to learn is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(attack.attribute(QLatin1String("byitem"))));
                                                         }
                                                         if(ok)
                                                         {
@@ -576,7 +576,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                         }
                                         else
                                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
-                                        attack = attack.nextSiblingElement(QStringLiteral("attack"));
+                                        attack = attack.nextSiblingElement(QLatin1String("attack"));
                                     }
                                     qSort(monster.learn);
                                 }
@@ -587,27 +587,27 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not attack_list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
                         {
-                            QDomElement evolutionsItem = item.firstChildElement(QStringLiteral("evolutions"));
+                            QDomElement evolutionsItem = item.firstChildElement(QLatin1String("evolutions"));
                             if(!evolutionsItem.isNull())
                             {
                                 if(evolutionsItem.isElement())
                                 {
-                                    QDomElement evolutionItem = evolutionsItem.firstChildElement(QStringLiteral("evolution"));
+                                    QDomElement evolutionItem = evolutionsItem.firstChildElement(QLatin1String("evolution"));
                                     while(!evolutionItem.isNull())
                                     {
                                         if(evolutionItem.isElement())
                                         {
-                                            if(evolutionItem.hasAttribute(QStringLiteral("type")) && (evolutionItem.hasAttribute(QStringLiteral("level")) || evolutionItem.attribute(QStringLiteral("type"))==QStringLiteral("trade")) && evolutionItem.hasAttribute(QStringLiteral("evolveTo")))
+                                            if(evolutionItem.hasAttribute(QLatin1String("type")) && (evolutionItem.hasAttribute(QLatin1String("level")) || evolutionItem.attribute(QLatin1String("type"))==QLatin1String("trade")) && evolutionItem.hasAttribute(QLatin1String("evolveTo")))
                                             {
                                                 ok=true;
                                                 Monster::Evolution evolutionVar;
-                                                const QString &typeText=evolutionItem.attribute(QStringLiteral("type"));
-                                                if(typeText!=QStringLiteral("trade"))
+                                                const QString &typeText=evolutionItem.attribute(QLatin1String("type"));
+                                                if(typeText!=QLatin1String("trade"))
                                                 {
-                                                    if(typeText==QStringLiteral("item"))
-                                                        evolutionVar.level=evolutionItem.attribute(QStringLiteral("level")).toUInt(&ok);
+                                                    if(typeText==QLatin1String("item"))
+                                                        evolutionVar.level=evolutionItem.attribute(QLatin1String("level")).toUInt(&ok);
                                                     else
-                                                        evolutionVar.level=evolutionItem.attribute(QStringLiteral("level")).toInt(&ok);
+                                                        evolutionVar.level=evolutionItem.attribute(QLatin1String("level")).toInt(&ok);
                                                     if(!ok)
                                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()));
                                                 }
@@ -615,17 +615,17 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                                     evolutionVar.level=0;
                                                 if(ok)
                                                 {
-                                                    evolutionVar.evolveTo=evolutionItem.attribute(QStringLiteral("evolveTo")).toUInt(&ok);
+                                                    evolutionVar.evolveTo=evolutionItem.attribute(QLatin1String("evolveTo")).toUInt(&ok);
                                                     if(!ok)
                                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, evolveTo is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()));
                                                 }
                                                 if(ok)
                                                 {
-                                                    if(typeText==QStringLiteral("level"))
+                                                    if(typeText==QLatin1String("level"))
                                                         evolutionVar.type=Monster::EvolutionType_Level;
-                                                    else if(typeText==QStringLiteral("item"))
+                                                    else if(typeText==QLatin1String("item"))
                                                         evolutionVar.type=Monster::EvolutionType_Item;
-                                                    else if(typeText==QStringLiteral("trade"))
+                                                    else if(typeText==QLatin1String("trade"))
                                                         evolutionVar.type=Monster::EvolutionType_Trade;
                                                     else
                                                     {
@@ -635,7 +635,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                                 }
                                                 if(ok)
                                                 {
-                                                    if(typeText==QStringLiteral("level") && (evolutionVar.level<0 || evolutionVar.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX))
+                                                    if(typeText==QLatin1String("level") && (evolutionVar.level<0 || evolutionVar.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX))
                                                     {
                                                         ok=false;
                                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level out of range: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()).arg(evolutionVar.level));
@@ -643,7 +643,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                                 }
                                                 if(ok)
                                                 {
-                                                    if(typeText==QStringLiteral("item"))
+                                                    if(typeText==QLatin1String("item"))
                                                     {
                                                         if(!items.contains(evolutionVar.level))
                                                         {
@@ -660,7 +660,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                         }
                                         else
                                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(evolutionItem.tagName()).arg(evolutionItem.lineNumber()));
-                                        evolutionItem = evolutionItem.nextSiblingElement(QStringLiteral("evolution"));
+                                        evolutionItem = evolutionItem.nextSiblingElement(QLatin1String("evolution"));
                                     }
                                 }
                                 else
@@ -702,7 +702,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QStringLiteral("monster"));
+        item = item.nextSiblingElement(QLatin1String("monster"));
     }
     //check the evolveTo
     QHash<quint32,Monster>::iterator i = monsters.begin();
@@ -862,7 +862,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                 CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
             }
             QDomElement root = domDocument.documentElement();
-            if(root.tagName()!=QStringLiteral("fights"))
+            if(root.tagName()!=QLatin1String("fights"))
             {
                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file").arg(file));
                 index_file++;
@@ -871,32 +871,32 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
 
             //load the content
             bool ok;
-            QDomElement item = root.firstChildElement(QStringLiteral("fight"));
+            QDomElement item = root.firstChildElement(QLatin1String("fight"));
             while(!item.isNull())
             {
                 if(item.isElement())
                 {
-                    if(item.hasAttribute(QStringLiteral("id")))
+                    if(item.hasAttribute(QLatin1String("id")))
                     {
-                        quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                        quint32 id=item.attribute(QLatin1String("id")).toUInt(&ok);
                         if(ok)
                         {
                             bool entryValid=true;
                             CatchChallenger::BotFight botFight;
                             botFight.cash=0;
                             {
-                                QDomElement monster = item.firstChildElement(QStringLiteral("monster"));
+                                QDomElement monster = item.firstChildElement(QLatin1String("monster"));
                                 while(entryValid && !monster.isNull())
                                 {
-                                    if(!monster.hasAttribute(QStringLiteral("id")))
+                                    if(!monster.hasAttribute(QLatin1String("id")))
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"id\": bot.tagName(): %1 (at line: %2)").arg(monster.tagName()).arg(monster.lineNumber()));
                                     else if(!monster.isElement())
-                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(QStringLiteral("type"))).arg(monster.lineNumber())));
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(QLatin1String("type"))).arg(monster.lineNumber())));
                                     else
                                     {
                                         CatchChallenger::BotFight::BotFightMonster botFightMonster;
                                         botFightMonster.level=1;
-                                        botFightMonster.id=monster.attribute(QStringLiteral("id")).toUInt(&ok);
+                                        botFightMonster.id=monster.attribute(QLatin1String("id")).toUInt(&ok);
                                         if(ok)
                                         {
                                             if(!monsters.contains(botFightMonster.id))
@@ -905,31 +905,31 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Monster not found into the monster list: %1 into the file %2 (line %3)").arg(botFightMonster.id).arg(file).arg(monster.lineNumber()));
                                                 break;
                                             }
-                                            if(monster.hasAttribute(QStringLiteral("level")))
+                                            if(monster.hasAttribute(QLatin1String("level")))
                                             {
-                                                botFightMonster.level=monster.attribute(QStringLiteral("level")).toUShort(&ok);
+                                                botFightMonster.level=monster.attribute(QLatin1String("level")).toUShort(&ok);
                                                 if(!ok)
                                                 {
-                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(QStringLiteral("type"))).arg(monster.lineNumber())));
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(QLatin1String("type"))).arg(monster.lineNumber())));
                                                     botFightMonster.level=1;
                                                 }
                                                 if(botFightMonster.level<1)
                                                 {
-                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(QStringLiteral("type"))).arg(monster.lineNumber())));
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute(QLatin1String("type"))).arg(monster.lineNumber())));
                                                     botFightMonster.level=1;
                                                 }
                                             }
-                                            QDomElement attack = monster.firstChildElement(QStringLiteral("attack"));
+                                            QDomElement attack = monster.firstChildElement(QLatin1String("attack"));
                                             while(entryValid && !attack.isNull())
                                             {
                                                 quint8 attackLevel=1;
-                                                if(!attack.hasAttribute(QStringLiteral("id")))
+                                                if(!attack.hasAttribute(QLatin1String("id")))
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(attack.tagName()).arg(attack.lineNumber()));
                                                 else if(!attack.isElement())
-                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName().arg(attack.attribute(QStringLiteral("type"))).arg(attack.lineNumber())));
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName().arg(attack.attribute(QLatin1String("type"))).arg(attack.lineNumber())));
                                                 else
                                                 {
-                                                    quint32 attackId=attack.attribute(QStringLiteral("id")).toUInt(&ok);
+                                                    quint32 attackId=attack.attribute(QLatin1String("id")).toUInt(&ok);
                                                     if(ok)
                                                     {
                                                         if(!monsterSkills.contains(attackId))
@@ -940,23 +940,23 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                                         }
                                                         if(attack.hasAttribute("level"))
                                                         {
-                                                            attackLevel=attack.attribute(QStringLiteral("level")).toUShort(&ok);
+                                                            attackLevel=attack.attribute(QLatin1String("level")).toUShort(&ok);
                                                             if(!ok)
                                                             {
-                                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QStringLiteral("type"))).arg(attack.lineNumber()));
+                                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QLatin1String("type"))).arg(attack.lineNumber()));
                                                                 entryValid=false;
                                                                 break;
                                                             }
                                                             if(attackLevel<1)
                                                             {
-                                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QStringLiteral("type"))).arg(attack.lineNumber()));
+                                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QLatin1String("type"))).arg(attack.lineNumber()));
                                                                 entryValid=false;
                                                                 break;
                                                             }
                                                         }
                                                         if(attackLevel>monsterSkills.value(attackId).level.size())
                                                         {
-                                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Level out of range: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QStringLiteral("type"))).arg(attack.lineNumber()));
+                                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Level out of range: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QLatin1String("type"))).arg(attack.lineNumber()));
                                                             entryValid=false;
                                                             break;
                                                         }
@@ -966,39 +966,39 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                                         botFightMonster.attacks << botFightAttack;
                                                     }
                                                 }
-                                                attack = attack.nextSiblingElement(QStringLiteral("attack"));
+                                                attack = attack.nextSiblingElement(QLatin1String("attack"));
                                             }
                                             if(botFightMonster.attacks.isEmpty())
                                                 botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
                                             if(botFightMonster.attacks.isEmpty())
                                             {
-                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Empty attack list: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QStringLiteral("type"))).arg(attack.lineNumber()));
+                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Empty attack list: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute(QLatin1String("type"))).arg(attack.lineNumber()));
                                                 entryValid=false;
                                                 break;
                                             }
                                             botFight.monsters << botFightMonster;
                                         }
                                     }
-                                    monster = monster.nextSiblingElement(QStringLiteral("monster"));
+                                    monster = monster.nextSiblingElement(QLatin1String("monster"));
                                 }
                             }
                             {
-                                QDomElement gain = item.firstChildElement(QStringLiteral("gain"));
+                                QDomElement gain = item.firstChildElement(QLatin1String("gain"));
                                 while(entryValid && !gain.isNull())
                                 {
-                                    if(!gain.hasAttribute(QStringLiteral("cash")))
+                                    if(!gain.hasAttribute(QLatin1String("cash")))
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("unknown fight gain: bot.tagName(): %1 (at line: %2)").arg(gain.tagName()).arg(gain.lineNumber()));
                                     else if(!gain.isElement())
-                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(gain.tagName().arg(gain.attribute(QStringLiteral("type"))).arg(gain.lineNumber())));
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(gain.tagName().arg(gain.attribute(QLatin1String("type"))).arg(gain.lineNumber())));
                                     else
                                     {
-                                        quint32 cash=gain.attribute(QStringLiteral("cash")).toUInt(&ok)*CommonSettings::commonSettings.rates_gold;
+                                        quint32 cash=gain.attribute(QLatin1String("cash")).toUInt(&ok)*CommonSettings::commonSettings.rates_gold;
                                         if(ok)
                                             botFight.cash+=cash;
                                         else
                                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, unknow cash text: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                     }
-                                    gain = gain.nextSiblingElement(QStringLiteral("gain"));
+                                    gain = gain.nextSiblingElement(QLatin1String("gain"));
                                 }
                             }
                             if(entryValid)
@@ -1020,7 +1020,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                 }
                 else
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                item = item.nextSiblingElement(QStringLiteral("fight"));
+                item = item.nextSiblingElement(QLatin1String("fight"));
             }
             index_file++;
         }
@@ -1071,35 +1071,35 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
 
     //load the content
     bool ok,ok2;
-    QDomElement item = root.firstChildElement(QStringLiteral("skill"));
+    QDomElement item = root.firstChildElement(QLatin1String("skill"));
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("id")))
+            if(item.hasAttribute(QLatin1String("id")))
             {
-                quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                quint32 id=item.attribute(QLatin1String("id")).toUInt(&ok);
                 if(ok && monsterSkills.contains(id))
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else if(ok)
                 {
                     QHash<quint8,Skill::SkillList> levelDef;
-                    QDomElement effect = item.firstChildElement(QStringLiteral("effect"));
+                    QDomElement effect = item.firstChildElement(QLatin1String("effect"));
                     if(!effect.isNull())
                     {
                         if(effect.isElement())
                         {
-                            QDomElement level = effect.firstChildElement(QStringLiteral("level"));
+                            QDomElement level = effect.firstChildElement(QLatin1String("level"));
                             while(!level.isNull())
                             {
                                 if(level.isElement())
                                 {
-                                    if(level.hasAttribute(QStringLiteral("number")))
+                                    if(level.hasAttribute(QLatin1String("number")))
                                     {
                                         quint32 sp=0;
-                                        if(level.hasAttribute(QStringLiteral("sp")))
+                                        if(level.hasAttribute(QLatin1String("sp")))
                                         {
-                                            sp=level.attribute(QStringLiteral("sp")).toUShort(&ok);
+                                            sp=level.attribute(QLatin1String("sp")).toUShort(&ok);
                                             if(!ok)
                                             {
                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, sp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(level.tagName()).arg(level.lineNumber()));
@@ -1107,9 +1107,9 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                             }
                                         }
                                         quint8 endurance=40;
-                                        if(level.hasAttribute(QStringLiteral("endurance")))
+                                        if(level.hasAttribute(QLatin1String("endurance")))
                                         {
-                                            endurance=level.attribute(QStringLiteral("endurance")).toUShort(&ok);
+                                            endurance=level.attribute(QLatin1String("endurance")).toUShort(&ok);
                                             if(!ok)
                                             {
                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, endurance is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(level.tagName()).arg(level.lineNumber()));
@@ -1123,7 +1123,7 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                         }
                                         quint8 number;
                                         if(ok)
-                                            number=level.attribute(QStringLiteral("number")).toUShort(&ok);
+                                            number=level.attribute(QLatin1String("number")).toUShort(&ok);
                                         if(ok)
                                         {
                                             levelDef[number].sp_to_learn=sp;
@@ -1131,23 +1131,23 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                             if(number>0)
                                             {
                                                 {
-                                                    QDomElement life = level.firstChildElement(QStringLiteral("life"));
+                                                    QDomElement life = level.firstChildElement(QLatin1String("life"));
                                                     while(!life.isNull())
                                                     {
                                                         if(life.isElement())
                                                         {
                                                             Skill::Life effect;
-                                                            if(life.hasAttribute(QStringLiteral("applyOn")))
+                                                            if(life.hasAttribute(QLatin1String("applyOn")))
                                                             {
-                                                                if(life.attribute(QStringLiteral("applyOn"))==QStringLiteral("aloneEnemy"))
+                                                                if(life.attribute(QLatin1String("applyOn"))==QLatin1String("aloneEnemy"))
                                                                     effect.effect.on=ApplyOn_AloneEnemy;
-                                                                else if(life.attribute(QStringLiteral("applyOn"))==QStringLiteral("themself"))
+                                                                else if(life.attribute(QLatin1String("applyOn"))==QLatin1String("themself"))
                                                                     effect.effect.on=ApplyOn_Themself;
-                                                                else if(life.attribute(QStringLiteral("applyOn"))==QStringLiteral("allEnemy"))
+                                                                else if(life.attribute(QLatin1String("applyOn"))==QLatin1String("allEnemy"))
                                                                     effect.effect.on=ApplyOn_AllEnemy;
-                                                                else if(life.attribute(QStringLiteral("applyOn"))==QStringLiteral("allAlly"))
+                                                                else if(life.attribute(QLatin1String("applyOn"))==QLatin1String("allAlly"))
                                                                     effect.effect.on=ApplyOn_AllAlly;
-                                                                else if(life.attribute(QStringLiteral("applyOn"))==QStringLiteral("nobody"))
+                                                                else if(life.attribute(QLatin1String("applyOn"))==QLatin1String("nobody"))
                                                                     effect.effect.on=ApplyOn_Nobody;
                                                                 else
                                                                 {
@@ -1158,20 +1158,20 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                                             else
                                                                 effect.effect.on=ApplyOn_AloneEnemy;
                                                             QString text;
-                                                            if(life.hasAttribute(QStringLiteral("quantity")))
-                                                                text=life.attribute(QStringLiteral("quantity"));
-                                                            if(text.endsWith(QStringLiteral("%")))
+                                                            if(life.hasAttribute(QLatin1String("quantity")))
+                                                                text=life.attribute(QLatin1String("quantity"));
+                                                            if(text.endsWith(QLatin1String("%")))
                                                                 effect.effect.type=QuantityType_Percent;
                                                             else
                                                                 effect.effect.type=QuantityType_Quantity;
-                                                            text.remove(QStringLiteral("%"));
-                                                            text.remove(QStringLiteral("+"));
+                                                            text.remove(QLatin1String("%"));
+                                                            text.remove(QLatin1String("+"));
                                                             effect.effect.quantity=text.toInt(&ok);
                                                             effect.success=100;
-                                                            if(life.hasAttribute(QStringLiteral("success")))
+                                                            if(life.hasAttribute(QLatin1String("success")))
                                                             {
-                                                                QString success=life.attribute(QStringLiteral("success"));
-                                                                success.remove(QStringLiteral("%"));
+                                                                QString success=life.attribute(QLatin1String("success"));
+                                                                success.remove(QLatin1String("%"));
                                                                 effect.success=success.toUShort(&ok2);
                                                                 if(!ok2)
                                                                 {
@@ -1187,32 +1187,32 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                                             else
                                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(text));
                                                         }
-                                                        life = life.nextSiblingElement(QStringLiteral("life"));
+                                                        life = life.nextSiblingElement(QLatin1String("life"));
                                                     }
                                                 }
                                                 {
-                                                    QDomElement buff = level.firstChildElement(QStringLiteral("buff"));
+                                                    QDomElement buff = level.firstChildElement(QLatin1String("buff"));
                                                     while(!buff.isNull())
                                                     {
                                                         if(buff.isElement())
                                                         {
-                                                            if(buff.hasAttribute(QStringLiteral("id")))
+                                                            if(buff.hasAttribute(QLatin1String("id")))
                                                             {
-                                                                quint32 idBuff=buff.attribute(QStringLiteral("id")).toUInt(&ok);
+                                                                quint32 idBuff=buff.attribute(QLatin1String("id")).toUInt(&ok);
                                                                 if(ok)
                                                                 {
                                                                     Skill::Buff effect;
-                                                                    if(buff.hasAttribute(QStringLiteral("applyOn")))
+                                                                    if(buff.hasAttribute(QLatin1String("applyOn")))
                                                                     {
-                                                                        if(buff.attribute(QStringLiteral("applyOn"))==QStringLiteral("aloneEnemy"))
+                                                                        if(buff.attribute(QLatin1String("applyOn"))==QLatin1String("aloneEnemy"))
                                                                             effect.effect.on=ApplyOn_AloneEnemy;
-                                                                        else if(buff.attribute(QStringLiteral("applyOn"))==QStringLiteral("themself"))
+                                                                        else if(buff.attribute(QLatin1String("applyOn"))==QLatin1String("themself"))
                                                                             effect.effect.on=ApplyOn_Themself;
-                                                                        else if(buff.attribute(QStringLiteral("applyOn"))==QStringLiteral("allEnemy"))
+                                                                        else if(buff.attribute(QLatin1String("applyOn"))==QLatin1String("allEnemy"))
                                                                             effect.effect.on=ApplyOn_AllEnemy;
-                                                                        else if(buff.attribute(QStringLiteral("applyOn"))==QStringLiteral("allAlly"))
+                                                                        else if(buff.attribute(QLatin1String("applyOn"))==QLatin1String("allAlly"))
                                                                             effect.effect.on=ApplyOn_AllAlly;
-                                                                        else if(buff.attribute(QStringLiteral("applyOn"))==QStringLiteral("nobody"))
+                                                                        else if(buff.attribute(QLatin1String("applyOn"))==QLatin1String("nobody"))
                                                                             effect.effect.on=ApplyOn_Nobody;
                                                                         else
                                                                         {
@@ -1228,9 +1228,9 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                                                     {
                                                                         effect.effect.level=1;
                                                                         ok2=true;
-                                                                        if(buff.hasAttribute(QStringLiteral("level")))
+                                                                        if(buff.hasAttribute(QLatin1String("level")))
                                                                         {
-                                                                            QString level=buff.attribute(QStringLiteral("level"));
+                                                                            QString level=buff.attribute(QLatin1String("level"));
                                                                             effect.effect.level=level.toUShort(&ok2);
                                                                             if(!ok2)
                                                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level wrong: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(buff.attribute("level")));
@@ -1248,10 +1248,10 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                                                             {
                                                                                 effect.effect.buff=idBuff;
                                                                                 effect.success=100;
-                                                                                if(buff.hasAttribute(QStringLiteral("success")))
+                                                                                if(buff.hasAttribute(QLatin1String("success")))
                                                                                 {
-                                                                                    QString success=buff.attribute(QStringLiteral("success"));
-                                                                                    success.remove(QStringLiteral("%"));
+                                                                                    QString success=buff.attribute(QLatin1String("success"));
+                                                                                    success.remove(QLatin1String("%"));
                                                                                     effect.success=success.toUShort(&ok2);
                                                                                     if(!ok2)
                                                                                     {
@@ -1270,7 +1270,7 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                                             else
                                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not tag id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                                         }
-                                                        buff = buff.nextSiblingElement(QStringLiteral("buff"));
+                                                        buff = buff.nextSiblingElement(QLatin1String("buff"));
                                                     }
                                                 }
                                             }
@@ -1283,19 +1283,19 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                 }
                                 else
                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                level = level.nextSiblingElement(QStringLiteral("level"));
+                                level = level.nextSiblingElement(QLatin1String("level"));
                             }
                             if(levelDef.size()==0)
                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, 0 level found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                             else
                             {
                                 monsterSkills[id].type=255;
-                                if(item.hasAttribute(QStringLiteral("type")))
+                                if(item.hasAttribute(QLatin1String("type")))
                                 {
-                                    if(typeNameToId.contains(item.attribute(QStringLiteral("type"))))
-                                        monsterSkills[id].type=typeNameToId.value(item.attribute(QStringLiteral("type")));
+                                    if(typeNameToId.contains(item.attribute(QLatin1String("type"))))
+                                        monsterSkills[id].type=typeNameToId.value(item.attribute(QLatin1String("type")));
                                     else
-                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QStringLiteral("type"))));
+                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QLatin1String("type"))));
                                 }
                             }
                             //order by level to learn
@@ -1332,7 +1332,7 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QStringLiteral("skill"));
+        item = item.nextSiblingElement(QLatin1String("skill"));
     }
     //check the default attack
     if(!monsterSkills.contains(0))
@@ -1406,14 +1406,14 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QStringLiteral("buff"));
+    QDomElement item = root.firstChildElement(QLatin1String("buff"));
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("id")))
+            if(item.hasAttribute(QLatin1String("id")))
             {
-                quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                quint32 id=item.attribute(QLatin1String("id")).toUInt(&ok);
                 if(ok && monsterBuffs.contains(id))
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else if(ok)
@@ -1421,24 +1421,24 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                     Buff::Duration general_duration=Buff::Duration_ThisFight;
                     quint8 general_durationNumberOfTurn=0;
                     float general_capture_bonus=1.0;
-                    if(item.hasAttribute(QStringLiteral("capture_bonus")))
+                    if(item.hasAttribute(QLatin1String("capture_bonus")))
                     {
-                       general_capture_bonus=item.attribute(QStringLiteral("capture_bonus")).toFloat(&ok);
+                       general_capture_bonus=item.attribute(QLatin1String("capture_bonus")).toFloat(&ok);
                         if(!ok)
                         {
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, capture_bonus is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                             general_capture_bonus=1.0;
                         }
                     }
-                    if(item.hasAttribute(QStringLiteral("duration")))
+                    if(item.hasAttribute(QLatin1String("duration")))
                     {
-                        if(item.attribute(QStringLiteral("duration"))==QStringLiteral("Always"))
+                        if(item.attribute(QLatin1String("duration"))==QLatin1String("Always"))
                             general_duration=Buff::Duration_Always;
-                        else if(item.attribute(QStringLiteral("duration"))==QStringLiteral("NumberOfTurn"))
+                        else if(item.attribute(QLatin1String("duration"))==QLatin1String("NumberOfTurn"))
                         {
-                            if(item.hasAttribute(QStringLiteral("durationNumberOfTurn")))
+                            if(item.hasAttribute(QLatin1String("durationNumberOfTurn")))
                             {
-                                general_durationNumberOfTurn=item.attribute(QStringLiteral("durationNumberOfTurn")).toUShort(&ok);
+                                general_durationNumberOfTurn=item.attribute(QLatin1String("durationNumberOfTurn")).toUShort(&ok);
                                 if(!ok)
                                 {
                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, durationNumberOfTurn is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
@@ -1449,7 +1449,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                 general_durationNumberOfTurn=3;
                             general_duration=Buff::Duration_NumberOfTurn;
                         }
-                        else if(item.attribute(QStringLiteral("duration"))==QStringLiteral("ThisFight"))
+                        else if(item.attribute(QLatin1String("duration"))==QLatin1String("ThisFight"))
                             general_duration=Buff::Duration_ThisFight;
                         else
                         {
@@ -1458,19 +1458,19 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                         }
                     }
                     QHash<quint8,Buff::GeneralEffect> levelDef;
-                    QDomElement effect = item.firstChildElement(QStringLiteral("effect"));
+                    QDomElement effect = item.firstChildElement(QLatin1String("effect"));
                     if(!effect.isNull())
                     {
                         if(effect.isElement())
                         {
-                            QDomElement level = effect.firstChildElement(QStringLiteral("level"));
+                            QDomElement level = effect.firstChildElement(QLatin1String("level"));
                             while(!level.isNull())
                             {
                                 if(level.isElement())
                                 {
-                                    if(level.hasAttribute(QStringLiteral("number")))
+                                    if(level.hasAttribute(QLatin1String("number")))
                                     {
-                                        quint8 number=level.attribute(QStringLiteral("number")).toUShort(&ok);
+                                        quint8 number=level.attribute(QLatin1String("number")).toUShort(&ok);
                                         if(ok)
                                         {
                                             if(number>0)
@@ -1478,24 +1478,24 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                                 Buff::Duration duration=general_duration;
                                                 quint8 durationNumberOfTurn=general_durationNumberOfTurn;
                                                 float capture_bonus=general_capture_bonus;
-                                                if(item.hasAttribute(QStringLiteral("capture_bonus")))
+                                                if(item.hasAttribute(QLatin1String("capture_bonus")))
                                                 {
-                                                   capture_bonus=item.attribute(QStringLiteral("capture_bonus")).toFloat(&ok);
+                                                   capture_bonus=item.attribute(QLatin1String("capture_bonus")).toFloat(&ok);
                                                     if(!ok)
                                                     {
                                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, capture_bonus is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                                         capture_bonus=general_capture_bonus;
                                                     }
                                                 }
-                                                if(item.hasAttribute(QStringLiteral("duration")))
+                                                if(item.hasAttribute(QLatin1String("duration")))
                                                 {
-                                                    if(item.attribute(QStringLiteral("duration"))==QStringLiteral("Always"))
+                                                    if(item.attribute(QLatin1String("duration"))==QLatin1String("Always"))
                                                         duration=Buff::Duration_Always;
-                                                    else if(item.attribute(QStringLiteral("duration"))==QStringLiteral("NumberOfTurn"))
+                                                    else if(item.attribute(QLatin1String("duration"))==QLatin1String("NumberOfTurn"))
                                                     {
-                                                        if(item.hasAttribute(QStringLiteral("durationNumberOfTurn")))
+                                                        if(item.hasAttribute(QLatin1String("durationNumberOfTurn")))
                                                         {
-                                                            durationNumberOfTurn=item.attribute(QStringLiteral("durationNumberOfTurn")).toUShort(&ok);
+                                                            durationNumberOfTurn=item.attribute(QLatin1String("durationNumberOfTurn")).toUShort(&ok);
                                                             if(!ok)
                                                             {
                                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, durationNumberOfTurn is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
@@ -1506,7 +1506,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                                             durationNumberOfTurn=general_durationNumberOfTurn;
                                                         duration=Buff::Duration_NumberOfTurn;
                                                     }
-                                                    else if(item.attribute(QStringLiteral("duration"))==QStringLiteral("ThisFight"))
+                                                    else if(item.attribute(QLatin1String("duration"))==QLatin1String("ThisFight"))
                                                         duration=Buff::Duration_ThisFight;
                                                     else
                                                     {
@@ -1520,68 +1520,68 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
 
 
 
-                                                QDomElement inFight = level.firstChildElement(QStringLiteral("inFight"));
+                                                QDomElement inFight = level.firstChildElement(QLatin1String("inFight"));
                                                 while(!inFight.isNull())
                                                 {
                                                     if(inFight.isElement())
                                                     {
                                                         Buff::Effect effect;
                                                         QString text;
-                                                        if(inFight.hasAttribute(QStringLiteral("hp")))
+                                                        if(inFight.hasAttribute(QLatin1String("hp")))
                                                         {
-                                                            text=inFight.attribute(QStringLiteral("hp"));
+                                                            text=inFight.attribute(QLatin1String("hp"));
                                                             effect.on=Buff::Effect::EffectOn_HP;
                                                         }
-                                                        else if(inFight.hasAttribute(QStringLiteral("defense")))
+                                                        else if(inFight.hasAttribute(QLatin1String("defense")))
                                                         {
-                                                            text=inFight.attribute(QStringLiteral("defense"));
+                                                            text=inFight.attribute(QLatin1String("defense"));
                                                             effect.on=Buff::Effect::EffectOn_Defense;
                                                         }
-                                                        if(text.endsWith(QStringLiteral("%")))
+                                                        if(text.endsWith(QLatin1String("%")))
                                                             effect.type=QuantityType_Percent;
                                                         else
                                                             effect.type=QuantityType_Quantity;
-                                                        text.remove(QStringLiteral("%"));
-                                                        text.remove(QStringLiteral("+"));
+                                                        text.remove(QLatin1String("%"));
+                                                        text.remove(QLatin1String("+"));
                                                         effect.quantity=text.toInt(&ok);
                                                         if(ok)
                                                             levelDef[number].fight << effect;
                                                         else
                                                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(text));
                                                     }
-                                                    inFight = inFight.nextSiblingElement(QStringLiteral("inFight"));
+                                                    inFight = inFight.nextSiblingElement(QLatin1String("inFight"));
                                                 }
-                                                QDomElement inWalk = level.firstChildElement(QStringLiteral("inWalk"));
+                                                QDomElement inWalk = level.firstChildElement(QLatin1String("inWalk"));
                                                 while(!inWalk.isNull())
                                                 {
                                                     if(inWalk.isElement())
                                                     {
-                                                        if(inWalk.hasAttribute(QStringLiteral("steps")))
+                                                        if(inWalk.hasAttribute(QLatin1String("steps")))
                                                         {
-                                                            quint32 steps=inWalk.attribute(QStringLiteral("steps")).toUInt(&ok);
+                                                            quint32 steps=inWalk.attribute(QLatin1String("steps")).toUInt(&ok);
                                                             if(ok)
                                                             {
                                                                 Buff::EffectInWalk effect;
                                                                 effect.steps=steps;
                                                                 QString text;
-                                                                if(inWalk.hasAttribute(QStringLiteral("hp")))
+                                                                if(inWalk.hasAttribute(QLatin1String("hp")))
                                                                 {
-                                                                    text=inWalk.attribute(QStringLiteral("hp"));
+                                                                    text=inWalk.attribute(QLatin1String("hp"));
                                                                     effect.effect.on=Buff::Effect::EffectOn_HP;
                                                                 }
-                                                                else if(inWalk.hasAttribute(QStringLiteral("defense")))
+                                                                else if(inWalk.hasAttribute(QLatin1String("defense")))
                                                                 {
-                                                                    text=inWalk.attribute(QStringLiteral("defense"));
+                                                                    text=inWalk.attribute(QLatin1String("defense"));
                                                                     effect.effect.on=Buff::Effect::EffectOn_Defense;
                                                                 }
                                                                 else
                                                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, not action found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                                if(text.endsWith(QStringLiteral("%")))
+                                                                if(text.endsWith(QLatin1String("%")))
                                                                     effect.effect.type=QuantityType_Percent;
                                                                 else
                                                                     effect.effect.type=QuantityType_Quantity;
-                                                                text.remove(QStringLiteral("%"));
-                                                                text.remove(QStringLiteral("+"));
+                                                                text.remove(QLatin1String("%"));
+                                                                text.remove(QLatin1String("+"));
                                                                 effect.effect.quantity=text.toInt(&ok);
                                                                 if(ok)
                                                                     levelDef[number].walk << effect;
@@ -1594,7 +1594,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                                         else
                                                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not tag steps: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                                     }
-                                                    inWalk = inWalk.nextSiblingElement(QStringLiteral("inWalk"));
+                                                    inWalk = inWalk.nextSiblingElement(QLatin1String("inWalk"));
                                                 }
                                             }
                                             else
@@ -1606,7 +1606,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                 }
                                 else
                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                level = level.nextSiblingElement(QStringLiteral("level"));
+                                level = level.nextSiblingElement(QLatin1String("level"));
                             }
                             quint8 index=1;
                             while(levelDef.contains(index))
@@ -1641,7 +1641,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QStringLiteral("buff"));
+        item = item.nextSiblingElement(QLatin1String("buff"));
     }
     return monsterBuffs;
 }

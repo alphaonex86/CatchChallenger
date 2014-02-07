@@ -599,7 +599,7 @@ void LocalClientHandlerFight::registerBattleRequest(LocalClientHandlerFight * ot
 {
     if(isInBattle())
     {
-        emit message(QStringLiteral("Already in battle, internal error"));
+        emit message(QLatin1String("Already in battle, internal error"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -648,7 +648,7 @@ void LocalClientHandlerFight::battleFinished()
     if(otherPlayerBattle==NULL)
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QStringLiteral("Battle finished"));
+    emit message(QLatin1String("Battle finished"));
     #endif
     otherPlayerBattle->resetBattleAction();
     resetBattleAction();
@@ -681,11 +681,11 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
 {
     if(otherPlayerBattle==NULL)
     {
-        //emit message(QStringLiteral("Battle already canceled"));
+        //emit message(QLatin1String("Battle already canceled"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QStringLiteral("Battle canceled"));
+    emit message(QLatin1String("Battle canceled"));
     #endif
     bool needUpdateCanDoFight=false;
     if(battleIsValidated)
@@ -694,7 +694,7 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
     if(send)
     {
             emit sendFullPacket(0xE0,0x0007);
-            emit receiveSystemText(QStringLiteral("Battle declined"));
+            emit receiveSystemText(QLatin1String("Battle declined"));
     }
     battleIsValidated=false;
     mHaveCurrentSkill=false;
@@ -707,12 +707,12 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
 {
     if(otherPlayerBattle==NULL)
     {
-        emit message(QStringLiteral("Can't accept battle if not in battle"));
+        emit message(QLatin1String("Can't accept battle if not in battle"));
         return;
     }
     if(battleIsValidated)
     {
-        emit message(QStringLiteral("Battle already validated"));
+        emit message(QLatin1String("Battle already validated"));
         return;
     }
     if(!otherPlayerBattle->getAbleToFight())
@@ -726,7 +726,7 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QStringLiteral("Battle accepted"));
+    emit message(QLatin1String("Battle accepted"));
     #endif
     startTheFight();
     battleIsValidated=true;
@@ -1032,7 +1032,7 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
         {
             dropKOCurrentMonster();
             dropKOOtherMonster();
-            emit message(QStringLiteral("Have win agains the current monster"));
+            emit message(QLatin1String("Have win agains the current monster"));
         }
         else
         {
@@ -1043,7 +1043,7 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
             LocalClientHandlerFight *tempOtherPlayerBattle=otherPlayerBattle;
             checkLoose();
             tempOtherPlayerBattle->checkLoose();
-            emit message(QStringLiteral("Have win the battle"));
+            emit message(QLatin1String("Have win the battle"));
             if(youWin)
                 emitBattleWin();
             if(theOtherWin)
