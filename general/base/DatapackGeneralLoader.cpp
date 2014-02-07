@@ -12,15 +12,13 @@
 
 using namespace CatchChallenger;
 
-QHash<QString, QDomDocument> DatapackGeneralLoader::xmlLoadedFile;
-
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
     QRegExp typeRegex(QStringLiteral("^[a-z]{1,32}$"));
     QDomDocument domDocument;
     QHash<QString, Reputation> reputation;
-    if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         //open and quick check the file
@@ -40,7 +38,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
             DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return reputation;
         }
-        xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("list"))
@@ -51,7 +49,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("reputation");
+    QDomElement item = root.firstChildElement(QStringLiteral("reputation"));
     while(!item.isNull())
     {
         if(item.isElement())
@@ -222,8 +220,8 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
     CatchChallenger::Quest quest;
     quest.id=0;
     QDomDocument domDocument;
-    if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         QFile itemsFile(file);
@@ -243,7 +241,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
             qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return QPair<bool,Quest>(false,quest);
         }
-        xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("quest"))
@@ -583,8 +581,8 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
     QHash<quint8, Plant> plants;
     QDomDocument domDocument;
     //open and quick check the file
-    if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile plantsFile(file);
@@ -604,7 +602,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
             qDebug() << QStringLiteral("Unable to open the plants file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return plants;
         }
-        xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("plants"))
@@ -796,8 +794,8 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
     QHash<quint32,quint32> itemToCrafingRecipes;
     QDomDocument domDocument;
     //open and quick check the file
-    if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile craftingRecipesFile(file);
@@ -817,7 +815,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
         }
-        xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("recipes"))
@@ -1030,8 +1028,8 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
         QDomDocument domDocument;
         const QString &file=fileList.at(file_index).absoluteFilePath();
         //open and quick check the file
-        if(xmlLoadedFile.contains(file))
-            domDocument=xmlLoadedFile.value(file);
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
             QFile industryFile(file);
@@ -1052,7 +1050,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                 file_index++;
                 continue;
             }
-            xmlLoadedFile[file]=domDocument;
+            CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=QStringLiteral("industries"))
@@ -1281,8 +1279,8 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
     QHash<quint32,quint32> industriesLink;
     QDomDocument domDocument;
     //open and quick check the file
-    if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile industriesLinkFile(file);
@@ -1301,7 +1299,7 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return industriesLink;
         }
-        xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("industries"))
@@ -1352,8 +1350,8 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
     QDomDocument domDocument;
     //open and quick check the file
     const QString &file=folder+QStringLiteral("items.xml");
-    if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
@@ -1372,7 +1370,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
             qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return items;
         }
-        xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("items"))
@@ -1623,8 +1621,8 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
     QPair<QList<QDomElement>, QList<Profile> > returnVar;
     QDomDocument domDocument;
     //open and quick check the file
-    if(xmlLoadedFile.contains(file))
-        domDocument=xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -1643,7 +1641,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
-        xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("list"))

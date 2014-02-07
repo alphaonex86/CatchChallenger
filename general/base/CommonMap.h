@@ -39,6 +39,7 @@ public:
     {
         quint32 x,y;
         Map *map;
+        MapCondition condition;
     };
     QHash<quint32,Teleporter> teleporter;//the int (x+y*width) is position
 

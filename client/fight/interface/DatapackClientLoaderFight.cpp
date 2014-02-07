@@ -18,8 +18,8 @@ void DatapackClientLoader::parseMonstersExtra()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("monster.xml");
     QDomDocument domDocument;
     //open and quick check the file
-    if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -292,8 +292,8 @@ void DatapackClientLoader::parseTypesExtra()
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("type.xml");
     QDomDocument domDocument;
     //open and quick check the file
-    if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
@@ -394,8 +394,8 @@ void DatapackClientLoader::parseBuffExtra()
     QDomDocument domDocument;
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("buff.xml");
     //open and quick check the file
-    if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -565,8 +565,8 @@ void DatapackClientLoader::parseSkillsExtra()
     //open and quick check the file
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("skill.xml");
     QDomDocument domDocument;
-    if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -736,8 +736,8 @@ void DatapackClientLoader::parseBotFightsExtra()
             const QString &file=list.at(index_file).absoluteFilePath();
             QDomDocument domDocument;
             //open and quick check the file
-            if(CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.contains(file))
-                domDocument=CatchChallenger::DatapackGeneralLoader::xmlLoadedFile.value(file);
+            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+                domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
             else
             {
                 QFile xmlFile(file);

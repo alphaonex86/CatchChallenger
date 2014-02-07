@@ -6,6 +6,8 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     repel_step=0;
+    items=NULL;
+    quests=NULL;
 }
 
 void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint32> &botAlreadyBeaten)
@@ -26,6 +28,12 @@ bool MapVisualiserPlayerWithFight::haveBeatBot(const quint32 &botFightId) const
 void MapVisualiserPlayerWithFight::addRepelStep(const quint32 &repel_step)
 {
     this->repel_step+=repel_step;
+}
+
+void MapVisualiserPlayerWithFight::setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests)
+{
+    this->items=items;
+    this->quests=quests;
 }
 
 void MapVisualiserPlayerWithFight::resetAll()
@@ -116,8 +124,71 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         return false;
     }
     CatchChallenger::Map *new_map=&map;
-    CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    QList<quint32> botFightList=static_cast<CatchChallenger::Map_client *>(new_map)->botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+    if(CatchChallenger::MoveOnTheMap::moveWithoutTeleport(direction,&new_map,&x,&y,false))
+    {
+        qDebug() << "Strange, can go but move failed";
+        return false;
+    }
+    if(!all_map.contains(new_map->map_file))
+        return false;
+    const CatchChallenger::Map_client &map_client=all_map.value(new_map->map_file)->logicalMap;
+
+    {
+        int list_size=map_client.teleport_semi.size();
+        int index=0;
+        while(index<list_size)
+        {
+            const CatchChallenger::Map_semi_teleport &teleporter=map_client.teleport_semi.at(index);
+            if(teleporter.source_x==x && teleporter.source_y==y)
+            {
+                switch(teleporter.condition.type)
+                {
+                    case CatchChallenger::MapConditionType_None:
+                    case CatchChallenger::MapConditionType_Clan://not do for now
+                    break;
+                    case CatchChallenger::MapConditionType_FightBot:
+                        if(!haveBeatBot(teleporter.condition.value))
+                        {
+                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            return false;
+                        }
+                    break;
+                    case CatchChallenger::MapConditionType_Item:
+                        if(items==NULL)
+                            break;
+                        if(!items->contains(teleporter.condition.value))
+                        {
+                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            return false;
+                        }
+                    break;
+                    case CatchChallenger::MapConditionType_Quest:
+                        if(quests==NULL)
+                            break;
+                        if(!quests->contains(teleporter.condition.value))
+                        {
+                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            return false;
+                        }
+                        if(!quests->value(teleporter.condition.value).finish_one_time)
+                        {
+                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            return false;
+                        }
+                    break;
+                    default:
+                    break;
+                }
+            }
+            index++;
+        }
+    }
+
+    QList<quint32> botFightList=map_client.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
     int index=0;
     while(index<botFightList.size())
     {
