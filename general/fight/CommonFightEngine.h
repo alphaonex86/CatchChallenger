@@ -43,6 +43,7 @@ public:
     virtual bool dropKOOtherMonster();
     virtual void healAllMonsters();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+    bool learnSkillByItem(PlayerMonster *playerMonster, const quint32 &itemId);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     void addPlayerMonster(const PlayerMonster &playerMonster);
     void insertPlayerMonster(const quint8 &place,const PlayerMonster &playerMonster);
@@ -97,6 +98,9 @@ protected:
     Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const quint32 &skill, const quint8 &skillLevel);
     virtual quint32 catchAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
     virtual void startTheFight();
+    virtual bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
+    virtual bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level);
+    virtual bool removeSkill(PlayerMonster * currentMonster,const int &index);
 signals:
     void error(const QString &error) const;
     void message(const QString &message) const;

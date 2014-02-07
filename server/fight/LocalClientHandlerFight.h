@@ -99,6 +99,9 @@ protected:
     bool haveCurrentSkill() const;
     quint32 getCurrentSkill() const;
     bool haveMonsterChange() const;
+    virtual bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
+    virtual bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level);
+    virtual bool removeSkill(PlayerMonster * currentMonster,const int &index);
 private:
     LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;

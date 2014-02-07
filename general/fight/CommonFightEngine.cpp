@@ -127,24 +127,28 @@ void CommonFightEngine::healAllMonsters()
         updateCanDoFight();
 }
 
-bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill)
+bool CommonFightEngine::learnSkill(const quint32 &monsterId, const quint32 &skill)
 {
     int index=0;
     int sub_index2,sub_index;
     while(index<player_informations->playerMonster.size())
     {
         const PlayerMonster &monster=player_informations->playerMonster.at(index);
+        //have located the monster
         if(monster.id==monsterId)
         {
+            //search if have already the previous skill
             sub_index2=0;
-            while(sub_index2<monster.skills.size())
+            const int &monster_skill_size=monster.skills.size();
+            while(sub_index2<monster_skill_size)
             {
                 if(monster.skills.at(sub_index2).skill==skill)
                     break;
                 sub_index2++;
             }
             sub_index=0;
-            while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size())
+            const int &learn_size=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size();
+            while(sub_index<learn_size)
             {
                 const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.at(sub_index);
                 if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
@@ -157,7 +161,17 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill
                             (sub_index2<monster.skills.size() && (monster.skills.value(sub_index2).level+1)==learn.learnSkillLevel)
                             )
                     {
-                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel).sp_to_learn;
+                        if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(learn.learnSkill))
+                        {
+                            emit error(QStringLiteral("Skill to learn not found into learnSkill()"));
+                            return false;
+                        }
+                        if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.size()>learn.learnSkillLevel)
+                        {
+                            emit error(QStringLiteral("Skill level to learn not found learnSkill()"));
+                            return false;
+                        }
+                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
                         if(sp>monster.sp)
                             return false;
                         player_informations->playerMonster[index].sp-=sp;
@@ -166,11 +180,11 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill
                             PlayerMonster::PlayerSkill temp;
                             temp.skill=skill;
                             temp.level=1;
-                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel).endurance;
-                            player_informations->playerMonster[index].skills << temp;
+                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
+                            addSkill(&player_informations->playerMonster[index],temp);
                         }
                         else
-                            player_informations->playerMonster[index].skills[sub_index2].level++;
+                            setSkillLevel(&player_informations->playerMonster[index],sub_index2,player_informations->playerMonster.at(index).skills.at(sub_index2).level+1);
                         return true;
                     }
                 }
@@ -181,6 +195,82 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill
         index++;
     }
     return false;
+}
+
+bool CommonFightEngine::learnSkillByItem(PlayerMonster *playerMonster, const quint32 &itemId)
+{
+    if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(playerMonster->monster))
+    {
+        emit error(QStringLiteral("Monster id not found into learnSkillByItem()"));
+        return false;
+    }
+    if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster).learnByItem.contains(itemId))
+    {
+        emit error(QStringLiteral("Item id not found into learnSkillByItem()"));
+        return false;
+    }
+    const Monster::AttackToLearnByItem &attackToLearnByItem=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster).learnByItem.value(itemId);
+    if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(attackToLearnByItem.learnSkill))
+    {
+        emit error(QStringLiteral("Skill to learn not found into learnSkill()"));
+        return false;
+    }
+    if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(attackToLearnByItem.learnSkill).level.size()>attackToLearnByItem.learnSkillLevel)
+    {
+        emit error(QStringLiteral("Skill level to learn not found learnSkill()"));
+        return false;
+    }
+    //search if have already the previous skill
+    int index=0;
+    const int &monster_skill_size=playerMonster->skills.size();
+    while(index<monster_skill_size)
+    {
+        if(playerMonster->skills.at(index).skill==attackToLearnByItem.learnSkill)
+        {
+            if(playerMonster->skills.at(index).level>=attackToLearnByItem.learnSkillLevel)
+                return false;
+            else
+            {
+                setSkillLevel(playerMonster,index,attackToLearnByItem.learnSkillLevel);
+                return true;
+            }
+        }
+        index++;
+    }
+    PlayerMonster::PlayerSkill temp;
+    temp.skill=attackToLearnByItem.learnSkill;
+    temp.level=attackToLearnByItem.learnSkillLevel;
+    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(attackToLearnByItem.learnSkill).level.at(attackToLearnByItem.learnSkillLevel-1).endurance;
+    addSkill(playerMonster,temp);
+    return true;
+}
+
+bool CommonFightEngine::addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill)
+{
+    currentMonster->skills << skill;
+    return true;
+}
+
+bool CommonFightEngine::setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level)
+{
+    if(index<0 || index>=currentMonster->skills.size())
+        return false;
+    else
+    {
+        currentMonster->skills[index].level=level;
+        return true;
+    }
+}
+
+bool CommonFightEngine::removeSkill(PlayerMonster * currentMonster,const int &index)
+{
+    if(index<0 || index>=currentMonster->skills.size())
+        return false;
+    else
+    {
+        currentMonster->skills.removeAt(index);
+        return true;
+    }
 }
 
 bool CommonFightEngine::isInFight() const
@@ -815,77 +905,95 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
         }
         if(!CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(object).contains(playerMonster->monster))
         {
-            emit error(QStringLiteral("this item %1 can't be applyed on this monster %2").arg(object).arg(playerMonster->monster));
+            emit error(QStringLiteral("this item %1 can't be applied on this monster %2").arg(object).arg(playerMonster->monster));
             return false;
         }
         confirmEvolutionTo(playerMonster,CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(object).value(playerMonster->monster));
         return true;
     }
-    if(!CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object) && !CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(object))
+    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object) || CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(object))
     {
-        emit error(QStringLiteral("This object can't be applyed on monster: %1").arg(object));
-        return false;
-    }
-    if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object))
-    {
-        const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster),playerMonster->level);
-        const QList<MonsterItemEffect> monsterItemEffect = CommonDatapack::commonDatapack.items.monsterItemEffect.values(object);
-        int index=0;
-        while(index<monsterItemEffect.size())
+        if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object))
         {
-            const MonsterItemEffect &effect=monsterItemEffect.at(index);
-            switch(effect.type)
+            const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster),playerMonster->level);
+            const QList<MonsterItemEffect> monsterItemEffect = CommonDatapack::commonDatapack.items.monsterItemEffect.values(object);
+            int index=0;
+            while(index<monsterItemEffect.size())
             {
-                case MonsterItemEffectType_AddHp:
-                    if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(quint32)effect.value)
-                        hpChange(playerMonster,playerMonster->hp+effect.value);
-                    else
-                        hpChange(playerMonster,playerMonsterStat.hp);
-                break;
-                case MonsterItemEffectType_RemoveBuff:
-                    if(effect.value>0)
-                        removeBuffOnMonster(playerMonster,effect.value);
-                    else
-                        removeAllBuffOnMonster(playerMonster);
-                break;
-                default:
-                    emit message(QStringLiteral("Item %1 have unknown effect").arg(object));
-                break;
+                const MonsterItemEffect &effect=monsterItemEffect.at(index);
+                switch(effect.type)
+                {
+                    case MonsterItemEffectType_AddHp:
+                        if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(quint32)effect.value)
+                            hpChange(playerMonster,playerMonster->hp+effect.value);
+                        else
+                            hpChange(playerMonster,playerMonsterStat.hp);
+                    break;
+                    case MonsterItemEffectType_RemoveBuff:
+                        if(effect.value>0)
+                            removeBuffOnMonster(playerMonster,effect.value);
+                        else
+                            removeAllBuffOnMonster(playerMonster);
+                    break;
+                    default:
+                        emit message(QStringLiteral("Item %1 have unknown effect").arg(object));
+                    break;
+                }
+                index++;
             }
-            index++;
+            if(isInFight())
+                doTheOtherMonsterTurn();
         }
-        if(isInFight())
-            doTheOtherMonsterTurn();
+        else if(CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(object))
+        {
+            if(isInFight())
+            {
+                emit error(QStringLiteral("this item %1 can't be used in fight").arg(object));
+                return false;
+            }
+            const QList<MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight = CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.values(object);
+            int index=0;
+            while(index<monsterItemEffectOutOfFight.size())
+            {
+                const MonsterItemEffectOutOfFight &effect=monsterItemEffectOutOfFight.at(index);
+                switch(effect.type)
+                {
+                    case MonsterItemEffectTypeOutOfFight_AddLevel:
+                        if(playerMonster->level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                        {
+                            emit error(QStringLiteral("this item %1 can't be used on monster at level max").arg(object));
+                            return false;
+                        }
+                        addLevel(playerMonster);
+                    break;
+                    default:
+                        emit message(QStringLiteral("Item %1 have unknown effect").arg(object));
+                    break;
+                }
+                index++;
+            }
+        }
     }
-    else if(CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(object))
+    else if(CommonDatapack::commonDatapack.items.itemToLearn.contains(object))
     {
         if(isInFight())
         {
             emit error(QStringLiteral("this item %1 can't be used in fight").arg(object));
             return false;
         }
-        const QList<MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight = CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.values(object);
-        int index=0;
-        while(index<monsterItemEffectOutOfFight.size())
+        if(!CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.value(object).contains(playerMonster->monster))
         {
-            const MonsterItemEffectOutOfFight &effect=monsterItemEffectOutOfFight.at(index);
-            switch(effect.type)
-            {
-                case MonsterItemEffectTypeOutOfFight_AddLevel:
-                    if(playerMonster->level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                    {
-                        emit error(QStringLiteral("this item %1 can't be used on monster at level max").arg(object));
-                        return false;
-                    }
-                    addLevel(playerMonster);
-                break;
-                default:
-                    emit message(QStringLiteral("Item %1 have unknown effect").arg(object));
-                break;
-            }
-            index++;
+            emit error(QStringLiteral("this item %1 can't be applied on this monster %2").arg(object).arg(playerMonster->monster));
+            return false;
         }
+        return learnSkillByItem(playerMonster,object);
     }
+    else
+    {
+        emit error(QStringLiteral("This object can't be applied on monster: %1").arg(object));
+        return false;
+    }
+
     return true;
 }
 

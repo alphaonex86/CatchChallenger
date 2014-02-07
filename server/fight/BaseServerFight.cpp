@@ -120,8 +120,8 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
     QDomDocument domDocument;
     QMultiHash<quint32,MonsterDrops> monsterDrops;
     //open and quick check the file
-    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -140,7 +140,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return monsterDrops;
         }
-        DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("list"))

@@ -70,6 +70,7 @@ private:
     QHash<QString,MapVisualiserThread::Map_full> mapCache;
     Tiled::MapReader reader;
     QHash<QString/*name*/,QHash<quint32/*bot id*/,CatchChallenger::Bot> > botFiles;
+    QString language;
 };
 
 #endif // MAPVISUALISERTHREAD_H

@@ -193,6 +193,7 @@ private slots:
     void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
     void animationFinished();
     void evolutionCanceled();
+    void teleportConditionNotRespected(const QString &text);
 
     //datapack
     void haveTheDatapack();

@@ -4,14 +4,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QString>
-#include <QDomDocument>
 #include <QDomElement>
-#include <QFile>
-#include <QCoreApplication>
-#include <QVariant>
-#include <QMutex>
-#include <QTime>
-#include <QMutexLocker>
 
 #include "DebugClass.h"
 #include "GeneralStructures.h"
@@ -30,6 +23,8 @@ public:
     bool tryLoadMap(const QString &fileName);
     bool loadMonsterMap(const QString &fileName);
     static QString resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath=QStringLiteral(""));
+    static QDomElement getXmlCondition(const QString &fileName,const QString &conditionFile,const quint32 &conditionId);
+    static MapCondition xmlConditionToMapCondition(const QString &conditionFile, const QDomElement &item);
 private:
     QByteArray decompress(const QByteArray &data, int expectedSize);
     QString error;

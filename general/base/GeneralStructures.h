@@ -331,11 +331,28 @@ struct Map_semi_border
     Map_semi_border_content_left_right right;
 };
 
+enum MapConditionType
+{
+    MapConditionType_None=0x00,
+    MapConditionType_Quest=0x01,
+    MapConditionType_Item=0x02,
+    MapConditionType_Clan=0x03,
+    MapConditionType_FightBot=0x04
+};
+
+struct MapCondition
+{
+    MapConditionType type;
+    quint32 value;
+};
+
 struct Map_semi_teleport
 {
     COORD_TYPE source_x,source_y;
     COORD_TYPE destination_x,destination_y;
     QString map;
+    QDomElement conditionUnparsed;
+    MapCondition condition;
 };
 
 struct MapMonster

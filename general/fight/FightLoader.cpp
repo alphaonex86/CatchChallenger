@@ -2,6 +2,7 @@
 #include "../base/DebugClass.h"
 #include "../base/GeneralVariable.h"
 #include "../base/CommonSettings.h"
+#include "../base/CommonDatapack.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -26,8 +27,8 @@ QList<Type> FightLoader::loadTypes(const QString &file)
     QList<Type> types;
     QDomDocument domDocument;
     //open and quick check the file
-    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile itemsFile(file);
@@ -46,7 +47,7 @@ QList<Type> FightLoader::loadTypes(const QString &file)
             qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return types;
         }
-        DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("types"))
@@ -165,8 +166,8 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
     QHash<quint32,Monster> monsters;
     QDomDocument domDocument;
     //open and quick check the file
-    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -185,7 +186,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return monsters;
         }
-        DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("list"))
@@ -836,8 +837,8 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
             const QString &file=list.at(index_file).absoluteFilePath();
             QDomDocument domDocument;
             //open and quick check the file
-            if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-                domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+            if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+                domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
             else
             {
                 QFile xmlFile(file);
@@ -858,7 +859,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                     index_file++;
                     continue;
                 }
-                DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+                CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
             }
             QDomElement root = domDocument.documentElement();
             if(root.tagName()!=QStringLiteral("fights"))
@@ -1039,8 +1040,8 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
     QHash<quint32,Skill> monsterSkills;
     QDomDocument domDocument;
     //open and quick check the file
-    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -1059,7 +1060,7 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return monsterSkills;
         }
-        DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")
@@ -1374,8 +1375,8 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
     QHash<quint32,Buff> monsterBuffs;
     QDomDocument domDocument;
     //open and quick check the file
-    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
-        domDocument=DatapackGeneralLoader::xmlLoadedFile.value(file);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
         QFile xmlFile(file);
@@ -1394,7 +1395,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return monsterBuffs;
         }
-        DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")

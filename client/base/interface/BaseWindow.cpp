@@ -99,6 +99,7 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap);
     connect(MapController::mapController,&MapController::repelEffectIsOver,     this,&BaseWindow::repelEffectIsOver);
     connect(MapController::mapController,&MapController::send_player_direction, this,&BaseWindow::send_player_direction,Qt::QueuedConnection);
+    connect(MapController::mapController,&MapController::teleportConditionNotRespected, this,&BaseWindow::teleportConditionNotRespected,Qt::QueuedConnection);
 
     //fight
     connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
@@ -541,7 +542,9 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_inventory);
                 ui->inventoryUse->setText(tr("Select"));
-                add_to_inventory(item,1,false);
+                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                        add_to_inventory(item,1,false);
                 break;
             }
             if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(item))
@@ -595,9 +598,18 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_inventory);
                 ui->inventoryUse->setText(tr("Select"));
-                showTip(tr("Using %1 on %2").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monsterUniqueId).name));
-                CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
-                ClientFightEngine::fightEngine.useObjectOnMonster(item,monsterUniqueId);
+                if(ClientFightEngine::fightEngine.useObjectOnMonster(item,monsterUniqueId))
+                {
+                    showTip(tr("Using %1 on %2").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monsterUniqueId).name));
+                    CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
+                }
+                else
+                {
+                    showTip(tr("Failed to use %1 on %2").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monsterUniqueId).name));
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
+                        if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                            add_to_inventory(item,1,false);
+                }
             }
         }
         break;
@@ -2959,4 +2971,9 @@ void BaseWindow::on_monsterList_itemSelectionChanged()
     int row=ui->monsterList->row(selectedMonsters.first());
     ui->monsterListMoveUp->setEnabled(row>0);
     ui->monsterListMoveDown->setEnabled(row<(playerMonster.size()-1));
+}
+
+void BaseWindow::teleportConditionNotRespected(const QString &text)
+{
+    showTip(text);
 }

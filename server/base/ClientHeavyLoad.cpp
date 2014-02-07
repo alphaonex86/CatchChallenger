@@ -1002,7 +1002,16 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     }
     player_informations->public_and_private_informations.allow=FacilityLib::StringToAllow(characterQuery.value(19).toString());
     //all is rights
-    if(GlobalServerData::serverPrivateVariables.map_list.contains(characterQuery.value(6).toString()))
+    QString map=characterQuery.value(6).toString();
+    if(!map.endsWith(QStringLiteral(".tmx")))
+        map+=QStringLiteral(".tmx");
+    QString rescue_map=characterQuery.value(10).toString();
+    if(!rescue_map.endsWith(QStringLiteral(".tmx")))
+        rescue_map+=QStringLiteral(".tmx");
+    QString unvalidated_rescue_map=characterQuery.value(14).toString();
+    if(!unvalidated_rescue_map.endsWith(QStringLiteral(".tmx")))
+        unvalidated_rescue_map+=QStringLiteral(".tmx");
+    if(GlobalServerData::serverPrivateVariables.map_list.contains(map))
     {
         quint8 x=characterQuery.value(3).toUInt(&ok);
         if(!ok)
@@ -1016,34 +1025,34 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
             loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y coord is not a number"));
             return;
         }
-        if(x>=GlobalServerData::serverPrivateVariables.map_list.value(characterQuery.value(6).toString())->width)
+        if(x>=GlobalServerData::serverPrivateVariables.map_list.value(map)->width)
         {
             loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("x to out of map"));
             return;
         }
-        if(y>=GlobalServerData::serverPrivateVariables.map_list.value(characterQuery.value(6).toString())->height)
+        if(y>=GlobalServerData::serverPrivateVariables.map_list.value(map)->height)
         {
             loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y to out of map"));
             return;
         }
         loginIsRightWithRescue(query_id,
             characterId,
-            GlobalServerData::serverPrivateVariables.map_list.value(characterQuery.value(6).toString()),
+            GlobalServerData::serverPrivateVariables.map_list.value(map),
             x,
             y,
             (Orientation)orentation,
-                characterQuery.value(10),
+                rescue_map,
                 characterQuery.value(11),
                 characterQuery.value(12),
                 characterQuery.value(13),
-                characterQuery.value(14),
+                unvalidated_rescue_map,
                 characterQuery.value(15),
                 characterQuery.value(16),
                 characterQuery.value(17)
         );
     }
     else
-        loginIsWrong(query_id,QStringLiteral("Map not found"),QStringLiteral("Map not found: ")+characterQuery.value(6).toString());
+        loginIsWrong(query_id,QStringLiteral("Map not found"),QStringLiteral("Map not found: ")+map);
 }
 
 void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId, Map* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
