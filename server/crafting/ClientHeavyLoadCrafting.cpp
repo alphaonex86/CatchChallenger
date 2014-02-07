@@ -25,7 +25,7 @@ void ClientHeavyLoad::loadRecipes()
     quint32 recipeId;
     QSqlQuery recipesQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!recipesQuery.exec(queryText))
-        emit message(recipesQuery.lastQuery()+QStringLiteral(": ")+recipesQuery.lastError().text());
+        emit message(recipesQuery.lastQuery()+QLatin1String(": ")+recipesQuery.lastError().text());
     while(recipesQuery.next())
     {
         recipeId=recipesQuery.value(0).toUInt(&ok);
@@ -60,35 +60,35 @@ void ClientHeavyLoad::loadItems()
     bool ok;
     QSqlQuery itemQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!itemQuery.exec(queryText))
-        emit message(itemQuery.lastQuery()+QStringLiteral(": ")+itemQuery.lastError().text());
+        emit message(itemQuery.lastQuery()+QLatin1String(": ")+itemQuery.lastError().text());
     //parse the result
     while(itemQuery.next())
     {
         quint32 id=itemQuery.value(0).toUInt(&ok);
         if(!ok)
         {
-            emit message(QStringLiteral("item id is not a number, skip"));
+            emit message(QLatin1String("item id is not a number, skip"));
             continue;
         }
         quint32 quantity=itemQuery.value(1).toUInt(&ok);
         if(!ok)
         {
-            emit message(QStringLiteral("quantity is not a number, skip"));
+            emit message(QLatin1String("quantity is not a number, skip"));
             continue;
         }
         if(itemQuery.value(2).toString().isEmpty())
         {
-            emit message(QStringLiteral("item warehouse is not a number, skip"));
+            emit message(QLatin1String("item warehouse is not a number, skip"));
             continue;
         }
         bool warehouse;
-        if(itemQuery.value(2).toString()==QStringLiteral("warehouse"))
+        if(itemQuery.value(2).toString()==QLatin1String("warehouse"))
             warehouse=true;
         else
         {
-            if(itemQuery.value(2).toString()==QStringLiteral("wear"))
+            if(itemQuery.value(2).toString()==QLatin1String("wear"))
                 warehouse=false;
-            else if(itemQuery.value(2).toString()==QStringLiteral("market"))
+            else if(itemQuery.value(2).toString()==QLatin1String("market"))
                 continue;
             else
             {

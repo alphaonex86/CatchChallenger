@@ -27,7 +27,7 @@ int ClientHeavyLoad::rawFilesCount;
 int ClientHeavyLoad::compressedFilesCount;
 QSet<QString> ClientHeavyLoad::compressedExtension;
 QHash<quint32,quint16> ClientHeavyLoad::clanConnectedCount;
-QRegularExpression ClientHeavyLoad::fileNameStartStringRegex=QRegularExpression(QStringLiteral("^[a-zA-Z]:/"));
+QRegularExpression ClientHeavyLoad::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
 
 ClientHeavyLoad::ClientHeavyLoad()
 {
@@ -443,41 +443,41 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     int index=0;
     int monster_position=1;
     {
-        const QString &mapQuery=QStringLiteral("'")+profile.map+QStringLiteral("',")+QString::number(profile.x)+QStringLiteral(",")+QString::number(profile.y)+QStringLiteral(",'bottom'");
+        const QString &mapQuery=QLatin1String("'")+profile.map+QLatin1String("',")+QString::number(profile.x)+QLatin1String(",")+QString::number(profile.y)+QLatin1String(",'bottom'");
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(")+
-                        QString::number(characterId)+QStringLiteral(",")+
-                        QString::number(player_informations->account_id)+QStringLiteral(",'")+
-                        pseudo+QStringLiteral("','")+
-                        skin+QStringLiteral("',")+
-                        mapQuery+QStringLiteral(",")+
-                        QStringLiteral("'normal',0,")+
-                        QString::number(profile.cash)+QStringLiteral(",")+
-                        mapQuery+QStringLiteral(",")+
-                        mapQuery+QStringLiteral(",")+
-                        QStringLiteral("0,0,")+
-                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+
-                        QStringLiteral("0,'',0,0,0,0,0,")+
-                        QString::number(profileIndex)+QStringLiteral(");"));
+                        QString::number(characterId)+QLatin1String(",")+
+                        QString::number(player_informations->account_id)+QLatin1String(",'")+
+                        pseudo+QLatin1String("','")+
+                        skin+QLatin1String("',")+
+                        mapQuery+QLatin1String(",")+
+                        QLatin1String("'normal',0,")+
+                        QString::number(profile.cash)+QLatin1String(",")+
+                        mapQuery+QLatin1String(",")+
+                        mapQuery+QLatin1String(",")+
+                        QLatin1String("0,0,")+
+                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",")+
+                        QLatin1String("0,'',0,0,0,0,0,")+
+                        QString::number(profileIndex)+QLatin1String(");"));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(")+
-                        QString::number(characterId)+QStringLiteral(",")+
-                        QString::number(player_informations->account_id)+QStringLiteral(",'")+
-                        pseudo+QStringLiteral("','")+
-                        skin+QStringLiteral("',")+
-                        mapQuery+QStringLiteral(",")+
-                        QStringLiteral("'normal',0,")+
-                        QString::number(profile.cash)+QStringLiteral(",")+
-                        mapQuery+QStringLiteral(",")+
-                        mapQuery+QStringLiteral(",")+
-                        QStringLiteral("0,0,")+
-                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+
-                        QStringLiteral("0,'',0,0,0,0,0,")+
-                        QString::number(profileIndex)+QStringLiteral(");"));
+                        QString::number(characterId)+QLatin1String(",")+
+                        QString::number(player_informations->account_id)+QLatin1String(",'")+
+                        pseudo+QLatin1String("','")+
+                        skin+QLatin1String("',")+
+                        mapQuery+QLatin1String(",")+
+                        QLatin1String("'normal',0,")+
+                        QString::number(profile.cash)+QLatin1String(",")+
+                        mapQuery+QLatin1String(",")+
+                        mapQuery+QLatin1String(",")+
+                        QLatin1String("0,0,")+
+                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",")+
+                        QLatin1String("0,'',0,0,0,0,0,")+
+                        QString::number(profileIndex)+QLatin1String(");"));
             break;
         }
     }
@@ -487,13 +487,13 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monsterId))
         {
             const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monsterId);
-            QString gender=QStringLiteral("unknown");
+            QString gender=QLatin1String("unknown");
             if(monster.ratio_gender!=-1)
             {
                 if(rand()%101<monster.ratio_gender)
-                    gender=QStringLiteral("female");
+                    gender=QLatin1String("female");
                 else
-                    gender=QStringLiteral("male");
+                    gender=QLatin1String("male");
             }
             CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profile.monsters.at(index).level);
             QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
@@ -724,47 +724,47 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!characterQuery.exec(queryText))
     {
-        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),characterQuery.lastQuery()+QStringLiteral(": ")+characterQuery.lastError().text());
+        characterSelectionIsWrong(query_id,QLatin1String("Character not found"),characterQuery.lastQuery()+QLatin1String(": ")+characterQuery.lastError().text());
         return;
     }
     if(!characterQuery.next())
     {
-        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),QStringLiteral("Result return query wrong"));
+        characterSelectionIsWrong(query_id,QLatin1String("Character not found"),QLatin1String("Result return query wrong"));
         return;
     }
     bool ok;
     const quint32 &account_id=characterQuery.value(0).toUInt(&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),QStringLiteral("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
+        characterSelectionIsWrong(query_id,QLatin1String("Character not found"),QStringLiteral("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
         return;
     }
     if(player_informations->account_id!=account_id)
     {
-        characterSelectionIsWrong(query_id,QStringLiteral("Character not found"),QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
+        characterSelectionIsWrong(query_id,QLatin1String("Character not found"),QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
         return;
     }
     if(player_informations->character_loaded)
     {
-        characterSelectionIsWrong(query_id,QStringLiteral("Already logged"),QStringLiteral("character_loaded already to true"));
+        characterSelectionIsWrong(query_id,QLatin1String("Already logged"),QLatin1String("character_loaded already to true"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.connected_players_id_list.contains(characterId))
     {
-        characterSelectionIsWrong(query_id,QStringLiteral("Already logged"),QStringLiteral("Already logged"));
+        characterSelectionIsWrong(query_id,QLatin1String("Already logged"),QLatin1String("Already logged"));
         return;
     }
     if(simplifiedIdList.size()<=0)
     {
-        characterSelectionIsWrong(query_id,QStringLiteral("Not free id to login"),QStringLiteral("Not free id to login"));
+        characterSelectionIsWrong(query_id,QLatin1String("Not free id to login"),QLatin1String("Not free id to login"));
         return;
     }
     if(!loadTheRawUTF8String())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            characterSelectionIsWrong(query_id,QStringLiteral("Convert into utf8 have wrong size"),QStringLiteral("Unable to convert the pseudo to utf8 for character id: %1").arg(player_informations->character_id));
+            characterSelectionIsWrong(query_id,QLatin1String("Convert into utf8 have wrong size"),QStringLiteral("Unable to convert the pseudo to utf8 for character id: %1").arg(player_informations->character_id));
         else
-            characterSelectionIsWrong(query_id,QStringLiteral("Convert into utf8 have wrong size"),QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+            characterSelectionIsWrong(query_id,QLatin1String("Convert into utf8 have wrong size"),QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return;
     }
     if(GlobalServerData::serverSettings.anonymous)
@@ -818,13 +818,13 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         player_informations->public_and_private_informations.public_informations.skinId=0;
     }
     QString type=characterQuery.value(7).toString();
-    if(type==QStringLiteral("normal"))
+    if(type==QLatin1String("normal"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
-    else if(type==QStringLiteral("premium"))
+    else if(type==QLatin1String("premium"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_premium;
-    else if(type==QStringLiteral("gm"))
+    else if(type==QLatin1String("gm"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_gm;
-    else if(type==QStringLiteral("dev"))
+    else if(type==QLatin1String("dev"))
         player_informations->public_and_private_informations.public_informations.type=Player_type_dev;
     else
     {
@@ -987,13 +987,13 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     }
     QString orientationString=characterQuery.value(5).toString();
     Orientation orentation;
-    if(orientationString==QStringLiteral("top"))
+    if(orientationString==QLatin1String("top"))
         orentation=Orientation_top;
-    else if(orientationString==QStringLiteral("bottom"))
+    else if(orientationString==QLatin1String("bottom"))
         orentation=Orientation_bottom;
-    else if(orientationString==QStringLiteral("left"))
+    else if(orientationString==QLatin1String("left"))
         orentation=Orientation_left;
-    else if(orientationString==QStringLiteral("right"))
+    else if(orientationString==QLatin1String("right"))
         orentation=Orientation_right;
     else
     {
@@ -1003,36 +1003,36 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     player_informations->public_and_private_informations.allow=FacilityLib::StringToAllow(characterQuery.value(19).toString());
     //all is rights
     QString map=characterQuery.value(6).toString();
-    if(!map.endsWith(QStringLiteral(".tmx")))
-        map+=QStringLiteral(".tmx");
+    if(!map.endsWith(QLatin1String(".tmx")))
+        map+=QLatin1String(".tmx");
     QString rescue_map=characterQuery.value(10).toString();
-    if(!rescue_map.endsWith(QStringLiteral(".tmx")))
-        rescue_map+=QStringLiteral(".tmx");
+    if(!rescue_map.endsWith(QLatin1String(".tmx")))
+        rescue_map+=QLatin1String(".tmx");
     QString unvalidated_rescue_map=characterQuery.value(14).toString();
-    if(!unvalidated_rescue_map.endsWith(QStringLiteral(".tmx")))
-        unvalidated_rescue_map+=QStringLiteral(".tmx");
+    if(!unvalidated_rescue_map.endsWith(QLatin1String(".tmx")))
+        unvalidated_rescue_map+=QLatin1String(".tmx");
     if(GlobalServerData::serverPrivateVariables.map_list.contains(map))
     {
         quint8 x=characterQuery.value(3).toUInt(&ok);
         if(!ok)
         {
-            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("x coord is not a number"));
+            loginIsWrong(query_id,QLatin1String("Wrong account data"),QLatin1String("x coord is not a number"));
             return;
         }
         quint8 y=characterQuery.value(4).toUInt(&ok);
         if(!ok)
         {
-            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y coord is not a number"));
+            loginIsWrong(query_id,QLatin1String("Wrong account data"),QLatin1String("y coord is not a number"));
             return;
         }
         if(x>=GlobalServerData::serverPrivateVariables.map_list.value(map)->width)
         {
-            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("x to out of map"));
+            loginIsWrong(query_id,QLatin1String("Wrong account data"),QLatin1String("x to out of map"));
             return;
         }
         if(y>=GlobalServerData::serverPrivateVariables.map_list.value(map)->height)
         {
-            loginIsWrong(query_id,QStringLiteral("Wrong account data"),QStringLiteral("y to out of map"));
+            loginIsWrong(query_id,QLatin1String("Wrong account data"),QLatin1String("y to out of map"));
             return;
         }
         loginIsRightWithRescue(query_id,
@@ -1052,7 +1052,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         );
     }
     else
-        loginIsWrong(query_id,QStringLiteral("Map not found"),QStringLiteral("Map not found: ")+map);
+        loginIsWrong(query_id,QLatin1String("Map not found"),QLatin1String("Map not found: ")+map);
 }
 
 void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId, Map* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
@@ -1095,13 +1095,13 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     }
     QString orientationString=rescue_orientation.toString();
     Orientation rescue_new_orientation;
-    if(orientationString==QStringLiteral("top"))
+    if(orientationString==QLatin1String("top"))
         rescue_new_orientation=Orientation_top;
-    else if(orientationString==QStringLiteral("bottom"))
+    else if(orientationString==QLatin1String("bottom"))
         rescue_new_orientation=Orientation_bottom;
-    else if(orientationString==QStringLiteral("left"))
+    else if(orientationString==QLatin1String("left"))
         rescue_new_orientation=Orientation_left;
-    else if(orientationString==QStringLiteral("right"))
+    else if(orientationString==QLatin1String("right"))
         rescue_new_orientation=Orientation_right;
     else
     {
@@ -1142,13 +1142,13 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     }
     QString unvalidated_orientationString=unvalidated_rescue_orientation.toString();
     Orientation unvalidated_rescue_new_orientation;
-    if(unvalidated_orientationString==QStringLiteral("top"))
+    if(unvalidated_orientationString==QLatin1String("top"))
         unvalidated_rescue_new_orientation=Orientation_top;
-    else if(unvalidated_orientationString==QStringLiteral("bottom"))
+    else if(unvalidated_orientationString==QLatin1String("bottom"))
         unvalidated_rescue_new_orientation=Orientation_bottom;
-    else if(unvalidated_orientationString==QStringLiteral("left"))
+    else if(unvalidated_orientationString==QLatin1String("left"))
         unvalidated_rescue_new_orientation=Orientation_left;
-    else if(unvalidated_orientationString==QStringLiteral("right"))
+    else if(unvalidated_orientationString==QLatin1String("right"))
         unvalidated_rescue_new_orientation=Orientation_right;
     else
     {
@@ -1430,12 +1430,12 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         {
             QString fileName=files.at(index);
             quint32 mtime=timestamps.at(index);
-            if(fileName.contains(QStringLiteral("./")) || fileName.contains(QStringLiteral("\\")) || fileName.contains(QStringLiteral("//")))
+            if(fileName.contains(QLatin1String("./")) || fileName.contains(QLatin1String("\\")) || fileName.contains(QLatin1String("//")))
             {
                 emit error(QStringLiteral("file name contains illegale char: %1").arg(fileName));
                 return;
             }
-            if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(QStringLiteral("/")))
+            if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(QLatin1String("/")))
             {
                 emit error(QStringLiteral("start with wrong string: %1").arg(fileName));
                 return;
@@ -1682,7 +1682,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
 
 QString ClientHeavyLoad::SQL_text_quote(QString text)
 {
-    return text.replace(QStringLiteral("'"),QStringLiteral("\\'"));
+    return text.replace(QLatin1String("'"),QLatin1String("\\'"));
 }
 
 void ClientHeavyLoad::dbQuery(const QString &queryText)
@@ -1697,7 +1697,7 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
     #endif
     QSqlQuery sqlQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!sqlQuery.exec(queryText))
-        emit message(sqlQuery.lastQuery()+QStringLiteral(": ")+sqlQuery.lastError().text());
+        emit message(sqlQuery.lastQuery()+QLatin1String(": ")+sqlQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
 }
 
@@ -1720,7 +1720,7 @@ void ClientHeavyLoad::loadReputation()
     bool ok;
     QSqlQuery reputationQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!reputationQuery.exec(queryText))
-        emit message(reputationQuery.lastQuery()+QStringLiteral(": ")+reputationQuery.lastError().text());
+        emit message(reputationQuery.lastQuery()+QLatin1String(": ")+reputationQuery.lastError().text());
     //parse the result
     while(reputationQuery.next())
     {

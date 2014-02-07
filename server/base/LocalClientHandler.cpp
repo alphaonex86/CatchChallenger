@@ -16,7 +16,7 @@ QHash<QString,LocalClientHandler::CaptureCityValidated> LocalClientHandler::capt
 QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
 
 QList<quint16> LocalClientHandler::marketObjectIdList;
-QRegularExpression LocalClientHandler::tmxRemove=QRegularExpression(QStringLiteral("\\.tmx$"));
+QRegularExpression LocalClientHandler::tmxRemove=QRegularExpression(QLatin1String("\\.tmx$"));
 
 LocalClientHandler::LocalClientHandler()
 {
@@ -182,24 +182,24 @@ QString LocalClientHandler::directionToStringToSave(const Direction &direction)
     {
         case Direction_look_at_top:
         case Direction_move_at_top:
-            return QStringLiteral("top");
+            return QLatin1String("top");
         break;
         case Direction_look_at_right:
         case Direction_move_at_right:
-            return QStringLiteral("right");
+            return QLatin1String("right");
         break;
         case Direction_look_at_bottom:
         case Direction_move_at_bottom:
-            return QStringLiteral("bottom");
+            return QLatin1String("bottom");
         break;
         case Direction_look_at_left:
         case Direction_move_at_left:
-            return QStringLiteral("left");
+            return QLatin1String("left");
         break;
         default:
         break;
     }
-    return QStringLiteral("bottom");
+    return QLatin1String("bottom");
 }
 
 QString LocalClientHandler::orientationToStringToSave(const Orientation &orientation)
@@ -207,21 +207,21 @@ QString LocalClientHandler::orientationToStringToSave(const Orientation &orienta
     switch(orientation)
     {
         case Orientation_top:
-            return QStringLiteral("top");
+            return QLatin1String("top");
         break;
         case Orientation_bottom:
-            return QStringLiteral("bottom");
+            return QLatin1String("bottom");
         break;
         case Orientation_right:
-            return QStringLiteral("right");
+            return QLatin1String("right");
         break;
         case Orientation_left:
-            return QStringLiteral("left");
+            return QLatin1String("left");
         break;
         default:
         break;
     }
-    return QStringLiteral("bottom");
+    return QLatin1String("bottom");
 }
 
 void LocalClientHandler::savePosition()
@@ -232,7 +232,7 @@ void LocalClientHandler::savePosition()
     //Orientation orientation;
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
     emit message(
-                QStringLiteral("map->map_file: %1,x: %2,y: %3, orientation: %4")
+                QLatin1String("map->map_file: %1,x: %2,y: %3, orientation: %4")
                 .arg(map->map_file)
                 .arg(x)
                 .arg(y)
@@ -1149,12 +1149,12 @@ bool LocalClientHandler::wareHouseStoreCheck(const qint64 &cash, const QList<QPa
 
 void LocalClientHandler::sendHandlerCommand(const QString &command,const QString &extraText)
 {
-    if(command==QStringLiteral("give"))
+    if(command==QLatin1String("give"))
     {
         bool ok;
-        QStringList arguments=extraText.split(QStringLiteral(" "),QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(QLatin1String(" "),QString::SkipEmptyParts);
         if(arguments.size()==2)
-            arguments << QStringLiteral("1");
+            arguments << QLatin1String("1");
         if(arguments.size()!=3)
         {
             emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /give objectId player [quantity=1]"));
@@ -1185,12 +1185,12 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         emit message(QStringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo.value(arguments.at(1))->addObjectAndSend(objectId,quantity);
     }
-    else if(command==QStringLiteral("take"))
+    else if(command==QLatin1String("take"))
     {
         bool ok;
-        QStringList arguments=extraText.split(QStringLiteral(" "),QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(QLatin1String(" "),QString::SkipEmptyParts);
         if(arguments.size()==2)
-            arguments << QStringLiteral("1");
+            arguments << QLatin1String("1");
         if(arguments.size()!=3)
         {
             emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /take objectId player [quantity=1]"));
@@ -1221,12 +1221,12 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         emit message(QStringLiteral("%1 have take to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo.value(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.value(arguments.at(1))->removeObject(objectId,quantity));
     }
-    else if(command==QStringLiteral("tp"))
+    else if(command==QLatin1String("tp"))
     {
-        QStringList arguments=extraText.split(QStringLiteral(" "),QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(QLatin1String(" "),QString::SkipEmptyParts);
         if(arguments.size()==3)
         {
-            if(arguments.at(1)!=QStringLiteral("to"))
+            if(arguments.at(1)!=QLatin1String("to"))
             {
                 emit receiveSystemText(QStringLiteral("wrong second arguement: %1, usage: /tp player1 to player2").arg(arguments.at(1)));
                 return;
@@ -1249,7 +1249,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             return;
         }
     }
-    else if(command==QStringLiteral("trade"))
+    else if(command==QLatin1String("trade"))
     {
         if(extraText.isEmpty())
         {
@@ -1297,7 +1297,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         otherPlayerTrade=playerByPseudo.value(extraText);
         otherPlayerTrade->registerTradeRequest(this);
     }
-    else if(command==QStringLiteral("battle"))
+    else if(command==QLatin1String("battle"))
     {
         if(extraText.isEmpty())
         {
@@ -3095,9 +3095,9 @@ void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
     //add into db
     QString clan_leader;
     if(player_informations->public_and_private_informations.clan_leader)
-        clan_leader=QStringLiteral("1");
+        clan_leader=QLatin1String("1");
     else
-        clan_leader=QStringLiteral("0");
+        clan_leader=QLatin1String("0");
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:

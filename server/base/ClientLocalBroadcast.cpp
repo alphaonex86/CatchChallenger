@@ -41,7 +41,7 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
 void ClientLocalBroadcast::receiveChatText(const QString &text,const Player_internal_informations *sender_informations)
 {
     /* Multiple message when multiple player connected
-    emit message(QStringLiteral("receiveChatText(), text: %1, sender_character: %2, to player: %3").arg(text).arg(sender_character).arg(player_informations.id)); */
+    emit message(QLatin1String("receiveChatText(), text: %1, sender_character: %2, to player: %3").arg(text).arg(sender_character).arg(player_informations.id)); */
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -79,7 +79,7 @@ void ClientLocalBroadcast::insertClient(Map *map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.contains(this))
-        emit message(QStringLiteral("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
+        emit message(QLatin1String("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
     else
     #endif
     static_cast<MapServer *>(map)->clientsForBroadcast << this;
