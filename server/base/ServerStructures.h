@@ -203,6 +203,11 @@ struct ServerPrivateVariables
     QSqlDatabase *db;//use pointer here to init in correct thread
     QString db_type_string;
 
+    //query
+    QString db_query_login;
+    QString db_query_insert_login;
+    QString db_query_characters;
+
     //datapack
     QString datapack_mapPath;
     QRegularExpression datapack_rightFileName;

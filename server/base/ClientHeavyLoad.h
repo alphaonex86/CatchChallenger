@@ -39,6 +39,12 @@ public:
     static int rawFilesCount,compressedFilesCount;
     static QSet<QString> compressedExtension;
     static QHash<quint32,quint16> clanConnectedCount;
+    static QString single_quote;
+    static QString antislash_single_quote;
+    static QString text_dotslash;
+    static QString text_slash;
+    static QString text_double_slash;
+    static QString text_antislash;
 public slots:
     virtual void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
     virtual void askLoginBot(const quint8 &query_id);
