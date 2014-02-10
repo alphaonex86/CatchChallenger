@@ -16,6 +16,70 @@
 
 using namespace CatchChallenger;
 
+QString Map_loader::text_map=QLatin1Literal("map");
+QString Map_loader::text_width=QLatin1Literal("width");
+QString Map_loader::text_height=QLatin1Literal("height");
+QString Map_loader::text_properties=QLatin1Literal("properties");
+QString Map_loader::text_property=QLatin1Literal("property");
+QString Map_loader::text_name=QLatin1Literal("name");
+QString Map_loader::text_value=QLatin1Literal("value");
+QString Map_loader::text_objectgroup=QLatin1Literal("objectgroup");
+QString Map_loader::text_Moving=QLatin1Literal("Moving");
+QString Map_loader::text_object=QLatin1Literal("object");
+QString Map_loader::text_x=QLatin1Literal("x");
+QString Map_loader::text_y=QLatin1Literal("y");
+QString Map_loader::text_type=QLatin1Literal("type");
+QString Map_loader::text_borderleft=QLatin1Literal("border-left");
+QString Map_loader::text_borderright=QLatin1Literal("border-right");
+QString Map_loader::text_bordertop=QLatin1Literal("border-top");
+QString Map_loader::text_borderbottom=QLatin1Literal("border-bottom");
+QString Map_loader::text_teleport_on_push=QLatin1Literal("teleport on push");
+QString Map_loader::text_teleport_on_it=QLatin1Literal("teleport on it");
+QString Map_loader::text_door=QLatin1Literal("door");
+QString Map_loader::text_condition_file=QLatin1Literal("condition-file");
+QString Map_loader::text_condition_id=QLatin1Literal("condition-id");
+QString Map_loader::text_rescue=QLatin1Literal("rescue");
+QString Map_loader::text_bot_spawn=QLatin1Literal("bot spawn");
+QString Map_loader::text_Object=QLatin1Literal("Object");
+QString Map_loader::text_bot=QLatin1Literal("bot");
+QString Map_loader::text_skin=QLatin1Literal("skin");
+QString Map_loader::text_lookAt=QLatin1Literal("lookAt");
+QString Map_loader::text_bottom=QLatin1Literal("bottom");
+QString Map_loader::text_file=QLatin1Literal("file");
+QString Map_loader::text_id=QLatin1Literal("id");
+QString Map_loader::text_layer=QLatin1Literal("layer");
+QString Map_loader::text_encoding=QLatin1Literal("encoding");
+QString Map_loader::text_compression=QLatin1Literal("compression");
+QString Map_loader::text_base64=QLatin1Literal("base64");
+QString Map_loader::text_Walkable=QLatin1Literal("Walkable");
+QString Map_loader::text_Collisions=QLatin1Literal("Collisions");
+QString Map_loader::text_Water=QLatin1Literal("Water");
+QString Map_loader::text_Grass=QLatin1Literal("Grass");
+QString Map_loader::text_Dirt=QLatin1Literal("Dirt");
+QString Map_loader::text_LedgesRight=QLatin1Literal("LedgesRight");
+QString Map_loader::text_LedgesLeft=QLatin1Literal("LedgesLeft");
+QString Map_loader::text_LedgesBottom=QLatin1Literal("LedgesBottom");
+QString Map_loader::text_LedgesDown=QLatin1Literal("LedgesDown");
+QString Map_loader::text_LedgesTop=QLatin1Literal("LedgesTop");
+QString Map_loader::text_LedgesUp=QLatin1Literal("LedgesUp");
+QString Map_loader::text_grass=QLatin1Literal("grass");
+QString Map_loader::text_monster=QLatin1Literal("monster");
+QString Map_loader::text_minLevel=QLatin1Literal("minLevel");
+QString Map_loader::text_maxLevel=QLatin1Literal("maxLevel");
+QString Map_loader::text_level=QLatin1Literal("level");
+QString Map_loader::text_luck=QLatin1Literal("luck");
+QString Map_loader::text_water=QLatin1Literal("water");
+QString Map_loader::text_cave=QLatin1Literal("cave");
+QString Map_loader::text_condition=QLatin1Literal("condition");
+QString Map_loader::text_quest=QLatin1Literal("quest");
+QString Map_loader::text_item=QLatin1Literal("item");
+QString Map_loader::text_fightBot=QLatin1Literal("fightBot");
+QString Map_loader::text_clan=QLatin1Literal("clan");
+QString Map_loader::text_dottmx=QLatin1Literal(".tmx");
+QString Map_loader::text_slash=QLatin1Literal("/");
+QString Map_loader::text_percent=QLatin1Literal("%");
+QString Map_loader::text_data=QLatin1Literal("data");
+
 /// \todo put at walkable the tp on push
 
 static void logZlibError(int error)
@@ -109,7 +173,7 @@ Map_loader::~Map_loader()
 
 bool Map_loader::tryLoadMap(const QString &fileName)
 {
-    error=QStringLiteral("");
+    error.clear();
     Map_to_send map_to_send;
     map_to_send.border.bottom.x_offset=0;
     map_to_send.border.top.x_offset=0;
@@ -142,19 +206,19 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("map"))
+    if(root.tagName()!=Map_loader::text_map)
     {
         error=QStringLiteral("\"map\" root balise not found for the xml file");
         return false;
     }
 
     //get the width
-    if(!root.hasAttribute(QLatin1String("width")))
+    if(!root.hasAttribute(Map_loader::text_width))
     {
         error=QStringLiteral("the root node has not the attribute \"width\"");
         return false;
     }
-    map_to_send.width=root.attribute(QLatin1String("width")).toUInt(&ok);
+    map_to_send.width=root.attribute(Map_loader::text_width).toUInt(&ok);
     if(!ok)
     {
         error=QStringLiteral("the root node has wrong attribute \"width\"");
@@ -162,12 +226,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     }
 
     //get the height
-    if(!root.hasAttribute(QLatin1String("height")))
+    if(!root.hasAttribute(Map_loader::text_height))
     {
         error=QStringLiteral("the root node has not the attribute \"height\"");
         return false;
     }
-    map_to_send.height=root.attribute(QLatin1String("height")).toUInt(&ok);
+    map_to_send.height=root.attribute(Map_loader::text_height).toUInt(&ok);
     if(!ok)
     {
         error=QStringLiteral("the root node has wrong attribute \"height\"");
@@ -187,18 +251,18 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     }
 
     //properties
-    QDomElement child = root.firstChildElement(QLatin1String("properties"));
+    QDomElement child = root.firstChildElement(Map_loader::text_properties);
     if(!child.isNull())
     {
         if(child.isElement())
         {
-            QDomElement SubChild=child.firstChildElement(QLatin1String("property"));
+            QDomElement SubChild=child.firstChildElement(Map_loader::text_property);
             while(!SubChild.isNull())
             {
                 if(SubChild.isElement())
                 {
-                    if(SubChild.hasAttribute(QLatin1String("name")) && SubChild.hasAttribute(QLatin1String("value")))
-                        map_to_send.property[SubChild.attribute(QLatin1String("name"))]=SubChild.attribute(QLatin1String("value"));
+                    if(SubChild.hasAttribute(Map_loader::text_name) && SubChild.hasAttribute(Map_loader::text_value))
+                        map_to_send.property[SubChild.attribute(Map_loader::text_name)]=SubChild.attribute(Map_loader::text_value);
                     else
                     {
                         error=QStringLiteral("Missing attribute name or value: child.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber());
@@ -210,7 +274,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     error=QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber());
                     return false;
                 }
-                SubChild = SubChild.nextSiblingElement(QLatin1String("property"));
+                SubChild = SubChild.nextSiblingElement(Map_loader::text_property);
             }
         }
         else
@@ -221,38 +285,38 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     }
 
     // objectgroup
-    child = root.firstChildElement(QLatin1String("objectgroup"));
+    child = root.firstChildElement(Map_loader::text_objectgroup);
     while(!child.isNull())
     {
-        if(!child.hasAttribute(QLatin1String("name")))
+        if(!child.hasAttribute(Map_loader::text_name))
             DebugClass::debugConsole(QStringLiteral("Has not attribute \"name\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         else if(!child.isElement())
-            DebugClass::debugConsole(QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute(QLatin1String("name"))).arg(child.lineNumber())));
+            DebugClass::debugConsole(QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute(Map_loader::text_name)).arg(child.lineNumber())));
         else
         {
-            if(child.attribute(QLatin1String("name"))==QLatin1String("Moving"))
+            if(child.attribute(Map_loader::text_name)==Map_loader::text_Moving)
             {
-                QDomElement SubChild=child.firstChildElement(QLatin1String("object"));
+                QDomElement SubChild=child.firstChildElement(Map_loader::text_object);
                 while(!SubChild.isNull())
                 {
-                    if(SubChild.isElement() && SubChild.hasAttribute(QLatin1String("x")) && SubChild.hasAttribute(QLatin1String("y")))
+                    if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
                     {
-                        quint32 object_x=SubChild.attribute(QLatin1String("x")).toUInt(&ok)/16;
+                        quint32 object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            quint32 object_y=(SubChild.attribute(QLatin1String("y")).toUInt(&ok)/16)-1;
+                            quint32 object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                             else if(object_x>map_to_send.width || object_y>map_to_send.height)
                                 DebugClass::debugConsole(QStringLiteral("Object out of the map: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
-                            else if(SubChild.hasAttribute(QLatin1String("type")))
+                            else if(SubChild.hasAttribute(Map_loader::text_type))
                             {
-                                QString type=SubChild.attribute(QLatin1String("type"));
+                                QString type=SubChild.attribute(Map_loader::text_type);
 
                                 QHash<QString,QVariant> property_text;
                                 QDomElement prop=SubChild.firstChildElement(QLatin1String("properties"));
@@ -265,15 +329,15 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                                  .arg(object_y)
                                                  );
                                     #endif
-                                    QDomElement property=prop.firstChildElement(QLatin1String("property"));
+                                    QDomElement property=prop.firstChildElement(Map_loader::text_property);
                                     while(!property.isNull())
                                     {
-                                        if(property.hasAttribute(QLatin1String("name")) && property.hasAttribute(QLatin1String("value")))
-                                            property_text[property.attribute(QLatin1String("name"))]=property.attribute(QLatin1String("value"));
-                                        property = property.nextSiblingElement(QLatin1String("property"));
+                                        if(property.hasAttribute(Map_loader::text_name) && property.hasAttribute(Map_loader::text_value))
+                                            property_text[property.attribute(Map_loader::text_name)]=property.attribute(Map_loader::text_value);
+                                        property = property.nextSiblingElement(Map_loader::text_property);
                                     }
                                 }
-                                if(type==QLatin1String("border-left") || type==QLatin1String("border-right") || type==QLatin1String("border-top") || type==QLatin1String("border-bottom"))
+                                if(type==Map_loader::text_borderleft || type==Map_loader::text_borderright || type==Map_loader::text_bordertop || type==Map_loader::text_borderbottom)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, border")
@@ -282,43 +346,43 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.contains(QLatin1String("map")))
+                                    if(property_text.contains(Map_loader::text_map))
                                     {
-                                        if(type==QLatin1String("border-left"))//border left
+                                        if(type==Map_loader::text_borderleft)//border left
                                         {
-                                            map_to_send.border.left.fileName=property_text.value(QLatin1String("map")).toString();
-                                            if(!map_to_send.border.left.fileName.endsWith(QLatin1String(".tmx")) && !map_to_send.border.left.fileName.isEmpty())
-                                                map_to_send.border.left.fileName+=QLatin1String(".tmx");
+                                            map_to_send.border.left.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send.border.left.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.left.fileName.isEmpty())
+                                                map_to_send.border.left.fileName+=Map_loader::text_dottmx;
                                             map_to_send.border.left.y_offset=object_y;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
                                             #endif
                                         }
-                                        else if(type==QLatin1String("border-right"))//border right
+                                        else if(type==Map_loader::text_borderright)//border right
                                         {
-                                            map_to_send.border.right.fileName=property_text.value(QLatin1String("map")).toString();
-                                            if(!map_to_send.border.right.fileName.endsWith(QLatin1String(".tmx")) && !map_to_send.border.right.fileName.isEmpty())
+                                            map_to_send.border.right.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send.border.right.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.right.fileName.isEmpty())
                                                 map_to_send.border.right.fileName+=QLatin1String(".tmx");
                                             map_to_send.border.right.y_offset=object_y;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
                                             #endif
                                         }
-                                        else if(type==QLatin1String("border-top"))//border top
+                                        else if(type==Map_loader::text_bordertop)//border top
                                         {
-                                            map_to_send.border.top.fileName=property_text.value(QLatin1String("map")).toString();
-                                            if(!map_to_send.border.top.fileName.endsWith(QLatin1String(".tmx")) && !map_to_send.border.top.fileName.isEmpty())
-                                                map_to_send.border.top.fileName+=QLatin1String(".tmx");
+                                            map_to_send.border.top.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send.border.top.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.top.fileName.isEmpty())
+                                                map_to_send.border.top.fileName+=Map_loader::text_dottmx;
                                             map_to_send.border.top.x_offset=object_x;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
                                             #endif
                                         }
-                                        else if(type==QLatin1String("border-bottom"))//border bottom
+                                        else if(type==Map_loader::text_borderbottom)//border bottom
                                         {
-                                            map_to_send.border.bottom.fileName=property_text.value(QLatin1String("map")).toString();
-                                            if(!map_to_send.border.bottom.fileName.endsWith(QLatin1String(".tmx")) && !map_to_send.border.bottom.fileName.isEmpty())
-                                                map_to_send.border.bottom.fileName+=QLatin1String(".tmx");
+                                            map_to_send.border.bottom.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send.border.bottom.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.bottom.fileName.isEmpty())
+                                                map_to_send.border.bottom.fileName+=Map_loader::text_dottmx;
                                             map_to_send.border.bottom.x_offset=object_x;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
@@ -334,7 +398,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     else
                                         DebugClass::debugConsole(QStringLiteral("Missing \"map\" properties for the border: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
                                 }
-                                else if(type==QLatin1String("teleport on push") || type==QLatin1String("teleport on it") || type==QLatin1String("door"))
+                                else if(type==Map_loader::text_teleport_on_push || type==Map_loader::text_teleport_on_it || type==Map_loader::text_door)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, tp")
@@ -343,32 +407,32 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.contains(QLatin1String("map")) && property_text.contains(QLatin1String("x")) && property_text.contains(QLatin1String("y")))
+                                    if(property_text.contains(Map_loader::text_map) && property_text.contains(Map_loader::text_x) && property_text.contains(Map_loader::text_y))
                                     {
                                         Map_semi_teleport new_tp;
-                                        new_tp.destination_x = property_text.value(QLatin1String("x")).toUInt(&ok);
+                                        new_tp.destination_x = property_text.value(Map_loader::text_x).toUInt(&ok);
                                         if(ok)
                                         {
-                                            new_tp.destination_y = property_text.value(QLatin1String("y")).toUInt(&ok);
+                                            new_tp.destination_y = property_text.value(Map_loader::text_y).toUInt(&ok);
                                             if(ok)
                                             {
-                                                if(property_text.contains(QLatin1String("condition-file")) && property_text.contains(QLatin1String("condition-id")))
+                                                if(property_text.contains(Map_loader::text_condition_file) && property_text.contains(Map_loader::text_condition_id))
                                                 {
-                                                    quint32 conditionId=property_text.value(QLatin1String("condition-id")).toUInt(&ok);
+                                                    quint32 conditionId=property_text.value(Map_loader::text_condition_id).toUInt(&ok);
                                                     if(!ok)
                                                         DebugClass::debugConsole(QStringLiteral("condition id is not a number, id: %1 (%2 at line: %3)").arg(property_text.value(QLatin1String("condition-id")).toString()).arg(fileName).arg(SubChild.lineNumber()));
                                                     else
                                                     {
-                                                        const QString &conditionFile=QFileInfo(QFileInfo(fileName).absolutePath()+QLatin1String("/")+property_text.value(QLatin1String("condition-file")).toString()).absoluteFilePath();
+                                                        const QString &conditionFile=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.value(Map_loader::text_condition_file).toString()).absoluteFilePath();
                                                         new_tp.conditionUnparsed=getXmlCondition(fileName,conditionFile,conditionId);
                                                         new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);
                                                     }
                                                 }
                                                 new_tp.source_x=object_x;
                                                 new_tp.source_y=object_y;
-                                                new_tp.map=property_text.value(QLatin1String("map")).toString();
-                                                if(!new_tp.map.endsWith(QLatin1String(".tmx")) && !new_tp.map.isEmpty())
-                                                    new_tp.map+=QLatin1String(".tmx");
+                                                new_tp.map=property_text.value(Map_loader::text_map).toString();
+                                                if(!new_tp.map.endsWith(Map_loader::text_dottmx) && !new_tp.map.isEmpty())
+                                                    new_tp.map+=Map_loader::text_dottmx;
                                                 map_to_send.teleport << new_tp;
                                                 #ifdef DEBUG_MESSAGE_MAP_OBJECT
                                                 DebugClass::debugConsole(QStringLiteral("Teleporter type: %1, to: %2 (%3,%4)").arg(type).arg(new_tp.map).arg(new_tp.source_x).arg(new_tp.source_y));
@@ -383,7 +447,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     else
                                         DebugClass::debugConsole(QStringLiteral("Missing map,x or y, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
                                 }
-                                else if(type==QLatin1String("rescue"))
+                                else if(type==Map_loader::text_rescue)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, rescue")
@@ -398,7 +462,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     map_to_send.rescue_points << tempPoint;
                                     map_to_send.bot_spawn_points << tempPoint;
                                 }
-                                else if(type==QLatin1String("bot spawn"))
+                                else if(type==Map_loader::text_bot_spawn)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, bot spawn")
@@ -430,35 +494,35 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     }
                     else
                         DebugClass::debugConsole(QStringLiteral("Is not Element: SubChild.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
-                    SubChild = SubChild.nextSiblingElement(QLatin1String("object"));
+                    SubChild = SubChild.nextSiblingElement(Map_loader::text_object);
                 }
             }
-            if(child.attribute(QLatin1String("name"))==QLatin1String("Object"))
+            if(child.attribute(Map_loader::text_name)==Map_loader::text_Object)
             {
-                QDomElement SubChild=child.firstChildElement(QLatin1String("object"));
+                QDomElement SubChild=child.firstChildElement(Map_loader::text_object);
                 while(!SubChild.isNull())
                 {
-                    if(SubChild.isElement() && SubChild.hasAttribute(QLatin1String("x")) && SubChild.hasAttribute(QLatin1String("y")))
+                    if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
                     {
-                        quint32 object_x=SubChild.attribute(QLatin1String("x")).toUInt(&ok)/16;
+                        quint32 object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            quint32 object_y=(SubChild.attribute(QLatin1String("y")).toUInt(&ok)/16)-1;
+                            quint32 object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
                             else if(object_x>map_to_send.width || object_y>map_to_send.height)
                                 DebugClass::debugConsole(QStringLiteral("Object out of the map: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
-                            else if(SubChild.hasAttribute(QLatin1String("type")))
+                            else if(SubChild.hasAttribute(Map_loader::text_type))
                             {
-                                QString type=SubChild.attribute(QLatin1String("type"));
+                                QString type=SubChild.attribute(Map_loader::text_type);
 
                                 QHash<QString,QVariant> property_text;
-                                QDomElement prop=SubChild.firstChildElement(QLatin1String("properties"));
+                                QDomElement prop=SubChild.firstChildElement(Map_loader::text_properties);
                                 if(!prop.isNull())
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
@@ -468,15 +532,15 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                                  .arg(object_y)
                                                  );
                                     #endif
-                                    QDomElement property=prop.firstChildElement(QLatin1String("property"));
+                                    QDomElement property=prop.firstChildElement(Map_loader::text_property);
                                     while(!property.isNull())
                                     {
-                                        if(property.hasAttribute(QLatin1String("name")) && property.hasAttribute(QLatin1String("value")))
-                                            property_text[property.attribute(QLatin1String("name"))]=property.attribute(QLatin1String("value"));
-                                        property = property.nextSiblingElement(QLatin1String("property"));
+                                        if(property.hasAttribute(Map_loader::text_name) && property.hasAttribute(Map_loader::text_value))
+                                            property_text[property.attribute(Map_loader::text_name)]=property.attribute(Map_loader::text_value);
+                                        property = property.nextSiblingElement(Map_loader::text_property);
                                     }
                                 }
-                                if(type==QLatin1String("bot"))
+                                if(type==Map_loader::text_bot)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3")
@@ -485,16 +549,16 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.contains(QLatin1String("skin")) && !property_text.value(QLatin1String("skin")).toString().isEmpty() && !property_text.contains(QLatin1String("lookAt")))
+                                    if(property_text.contains(Map_loader::text_skin) && !property_text.value(Map_loader::text_skin).toString().isEmpty() && !property_text.contains(Map_loader::text_lookAt))
                                     {
-                                        property_text[QLatin1String("lookAt")]=QLatin1String("bottom");
+                                        property_text[Map_loader::text_lookAt]=Map_loader::text_bottom;
                                         DebugClass::debugConsole(QStringLiteral("skin but not lookAt, fixed by bottom: %1 (%2 at line: %3)").arg(SubChild.tagName()).arg(fileName).arg(SubChild.lineNumber()));
                                     }
-                                    if(property_text.contains(QLatin1String("file")) && property_text.contains(QLatin1String("id")))
+                                    if(property_text.contains(Map_loader::text_file) && property_text.contains(Map_loader::text_id))
                                     {
                                         Map_to_send::Bot_Semi bot_semi;
-                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+QLatin1String("/")+property_text.value(QLatin1String("file")).toString()).absoluteFilePath();
-                                        bot_semi.id=property_text.value(QLatin1String("id")).toUInt(&ok);
+                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.value(Map_loader::text_file).toString()).absoluteFilePath();
+                                        bot_semi.id=property_text.value(Map_loader::text_id).toUInt(&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
@@ -524,17 +588,17 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     }
                     else
                         DebugClass::debugConsole(QStringLiteral("Is not Element: SubChild.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
-                    SubChild = SubChild.nextSiblingElement(QLatin1String("object"));
+                    SubChild = SubChild.nextSiblingElement(Map_loader::text_object);
                 }
             }
         }
-        child = child.nextSiblingElement(QLatin1String("objectgroup"));
+        child = child.nextSiblingElement(Map_loader::text_objectgroup);
     }
 
 
 
     // layer
-    child = root.firstChildElement(QLatin1String("layer"));
+    child = root.firstChildElement(Map_loader::text_layer);
     while(!child.isNull())
     {
         if(!child.isElement())
@@ -542,15 +606,15 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             error=QStringLiteral("Is Element: child.tagName(): %1").arg(child.tagName());
             return false;
         }
-        else if(!child.hasAttribute(QLatin1String("name")))
+        else if(!child.hasAttribute(Map_loader::text_name))
         {
             error=QStringLiteral("Has not attribute \"name\": child.tagName(): %1").arg(child.tagName());
             return false;
         }
         else
         {
-            QDomElement data = child.firstChildElement(QLatin1String("data"));
-            QString name=child.attribute(QLatin1String("name"));
+            QDomElement data = child.firstChildElement(Map_loader::text_data);
+            QString name=child.attribute(Map_loader::text_name);
             if(data.isNull())
             {
                 error=QStringLiteral("Is Element for layer is null: %1 and name: %2").arg(data.tagName()).arg(name);
@@ -561,22 +625,22 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 error=QStringLiteral("Is Element for layer child.tagName(): %1").arg(data.tagName());
                 return false;
             }
-            else if(!data.hasAttribute(QLatin1String("encoding")))
+            else if(!data.hasAttribute(Map_loader::text_encoding))
             {
                 error=QStringLiteral("Has not attribute \"base64\": child.tagName(): %1").arg(data.tagName());
                 return false;
             }
-            else if(!data.hasAttribute(QLatin1String("compression")))
+            else if(!data.hasAttribute(Map_loader::text_compression))
             {
                 error=QStringLiteral("Has not attribute \"zlib\": child.tagName(): %1").arg(data.tagName());
                 return false;
             }
-            else if(data.attribute(QLatin1String("encoding"))!=QLatin1String("base64"))
+            else if(data.attribute(Map_loader::text_encoding)!=Map_loader::text_base64)
             {
                 error=QStringLiteral("only encoding base64 is supported");
                 return false;
             }
-            else if(!data.hasAttribute(QLatin1String("compression")))
+            else if(!data.hasAttribute(Map_loader::text_compression))
             {
                 error=QStringLiteral("Only compression zlib is supported");
                 return false;
@@ -596,7 +660,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     error=QStringLiteral("map binary size (%1) != %2x%3x4").arg(data.size()).arg(map_to_send.height).arg(map_to_send.width);
                     return false;
                 }
-                if(name==QLatin1String("Walkable"))
+                if(name==Map_loader::text_Walkable)
                 {
                     if(Walkable.isEmpty())
                         Walkable=data;
@@ -611,7 +675,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("Collisions"))
+                else if(name==Map_loader::text_Collisions)
                 {
                     if(Collisions.isEmpty())
                         Collisions=data;
@@ -626,7 +690,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("Water"))
+                else if(name==Map_loader::text_Water)
                 {
                     if(Water.isEmpty())
                         Water=data;
@@ -641,7 +705,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("Grass"))
+                else if(name==Map_loader::text_Grass)
                 {
                     if(Grass.isEmpty())
                         Grass=data;
@@ -656,7 +720,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("Dirt"))
+                else if(name==Map_loader::text_Dirt)
                 {
                     if(Dirt.isEmpty())
                         Dirt=data;
@@ -671,7 +735,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("LedgesRight"))
+                else if(name==Map_loader::text_LedgesRight)
                 {
                     if(LedgesRight.isEmpty())
                         LedgesRight=data;
@@ -686,7 +750,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("LedgesLeft"))
+                else if(name==Map_loader::text_LedgesLeft)
                 {
                     if(LedgesLeft.isEmpty())
                         LedgesLeft=data;
@@ -701,7 +765,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("LedgesBottom") || name==QLatin1String("LedgesDown"))
+                else if(name==Map_loader::text_LedgesBottom || name==Map_loader::text_LedgesDown)
                 {
                     if(LedgesBottom.isEmpty())
                         LedgesBottom=data;
@@ -716,7 +780,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==QLatin1String("LedgesTop") || name==QLatin1String("LedgesUp"))
+                else if(name==Map_loader::text_LedgesTop || name==Map_loader::text_LedgesUp)
                 {
                     if(LedgesTop.isEmpty())
                         LedgesTop=data;
@@ -733,7 +797,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 }
             }
         }
-        child = child.nextSiblingElement(QLatin1String("layer"));
+        child = child.nextSiblingElement(Map_loader::text_layer);
     }
 
     /*QByteArray null_data;
@@ -1081,7 +1145,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     this->map_to_send=map_to_send;
 
     QString xmlExtra=fileName;
-    xmlExtra.replace(QLatin1String(".tmx"),QLatin1String(".xml"));
+    xmlExtra.replace(Map_loader::text_dottmx,QLatin1String(".xml"));
     if(QFile::exists(xmlExtra))
         loadMonsterMap(xmlExtra);
 
@@ -1117,7 +1181,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
     this->map_to_send.xmlRoot = domDocument.documentElement();
-    if(this->map_to_send.xmlRoot.tagName()!=QLatin1String("map"))
+    if(this->map_to_send.xmlRoot.tagName()!=Map_loader::text_map)
     {
         qDebug() << QStringLiteral("\"map\" root balise not found for the xml file");
         return false;
@@ -1125,33 +1189,33 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
 
     //grass
     quint32 tempGrassLuckTotal=0;
-    QDomElement grass = this->map_to_send.xmlRoot.firstChildElement(QLatin1String("grass"));
+    QDomElement grass = this->map_to_send.xmlRoot.firstChildElement(Map_loader::text_grass);
     if(!grass.isNull())
     {
         if(grass.isElement())
         {
-            QDomElement monsters=grass.firstChildElement(QLatin1String("monster"));
+            QDomElement monsters=grass.firstChildElement(Map_loader::text_monster);
             while(!monsters.isNull())
             {
                 if(monsters.isElement())
                 {
-                    if(monsters.hasAttribute(QLatin1String("id")) && ((monsters.hasAttribute(QLatin1String("minLevel")) && monsters.hasAttribute(QLatin1String("maxLevel"))) || monsters.hasAttribute(QLatin1String("level"))) && monsters.hasAttribute(QLatin1String("luck")))
+                    if(monsters.hasAttribute(Map_loader::text_id) && ((monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel)) || monsters.hasAttribute(Map_loader::text_level)) && monsters.hasAttribute(Map_loader::text_luck))
                     {
                         MapMonster mapMonster;
-                        mapMonster.id=monsters.attribute(QLatin1String("id")).toUInt(&ok);
+                        mapMonster.id=monsters.attribute(Map_loader::text_id).toUInt(&ok);
                         if(!ok)
                             qDebug() << QStringLiteral("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                        if(monsters.hasAttribute(QLatin1String("minLevel")) && monsters.hasAttribute(QLatin1String("maxLevel")))
+                        if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
                         {
                             if(ok)
                             {
-                                mapMonster.minLevel=monsters.attribute(QLatin1String("minLevel")).toUShort(&ok);
+                                mapMonster.minLevel=monsters.attribute(Map_loader::text_minLevel).toUShort(&ok);
                                 if(!ok)
                                     qDebug() << QStringLiteral("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                             }
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(QLatin1String("maxLevel")).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_maxLevel).toUShort(&ok);
                                 if(!ok)
                                     qDebug() << QStringLiteral("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                             }
@@ -1160,7 +1224,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                         {
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(QLatin1String("level")).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_level).toUShort(&ok);
                                 mapMonster.minLevel=mapMonster.maxLevel;
                                 if(!ok)
                                     qDebug() << QStringLiteral("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
@@ -1168,8 +1232,8 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                         }
                         if(ok)
                         {
-                            QString textLuck=monsters.attribute(QLatin1String("luck"));
-                            textLuck.remove(QLatin1String("%"));
+                            QString textLuck=monsters.attribute(Map_loader::text_luck);
+                            textLuck.remove(Map_loader::text_percent);
                             mapMonster.luck=textLuck.toUShort(&ok);
                             if(!ok)
                                 qDebug() << QStringLiteral("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
@@ -1227,7 +1291,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                 }
                 else
                     qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                monsters = monsters.nextSiblingElement(QLatin1String("monster"));
+                monsters = monsters.nextSiblingElement(Map_loader::text_monster);
             }
         }
         else
@@ -1241,33 +1305,33 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
 
     //water
     quint32 tempWaterLuckTotal=0;
-    QDomElement water = this->map_to_send.xmlRoot.firstChildElement(QLatin1String("water"));
+    QDomElement water = this->map_to_send.xmlRoot.firstChildElement(Map_loader::text_water);
     if(!water.isNull())
     {
         if(water.isElement())
         {
-            QDomElement monsters=water.firstChildElement(QLatin1String("monster"));
+            QDomElement monsters=water.firstChildElement(Map_loader::text_monster);
             while(!monsters.isNull())
             {
                 if(monsters.isElement())
                 {
-                    if(monsters.hasAttribute(QLatin1String("id")) && ((monsters.hasAttribute(QLatin1String("minLevel")) && monsters.hasAttribute(QLatin1String("maxLevel"))) || monsters.hasAttribute(QLatin1String("level"))) && monsters.hasAttribute(QLatin1String("luck")))
+                    if(monsters.hasAttribute(Map_loader::text_id) && ((monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel)) || monsters.hasAttribute(Map_loader::text_level)) && monsters.hasAttribute(Map_loader::text_luck))
                     {
                         MapMonster mapMonster;
-                        mapMonster.id=monsters.attribute(QLatin1String("id")).toUInt(&ok);
+                        mapMonster.id=monsters.attribute(Map_loader::text_id).toUInt(&ok);
                         if(!ok)
                             qDebug() << QStringLiteral("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                        if(monsters.hasAttribute(QLatin1String("minLevel")) && monsters.hasAttribute(QLatin1String("maxLevel")))
+                        if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
                         {
                             if(ok)
                             {
-                                mapMonster.minLevel=monsters.attribute(QLatin1String("minLevel")).toUShort(&ok);
+                                mapMonster.minLevel=monsters.attribute(Map_loader::text_minLevel).toUShort(&ok);
                                 if(!ok)
                                     qDebug() << QStringLiteral("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                             }
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(QLatin1String("maxLevel")).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_maxLevel).toUShort(&ok);
                                 if(!ok)
                                     qDebug() << QStringLiteral("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                             }
@@ -1276,7 +1340,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                         {
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(QLatin1String("level")).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_level).toUShort(&ok);
                                 mapMonster.minLevel=mapMonster.maxLevel;
                                 if(!ok)
                                     qDebug() << QStringLiteral("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
@@ -1284,8 +1348,8 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                         }
                         if(ok)
                         {
-                            QString textLuck=monsters.attribute(QLatin1String("luck"));
-                            textLuck.remove(QLatin1String("%"));
+                            QString textLuck=monsters.attribute(Map_loader::text_luck);
+                            textLuck.remove(Map_loader::text_percent);
                             mapMonster.luck=textLuck.toUShort(&ok);
                             if(!ok)
                                 qDebug() << QStringLiteral("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
@@ -1343,7 +1407,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                 }
                 else
                     qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                monsters = monsters.nextSiblingElement(QLatin1String("monster"));
+                monsters = monsters.nextSiblingElement(Map_loader::text_monster);
             }
         }
         else
@@ -1357,33 +1421,33 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
 
     //cave
     quint32 tempCaveLuckTotal=0;
-    QDomElement cave = this->map_to_send.xmlRoot.firstChildElement(QLatin1String("cave"));
+    QDomElement cave = this->map_to_send.xmlRoot.firstChildElement(Map_loader::text_cave);
     if(!cave.isNull())
     {
         if(cave.isElement())
         {
-            QDomElement monsters=cave.firstChildElement(QLatin1String("monster"));
+            QDomElement monsters=cave.firstChildElement(Map_loader::text_monster);
             while(!monsters.isNull())
             {
                 if(monsters.isElement())
                 {
-                    if(monsters.hasAttribute(QLatin1String("id")) && ((monsters.hasAttribute(QLatin1String("minLevel")) && monsters.hasAttribute(QLatin1String("maxLevel"))) || monsters.hasAttribute(QLatin1String("level"))) && monsters.hasAttribute(QLatin1String("luck")))
+                    if(monsters.hasAttribute(Map_loader::text_id) && ((monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel)) || monsters.hasAttribute(Map_loader::text_level)) && monsters.hasAttribute(Map_loader::text_luck))
                     {
                         MapMonster mapMonster;
-                        mapMonster.id=monsters.attribute(QLatin1String("id")).toUInt(&ok);
+                        mapMonster.id=monsters.attribute(Map_loader::text_id).toUInt(&ok);
                         if(!ok)
                             qDebug() << QStringLiteral("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                        if(monsters.hasAttribute(QLatin1String("minLevel")) && monsters.hasAttribute(QLatin1String("maxLevel")))
+                        if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
                         {
                             if(ok)
                             {
-                                mapMonster.minLevel=monsters.attribute(QLatin1String("minLevel")).toUShort(&ok);
+                                mapMonster.minLevel=monsters.attribute(Map_loader::text_minLevel).toUShort(&ok);
                                 if(!ok)
                                     qDebug() << QStringLiteral("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                             }
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(QLatin1String("maxLevel")).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_maxLevel).toUShort(&ok);
                                 if(!ok)
                                     qDebug() << QStringLiteral("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                             }
@@ -1392,7 +1456,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                         {
                             if(ok)
                             {
-                                mapMonster.maxLevel=monsters.attribute(QLatin1String("level")).toUShort(&ok);
+                                mapMonster.maxLevel=monsters.attribute(Map_loader::text_level).toUShort(&ok);
                                 mapMonster.minLevel=mapMonster.maxLevel;
                                 if(!ok)
                                     qDebug() << QStringLiteral("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
@@ -1400,8 +1464,8 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                         }
                         if(ok)
                         {
-                            QString textLuck=monsters.attribute(QLatin1String("luck"));
-                            textLuck.remove("%");
+                            QString textLuck=monsters.attribute(Map_loader::text_luck);
+                            textLuck.remove(Map_loader::text_percent);
                             mapMonster.luck=textLuck.toUShort(&ok);
                             if(!ok)
                                 qDebug() << QStringLiteral("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
@@ -1459,7 +1523,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                 }
                 else
                     qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                monsters = monsters.nextSiblingElement(QLatin1String("monster"));
+                monsters = monsters.nextSiblingElement(Map_loader::text_monster);
             }
         }
         else
@@ -1541,25 +1605,25 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
         return QDomElement();
     }
 
-    QDomElement item = root.firstChildElement(QLatin1String("condition"));
+    QDomElement item = root.firstChildElement(Map_loader::text_condition);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(!item.hasAttribute(QLatin1String("id")))
+            if(!item.hasAttribute(Map_loader::text_id))
                 qDebug() << QStringLiteral("\"condition\" balise have not id attribute (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
-            else if(!item.hasAttribute(QLatin1String("type")))
+            else if(!item.hasAttribute(Map_loader::text_type))
                 qDebug() << QStringLiteral("\"condition\" balise have not type attribute (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
             else
             {
-                quint32 id=item.attribute(QLatin1String("id")).toUInt(&ok);
+                quint32 id=item.attribute(Map_loader::text_id).toUInt(&ok);
                 if(!ok)
                     qDebug() << QStringLiteral("\"condition\" balise have id is not a number (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
                 else
                     CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed[conditionFile][id]=item;
             }
         }
-        item = item.nextSiblingElement(QLatin1String("condition"));
+        item = item.nextSiblingElement(Map_loader::text_condition);
     }
     if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.contains(conditionFile))
         if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
@@ -1573,13 +1637,13 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
     MapCondition condition;
     condition.type=MapConditionType_None;
     condition.value=0;
-    if(conditionContent.attribute(QLatin1String("type"))==QLatin1String("quest"))
+    if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_quest)
     {
-        if(!conditionContent.hasAttribute(QLatin1String("quest")))
+        if(!conditionContent.hasAttribute(Map_loader::text_quest))
             qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
         else
         {
-            quint32 quest=conditionContent.attribute(QLatin1String("quest")).toUInt(&ok);
+            quint32 quest=conditionContent.attribute(Map_loader::text_quest).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(quest))
@@ -1591,13 +1655,13 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             }
         }
     }
-    else if(conditionContent.attribute(QLatin1String("type"))==QLatin1String("item"))
+    else if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_item)
     {
-        if(!conditionContent.hasAttribute(QLatin1String("item")))
+        if(!conditionContent.hasAttribute(Map_loader::text_item))
             qDebug() << QStringLiteral("\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
         else
         {
-            quint32 item=conditionContent.attribute(QLatin1String("item")).toUInt(&ok);
+            quint32 item=conditionContent.attribute(Map_loader::text_item).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else if(!CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
@@ -1609,13 +1673,13 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             }
         }
     }
-    else if(conditionContent.attribute(QLatin1String("type"))==QLatin1String("fightBot"))
+    else if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_fightBot)
     {
-        if(!conditionContent.hasAttribute(QLatin1String("fightBot")))
+        if(!conditionContent.hasAttribute(Map_loader::text_fightBot))
             qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
         else
         {
-            quint32 fightBot=conditionContent.attribute(QLatin1String("fightBot")).toUInt(&ok);
+            quint32 fightBot=conditionContent.attribute(Map_loader::text_fightBot).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightBot))
@@ -1627,7 +1691,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             }
         }
     }
-    else if(conditionContent.attribute(QLatin1String("type"))==QLatin1String("clan"))
+    else if(conditionContent.attribute(Map_loader::text_type)==Map_loader::text_clan)
         condition.type=MapConditionType_Clan;
     else
         qDebug() << QStringLiteral("\"condition\" balise have type but value is not quest, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());

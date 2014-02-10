@@ -18,6 +18,13 @@
 
 using namespace CatchChallenger;
 
+QString BaseServerCrafting::text_shops=QLatin1Literal("shops");
+QString BaseServerCrafting::text_shop=QLatin1Literal("shop");
+QString BaseServerCrafting::text_id=QLatin1Literal("id");
+QString BaseServerCrafting::text_product=QLatin1Literal("product");
+QString BaseServerCrafting::text_itemId=QLatin1Literal("itemId");
+QString BaseServerCrafting::text_overridePrice=QLatin1Literal("overridePrice");
+
 void BaseServerCrafting::preload_the_plant_on_map()
 {
     int plant_on_the_map=0;
@@ -145,7 +152,7 @@ void BaseServerCrafting::preload_shop()
         }
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("shops"))
+    if(root.tagName()!=BaseServerCrafting::text_shops)
     {
         DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, \"shops\" root balise not found for the xml file").arg(file));
         return;
@@ -153,27 +160,27 @@ void BaseServerCrafting::preload_shop()
 
     //load the content
     bool ok;
-    QDomElement shopItem = root.firstChildElement(QStringLiteral("shop"));
+    QDomElement shopItem = root.firstChildElement(BaseServerCrafting::text_shop);
     while(!shopItem.isNull())
     {
         if(shopItem.isElement())
         {
-            if(shopItem.hasAttribute(QStringLiteral("id")))
+            if(shopItem.hasAttribute(BaseServerCrafting::text_id))
             {
-                quint32 id=shopItem.attribute(QStringLiteral("id")).toUInt(&ok);
+                quint32 id=shopItem.attribute(BaseServerCrafting::text_id).toUInt(&ok);
                 if(ok)
                 {
                     if(!GlobalServerData::serverPrivateVariables.shops.contains(id))
                     {
                         Shop shop;
-                        QDomElement product = shopItem.firstChildElement(QStringLiteral("product"));
+                        QDomElement product = shopItem.firstChildElement(BaseServerCrafting::text_product);
                         while(!product.isNull())
                         {
                             if(product.isElement())
                             {
-                                if(product.hasAttribute(QStringLiteral("itemId")))
+                                if(product.hasAttribute(BaseServerCrafting::text_itemId))
                                 {
-                                    quint32 itemId=product.attribute(QStringLiteral("itemId")).toUInt(&ok);
+                                    quint32 itemId=product.attribute(BaseServerCrafting::text_itemId).toUInt(&ok);
                                     if(!ok)
                                         DebugClass::debugConsole(QStringLiteral("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                     else
@@ -183,9 +190,9 @@ void BaseServerCrafting::preload_shop()
                                         else
                                         {
                                             quint32 price=CommonDatapack::commonDatapack.items.item.value(itemId).price;
-                                            if(product.hasAttribute(QStringLiteral("overridePrice")))
+                                            if(product.hasAttribute(BaseServerCrafting::text_overridePrice))
                                             {
-                                                price=product.attribute(QStringLiteral("overridePrice")).toUInt(&ok);
+                                                price=product.attribute(BaseServerCrafting::text_overridePrice).toUInt(&ok);
                                                 if(!ok)
                                                     price=CommonDatapack::commonDatapack.items.item.value(itemId).price;
                                             }
@@ -199,7 +206,7 @@ void BaseServerCrafting::preload_shop()
                             }
                             else
                                 DebugClass::debugConsole(QStringLiteral("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
-                            product = product.nextSiblingElement(QStringLiteral("product"));
+                            product = product.nextSiblingElement(BaseServerCrafting::text_product);
                         }
                         GlobalServerData::serverPrivateVariables.shops[id]=shop;
                     }
@@ -214,7 +221,7 @@ void BaseServerCrafting::preload_shop()
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
-        shopItem = shopItem.nextSiblingElement(QStringLiteral("shop"));
+        shopItem = shopItem.nextSiblingElement(BaseServerCrafting::text_shop);
     }
 
     DebugClass::debugConsole(QStringLiteral("%1 shops(s) loaded").arg(GlobalServerData::serverPrivateVariables.shops.size()));
