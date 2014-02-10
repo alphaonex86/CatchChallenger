@@ -12,6 +12,77 @@
 
 using namespace CatchChallenger;
 
+QString DatapackGeneralLoader::text_list=QLatin1String("list");
+QString DatapackGeneralLoader::text_reputation=QLatin1String("reputation");
+QString DatapackGeneralLoader::text_type=QLatin1String("type");
+QString DatapackGeneralLoader::text_level=QLatin1String("level");
+QString DatapackGeneralLoader::text_point=QLatin1String("point");
+QString DatapackGeneralLoader::text_slashdefinitionxml=QLatin1String("/definition.xml");
+QString DatapackGeneralLoader::text_quest=QLatin1String("quest");
+QString DatapackGeneralLoader::text_repeatable=QLatin1String("repeatable");
+QString DatapackGeneralLoader::text_yes=QLatin1String("yes");
+QString DatapackGeneralLoader::text_true=QLatin1String("true");
+QString DatapackGeneralLoader::text_bot=QLatin1String("bot");
+QString DatapackGeneralLoader::text_dotcomma=QLatin1String(";");
+QString DatapackGeneralLoader::text_requirements=QLatin1String("requirements");
+QString DatapackGeneralLoader::text_less=QLatin1String("-");
+QString DatapackGeneralLoader::text_id=QLatin1String("id");
+QString DatapackGeneralLoader::text_rewards=QLatin1String("rewards");
+QString DatapackGeneralLoader::text_allow=QLatin1String("allow");
+QString DatapackGeneralLoader::text_clan=QLatin1String("clan");
+QString DatapackGeneralLoader::text_step=QLatin1String("step");
+QString DatapackGeneralLoader::text_item=QLatin1String("item");
+QString DatapackGeneralLoader::text_quantity=QLatin1String("quantity");
+QString DatapackGeneralLoader::text_monster=QLatin1String("monster");
+QString DatapackGeneralLoader::text_rate=QLatin1String("rate");
+QString DatapackGeneralLoader::text_percent=QLatin1String("percent");
+QString DatapackGeneralLoader::text_fight=QLatin1String("fight");
+QString DatapackGeneralLoader::text_plants=QLatin1String("plants");
+QString DatapackGeneralLoader::text_plant=QLatin1String("plant");
+QString DatapackGeneralLoader::text_itemUsed=QLatin1String("itemUsed");
+QString DatapackGeneralLoader::text_grow=QLatin1String("grow");
+QString DatapackGeneralLoader::text_fruits=QLatin1String("fruits");
+QString DatapackGeneralLoader::text_sprouted=QLatin1String("sprouted");
+QString DatapackGeneralLoader::text_taller=QLatin1String("taller");
+QString DatapackGeneralLoader::text_flowering=QLatin1String("flowering");
+QString DatapackGeneralLoader::text_recipes=QLatin1String("recipes");
+QString DatapackGeneralLoader::text_recipe=QLatin1String("recipe");
+QString DatapackGeneralLoader::text_itemToLearn=QLatin1String("itemToLearn");
+QString DatapackGeneralLoader::text_doItemId=QLatin1String("doItemId");
+QString DatapackGeneralLoader::text_success=QLatin1String("success");
+QString DatapackGeneralLoader::text_material=QLatin1String("material");
+QString DatapackGeneralLoader::text_industries=QLatin1String("industries");
+QString DatapackGeneralLoader::text_industrialrecipe=QLatin1String("industrialrecipe");
+QString DatapackGeneralLoader::text_time=QLatin1String("time");
+QString DatapackGeneralLoader::text_cycletobefull=QLatin1String("cycletobefull");
+QString DatapackGeneralLoader::text_resource=QLatin1String("resource");
+QString DatapackGeneralLoader::text_product=QLatin1String("product");
+QString DatapackGeneralLoader::text_link=QLatin1String("link");
+QString DatapackGeneralLoader::text_price=QLatin1String("price");
+QString DatapackGeneralLoader::text_consumeAtUse=QLatin1String("consumeAtUse");
+QString DatapackGeneralLoader::text_false=QLatin1String("false");
+QString DatapackGeneralLoader::text_trap=QLatin1String("trap");
+QString DatapackGeneralLoader::text_bonus_rate=QLatin1String("bonus_rate");
+QString DatapackGeneralLoader::text_repel=QLatin1String("repel");
+QString DatapackGeneralLoader::text_hp=QLatin1String("hp");
+QString DatapackGeneralLoader::text_add=QLatin1String("add");
+QString DatapackGeneralLoader::text_all=QLatin1String("all");
+QString DatapackGeneralLoader::text_buff=QLatin1String("buff");
+QString DatapackGeneralLoader::text_remove=QLatin1String("remove");
+QString DatapackGeneralLoader::text_up=QLatin1String("up");
+QString DatapackGeneralLoader::text_start=QLatin1String("start");
+QString DatapackGeneralLoader::text_map=QLatin1String("map");
+QString DatapackGeneralLoader::text_file=QLatin1String("file");
+QString DatapackGeneralLoader::text_x=QLatin1String("x");
+QString DatapackGeneralLoader::text_y=QLatin1String("y");
+QString DatapackGeneralLoader::text_forcedskin=QLatin1String("forcedskin");
+QString DatapackGeneralLoader::text_cash=QLatin1String("cash");
+QString DatapackGeneralLoader::text_itemId=QLatin1String("itemId");
+QString DatapackGeneralLoader::text_industry=QLatin1String("industry");
+QString DatapackGeneralLoader::text_items=QLatin1String("items");
+QString DatapackGeneralLoader::text_value=QLatin1String("value");
+QString DatapackGeneralLoader::text_captured_with=QLatin1String("captured_with");
+
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
     QRegExp typeRegex(QLatin1String("^[a-z]{1,32}$"));
@@ -41,7 +112,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("list"))
+    if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
         DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file));
         return reputation;
@@ -49,24 +120,24 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QLatin1String("reputation"));
+    QDomElement item = root.firstChildElement(DatapackGeneralLoader::text_reputation);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QLatin1String("type")))
+            if(item.hasAttribute(DatapackGeneralLoader::text_type))
             {
                 QList<qint32> point_list_positive,point_list_negative;
                 QStringList text_positive,text_negative;
-                QDomElement level = item.firstChildElement(QLatin1String("level"));
+                QDomElement level = item.firstChildElement(DatapackGeneralLoader::text_level);
                 ok=true;
                 while(!level.isNull() && ok)
                 {
                     if(level.isElement())
                     {
-                        if(level.hasAttribute(QLatin1String("point")))
+                        if(level.hasAttribute(DatapackGeneralLoader::text_point))
                         {
-                            qint32 point=level.attribute(QLatin1String("point")).toInt(&ok);
+                            qint32 point=level.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                             QString text_val;
                             if(ok)
                             {
@@ -132,7 +203,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                     }
                     else
                         DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                    level = level.nextSiblingElement(QLatin1String("level"));
+                    level = level.nextSiblingElement(DatapackGeneralLoader::text_level);
                 }
                 if(ok)
                     if(point_list_positive.size()<2)
@@ -153,15 +224,15 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                         ok=false;
                     }
                 if(ok)
-                    if(!item.attribute(QLatin1String("type")).contains(typeRegex))
+                    if(!item.attribute(DatapackGeneralLoader::text_type).contains(typeRegex))
                     {
-                        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QLatin1String("type"))));
+                        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(DatapackGeneralLoader::text_type)));
                         ok=false;
                     }
                 if(ok)
                 {
-                    reputation[item.attribute(QLatin1String("type"))].reputation_positive=point_list_positive;
-                    reputation[item.attribute(QLatin1String("type"))].reputation_negative=point_list_negative;
+                    reputation[item.attribute(DatapackGeneralLoader::text_type)].reputation_positive=point_list_positive;
+                    reputation[item.attribute(DatapackGeneralLoader::text_type)].reputation_negative=point_list_negative;
                 }
             }
             else
@@ -169,7 +240,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QLatin1String("reputation"));
+        item = item.nextSiblingElement(DatapackGeneralLoader::text_reputation);
     }
 
     return reputation;
@@ -189,7 +260,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
             index++;
             continue;
         }
-        if(!QFile(entryList.at(index).absoluteFilePath()+QLatin1String("/definition.xml")).exists())
+        if(!QFile(entryList.at(index).absoluteFilePath()+DatapackGeneralLoader::text_slashdefinitionxml).exists())
         {
             index++;
             continue;
@@ -198,7 +269,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
         if(ok)
         {
             //add it, all seam ok
-            QPair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath()+QLatin1String("/definition.xml"));
+            QPair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath()+DatapackGeneralLoader::text_slashdefinitionxml);
             if(returnedQuest.first==true)
             {
                 returnedQuest.second.id=questId;
@@ -244,7 +315,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("quest"))
+    if(root.tagName()!=DatapackGeneralLoader::text_quest)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
         return QPair<bool,Quest>(false,quest);
@@ -255,12 +326,12 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
     QList<quint32> defaultBots;
     quest.id=0;
     quest.repeatable=false;
-    if(root.hasAttribute(QLatin1String("repeatable")))
-        if(root.attribute(QLatin1String("repeatable"))==QLatin1String("yes") || root.attribute(QLatin1String("repeatable"))==QLatin1String("true"))
+    if(root.hasAttribute(DatapackGeneralLoader::text_repeatable))
+        if(root.attribute(DatapackGeneralLoader::text_repeatable)==DatapackGeneralLoader::text_yes || root.attribute(DatapackGeneralLoader::text_repeatable)==DatapackGeneralLoader::text_true)
             quest.repeatable=true;
-    if(root.hasAttribute(QLatin1String("bot")))
+    if(root.hasAttribute(DatapackGeneralLoader::text_bot))
     {
-        QStringList tempStringList=root.attribute(QLatin1String("bot")).split(QLatin1String(";"));
+        QStringList tempStringList=root.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
         int index=0;
         while(index<tempStringList.size())
         {
@@ -272,22 +343,22 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
     }
 
     //load requirements
-    QDomElement requirements = root.firstChildElement(QLatin1String("requirements"));
+    QDomElement requirements = root.firstChildElement(DatapackGeneralLoader::text_requirements);
     while(!requirements.isNull())
     {
         if(requirements.isElement())
         {
             //load requirements reputation
             {
-                QDomElement requirementsItem = requirements.firstChildElement(QLatin1String("reputation"));
+                QDomElement requirementsItem = requirements.firstChildElement(DatapackGeneralLoader::text_reputation);
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
                     {
-                        if(requirementsItem.hasAttribute(QLatin1String("type")) && requirementsItem.hasAttribute(QLatin1String("level")))
+                        if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_type) && requirementsItem.hasAttribute(DatapackGeneralLoader::text_level))
                         {
-                            QString stringLevel=requirementsItem.attribute(QLatin1String("level"));
-                            bool positif=!stringLevel.startsWith(QLatin1String("-"));
+                            QString stringLevel=requirementsItem.attribute(DatapackGeneralLoader::text_level);
+                            bool positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
                             if(!positif)
                                 stringLevel.remove(0,1);
                             quint8 level=stringLevel.toUShort(&ok);
@@ -296,7 +367,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                                 CatchChallenger::Quest::ReputationRequirements reputation;
                                 reputation.level=level;
                                 reputation.positif=positif;
-                                reputation.type=requirementsItem.attribute(QLatin1String("type"));
+                                reputation.type=requirementsItem.attribute(DatapackGeneralLoader::text_type);
                                 quest.requirements.reputation << reputation;
                             }
                             else
@@ -307,59 +378,59 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
-                    requirementsItem = requirementsItem.nextSiblingElement(QLatin1String("requirements"));
+                    requirementsItem = requirementsItem.nextSiblingElement(DatapackGeneralLoader::text_requirements);
                 }
             }
             //load requirements quest
             {
-                QDomElement requirementsItem = requirements.firstChildElement(QLatin1String("quest"));
+                QDomElement requirementsItem = requirements.firstChildElement(DatapackGeneralLoader::text_quest);
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
                     {
-                        if(requirementsItem.hasAttribute(QLatin1String("id")))
+                        if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_id))
                         {
-                            quint32 questId=requirementsItem.attribute(QLatin1String("id")).toUInt(&ok);
+                            quint32 questId=requirementsItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                             if(ok)
                                 quest.requirements.quests << questId;
                             else
-                                qDebug() << QStringLiteral("Unable to open the file: %1, requirement quest item id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(requirementsItem.attribute(QLatin1String("id")));
+                                qDebug() << QStringLiteral("Unable to open the file: %1, requirement quest item id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(requirementsItem.attribute(DatapackGeneralLoader::text_id));
                         }
                         else
                             qDebug() << QStringLiteral("Has attribute: %1, requirement quest item have not id attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
-                    requirementsItem = requirementsItem.nextSiblingElement(QLatin1String("quest"));
+                    requirementsItem = requirementsItem.nextSiblingElement(DatapackGeneralLoader::text_quest);
                 }
             }
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(requirements.tagName()).arg(requirements.lineNumber());
-        requirements = requirements.nextSiblingElement(QLatin1String("requirements"));
+        requirements = requirements.nextSiblingElement(DatapackGeneralLoader::text_requirements);
     }
 
     //load rewards
-    QDomElement rewards = root.firstChildElement(QLatin1String("rewards"));
+    QDomElement rewards = root.firstChildElement(DatapackGeneralLoader::text_rewards);
     while(!rewards.isNull())
     {
         if(rewards.isElement())
         {
             //load rewards reputation
             {
-                QDomElement reputationItem = rewards.firstChildElement(QLatin1String("reputation"));
+                QDomElement reputationItem = rewards.firstChildElement(DatapackGeneralLoader::text_reputation);
                 while(!reputationItem.isNull())
                 {
                     if(reputationItem.isElement())
                     {
-                        if(reputationItem.hasAttribute(QLatin1String("type")) && reputationItem.hasAttribute(QLatin1String("point")))
+                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
                         {
-                            qint32 point=reputationItem.attribute(QLatin1String("point")).toInt(&ok);
+                            qint32 point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                             if(ok)
                             {
                                 CatchChallenger::Quest::ReputationRewards reputation;
                                 reputation.point=point;
-                                reputation.type=reputationItem.attribute(QLatin1String("type"));
+                                reputation.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
                                 quest.rewards.reputation << reputation;
                             }
                             else
@@ -370,67 +441,67 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                    reputationItem = reputationItem.nextSiblingElement(QLatin1String("rewards"));
+                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_rewards);
                 }
             }
             //load rewards item
             {
-                QDomElement rewardsItem = rewards.firstChildElement(QLatin1String("item"));
+                QDomElement rewardsItem = rewards.firstChildElement(DatapackGeneralLoader::text_item);
                 while(!rewardsItem.isNull())
                 {
                     if(rewardsItem.isElement())
                     {
-                        if(rewardsItem.hasAttribute(QLatin1String("id")))
+                        if(rewardsItem.hasAttribute(DatapackGeneralLoader::text_id))
                         {
                             CatchChallenger::Quest::Item item;
-                            item.item=rewardsItem.attribute(QLatin1String("id")).toUInt(&ok);
+                            item.item=rewardsItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                             item.quantity=1;
                             if(ok)
                             {
                                 if(!CommonDatapack::commonDatapack.items.item.contains(item.item))
                                 {
-                                    qDebug() << QStringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute(QLatin1String("id")));
+                                    qDebug() << QStringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute(DatapackGeneralLoader::text_id));
                                     return QPair<bool,Quest>(false,quest);
                                 }
-                                if(rewardsItem.hasAttribute(QLatin1String("quantity")))
+                                if(rewardsItem.hasAttribute(DatapackGeneralLoader::text_quantity))
                                 {
-                                    item.quantity=rewardsItem.attribute(QLatin1String("quantity")).toUInt(&ok);
+                                    item.quantity=rewardsItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                                     if(!ok)
                                         item.quantity=1;
                                 }
                                 quest.rewards.items << item;
                             }
                             else
-                                qDebug() << QStringLiteral("Unable to open the file: %1, rewards item id is not a number: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute(QLatin1String("id")));
+                                qDebug() << QStringLiteral("Unable to open the file: %1, rewards item id is not a number: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute(DatapackGeneralLoader::text_id));
                         }
                         else
                             qDebug() << QStringLiteral("Has attribute: %1, rewards item have not attribute id: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
-                    rewardsItem = rewardsItem.nextSiblingElement(QLatin1String("quest"));
+                    rewardsItem = rewardsItem.nextSiblingElement(DatapackGeneralLoader::text_quest);
                 }
             }
             //load rewards allow
             {
-                QDomElement allowItem = rewards.firstChildElement(QLatin1String("allow"));
+                QDomElement allowItem = rewards.firstChildElement(DatapackGeneralLoader::text_allow);
                 while(!allowItem.isNull())
                 {
                     if(allowItem.isElement())
                     {
-                        if(allowItem.hasAttribute(QLatin1String("type")))
+                        if(allowItem.hasAttribute(DatapackGeneralLoader::text_type))
                         {
-                            if(allowItem.attribute(QLatin1String("type"))==QLatin1String("clan"))
+                            if(allowItem.attribute(DatapackGeneralLoader::text_type)==DatapackGeneralLoader::text_clan)
                                 quest.rewards.allow << CatchChallenger::ActionAllow_Clan;
                             else
-                                qDebug() << QStringLiteral("Unable to open the file: %1, allow type not understand: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber()).arg(allowItem.attribute(QLatin1String("id")));
+                                qDebug() << QStringLiteral("Unable to open the file: %1, allow type not understand: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber()).arg(allowItem.attribute(DatapackGeneralLoader::text_id));
                         }
                         else
                             qDebug() << QStringLiteral("Has attribute: %1, rewards item have not attribute id: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber());
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(allowItem.tagName()).arg(allowItem.lineNumber());
-                    allowItem = allowItem.nextSiblingElement(QLatin1String("allow"));
+                    allowItem = allowItem.nextSiblingElement(DatapackGeneralLoader::text_allow);
                 }
             }
             quest.rewards.allow.fromSet(quest.rewards.allow.toSet());
@@ -442,20 +513,20 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
 
     QHash<quint8,CatchChallenger::Quest::Step> steps;
     //load step
-    QDomElement step = root.firstChildElement(QLatin1String("step"));
+    QDomElement step = root.firstChildElement(DatapackGeneralLoader::text_step);
     while(!step.isNull())
     {
         if(step.isElement())
         {
-            if(step.hasAttribute(QLatin1String("id")))
+            if(step.hasAttribute(DatapackGeneralLoader::text_id))
             {
-                quint32 id=step.attribute(QLatin1String("id")).toUInt(&ok);
+                quint32 id=step.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                 if(ok)
                 {
                     CatchChallenger::Quest::Step stepObject;
-                    if(step.hasAttribute(QLatin1String("bot")))
+                    if(step.hasAttribute(DatapackGeneralLoader::text_bot))
                     {
-                        QStringList tempStringList=step.attribute(QLatin1String("bot")).split(QLatin1String(";"));
+                        QStringList tempStringList=step.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
                         int index=0;
                         while(index<tempStringList.size())
                         {
@@ -469,36 +540,36 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                         stepObject.bots=defaultBots;
                     //do the item
                     {
-                        QDomElement stepItem = step.firstChildElement(QLatin1String("item"));
+                        QDomElement stepItem = step.firstChildElement(DatapackGeneralLoader::text_item);
                         while(!stepItem.isNull())
                         {
                             if(stepItem.isElement())
                             {
-                                if(stepItem.hasAttribute(QLatin1String("id")))
+                                if(stepItem.hasAttribute(DatapackGeneralLoader::text_id))
                                 {
                                     CatchChallenger::Quest::Item item;
-                                    item.item=stepItem.attribute(QLatin1String("id")).toUInt(&ok);
+                                    item.item=stepItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                                     item.quantity=1;
                                     if(ok)
                                     {
                                         if(!CommonDatapack::commonDatapack.items.item.contains(item.item))
                                         {
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber()).arg(stepItem.attribute(QLatin1String("id")));
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber()).arg(stepItem.attribute(DatapackGeneralLoader::text_id));
                                             return QPair<bool,Quest>(false,quest);
                                         }
-                                        if(stepItem.hasAttribute(QLatin1String("quantity")))
+                                        if(stepItem.hasAttribute(DatapackGeneralLoader::text_quantity))
                                         {
-                                            item.quantity=stepItem.attribute(QLatin1String("quantity")).toUInt(&ok);
+                                            item.quantity=stepItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                                             if(!ok)
                                                 item.quantity=1;
                                         }
                                         stepObject.requirements.items << item;
-                                        if(stepItem.hasAttribute(QLatin1String("monster")) && stepItem.hasAttribute(QLatin1String("rate")))
+                                        if(stepItem.hasAttribute(DatapackGeneralLoader::text_monster) && stepItem.hasAttribute(DatapackGeneralLoader::text_rate))
                                         {
                                             CatchChallenger::Quest::ItemMonster itemMonster;
                                             itemMonster.item=item.item;
 
-                                            QStringList tempStringList=stepItem.attribute(QLatin1String("monster")).split(QLatin1String(";"));
+                                            QStringList tempStringList=stepItem.attribute(DatapackGeneralLoader::text_monster).split(DatapackGeneralLoader::text_dotcomma);
                                             int index=0;
                                             while(index<tempStringList.size())
                                             {
@@ -508,45 +579,45 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                                                 index++;
                                             }
 
-                                            QString rateString=stepItem.attribute(QLatin1String("rate"));
-                                            rateString.remove(QLatin1String("%"));
+                                            QString rateString=stepItem.attribute(DatapackGeneralLoader::text_rate);
+                                            rateString.remove(DatapackGeneralLoader::text_percent);
                                             itemMonster.rate=rateString.toUShort(&ok);
                                             if(ok)
                                                 stepObject.itemsMonster << itemMonster;
                                         }
                                     }
                                     else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(stepItem.attribute(QLatin1String("id")));
+                                        qDebug() << QStringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(stepItem.attribute(DatapackGeneralLoader::text_id));
                                 }
                                 else
                                     qDebug() << QStringLiteral("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
                             }
                             else
                                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                            stepItem = stepItem.nextSiblingElement(QLatin1String("item"));
+                            stepItem = stepItem.nextSiblingElement(DatapackGeneralLoader::text_item);
                         }
                     }
                     //do the fight
                     {
-                        QDomElement fightItem = step.firstChildElement(QLatin1String("fight"));
+                        QDomElement fightItem = step.firstChildElement(DatapackGeneralLoader::text_fight);
                         while(!fightItem.isNull())
                         {
                             if(fightItem.isElement())
                             {
-                                if(fightItem.hasAttribute(QLatin1String("id")))
+                                if(fightItem.hasAttribute(DatapackGeneralLoader::text_id))
                                 {
-                                    quint32 fightId=fightItem.attribute(QLatin1String("id")).toUInt(&ok);
+                                    quint32 fightId=fightItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                                     if(ok)
                                         stepObject.requirements.fightId << fightId;
                                     else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(fightItem.attribute(QLatin1String("id")));
+                                        qDebug() << QStringLiteral("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber()).arg(fightItem.attribute(DatapackGeneralLoader::text_id));
                                 }
                                 else
                                     qDebug() << QStringLiteral("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
                             }
                             else
                                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                            fightItem = fightItem.nextSiblingElement(QLatin1String("fight"));
+                            fightItem = fightItem.nextSiblingElement(DatapackGeneralLoader::text_fight);
                         }
                     }
                     steps[id]=stepObject;
@@ -559,7 +630,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-        step = step.nextSiblingElement(QLatin1String("step"));
+        step = step.nextSiblingElement(DatapackGeneralLoader::text_step);
     }
 
     //sort the step
@@ -605,7 +676,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("plants"))
+    if(root.tagName()!=DatapackGeneralLoader::text_plants)
     {
         qDebug() << QStringLiteral("Unable to open the plants file: %1, \"plants\" root balise not found for the xml file").arg(file);
         return plants;
@@ -613,15 +684,15 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
 
     //load the content
     bool ok,ok2;
-    QDomElement plantItem = root.firstChildElement(QLatin1String("plant"));
+    QDomElement plantItem = root.firstChildElement(DatapackGeneralLoader::text_plant);
     while(!plantItem.isNull())
     {
         if(plantItem.isElement())
         {
-            if(plantItem.hasAttribute(QLatin1String("id")) && plantItem.hasAttribute(QLatin1String("itemUsed")))
+            if(plantItem.hasAttribute(DatapackGeneralLoader::text_id) && plantItem.hasAttribute(DatapackGeneralLoader::text_itemUsed))
             {
-                quint8 id=plantItem.attribute(QLatin1String("id")).toUShort(&ok);
-                quint32 itemUsed=plantItem.attribute(QLatin1String("itemUsed")).toUInt(&ok2);
+                quint8 id=plantItem.attribute(DatapackGeneralLoader::text_id).toUShort(&ok);
+                quint32 itemUsed=plantItem.attribute(DatapackGeneralLoader::text_itemUsed).toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!plants.contains(id))
@@ -633,7 +704,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                         plant.flowering_seconds=0;
                         plant.itemUsed=itemUsed;
                         ok=false;
-                        QDomElement quantity = plantItem.firstChildElement(QLatin1String("quantity"));
+                        QDomElement quantity = plantItem.firstChildElement(DatapackGeneralLoader::text_quantity);
                         if(!quantity.isNull())
                         {
                             if(quantity.isElement())
@@ -648,12 +719,12 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                             }
                         }
                         int intermediateTimeCount=0;
-                        QDomElement grow = plantItem.firstChildElement(QLatin1String("grow"));
+                        QDomElement grow = plantItem.firstChildElement(DatapackGeneralLoader::text_grow);
                         if(!grow.isNull())
                         {
                             if(grow.isElement())
                             {
-                                QDomElement fruits = grow.firstChildElement(QLatin1String("fruits"));
+                                QDomElement fruits = grow.firstChildElement(DatapackGeneralLoader::text_fruits);
                                 if(!fruits.isNull())
                                 {
                                     if(fruits.isElement())
@@ -679,7 +750,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     ok=false;
                                     qDebug() << QStringLiteral("Unable to parse the plants file: %1, fruits is null: child.tagName(): %2 (at line: %3)").arg(file).arg(grow.tagName()).arg(grow.lineNumber());
                                 }
-                                QDomElement sprouted = grow.firstChildElement(QLatin1String("sprouted"));
+                                QDomElement sprouted = grow.firstChildElement(DatapackGeneralLoader::text_sprouted);
                                 if(!sprouted.isNull())
                                 {
                                     if(sprouted.isElement())
@@ -696,7 +767,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     else
                                         qDebug() << QStringLiteral("Unable to parse the plants file: %1, sprouted is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(sprouted.tagName()).arg(sprouted.lineNumber());
                                 }
-                                QDomElement taller = grow.firstChildElement(QLatin1String("taller"));
+                                QDomElement taller = grow.firstChildElement(DatapackGeneralLoader::text_taller);
                                 if(!taller.isNull())
                                 {
                                     if(taller.isElement())
@@ -713,7 +784,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     else
                                         qDebug() << QStringLiteral("Unable to parse the plants file: %1, taller is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(taller.tagName()).arg(taller.lineNumber());
                                 }
-                                QDomElement flowering = grow.firstChildElement(QLatin1String("flowering"));
+                                QDomElement flowering = grow.firstChildElement(DatapackGeneralLoader::text_flowering);
                                 if(!flowering.isNull())
                                 {
                                     if(flowering.isElement())
@@ -783,7 +854,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
         }
         else
             qDebug() << QStringLiteral("Unable to open the plants file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(plantItem.tagName()).arg(plantItem.lineNumber());
-        plantItem = plantItem.nextSiblingElement(QLatin1String("plant"));
+        plantItem = plantItem.nextSiblingElement(DatapackGeneralLoader::text_plant);
     }
     return plants;
 }
@@ -818,7 +889,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("recipes"))
+    if(root.tagName()!=DatapackGeneralLoader::text_recipes)
     {
         qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, \"recipes\" root balise not found for the xml file").arg(file);
         return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
@@ -826,17 +897,17 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
 
     //load the content
     bool ok,ok2,ok3;
-    QDomElement recipeItem = root.firstChildElement(QLatin1String("recipe"));
+    QDomElement recipeItem = root.firstChildElement(DatapackGeneralLoader::text_recipe);
     while(!recipeItem.isNull())
     {
         if(recipeItem.isElement())
         {
-            if(recipeItem.hasAttribute(QLatin1String("id")) && recipeItem.hasAttribute(QLatin1String("itemToLearn")) && recipeItem.hasAttribute(QLatin1String("doItemId")))
+            if(recipeItem.hasAttribute(DatapackGeneralLoader::text_id) && recipeItem.hasAttribute(DatapackGeneralLoader::text_itemToLearn) && recipeItem.hasAttribute(DatapackGeneralLoader::text_doItemId))
             {
                 quint8 success=100;
-                if(recipeItem.hasAttribute(QLatin1String("success")))
+                if(recipeItem.hasAttribute(DatapackGeneralLoader::text_success))
                 {
-                    quint8 tempShort=recipeItem.attribute(QLatin1String("success")).toUShort(&ok);
+                    quint8 tempShort=recipeItem.attribute(DatapackGeneralLoader::text_success).toUShort(&ok);
                     if(ok)
                     {
                         if(tempShort>100)
@@ -848,9 +919,9 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                         qDebug() << QStringLiteral("preload_crafting_recipes() success in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                 }
                 quint16 quantity=1;
-                if(recipeItem.hasAttribute(QLatin1String("quantity")))
+                if(recipeItem.hasAttribute(DatapackGeneralLoader::text_quantity))
                 {
-                    quint32 tempShort=recipeItem.attribute(QLatin1String("quantity")).toUInt(&ok);
+                    quint32 tempShort=recipeItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                     if(ok)
                     {
                         if(tempShort>65535)
@@ -862,9 +933,9 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                         qDebug() << QStringLiteral("preload_crafting_recipes() quantity in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                 }
 
-                quint32 id=recipeItem.attribute(QLatin1String("id")).toUInt(&ok);
-                quint32 itemToLearn=recipeItem.attribute(QLatin1String("itemToLearn")).toUInt(&ok2);
-                quint32 doItemId=recipeItem.attribute(QLatin1String("doItemId")).toUInt(&ok3);
+                quint32 id=recipeItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                quint32 itemToLearn=recipeItem.attribute(DatapackGeneralLoader::text_itemToLearn).toUInt(&ok2);
+                quint32 doItemId=recipeItem.attribute(DatapackGeneralLoader::text_doItemId).toUInt(&ok3);
                 if(ok && ok2 && ok3)
                 {
                     if(!crafingRecipes.contains(id))
@@ -875,14 +946,14 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                         recipe.itemToLearn=itemToLearn;
                         recipe.quantity=quantity;
                         recipe.success=success;
-                        QDomElement material = recipeItem.firstChildElement(QLatin1String("material"));
+                        QDomElement material = recipeItem.firstChildElement(DatapackGeneralLoader::text_material);
                         while(!material.isNull() && ok)
                         {
                             if(material.isElement())
                             {
-                                if(material.hasAttribute(QLatin1String("itemId")))
+                                if(material.hasAttribute(DatapackGeneralLoader::text_itemId))
                                 {
-                                    quint32 itemId=material.attribute(QLatin1String("itemId")).toUInt(&ok2);
+                                    quint32 itemId=material.attribute(DatapackGeneralLoader::text_itemId).toUInt(&ok2);
                                     if(!ok2)
                                     {
                                         ok=false;
@@ -890,9 +961,9 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                                         break;
                                     }
                                     quint16 quantity=1;
-                                    if(material.hasAttribute(QLatin1String("quantity")))
+                                    if(material.hasAttribute(DatapackGeneralLoader::text_quantity))
                                     {
-                                        quint32 tempShort=material.attribute(QLatin1String("quantity")).toUInt(&ok2);
+                                        quint32 tempShort=material.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok2);
                                         if(ok2)
                                         {
                                             if(tempShort>65535)
@@ -948,7 +1019,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                             }
                             else
                                 qDebug() << QStringLiteral("preload_crafting_recipes() material is not an element for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
-                            material = material.nextSiblingElement(QLatin1String("material"));
+                            material = material.nextSiblingElement(DatapackGeneralLoader::text_material);
                         }
                         if(ok)
                         {
@@ -1007,7 +1078,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
         }
         else
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
-        recipeItem = recipeItem.nextSiblingElement(QLatin1String("recipe"));
+        recipeItem = recipeItem.nextSiblingElement(DatapackGeneralLoader::text_recipe);
     }
     return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
 }
@@ -1053,7 +1124,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!=QLatin1String("industries"))
+        if(root.tagName()!=DatapackGeneralLoader::text_industries)
         {
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(file);
             file_index++;
@@ -1062,17 +1133,17 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
 
         //load the content
         bool ok,ok2,ok3;
-        QDomElement industryItem = root.firstChildElement(QLatin1String("industrialrecipe"));
+        QDomElement industryItem = root.firstChildElement(DatapackGeneralLoader::text_industrialrecipe);
         while(!industryItem.isNull())
         {
             if(industryItem.isElement())
             {
-                if(industryItem.hasAttribute(QLatin1String("id")) && industryItem.hasAttribute(QLatin1String("time")) && industryItem.hasAttribute(QLatin1String("cycletobefull")))
+                if(industryItem.hasAttribute(DatapackGeneralLoader::text_id) && industryItem.hasAttribute(DatapackGeneralLoader::text_time) && industryItem.hasAttribute(DatapackGeneralLoader::text_cycletobefull))
                 {
                     Industry industry;
-                    quint32 id=industryItem.attribute(QLatin1String("id")).toUInt(&ok);
-                    industry.time=industryItem.attribute(QLatin1String("time")).toUInt(&ok2);
-                    industry.cycletobefull=industryItem.attribute(QLatin1String("cycletobefull")).toUInt(&ok3);
+                    quint32 id=industryItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                    industry.time=industryItem.attribute(DatapackGeneralLoader::text_time).toUInt(&ok2);
+                    industry.cycletobefull=industryItem.attribute(DatapackGeneralLoader::text_cycletobefull).toUInt(&ok3);
                     if(ok && ok2 && ok3)
                     {
                         if(!industries.contains(id))
@@ -1094,7 +1165,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                             }
                             //resource
                             {
-                                QDomElement resourceItem = industryItem.firstChildElement(QLatin1String("resource"));
+                                QDomElement resourceItem = industryItem.firstChildElement(DatapackGeneralLoader::text_resource);
                                 ok=true;
                                 while(!resourceItem.isNull() && ok)
                                 {
@@ -1102,17 +1173,17 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                     {
                                         Industry::Resource resource;
                                         resource.quantity=1;
-                                        if(resourceItem.hasAttribute(QLatin1String("quantity")))
+                                        if(resourceItem.hasAttribute(DatapackGeneralLoader::text_quantity))
                                         {
-                                            resource.quantity=resourceItem.attribute(QLatin1String("quantity")).toUInt(&ok);
+                                            resource.quantity=resourceItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                                             if(!ok)
                                                 qDebug() << QStringLiteral("quantity is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                         }
                                         if(ok)
                                         {
-                                            if(resourceItem.hasAttribute(QLatin1String("id")))
+                                            if(resourceItem.hasAttribute(DatapackGeneralLoader::text_id))
                                             {
-                                                resource.item=resourceItem.attribute(QLatin1String("id")).toUInt(&ok);
+                                                resource.item=resourceItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                                                 if(!ok)
                                                     qDebug() << QStringLiteral("id is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 else if(!items.contains(resource.item))
@@ -1165,14 +1236,14 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                         ok=false;
                                         qDebug() << QStringLiteral("is not a elements: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                     }
-                                    resourceItem = resourceItem.nextSiblingElement(QLatin1String("resource"));
+                                    resourceItem = resourceItem.nextSiblingElement(DatapackGeneralLoader::text_resource);
                                 }
                             }
 
                             //product
                             if(ok)
                             {
-                                QDomElement productItem = industryItem.firstChildElement(QLatin1String("product"));
+                                QDomElement productItem = industryItem.firstChildElement(DatapackGeneralLoader::text_product);
                                 ok=true;
                                 while(!productItem.isNull() && ok)
                                 {
@@ -1180,17 +1251,17 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                     {
                                         Industry::Product product;
                                         product.quantity=1;
-                                        if(productItem.hasAttribute(QLatin1String("quantity")))
+                                        if(productItem.hasAttribute(DatapackGeneralLoader::text_quantity))
                                         {
-                                            product.quantity=productItem.attribute(QLatin1String("quantity")).toUInt(&ok);
+                                            product.quantity=productItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                                             if(!ok)
                                                 qDebug() << QStringLiteral("quantity is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                         }
                                         if(ok)
                                         {
-                                            if(productItem.hasAttribute(QLatin1String("id")))
+                                            if(productItem.hasAttribute(DatapackGeneralLoader::text_id))
                                             {
-                                                product.item=productItem.attribute(QLatin1String("id")).toUInt(&ok);
+                                                product.item=productItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                                                 if(!ok)
                                                     qDebug() << QStringLiteral("id is not a number: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 else if(!items.contains(product.item))
@@ -1243,7 +1314,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                         ok=false;
                                         qDebug() << QStringLiteral("is not a elements: %1: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                     }
-                                    productItem = productItem.nextSiblingElement(QLatin1String("product"));
+                                    productItem = productItem.nextSiblingElement(DatapackGeneralLoader::text_product);
                                 }
                             }
 
@@ -1267,7 +1338,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
             }
             else
                 qDebug() << QStringLiteral("Unable to open the industries file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(industryItem.tagName()).arg(industryItem.lineNumber());
-            industryItem = industryItem.nextSiblingElement(QLatin1String("industrialrecipe"));
+            industryItem = industryItem.nextSiblingElement(DatapackGeneralLoader::text_industrialrecipe);
         }
         file_index++;
     }
@@ -1302,7 +1373,7 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("industries"))
+    if(root.tagName()!=DatapackGeneralLoader::text_industries)
     {
         qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(file);
         return industriesLink;
@@ -1310,15 +1381,15 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
 
     //load the content
     bool ok,ok2;
-    QDomElement linkItem = root.firstChildElement(QLatin1String("link"));
+    QDomElement linkItem = root.firstChildElement(DatapackGeneralLoader::text_link);
     while(!linkItem.isNull())
     {
         if(linkItem.isElement())
         {
-            if(linkItem.hasAttribute(QLatin1String("industrialrecipe")) && linkItem.hasAttribute(QLatin1String("industry")))
+            if(linkItem.hasAttribute(DatapackGeneralLoader::text_industrialrecipe) && linkItem.hasAttribute(DatapackGeneralLoader::text_industry))
             {
-                quint32 industry_id=linkItem.attribute(QLatin1String("industrialrecipe")).toUInt(&ok);
-                quint32 factory_id=linkItem.attribute(QLatin1String("industry")).toUInt(&ok2);
+                quint32 industry_id=linkItem.attribute(DatapackGeneralLoader::text_industrialrecipe).toUInt(&ok);
+                quint32 factory_id=linkItem.attribute(DatapackGeneralLoader::text_industry).toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!industriesLink.contains(factory_id))
@@ -1339,7 +1410,7 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
         }
         else
             qDebug() << QStringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(linkItem.tagName()).arg(linkItem.lineNumber());
-        linkItem = linkItem.nextSiblingElement(QLatin1String("link"));
+        linkItem = linkItem.nextSiblingElement(DatapackGeneralLoader::text_link);
     }
     return industriesLink;
 }
@@ -1373,7 +1444,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("items"))
+    if(root.tagName()!=DatapackGeneralLoader::text_items)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
         return items;
@@ -1381,24 +1452,24 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QLatin1String("item"));
+    QDomElement item = root.firstChildElement(DatapackGeneralLoader::text_item);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QLatin1String("id")))
+            if(item.hasAttribute(DatapackGeneralLoader::text_id))
             {
-                quint32 id=item.attribute(QLatin1String("id")).toUInt(&ok);
+                quint32 id=item.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                 if(ok)
                 {
                     if(!items.item.contains(id))
                     {
                         //load the price
                         {
-                            if(item.hasAttribute(QLatin1String("price")))
+                            if(item.hasAttribute(DatapackGeneralLoader::text_price))
                             {
                                 bool ok;
-                                items.item[id].price=item.attribute(QLatin1String("price")).toUInt(&ok);
+                                items.item[id].price=item.attribute(DatapackGeneralLoader::text_price).toUInt(&ok);
                                 if(!ok)
                                 {
                                     qDebug() << QStringLiteral("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
@@ -1407,16 +1478,16 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                             }
                             else
                             {
-                                /*if(!item.hasAttribute(QLatin1String("quest")) || item.attribute(QLatin1String("quest"))!=QLatin1String("yes"))
+                                /*if(!item.hasAttribute(DatapackGeneralLoader::text_quest) || item.attribute(DatapackGeneralLoader::text_quest)!=DatapackGeneralLoader::text_yes)
                                     qDebug() << QStringLiteral("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(file).arg(item.lineNumber());*/
                                 items.item[id].price=0;
                             }
                         }
                         //load the consumeAtUse
                         {
-                            if(item.hasAttribute(QLatin1String("consumeAtUse")))
+                            if(item.hasAttribute(DatapackGeneralLoader::text_consumeAtUse))
                             {
-                                if(item.attribute(QLatin1String("consumeAtUse"))==QLatin1String("false"))
+                                if(item.attribute(DatapackGeneralLoader::text_consumeAtUse)==DatapackGeneralLoader::text_false)
                                     items.item[id].consumeAtUse=false;
                                 else
                                     items.item[id].consumeAtUse=true;
@@ -1428,16 +1499,16 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                         //load the trap
                         if(!haveAnEffect)
                         {
-                            QDomElement trapItem = item.firstChildElement(QLatin1String("trap"));
+                            QDomElement trapItem = item.firstChildElement(DatapackGeneralLoader::text_trap);
                             if(!trapItem.isNull())
                             {
                                 if(trapItem.isElement())
                                 {
                                     Trap trap;
                                     trap.bonus_rate=1.0;
-                                    if(trapItem.hasAttribute(QLatin1String("bonus_rate")))
+                                    if(trapItem.hasAttribute(DatapackGeneralLoader::text_bonus_rate))
                                     {
-                                        float bonus_rate=trapItem.attribute(QLatin1String("bonus_rate")).toFloat(&ok);
+                                        float bonus_rate=trapItem.attribute(DatapackGeneralLoader::text_bonus_rate).toFloat(&ok);
                                         if(ok)
                                             trap.bonus_rate=bonus_rate;
                                         else
@@ -1453,14 +1524,14 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                         //load the repel
                         if(!haveAnEffect)
                         {
-                            QDomElement repelItem = item.firstChildElement(QLatin1String("repel"));
+                            QDomElement repelItem = item.firstChildElement(DatapackGeneralLoader::text_repel);
                             if(!repelItem.isNull())
                             {
                                 if(repelItem.isElement())
                                 {
-                                    if(repelItem.hasAttribute(QLatin1String("step")))
+                                    if(repelItem.hasAttribute(DatapackGeneralLoader::text_step))
                                     {
-                                        quint32 step=repelItem.attribute(QLatin1String("step")).toUInt(&ok);
+                                        quint32 step=repelItem.attribute(DatapackGeneralLoader::text_step).toUInt(&ok);
                                         if(ok)
                                         {
                                             if(step>0)
@@ -1483,14 +1554,14 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                         if(!haveAnEffect)
                         {
                             {
-                                QDomElement hpItem = item.firstChildElement(QLatin1String("hp"));
+                                QDomElement hpItem = item.firstChildElement(DatapackGeneralLoader::text_hp);
                                 while(!hpItem.isNull())
                                 {
                                     if(hpItem.isElement())
                                     {
-                                        if(hpItem.hasAttribute(QLatin1String("add")))
+                                        if(hpItem.hasAttribute(DatapackGeneralLoader::text_add))
                                         {
-                                            if(hpItem.attribute(QLatin1String("add"))==QLatin1String("all"))
+                                            if(hpItem.attribute(DatapackGeneralLoader::text_add)==DatapackGeneralLoader::text_all)
                                             {
                                                 MonsterItemEffect monsterItemEffect;
                                                 monsterItemEffect.type=MonsterItemEffectType_AddHp;
@@ -1499,7 +1570,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                             }
                                             else
                                             {
-                                                qint32 add=hpItem.attribute(QLatin1String("add")).toUInt(&ok);
+                                                qint32 add=hpItem.attribute(DatapackGeneralLoader::text_add).toUInt(&ok);
                                                 if(ok)
                                                 {
                                                     if(add>0)
@@ -1519,18 +1590,18 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                         else
                                             qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
                                     }
-                                    hpItem = hpItem.nextSiblingElement(QLatin1String("hp"));
+                                    hpItem = hpItem.nextSiblingElement(DatapackGeneralLoader::text_hp);
                                 }
                             }
                             {
-                                QDomElement buffItem = item.firstChildElement(QLatin1String("buff"));
+                                QDomElement buffItem = item.firstChildElement(DatapackGeneralLoader::text_buff);
                                 while(!buffItem.isNull())
                                 {
                                     if(buffItem.isElement())
                                     {
-                                        if(buffItem.hasAttribute(QLatin1String("remove")))
+                                        if(buffItem.hasAttribute(DatapackGeneralLoader::text_remove))
                                         {
-                                            if(buffItem.attribute(QLatin1String("remove"))==QLatin1String("all"))
+                                            if(buffItem.attribute(DatapackGeneralLoader::text_remove)==DatapackGeneralLoader::text_all)
                                             {
                                                 MonsterItemEffect monsterItemEffect;
                                                 monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
@@ -1539,7 +1610,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                             }
                                             else
                                             {
-                                                qint32 remove=buffItem.attribute(QLatin1String("remove")).toUInt(&ok);
+                                                qint32 remove=buffItem.attribute(DatapackGeneralLoader::text_remove).toUInt(&ok);
                                                 if(ok)
                                                 {
                                                     if(remove>0)
@@ -1564,7 +1635,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                         else
                                             qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
                                     }
-                                    buffItem = buffItem.nextSiblingElement(QLatin1String("buff"));
+                                    buffItem = buffItem.nextSiblingElement(DatapackGeneralLoader::text_buff);
                                 }
                             }
                             if(items.monsterItemEffect.contains(id))
@@ -1573,14 +1644,14 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                         //load the monster offline effect
                         if(!haveAnEffect)
                         {
-                            QDomElement levelItem = item.firstChildElement(QLatin1String("level"));
+                            QDomElement levelItem = item.firstChildElement(DatapackGeneralLoader::text_level);
                             while(!levelItem.isNull())
                             {
                                 if(levelItem.isElement())
                                 {
-                                    if(levelItem.hasAttribute(QLatin1String("up")))
+                                    if(levelItem.hasAttribute(DatapackGeneralLoader::text_up))
                                     {
-                                        const quint32 &levelUp=levelItem.attribute(QLatin1String("up")).toUInt(&ok);
+                                        const quint32 &levelUp=levelItem.attribute(DatapackGeneralLoader::text_up).toUInt(&ok);
                                         if(!ok)
                                             qDebug() << QStringLiteral("Unable to open the file: %1, level up is not possitive number: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
                                         else if(levelUp<=0)
@@ -1596,7 +1667,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                     else
                                         qDebug() << QStringLiteral("Unable to open the file: %1, level have not the attribute up: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
                                 }
-                                levelItem = levelItem.nextSiblingElement(QLatin1String("level"));
+                                levelItem = levelItem.nextSiblingElement(DatapackGeneralLoader::text_level);
                             }
                         }
                     }
@@ -1611,7 +1682,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement(QLatin1String("item"));
+        item = item.nextSiblingElement(DatapackGeneralLoader::text_item);
     }
     return items;
 }
@@ -1644,7 +1715,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("list"))
+    if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
@@ -1652,47 +1723,47 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
 
     //load the content
     bool ok;
-    QDomElement startItem = root.firstChildElement(QLatin1String("start"));
+    QDomElement startItem = root.firstChildElement(DatapackGeneralLoader::text_start);
     while(!startItem.isNull())
     {
         if(startItem.isElement())
         {
             Profile profile;
-            QDomElement map = startItem.firstChildElement(QLatin1String("map"));
-            if(!map.isNull() && map.isElement() && map.hasAttribute(QLatin1String("file")) && map.hasAttribute(QLatin1String("x")) && map.hasAttribute(QLatin1String("y")))
+            QDomElement map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
+            if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
             {
-                profile.map=map.attribute(QLatin1String("file"));
+                profile.map=map.attribute(DatapackGeneralLoader::text_file);
                 if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+profile.map))
                 {
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(QLatin1String("start"));
+                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
-                profile.x=map.attribute(QLatin1String("x")).toUShort(&ok);
+                profile.x=map.attribute(DatapackGeneralLoader::text_x).toUShort(&ok);
                 if(!ok)
                 {
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(QLatin1String("start"));
+                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
-                profile.y=map.attribute(QLatin1String("y")).toUShort(&ok);
+                profile.y=map.attribute(DatapackGeneralLoader::text_y).toUShort(&ok);
                 if(!ok)
                 {
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    startItem = startItem.nextSiblingElement(QLatin1String("start"));
+                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
             }
             else
             {
                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, no correct map configuration: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                startItem = startItem.nextSiblingElement(QLatin1String("start"));
+                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                 continue;
             }
-            QDomElement forcedskin = startItem.firstChildElement(QLatin1String("forcedskin"));
-            if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(QLatin1String("value")))
+            QDomElement forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
+            if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
             {
-                profile.forcedskin=forcedskin.attribute(QLatin1String("value")).split(QLatin1String(";"));
+                profile.forcedskin=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
                 int index=0;
                 while(index<profile.forcedskin.size())
                 {
@@ -1706,28 +1777,28 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 }
             }
             profile.cash=0;
-            QDomElement cash = startItem.firstChildElement(QLatin1String("cash"));
-            if(!cash.isNull() && cash.isElement() && cash.hasAttribute(QLatin1String("value")))
+            QDomElement cash = startItem.firstChildElement(DatapackGeneralLoader::text_cash);
+            if(!cash.isNull() && cash.isElement() && cash.hasAttribute(DatapackGeneralLoader::text_value))
             {
-                profile.cash=cash.attribute(QLatin1String("value")).toULongLong(&ok);
+                profile.cash=cash.attribute(DatapackGeneralLoader::text_value).toULongLong(&ok);
                 if(!ok)
                 {
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, cash is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     profile.cash=0;
                 }
             }
-            QDomElement monstersElement = startItem.firstChildElement(QLatin1String("monster"));
+            QDomElement monstersElement = startItem.firstChildElement(DatapackGeneralLoader::text_monster);
             while(!monstersElement.isNull())
             {
                 Profile::Monster monster;
-                if(monstersElement.isElement() && monstersElement.hasAttribute(QLatin1String("id")) && monstersElement.hasAttribute(QLatin1String("level")) && monstersElement.hasAttribute(QLatin1String("captured_with")))
+                if(monstersElement.isElement() && monstersElement.hasAttribute(DatapackGeneralLoader::text_id) && monstersElement.hasAttribute(DatapackGeneralLoader::text_level) && monstersElement.hasAttribute(DatapackGeneralLoader::text_captured_with))
                 {
-                    monster.id=monstersElement.attribute(QLatin1String("id")).toUInt(&ok);
+                    monster.id=monstersElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                     if(!ok)
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     if(ok)
                     {
-                        monster.level=monstersElement.attribute(QLatin1String("level")).toUShort(&ok);
+                        monster.level=monstersElement.attribute(DatapackGeneralLoader::text_level).toUShort(&ok);
                         if(!ok)
                             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
@@ -1738,7 +1809,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                     }
                     if(ok)
                     {
-                        monster.captured_with=monstersElement.attribute(QLatin1String("captured_with")).toUInt(&ok);
+                        monster.captured_with=monstersElement.attribute(DatapackGeneralLoader::text_captured_with).toUInt(&ok);
                         if(!ok)
                             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
@@ -1758,22 +1829,22 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                     if(ok)
                         profile.monsters << monster;
                 }
-                monstersElement = monstersElement.nextSiblingElement(QLatin1String("monster"));
+                monstersElement = monstersElement.nextSiblingElement(DatapackGeneralLoader::text_monster);
             }
             if(profile.monsters.empty())
             {
                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, not monster to load: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                startItem = startItem.nextSiblingElement(QLatin1String("start"));
+                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                 continue;
             }
-            QDomElement reputationElement = startItem.firstChildElement(QLatin1String("reputation"));
+            QDomElement reputationElement = startItem.firstChildElement(DatapackGeneralLoader::text_reputation);
             while(!reputationElement.isNull())
             {
                 Profile::Reputation reputationTemp;
-                if(reputationElement.isElement() && reputationElement.hasAttribute(QLatin1String("type")) && reputationElement.hasAttribute(QLatin1String("level")))
+                if(reputationElement.isElement() && reputationElement.hasAttribute(DatapackGeneralLoader::text_type) && reputationElement.hasAttribute(DatapackGeneralLoader::text_level))
                 {
-                    reputationTemp.type=reputationElement.attribute(QLatin1String("type"));
-                    reputationTemp.level=reputationElement.attribute(QLatin1String("level")).toShort(&ok);
+                    reputationTemp.type=reputationElement.attribute(DatapackGeneralLoader::text_type);
+                    reputationTemp.level=reputationElement.attribute(DatapackGeneralLoader::text_level).toShort(&ok);
                     if(!ok)
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     if(ok)
@@ -1810,9 +1881,9 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                         if(ok)
                         {
                             reputationTemp.point=0;
-                            if(reputationElement.hasAttribute(QLatin1String("point")))
+                            if(reputationElement.hasAttribute(DatapackGeneralLoader::text_point))
                             {
-                                reputationTemp.point=reputationElement.attribute(QLatin1String("point")).toInt(&ok);
+                                reputationTemp.point=reputationElement.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                 if(ok)
                                 {
@@ -1825,23 +1896,23 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                     if(ok)
                         profile.reputation << reputationTemp;
                 }
-                reputationElement = reputationElement.nextSiblingElement(QLatin1String("reputation"));
+                reputationElement = reputationElement.nextSiblingElement(DatapackGeneralLoader::text_reputation);
             }
-            QDomElement itemElement = startItem.firstChildElement(QLatin1String("item"));
+            QDomElement itemElement = startItem.firstChildElement(DatapackGeneralLoader::text_item);
             while(!itemElement.isNull())
             {
                 Profile::Item itemTemp;
-                if(itemElement.isElement() && itemElement.hasAttribute(QLatin1String("id")))
+                if(itemElement.isElement() && itemElement.hasAttribute(DatapackGeneralLoader::text_id))
                 {
-                    itemTemp.id=itemElement.attribute(QLatin1String("id")).toUInt(&ok);
+                    itemTemp.id=itemElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                     if(!ok)
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     if(ok)
                     {
                         itemTemp.quantity=0;
-                        if(itemElement.hasAttribute(QLatin1String("quantity")))
+                        if(itemElement.hasAttribute(DatapackGeneralLoader::text_quantity))
                         {
-                            itemTemp.quantity=itemElement.attribute(QLatin1String("quantity")).toUInt(&ok);
+                            itemTemp.quantity=itemElement.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                             if(!ok)
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                             if(ok)
@@ -1865,7 +1936,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                     if(ok)
                         profile.items << itemTemp;
                 }
-                itemElement = itemElement.nextSiblingElement(QLatin1String("item"));
+                itemElement = itemElement.nextSiblingElement(DatapackGeneralLoader::text_item);
             }
             returnVar.second << profile;
             returnVar.first << startItem;
@@ -1873,7 +1944,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         }
         else
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-        startItem = startItem.nextSiblingElement(QLatin1String("start"));
+        startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
     }
     return returnVar;
 }
