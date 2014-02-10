@@ -28,6 +28,13 @@ int ClientHeavyLoad::compressedFilesCount;
 QSet<QString> ClientHeavyLoad::compressedExtension;
 QHash<quint32,quint16> ClientHeavyLoad::clanConnectedCount;
 QRegularExpression ClientHeavyLoad::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
+QString ClientHeavyLoad::single_quote=QLatin1Literal("'");
+QString ClientHeavyLoad::antislash_single_quote=QLatin1Literal("\\'");
+
+QString ClientHeavyLoad::text_dotslash=QLatin1Literal("./");
+QString ClientHeavyLoad::text_slash=QLatin1Literal("/");
+QString ClientHeavyLoad::text_double_slash=QLatin1Literal("//");
+QString ClientHeavyLoad::text_antislash=QLatin1Literal("\\");
 
 ClientHeavyLoad::ClientHeavyLoad()
 {
@@ -59,17 +66,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         return;
     }
     {
-        QString queryText;
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QStringLiteral("SELECT `id`,`password` FROM `account` WHERE `login`='%1'").arg(QString(login.toHex()));
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                queryText=QStringLiteral("SELECT id,password FROM account WHERE login='%1'").arg(QString(login.toHex()));
-            break;
-        }
+        const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_login.arg(QString(login.toHex()));
         QSqlQuery accountQuery(*GlobalServerData::serverPrivateVariables.db);
         if(!accountQuery.exec(queryText))
             emit message(accountQuery.lastQuery()+": "+accountQuery.lastError().text());
@@ -80,16 +77,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
             {
                 GlobalServerData::serverPrivateVariables.maxAccountId++;
                 player_informations->account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQuery(QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQuery(QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
-                    break;
-                }
+                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_login.arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
             }
             else
             {
@@ -167,17 +155,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         quint8 max_character=CommonSettings::commonSettings.max_character;
         if(max_character==0)
             max_character=255;
-        QString queryText;
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                queryText=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
-            break;
-        }
+        const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_characters.arg(player_informations->account_id).arg(max_character);
         QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
         if(!characterQuery.exec(queryText))
             emit message(characterQuery.lastQuery()+": "+characterQuery.lastError().text());
@@ -443,7 +421,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     int index=0;
     int monster_position=1;
     {
-        const QString &mapQuery=QLatin1String("'")+profile.map+QLatin1String("',")+QString::number(profile.x)+QLatin1String(",")+QString::number(profile.y)+QLatin1String(",'bottom'");
+        const QString &mapQuery=ClientHeavyLoad::single_quote+profile.map+QLatin1String("',")+QString::number(profile.x)+QLatin1String(",")+QString::number(profile.y)+QLatin1String(",'bottom'");
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
@@ -1430,12 +1408,12 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         {
             QString fileName=files.at(index);
             quint32 mtime=timestamps.at(index);
-            if(fileName.contains(QLatin1String("./")) || fileName.contains(QLatin1String("\\")) || fileName.contains(QLatin1String("//")))
+            if(fileName.contains(ClientHeavyLoad::text_dotslash) || fileName.contains(ClientHeavyLoad::text_antislash) || fileName.contains(ClientHeavyLoad::text_double_slash))
             {
                 emit error(QStringLiteral("file name contains illegale char: %1").arg(fileName));
                 return;
             }
-            if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(QLatin1String("/")))
+            if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(ClientHeavyLoad::text_slash))
             {
                 emit error(QStringLiteral("start with wrong string: %1").arg(fileName));
                 return;
@@ -1682,7 +1660,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
 
 QString ClientHeavyLoad::SQL_text_quote(QString text)
 {
-    return text.replace(QLatin1String("'"),QLatin1String("\\'"));
+    return text.replace(ClientHeavyLoad::single_quote,ClientHeavyLoad::antislash_single_quote);
 }
 
 void ClientHeavyLoad::dbQuery(const QString &queryText)

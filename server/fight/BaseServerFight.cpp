@@ -16,6 +16,17 @@
 
 using namespace CatchChallenger;
 
+QString BaseServerFight::text_list=QLatin1Literal("list");
+QString BaseServerFight::text_id=QLatin1Literal("id");
+QString BaseServerFight::text_monster=QLatin1Literal("monster");
+QString BaseServerFight::text_drops=QLatin1Literal("drops");
+QString BaseServerFight::text_drop=QLatin1Literal("drop");
+QString BaseServerFight::text_item=QLatin1Literal("item");
+QString BaseServerFight::text_quantity_min=QLatin1Literal("quantity_min");
+QString BaseServerFight::text_quantity_max=QLatin1Literal("quantity_max");
+QString BaseServerFight::text_luck=QLatin1Literal("luck");
+QString BaseServerFight::text_percent=QLatin1Literal("percent");
+
 void BaseServerFight::preload_monsters_drops()
 {
     GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+QLatin1String(DATAPACK_BASE_PATH_MONSTERS)+QLatin1String("monster.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
@@ -143,7 +154,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QLatin1String("list"))
+    if(root.tagName()!=BaseServerFight::text_list)
     {
         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(file));
         return monsterDrops;
@@ -151,36 +162,36 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QLatin1String("monster"));
+    QDomElement item = root.firstChildElement(BaseServerFight::text_monster);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QLatin1String("id")))
+            if(item.hasAttribute(BaseServerFight::text_id))
             {
-                quint32 id=item.attribute(QLatin1String("id")).toUInt(&ok);
+                quint32 id=item.attribute(BaseServerFight::text_id).toUInt(&ok);
                 if(!ok)
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else if(!monsters.contains(id))
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id into the monster list, skip: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
-                    QDomElement drops = item.firstChildElement(QLatin1String("drops"));
+                    QDomElement drops = item.firstChildElement(BaseServerFight::text_drops);
                     if(!drops.isNull())
                     {
                         if(drops.isElement())
                         {
-                            QDomElement drop = drops.firstChildElement(QLatin1String("drop"));
+                            QDomElement drop = drops.firstChildElement(BaseServerFight::text_drop);
                             while(!drop.isNull())
                             {
                                 if(drop.isElement())
                                 {
-                                    if(drop.hasAttribute(QLatin1String("item")))
+                                    if(drop.hasAttribute(BaseServerFight::text_item))
                                     {
                                         MonsterDrops dropVar;
-                                        if(drop.hasAttribute(QLatin1String("quantity_min")))
+                                        if(drop.hasAttribute(BaseServerFight::text_quantity_min))
                                         {
-                                            dropVar.quantity_min=drop.attribute(QLatin1String("quantity_min")).toUInt(&ok);
+                                            dropVar.quantity_min=drop.attribute(BaseServerFight::text_quantity_min).toUInt(&ok);
                                             if(!ok)
                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_min is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                         }
@@ -188,9 +199,9 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                             dropVar.quantity_min=1;
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(QLatin1String("quantity_max")))
+                                            if(drop.hasAttribute(BaseServerFight::text_quantity_max))
                                             {
-                                                dropVar.quantity_max=drop.attribute(QLatin1String("quantity_max")).toUInt(&ok);
+                                                dropVar.quantity_max=drop.attribute(BaseServerFight::text_quantity_max).toUInt(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_max is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                             }
@@ -223,10 +234,10 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                         }
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(QLatin1String("luck")))
+                                            if(drop.hasAttribute(BaseServerFight::text_luck))
                                             {
-                                                QString luck=drop.attribute(QLatin1String("luck"));
-                                                luck.remove(QLatin1String("%"));
+                                                QString luck=drop.attribute(BaseServerFight::text_luck);
+                                                luck.remove(BaseServerFight::text_percent);
                                                 dropVar.luck=luck.toUShort(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
@@ -249,9 +260,9 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                         }
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(QLatin1String("item")))
+                                            if(drop.hasAttribute(BaseServerFight::text_item))
                                             {
-                                                dropVar.item=drop.attribute(QLatin1String("item")).toUInt(&ok);
+                                                dropVar.item=drop.attribute(BaseServerFight::text_item).toUInt(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                             }
@@ -288,7 +299,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                 }
                                 else
                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                drop = drop.nextSiblingElement(QLatin1String("drop"));
+                                drop = drop.nextSiblingElement(BaseServerFight::text_drop);
                             }
                         }
                         else
@@ -301,7 +312,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QLatin1String("monster"));
+        item = item.nextSiblingElement(BaseServerFight::text_monster);
     }
     return monsterDrops;
 }

@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QSemaphore>
 #include <QString>
+#include <QRegularExpression>
 
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/Map_loader.h"
@@ -131,6 +132,37 @@ protected:
 
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
     QSet<quint32> botIdLoaded;
+
+    static QRegularExpression regexXmlFile;
+    static QString text_dotxml;
+    static QString text_zone;
+    static QString text_capture;
+    static QString text_fightId;
+    static QString text_dotcomma;
+    static QString text_male;
+    static QString text_female;
+    static QString text_unknown;
+    static QString text_slash;
+    static QString text_antislash;
+    static QString text_type;
+    static QString text_shop;
+    static QString text_learn;
+    static QString text_heal;
+    static QString text_market;
+    static QString text_zonecapture;
+    static QString text_fight;
+    static QString text_fightid;
+    static QString text_lookAt;
+    static QString text_left;
+    static QString text_right;
+    static QString text_top;
+    static QString text_bottom;
+    static QString text_bots;
+    static QString text_bot;
+    static QString text_id;
+    static QString text_name;
+    static QString text_step;
+    static QString text_arrow;
 };
 }
 

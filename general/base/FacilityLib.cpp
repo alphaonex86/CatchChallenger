@@ -9,6 +9,7 @@
 using namespace CatchChallenger;
 
 QByteArray FacilityLib::UTF8EmptyData=QByteArray().fill(0x00,1);
+QString FacilityLib::slash=QLatin1Literal("/");
 
 QByteArray FacilityLib::toUTF8(const QString &text)
 {
@@ -26,18 +27,15 @@ QByteArray FacilityLib::toUTF8(const QString &text)
 QStringList FacilityLib::listFolder(const QString& folder,const QString& suffix)
 {
     QStringList returnList;
-    QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
+    QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {
         QFileInfo fileInfo=entryList.at(index);
-        if(!fileInfo.fileName().startsWith(QStringLiteral(".")))
-        {
-            if(fileInfo.isDir())
-                returnList+=listFolder(folder,suffix+fileInfo.fileName()+QStringLiteral("/"));//put unix separator because it's transformed into that's under windows too
-            else if(fileInfo.isFile())
-                returnList+=suffix+fileInfo.fileName();
-        }
+        if(fileInfo.isDir())
+            returnList+=listFolder(folder,suffix+fileInfo.fileName()+slash);//put unix separator because it's transformed into that's under windows too
+        else if(fileInfo.isFile())
+            returnList+=suffix+fileInfo.fileName();
     }
     return returnList;
 }

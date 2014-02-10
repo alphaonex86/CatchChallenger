@@ -4,8 +4,8 @@ QDomElement::hasAttribute(): 1947ms
 concat by +: 4161ms
 replace format to QString: 2957ms
 replace format to format: 5140ms
-search remplace string to format: 11986ms
-search remplace format to string: 11877ms
+search replace string to format: 11986ms
+search replace format to string: 11877ms
 
  
 QLatin1String: 
@@ -14,8 +14,8 @@ QDomElement::hasAttribute(): 1507ms
 concat by +: 3771ms
 replace format to QString: 1559ms
 replace format to format: 2142ms
-search remplace string to format: 11194ms
-search remplace format to string: NA 
+search replace string to format: 11194ms
+search replace format to string: NA 
 
 QString: 
 Condition with != and ==: 4586ms
@@ -23,8 +23,8 @@ QDomElement::hasAttribute(): 2280ms
 concat by +: 4589ms
 replace format to QString: 3288ms
 replace format to format: 5741ms
-search remplace string to format: 12310ms
-search remplace format to string: 12145ms 
+search replace string to format: 12310ms
+search replace format to string: 12145ms 
 
 QLatin1Literal: 
 Condition with != and ==: 231ms
@@ -32,8 +32,8 @@ QDomElement::hasAttribute(): 1505ms
 concat by +: 3775ms
 replace format to QString: 1555ms
 replace format to format: 2130ms
-search remplace string to format: 11207ms
-search remplace format to string: NA
+search replace string to format: 11207ms
+search replace format to string: NA
 
 Char*: 
 Condition with != and ==: 4630ms
@@ -41,8 +41,8 @@ QDomElement::hasAttribute(): 2339ms
 concat by +: 4275ms
 replace format to QString: 3364ms
 replace format to format: 5811ms
-search remplace string to format: 12291ms
-search remplace format to string: NA
+search replace string to format: 12291ms
+search replace format to string: NA
 
 Prepared: 
 Condition with != and ==: 92ms
@@ -50,5 +50,5 @@ QDomElement::hasAttribute(): 31ms
 concat by +: 2492ms
 replace format to QString: 1280ms
 replace format to format: 237ms
-search remplace string to format: 9472ms
-search remplace format to string: 9313ms
+search replace string to format: 9472ms
+search replace format to string: 9313ms
