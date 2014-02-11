@@ -38,7 +38,12 @@ public:
     static QString timeToString(const quint32 &time);
 private:
     static QByteArray UTF8EmptyData;
-    static QString slash;
+    static QString text_slash;
+    static QString text_male;
+    static QString text_female;
+    static QString text_unknown;
+    static QString text_clan;
+    static QString text_dotcomma;
 };
 }
 

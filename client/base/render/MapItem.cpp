@@ -12,6 +12,7 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     : QGraphicsItem(parent)
 {
     setFlag(QGraphicsItem::ItemHasNoContents);
+    setCacheMode(QGraphicsItem::ItemCoordinateCache);
 
     cache=useCache;
 }
