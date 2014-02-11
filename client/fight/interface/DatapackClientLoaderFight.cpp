@@ -15,7 +15,14 @@
 
 void DatapackClientLoader::parseMonstersExtra()
 {
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("monster.xml");
+    QString STATIC_DATAPACK_BASE_PATH_MONSTERS=QLatin1Literal(DATAPACK_BASE_PATH_MONSTERS);
+    const QString &frontgif=QLatin1Literal("/front.gif");
+    const QString &frontpng=QLatin1Literal("/front.png");
+    const QString &backgif=QLatin1Literal("/back.gif");
+    const QString &backpng=QLatin1Literal("/back.png");
+    const QString &smallgif=QLatin1Literal("/small.gif");
+    const QString &smallpng=QLatin1Literal("/small.png");
+    const QString &file=datapackPath+STATIC_DATAPACK_BASE_PATH_MONSTERS+QStringLiteral("monster.xml");
     QDomDocument domDocument;
     //open and quick check the file
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
@@ -40,7 +47,7 @@ void DatapackClientLoader::parseMonstersExtra()
         }
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("list"))
+    if(root.tagName()!=DatapackClientLoader::text_list)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
@@ -49,20 +56,20 @@ void DatapackClientLoader::parseMonstersExtra()
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QStringLiteral("monster"));
+    QDomElement item = root.firstChildElement(DatapackClientLoader::text_monster);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("id")))
+            if(item.hasAttribute(DatapackClientLoader::text_id))
             {
-                quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                 if(!ok)
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
                     if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(id))
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster list into monster extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
                         DatapackClientLoader::MonsterExtra monsterExtraEntry;
@@ -71,13 +78,13 @@ void DatapackClientLoader::parseMonstersExtra()
                         #endif
                         {
                             bool found=false;
-                            QDomElement name = item.firstChildElement(QStringLiteral("name"));
-                            if(!language.isEmpty() && language!=QStringLiteral("en"))
+                            QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!name.isNull())
                                 {
                                     if(name.isElement())
                                     {
-                                        if(name.hasAttribute(QStringLiteral("lang")) && name.attribute(QStringLiteral("lang"))==language)
+                                        if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                         {
                                             monsterExtraEntry.name=name.text();
                                             found=true;
@@ -86,16 +93,16 @@ void DatapackClientLoader::parseMonstersExtra()
                                     }
                                     else
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    name = name.nextSiblingElement(QStringLiteral("name"));
+                                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             if(!found)
                             {
-                                name = item.firstChildElement(QStringLiteral("name"));
+                                name = item.firstChildElement(DatapackClientLoader::text_name);
                                 while(!name.isNull())
                                 {
                                     if(name.isElement())
                                     {
-                                        if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                        if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
                                             monsterExtraEntry.name=name.text();
                                             break;
@@ -103,19 +110,19 @@ void DatapackClientLoader::parseMonstersExtra()
                                     }
                                     else
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    name = name.nextSiblingElement(QStringLiteral("name"));
+                                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             }
                         }
                         {
                             bool found=false;
-                            QDomElement description = item.firstChildElement(QStringLiteral("description"));
-                            if(!language.isEmpty() && language!=QStringLiteral("en"))
+                            QDomElement description = item.firstChildElement(DatapackClientLoader::text_description);
+                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!description.isNull())
                                 {
                                     if(description.isElement())
                                     {
-                                        if(description.hasAttribute(QStringLiteral("lang")) && description.attribute(QStringLiteral("lang"))==language)
+                                        if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
                                         {
                                                 monsterExtraEntry.description=description.text();
                                                 found=true;
@@ -124,16 +131,16 @@ void DatapackClientLoader::parseMonstersExtra()
                                     }
                                     else
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    description = description.nextSiblingElement(QStringLiteral("description"));
+                                    description = description.nextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             if(!found)
                             {
-                                description = item.firstChildElement(QStringLiteral("description"));
+                                description = item.firstChildElement(DatapackClientLoader::text_description);
                                 while(!description.isNull())
                                 {
                                     if(description.isElement())
                                     {
-                                        if(!description.hasAttribute(QStringLiteral("lang")) || description.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                        if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
                                                 monsterExtraEntry.description=description.text();
                                                 break;
@@ -141,43 +148,43 @@ void DatapackClientLoader::parseMonstersExtra()
                                     }
                                     else
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    description = description.nextSiblingElement(QStringLiteral("description"));
+                                    description = description.nextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             }
                         }
                         //load the kind
                         {
                             bool kind_found=false;
-                            QDomElement kind = item.firstChildElement(QStringLiteral("kind"));
-                            if(!language.isEmpty() && language!=QStringLiteral("en"))
+                            QDomElement kind = item.firstChildElement(DatapackClientLoader::text_kind);
+                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!kind.isNull())
                                 {
                                     if(kind.isElement())
                                     {
-                                        if(kind.hasAttribute(QStringLiteral("lang")) && kind.attribute(QStringLiteral("lang"))==language)
+                                        if(kind.hasAttribute(DatapackClientLoader::text_lang) && kind.attribute(DatapackClientLoader::text_lang)==language)
                                         {
                                             monsterExtraEntry.kind=kind.text();
                                             kind_found=true;
                                             break;
                                         }
                                     }
-                                    kind = kind.nextSiblingElement(QStringLiteral("kind"));
+                                    kind = kind.nextSiblingElement(DatapackClientLoader::text_kind);
                                 }
                             if(!kind_found)
                             {
-                                kind = item.firstChildElement(QStringLiteral("kind"));
+                                kind = item.firstChildElement(DatapackClientLoader::text_kind);
                                 while(!kind.isNull())
                                 {
                                     if(kind.isElement())
                                     {
-                                        if(!kind.hasAttribute(QStringLiteral("lang")) || kind.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                        if(!kind.hasAttribute(DatapackClientLoader::text_lang) || kind.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
                                             monsterExtraEntry.kind=kind.text();
                                             kind_found=true;
                                             break;
                                         }
                                     }
-                                    kind = kind.nextSiblingElement(QStringLiteral("kind"));
+                                    kind = kind.nextSiblingElement(DatapackClientLoader::text_kind);
                                 }
                             }
                         }
@@ -185,48 +192,49 @@ void DatapackClientLoader::parseMonstersExtra()
                         //load the habitat
                         {
                             bool habitat_found=false;
-                            QDomElement habitat = item.firstChildElement(QStringLiteral("habitat"));
-                            if(!language.isEmpty() && language!=QStringLiteral("en"))
+                            QDomElement habitat = item.firstChildElement(DatapackClientLoader::text_habitat);
+                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!habitat.isNull())
                                 {
                                     if(habitat.isElement())
                                     {
-                                        if(habitat.hasAttribute(QStringLiteral("lang")) && habitat.attribute(QStringLiteral("lang"))==language)
+                                        if(habitat.hasAttribute(DatapackClientLoader::text_lang) && habitat.attribute(DatapackClientLoader::text_lang)==language)
                                         {
                                             monsterExtraEntry.habitat=habitat.text();
                                             habitat_found=true;
                                             break;
                                         }
                                     }
-                                    habitat = habitat.nextSiblingElement(QStringLiteral("habitat"));
+                                    habitat = habitat.nextSiblingElement(DatapackClientLoader::text_habitat);
                                 }
                             if(!habitat_found)
                             {
-                                habitat = item.firstChildElement(QStringLiteral("habitat"));
+                                habitat = item.firstChildElement(DatapackClientLoader::text_habitat);
                                 while(!habitat.isNull())
                                 {
                                     if(habitat.isElement())
                                     {
-                                        if(!habitat.hasAttribute(QStringLiteral("lang")) || habitat.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                        if(!habitat.hasAttribute(DatapackClientLoader::text_lang) || habitat.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
                                             monsterExtraEntry.habitat=habitat.text();
                                             habitat_found=true;
                                             break;
                                         }
                                     }
-                                    habitat = habitat.nextSiblingElement(QStringLiteral("habitat"));
+                                    habitat = habitat.nextSiblingElement(DatapackClientLoader::text_habitat);
                                 }
                             }
                         }
+                        const QString &basepath=datapackPath+DatapackClientLoader::text_slash+STATIC_DATAPACK_BASE_PATH_MONSTERS+QString::number(id);
                         if(monsterExtraEntry.name.isEmpty())
                             monsterExtraEntry.name=tr("Unknown");
                         if(monsterExtraEntry.description.isEmpty())
                             monsterExtraEntry.description=tr("Unknown");
-                        monsterExtraEntry.frontPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("front.png");
+                        monsterExtraEntry.frontPath=basepath+frontpng;
                         monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                         if(monsterExtraEntry.front.isNull())
                         {
-                            monsterExtraEntry.frontPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("front.gif");
+                            monsterExtraEntry.frontPath=basepath+frontgif;
                             monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                             if(monsterExtraEntry.front.isNull())
                             {
@@ -234,11 +242,11 @@ void DatapackClientLoader::parseMonstersExtra()
                                 monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                             }
                         }
-                        monsterExtraEntry.backPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("back.png");
+                        monsterExtraEntry.backPath=basepath+backpng;
                         monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                         if(monsterExtraEntry.back.isNull())
                         {
-                            monsterExtraEntry.backPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("back.gif");
+                            monsterExtraEntry.backPath=basepath+backgif;
                             monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                             if(monsterExtraEntry.back.isNull())
                             {
@@ -246,10 +254,10 @@ void DatapackClientLoader::parseMonstersExtra()
                                 monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                             }
                         }
-                        monsterExtraEntry.thumb=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("small.png");
+                        monsterExtraEntry.thumb=basepath+smallpng;
                         if(monsterExtraEntry.thumb.isNull())
                         {
-                            monsterExtraEntry.thumb=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("small.gif");
+                            monsterExtraEntry.thumb=basepath+smallgif;
                             if(monsterExtraEntry.thumb.isNull())
                                 monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
                         }
@@ -263,7 +271,7 @@ void DatapackClientLoader::parseMonstersExtra()
         }
         else
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QStringLiteral("monster"));
+        item = item.nextSiblingElement(DatapackClientLoader::text_monster);
     }
 
     QHashIterator<quint32,CatchChallenger::Monster> i(CatchChallenger::CommonDatapack::commonDatapack.monsters);
@@ -314,7 +322,7 @@ void DatapackClientLoader::parseTypesExtra()
         }
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("types"))
+    if(root.tagName()!=DatapackClientLoader::text_types)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"list\" root balise not found for the xml file").arg(file);
         return;
@@ -324,26 +332,26 @@ void DatapackClientLoader::parseTypesExtra()
     {
         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         QSet<QString> duplicate;
-        QDomElement typeItem = root.firstChildElement(QStringLiteral("type"));
+        QDomElement typeItem = root.firstChildElement(DatapackClientLoader::text_type);
         while(!typeItem.isNull())
         {
             if(typeItem.isElement())
             {
-                if(typeItem.hasAttribute(QStringLiteral("name")))
+                if(typeItem.hasAttribute(DatapackClientLoader::text_name))
                 {
-                    QString name=typeItem.attribute(QStringLiteral("name"));
+                    QString name=typeItem.attribute(DatapackClientLoader::text_name);
                     if(!duplicate.contains(name))
                     {
                         duplicate << name;
                         TypeText type;
                         bool found=false;
-                        QDomElement nameItem = typeItem.firstChildElement(QStringLiteral("name"));
-                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                        QDomElement nameItem = typeItem.firstChildElement(DatapackClientLoader::text_name);
+                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             while(!nameItem.isNull())
                             {
                                 if(nameItem.isElement())
                                 {
-                                    if(nameItem.hasAttribute(QStringLiteral("lang")) && nameItem.attribute(QStringLiteral("lang"))==language)
+                                    if(nameItem.hasAttribute(DatapackClientLoader::text_lang) && nameItem.attribute(DatapackClientLoader::text_lang)==language)
                                     {
                                         type.name=nameItem.text();
                                         found=true;
@@ -352,16 +360,16 @@ void DatapackClientLoader::parseTypesExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
-                                nameItem = nameItem.nextSiblingElement(QStringLiteral("name"));
+                                nameItem = nameItem.nextSiblingElement(DatapackClientLoader::text_name);
                             }
                         if(!found)
                         {
-                            nameItem = typeItem.firstChildElement(QStringLiteral("name"));
+                            nameItem = typeItem.firstChildElement(DatapackClientLoader::text_name);
                             while(!nameItem.isNull())
                             {
                                 if(nameItem.isElement())
                                 {
-                                    if(!nameItem.hasAttribute(QStringLiteral("lang")) || nameItem.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                    if(!nameItem.hasAttribute(DatapackClientLoader::text_lang) || nameItem.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                     {
                                         type.name=nameItem.text();
                                         break;
@@ -369,7 +377,7 @@ void DatapackClientLoader::parseTypesExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
-                                nameItem = nameItem.nextSiblingElement(QStringLiteral("name"));
+                                nameItem = nameItem.nextSiblingElement(DatapackClientLoader::text_name);
                             }
                         }
                         DatapackClientLoader::datapackLoader.typeExtra[DatapackClientLoader::datapackLoader.typeExtra.size()]=type;
@@ -382,7 +390,7 @@ void DatapackClientLoader::parseTypesExtra()
             }
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-            typeItem = typeItem.nextSiblingElement(QStringLiteral("type"));
+            typeItem = typeItem.nextSiblingElement(DatapackClientLoader::text_type);
         }
     }
 
@@ -391,6 +399,8 @@ void DatapackClientLoader::parseTypesExtra()
 
 void DatapackClientLoader::parseBuffExtra()
 {
+    const QString &dotpng=QLatin1Literal(".png");
+    const QString &dotgif=QLatin1Literal(".gif");
     QDomDocument domDocument;
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("buff.xml");
     //open and quick check the file
@@ -416,7 +426,7 @@ void DatapackClientLoader::parseBuffExtra()
         }
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("list"))
+    if(root.tagName()!=DatapackClientLoader::text_list)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
@@ -425,20 +435,20 @@ void DatapackClientLoader::parseBuffExtra()
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QStringLiteral("buff"));
+    QDomElement item = root.firstChildElement(DatapackClientLoader::text_buff);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("id")))
+            if(item.hasAttribute(DatapackClientLoader::text_id))
             {
-                quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                 if(!ok)
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
                     if(!CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.contains(id))
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster buff list into buff extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
                         DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
@@ -446,13 +456,13 @@ void DatapackClientLoader::parseBuffExtra()
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
                         bool found=false;
-                        QDomElement name = item.firstChildElement(QStringLiteral("name"));
-                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                        QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             while(!name.isNull())
                             {
                                 if(name.isElement())
                                 {
-                                    if(name.hasAttribute(QStringLiteral("lang")) && name.attribute(QStringLiteral("lang"))==language)
+                                    if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                     {
                                         monsterBuffExtraEntry.name=name.text();
                                         found=true;
@@ -461,16 +471,16 @@ void DatapackClientLoader::parseBuffExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                name = name.nextSiblingElement(QStringLiteral("name"));
+                                name = name.nextSiblingElement(DatapackClientLoader::text_name);
                             }
                         if(!found)
                         {
-                            name = item.firstChildElement(QStringLiteral("name"));
+                            name = item.firstChildElement(DatapackClientLoader::text_name);
                             while(!name.isNull())
                             {
                                 if(name.isElement())
                                 {
-                                    if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                    if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                     {
                                         monsterBuffExtraEntry.name=name.text();
                                         break;
@@ -478,17 +488,17 @@ void DatapackClientLoader::parseBuffExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                name = name.nextSiblingElement(QStringLiteral("name"));
+                                name = name.nextSiblingElement(DatapackClientLoader::text_name);
                             }
                         }
                         found=false;
-                        QDomElement description = item.firstChildElement(QStringLiteral("description"));
-                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                        QDomElement description = item.firstChildElement(DatapackClientLoader::text_description);
+                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             while(!description.isNull())
                             {
                                 if(description.isElement())
                                 {
-                                    if(description.hasAttribute(QStringLiteral("lang")) && description.attribute(QStringLiteral("lang"))==language)
+                                    if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
                                     {
                                         monsterBuffExtraEntry.description=description.text();
                                         found=true;
@@ -497,16 +507,16 @@ void DatapackClientLoader::parseBuffExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                description = description.nextSiblingElement(QStringLiteral("description"));
+                                description = description.nextSiblingElement(DatapackClientLoader::text_description);
                             }
                         if(!found)
                         {
-                            description = item.firstChildElement(QStringLiteral("description"));
+                            description = item.firstChildElement(DatapackClientLoader::text_description);
                             while(!description.isNull())
                             {
                                 if(description.isElement())
                                 {
-                                    if(!description.hasAttribute(QStringLiteral("lang")) || description.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                    if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                     {
                                         monsterBuffExtraEntry.description=description.text();
                                         break;
@@ -514,15 +524,16 @@ void DatapackClientLoader::parseBuffExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                description = description.nextSiblingElement(QStringLiteral("description"));
+                                description = description.nextSiblingElement(DatapackClientLoader::text_description);
                             }
                         }
                         if(monsterBuffExtraEntry.name.isEmpty())
                             monsterBuffExtraEntry.name=tr("Unknown");
                         if(monsterBuffExtraEntry.description.isEmpty())
                             monsterBuffExtraEntry.description=tr("Unknown");
-                        const QString &pngFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_BUFFICON)+QString::number(id)+QStringLiteral(".png");
-                        const QString &gifFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_BUFFICON)+QString::number(id)+QStringLiteral(".gif");
+                        const QString &basePath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_BUFFICON)+QString::number(id);
+                        const QString &pngFile=basePath+dotpng;
+                        const QString &gifFile=basePath+dotgif;
                         if(QFile(pngFile).exists())
                             monsterBuffExtraEntry.icon=QIcon(pngFile);
                         else if(QFile(gifFile).exists())
@@ -539,7 +550,7 @@ void DatapackClientLoader::parseBuffExtra()
         }
         else
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QStringLiteral("buff"));
+        item = item.nextSiblingElement(DatapackClientLoader::text_buff);
     }
 
     QHashIterator<quint32,CatchChallenger::Buff> i(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs);
@@ -587,7 +598,7 @@ void DatapackClientLoader::parseSkillsExtra()
         }
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("list"))
+    if(root.tagName()!=DatapackClientLoader::text_list)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
@@ -597,20 +608,20 @@ void DatapackClientLoader::parseSkillsExtra()
     bool found;
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("skill");
+    QDomElement item = root.firstChildElement(DatapackClientLoader::text_skill);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("id")))
+            if(item.hasAttribute(DatapackClientLoader::text_id))
             {
-                quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                 if(!ok)
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
                     if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(id))
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster skill list into skill extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
                         DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
@@ -618,13 +629,13 @@ void DatapackClientLoader::parseSkillsExtra()
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
                         found=false;
-                        QDomElement name = item.firstChildElement(QStringLiteral("name"));
-                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                        QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             while(!name.isNull())
                             {
                                 if(name.isElement())
                                 {
-                                    if(name.hasAttribute(QStringLiteral("lang")) && name.attribute(QStringLiteral("lang"))==language)
+                                    if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                     {
                                         monsterSkillExtraEntry.name=name.text();
                                         found=true;
@@ -633,16 +644,16 @@ void DatapackClientLoader::parseSkillsExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                name = name.nextSiblingElement(QStringLiteral("name"));
+                                name = name.nextSiblingElement(DatapackClientLoader::text_name);
                             }
                         if(!found)
                         {
-                            name = item.firstChildElement(QStringLiteral("name"));
+                            name = item.firstChildElement(DatapackClientLoader::text_name);
                             while(!name.isNull())
                             {
                                 if(name.isElement())
                                 {
-                                    if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                    if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                     {
                                         monsterSkillExtraEntry.name=name.text();
                                         break;
@@ -650,17 +661,17 @@ void DatapackClientLoader::parseSkillsExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                name = name.nextSiblingElement(QStringLiteral("name"));
+                                name = name.nextSiblingElement(DatapackClientLoader::text_name);
                             }
                         }
                         found=false;
-                        QDomElement description = item.firstChildElement(QStringLiteral("description"));
-                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                        QDomElement description = item.firstChildElement(DatapackClientLoader::text_description);
+                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             while(!description.isNull())
                             {
                                 if(description.isElement())
                                 {
-                                    if(description.hasAttribute(QStringLiteral("lang")) && description.attribute(QStringLiteral("lang"))==language)
+                                    if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
                                     {
                                         monsterSkillExtraEntry.description=description.text();
                                         found=true;
@@ -669,16 +680,16 @@ void DatapackClientLoader::parseSkillsExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                description = description.nextSiblingElement(QStringLiteral("description"));
+                                description = description.nextSiblingElement(DatapackClientLoader::text_description);
                             }
                         if(!found)
                         {
-                            description = item.firstChildElement(QStringLiteral("description"));
+                            description = item.firstChildElement(DatapackClientLoader::text_description);
                             while(!description.isNull())
                             {
                                 if(description.isElement())
                                 {
-                                    if(!description.hasAttribute(QStringLiteral("lang")) || description.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                    if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                     {
                                         monsterSkillExtraEntry.description=description.text();
                                         break;
@@ -686,7 +697,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                 }
                                 else
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                description = description.nextSiblingElement(QStringLiteral("description"));
+                                description = description.nextSiblingElement(DatapackClientLoader::text_description);
                             }
                         }
                         if(monsterSkillExtraEntry.name.isEmpty())
@@ -702,7 +713,7 @@ void DatapackClientLoader::parseSkillsExtra()
         }
         else
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QStringLiteral("skill"));
+        item = item.nextSiblingElement(DatapackClientLoader::text_skill);
     }
 
     QHashIterator<quint32,CatchChallenger::Skill> i(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills);
@@ -760,7 +771,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                 }
             }
             QDomElement root = domDocument.documentElement();
-            if(root.tagName()!=QStringLiteral("fights"))
+            if(root.tagName()!=DatapackClientLoader::text_fights)
             {
                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file").arg(file));
                 index_file++;
@@ -769,14 +780,14 @@ void DatapackClientLoader::parseBotFightsExtra()
 
             //load the content
             bool ok;
-            QDomElement item = root.firstChildElement(QStringLiteral("fight"));
+            QDomElement item = root.firstChildElement(DatapackClientLoader::text_fight);
             while(!item.isNull())
             {
                 if(item.isElement())
                 {
-                    if(item.hasAttribute(QStringLiteral("id")))
+                    if(item.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
+                        quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                         if(ok)
                         {
                             if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(id))
@@ -788,13 +799,13 @@ void DatapackClientLoader::parseBotFightsExtra()
                                     botFightExtra.win=tr("You are so strong for me!");
                                     {
                                         found=false;
-                                        QDomElement start = item.firstChildElement(QStringLiteral("start"));
-                                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                                        QDomElement start = item.firstChildElement(DatapackClientLoader::text_start);
+                                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                             while(!start.isNull())
                                             {
                                                 if(start.isElement())
                                                 {
-                                                    if(start.hasAttribute(QStringLiteral("lang")) && start.attribute(QStringLiteral("lang"))==language)
+                                                    if(start.hasAttribute(DatapackClientLoader::text_lang) && start.attribute(DatapackClientLoader::text_lang)==language)
                                                     {
                                                         botFightExtra.start=start.text();
                                                         found=true;
@@ -803,16 +814,16 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                 }
                                                 else
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                start = start.nextSiblingElement(QStringLiteral("start"));
+                                                start = start.nextSiblingElement(DatapackClientLoader::text_start);
                                             }
                                         if(!found)
                                         {
-                                            start = item.firstChildElement(QStringLiteral("start"));
+                                            start = item.firstChildElement(DatapackClientLoader::text_start);
                                             while(!start.isNull())
                                             {
                                                 if(start.isElement())
                                                 {
-                                                    if(!start.hasAttribute(QStringLiteral("lang")) || start.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                                    if(!start.hasAttribute(DatapackClientLoader::text_lang) || start.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                                     {
                                                         botFightExtra.start=start.text();
                                                         break;
@@ -820,17 +831,17 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                 }
                                                 else
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                start = start.nextSiblingElement(QStringLiteral("start"));
+                                                start = start.nextSiblingElement(DatapackClientLoader::text_start);
                                             }
                                         }
                                         found=false;
-                                        QDomElement win = item.firstChildElement(QStringLiteral("win"));
-                                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                                        QDomElement win = item.firstChildElement(DatapackClientLoader::text_win);
+                                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                             while(!win.isNull())
                                             {
                                                 if(win.isElement())
                                                 {
-                                                    if(win.hasAttribute(QStringLiteral("lang")) && win.attribute(QStringLiteral("lang"))==language)
+                                                    if(win.hasAttribute(DatapackClientLoader::text_lang) && win.attribute(DatapackClientLoader::text_lang)==language)
                                                     {
                                                         botFightExtra.win=win.text();
                                                         found=true;
@@ -839,16 +850,16 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                 }
                                                 else
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                win = win.nextSiblingElement(QStringLiteral("win"));
+                                                win = win.nextSiblingElement(DatapackClientLoader::text_win);
                                             }
                                         if(!found)
                                         {
-                                            win = item.firstChildElement(QStringLiteral("win"));
+                                            win = item.firstChildElement(DatapackClientLoader::text_win);
                                             while(!win.isNull())
                                             {
                                                 if(win.isElement())
                                                 {
-                                                    if(!win.hasAttribute(QStringLiteral("lang")) || win.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                                    if(!win.hasAttribute(DatapackClientLoader::text_lang) || win.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                                     {
                                                         botFightExtra.win=win.text();
                                                         break;
@@ -856,7 +867,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                 }
                                                 else
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                win = win.nextSiblingElement(QStringLiteral("win"));
+                                                win = win.nextSiblingElement(DatapackClientLoader::text_win);
                                             }
                                         }
                                     }
@@ -874,7 +885,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                 }
                 else
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                item = item.nextSiblingElement(QStringLiteral("fight"));
+                item = item.nextSiblingElement(DatapackClientLoader::text_fight);
             }
             index_file++;
         }

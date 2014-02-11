@@ -261,7 +261,7 @@ void OrthogonalRenderer::drawMapObject(QPainter *painter,
 {
     painter->save();
 
-    const QRectF bounds = object->bounds();
+    const QRectF &bounds = object->bounds();
     QRectF rect(tileToPixelCoords(bounds.topLeft()),
                 tileToPixelCoords(bounds.bottomRight()));
 

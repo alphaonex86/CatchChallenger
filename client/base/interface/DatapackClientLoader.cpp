@@ -19,6 +19,44 @@
 
 DatapackClientLoader DatapackClientLoader::datapackLoader;
 
+QString DatapackClientLoader::text_list=QLatin1Literal("list");
+QString DatapackClientLoader::text_reputation=QLatin1Literal("reputation");
+QString DatapackClientLoader::text_type=QLatin1Literal("type");
+QString DatapackClientLoader::text_name=QLatin1Literal("name");
+QString DatapackClientLoader::text_en=QLatin1Literal("en");
+QString DatapackClientLoader::text_lang=QLatin1Literal("lang");
+QString DatapackClientLoader::text_level=QLatin1Literal("level");
+QString DatapackClientLoader::text_point=QLatin1Literal("point");
+QString DatapackClientLoader::text_text=QLatin1Literal("text");
+QString DatapackClientLoader::text_id=QLatin1Literal("id");
+QString DatapackClientLoader::text_image=QLatin1Literal("image");
+QString DatapackClientLoader::text_description=QLatin1Literal("description");
+QString DatapackClientLoader::text_item=QLatin1Literal("item");
+QString DatapackClientLoader::text_slashdefinitiondotxml=QLatin1Literal("/definition.xml");
+QString DatapackClientLoader::text_quest=QLatin1Literal("quest");
+QString DatapackClientLoader::text_rewards=QLatin1Literal("rewards");
+QString DatapackClientLoader::text_show=QLatin1Literal("show");
+QString DatapackClientLoader::text_true=QLatin1Literal("true");
+QString DatapackClientLoader::text_step=QLatin1Literal("step");
+QString DatapackClientLoader::text_bot=QLatin1Literal("bot");
+QString DatapackClientLoader::text_dotcomma=QLatin1Literal(";");
+QString DatapackClientLoader::text_client_logic=QLatin1Literal("client_logic");
+QString DatapackClientLoader::text_map=QLatin1Literal("map");
+QString DatapackClientLoader::text_items=QLatin1Literal("items");
+QString DatapackClientLoader::text_zone=QLatin1Literal("zone");
+
+QString DatapackClientLoader::text_monster=QLatin1Literal("monster");
+QString DatapackClientLoader::text_kind=QLatin1Literal("kind");
+QString DatapackClientLoader::text_habitat=QLatin1Literal("habitat");
+QString DatapackClientLoader::text_slash=QLatin1Literal("/");
+QString DatapackClientLoader::text_types=QLatin1Literal("types");
+QString DatapackClientLoader::text_buff=QLatin1Literal("buff");
+QString DatapackClientLoader::text_skill=QLatin1Literal("skill");
+QString DatapackClientLoader::text_fight=QLatin1Literal("buff");
+QString DatapackClientLoader::text_fights=QLatin1Literal("skill");
+QString DatapackClientLoader::text_start=QLatin1Literal("start");
+QString DatapackClientLoader::text_win=QLatin1Literal("win");
+
 DatapackClientLoader::DatapackClientLoader()
 {
     mDefaultInventoryImage=NULL;
@@ -116,7 +154,7 @@ void DatapackClientLoader::parseReputationExtra()
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("list"))
+    if(root.tagName()!=DatapackClientLoader::text_list)
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file));
         return;
@@ -124,68 +162,68 @@ void DatapackClientLoader::parseReputationExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QStringLiteral("reputation"));
+    QDomElement item = root.firstChildElement(DatapackClientLoader::text_reputation);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("type")))
+            if(item.hasAttribute(DatapackClientLoader::text_type))
             {
                 ok=true;
 
                 //load the name
                 {
                     bool name_found=false;
-                    QDomElement name = item.firstChildElement(QStringLiteral("name"));
-                    if(!language.isEmpty() && language!=QStringLiteral("en"))
+                    QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                    if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                         while(!name.isNull())
                         {
                             if(name.isElement())
                             {
-                                if(name.hasAttribute(QStringLiteral("lang")) && name.attribute(QStringLiteral("lang"))==language)
+                                if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                 {
-                                    reputationExtra[item.attribute(QStringLiteral("type"))].name=name.text();
+                                    reputationExtra[item.attribute(DatapackClientLoader::text_type)].name=name.text();
                                     name_found=true;
                                     break;
                                 }
                             }
-                            name = name.nextSiblingElement(QStringLiteral("name"));
+                            name = name.nextSiblingElement(DatapackClientLoader::text_name);
                         }
                     if(!name_found)
                     {
-                        name = item.firstChildElement(QStringLiteral("name"));
+                        name = item.firstChildElement(DatapackClientLoader::text_name);
                         while(!name.isNull())
                         {
                             if(name.isElement())
                             {
-                                if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                 {
-                                    reputationExtra[item.attribute(QStringLiteral("type"))].name=name.text();
+                                    reputationExtra[item.attribute(DatapackClientLoader::text_type)].name=name.text();
                                     name_found=true;
                                     break;
                                 }
                             }
-                            name = name.nextSiblingElement(QStringLiteral("name"));
+                            name = name.nextSiblingElement(DatapackClientLoader::text_name);
                         }
                     }
                     if(!name_found)
                     {
-                        reputationExtra[item.attribute(QStringLiteral("type"))].name=tr("Unknown");
-                        qDebug() << QStringLiteral("English name not found for the reputation with id: %1").arg(item.attribute(QStringLiteral("type")));
+                        reputationExtra[item.attribute(DatapackClientLoader::text_type)].name=tr("Unknown");
+                        qDebug() << QStringLiteral("English name not found for the reputation with id: %1").arg(item.attribute(DatapackClientLoader::text_type));
                     }
                 }
 
                 QList<qint32> point_list_positive,point_list_negative;
                 QStringList text_positive,text_negative;
-                QDomElement level = item.firstChildElement(QStringLiteral("level"));
+                QDomElement level = item.firstChildElement(DatapackClientLoader::text_level);
                 ok=true;
                 while(!level.isNull() && ok)
                 {
                     if(level.isElement())
                     {
-                        if(level.hasAttribute(QStringLiteral("point")))
+                        if(level.hasAttribute(DatapackClientLoader::text_point))
                         {
-                            qint32 point=level.attribute(QStringLiteral("point")).toInt(&ok);
+                            qint32 point=level.attribute(DatapackClientLoader::text_point).toInt(&ok);
                             //QString text_val;
                             if(ok)
                             {
@@ -195,36 +233,36 @@ void DatapackClientLoader::parseReputationExtra()
                                 //load the name
                                 {
                                     bool name_found=false;
-                                    QDomElement name = level.firstChildElement(QStringLiteral("text"));
-                                    if(!language.isEmpty() && language!=QStringLiteral("en"))
+                                    QDomElement name = level.firstChildElement(DatapackClientLoader::text_text);
+                                    if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                         while(!name.isNull())
                                         {
                                             if(name.isElement())
                                             {
-                                                if(name.hasAttribute(QStringLiteral("lang")) && name.attribute(QStringLiteral("lang"))==language)
+                                                if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                                 {
                                                     text=name.text();
                                                     name_found=true;
                                                     break;
                                                 }
                                             }
-                                            name = name.nextSiblingElement(QStringLiteral("text"));
+                                            name = name.nextSiblingElement(DatapackClientLoader::text_text);
                                         }
                                     if(!name_found)
                                     {
-                                        name = level.firstChildElement(QStringLiteral("text"));
+                                        name = level.firstChildElement(DatapackClientLoader::text_text);
                                         while(!name.isNull())
                                         {
                                             if(name.isElement())
                                             {
-                                                if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                                if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                                 {
                                                     text=name.text();
                                                     name_found=true;
                                                     break;
                                                 }
                                             }
-                                            name = name.nextSiblingElement(QStringLiteral("text"));
+                                            name = name.nextSiblingElement(DatapackClientLoader::text_text);
                                         }
                                     }
                                     if(!name_found)
@@ -295,7 +333,7 @@ void DatapackClientLoader::parseReputationExtra()
                     }
                     else
                         qDebug() << (QStringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                    level = level.nextSiblingElement(QStringLiteral("level"));
+                    level = level.nextSiblingElement(DatapackClientLoader::text_level);
                 }
                 if(ok)
                     if(point_list_positive.size()<2)
@@ -323,8 +361,8 @@ void DatapackClientLoader::parseReputationExtra()
                     }
                 if(ok)
                 {
-                    reputationExtra[item.attribute(QStringLiteral("type"))].reputation_positive=text_positive;
-                    reputationExtra[item.attribute(QStringLiteral("type"))].reputation_negative=text_negative;
+                    reputationExtra[item.attribute(DatapackClientLoader::text_type)].reputation_positive=text_positive;
+                    reputationExtra[item.attribute(DatapackClientLoader::text_type)].reputation_negative=text_negative;
                 }
             }
             else
@@ -377,7 +415,7 @@ void DatapackClientLoader::parseItemsExtra()
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("items"))
+    if(root.tagName()!=DatapackClientLoader::text_items)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
         return;
@@ -385,20 +423,20 @@ void DatapackClientLoader::parseItemsExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(QStringLiteral("item"));
+    QDomElement item = root.firstChildElement(DatapackClientLoader::text_item);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("id")))
+            if(item.hasAttribute(DatapackClientLoader::text_id))
             {
-                quint32 id=item.attribute(QStringLiteral("id")).toULongLong(&ok);
+                quint32 id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                 if(ok)
                 {
                     if(!DatapackClientLoader::itemsExtra.contains(id))
                     {
                         //load the image
-                        if(item.hasAttribute(QStringLiteral("image")))
+                        if(item.hasAttribute(DatapackClientLoader::text_image))
                         {
                             QPixmap image(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute("image"));
                             if(image.isNull())
@@ -409,7 +447,7 @@ void DatapackClientLoader::parseItemsExtra()
                             }
                             else
                             {
-                                DatapackClientLoader::itemsExtra[id].imagePath=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(QStringLiteral("image"))).absoluteFilePath();
+                                DatapackClientLoader::itemsExtra[id].imagePath=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(DatapackClientLoader::text_image)).absoluteFilePath();
                                 DatapackClientLoader::itemsExtra[id].image=image;
                             }
                         }
@@ -425,36 +463,36 @@ void DatapackClientLoader::parseItemsExtra()
                         //load the name
                         {
                             bool name_found=false;
-                            QDomElement name = item.firstChildElement(QStringLiteral("name"));
-                            if(!language.isEmpty() && language!=QStringLiteral("en"))
+                            QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!name.isNull())
                                 {
                                     if(name.isElement())
                                     {
-                                        if(name.hasAttribute(QStringLiteral("lang")) && name.attribute(QStringLiteral("lang"))==language)
+                                        if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                         {
                                             DatapackClientLoader::itemsExtra[id].name=name.text();
                                             name_found=true;
                                             break;
                                         }
                                     }
-                                    name = name.nextSiblingElement(QStringLiteral("name"));
+                                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             if(!name_found)
                             {
-                                name = item.firstChildElement(QStringLiteral("name"));
+                                name = item.firstChildElement(DatapackClientLoader::text_name);
                                 while(!name.isNull())
                                 {
                                     if(name.isElement())
                                     {
-                                        if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                        if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
                                             DatapackClientLoader::itemsExtra[id].name=name.text();
                                             name_found=true;
                                             break;
                                         }
                                     }
-                                    name = name.nextSiblingElement(QStringLiteral("name"));
+                                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             }
                             if(!name_found)
@@ -467,36 +505,36 @@ void DatapackClientLoader::parseItemsExtra()
                         //load the description
                         {
                             bool description_found=false;
-                            QDomElement description = item.firstChildElement(QStringLiteral("description"));
-                            if(!language.isEmpty() && language!=QStringLiteral("en"))
+                            QDomElement description = item.firstChildElement(DatapackClientLoader::text_description);
+                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!description.isNull())
                                 {
                                     if(description.isElement())
                                     {
-                                        if(description.hasAttribute(QStringLiteral("lang")) && description.attribute(QStringLiteral("lang"))==language)
+                                        if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
                                         {
                                             DatapackClientLoader::itemsExtra[id].description=description.text();
                                             description_found=true;
                                             break;
                                         }
                                     }
-                                    description = description.nextSiblingElement(QStringLiteral("description"));
+                                    description = description.nextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             if(!description_found)
                             {
-                                description = item.firstChildElement(QStringLiteral("description"));
+                                description = item.firstChildElement(DatapackClientLoader::text_description);
                                 while(!description.isNull())
                                 {
                                     if(description.isElement())
                                     {
-                                        if(!description.hasAttribute(QStringLiteral("lang")) || description.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                        if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
                                             DatapackClientLoader::itemsExtra[id].description=description.text();
                                             description_found=true;
                                             break;
                                         }
                                     }
-                                    description = description.nextSiblingElement(QStringLiteral("description"));
+                                    description = description.nextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             }
                             if(!description_found)
@@ -517,7 +555,7 @@ void DatapackClientLoader::parseItemsExtra()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement(QStringLiteral("item"));
+        item = item.nextSiblingElement(DatapackClientLoader::text_item);
     }
 
     qDebug() << QStringLiteral("%1 item(s) extra loaded").arg(DatapackClientLoader::itemsExtra.size());
@@ -612,7 +650,7 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
         QDomDocument domDocument;
-        const QString &file=entryList.at(index).absoluteFilePath()+QStringLiteral("/definition.xml");
+        const QString &file=entryList.at(index).absoluteFilePath()+DatapackClientLoader::text_slashdefinitiondotxml;
         if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
@@ -639,7 +677,7 @@ void DatapackClientLoader::parseQuestsExtra()
             CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!=QStringLiteral("quest"))
+        if(root.tagName()!=DatapackClientLoader::text_quest)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
             index++;
@@ -650,14 +688,14 @@ void DatapackClientLoader::parseQuestsExtra()
 
         //load name
         {
-            QDomElement name = root.firstChildElement(QStringLiteral("name"));
+            QDomElement name = root.firstChildElement(DatapackClientLoader::text_name);
             bool found=false;
-            if(!language.isEmpty() && language!=QStringLiteral("en"))
+            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                 while(!name.isNull())
                 {
                     if(name.isElement())
                     {
-                        if(name.hasAttribute(QStringLiteral("lang")) && name.attribute(QStringLiteral("lang"))==language)
+                        if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                         {
                             quest.name=name.text();
                             found=true;
@@ -666,16 +704,16 @@ void DatapackClientLoader::parseQuestsExtra()
                         else
                             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                     }
-                    name = name.nextSiblingElement(QStringLiteral("name"));
+                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
                 }
             if(!found)
             {
-                name = root.firstChildElement(QStringLiteral("name"));
+                name = root.firstChildElement(DatapackClientLoader::text_name);
                 while(!name.isNull())
                 {
                     if(name.isElement())
                     {
-                        if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                        if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                         {
                             quest.name=name.text();
                             break;
@@ -683,18 +721,18 @@ void DatapackClientLoader::parseQuestsExtra()
                         else
                             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                     }
-                    name = name.nextSiblingElement(QStringLiteral("name"));
+                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
                 }
             }
         }
 
         //load showRewards
         {
-            QDomElement rewards = root.firstChildElement(QStringLiteral("rewards"));
+            QDomElement rewards = root.firstChildElement(DatapackClientLoader::text_rewards);
             if(!rewards.isNull() && rewards.isElement())
             {
-                if(rewards.hasAttribute(QStringLiteral("show")))
-                    if(rewards.attribute(QStringLiteral("show"))==QStringLiteral("true"))
+                if(rewards.hasAttribute(DatapackClientLoader::text_show))
+                    if(rewards.attribute(DatapackClientLoader::text_show)==DatapackClientLoader::text_true)
                         showRewards=true;
             }
         }
@@ -702,20 +740,20 @@ void DatapackClientLoader::parseQuestsExtra()
         QHash<quint32,QString> steps;
         {
             //load step
-            QDomElement step = root.firstChildElement(QStringLiteral("step"));
+            QDomElement step = root.firstChildElement(DatapackClientLoader::text_step);
             while(!step.isNull())
             {
                 if(step.isElement())
                 {
-                    if(step.hasAttribute(QStringLiteral("id")))
+                    if(step.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        quint32 id=step.attribute(QStringLiteral("id")).toULongLong(&ok);
+                        quint32 id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                         if(ok)
                         {
                             CatchChallenger::Quest::Step stepObject;
-                            if(step.hasAttribute(QStringLiteral("bot")))
+                            if(step.hasAttribute(DatapackClientLoader::text_bot))
                             {
-                                QStringList tempStringList=step.attribute(QStringLiteral("bot")).split(QStringLiteral(";"));
+                                QStringList tempStringList=step.attribute(DatapackClientLoader::text_bot).split(DatapackClientLoader::text_dotcomma);
                                 int index=0;
                                 while(index<tempStringList.size())
                                 {
@@ -725,15 +763,15 @@ void DatapackClientLoader::parseQuestsExtra()
                                     index++;
                                 }
                             }
-                            QDomElement stepItem = step.firstChildElement(QStringLiteral("text"));
+                            QDomElement stepItem = step.firstChildElement(DatapackClientLoader::text_text);
                             bool found=false;
-                            if(!language.isEmpty() && language!=QStringLiteral("en"))
+                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             {
                                 while(!stepItem.isNull())
                                 {
                                     if(stepItem.isElement())
                                     {
-                                        if(stepItem.hasAttribute(QStringLiteral("lang")) || stepItem.attribute(QStringLiteral("lang"))==language)
+                                        if(stepItem.hasAttribute(DatapackClientLoader::text_lang) || stepItem.attribute(DatapackClientLoader::text_lang)==language)
                                         {
                                             found=true;
                                             steps[id]=stepItem.text();
@@ -741,24 +779,24 @@ void DatapackClientLoader::parseQuestsExtra()
                                     }
                                     else
                                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                                    stepItem = stepItem.nextSiblingElement(QStringLiteral("text"));
+                                    stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
                                 }
                             }
                             if(!found)
                             {
-                                stepItem = step.firstChildElement(QStringLiteral("text"));
+                                stepItem = step.firstChildElement(DatapackClientLoader::text_text);
                                 while(!stepItem.isNull())
                                 {
                                     if(stepItem.isElement())
                                     {
-                                        if(!stepItem.hasAttribute(QStringLiteral("lang")) || stepItem.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                        if(!stepItem.hasAttribute(DatapackClientLoader::text_lang) || stepItem.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                             steps[id]=stepItem.text();
                                         else
                                             qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
                                     }
                                     else
                                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                                    stepItem = stepItem.nextSiblingElement(QStringLiteral("text"));
+                                    stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
                                 }
                             }
                         }
@@ -770,7 +808,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 }
                 else
                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                step = step.nextSiblingElement(QStringLiteral("step"));
+                step = step.nextSiblingElement(DatapackClientLoader::text_step);
             }
         }
 
@@ -830,7 +868,7 @@ void DatapackClientLoader::parseQuestsText()
             continue;
         }
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!=QStringLiteral("text"))
+        if(root.tagName()!=DatapackClientLoader::text_text)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
             index++;
@@ -841,24 +879,24 @@ void DatapackClientLoader::parseQuestsText()
         bool ok;
         QHash<quint32,QString> client_logic_texts;
         //load text
-        QDomElement client_logic = root.firstChildElement(QStringLiteral("client_logic"));
+        QDomElement client_logic = root.firstChildElement(DatapackClientLoader::text_client_logic);
         while(!client_logic.isNull())
         {
             if(client_logic.isElement())
             {
-                if(client_logic.hasAttribute(QStringLiteral("id")))
+                if(client_logic.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    quint32 id=client_logic.attribute(QStringLiteral("id")).toULongLong(&ok);
+                    quint32 id=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                     if(ok)
                     {
-                        QDomElement text = client_logic.firstChildElement(QStringLiteral("text"));
+                        QDomElement text = client_logic.firstChildElement(DatapackClientLoader::text_text);
                         bool found=false;
-                        if(!language.isEmpty() && language!=QStringLiteral("en"))
+                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             while(!text.isNull())
                             {
                                 if(text.isElement())
                                 {
-                                    if(text.hasAttribute(QStringLiteral("lang")) && text.attribute(QStringLiteral("lang"))==language)
+                                    if(text.hasAttribute(DatapackClientLoader::text_lang) && text.attribute(DatapackClientLoader::text_lang)==language)
                                     {
                                         client_logic_texts[id]=text.text();
                                         found=true;
@@ -866,23 +904,23 @@ void DatapackClientLoader::parseQuestsText()
                                 }
                                 else
                                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
-                                text = text.nextSiblingElement(QStringLiteral("text"));
+                                text = text.nextSiblingElement(DatapackClientLoader::text_text);
                             }
                         if(!found)
                         {
-                            text = client_logic.firstChildElement(QStringLiteral("text"));
+                            text = client_logic.firstChildElement(DatapackClientLoader::text_text);
                             while(!text.isNull())
                             {
                                 if(text.isElement())
                                 {
-                                    if(!text.hasAttribute(QStringLiteral("lang")) || text.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                                    if(!text.hasAttribute(DatapackClientLoader::text_lang) || text.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         client_logic_texts[id]=text.text();
                                     else
                                         qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
                                 }
                                 else
                                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
-                                text = text.nextSiblingElement(QStringLiteral("text"));
+                                text = text.nextSiblingElement(DatapackClientLoader::text_text);
                             }
                         }
                     }
@@ -894,7 +932,7 @@ void DatapackClientLoader::parseQuestsText()
             }
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
-            client_logic = client_logic.nextSiblingElement(QStringLiteral("client_logic"));
+            client_logic = client_logic.nextSiblingElement(DatapackClientLoader::text_client_logic);
         }
         #ifdef DEBUG_CLIENT_QUEST
         qDebug() << QStringLiteral("%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
@@ -936,21 +974,21 @@ void DatapackClientLoader::parseAudioAmbiance()
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("list"))
+    if(root.tagName()!=DatapackClientLoader::text_list)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
         return;
     }
 
     //load the content
-    QDomElement item = root.firstChildElement(QStringLiteral("map"));
+    QDomElement item = root.firstChildElement(DatapackClientLoader::text_map);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(QStringLiteral("type")))
+            if(item.hasAttribute(DatapackClientLoader::text_type))
             {
-                QString type=item.attribute(QStringLiteral("type"));
+                QString type=item.attribute(DatapackClientLoader::text_type);
                 if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
                     audioAmbiance[type]=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+item.text();
                 else
@@ -961,7 +999,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement(QStringLiteral("map"));
+        item = item.nextSiblingElement(DatapackClientLoader::text_map);
     }
 
     qDebug() << QStringLiteral("%1 audio ambiance(s) link loaded").arg(audioAmbiance.size());
@@ -1026,7 +1064,7 @@ void DatapackClientLoader::parseZoneExtra()
             continue;
         }
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!=QStringLiteral("zone"))
+        if(root.tagName()!=DatapackClientLoader::text_zone)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
             index++;
@@ -1038,14 +1076,14 @@ void DatapackClientLoader::parseZoneExtra()
         DatapackClientLoader::ZoneExtra zone;
 
         //load name
-        QDomElement name = root.firstChildElement(QStringLiteral("name"));
+        QDomElement name = root.firstChildElement(DatapackClientLoader::text_name);
         bool found=false;
-        if(!language.isEmpty() && language!=QStringLiteral("en"))
+        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
             while(!name.isNull())
             {
                 if(name.isElement())
                 {
-                    if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                    if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                     {
                         haveName=true;
                         zone.name=name.text();
@@ -1054,16 +1092,16 @@ void DatapackClientLoader::parseZoneExtra()
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                 }
-                name = name.nextSiblingElement(QStringLiteral("name"));
+                name = name.nextSiblingElement(DatapackClientLoader::text_name);
             }
         if(!found)
         {
-            name = root.firstChildElement(QStringLiteral("name"));
+            name = root.firstChildElement(DatapackClientLoader::text_name);
             while(!name.isNull())
             {
                 if(name.isElement())
                 {
-                    if(!name.hasAttribute(QStringLiteral("lang")) || name.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+                    if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                     {
                         haveName=true;
                         zone.name=name.text();
@@ -1072,7 +1110,7 @@ void DatapackClientLoader::parseZoneExtra()
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                 }
-                name = name.nextSiblingElement(QStringLiteral("name"));
+                name = name.nextSiblingElement(DatapackClientLoader::text_name);
             }
         }
         if(haveName)

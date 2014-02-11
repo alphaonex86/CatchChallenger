@@ -137,6 +137,44 @@ private slots:
     void parseZoneExtra();
     void parseTileset();
     void parseReputationExtra();
+protected:
+    static QString text_list;
+    static QString text_reputation;
+    static QString text_type;
+    static QString text_name;
+    static QString text_en;
+    static QString text_lang;
+    static QString text_level;
+    static QString text_point;
+    static QString text_text;
+    static QString text_id;
+    static QString text_image;
+    static QString text_description;
+    static QString text_item;
+    static QString text_slashdefinitiondotxml;
+    static QString text_quest;
+    static QString text_rewards;
+    static QString text_show;
+    static QString text_true;
+    static QString text_step;
+    static QString text_bot;
+    static QString text_dotcomma;
+    static QString text_client_logic;
+    static QString text_map;
+    static QString text_items;
+    static QString text_zone;
+
+    static QString text_monster;
+    static QString text_kind;
+    static QString text_habitat;
+    static QString text_slash;
+    static QString text_types;
+    static QString text_buff;
+    static QString text_skill;
+    static QString text_fight;
+    static QString text_fights;
+    static QString text_start;
+    static QString text_win;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

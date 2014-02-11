@@ -124,7 +124,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         return false;
     }
     CatchChallenger::Map *new_map=&map;
-    if(CatchChallenger::MoveOnTheMap::moveWithoutTeleport(direction,&new_map,&x,&y,false))
+    if(!CatchChallenger::MoveOnTheMap::moveWithoutTeleport(direction,&new_map,&x,&y,false))
     {
         qDebug() << "Strange, can go but move failed";
         return false;

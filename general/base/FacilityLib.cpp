@@ -9,7 +9,12 @@
 using namespace CatchChallenger;
 
 QByteArray FacilityLib::UTF8EmptyData=QByteArray().fill(0x00,1);
-QString FacilityLib::slash=QLatin1Literal("/");
+QString FacilityLib::text_slash=QLatin1Literal("/");
+QString FacilityLib::text_male=QLatin1Literal("male");
+QString FacilityLib::text_female=QLatin1Literal("female");
+QString FacilityLib::text_unknown=QLatin1Literal("unknown");
+QString FacilityLib::text_clan=QLatin1Literal("clan");
+QString FacilityLib::text_dotcomma=QLatin1Literal(";");
 
 QByteArray FacilityLib::toUTF8(const QString &text)
 {
@@ -33,7 +38,7 @@ QStringList FacilityLib::listFolder(const QString& folder,const QString& suffix)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            returnList+=listFolder(folder,suffix+fileInfo.fileName()+slash);//put unix separator because it's transformed into that's under windows too
+            returnList+=listFolder(folder,suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
         else if(fileInfo.isFile())
             returnList+=suffix+fileInfo.fileName();
     }
@@ -177,13 +182,13 @@ QString FacilityLib::genderToString(const Gender &gender)
     switch(gender)
     {
         case Gender_Male:
-            return QStringLiteral("male");
+            return FacilityLib::text_male;
         case Gender_Female:
-            return QStringLiteral("female");
+            return FacilityLib::text_female;
         default:
             break;
     }
-    return QStringLiteral("unknown");
+    return FacilityLib::text_unknown;
 }
 
 QString FacilityLib::allowToString(const QSet<ActionAllow> &allowList)
@@ -194,22 +199,22 @@ QString FacilityLib::allowToString(const QSet<ActionAllow> &allowList)
         switch(i.next())
         {
             case ActionAllow_Clan:
-                allowString << QStringLiteral("clan");
+                allowString << FacilityLib::text_clan;
             break;
             default:
             break;
         }
-    return allowString.join(QStringLiteral(";"));
+    return allowString.join(FacilityLib::text_dotcomma);
 }
 
 QSet<ActionAllow> FacilityLib::StringToAllow(const QString &string)
 {
     QSet<ActionAllow> allowList;
-    const QStringList &allowStringList=string.split(QStringLiteral(";"));
+    const QStringList &allowStringList=string.split(FacilityLib::text_dotcomma);
     int index=0;
     while(index<allowStringList.size())
     {
-        if(allowStringList.at(index)==QStringLiteral("clan"))
+        if(allowStringList.at(index)==FacilityLib::text_clan)
             allowList << ActionAllow_Clan;
         index++;
     }
@@ -295,7 +300,7 @@ bool FacilityLib::rmpath(const QDir &dir)
         else
         {
             //return the fonction for scan the new folder
-            if(!FacilityLib::rmpath(dir.absolutePath()+QStringLiteral("/")+fileInfo.fileName()+QStringLiteral("/")))
+            if(!FacilityLib::rmpath(dir.absolutePath()+FacilityLib::text_slash+fileInfo.fileName()+FacilityLib::text_slash))
                 allHaveWork=false;
         }
     }

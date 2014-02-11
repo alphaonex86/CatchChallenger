@@ -326,6 +326,12 @@ private:
     QList<Layer*> mLayers;
     QList<Tileset*> mTilesets;
     LayerDataFormat mLayerDataFormat;
+
+public:
+    static QString text_unknown;
+    static QString text_orthogonal;
+    static QString text_isometric;
+    static QString text_staggered;
 };
 
 /**
