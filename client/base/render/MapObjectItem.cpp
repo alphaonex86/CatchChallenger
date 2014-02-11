@@ -8,6 +8,7 @@ MapObjectItem::MapObjectItem(Tiled::MapObject *mapObject,
     : QGraphicsItem(parent)
     , mMapObject(mapObject)
 {
+    setCacheMode(QGraphicsItem::ItemCoordinateCache);
 }
 
 QRectF MapObjectItem::boundingRect() const

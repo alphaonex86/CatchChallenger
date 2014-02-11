@@ -37,6 +37,11 @@
 
 using namespace Tiled;
 
+QString Map::text_unknown=QLatin1Literal("unknown");
+QString Map::text_orthogonal=QLatin1Literal("orthogonal");
+QString Map::text_isometric=QLatin1Literal("isometric");
+QString Map::text_staggered=QLatin1Literal("staggered");
+
 Map::Map(Orientation orientation,
          int width, int height, int tileWidth, int tileHeight):
     Object(MapType),
@@ -205,16 +210,16 @@ QString Tiled::orientationToString(Map::Orientation orientation)
     switch (orientation) {
     default:
     case Map::Unknown:
-        return QStringLiteral("unknown");
+        return Map::text_unknown;
         break;
     case Map::Orthogonal:
-        return QStringLiteral("orthogonal");
+        return Map::text_orthogonal;
         break;
     case Map::Isometric:
-        return QStringLiteral("isometric");
+        return Map::text_isometric;
         break;
     case Map::Staggered:
-        return QStringLiteral("staggered");
+        return Map::text_staggered;
         break;
     }
 }
@@ -222,11 +227,11 @@ QString Tiled::orientationToString(Map::Orientation orientation)
 Map::Orientation Tiled::orientationFromString(const QString &string)
 {
     Map::Orientation orientation = Map::Unknown;
-    if (string == QStringLiteral("orthogonal")) {
+    if (string == Map::text_orthogonal) {
         orientation = Map::Orthogonal;
-    } else if (string == QStringLiteral("isometric")) {
+    } else if (string == Map::text_isometric) {
         orientation = Map::Isometric;
-    } else if (string == QStringLiteral("staggered")) {
+    } else if (string == Map::text_staggered) {
         orientation = Map::Staggered;
     }
     return orientation;

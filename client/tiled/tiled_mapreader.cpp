@@ -51,6 +51,61 @@ using namespace Tiled;
 using namespace Tiled::Internal;
 
 namespace Tiled {
+
+QString MapReader::text_map=QLatin1Literal("map");
+QString MapReader::text_width=QLatin1Literal("width");
+QString MapReader::text_height=QLatin1Literal("height");
+QString MapReader::text_tilewidth=QLatin1Literal("tilewidth");
+QString MapReader::text_tileheight=QLatin1Literal("tileheight");
+QString MapReader::text_orientation=QLatin1Literal("orientation");
+QString MapReader::text_backgroundcolor=QLatin1Literal("backgroundcolor");
+QString MapReader::text_properties=QLatin1Literal("properties");
+QString MapReader::text_tileset=QLatin1Literal("tileset");
+QString MapReader::text_layer=QLatin1Literal("layer");
+QString MapReader::text_objectgroup=QLatin1Literal("objectgroup");
+QString MapReader::text_imagelayer=QLatin1Literal("imagelayer");
+QString MapReader::text_source=QLatin1Literal("source");
+QString MapReader::text_name=QLatin1Literal("name");
+QString MapReader::text_spacing=QLatin1Literal("spacing");
+QString MapReader::text_margin=QLatin1Literal("margin");
+QString MapReader::text_tile=QLatin1Literal("tile");
+QString MapReader::text_tileoffset=QLatin1Literal("tileoffset");
+QString MapReader::text_x=QLatin1Literal("x");
+QString MapReader::text_y=QLatin1Literal("y");
+QString MapReader::text_image=QLatin1Literal("image");
+QString MapReader::text_terraintypes=QLatin1Literal("terraintypes");
+QString MapReader::text_id=QLatin1Literal("id");
+QString MapReader::text_comma=QLatin1Literal(",");
+QString MapReader::text_probability=QLatin1Literal("probability");
+QString MapReader::text_trans=QLatin1Literal("trans");
+QString MapReader::text_dies=QLatin1Literal("#");
+QString MapReader::text_format=QLatin1Literal("format");
+QString MapReader::text_data=QLatin1Literal("data");
+QString MapReader::text_encoding=QLatin1Literal("encoding");
+QString MapReader::text_base64=QLatin1Literal("base64");
+QString MapReader::text_firstgid=QLatin1Literal("firstgid");
+QString MapReader::text_terrain=QLatin1Literal("terrain");
+QString MapReader::text_opacity=QLatin1Literal("opacity");
+QString MapReader::text_visible=QLatin1Literal("visible");
+QString MapReader::text_compression=QLatin1Literal("compression");
+QString MapReader::text_csv=QLatin1Literal("csv");
+QString MapReader::text_gzip=QLatin1Literal("gzip");
+QString MapReader::text_zlib=QLatin1Literal("zlib");
+QString MapReader::text_gid=QLatin1Literal("gid");
+QString MapReader::text_color=QLatin1Literal("color");
+QString MapReader::text_object=QLatin1Literal("object");
+QString MapReader::text_type=QLatin1Literal("type");
+QString MapReader::text_rotation=QLatin1Literal("rotation");
+QString MapReader::text_polygon=QLatin1Literal("polygon");
+QString MapReader::text_polyline=QLatin1Literal("polyline");
+QString MapReader::text_ellipse=QLatin1Literal("ellipse");
+QString MapReader::text_points=QLatin1Literal("points");
+QString MapReader::text_space=QLatin1Literal("space");
+QString MapReader::text_property=QLatin1Literal("property");
+QString MapReader::text_value=QLatin1Literal("value");
+QString MapReader::text_slash=QLatin1Literal("/");
+
+
 namespace Internal {
 
 class MapReaderPrivate
@@ -122,6 +177,7 @@ private:
     QList<Tileset*> mCreatedTilesets;
     GidMapper mGidMapper;
     bool mReadingExternalTileset;
+    QHash<QString/*source*/,QImage> imageCache;
 
     QXmlStreamReader xml;
 };
@@ -137,7 +193,7 @@ Map *MapReaderPrivate::readMap(QIODevice *device, const QString &path)
 
     xml.setDevice(device);
 
-    if (xml.readNextStartElement() && xml.name() == QStringLiteral("map")) {
+    if (xml.readNextStartElement() && xml.name() == MapReader::text_map) {
         map = readMap();
     } else {
         xml.raiseError(tr("Not a map file."));
@@ -156,7 +212,7 @@ Tileset *MapReaderPrivate::readTileset(QIODevice *device, const QString &path)
 
     xml.setDevice(device);
 
-    if (xml.readNextStartElement() && xml.name() == QStringLiteral("tileset"))
+    if (xml.readNextStartElement() && xml.name() == MapReader::text_tileset)
         tileset = readTileset();
     else
         xml.raiseError(tr("Not a tileset file."));
@@ -200,20 +256,20 @@ void MapReaderPrivate::readUnknownElement()
 
 Map *MapReaderPrivate::readMap()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("map"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_map);
 
     const QXmlStreamAttributes atts = xml.attributes();
     const int mapWidth =
-            atts.value(QStringLiteral("width")).toString().toInt();
+            atts.value(MapReader::text_width).toString().toInt();
     const int mapHeight =
-            atts.value(QStringLiteral("height")).toString().toInt();
+            atts.value(MapReader::text_height).toString().toInt();
     const int tileWidth =
-            atts.value(QStringLiteral("tilewidth")).toString().toInt();
+            atts.value(MapReader::text_tilewidth).toString().toInt();
     const int tileHeight =
-            atts.value(QStringLiteral("tileheight")).toString().toInt();
+            atts.value(MapReader::text_tileheight).toString().toInt();
 
     const QString orientationString =
-            atts.value(QStringLiteral("orientation")).toString();
+            atts.value(MapReader::text_orientation).toString();
     const Map::Orientation orientation =
             orientationFromString(orientationString);
 
@@ -225,20 +281,20 @@ Map *MapReaderPrivate::readMap()
     mMap = new Map(orientation, mapWidth, mapHeight, tileWidth, tileHeight);
     mCreatedTilesets.clear();
 
-    QStringRef bgColorString = atts.value(QStringLiteral("backgroundcolor"));
+    QStringRef bgColorString = atts.value(MapReader::text_backgroundcolor);
     if (!bgColorString.isEmpty())
         mMap->setBackgroundColor(QColor(bgColorString.toString()));
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("properties"))
+        if (xml.name() == MapReader::text_properties)
             mMap->mergeProperties(readProperties());
-        else if (xml.name() == QStringLiteral("tileset"))
+        else if (xml.name() == MapReader::text_tileset)
             mMap->addTileset(readTileset());
-        else if (xml.name() == QStringLiteral("layer"))
+        else if (xml.name() == MapReader::text_layer)
             mMap->addLayer(readLayer());
-        else if (xml.name() == QStringLiteral("objectgroup"))
+        else if (xml.name() == MapReader::text_objectgroup)
             mMap->addLayer(readObjectGroup());
-        else if (xml.name() == QStringLiteral("imagelayer"))
+        else if (xml.name() == MapReader::text_imagelayer)
             mMap->addLayer(readImageLayer());
         else
             readUnknownElement();
@@ -259,26 +315,26 @@ Map *MapReaderPrivate::readMap()
 
 Tileset *MapReaderPrivate::readTileset()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("tileset"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_tileset);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    const QString source = atts.value(QStringLiteral("source")).toString();
+    const QString source = atts.value(MapReader::text_source).toString();
     const unsigned firstGid =
-            atts.value(QStringLiteral("firstgid")).toString().toUInt();
+            atts.value(MapReader::text_firstgid).toString().toUInt();
 
     Tileset *tileset = 0;
 
     if (source.isEmpty()) { // Not an external tileset
         const QString name =
-                atts.value(QStringLiteral("name")).toString();
+                atts.value(MapReader::text_name).toString();
         const int tileWidth =
-                atts.value(QStringLiteral("tilewidth")).toString().toInt();
+                atts.value(MapReader::text_tilewidth).toString().toInt();
         const int tileHeight =
-                atts.value(QStringLiteral("tileheight")).toString().toInt();
+                atts.value(MapReader::text_tileheight).toString().toInt();
         const int tileSpacing =
-                atts.value(QStringLiteral("spacing")).toString().toInt();
+                atts.value(MapReader::text_spacing).toString().toInt();
         const int margin =
-                atts.value(QStringLiteral("margin")).toString().toInt();
+                atts.value(MapReader::text_margin).toString().toInt();
 
         if (tileWidth < 0 || tileHeight < 0
             || (firstGid == 0 && !mReadingExternalTileset)) {
@@ -291,23 +347,23 @@ Tileset *MapReaderPrivate::readTileset()
             mCreatedTilesets.append(tileset);
 
             while (xml.readNextStartElement()) {
-                if (xml.name() == QStringLiteral("tile")) {
+                if (xml.name() == MapReader::text_tile) {
                     readTilesetTile(tileset);
-                } else if (xml.name() == QStringLiteral("tileoffset")) {
+                } else if (xml.name() == MapReader::text_tileoffset) {
                     const QXmlStreamAttributes oa = xml.attributes();
-                    int x = oa.value(QStringLiteral("x")).toString().toInt();
-                    int y = oa.value(QStringLiteral("y")).toString().toInt();
+                    int x = oa.value(MapReader::text_x).toString().toInt();
+                    int y = oa.value(MapReader::text_y).toString().toInt();
                     tileset->setTileOffset(QPoint(x, y));
                     xml.skipCurrentElement();
-                } else if (xml.name() == QStringLiteral("properties")) {
+                } else if (xml.name() == MapReader::text_properties) {
                     tileset->mergeProperties(readProperties());
-                } else if (xml.name() == QStringLiteral("image")) {
+                } else if (xml.name() == MapReader::text_image) {
                     if (tileWidth == 0 || tileHeight == 0) {
                         xml.raiseError(tr("Invalid tileset parameters for tileset"
                                           " '%1'").arg(name));
                     }
                     readTilesetImage(tileset);
-                } else if (xml.name() == QStringLiteral("terraintypes")) {
+                } else if (xml.name() == MapReader::text_terraintypes) {
                     readTilesetTerrainTypes(tileset);
                 } else {
                     readUnknownElement();
@@ -342,10 +398,10 @@ Tileset *MapReaderPrivate::readTileset()
 
 void MapReaderPrivate::readTilesetTile(Tileset *tileset)
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("tile"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_tile);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    const int id = atts.value(QStringLiteral("id")).toString().toInt();
+    const int id = atts.value(MapReader::text_id).toString().toInt();
 
     // In lazy mode we don't know in advance how many tiles a certain tileset
     // will have. Make sure the tileset is at least big enough to hold the
@@ -365,9 +421,9 @@ void MapReaderPrivate::readTilesetTile(Tileset *tileset)
     Tile *tile = tileset->tileAt(id);
 
     // Read tile quadrant terrain ids
-    QString terrain = atts.value(QStringLiteral("terrain")).toString();
+    QString terrain = atts.value(MapReader::text_terrain).toString();
     if (!terrain.isEmpty()) {
-        QStringList quadrants = terrain.split(QStringLiteral(","));
+        QStringList quadrants = terrain.split(MapReader::text_comma);
         if (quadrants.size() == 4) {
             for (int i = 0; i < 4; ++i) {
                 int t = quadrants.at(i).isEmpty() ? -1 : quadrants.at(i).toInt();
@@ -377,15 +433,15 @@ void MapReaderPrivate::readTilesetTile(Tileset *tileset)
     }
 
     // Read tile probability
-    QString probability = atts.value(QStringLiteral("probability")).toString();
+    QString probability = atts.value(MapReader::text_probability).toString();
     if (!probability.isEmpty()) {
         tile->setTerrainProbability(probability.toFloat());
     }
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("properties")) {
+        if (xml.name() == MapReader::text_properties) {
             tile->mergeProperties(readProperties());
-        } else if (xml.name() == QStringLiteral("image")) {
+        } else if (xml.name() == MapReader::text_image) {
             // TODO: Support individual tile images in lazy mode
             tileset->setTileImage(id, QPixmap::fromImage(readImage()));
         } else {
@@ -396,22 +452,22 @@ void MapReaderPrivate::readTilesetTile(Tileset *tileset)
 
 void MapReaderPrivate::readTilesetImage(Tileset *tileset)
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("image"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_image);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    QString source = atts.value(QStringLiteral("source")).toString();
-    QString trans = atts.value(QStringLiteral("trans")).toString();
+    QString source = atts.value(MapReader::text_source).toString();
+    QString trans = atts.value(MapReader::text_trans).toString();
 
     if (!trans.isEmpty()) {
-        if (!trans.startsWith(QStringLiteral("#")))
-            trans.prepend(QStringLiteral("#"));
+        if (!trans.startsWith(MapReader::text_dies))
+            trans.prepend(MapReader::text_dies);
         tileset->setTransparentColor(QColor(trans));
     }
 
     source = p->resolveReference(source, mPath);
 
     // Set the width that the tileset had when the map was saved
-    const int width = atts.value(QStringLiteral("width")).toString().toInt();
+    const int width = atts.value(MapReader::text_width).toString().toInt();
     mGidMapper.setTilesetWidth(tileset, width);
 
     if (mLazy && !source.isEmpty()) {
@@ -426,20 +482,20 @@ void MapReaderPrivate::readTilesetImage(Tileset *tileset)
 
 QImage MapReaderPrivate::readImage()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("image"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_image);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    QString source = atts.value(QStringLiteral("source")).toString();
-    QString format = atts.value(QStringLiteral("format")).toString();
+    QString source = atts.value(MapReader::text_source).toString();
+    QString format = atts.value(MapReader::text_format).toString();
 
     if (source.isEmpty()) {
         while (xml.readNextStartElement()) {
-            if (xml.name() == QStringLiteral("data")) {
+            if (xml.name() == MapReader::text_data) {
                 const QXmlStreamAttributes atts = xml.attributes();
-                QString encoding = atts.value(QStringLiteral("encoding"))
+                QString encoding = atts.value(MapReader::text_encoding)
                     .toString();
                 QByteArray data = xml.readElementText().toLatin1();
-                if (encoding == QStringLiteral("base64")) {
+                if (encoding == MapReader::text_base64) {
                     data = QByteArray::fromBase64(data);
                 }
                 xml.skipCurrentElement();
@@ -452,11 +508,12 @@ QImage MapReaderPrivate::readImage()
         xml.skipCurrentElement();
 
         source = p->resolveReference(source, mPath);
+        if(imageCache.contains(source))
+            return imageCache.value(source);
         QImage image = p->readExternalImage(source);
         if (image.isNull())
             xml.raiseError(tr("Error loading image:\n'%1'").arg(source));
-        if(image.format()!=QImage::Format_ARGB32 || image.format()!=QImage::Format_RGB32)
-            image=image.convertToFormat(QImage::Format_ARGB32);
+        imageCache[source]=image;
         return image;
     }
     return QImage();
@@ -464,18 +521,18 @@ QImage MapReaderPrivate::readImage()
 
 void MapReaderPrivate::readTilesetTerrainTypes(Tileset *tileset)
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("terraintypes"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_terraintypes);
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("terrain")) {
+        if (xml.name() == MapReader::text_terrain) {
             const QXmlStreamAttributes atts = xml.attributes();
-            QString name = atts.value(QStringLiteral("name")).toString();
-            int tile = atts.value(QStringLiteral("tile")).toString().toInt();
+            QString name = atts.value(MapReader::text_name).toString();
+            int tile = atts.value(MapReader::text_tile).toString().toInt();
 
             Terrain *terrain = tileset->addTerrain(name, tile);
 
             while (xml.readNextStartElement()) {
-                if (xml.name() == QStringLiteral("properties"))
+                if (xml.name() == MapReader::text_properties)
                     terrain->mergeProperties(readProperties());
                 else
                     readUnknownElement();
@@ -489,8 +546,8 @@ void MapReaderPrivate::readTilesetTerrainTypes(Tileset *tileset)
 static void readLayerAttributes(Layer *layer,
                                 const QXmlStreamAttributes &atts)
 {
-    const QStringRef opacityRef = atts.value(QStringLiteral("opacity"));
-    const QStringRef visibleRef = atts.value(QStringLiteral("visible"));
+    const QStringRef opacityRef = atts.value(MapReader::text_opacity);
+    const QStringRef visibleRef = atts.value(MapReader::text_visible);
 
     bool ok;
     const float opacity = opacityRef.toString().toFloat(&ok);
@@ -504,22 +561,22 @@ static void readLayerAttributes(Layer *layer,
 
 TileLayer *MapReaderPrivate::readLayer()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("layer"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_layer);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    const QString name = atts.value(QStringLiteral("name")).toString();
-    const int x = atts.value(QStringLiteral("x")).toString().toInt();
-    const int y = atts.value(QStringLiteral("y")).toString().toInt();
-    const int width = atts.value(QStringLiteral("width")).toString().toInt();
-    const int height = atts.value(QStringLiteral("height")).toString().toInt();
+    const QString name = atts.value(MapReader::text_name).toString();
+    const int x = atts.value(MapReader::text_x).toString().toInt();
+    const int y = atts.value(MapReader::text_y).toString().toInt();
+    const int width = atts.value(MapReader::text_width).toString().toInt();
+    const int height = atts.value(MapReader::text_height).toString().toInt();
 
     TileLayer *tileLayer = new TileLayer(name, x, y, width, height);
     readLayerAttributes(tileLayer, atts);
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("properties"))
+        if (xml.name() == MapReader::text_properties)
             tileLayer->mergeProperties(readProperties());
-        else if (xml.name() == QStringLiteral("data"))
+        else if (xml.name() == MapReader::text_data)
             readLayerData(tileLayer);
         else
             readUnknownElement();
@@ -530,24 +587,24 @@ TileLayer *MapReaderPrivate::readLayer()
 
 void MapReaderPrivate::readLayerData(TileLayer *tileLayer)
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("data"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_data);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    QStringRef encoding = atts.value(QStringLiteral("encoding"));
-    QStringRef compression = atts.value(QStringLiteral("compression"));
+    QStringRef encoding = atts.value(MapReader::text_encoding);
+    QStringRef compression = atts.value(MapReader::text_compression);
 
     bool respect = true; // TODO: init from preferences
     if (respect) {
         if (encoding.isEmpty())
             mMap->setLayerDataFormat(Map::XML);
-        else if (encoding == QStringLiteral("csv"))
+        else if (encoding == MapReader::text_csv)
             mMap->setLayerDataFormat(Map::CSV);
-        else if (encoding == QStringLiteral("base64")) {
+        else if (encoding == MapReader::text_base64) {
             if (compression.isEmpty())
                 mMap->setLayerDataFormat(Map::Base64);
-            else if (compression == QStringLiteral("gzip"))
+            else if (compression == MapReader::text_gzip)
                 mMap->setLayerDataFormat(Map::Base64Gzip);
-            else if (compression == QStringLiteral("zlib"))
+            else if (compression == MapReader::text_zlib)
                 mMap->setLayerDataFormat(Map::Base64Zlib);
         }
         // else, error handled below
@@ -560,14 +617,14 @@ void MapReaderPrivate::readLayerData(TileLayer *tileLayer)
         if (xml.isEndElement())
             break;
         else if (xml.isStartElement()) {
-            if (xml.name() == QStringLiteral("tile")) {
+            if (xml.name() == MapReader::text_tile) {
                 if (y >= tileLayer->height()) {
                     xml.raiseError(tr("Too many <tile> elements"));
                     continue;
                 }
 
                 const QXmlStreamAttributes atts = xml.attributes();
-                unsigned gid = atts.value(QStringLiteral("gid")).toString().toUInt();
+                unsigned gid = atts.value(MapReader::text_gid).toString().toUInt();
                 tileLayer->setCell(x, y, cellForGid(gid));
 
                 x++;
@@ -581,11 +638,11 @@ void MapReaderPrivate::readLayerData(TileLayer *tileLayer)
                 readUnknownElement();
             }
         } else if (xml.isCharacters() && !xml.isWhitespace()) {
-            if (encoding == QStringLiteral("base64")) {
+            if (encoding == MapReader::text_base64) {
                 decodeBinaryLayerData(tileLayer,
                                       xml.text(),
                                       compression);
-            } else if (encoding == QStringLiteral("csv")) {
+            } else if (encoding == MapReader::text_csv) {
                 decodeCSVLayerData(tileLayer, xml.text().toString());
             } else {
                 xml.raiseError(tr("Unknown encoding: %1")
@@ -609,8 +666,8 @@ void MapReaderPrivate::decodeBinaryLayerData(TileLayer *tileLayer,
     QByteArray tileData = QByteArray::fromBase64(latin1Text);
     const int size = (tileLayer->width() * tileLayer->height()) * 4;
 
-    if (compression == QStringLiteral("zlib")
-        || compression == QStringLiteral("gzip")) {
+    if (compression == MapReader::text_zlib
+        || compression == MapReader::text_gzip) {
         tileData = decompress(tileData, size);
     } else if (!compression.isEmpty()) {
         xml.raiseError(tr("Compression method '%1' not supported")
@@ -648,7 +705,7 @@ void MapReaderPrivate::decodeBinaryLayerData(TileLayer *tileLayer,
 void MapReaderPrivate::decodeCSVLayerData(TileLayer *tileLayer, const QString &text)
 {
     QString trimText = text.trimmed();
-    QStringList tiles = trimText.split(QStringLiteral(","));
+    QStringList tiles = trimText.split(MapReader::text_comma);
 
     if (tiles.length() != tileLayer->width() * tileLayer->height()) {
         xml.raiseError(tr("Corrupt layer data for layer '%1'")
@@ -689,26 +746,26 @@ Cell MapReaderPrivate::cellForGid(unsigned gid)
 
 ObjectGroup *MapReaderPrivate::readObjectGroup()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("objectgroup"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_objectgroup);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    const QString name = atts.value(QStringLiteral("name")).toString();
-    const int x = atts.value(QStringLiteral("x")).toString().toInt();
-    const int y = atts.value(QStringLiteral("y")).toString().toInt();
-    const int width = atts.value(QStringLiteral("width")).toString().toInt();
-    const int height = atts.value(QStringLiteral("height")).toString().toInt();
+    const QString name = atts.value(MapReader::text_name).toString();
+    const int x = atts.value(MapReader::text_x).toString().toInt();
+    const int y = atts.value(MapReader::text_y).toString().toInt();
+    const int width = atts.value(MapReader::text_width).toString().toInt();
+    const int height = atts.value(MapReader::text_height).toString().toInt();
 
     ObjectGroup *objectGroup = new ObjectGroup(name, x, y, width, height);
     readLayerAttributes(objectGroup, atts);
 
-    const QString color = atts.value(QStringLiteral("color")).toString();
+    const QString color = atts.value(MapReader::text_color).toString();
     if (!color.isEmpty())
         objectGroup->setColor(color);
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("object"))
+        if (xml.name() == MapReader::text_object)
             objectGroup->addObject(readObject());
-        else if (xml.name() == QStringLiteral("properties"))
+        else if (xml.name() == MapReader::text_properties)
             objectGroup->mergeProperties(readProperties());
         else
             readUnknownElement();
@@ -719,22 +776,22 @@ ObjectGroup *MapReaderPrivate::readObjectGroup()
 
 ImageLayer *MapReaderPrivate::readImageLayer()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("imagelayer"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_imagelayer);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    const QString name = atts.value(QStringLiteral("name")).toString();
-    const int x = atts.value(QStringLiteral("x")).toString().toInt();
-    const int y = atts.value(QStringLiteral("y")).toString().toInt();
-    const int width = atts.value(QStringLiteral("width")).toString().toInt();
-    const int height = atts.value(QStringLiteral("height")).toString().toInt();
+    const QString name = atts.value(MapReader::text_name).toString();
+    const int x = atts.value(MapReader::text_x).toString().toInt();
+    const int y = atts.value(MapReader::text_y).toString().toInt();
+    const int width = atts.value(MapReader::text_width).toString().toInt();
+    const int height = atts.value(MapReader::text_height).toString().toInt();
 
     ImageLayer *imageLayer = new ImageLayer(name, x, y, width, height);
     readLayerAttributes(imageLayer, atts);
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("image"))
+        if (xml.name() == MapReader::text_image)
             readImageLayerImage(imageLayer);
-        else if (xml.name() == QStringLiteral("properties"))
+        else if (xml.name() == MapReader::text_properties)
             imageLayer->mergeProperties(readProperties());
         else
             readUnknownElement();
@@ -745,15 +802,15 @@ ImageLayer *MapReaderPrivate::readImageLayer()
 
 void MapReaderPrivate::readImageLayerImage(ImageLayer *imageLayer)
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("image"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_image);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    QString source = atts.value(QStringLiteral("source")).toString();
-    QString trans = atts.value(QStringLiteral("trans")).toString();
+    QString source = atts.value(MapReader::text_source).toString();
+    QString trans = atts.value(MapReader::text_trans).toString();
 
     if (!trans.isEmpty()) {
-        if (!trans.startsWith(QStringLiteral("#")))
-            trans.prepend(QStringLiteral("#"));
+        if (!trans.startsWith(MapReader::text_dies))
+            trans.prepend(MapReader::text_dies);
         imageLayer->setTransparentColor(QColor(trans));
     }
 
@@ -785,17 +842,17 @@ static QPointF pixelToTileCoordinates(Map *map, int x, int y)
 
 MapObject *MapReaderPrivate::readObject()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("object"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_object);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    const QString name = atts.value(QStringLiteral("name")).toString();
-    const unsigned gid = atts.value(QStringLiteral("gid")).toString().toUInt();
-    const int x = atts.value(QStringLiteral("x")).toString().toInt();
-    const int y = atts.value(QStringLiteral("y")).toString().toInt();
-    const int width = atts.value(QStringLiteral("width")).toString().toInt();
-    const int height = atts.value(QStringLiteral("height")).toString().toInt();
-    const QString type = atts.value(QStringLiteral("type")).toString();
-    const QStringRef visibleRef = atts.value(QStringLiteral("visible"));
+    const QString name = atts.value(MapReader::text_name).toString();
+    const unsigned gid = atts.value(MapReader::text_gid).toString().toUInt();
+    const int x = atts.value(MapReader::text_x).toString().toInt();
+    const int y = atts.value(MapReader::text_y).toString().toInt();
+    const int width = atts.value(MapReader::text_width).toString().toInt();
+    const int height = atts.value(MapReader::text_height).toString().toInt();
+    const QString type = atts.value(MapReader::text_type).toString();
+    const QStringRef visibleRef = atts.value(MapReader::text_visible);
 
     const QPointF pos = pixelToTileCoordinates(mMap, x, y);
     const QPointF size = pixelToTileCoordinates(mMap, width, height);
@@ -804,7 +861,7 @@ MapObject *MapReaderPrivate::readObject()
                                                               size.y()));
 
     bool ok;
-    const qreal rotation = atts.value(QStringLiteral("rotation")).toString().toDouble(&ok);
+    const qreal rotation = atts.value(MapReader::text_rotation).toString().toDouble(&ok);
     if (ok)
         object->setRotation(rotation);
 
@@ -816,15 +873,15 @@ MapObject *MapReaderPrivate::readObject()
         object->setVisible(visible);
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("properties")) {
+        if (xml.name() == MapReader::text_properties) {
             object->mergeProperties(readProperties());
-        } else if (xml.name() == QStringLiteral("polygon")) {
+        } else if (xml.name() == MapReader::text_polygon) {
             object->setPolygon(readPolygon());
             object->setShape(MapObject::Polygon);
-        } else if (xml.name() == QStringLiteral("polyline")) {
+        } else if (xml.name() == MapReader::text_polyline) {
             object->setPolygon(readPolygon());
             object->setShape(MapObject::Polyline);
-        } else if (xml.name() == QStringLiteral("ellipse")) {
+        } else if (xml.name() == MapReader::text_ellipse) {
             xml.skipCurrentElement();
             object->setShape(MapObject::Ellipse);
         } else {
@@ -837,19 +894,19 @@ MapObject *MapReaderPrivate::readObject()
 
 QPolygonF MapReaderPrivate::readPolygon()
 {
-    Q_ASSERT(xml.isStartElement() && (xml.name() == QStringLiteral("polygon") ||
-                                      xml.name() == QStringLiteral("polyline")));
+    Q_ASSERT(xml.isStartElement() && (xml.name() == MapReader::text_polygon ||
+                                      xml.name() == MapReader::text_polyline));
 
     const QXmlStreamAttributes atts = xml.attributes();
-    const QString points = atts.value(QStringLiteral("points")).toString();
-    const QStringList pointsList = points.split(QStringLiteral(" "),
+    const QString points = atts.value(MapReader::text_points).toString();
+    const QStringList pointsList = points.split(MapReader::text_space,
                                                 QString::SkipEmptyParts);
 
     QPolygonF polygon;
     bool ok = true;
 
     foreach (const QString &point, pointsList) {
-        const int commaPos = point.indexOf(QStringLiteral(","));
+        const int commaPos = point.indexOf(MapReader::text_comma);
         if (commaPos == -1) {
             ok = false;
             break;
@@ -874,12 +931,12 @@ QPolygonF MapReaderPrivate::readPolygon()
 
 Properties MapReaderPrivate::readProperties()
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("properties"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_properties);
 
     Properties properties;
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == QStringLiteral("property"))
+        if (xml.name() == MapReader::text_property)
             readProperty(&properties);
         else
             readUnknownElement();
@@ -890,11 +947,11 @@ Properties MapReaderPrivate::readProperties()
 
 void MapReaderPrivate::readProperty(Properties *properties)
 {
-    Q_ASSERT(xml.isStartElement() && xml.name() == QStringLiteral("property"));
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_property);
 
     const QXmlStreamAttributes atts = xml.attributes();
-    QString propertyName = atts.value(QStringLiteral("name")).toString();
-    QString propertyValue = atts.value(QStringLiteral("value")).toString();
+    QString propertyName = atts.value(MapReader::text_name).toString();
+    QString propertyValue = atts.value(MapReader::text_value).toString();
 
     while (xml.readNext() != QXmlStreamReader::Invalid) {
         if (xml.isEndElement()) {
@@ -976,14 +1033,17 @@ QString MapReader::resolveReference(const QString &reference,
                                     const QString &mapPath)
 {
     if (QDir::isRelativePath(reference))
-        return mapPath + QStringLiteral("/") + reference;
+        return mapPath + MapReader::text_slash + reference;
     else
         return reference;
 }
 
 QImage MapReader::readExternalImage(const QString &source)
 {
-    return QImage(source);
+    QImage image(source);
+    if(image.format()!=QImage::Format_ARGB32 || image.format()!=QImage::Format_RGB32)
+        image=image.convertToFormat(QImage::Format_ARGB32);
+    return image;
 }
 
 Tileset *MapReader::readExternalTileset(const QString &source,

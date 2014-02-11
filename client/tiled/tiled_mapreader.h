@@ -137,6 +137,60 @@ protected:
     virtual Tileset *readExternalTileset(const QString &source,
                                          QString *error);
 
+public:
+    static QString text_map;
+    static QString text_width;
+    static QString text_height;
+    static QString text_tilewidth;
+    static QString text_tileheight;
+    static QString text_orientation;
+    static QString text_backgroundcolor;
+    static QString text_properties;
+    static QString text_tileset;
+    static QString text_layer;
+    static QString text_objectgroup;
+    static QString text_imagelayer;
+    static QString text_source;
+    static QString text_name;
+    static QString text_spacing;
+    static QString text_margin;
+    static QString text_tile;
+    static QString text_tileoffset;
+    static QString text_x;
+    static QString text_y;
+    static QString text_image;
+    static QString text_terraintypes;
+    static QString text_id;
+    static QString text_comma;
+    static QString text_probability;
+    static QString text_trans;
+    static QString text_dies;
+    static QString text_format;
+    static QString text_data;
+    static QString text_encoding;
+    static QString text_base64;
+    static QString text_firstgid;
+    static QString text_terrain;
+    static QString text_opacity;
+    static QString text_visible;
+    static QString text_compression;
+    static QString text_csv;
+    static QString text_gzip;
+    static QString text_zlib;
+    static QString text_gid;
+    static QString text_color;
+    static QString text_object;
+    static QString text_type;
+    static QString text_rotation;
+    static QString text_polygon;
+    static QString text_polyline;
+    static QString text_ellipse;
+    static QString text_points;
+    static QString text_space;
+    static QString text_property;
+    static QString text_value;
+    static QString text_slash;
+
 private:
     friend class Internal::MapReaderPrivate;
     Internal::MapReaderPrivate *d;
