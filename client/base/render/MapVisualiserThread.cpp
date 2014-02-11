@@ -65,7 +65,12 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     Tiled::Layer *grassOver;*/
 
     //load the map
-    tempMapObject->tiledMap = reader.readMap(resolvedFileName);
+    {
+        QTime time;
+        time.restart();
+        tempMapObject->tiledMap = reader.readMap(resolvedFileName);
+        qDebug() << QStringLiteral("%1 loaded into %2ms").arg(resolvedFileName).arg(time.elapsed());
+    }
     if (!tempMapObject->tiledMap)
     {
         mLastError=reader.errorString();
