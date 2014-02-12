@@ -502,7 +502,7 @@ bool LocalClientHandler::singleMove(const Direction &direction)
         return true;
     if(player_informations->public_and_private_informations.repel_step<=0)
     {
-        if(localClientHandlerFight.generateWildFightIfCollision(map,x,y))
+        if(localClientHandlerFight.generateWildFightIfCollision(map,x,y,player_informations->public_and_private_informations.items))
         {
             emit message(QStringLiteral("LocalClientHandler::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
             return true;
