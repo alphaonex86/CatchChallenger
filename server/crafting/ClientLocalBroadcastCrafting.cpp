@@ -18,7 +18,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
         emit error(QStringLiteral("plant_id not found: %1").arg(plant_id));
         return;
     }
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the dirt
@@ -331,7 +331,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("collectPlant(%1)").arg(query_id));
     #endif
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the dirt

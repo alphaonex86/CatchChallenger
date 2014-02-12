@@ -24,7 +24,7 @@ public:
     //info linked
 
     Direction getLastDirection() const;
-    Map* getMap() const;
+    CommonMap* getMap() const;
     inline COORD_TYPE getX() const;
     inline COORD_TYPE getY() const;
 
@@ -34,7 +34,7 @@ protected:
     //pass to the Map management visibility algorithm
     virtual bool singleMove(const Direction &direction) = 0;
     COORD_TYPE			x,y;//can't be negative
-    Map*                map;
+    CommonMap*                map;
 
     //related to stop
     //volatile bool stopCurrentMethod;
@@ -49,9 +49,9 @@ signals:
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
 public slots:
     //map slots, transmited by the current ClientNetworkRead
-    virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
-    virtual void teleportValidatedTo(Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
+    virtual void teleportValidatedTo(CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
     //normal slots
     virtual void askIfIsReadyToStop();
 private:

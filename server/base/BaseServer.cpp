@@ -902,10 +902,7 @@ void BaseServer::preload_the_map()
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->width			= map_temp.map_to_send.width;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer	= map_temp.map_to_send.parsed_layer;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file			= fileName;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->grassMonster     = map_temp.map_to_send.grassMonster;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->waterMonster     = map_temp.map_to_send.waterMonster;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->caveMonster     = map_temp.map_to_send.caveMonster;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file		= fileName;
 
                 map_name << fileName;
 
@@ -1017,7 +1014,7 @@ void BaseServer::preload_the_map()
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
                         #endif
-                        Map::Teleporter *teleporter=&semi_loaded_map[index].map->teleporter[virtual_position];
+                        CommonMap::Teleporter *teleporter=&semi_loaded_map[index].map->teleporter[virtual_position];
                         teleporter->map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map);
                         teleporter->x=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x;
                         teleporter->y=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y;
@@ -1255,8 +1252,8 @@ void BaseServer::preload_the_players()
 
 void BaseServer::preload_the_visibility_algorithm()
 {
-    QHash<QString,Map *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
-    QHash<QString,Map *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
+    QHash<QString,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
+    QHash<QString,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithm_simple:
@@ -1435,8 +1432,8 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             #endif
                                             quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
                                             int index_botfight_range=0;
-                                            CatchChallenger::Map *map=semi_loaded_map.value(index).map;
-                                            CatchChallenger::Map *old_map=map;
+                                            CatchChallenger::CommonMap *map=semi_loaded_map.value(index).map;
+                                            CatchChallenger::CommonMap *old_map=map;
                                             while(index_botfight_range<CATCHCHALLENGER_BOTFIGHT_RANGE)
                                             {
                                                 if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
@@ -1685,11 +1682,11 @@ void BaseServer::unload_the_bots()
 
 void BaseServer::unload_the_map()
 {
-    QHash<QString,Map *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
-    QHash<QString,Map *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
+    QHash<QString,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
+    QHash<QString,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     while (i != i_end)
     {
-        Map::removeParsedLayer(i.value()->parsed_layer);
+        CommonMap::removeParsedLayer(i.value()->parsed_layer);
         delete i.value();
         i++;
     }

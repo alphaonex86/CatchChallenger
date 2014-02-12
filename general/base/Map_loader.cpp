@@ -179,7 +179,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     map_to_send.border.top.x_offset=0;
     map_to_send.border.left.y_offset=0;
     map_to_send.border.right.y_offset=0;
-    QByteArray xmlContent,Walkable,Collisions,Water,Grass,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
+
+    QList<QString> detectedMonsterCollisionLayer;
+    QByteArray xmlContent,Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
+    QList<QByteArray> monsterList;
     bool ok;
     QDomDocument domDocument;
 
@@ -595,7 +598,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         child = child.nextSiblingElement(Map_loader::text_objectgroup);
     }
 
-
+    const quint32 rawSize=map_to_send.width*map_to_send.height*4;
 
     // layer
     child = root.firstChildElement(Map_loader::text_layer);
@@ -690,36 +693,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name==Map_loader::text_Water)
-                {
-                    if(Water.isEmpty())
-                        Water=data;
-                    else
-                    {
-                        int index=0;
-                        const int &layersize=Water.size();
-                        while(index<layersize)
-                        {
-                            Water[index]=Water.at(index) || data.at(index);
-                            index++;
-                        }
-                    }
-                }
-                else if(name==Map_loader::text_Grass)
-                {
-                    if(Grass.isEmpty())
-                        Grass=data;
-                    else
-                    {
-                        int index=0;
-                        const int &layersize=Grass.size();
-                        while(index<layersize)
-                        {
-                            Grass[index]=Grass.at(index) || data.at(index);
-                            index++;
-                        }
-                    }
-                }
                 else if(name==Map_loader::text_Dirt)
                 {
                     if(Dirt.isEmpty())
@@ -795,6 +768,23 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
+                else
+                {
+                    if(!name.isEmpty() && rawSize==(quint32)data.size())
+                    {
+                        int index=0;
+                        while(index<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
+                        {
+                            if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
+                            {
+                                if(!detectedMonsterCollisionLayer.contains(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType))
+                                    detectedMonsterCollisionLayer << CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType;
+                            }
+                            index++;
+                        }
+                        monsterList << data;
+                    }
+                }
             }
         }
         child = child.nextSiblingElement(Map_loader::text_layer);
@@ -811,14 +801,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         map_to_send.parsed_layer.walkable	= new bool[map_to_send.width*map_to_send.height];
     else
         map_to_send.parsed_layer.walkable	= NULL;
-    if(Water.size()>0)
-        map_to_send.parsed_layer.water		= new bool[map_to_send.width*map_to_send.height];
-    else
-        map_to_send.parsed_layer.water		= NULL;
-    if(Grass.size()>0)
-        map_to_send.parsed_layer.grass		= new bool[map_to_send.width*map_to_send.height];
-    else
-        map_to_send.parsed_layer.grass		= NULL;
+    map_to_send.parsed_layer.monstersCollisionMap		= new quint8[map_to_send.width*map_to_send.height];
     if(Dirt.size()>0)
         map_to_send.parsed_layer.dirt		= new bool[map_to_send.width*map_to_send.height];
     else
@@ -832,25 +815,18 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     quint32 y=0;
 
     char * WalkableBin=NULL;
-    char * WaterBin=NULL;
     char * CollisionsBin=NULL;
-    char * GrassBin=NULL;
     char * DirtBin=NULL;
     char * LedgesRightBin=NULL;
     char * LedgesLeftBin=NULL;
     char * LedgesBottomBin=NULL;
     char * LedgesTopBin=NULL;
+    QList<const char *> MonsterCollisionBin;
     {
-        const quint32 rawSize=map_to_send.width*map_to_send.height*4;
-
         if(rawSize==(quint32)Walkable.size())
             WalkableBin=Walkable.data();
-        if(rawSize==(quint32)Water.size())
-            WaterBin=Water.data();
         if(rawSize==(quint32)Collisions.size())
             CollisionsBin=Collisions.data();
-        if(rawSize==(quint32)Grass.size())
-            GrassBin=Grass.data();
         if(rawSize==(quint32)Dirt.size())
             DirtBin=Dirt.data();
         if(rawSize==(quint32)LedgesRight.size())
@@ -861,9 +837,15 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             LedgesBottomBin=LedgesBottom.data();
         if(rawSize==(quint32)LedgesTop.size())
             LedgesTopBin=LedgesTop.data();
+        int index=0;
+        while(index<detectedMonsterCollisionLayer.size())
+        {
+            MonsterCollisionBin << detectedMonsterCollisionLayer.at(index).constData();
+            index++;
+        }
     }
 
-    bool walkable=false,water=false,collisions=false,grass=false,dirt=false,ledgesRight=false,ledgesLeft=false,ledgesBottom=false,ledgesTop=false;
+    bool walkable=false,collisions=false,monsterCollision=false,dirt=false,ledgesRight=false,ledgesLeft=false,ledgesBottom=false,ledgesTop=false;
     while(x<map_to_send.width)
     {
         y=0;
@@ -873,18 +855,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 walkable=WalkableBin[x*4+y*map_to_send.width*4+0]!=0x00 || WalkableBin[x*4+y*map_to_send.width*4+1]!=0x00 || WalkableBin[x*4+y*map_to_send.width*4+2]!=0x00 || WalkableBin[x*4+y*map_to_send.width*4+3]!=0x00;
             else
                 walkable=false;
-            if(WaterBin!=NULL)
-                water=WaterBin[x*4+y*map_to_send.width*4+0]!=0x00 || WaterBin[x*4+y*map_to_send.width*4+1]!=0x00 || WaterBin[x*4+y*map_to_send.width*4+2]!=0x00 || WaterBin[x*4+y*map_to_send.width*4+3]!=0x00;
-            else
-                water=false;
             if(CollisionsBin!=NULL)
                 collisions=CollisionsBin[x*4+y*map_to_send.width*4+0]!=0x00 || CollisionsBin[x*4+y*map_to_send.width*4+1]!=0x00 || CollisionsBin[x*4+y*map_to_send.width*4+2]!=0x00 || CollisionsBin[x*4+y*map_to_send.width*4+3]!=0x00;
             else
                 collisions=false;
-            if(GrassBin!=NULL)
-                grass=GrassBin[x*4+y*map_to_send.width*4+0]!=0x00 || GrassBin[x*4+y*map_to_send.width*4+1]!=0x00 || GrassBin[x*4+y*map_to_send.width*4+2]!=0x00 || GrassBin[x*4+y*map_to_send.width*4+3]!=0x00;
-            else
-                grass=false;
             if(DirtBin!=NULL)
                 dirt=DirtBin[x*4+y*map_to_send.width*4+0]!=0x00 || DirtBin[x*4+y*map_to_send.width*4+1]!=0x00 || DirtBin[x*4+y*map_to_send.width*4+2]!=0x00 || DirtBin[x*4+y*map_to_send.width*4+3]!=0x00;
             else
@@ -905,55 +879,22 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 ledgesTop=LedgesTopBin[x*4+y*map_to_send.width*4+0]!=0x00 || LedgesTopBin[x*4+y*map_to_send.width*4+1]!=0x00 || LedgesTopBin[x*4+y*map_to_send.width*4+2]!=0x00 || LedgesTopBin[x*4+y*map_to_send.width*4+3]!=0x00;
             else
                 ledgesTop=false;
-
-            /* drop mid() due to lack of performance
-            if(x*4+y*map_to_send.width*4<(quint32)Walkable.size())
-                walkable=Walkable.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                walkable=false;
-            if(x*4+y*map_to_send.width*4<(quint32)Water.size())
-                water=Water.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                water=false;
-            if(x*4+y*map_to_send.width*4<(quint32)Collisions.size())
-                collisions=Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                collisions=false;
-            if(x*4+y*map_to_send.width*4<(quint32)Grass.size())
-                grass=Grass.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                grass=false;
-            if(x*4+y*map_to_send.width*4<(quint32)Dirt.size())
-                dirt=Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                dirt=false;
-
-            if(x*4+y*map_to_send.width*4<(quint32)LedgesRight.size())
-                ledgesRight=LedgesRight.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                ledgesRight=false;
-            if(x*4+y*map_to_send.width*4<(quint32)LedgesLeft.size())
-                ledgesLeft=LedgesLeft.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                ledgesLeft=false;
-            if(x*4+y*map_to_send.width*4<(quint32)LedgesBottom.size())
-                ledgesBottom=LedgesBottom.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                ledgesBottom=false;
-            if(x*4+y*map_to_send.width*4<(quint32)LedgesTop.size())
-                ledgesTop=LedgesTop.mid(x*4+y*map_to_send.width*4,4)!=null_data;
-            else//if layer not found
-                ledgesTop=false;*/
-
+            monsterCollision=false;
+            int index=0;
+            while(index<MonsterCollisionBin.size())
+            {
+                if(MonsterCollisionBin.at(index).constData())
+                {
+                    monsterCollision=true;
+                    break;
+                }
+                index++;
+            }
 
             if(Walkable.size()>0)
-                map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=walkable && !water && !collisions && !dirt;
-            if(Water.size()>0)
-                map_to_send.parsed_layer.water[x+y*map_to_send.width]=water && !collisions;
-            if(Grass.size()>0)
-                map_to_send.parsed_layer.grass[x+y*map_to_send.width]=walkable && grass && !water && !collisions;
+                map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=(walkable || monsterCollision) && !collisions && !dirt;
             if(Dirt.size()>0)
-                map_to_send.parsed_layer.dirt[x+y*map_to_send.width]=dirt && !water;
+                map_to_send.parsed_layer.dirt[x+y*map_to_send.width]=dirt;
             if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
             {
                 map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_NoLedges;
@@ -1022,15 +963,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 map_to_send.parsed_layer.walkable[map_to_send.bots.at(index).point.x+map_to_send.bots.at(index).point.y*map_to_send.width]=false;
                 index++;
             }
-        }
-    }
-    if(Water.size()>0)
-    {
-        int index=0;
-        while(index<teleportlistsize)
-        {
-            map_to_send.parsed_layer.water[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
-            index++;
         }
     }
 

@@ -113,7 +113,7 @@ void FakeBot::random_new_step()
     //to group the signle move into move line
     MoveOnTheMap::newDirection(final_direction);
     //to do the real move
-    if(!move(final_direction,(Map **)&map,&x,&y))
+    if(!move(final_direction,(CommonMap **)&map,&x,&y))
     {
         DebugClass::debugConsole(QStringLiteral("FakeBot::random_new_step(), step 2, id: %1, x: %2, y:%3, can't move on direction of: %4").arg(api.getId()).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
         map=NULL;

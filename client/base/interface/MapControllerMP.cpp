@@ -444,8 +444,8 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     otherPlayerList[id].presumed_x=x;
     otherPlayerList[id].presumed_y=y;
     otherPlayerList[id].presumed_direction=otherPlayerList.value(id).direction;
-    CatchChallenger::Map * map=&otherPlayerList.value(id).presumed_map->logicalMap;
-    CatchChallenger::Map * old_map;
+    CatchChallenger::CommonMap * map=&otherPlayerList.value(id).presumed_map->logicalMap;
+    CatchChallenger::CommonMap * old_map;
 
     //move to have the new position if needed
     int index=0;
@@ -1069,8 +1069,8 @@ void MapControllerMP::moveOtherPlayerStepSlot()
     //if have finish the step
     if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep>5)
     {
-        CatchChallenger::Map * old_map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
-        CatchChallenger::Map * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
+        CatchChallenger::CommonMap * old_map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
+        CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
         quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
         quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
         //set the final value (direction, position, ...)

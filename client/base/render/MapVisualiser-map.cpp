@@ -27,12 +27,11 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     all_map.remove(map->logicalMap.map_file);
     old_all_map.remove(map->logicalMap.map_file);
     //delete common variables
-    CatchChallenger::Map::removeParsedLayer(map->logicalMap.parsed_layer);
+    CatchChallenger::CommonMap::removeParsedLayer(map->logicalMap.parsed_layer);
     map->logicalMap.parsed_layer.dirt=NULL;
-    map->logicalMap.parsed_layer.grass=NULL;
+    map->logicalMap.parsed_layer.monstersCollisionMap=NULL;
     map->logicalMap.parsed_layer.ledges=NULL;
     map->logicalMap.parsed_layer.walkable=NULL;
-    map->logicalMap.parsed_layer.water=NULL;
     qDeleteAll(map->tiledMap->tilesets());
     if(map->tiledMap!=NULL)
         delete map->tiledMap;

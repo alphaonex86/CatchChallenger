@@ -42,6 +42,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseBotFights();
     parseIndustries();
     parseProfileList();
+    parseMonstersCollision();
     isParsed=true;
 }
 
@@ -135,6 +136,19 @@ void CommonDatapack::parseProfileList()
     qDebug() << QStringLiteral("%1 profile(s) loaded").arg(profileList.size());
 }
 
+void CommonDatapack::parseMonstersCollision()
+{
+    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("monstersCollision.xml"),items.item);
+    int index=0;
+    while(index<monstersCollision.size())
+    {
+        monstersCollisionLayer << monstersCollision.at(index).layer;
+        index++;
+    }
+    qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
+    qDebug() << QStringLiteral("%1 monster(s) layer loaded").arg(monstersCollisionLayer.size());
+}
+
 void CommonDatapack::unload()
 {
     QMutexLocker mutexLocker(&inProgress);
@@ -159,6 +173,8 @@ void CommonDatapack::unload()
     types.clear();
     xmlLoadedFile.clear();
     teleportConditionsUnparsed.clear();
+    monstersCollision.clear();
+    monstersCollisionLayer.clear();
     isParsed=false;
 }
 

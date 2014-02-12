@@ -339,7 +339,7 @@ void LocalClientHandlerFight::saveStat()
     }
 }
 
-bool LocalClientHandlerFight::botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
+bool LocalClientHandlerFight::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
     {
