@@ -28,9 +28,7 @@ bool CommonFightEngine::canEscape() const
 
 void CommonFightEngine::resetAll()
 {
-    stepFight_Grass=0;
-    stepFight_Water=0;
-    stepFight_Cave=0;
+    stepFight=0;
     ableToFight=false;
     wildMonsters.clear();
     botFightMonsters.clear();
@@ -311,11 +309,14 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const quint8 &x,co
         emit message(QStringLiteral("map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y));
         return false;
     }
-    if(CatchChallenger::MoveOnTheMap::isGrass(map,x,y) && !map.grassMonster.empty())
-        return randomSeeds.size()>=CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT;
-    if(CatchChallenger::MoveOnTheMap::isWater(map,x,y) && !map.waterMonster.empty())
-        return randomSeeds.size()>=CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT;
-    if(!map.caveMonster.empty())
+    if(map.parsed_layer.monstersCollisionMap==NULL)
+        return true;
+
+    quint8 zoneCode=map.parsed_layer.monstersCollisionMap[x+y*map.width];
+    const MonstersCollisionValue &monstersCollisionValue=map.parsed_layer.monstersCollisionList.at(zoneCode);
+    if(monstersCollisionValue.walkOn.isEmpty())
+        return true;
+    else
         return randomSeeds.size()>=CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT;
 
     /// no fight in this zone
@@ -2166,7 +2167,7 @@ void CommonFightEngine::startTheFight()
 }
 
 //return true if now have wild monter to fight
-bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
+bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const QHash<quint32,quint32> &items)
 {
     bool ok;
     if(isInFight())
@@ -2174,118 +2175,63 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
         emit error(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
     }
-    if(CatchChallenger::MoveOnTheMap::isGrass(*map,x,y) && !map->grassMonster.empty())
-    {
-        if(!ableToFight)
-        {
-            emit error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
-            return false;
-        }
-        if(stepFight_Grass==0)
-        {
-            if(randomSeeds.size()==0)
-            {
-                emit error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
-                return false;
-            }
-            else
-                stepFight_Grass=getOneSeed(16);
-        }
-        else
-            stepFight_Grass--;
-        if(stepFight_Grass==0)
-        {
-            PlayerMonster monster=getRandomMonster(map->grassMonster,&ok);
-            if(ok)
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QStringLiteral("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
-                #endif
-                startTheFight();
-                wildMonsters << monster;
-            }
-            else
-                emit error(QStringLiteral("error: no more random seed here to have the get"));
-            return ok;
-        }
-        else
-            return false;
-    }
-    if(CatchChallenger::MoveOnTheMap::isWater(*map,x,y) && !map->waterMonster.empty())
-    {
-        if(!ableToFight)
-        {
-            emit error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
-            return false;
-        }
-        if(stepFight_Water==0)
-        {
-            if(randomSeeds.size()==0)
-            {
-                emit error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
-                return false;
-            }
-            else
-                stepFight_Water=getOneSeed(16);
-        }
-        else
-            stepFight_Water--;
-        if(stepFight_Water==0)
-        {
-            PlayerMonster monster=getRandomMonster(map->waterMonster,&ok);
-            if(ok)
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QStringLiteral("Start water fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
-                #endif
-                startTheFight();
-                wildMonsters << monster;
-            }
-            else
-                emit error(QStringLiteral("error: no more random seed here to have the get"));
-            return ok;
-        }
-        else
-            return false;
-    }
-    if(!map->caveMonster.empty())
-    {
-        if(!ableToFight)
-        {
-            emit error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
-            return false;
-        }
-        if(stepFight_Cave==0)
-        {
-            if(randomSeeds.size()==0)
-            {
-                emit error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
-                return false;
-            }
-            else
-                stepFight_Cave=getOneSeed(16);
-        }
-        else
-            stepFight_Cave--;
-        if(stepFight_Cave==0)
-        {
-            PlayerMonster monster=getRandomMonster(map->caveMonster,&ok);
-            if(ok)
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QStringLiteral("Start cave fight with monseter id: %1 level %2").arg(monster.monster).arg(monster.level));
-                #endif
-                startTheFight();
-                wildMonsters << monster;
-            }
-            else
-                emit error(QStringLiteral("error: no more random seed here to have the get"));
-            return ok;
-        }
-        else
-            return false;
-    }
 
+    if(map->parsed_layer.monstersCollisionMap==NULL)
+    {
+        /// no fight in this zone
+        return false;
+    }
+    quint8 zoneCode=map->parsed_layer.monstersCollisionMap[x+y*map->width];
+    const MonstersCollisionValue &monstersCollisionValue=map->parsed_layer.monstersCollisionList.at(zoneCode);
+    QMapIterator<quint32/*item*/, MonstersCollisionValueMonster> i(monstersCollisionValue.walkOn);
+    while (i.hasNext()) {
+        i.next();
+        if(i.key()==0 || items.contains(i.key()))
+        {
+            if(i.value().monsters.isEmpty())
+            {
+                /// no fight in this zone
+                return false;
+            }
+            else
+            {
+                if(!ableToFight)
+                {
+                    emit error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return false;
+                }
+                if(stepFight==0)
+                {
+                    if(randomSeeds.size()==0)
+                    {
+                        emit error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+                        return false;
+                    }
+                    else
+                        stepFight=getOneSeed(16);
+                }
+                else
+                    stepFight--;
+                if(stepFight==0)
+                {
+                    const PlayerMonster &monster=getRandomMonster(i.value().monsters,&ok);
+                    if(ok)
+                    {
+                        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                        emit message(QStringLiteral("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
+                        #endif
+                        startTheFight();
+                        wildMonsters << monster;
+                    }
+                    else
+                        emit error(QStringLiteral("error: no more random seed here to have the get"));
+                    return ok;
+                }
+                else
+                    return false;
+            }
+        }
+    }
     /// no fight in this zone
     return false;
 }
