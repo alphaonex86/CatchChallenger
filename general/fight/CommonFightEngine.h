@@ -65,7 +65,7 @@ public:
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
-    bool generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool generateWildFightIfCollision(CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y, const QHash<quint32, quint32> &items);
     virtual bool doTheOtherMonsterTurn();
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
@@ -108,7 +108,7 @@ protected:
     Player_private_and_public_informations *player_informations;
     bool ableToFight;
     QList<PlayerMonster> wildMonsters,botFightMonsters;
-    quint8 stepFight_Grass,stepFight_Water,stepFight_Cave;
+    quint8 stepFight;
     QByteArray randomSeeds;
     int selectedMonster;
     bool doTurnIfChangeOfMonster;
