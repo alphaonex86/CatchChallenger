@@ -304,7 +304,7 @@ bool CommonFightEngine::haveMonsters() const
 }
 
 //return is have random seed to do random step
-bool CommonFightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y) const
+bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const quint8 &x,const quint8 &y) const
 {
     if(isInFight())
     {
@@ -2166,7 +2166,7 @@ void CommonFightEngine::startTheFight()
 }
 
 //return true if now have wild monter to fight
-bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
+bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     bool ok;
     if(isInFight())

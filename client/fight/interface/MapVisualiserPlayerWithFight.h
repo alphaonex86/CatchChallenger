@@ -18,7 +18,7 @@ public:
 protected slots:
     virtual void keyPressParse();
     virtual bool haveStopTileAction();
-    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
+    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     virtual void resetAll();
 protected:
     QSet<quint32> botAlreadyBeaten;

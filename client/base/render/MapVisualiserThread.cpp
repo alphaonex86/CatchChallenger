@@ -117,9 +117,6 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     tempMapObject->logicalMap.border.top.map                        = NULL;
     tempMapObject->logicalMap.border.right.map                      = NULL;
     tempMapObject->logicalMap.border.left.map                       = NULL;
-    tempMapObject->logicalMap.grassMonster                          = map_loader.map_to_send.grassMonster;
-    tempMapObject->logicalMap.waterMonster                          = map_loader.map_to_send.waterMonster;
-    tempMapObject->logicalMap.caveMonster                           = map_loader.map_to_send.caveMonster;
 
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {

@@ -30,7 +30,7 @@ public:
     quint8 getCurrentSelectedMonsterNumber() const;
     virtual quint8 getOtherSelectedMonsterNumber() const;
     bool remainMonstersToFight(const quint32 &monsterId) const;
-    virtual bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y) const;
+    virtual bool canDoRandomFight(const CommonMap &map,const quint8 &x,const quint8 &y) const;
     void updateCanDoFight();
     virtual bool haveAnotherMonsterOnThePlayerToFight() const;
     virtual bool haveAnotherEnnemyMonsterToFight() const;
@@ -65,7 +65,7 @@ public:
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
-    bool generateWildFightIfCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
     virtual bool doTheOtherMonsterTurn();
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;

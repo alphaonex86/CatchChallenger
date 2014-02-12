@@ -47,7 +47,7 @@ protected slots:
     void remove_plant(const quint32 &mapId,const quint8 &x,const quint8 &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
-    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
+    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     void tryLoadPlantOnMapDisplayed(const QString &fileName);
     void updateGrowing();
 public slots:

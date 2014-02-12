@@ -66,10 +66,11 @@ void BaseServerFight::load_monsters_max_id()
 
 void BaseServerFight::check_monsters_map()
 {
-    quint32 monstersChecked=0,zoneChecked=0;
+    return;//disable, do at loadtime
+/*    quint32 monstersChecked=0,zoneChecked=0;
     int index;
 
-    QHashIterator<QString,Map *> i(GlobalServerData::serverPrivateVariables.map_list);
+    QHashIterator<QString,CommonMap *> i(GlobalServerData::serverPrivateVariables.map_list);
     while (i.hasNext()) {
         i.next();
         if(!i.value()->grassMonster.isEmpty())
@@ -122,7 +123,7 @@ void BaseServerFight::check_monsters_map()
         }
     }
 
-    DebugClass::debugConsole(QStringLiteral("%1 monster(s) into %2 zone(s) for %3 map(s) checked").arg(monstersChecked).arg(zoneChecked).arg(GlobalServerData::serverPrivateVariables.map_list.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 monster(s) into %2 zone(s) for %3 map(s) checked").arg(monstersChecked).arg(zoneChecked).arg(GlobalServerData::serverPrivateVariables.map_list.size()));*/
 
 }
 

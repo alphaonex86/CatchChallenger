@@ -62,8 +62,8 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
         emit error(QStringLiteral("ClientLocalBroadcast::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
-    Map *old_map=map;
-    Map *new_map=map;
+    CommonMap *old_map=map;
+    CommonMap *new_map=map;
     MoveOnTheMap::move(direction,&new_map,&x,&y);
     if(old_map!=new_map)
     {
@@ -75,7 +75,7 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
     return true;
 }
 
-void ClientLocalBroadcast::insertClient(Map *map)
+void ClientLocalBroadcast::insertClient(CommonMap *map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.contains(this))
@@ -87,7 +87,7 @@ void ClientLocalBroadcast::insertClient(Map *map)
     sendNearPlant();
 }
 
-void ClientLocalBroadcast::removeClient(Map *map, const bool &withDestroy)
+void ClientLocalBroadcast::removeClient(CommonMap *map, const bool &withDestroy)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1)
@@ -101,13 +101,13 @@ void ClientLocalBroadcast::removeClient(Map *map, const bool &withDestroy)
 }
 
 //map slots, transmited by the current ClientNetworkRead
-void ClientLocalBroadcast::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void ClientLocalBroadcast::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
     insertClient(map);
 }
 
-void ClientLocalBroadcast::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void ClientLocalBroadcast::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     bool mapChange=this->map!=map;
     if(mapChange)

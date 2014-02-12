@@ -114,7 +114,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     return false;
 }
 
-bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::Map map, quint8 x, quint8 y, const bool &checkCollision)
+bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, quint8 x, quint8 y, const bool &checkCollision)
 {
     if(!MapVisualiserPlayer::canGoTo(direction,map,x,y,checkCollision))
         return false;
@@ -123,7 +123,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         qDebug() << "Strange, try move when is in fight";
         return false;
     }
-    CatchChallenger::Map *new_map=&map;
+    CatchChallenger::CommonMap *new_map=&map;
     if(!CatchChallenger::MoveOnTheMap::moveWithoutTeleport(direction,&new_map,&x,&y,false))
     {
         qDebug() << "Strange, can go but move failed";
@@ -202,44 +202,32 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         }
         index++;
     }
-    if(CatchChallenger::MoveOnTheMap::isGrass(*new_map,x,y) && !new_map->grassMonster.empty())
+    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*new_map,x,y);
+    if(!monstersCollisionValue.walkOn.isEmpty())
     {
-        if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_Grass);
-            return false;
+        QMapIterator<quint32/*item*/, CatchChallenger::MonstersCollisionValueMonster> i(monstersCollisionValue.walkOn);
+        while (i.hasNext()) {
+            i.next();
+            if(i.key()==0 || items->contains(i.key()))
+            {
+                if(!i.value().monsters.isEmpty())
+                {
+                    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+                    {
+                        emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
+                        return false;
+                    }
+                    if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
+                    {
+                        emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+                        return false;
+                    }
+                }
+                return true;
+            }
         }
-        if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-            return false;
-        }
-    }
-    if(CatchChallenger::MoveOnTheMap::isWater(*new_map,x,y) && !new_map->waterMonster.empty())
-    {
-        if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_Wather);
-            return false;
-        }
-        if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-            return false;
-        }
-    }
-    if(!new_map->caveMonster.empty())
-    {
-        if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_Cave);
-            return false;
-        }
-        if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-            return false;
-        }
+        emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneItem);
+        return false;
     }
     return true;
 }

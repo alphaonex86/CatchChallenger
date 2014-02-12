@@ -24,7 +24,7 @@ public:
 
     struct TeleportationPoint
     {
-        Map *map;
+        CommonMap *map;
         COORD_TYPE x;
         COORD_TYPE y;
         Orientation orientation;
@@ -35,7 +35,7 @@ public slots:
     //normal slots
     void askIfIsReadyToStop();
 
-    void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     void sendTradeRequest(const QByteArray &data);
     void sendBattleRequest(const QByteArray &data);
 private:
@@ -67,7 +67,7 @@ signals:
     void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps) const;
     //packet parsed (map management)
     void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction) const;
-    void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
+    void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
     //character
     void addCharacter(const quint8 &query_id, const quint8 &profileIndex,const QString &pseudo,const QString &skin) const;
     void removeCharacter(const quint8 &query_id, const quint32 &characterId) const;
