@@ -1958,14 +1958,6 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
 QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items)
 {
     QList<MonstersCollision> returnVar;
-    {
-        MonstersCollision monstersCollision;
-        monstersCollision.item=0;
-        monstersCollision.monsterType=QLatin1Literal("cave");
-        monstersCollision.type=MonstersCollisionType_WalkOn;
-        returnVar << monstersCollision;
-    }
-
     QDomDocument domDocument;
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
