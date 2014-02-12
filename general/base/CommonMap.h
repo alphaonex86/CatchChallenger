@@ -9,7 +9,7 @@
 #include "GeneralStructures.h"
 
 namespace CatchChallenger {
-class Map
+class CommonMap
 {
 public:
     //the index is position (x+y*width)
@@ -19,12 +19,12 @@ public:
     {
         struct Map_BorderContent_TopBottom
         {
-            Map *map;
+            CommonMap *map;
             qint32 x_offset;
         };
         struct Map_BorderContent_LeftRight
         {
-            Map *map;
+            CommonMap *map;
             qint32 y_offset;
         };
         Map_BorderContent_TopBottom top;
@@ -34,11 +34,11 @@ public:
     };
     Map_Border border;
 
-    QList<Map *> near_map;//not only the border
+    QList<CommonMap *> near_map;//not only the border
     struct Teleporter
     {
         quint32 x,y;
-        Map *map;
+        CommonMap *map;
         MapCondition condition;
     };
     QHash<quint32,Teleporter> teleporter;//the int (x+y*width) is position
@@ -49,9 +49,9 @@ public:
     quint32 group;
     quint32 id;
 
-    QList<MapMonster> grassMonster;
+    /*QList<MapMonster> grassMonster;
     QList<MapMonster> waterMonster;
-    QList<MapMonster> caveMonster;
+    QList<MapMonster> caveMonster;*/
 
     QMultiHash<QPair<quint8,quint8>,quint32> botsFightTrigger;//trigger line in front of bot fight
 

@@ -90,7 +90,7 @@ protected:
     struct Map_semi
     {
         //conversion x,y to position: x+y*width
-        Map* map;
+        CommonMap* map;
         Map_semi_border border;
         Map_to_send old_map;
     };

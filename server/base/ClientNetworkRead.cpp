@@ -39,7 +39,7 @@ void ClientNetworkRead::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
-void ClientNetworkRead::teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void ClientNetworkRead::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     if(queryNumberList.empty())
     {

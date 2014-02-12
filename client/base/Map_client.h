@@ -23,7 +23,7 @@ public:
     quint64 mature_at;
 };
 
-class Map_client : public Map
+class Map_client : public CommonMap
 {
 public:
     QList<Map_semi_teleport> teleport_semi;

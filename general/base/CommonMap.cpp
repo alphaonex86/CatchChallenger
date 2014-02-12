@@ -3,7 +3,7 @@
 
 using namespace CatchChallenger;
 
-void Map::removeParsedLayer(const ParsedLayer &parsed_layer)
+void CommonMap::removeParsedLayer(const ParsedLayer &parsed_layer)
 {
     if(parsed_layer.dirt!=NULL)
         delete parsed_layer.dirt;

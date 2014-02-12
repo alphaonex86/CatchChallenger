@@ -34,16 +34,16 @@ public slots:
     void receiveChatText(const QString &text, const Player_internal_informations *sender_informations);
     //map move
     bool singleMove(const Direction &direction);
-    virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     //seed
     void seedValidated();
     virtual void plantSeed(const quint8 &query_id,const quint8 &plant_id);
     virtual void collectPlant(const quint8 &query_id);
 protected:
     virtual void extraStop();
-    virtual void insertClient(Map *map);
-    virtual void removeClient(Map *map,const bool &withDestroy=false);
+    virtual void insertClient(CommonMap *map);
+    virtual void removeClient(CommonMap *map,const bool &withDestroy=false);
     virtual void sendNearPlant();
     virtual void removeNearPlant();
     virtual void receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time);
@@ -53,7 +53,7 @@ protected:
     {
         quint8 query_id;
         quint8 plant_id;
-        Map *map;
+        CommonMap *map;
         quint8 x,y;
     };
     QList<PlantInWaiting> plant_list_in_waiting;

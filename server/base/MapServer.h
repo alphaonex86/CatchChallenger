@@ -12,7 +12,7 @@ namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple;
 class ClientLocalBroadcast;
 
-class MapServer : public Map, public MapServerCrafting
+class MapServer : public CommonMap, public MapServerCrafting
 {
 public:
     QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change

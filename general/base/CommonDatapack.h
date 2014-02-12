@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QHash>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 #include <QMultiHash>
@@ -38,6 +39,7 @@ public:
     QList<Type> types;
     QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
     QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
+    QList<MonstersCollision> monstersCollision;
 private:
     QMutex inProgress;
     bool isParsed;
@@ -57,6 +59,7 @@ private slots:
     void parseReputation();
     void parseBotFights();
     void parseProfileList();
+    void parseMonstersCollision();
 };
 }
 

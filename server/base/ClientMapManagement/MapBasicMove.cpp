@@ -45,7 +45,7 @@ Direction MapBasicMove::getLastDirection() const
     return last_direction;
 }
 
-Map* MapBasicMove::getMap() const
+CommonMap* MapBasicMove::getMap() const
 {
     return map;
 }
@@ -64,7 +64,7 @@ void MapBasicMove::extraStop()
 {
 }
 
-void MapBasicMove::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     //store the starting informations
     last_direction=static_cast<Direction>(orientation);
@@ -88,7 +88,7 @@ void MapBasicMove::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /
     #endif
 }
 
-void MapBasicMove::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void MapBasicMove::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
 }

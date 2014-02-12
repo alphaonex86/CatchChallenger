@@ -1216,7 +1216,7 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x,
         if(!CatchChallenger::MoveOnTheMap::isWalkable(*map,x,y))
         {
             //check bot with border
-            CatchChallenger::Map * current_map=map;
+            CatchChallenger::CommonMap * current_map=map;
             switch(MapController::mapController->getDirection())
             {
                 case CatchChallenger::Direction_look_at_left:
@@ -1306,7 +1306,7 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
     else
     {
         //check bot with border
-        CatchChallenger::Map * current_map=map;
+        CatchChallenger::CommonMap * current_map=map;
         switch(MapController::mapController->getDirection())
         {
             case CatchChallenger::Direction_look_at_left:
@@ -1388,16 +1388,22 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
 {
     switch(blockOnVar)
     {
-        case MapVisualiserPlayer::BlockedOn_Grass:
-        case MapVisualiserPlayer::BlockedOn_Wather:
-        case MapVisualiserPlayer::BlockedOn_Cave:
+        case MapVisualiserPlayer::BlockedOn_ZoneFight:
         case MapVisualiserPlayer::BlockedOn_Fight:
             qDebug() << "You can't enter to the fight zone if you are not able to fight";
             showTip(tr("You can't enter to the fight zone if you are not able to fight"));
         break;
+        case MapVisualiserPlayer::BlockedOn_ZoneItem:
+            qDebug() << "You can't enter to this zone without the correct item";
+            showTip(tr("You can't enter to this zone without the correct item"));
+        break;
         case MapVisualiserPlayer::BlockedOn_RandomNumber:
             qDebug() << "You can't enter to the fight zone, because have not random number";
             showTip(tr("You can't enter to the fight zone, because have not random number"));
+        break;
+        default:
+            qDebug() << "You can't enter to the zone, for unknown reason";
+            showTip(tr("You can't enter to the zone"));
         break;
     }
 }

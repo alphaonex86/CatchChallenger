@@ -25,9 +25,8 @@ public:
     CatchChallenger::Direction getDirection();
     enum BlockedOn
     {
-        BlockedOn_Grass,
-        BlockedOn_Wather,
-        BlockedOn_Cave,
+        BlockedOn_ZoneItem,
+        BlockedOn_ZoneFight,
         BlockedOn_RandomNumber,
         BlockedOn_Fight
     };
@@ -91,7 +90,7 @@ protected slots:
     //void setAnimationTilset(QString animationTilset);
     virtual void resetAll();
     void setSpeed(const SPEED_TYPE &speed);
-    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
+    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     void mapDisplayedSlot(const QString &fileName);
     virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
 signals:
