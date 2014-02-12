@@ -297,7 +297,7 @@ void LocalClientHandler::savePosition()
  * Because the ClientMapManagement can be totaly satured by the square complexity
  * that's allow to continue the player to connect and play
  * the overhead for the network it just at the connexion */
-void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void LocalClientHandler::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
 
@@ -431,7 +431,7 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     }
     COORD_TYPE x=this->x,y=this->y;
     temp_direction=direction;
-    Map* map=this->map;
+    CommonMap* map=this->map;
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
     emit message(QStringLiteral("LocalClientHandler::singleMove(), go in this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
     #endif
@@ -448,7 +448,7 @@ bool LocalClientHandler::singleMove(const Direction &direction)
 
     if(map->teleporter.contains(x+y*map->width))
     {
-        const Map::Teleporter &teleporter=map->teleporter.value(x+y*map->width);
+        const CommonMap::Teleporter &teleporter=map->teleporter.value(x+y*map->width);
         switch(teleporter.condition.type)
         {
             case CatchChallenger::MapConditionType_None:
@@ -1376,7 +1376,7 @@ bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skil
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("learnSkill(%1,%2)").arg(monsterId).arg(skill));
     #endif
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     Direction direction=getLastDirection();
@@ -1568,12 +1568,12 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
     }
 }
 
-void LocalClientHandler::receiveTeleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void LocalClientHandler::receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     emit teleportTo(map,x,y,orientation);
 }
 
-void LocalClientHandler::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void LocalClientHandler::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     emit message(QStringLiteral("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
@@ -1612,7 +1612,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
         emit error(QStringLiteral("shopId not found: %1").arg(shopId));
         return;
     }
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
@@ -1723,7 +1723,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         emit error(QStringLiteral("quantity wrong: %1").arg(quantity));
         return;
     }
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
@@ -1854,7 +1854,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
         emit error(QStringLiteral("quantity wrong: %1").arg(quantity));
         return;
     }
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
@@ -2543,7 +2543,7 @@ void LocalClientHandler::heal()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("ask heal at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
     #endif
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
@@ -2635,7 +2635,7 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("request fight at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
     #endif
-    Map *map=this->map;
+    CommonMap *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
@@ -3171,7 +3171,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QStringLiteral("ask zonecapture at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
         #endif
-        Map *map=this->map;
+        CommonMap *map=this->map;
         quint8 x=this->x;
         quint8 y=this->y;
         //resolv the object

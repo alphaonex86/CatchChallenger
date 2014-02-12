@@ -47,11 +47,11 @@ void MapController::datapackParsed()
     delayedPlantInsert.clear();
 }
 
-bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision)
+bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision)
 {
     if(!MapVisualiserPlayerWithFight::canGoTo(direction,map,x,y,checkCollision))
         return false;
-    CatchChallenger::Map *new_map=&map;
+    CatchChallenger::CommonMap *new_map=&map;
     CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
     if(all_map.value(new_map->map_file)->logicalMap.bots.contains(QPair<quint8,quint8>(x,y)))
         return false;
@@ -133,8 +133,8 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                     #endif
                     quint8 temp_x=x,temp_y=y;
                     int index_botfight_range=0;
-                    CatchChallenger::Map *map=&parsedMap->logicalMap;
-                    CatchChallenger::Map *old_map=map;
+                    CatchChallenger::CommonMap *map=&parsedMap->logicalMap;
+                    CatchChallenger::CommonMap *old_map=map;
                     while(index_botfight_range<CATCHCHALLENGER_BOTFIGHT_RANGE)
                     {
                         if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))

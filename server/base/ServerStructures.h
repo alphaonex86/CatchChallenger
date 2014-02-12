@@ -26,7 +26,7 @@
 namespace CatchChallenger {
 class EventThreader;
 class Map_custom;
-class Map;
+class CommonMap;
 class ClientBroadCast;
 class ClientMapManagement;
 class FakeBot;
@@ -35,7 +35,7 @@ class Map_server_MapVisibility_simple;
 
 struct Map_player_info
 {
-    Map *map;
+    CommonMap *map;
     int x,y;
     QString skin;
 };
@@ -76,7 +76,7 @@ struct Player_internal_informations
     volatile bool isConnected;
     struct Rescue
     {
-        Map* map;
+        CommonMap* map;
         COORD_TYPE x;
         COORD_TYPE y;
         Orientation orientation;
@@ -242,7 +242,7 @@ struct ServerPrivateVariables
     QHash<QString,quint8> skinList;
 
     //map
-    QHash<QString,Map *> map_list;
+    QHash<QString,CommonMap *> map_list;
     QHash<quint32,QString> id_map_to_map;
     QTimer timer_to_send_insert_move_remove;/// \todo put on timer by thread without Qt::QueuedConnection to improve the performance
     QTimer positionSync;/// \todo put into the local thread to drop Qt::QueuedConnection and improve the performance

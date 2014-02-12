@@ -372,11 +372,24 @@ enum ParsedLayerLedges
     ParsedLayerLedges_LedgesBottom=0x04
 };
 
+struct MonstersCollisionValueMonster
+{
+    QList<MapMonster> monsters;
+    QString tile;
+};
+
+struct MonstersCollisionValue
+{
+    QMap<quint32/*item*/, MonstersCollisionValueMonster> walkOn;
+    QMap<quint32/*item*/, MonstersCollisionValueMonster> actionOn;
+};
+
 struct ParsedLayer
 {
     bool *walkable;
-    bool *water;
-    bool *grass;
+    quint8 *monstersCollisionMap;
+    QList<MonstersCollisionValue> monstersCollisionList;
+    //bool *grass;
     bool *dirt;
     //not stored as ParsedLayerLedges to prevent memory space unused
     quint8 *ledges;
@@ -413,9 +426,8 @@ struct Map_to_send
     };
     QList<Bot_Semi> bots;
 
-    QList<MapMonster> grassMonster;
-    QList<MapMonster> waterMonster;
-    QList<MapMonster> caveMonster;
+    quint8 *monstersCollisionMap;
+    QList<MonstersCollisionValue> monstersCollisionList;
 
     QDomElement xmlRoot;
 };
@@ -749,6 +761,21 @@ struct Profile
     QList<Monster> monsters;
     QList<Reputation> reputation;
     QList<Item> items;
+};
+
+enum MonstersCollisionType
+{
+    MonstersCollisionType_WalkOn=0x00,
+    MonstersCollisionType_ActionOn=0x01
+};
+
+struct MonstersCollision
+{
+    MonstersCollisionType type;
+    quint32 item;
+    QString tile;
+    QString layer;
+    QString monsterType;
 };
 
 struct Type

@@ -36,8 +36,8 @@ public:
     void getRandomNumberIfNeeded() const;
     bool tryEscape();
     quint32 tryCapture(const quint32 &item);
-    bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
-    bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool checkFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(LocalClientHandlerFight * otherPlayerBattle);
     //random linked signals
     //void newRandomNumber(const QByteArray &randomData);
@@ -121,7 +121,7 @@ signals:
     void sendBattleRequest(const QByteArray &data) const;
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
-    void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
+    void teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
     void addObjectAndSend(const quint32 &item,const quint32 &quantity=1) const;
     void addCash(const quint64 &cash,const bool &forceSave=false) const;
     void fightOrBattleFinish(const bool &win,const quint32 &fightId);

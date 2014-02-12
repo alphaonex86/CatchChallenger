@@ -21,8 +21,8 @@ QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>::const_iterato
 QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>::const_iterator MapVisibilityAlgorithm_Simple::i_insert_end;
 QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator MapVisibilityAlgorithm_Simple::i_remove;
 QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator MapVisibilityAlgorithm_Simple::i_remove_end;
-Map* MapVisibilityAlgorithm_Simple::old_map;
-Map* MapVisibilityAlgorithm_Simple::new_map;
+CommonMap* MapVisibilityAlgorithm_Simple::old_map;
+CommonMap* MapVisibilityAlgorithm_Simple::new_map;
 bool MapVisibilityAlgorithm_Simple::mapHaveChanged;
 
 //temp variable to move on the map
@@ -612,7 +612,7 @@ void MapVisibilityAlgorithm_Simple::unloadFromTheMap()
 }
 
 //map slots, transmited by the current ClientNetworkRead
-void MapVisibilityAlgorithm_Simple::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void MapVisibilityAlgorithm_Simple::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
     loadOnTheMap();
@@ -713,7 +713,7 @@ bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUni
     return true;
 }
 
-void MapVisibilityAlgorithm_Simple::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void MapVisibilityAlgorithm_Simple::teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
     bool mapChange=(this->map!=map);
     emit message(QStringLiteral("MapVisibilityAlgorithm_Simple::teleportValidatedTo() with mapChange: %1").arg(mapChange));

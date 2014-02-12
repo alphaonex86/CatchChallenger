@@ -82,6 +82,12 @@ QString DatapackGeneralLoader::text_industry=QLatin1String("industry");
 QString DatapackGeneralLoader::text_items=QLatin1String("items");
 QString DatapackGeneralLoader::text_value=QLatin1String("value");
 QString DatapackGeneralLoader::text_captured_with=QLatin1String("captured_with");
+QString DatapackGeneralLoader::text_monstersCollision=QLatin1String("monstersCollision");
+QString DatapackGeneralLoader::text_monsterType=QLatin1String("monsterType");
+QString DatapackGeneralLoader::text_walkOn=QLatin1String("walkOn");
+QString DatapackGeneralLoader::text_actionOn=QLatin1String("actionOn");
+QString DatapackGeneralLoader::text_layer=QLatin1String("layer");
+QString DatapackGeneralLoader::text_tile=QLatin1String("tile");
 
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
@@ -1945,6 +1951,142 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         else
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
         startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+    }
+    return returnVar;
+}
+
+QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items)
+{
+    QList<MonstersCollision> returnVar;
+    {
+        MonstersCollision monstersCollision;
+        monstersCollision.item=0;
+        monstersCollision.monsterType=QLatin1Literal("cave");
+        monstersCollision.type=MonstersCollisionType_WalkOn;
+        returnVar << monstersCollision;
+    }
+
+    QDomDocument domDocument;
+    //open and quick check the file
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    else
+    {
+        QFile xmlFile(file);
+        QByteArray xmlContent;
+        if(!xmlFile.open(QIODevice::ReadOnly))
+        {
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            return returnVar;
+        }
+        xmlContent=xmlFile.readAll();
+        xmlFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            return returnVar;
+        }
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    {
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        return returnVar;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement monstersCollisionItem = root.firstChildElement(DatapackGeneralLoader::text_monstersCollision);
+    while(!monstersCollisionItem.isNull())
+    {
+        if(monstersCollisionItem.isElement())
+        {
+            if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_type) && monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+            {
+                ok=true;
+                MonstersCollision monstersCollision;
+                if(monstersCollisionItem.attribute(DatapackGeneralLoader::text_type)==DatapackGeneralLoader::text_walkOn)
+                    monstersCollision.type=MonstersCollisionType_WalkOn;
+                else if(monstersCollisionItem.attribute(DatapackGeneralLoader::text_type)==DatapackGeneralLoader::text_actionOn)
+                    monstersCollision.type=MonstersCollisionType_ActionOn;
+                else
+                {
+                    ok=false;
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("type is not walkOn or actionOn, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                }
+                if(ok)
+                {
+                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_layer))
+                        monstersCollision.layer=monstersCollisionItem.attribute(DatapackGeneralLoader::text_layer);
+                }
+                if(ok)
+                {
+                    if(monstersCollision.layer.isEmpty() && monstersCollision.type==MonstersCollisionType_WalkOn)//need specific layer name to do that's
+                    {
+                        ok=false;
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("To have blocking layer by item, have specific layer name, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                    }
+                    else
+                    {
+                        monstersCollision.item=0;
+                        if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_item))
+                        {
+                            monstersCollision.item=monstersCollisionItem.attribute(DatapackGeneralLoader::text_item).toUInt(&ok);
+                            if(!ok)
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("item attribute is not a number, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                            else if(!items.contains(monstersCollision.item))
+                            {
+                                ok=false;
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("item is not into item list, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                            }
+                        }
+                    }
+                }
+                if(ok)
+                {
+                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_tile))
+                        monstersCollision.layer=monstersCollisionItem.attribute(DatapackGeneralLoader::text_tile);
+                }
+                if(ok)
+                {
+                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+                        monstersCollision.layer=monstersCollisionItem.attribute(DatapackGeneralLoader::text_monsterType);
+                }
+                if(ok)
+                {
+                    int index=0;
+                    while(index<returnVar.size())
+                    {
+                        if(returnVar.at(index).type==monstersCollision.type && returnVar.at(index).layer==monstersCollision.layer && returnVar.at(index).item==monstersCollision.item)
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("similar monstersCollision previously found, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                            ok=false;
+                            break;
+                        }
+                        if(monstersCollision.type==MonstersCollisionType_WalkOn && returnVar.at(index).layer==monstersCollision.layer)
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("You can't have different item for same layer in walkOn mode, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                            ok=false;
+                            break;
+                        }
+                        index++;
+                    }
+                }
+                if(ok)
+                {
+                    if(monstersCollision.type==MonstersCollisionType_WalkOn && monstersCollision.layer.isEmpty() && monstersCollision.item==0)
+                        returnVar.first()=monstersCollision;
+                    else
+                        returnVar << monstersCollision;
+                }
+            }
+            else
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute type or monsterType, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+        }
+        monstersCollisionItem = monstersCollisionItem.nextSiblingElement(DatapackGeneralLoader::text_monstersCollision);
     }
     return returnVar;
 }

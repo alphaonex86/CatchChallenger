@@ -314,8 +314,8 @@ void MapVisualiserPlayer::moveStepSlot()
     //if have finish the step
     if(moveStep>5)
     {
-        CatchChallenger::Map * map=&all_map.value(current_map)->logicalMap;
-        const CatchChallenger::Map * old_map=map;
+        CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+        const CatchChallenger::CommonMap * old_map=map;
         //set the final value (direction, position, ...)
         switch(direction)
         {
@@ -543,7 +543,7 @@ bool MapVisualiserPlayer::haveStopTileAction()
 
 void MapVisualiserPlayer::parseStop()
 {
-    CatchChallenger::Map * map=&all_map.value(current_map)->logicalMap;
+    CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
     quint8 x=this->x;
     quint8 y=this->y;
     switch(direction)
@@ -591,7 +591,7 @@ void MapVisualiserPlayer::parseStop()
 
 void MapVisualiserPlayer::parseAction()
 {
-    CatchChallenger::Map * map=&all_map.value(current_map)->logicalMap;
+    CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
     quint8 x=this->x;
     quint8 y=this->y;
     switch(direction)
@@ -794,9 +794,9 @@ void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
     moveTimer.setInterval(speed/5);
 }
 
-bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::Map map, quint8 x, quint8 y, const bool &checkCollision)
+bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, quint8 x, quint8 y, const bool &checkCollision)
 {
-    CatchChallenger::Map *mapPointer=&map;
+    CatchChallenger::CommonMap *mapPointer=&map;
     CatchChallenger::ParsedLayerLedges ledge;
     do
     {

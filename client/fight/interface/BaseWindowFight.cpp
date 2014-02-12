@@ -453,6 +453,8 @@ bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &
 
 void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, const quint8 &y)
 {
+    Q_UNUSED(x);
+    Q_UNUSED(y);
     //map not located
     if(map==NULL)
     {
@@ -460,11 +462,11 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
         return;
     }
     //map is grass
-    if(MoveOnTheMap::isGrass(*map,x,y))
+    //if(MoveOnTheMap::isGrass(*map,x,y))
         ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
     //map is other
-    else
-        ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+/*    else
+        ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));*/
 }
 
 void BaseWindow::init_other_monster_display()
