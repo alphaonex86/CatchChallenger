@@ -8,7 +8,7 @@ MapObjectItem::MapObjectItem(Tiled::MapObject *mapObject,
     : QGraphicsItem(parent)
     , mMapObject(mapObject)
 {
-    setCacheMode(QGraphicsItem::ItemCoordinateCache);
+    //setCacheMode(QGraphicsItem::ItemCoordinateCache);just change direction without move do bug
 }
 
 QRectF MapObjectItem::boundingRect() const
