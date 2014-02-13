@@ -2016,7 +2016,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                 }
                 if(ok)
                 {
-                    if(monstersCollision.layer.isEmpty() && monstersCollision.type==MonstersCollisionType_WalkOn)//need specific layer name to do that's
+                    if(monstersCollision.layer.isEmpty() && monstersCollision.type!=MonstersCollisionType_WalkOn)//need specific layer name to do that's
                     {
                         ok=false;
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("To have blocking layer by item, have specific layer name, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
@@ -2040,12 +2040,12 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                 if(ok)
                 {
                     if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_tile))
-                        monstersCollision.layer=monstersCollisionItem.attribute(DatapackGeneralLoader::text_tile);
+                        monstersCollision.tile=monstersCollisionItem.attribute(DatapackGeneralLoader::text_tile);
                 }
                 if(ok)
                 {
                     if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
-                        monstersCollision.layer=monstersCollisionItem.attribute(DatapackGeneralLoader::text_monsterType);
+                        monstersCollision.monsterType=monstersCollisionItem.attribute(DatapackGeneralLoader::text_monsterType);
                 }
                 if(ok)
                 {
@@ -2067,10 +2067,18 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                         index++;
                     }
                 }
-                if(ok)
+                if(ok && !monstersCollision.monsterType.isEmpty())
                 {
                     if(monstersCollision.type==MonstersCollisionType_WalkOn && monstersCollision.layer.isEmpty() && monstersCollision.item==0)
-                        returnVar.first()=monstersCollision;
+                    {
+                        if(returnVar.isEmpty())
+                            returnVar << monstersCollision;
+                        else
+                        {
+                            returnVar << returnVar.last();
+                            returnVar.first()=monstersCollision;
+                        }
+                    }
                     else
                         returnVar << monstersCollision;
                 }

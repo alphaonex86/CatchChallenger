@@ -971,114 +971,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         }
     }
 
-    //drop the empty layer
-    {}
-
-#ifdef DEBUG_MESSAGE_MAP_RAW
-    if(Walkable.size()>0 || Water.size()>0 || Collisions.size()>0 || Grass.size()>0 || Dirt.size()>0)
-    {
-        QByteArray null_data;
-        null_data.resize(4);
-        null_data[0]=0x00;
-        null_data[1]=0x00;
-        null_data[2]=0x00;
-        null_data[3]=0x00;
-        x=0;
-        y=0;
-        QStringList layers_name;
-        if(Walkable.size()>0)
-            layers_name << "Walkable";
-        if(Water.size()>0)
-            layers_name << "Water";
-        if(Collisions.size()>0)
-            layers_name << "Collisions";
-        if(Grass.size()>0)
-            layers_name << "Grass";
-        if(Dirt.size()>0)
-            layers_name << "Dirt";
-        if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
-            layers_name << "Ledges*";
-        DebugClass::debugConsole("For "+fileName+": "+layers_name.join(" + ")+" = Walkable");
-        while(y<map_to_send.height)
-        {
-            QString line;
-            if(Walkable.size()>0)
-            {
-                x=0;
-                while(x<map_to_send.width)
-                {
-                    line += QString::number(Walkable.mid(x*4+y*map_to_send.width*4,4)!=null_data);
-                    x++;
-                }
-                line+=" ";
-            }
-            if(Water.size()>0)
-            {
-                x=0;
-                while(x<map_to_send.width)
-                {
-                    line += QString::number(Water.mid(x*4+y*map_to_send.width*4,4)!=null_data);
-                    x++;
-                }
-                line+=" ";
-            }
-            if(Collisions.size()>0)
-            {
-                x=0;
-                while(x<map_to_send.width)
-                {
-                    line += QString::number(Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data);
-                    x++;
-                }
-                line+=" ";
-            }
-            if(Grass.size()>0)
-            {
-                x=0;
-                while(x<map_to_send.width)
-                {
-                    line += QString::number(Grass.mid(x*4+y*map_to_send.width*4,4)!=null_data);
-                    x++;
-                }
-                line+=" ";
-            }
-            if(Dirt.size()>0)
-            {
-                x=0;
-                while(x<map_to_send.width)
-                {
-                    line += QString::number(Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data);
-                    x++;
-                }
-                line+=" ";
-            }
-            if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
-            {
-                x=0;
-                while(x<map_to_send.width)
-                {
-                    line += QString::number(map_to_send.parsed_layer.ledges.value(x+y*map_to_send.width);
-                    x++;
-                }
-                line+=" ";
-            }
-            x=0;
-            while(x<map_to_send.width)
-            {
-                line += QString::number(map_to_send.parsed_layer.walkable.value(x+y*map_to_send.width);
-                x++;
-            }
-            line.replace("0","_");
-            DebugClass::debugConsole(line);
-            y++;
-        }
-    }
-    else
-        DebugClass::debugConsole("No layer found!");
-#endif
-
     //don't put code here !!!!!! put before the last block
-
     this->map_to_send=map_to_send;
 
     QString xmlExtra=fileName;
@@ -1142,6 +1035,97 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             }
         }
     }
+
+#ifdef DEBUG_MESSAGE_MAP_RAW
+    if(Walkable.size()>0 || map_to_send.parsed_layer.monstersCollisionMap!=NULL || Collisions.size()>0 || Dirt.size()>0)
+    {
+        QByteArray null_data;
+        null_data.resize(4);
+        null_data[0]=0x00;
+        null_data[1]=0x00;
+        null_data[2]=0x00;
+        null_data[3]=0x00;
+        x=0;
+        y=0;
+        QStringList layers_name;
+        if(Walkable.size()>0)
+            layers_name << "Walkable";
+        if(map_to_send.parsed_layer.monstersCollisionMap!=NULL)
+            layers_name << "Monster zone";
+        if(Collisions.size()>0)
+            layers_name << "Collisions";
+        if(Dirt.size()>0)
+            layers_name << "Dirt";
+        if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
+            layers_name << "Ledges*";
+        DebugClass::debugConsole("For "+fileName+": "+layers_name.join(" + ")+" = Walkable");
+        while(y<map_to_send.height)
+        {
+            QString line;
+            if(Walkable.size()>0)
+            {
+                x=0;
+                while(x<map_to_send.width)
+                {
+                    line += QString::number(Walkable.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    x++;
+                }
+                line+=" ";
+            }
+            if(map_to_send.parsed_layer.monstersCollisionMap!=NULL)
+            {
+                x=0;
+                while(x<map_to_send.width)
+                {
+                    line += QString::number(map_to_send.parsed_layer.monstersCollisionMap[x+y*map_to_send.width]);
+                    x++;
+                }
+                line+=" ";
+            }
+            if(Collisions.size()>0)
+            {
+                x=0;
+                while(x<map_to_send.width)
+                {
+                    line += QString::number(Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    x++;
+                }
+                line+=" ";
+            }
+            if(Dirt.size()>0)
+            {
+                x=0;
+                while(x<map_to_send.width)
+                {
+                    line += QString::number(Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    x++;
+                }
+                line+=" ";
+            }
+            if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
+            {
+                x=0;
+                while(x<map_to_send.width)
+                {
+                    line += QString::number(map_to_send.parsed_layer.ledges[x+y*map_to_send.width]);
+                    x++;
+                }
+                line+=" ";
+            }
+            x=0;
+            while(x<map_to_send.width)
+            {
+                line += QString::number(map_to_send.parsed_layer.walkable[x+y*map_to_send.width]);
+                x++;
+            }
+            line.replace("0","_");
+            DebugClass::debugConsole(line);
+            y++;
+        }
+    }
+    else
+        DebugClass::debugConsole("No layer found!");
+#endif
 
     return true;
 }
@@ -1323,8 +1307,8 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
                     monsterTypeList.remove(detectedMonsterCollisionMonsterType.at(index));
                 }
             }
-            else
-                qDebug() << QStringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber()).arg(fileName);
+            /*else//do ignore for cave
+                qDebug() << QStringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber()).arg(fileName);*/
             index++;
         }
     }
@@ -1337,7 +1321,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
         int index=0;
         while(index<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
         {
-            if(detectedMonsterCollisionMonsterType.contains(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType))
+            if(monsterTypeList.contains(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType))
             {
                 quint8 tempZoneNumberIndex=0;
                 //cave
@@ -1349,7 +1333,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
                     if(!zoneNumber.contains(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
                     {
                         zoneNumber[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer]=zoneNumberIndex;
-                        map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];//create
+                        map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//create
                         tempZoneNumberIndex=zoneNumberIndex;
                         zoneNumberIndex++;
                     }
@@ -1357,11 +1341,13 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
                         tempZoneNumberIndex=zoneNumber.value(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer);
                 }
                 MonstersCollisionValueMonster *monstersCollisionValueMonster;
-                if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
-                    monstersCollisionValueMonster=&map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex].actionOn[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).item];
-                else
-                    crash on walkOn[
-                    monstersCollisionValueMonster=&map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex].walkOn[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).item];
+                {
+                    MonstersCollisionValue *monstersCollisionValue=&map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
+                    if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
+                        monstersCollisionValueMonster=&monstersCollisionValue->actionOn[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).item];
+                    else
+                        monstersCollisionValueMonster=&monstersCollisionValue->walkOn[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).item];
+                }
                 monstersCollisionValueMonster->tile=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).tile;
                 monstersCollisionValueMonster->monsters=monsterTypeList.values(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType);
             }
