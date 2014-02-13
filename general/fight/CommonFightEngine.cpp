@@ -2182,6 +2182,12 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
         return false;
     }
     quint8 zoneCode=map->parsed_layer.monstersCollisionMap[x+y*map->width];
+    if(zoneCode>=map->parsed_layer.monstersCollisionList.size())
+    {
+        emit error(QStringLiteral("error: map: %1 (%2,%3), zone code out of range").arg(map->map_file).arg(x).arg(y));
+        /// no fight in this zone
+        return false;
+    }
     const MonstersCollisionValue &monstersCollisionValue=map->parsed_layer.monstersCollisionList.at(zoneCode);
     QMapIterator<quint32/*item*/, MonstersCollisionValueMonster> i(monstersCollisionValue.walkOn);
     while (i.hasNext()) {
