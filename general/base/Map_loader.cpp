@@ -175,11 +175,11 @@ Map_loader::~Map_loader()
 bool Map_loader::tryLoadMap(const QString &fileName)
 {
     error.clear();
-    Map_to_send map_to_send;
-    map_to_send.border.bottom.x_offset=0;
-    map_to_send.border.top.x_offset=0;
-    map_to_send.border.left.y_offset=0;
-    map_to_send.border.right.y_offset=0;
+    Map_to_send map_to_send_temp;
+    map_to_send_temp.border.bottom.x_offset=0;
+    map_to_send_temp.border.top.x_offset=0;
+    map_to_send_temp.border.left.y_offset=0;
+    map_to_send_temp.border.right.y_offset=0;
 
     QList<QString> detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer;
     QByteArray xmlContent,Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
@@ -223,7 +223,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         error=QStringLiteral("the root node has not the attribute \"width\"");
         return false;
     }
-    map_to_send.width=root.attribute(Map_loader::text_width).toUInt(&ok);
+    map_to_send_temp.width=root.attribute(Map_loader::text_width).toUInt(&ok);
     if(!ok)
     {
         error=QStringLiteral("the root node has wrong attribute \"width\"");
@@ -236,7 +236,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         error=QStringLiteral("the root node has not the attribute \"height\"");
         return false;
     }
-    map_to_send.height=root.attribute(Map_loader::text_height).toUInt(&ok);
+    map_to_send_temp.height=root.attribute(Map_loader::text_height).toUInt(&ok);
     if(!ok)
     {
         error=QStringLiteral("the root node has wrong attribute \"height\"");
@@ -244,12 +244,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     }
 
     //check the size
-    if(map_to_send.width<1 || map_to_send.width>255)
+    if(map_to_send_temp.width<1 || map_to_send_temp.width>255)
     {
         error=QStringLiteral("the width should be greater or equal than 1, and lower or equal than 32000");
         return false;
     }
-    if(map_to_send.height<1 || map_to_send.height>255)
+    if(map_to_send_temp.height<1 || map_to_send_temp.height>255)
     {
         error=QStringLiteral("the height should be greater or equal than 1, and lower or equal than 32000");
         return false;
@@ -267,7 +267,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 if(SubChild.isElement())
                 {
                     if(SubChild.hasAttribute(Map_loader::text_name) && SubChild.hasAttribute(Map_loader::text_value))
-                        map_to_send.property[SubChild.attribute(Map_loader::text_name)]=SubChild.attribute(Map_loader::text_value);
+                        map_to_send_temp.property[SubChild.attribute(Map_loader::text_name)]=SubChild.attribute(Map_loader::text_value);
                     else
                     {
                         error=QStringLiteral("Missing attribute name or value: child.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber());
@@ -317,7 +317,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
-                            else if(object_x>map_to_send.width || object_y>map_to_send.height)
+                            else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
                                 DebugClass::debugConsole(QStringLiteral("Object out of the map: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                             else if(SubChild.hasAttribute(Map_loader::text_type))
                             {
@@ -355,40 +355,40 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     {
                                         if(type==Map_loader::text_borderleft)//border left
                                         {
-                                            map_to_send.border.left.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send.border.left.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.left.fileName.isEmpty())
-                                                map_to_send.border.left.fileName+=Map_loader::text_dottmx;
-                                            map_to_send.border.left.y_offset=object_y;
+                                            map_to_send_temp.border.left.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send_temp.border.left.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.left.fileName.isEmpty())
+                                                map_to_send_temp.border.left.fileName+=Map_loader::text_dottmx;
+                                            map_to_send_temp.border.left.y_offset=object_y;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
                                             #endif
                                         }
                                         else if(type==Map_loader::text_borderright)//border right
                                         {
-                                            map_to_send.border.right.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send.border.right.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.right.fileName.isEmpty())
-                                                map_to_send.border.right.fileName+=QLatin1String(".tmx");
-                                            map_to_send.border.right.y_offset=object_y;
+                                            map_to_send_temp.border.right.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send_temp.border.right.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.right.fileName.isEmpty())
+                                                map_to_send_temp.border.right.fileName+=QLatin1String(".tmx");
+                                            map_to_send_temp.border.right.y_offset=object_y;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
                                             #endif
                                         }
                                         else if(type==Map_loader::text_bordertop)//border top
                                         {
-                                            map_to_send.border.top.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send.border.top.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.top.fileName.isEmpty())
-                                                map_to_send.border.top.fileName+=Map_loader::text_dottmx;
-                                            map_to_send.border.top.x_offset=object_x;
+                                            map_to_send_temp.border.top.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send_temp.border.top.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.top.fileName.isEmpty())
+                                                map_to_send_temp.border.top.fileName+=Map_loader::text_dottmx;
+                                            map_to_send_temp.border.top.x_offset=object_x;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
                                             #endif
                                         }
                                         else if(type==Map_loader::text_borderbottom)//border bottom
                                         {
-                                            map_to_send.border.bottom.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send.border.bottom.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send.border.bottom.fileName.isEmpty())
-                                                map_to_send.border.bottom.fileName+=Map_loader::text_dottmx;
-                                            map_to_send.border.bottom.x_offset=object_x;
+                                            map_to_send_temp.border.bottom.fileName=property_text.value(Map_loader::text_map).toString();
+                                            if(!map_to_send_temp.border.bottom.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.bottom.fileName.isEmpty())
+                                                map_to_send_temp.border.bottom.fileName+=Map_loader::text_dottmx;
+                                            map_to_send_temp.border.bottom.x_offset=object_x;
                                             #ifdef DEBUG_MESSAGE_MAP_BORDER
                                             DebugClass::debugConsole(QStringLiteral("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
                                             #endif
@@ -415,6 +415,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     if(property_text.contains(Map_loader::text_map) && property_text.contains(Map_loader::text_x) && property_text.contains(Map_loader::text_y))
                                     {
                                         Map_semi_teleport new_tp;
+                                        new_tp.condition.type=MapConditionType_None;
+                                        new_tp.condition.value=0;
                                         new_tp.destination_x = property_text.value(Map_loader::text_x).toUInt(&ok);
                                         if(ok)
                                         {
@@ -438,7 +440,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                                 new_tp.map=property_text.value(Map_loader::text_map).toString();
                                                 if(!new_tp.map.endsWith(Map_loader::text_dottmx) && !new_tp.map.isEmpty())
                                                     new_tp.map+=Map_loader::text_dottmx;
-                                                map_to_send.teleport << new_tp;
+                                                map_to_send_temp.teleport << new_tp;
                                                 #ifdef DEBUG_MESSAGE_MAP_OBJECT
                                                 DebugClass::debugConsole(QStringLiteral("Teleporter type: %1, to: %2 (%3,%4)").arg(type).arg(new_tp.map).arg(new_tp.source_x).arg(new_tp.source_y));
                                                 #endif
@@ -464,8 +466,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     Map_to_send::Map_Point tempPoint;
                                     tempPoint.x=object_x;
                                     tempPoint.y=object_y;
-                                    map_to_send.rescue_points << tempPoint;
-                                    map_to_send.bot_spawn_points << tempPoint;
+                                    map_to_send_temp.rescue_points << tempPoint;
+                                    map_to_send_temp.bot_spawn_points << tempPoint;
                                 }
                                 else if(type==Map_loader::text_bot_spawn)
                                 {
@@ -479,7 +481,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     Map_to_send::Map_Point tempPoint;
                                     tempPoint.x=object_x;
                                     tempPoint.y=object_y;
-                                    map_to_send.bot_spawn_points << tempPoint;
+                                    map_to_send_temp.bot_spawn_points << tempPoint;
                                 }
                                 else
                                 {
@@ -520,7 +522,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
-                            else if(object_x>map_to_send.width || object_y>map_to_send.height)
+                            else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
                                 DebugClass::debugConsole(QStringLiteral("Object out of the map: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
                             else if(SubChild.hasAttribute(Map_loader::text_type))
                             {
@@ -569,7 +571,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                         {
                                             bot_semi.point.x=object_x;
                                             bot_semi.point.y=object_y;
-                                            map_to_send.bots << bot_semi;
+                                            map_to_send_temp.bots << bot_semi;
                                         }
                                     }
                                     else
@@ -600,7 +602,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         child = child.nextSiblingElement(Map_loader::text_objectgroup);
     }
 
-    const quint32 rawSize=map_to_send.width*map_to_send.height*4;
+    const quint32 rawSize=map_to_send_temp.width*map_to_send_temp.height*4;
 
     // layer
     child = root.firstChildElement(Map_loader::text_layer);
@@ -659,10 +661,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 #else
                     const QByteArray latin1Text = text.toLatin1();
                 #endif
-                const QByteArray &data=decompress(QByteArray::fromBase64(latin1Text),map_to_send.height*map_to_send.width*4);
-                if((quint32)data.size()!=map_to_send.height*map_to_send.width*4)
+                const QByteArray &data=decompress(QByteArray::fromBase64(latin1Text),map_to_send_temp.height*map_to_send_temp.width*4);
+                if((quint32)data.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
                 {
-                    error=QStringLiteral("map binary size (%1) != %2x%3x4").arg(data.size()).arg(map_to_send.height).arg(map_to_send.width);
+                    error=QStringLiteral("map binary size (%1) != %2x%3x4").arg(data.size()).arg(map_to_send_temp.height).arg(map_to_send_temp.width);
                     return false;
                 }
                 if(name==Map_loader::text_Walkable)
@@ -803,18 +805,18 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     null_data[3]=0x00;*/
 
     if(Walkable.size()>0)
-        map_to_send.parsed_layer.walkable	= new bool[map_to_send.width*map_to_send.height];
+        map_to_send_temp.parsed_layer.walkable	= new bool[map_to_send_temp.width*map_to_send_temp.height];
     else
-        map_to_send.parsed_layer.walkable	= NULL;
-    map_to_send.parsed_layer.monstersCollisionMap		= new quint8[map_to_send.width*map_to_send.height];
+        map_to_send_temp.parsed_layer.walkable	= NULL;
+    map_to_send_temp.parsed_layer.monstersCollisionMap		= new quint8[map_to_send_temp.width*map_to_send_temp.height];
     if(Dirt.size()>0)
-        map_to_send.parsed_layer.dirt		= new bool[map_to_send.width*map_to_send.height];
+        map_to_send_temp.parsed_layer.dirt		= new bool[map_to_send_temp.width*map_to_send_temp.height];
     else
-        map_to_send.parsed_layer.dirt		= NULL;
+        map_to_send_temp.parsed_layer.dirt		= NULL;
     if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
-        map_to_send.parsed_layer.ledges		= new quint8[map_to_send.width*map_to_send.height];
+        map_to_send_temp.parsed_layer.ledges		= new quint8[map_to_send_temp.width*map_to_send_temp.height];
     else
-        map_to_send.parsed_layer.ledges		= NULL;
+        map_to_send_temp.parsed_layer.ledges		= NULL;
 
     quint32 x=0;
     quint32 y=0;
@@ -851,44 +853,44 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     }
 
     bool walkable=false,collisions=false,monsterCollision=false,dirt=false,ledgesRight=false,ledgesLeft=false,ledgesBottom=false,ledgesTop=false;
-    while(x<map_to_send.width)
+    while(x<map_to_send_temp.width)
     {
         y=0;
-        while(y<map_to_send.height)
+        while(y<map_to_send_temp.height)
         {
             if(WalkableBin!=NULL)
-                walkable=WalkableBin[x*4+y*map_to_send.width*4+0]!=0x00 || WalkableBin[x*4+y*map_to_send.width*4+1]!=0x00 || WalkableBin[x*4+y*map_to_send.width*4+2]!=0x00 || WalkableBin[x*4+y*map_to_send.width*4+3]!=0x00;
+                walkable=WalkableBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || WalkableBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || WalkableBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || WalkableBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 walkable=false;
             if(CollisionsBin!=NULL)
-                collisions=CollisionsBin[x*4+y*map_to_send.width*4+0]!=0x00 || CollisionsBin[x*4+y*map_to_send.width*4+1]!=0x00 || CollisionsBin[x*4+y*map_to_send.width*4+2]!=0x00 || CollisionsBin[x*4+y*map_to_send.width*4+3]!=0x00;
+                collisions=CollisionsBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || CollisionsBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || CollisionsBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || CollisionsBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 collisions=false;
             if(DirtBin!=NULL)
-                dirt=DirtBin[x*4+y*map_to_send.width*4+0]!=0x00 || DirtBin[x*4+y*map_to_send.width*4+1]!=0x00 || DirtBin[x*4+y*map_to_send.width*4+2]!=0x00 || DirtBin[x*4+y*map_to_send.width*4+3]!=0x00;
+                dirt=DirtBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || DirtBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || DirtBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || DirtBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 dirt=false;
             if(LedgesRightBin!=NULL)
-                ledgesRight=LedgesRightBin[x*4+y*map_to_send.width*4+0]!=0x00 || LedgesRightBin[x*4+y*map_to_send.width*4+1]!=0x00 || LedgesRightBin[x*4+y*map_to_send.width*4+2]!=0x00 || LedgesRightBin[x*4+y*map_to_send.width*4+3]!=0x00;
+                ledgesRight=LedgesRightBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesRightBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesRightBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesRightBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesRight=false;
             if(LedgesLeftBin!=NULL)
-                ledgesLeft=LedgesLeftBin[x*4+y*map_to_send.width*4+0]!=0x00 || LedgesLeftBin[x*4+y*map_to_send.width*4+1]!=0x00 || LedgesLeftBin[x*4+y*map_to_send.width*4+2]!=0x00 || LedgesLeftBin[x*4+y*map_to_send.width*4+3]!=0x00;
+                ledgesLeft=LedgesLeftBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesLeftBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesLeftBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesLeftBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesLeft=false;
             if(LedgesBottomBin!=NULL)
-                ledgesBottom=LedgesBottomBin[x*4+y*map_to_send.width*4+0]!=0x00 || LedgesBottomBin[x*4+y*map_to_send.width*4+1]!=0x00 || LedgesBottomBin[x*4+y*map_to_send.width*4+2]!=0x00 || LedgesBottomBin[x*4+y*map_to_send.width*4+3]!=0x00;
+                ledgesBottom=LedgesBottomBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesBottomBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesBottomBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesBottomBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesBottom=false;
             if(LedgesTopBin!=NULL)
-                ledgesTop=LedgesTopBin[x*4+y*map_to_send.width*4+0]!=0x00 || LedgesTopBin[x*4+y*map_to_send.width*4+1]!=0x00 || LedgesTopBin[x*4+y*map_to_send.width*4+2]!=0x00 || LedgesTopBin[x*4+y*map_to_send.width*4+3]!=0x00;
+                ledgesTop=LedgesTopBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesTopBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesTopBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesTopBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesTop=false;
             monsterCollision=false;
             int index=0;
             while(index<MonsterCollisionBin.size())
             {
-                if(MonsterCollisionBin.at(index)[x*4+y*map_to_send.width*4+0]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send.width*4+1]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send.width*4+2]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send.width*4+3]!=0x00)
+                if(MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+0]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+1]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+2]!=0x00 || MonsterCollisionBin.at(index)[x*4+y*map_to_send_temp.width*4+3]!=0x00)
                 {
                     monsterCollision=true;
                     break;
@@ -897,51 +899,51 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             }
 
             if(Walkable.size()>0)
-                map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=(walkable || monsterCollision) && !collisions && !dirt;
+                map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=(walkable || monsterCollision) && !collisions && !dirt;
             if(Dirt.size()>0)
-                map_to_send.parsed_layer.dirt[x+y*map_to_send.width]=dirt;
+                map_to_send_temp.parsed_layer.dirt[x+y*map_to_send_temp.width]=dirt;
             if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
             {
-                map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_NoLedges;
+                map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(quint8)ParsedLayerLedges_NoLedges;
                 if(ledgesLeft)
                 {
                     if(ledgesRight || ledgesBottom || ledgesTop)
                     {
                         DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for left"));
-                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
-                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesLeft;
+                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(quint8)ParsedLayerLedges_LedgesLeft;
                 }
                 if(ledgesRight)
                 {
                     if(ledgesLeft || ledgesBottom || ledgesTop)
                     {
                         DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for right"));
-                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
-                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesRight;
+                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(quint8)ParsedLayerLedges_LedgesRight;
                 }
                 if(ledgesTop)
                 {
                     if(ledgesRight || ledgesBottom || ledgesLeft)
                     {
                         DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for top"));
-                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
-                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesTop;
+                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(quint8)ParsedLayerLedges_LedgesTop;
                 }
                 if(ledgesBottom)
                 {
                     if(ledgesRight || ledgesLeft || ledgesTop)
                     {
                         DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for bottom"));
-                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
                     else
-                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesBottom;
+                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(quint8)ParsedLayerLedges_LedgesBottom;
                 }
             }
             y++;
@@ -949,30 +951,30 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         x++;
     }
 
-    const int &teleportlistsize=map_to_send.teleport.size();
+    const int &teleportlistsize=map_to_send_temp.teleport.size();
     if(Walkable.size()>0)
     {
         int index=0;
         {
             while(index<teleportlistsize)
             {
-                map_to_send.parsed_layer.walkable[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
+                map_to_send_temp.parsed_layer.walkable[map_to_send_temp.teleport.at(index).source_x+map_to_send_temp.teleport.at(index).source_y*map_to_send_temp.width]=true;
                 index++;
             }
         }
         index=0;
         {
-            const int &listsize=map_to_send.bots.size();
+            const int &listsize=map_to_send_temp.bots.size();
             while(index<listsize)
             {
-                map_to_send.parsed_layer.walkable[map_to_send.bots.at(index).point.x+map_to_send.bots.at(index).point.y*map_to_send.width]=false;
+                map_to_send_temp.parsed_layer.walkable[map_to_send_temp.bots.at(index).point.x+map_to_send_temp.bots.at(index).point.y*map_to_send_temp.width]=false;
                 index++;
             }
         }
     }
 
     //don't put code here !!!!!! put before the last block
-    this->map_to_send=map_to_send;
+    this->map_to_send=map_to_send_temp;
 
     QString xmlExtra=fileName;
     xmlExtra.replace(Map_loader::text_dottmx,QLatin1String(".xml"));
@@ -980,15 +982,15 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         loadMonsterMap(xmlExtra,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer);
 
     {
-        map_to_send.parsed_layer.monstersCollisionMap=new quint8[map_to_send.width*map_to_send.height];
+        this->map_to_send.parsed_layer.monstersCollisionMap=new quint8[this->map_to_send.width*this->map_to_send.height];
         {
             quint8 x=0;
-            while(x<map_to_send.width)
+            while(x<this->map_to_send.width)
             {
                 quint8 y=0;
-                while(y<map_to_send.height)
+                while(y<this->map_to_send.height)
                 {
-                    map_to_send.parsed_layer.monstersCollisionMap[x+y*map_to_send.width]=0;
+                    this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=0;
                     y++;
                 }
                 x++;
@@ -1001,19 +1003,22 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 i.next();
                 if(zoneNumber.contains(i.key()))
                 {
-                    const quint8 &zoneId=zoneNumber.contains(i.key());
+                    const quint8 &zoneId=zoneNumber.value(i.key());
                     quint8 x=0;
-                    while(x<map_to_send.width)
+                    while(x<this->map_to_send.width)
                     {
                         quint8 y=0;
-                        while(y<map_to_send.height)
+                        while(y<this->map_to_send.height)
                         {
-                            if(map_to_send.parsed_layer.monstersCollisionMap[x+y*map_to_send.width]==0)
-                                map_to_send.parsed_layer.monstersCollisionMap[x+y*map_to_send.width]=zoneId;
-                            else if(map_to_send.parsed_layer.monstersCollisionMap[x+y*map_to_send.width]==zoneId)
-                            {}//ignore, same zone
-                            else
-                                DebugClass::debugConsole(QStringLiteral("Have already monster at %1,%2 for %3").arg(x).arg(y).arg(fileName));
+                            if(i.value()[x*4+y*map_to_send_temp.width*4+0]!=0x00 || i.value()[x*4+y*map_to_send_temp.width*4+1]!=0x00 || i.value()[x*4+y*map_to_send_temp.width*4+2]!=0x00 || i.value()[x*4+y*map_to_send_temp.width*4+3]!=0x00)
+                            {
+                                if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
+                                    this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;
+                                else if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==zoneId)
+                                {}//ignore, same zone
+                                else
+                                    DebugClass::debugConsole(QStringLiteral("Have already monster at %1,%2 for %3").arg(x).arg(y).arg(fileName));
+                            }
                             y++;
                         }
                         x++;
@@ -1023,21 +1028,22 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         }
 
         {
-            if(map_to_send.parsed_layer.monstersCollisionList.isEmpty())
+            if(this->map_to_send.parsed_layer.monstersCollisionList.isEmpty())
             {
-                delete map_to_send.parsed_layer.monstersCollisionMap;
-                map_to_send.parsed_layer.monstersCollisionMap=NULL;
+                delete this->map_to_send.parsed_layer.monstersCollisionMap;
+                this->map_to_send.parsed_layer.monstersCollisionMap=NULL;
             }
-            if(map_to_send.parsed_layer.monstersCollisionList.size()==1 && map_to_send.parsed_layer.monstersCollisionList.first().actionOn.isEmpty() && map_to_send.parsed_layer.monstersCollisionList.first().walkOn.isEmpty())
+            if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.first().actionOn.isEmpty() && this->map_to_send.parsed_layer.monstersCollisionList.first().walkOn.isEmpty())
             {
-                delete map_to_send.parsed_layer.monstersCollisionMap;
-                map_to_send.parsed_layer.monstersCollisionMap=NULL;
+                this->map_to_send.parsed_layer.monstersCollisionList.clear();
+                delete this->map_to_send.parsed_layer.monstersCollisionMap;
+                this->map_to_send.parsed_layer.monstersCollisionMap=NULL;
             }
         }
     }
 
 #ifdef DEBUG_MESSAGE_MAP_RAW
-    if(Walkable.size()>0 || map_to_send.parsed_layer.monstersCollisionMap!=NULL || Collisions.size()>0 || Dirt.size()>0)
+    if(Walkable.size()>0 || this->map_to_send.parsed_layer.monstersCollisionMap!=NULL || Collisions.size()>0 || Dirt.size()>0)
     {
         QByteArray null_data;
         null_data.resize(4);
@@ -1050,7 +1056,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         QStringList layers_name;
         if(Walkable.size()>0)
             layers_name << "Walkable";
-        if(map_to_send.parsed_layer.monstersCollisionMap!=NULL)
+        if(this->map_to_send.parsed_layer.monstersCollisionMap!=NULL)
             layers_name << "Monster zone";
         if(Collisions.size()>0)
             layers_name << "Collisions";
@@ -1059,25 +1065,25 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
             layers_name << "Ledges*";
         DebugClass::debugConsole("For "+fileName+": "+layers_name.join(" + ")+" = Walkable");
-        while(y<map_to_send.height)
+        while(y<this->map_to_send.height)
         {
             QString line;
             if(Walkable.size()>0)
             {
                 x=0;
-                while(x<map_to_send.width)
+                while(x<this->map_to_send.width)
                 {
-                    line += QString::number(Walkable.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    line += QString::number(Walkable.mid(x*4+y*this->map_to_send.width*4,4)!=null_data);
                     x++;
                 }
                 line+=" ";
             }
-            if(map_to_send.parsed_layer.monstersCollisionMap!=NULL)
+            if(this->map_to_send.parsed_layer.monstersCollisionMap!=NULL)
             {
                 x=0;
-                while(x<map_to_send.width)
+                while(x<this->map_to_send.width)
                 {
-                    line += QString::number(map_to_send.parsed_layer.monstersCollisionMap[x+y*map_to_send.width]);
+                    line += QString::number(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]);
                     x++;
                 }
                 line+=" ";
@@ -1085,9 +1091,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             if(Collisions.size()>0)
             {
                 x=0;
-                while(x<map_to_send.width)
+                while(x<this->map_to_send.width)
                 {
-                    line += QString::number(Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    line += QString::number(Collisions.mid(x*4+y*this->map_to_send.width*4,4)!=null_data);
                     x++;
                 }
                 line+=" ";
@@ -1095,9 +1101,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             if(Dirt.size()>0)
             {
                 x=0;
-                while(x<map_to_send.width)
+                while(x<this->map_to_send.width)
                 {
-                    line += QString::number(Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    line += QString::number(Dirt.mid(x*4+y*this->map_to_send.width*4,4)!=null_data);
                     x++;
                 }
                 line+=" ";
@@ -1105,17 +1111,17 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
             {
                 x=0;
-                while(x<map_to_send.width)
+                while(x<this->map_to_send.width)
                 {
-                    line += QString::number(map_to_send.parsed_layer.ledges[x+y*map_to_send.width]);
+                    line += QString::number(this->map_to_send.parsed_layer.ledges[x+y*this->map_to_send.width]);
                     x++;
                 }
                 line+=" ";
             }
             x=0;
-            while(x<map_to_send.width)
+            while(x<this->map_to_send.width)
             {
-                line += QString::number(map_to_send.parsed_layer.walkable[x+y*map_to_send.width]);
+                line += QString::number(this->map_to_send.parsed_layer.walkable[x+y*this->map_to_send.width]);
                 x++;
             }
             line.replace("0","_");
@@ -1313,9 +1319,10 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
         }
     }
 
-    map_to_send.parsed_layer.monstersCollisionList.clear();
-    map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//cave
+    this->map_to_send.parsed_layer.monstersCollisionList.clear();
+    this->map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//cave
     //found the zone number
+    zoneNumber.clear();
     quint8 zoneNumberIndex=1;
     {
         int index=0;
@@ -1333,7 +1340,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
                     if(!zoneNumber.contains(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
                     {
                         zoneNumber[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer]=zoneNumberIndex;
-                        map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//create
+                        this->map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//create
                         tempZoneNumberIndex=zoneNumberIndex;
                         zoneNumberIndex++;
                     }
@@ -1342,7 +1349,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
                 }
                 MonstersCollisionValueMonster *monstersCollisionValueMonster;
                 {
-                    MonstersCollisionValue *monstersCollisionValue=&map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
+                    MonstersCollisionValue *monstersCollisionValue=&this->map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
                     if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
                         monstersCollisionValueMonster=&monstersCollisionValue->actionOn[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).item];
                     else

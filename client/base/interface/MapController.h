@@ -55,6 +55,19 @@ public slots:
     virtual void reinject_signals();
 private slots:
     void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
+protected:
+    static QString text_left;
+    static QString text_right;
+    static QString text_top;
+    static QString text_bottom;
+    static QString text_slash;
+    static QString text_type;
+    static QString text_fight;
+    static QString text_fightid;
+    static QString text_bot;
+    static QString text_slashtrainerpng;
+    static QString text_DATAPACK_BASE_PATH_SKINBOT;
+    static QString text_DATAPACK_BASE_PATH_SKIN;
 };
 
 #endif // MAPCONTROLLER_H

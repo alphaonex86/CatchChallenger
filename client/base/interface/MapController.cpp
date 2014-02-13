@@ -6,6 +6,20 @@
 
 MapController* MapController::mapController=NULL;
 
+QString MapController::text_left=QLatin1Literal("left");
+QString MapController::text_right=QLatin1Literal("right");
+QString MapController::text_top=QLatin1Literal("top");
+QString MapController::text_bottom=QLatin1Literal("bottom");
+QString MapController::text_slash=QLatin1Literal("/");
+QString MapController::text_type=QLatin1Literal("type");
+QString MapController::text_fight=QLatin1Literal("fight");
+QString MapController::text_fightid=QLatin1Literal("fightid");
+QString MapController::text_bot=QLatin1Literal("bot");
+QString MapController::text_slashtrainerpng=QLatin1Literal("/trainer.png");
+QString MapController::text_DATAPACK_BASE_PATH_SKINBOT=QLatin1Literal(DATAPACK_BASE_PATH_SKINBOT);
+QString MapController::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
+
+
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapControllerMP(centerOnPlayer,debugTags,useCache,OpenGL)
 {
@@ -70,60 +84,62 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     }
     CatchChallenger::Direction direction;
     int baseTile=-1;
-    if(lookAt==QStringLiteral("left"))
+    if(lookAt==MapController::text_left)
     {
         baseTile=10;
         direction=CatchChallenger::Direction_move_at_left;
     }
-    else if(lookAt==QStringLiteral("right"))
+    else if(lookAt==MapController::text_right)
     {
         baseTile=4;
         direction=CatchChallenger::Direction_move_at_right;
     }
-    else if(lookAt==QStringLiteral("top"))
+    else if(lookAt==MapController::text_top)
     {
         baseTile=1;
         direction=CatchChallenger::Direction_move_at_top;
     }
     else
     {
-        if(lookAt!=QStringLiteral("bottom"))
+        if(lookAt!=MapController::text_bottom)
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
     }
     parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject=new Tiled::MapObject();
-    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset=new Tiled::Tileset(QStringLiteral("bot"),16,24);
-    QString skinPath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+QStringLiteral("/")+skin+QStringLiteral("/trainer.png");
+    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset=new Tiled::Tileset(MapController::text_bot,16,24);
+    QString skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
     if(!QFile(skinPath).exists())
-        skinPath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKINBOT)+QStringLiteral("/")+skin+QStringLiteral("/trainer.png");
+        skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKINBOT+MapController::text_slash+skin+MapController::text_slashtrainerpng;
+    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)];
     if(!QFile(skinPath).exists())
     {
         qDebug() << "Unable the load the bot tileset (not found):" << skinPath;
-        if(!parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
+        if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
-    else if(!parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->loadFromImage(QImage(skinPath),skinPath))
+    else if(!botDisplay->tileset->loadFromImage(QImage(skinPath),skinPath))
     {
         qDebug() << "Unable the load the bot tileset";
-        if(!parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
+        if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
-    Tiled::Cell cell=parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject->cell();
-    cell.tile=parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).tileset->tileAt(baseTile);
-    parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject->setCell(cell);
-    ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject);
+
+    Tiled::Cell cell=botDisplay->mapObject->cell();
+    cell.tile=botDisplay->tileset->tileAt(baseTile);
+    botDisplay->mapObject->setCell(cell);
+    ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject->setPosition(QPoint(x,y+1));
-    MapObjectItem::objectLink.value(parsedMap->logicalMap.botsDisplay.value(QPair<quint8,quint8>(x,y)).mapObject)->setZValue(y);
+    botDisplay->mapObject->setPosition(QPoint(x,y+1));
+    MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);
 
     if(parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).step.contains(1))
     {
         QDomElement stepBot=parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).step.value(1);
-        if(stepBot.hasAttribute(QStringLiteral("type")) && stepBot.attribute(QStringLiteral("type"))==QStringLiteral("fight") && stepBot.hasAttribute(QStringLiteral("fightid")))
+        if(stepBot.hasAttribute(MapController::text_type) && stepBot.attribute(MapController::text_type)==MapController::text_fight && stepBot.hasAttribute(MapController::text_fightid))
         {
             bool ok;
-            quint32 fightid=stepBot.attribute(QStringLiteral("fightid")).toUInt(&ok);
+            quint32 fightid=stepBot.attribute(MapController::text_fightid).toUInt(&ok);
             if(ok)
             {
                 if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightid))
