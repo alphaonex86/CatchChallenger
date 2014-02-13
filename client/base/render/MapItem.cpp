@@ -12,7 +12,7 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     : QGraphicsItem(parent)
 {
     setFlag(QGraphicsItem::ItemHasNoContents);
-    setCacheMode(QGraphicsItem::ItemCoordinateCache);
+    //setCacheMode(QGraphicsItem::ItemCoordinateCache);just change direction without move do bug
 
     cache=useCache;
 }
