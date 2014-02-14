@@ -34,7 +34,6 @@ public slots:
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
 
     //the datapack
-    void setDatapackPath(const QString &path);
     virtual void datapackParsed();
     virtual void reinject_signals();
 private:
@@ -125,15 +124,9 @@ private:
     float scaleSize;
     bool isTeleported;
 protected:
-    bool mHaveTheDatapack;
-
     //current player
     CatchChallenger::Player_private_and_public_informations player_informations;
     bool player_informations_is_set;
-
-    //datapack
-    QString datapackPath;
-    QString datapackMapPath;
 private slots:
     bool loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y);
     void moveOtherPlayerStepSlot();

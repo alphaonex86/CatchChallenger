@@ -88,6 +88,7 @@ QString DatapackGeneralLoader::text_walkOn=QLatin1String("walkOn");
 QString DatapackGeneralLoader::text_actionOn=QLatin1String("actionOn");
 QString DatapackGeneralLoader::text_layer=QLatin1String("layer");
 QString DatapackGeneralLoader::text_tile=QLatin1String("tile");
+QString DatapackGeneralLoader::text_background=QLatin1String("background");
 
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
@@ -2041,6 +2042,11 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                 {
                     if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_tile))
                         monstersCollision.tile=monstersCollisionItem.attribute(DatapackGeneralLoader::text_tile);
+                }
+                if(ok)
+                {
+                    if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_background))
+                        monstersCollision.background=monstersCollisionItem.attribute(DatapackGeneralLoader::text_background);
                 }
                 if(ok)
                 {

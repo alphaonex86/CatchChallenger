@@ -1,11 +1,20 @@
 #include "MapVisualiserPlayer.h"
 
 #include "../../../general/base/MoveOnTheMap.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "../interface/DatapackClientLoader.h"
+#include "../../../general/base/GeneralVariable.h"
 
 #include <qmath.h>
 #include <QFileInfo>
 #include <QMessageBox>
+
+QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
+QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAP=QLatin1Literal(DATAPACK_BASE_PATH_MAP);
+QString MapVisualiserPlayer::text_slashtrainerpng=QLatin1Literal("/trainer.png");
+QString MapVisualiserPlayer::text_slash=QLatin1Literal("/");
+QString MapVisualiserPlayer::text_antislash=QLatin1Literal("\\");
+QString MapVisualiserPlayer::text_dotpng=QLatin1Literal(".png");
 
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
@@ -40,14 +49,18 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     stepAlternance=false;
-    animationTileset=new Tiled::Tileset(QStringLiteral("animation"),16,16);
+    animationTileset=new Tiled::Tileset(QLatin1Literal("animation"),16,16);
     nextCurrentObject=new Tiled::MapObject();
     grassCurrentObject=new Tiled::MapObject();
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
 
+    defaultTileset=QLatin1Literal("trainer");
     playerMapObject = new Tiled::MapObject();
-    playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
+
+    lastTileset=defaultTileset;
+    playerTileset = new Tiled::Tileset(QLatin1Literal("player"),16,24);
+    playerTilesetCache[lastTileset]=playerTileset;
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -56,7 +69,17 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
     delete nextCurrentObject;
     delete grassCurrentObject;
     delete playerMapObject;
-    delete playerTileset;
+    //delete playerTileset;
+    QSet<Tiled::Tileset *> deletedTileset;
+    QHashIterator<QString,Tiled::Tileset *> i(playerTilesetCache);
+    while (i.hasNext()) {
+        i.next();
+        if(!deletedTileset.contains(i.value()))
+        {
+            deletedTileset << i.value();
+            delete i.value();
+        }
+    }
 }
 
 bool MapVisualiserPlayer::haveMapInMemory(const QString &mapPath)
@@ -212,6 +235,14 @@ void MapVisualiserPlayer::keyPressParse()
 
 void MapVisualiserPlayer::moveStepSlot()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!moveTimer.isSingleShot())
+    {
+        qDebug() << QStringLiteral("moveTimer is not in single shot").arg(moveStep);
+        moveTimer.setSingleShot(true);
+    }
+    #endif
+    //moveTimer.stop();
     int baseTile=1;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
     switch(direction)
@@ -375,6 +406,12 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
 }
 
+void MapVisualiserPlayer::setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests)
+{
+    this->items=items;
+    this->quests=quests;
+}
+
 void MapVisualiserPlayer::finalPlayerStep()
 {
     if(!all_map.contains(current_map))
@@ -387,6 +424,64 @@ void MapVisualiserPlayer::finalPlayerStep()
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
         return;
+    }
+
+    {
+        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,x,y);
+        int index=0;
+        while(index<monstersCollisionValue.walkOn.size())
+        {
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            if(monstersCollision.item==0 || items->contains(monstersCollision.item))
+            {
+                if(monstersCollision.tile!=lastTileset)
+                {
+                    lastTileset=monstersCollision.tile;
+                    if(playerTilesetCache.contains(lastTileset))
+                        playerTileset=playerTilesetCache.value(lastTileset);
+                    else
+                    {
+                        if(lastTileset.isEmpty())
+                            playerTileset=playerTilesetCache[defaultTileset];
+                        else
+                        {
+                            const QString &imagePath=playerSkinPath+MapVisualiserPlayer::text_slash+lastTileset+MapVisualiserPlayer::text_dotpng;
+                            QImage image(imagePath);
+                            if(!image.isNull())
+                            {
+                                playerTileset = new Tiled::Tileset(lastTileset,16,24);
+                                playerTileset->loadFromImage(image,imagePath);
+                            }
+                            else
+                            {
+                                qDebug() << "Unable to load the player tilset: "+imagePath;
+                                playerTileset=playerTilesetCache[defaultTileset];
+                            }
+                        }
+                        playerTilesetCache[lastTileset]=playerTileset;
+                    }
+                    {
+                        Tiled::Cell cell=playerMapObject->cell();
+                        int tileId=cell.tile->id();
+                        cell.tile=playerTileset->tileAt(tileId);
+                        playerMapObject->setCell(cell);
+                    }
+                }
+                break;
+            }
+            index++;
+        }
+        if(index==monstersCollisionValue.walkOn.size())
+        {
+            lastTileset=defaultTileset;
+            playerTileset=playerTilesetCache[defaultTileset];
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                int tileId=cell.tile->id();
+                cell.tile=playerTileset->tileAt(tileId);
+                playerMapObject->setCell(cell);
+            }
+        }
     }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
@@ -1004,3 +1099,30 @@ CatchChallenger::Map_client * MapVisualiserPlayer::getMapObject()
         return NULL;
 }
 
+//the datapack
+void MapVisualiserPlayer::setDatapackPath(const QString &path)
+{
+    #ifdef DEBUG_CLIENT_LOAD_ORDER
+    qDebug() << QStringLiteral("MapControllerMP::setDatapackPath()");
+    #endif
+
+    if(path.endsWith(MapVisualiserPlayer::text_slash) || path.endsWith(MapVisualiserPlayer::text_antislash))
+        datapackPath=path;
+    else
+        datapackPath=path+MapVisualiserPlayer::text_slash;
+    datapackMapPath=QFileInfo(datapackPath+MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAP).absoluteFilePath();
+    if(!datapackMapPath.endsWith(MapVisualiserPlayer::text_slash) && !datapackMapPath.endsWith(MapVisualiserPlayer::text_antislash))
+        datapackMapPath+=MapVisualiserPlayer::text_slash;
+    mLastLocation.clear();
+}
+
+void MapVisualiserPlayer::datapackParsed()
+{
+    #ifdef DEBUG_CLIENT_LOAD_ORDER
+    qDebug() << QStringLiteral("MapControllerMP::datapackParsed()");
+    #endif
+
+    if(mHaveTheDatapack)
+        return;
+    mHaveTheDatapack=true;
+}

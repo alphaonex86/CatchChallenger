@@ -1,6 +1,7 @@
 #include "MapVisualiserPlayerWithFight.h"
 
 #include "../../fight/interface/ClientFightEngine.h"
+#include "../../../general/base/CommonDatapack.h"
 
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
@@ -28,12 +29,6 @@ bool MapVisualiserPlayerWithFight::haveBeatBot(const quint32 &botFightId) const
 void MapVisualiserPlayerWithFight::addRepelStep(const quint32 &repel_step)
 {
     this->repel_step+=repel_step;
-}
-
-void MapVisualiserPlayerWithFight::setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests)
-{
-    this->items=items;
-    this->quests=quests;
 }
 
 void MapVisualiserPlayerWithFight::resetAll()
@@ -205,12 +200,13 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*new_map,x,y);
     if(!monstersCollisionValue.walkOn.isEmpty())
     {
-        QMapIterator<quint32/*item*/, CatchChallenger::MonstersCollisionValueMonster> i(monstersCollisionValue.walkOn);
-        while (i.hasNext()) {
-            i.next();
-            if(i.key()==0 || items->contains(i.key()))
+        int index=0;
+        while(index<monstersCollisionValue.walkOn.size())
+        {
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            if(monstersCollision.item==0 || items->contains(monstersCollision.item))
             {
-                if(!i.value().monsters.isEmpty())
+                if(!monstersCollisionValue.walkOnMonsters.at(index).isEmpty())
                 {
                     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
                     {
@@ -225,6 +221,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                 }
                 return true;
             }
+            index++;
         }
         emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneItem);
         return false;

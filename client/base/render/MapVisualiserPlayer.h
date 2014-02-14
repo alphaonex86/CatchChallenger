@@ -39,10 +39,24 @@ public:
     quint8 getX();
     quint8 getY();
     CatchChallenger::Map_client * getMapObject();
+
+    //the datapack
+    void setDatapackPath(const QString &path);
+    virtual void datapackParsed();
+
+    void setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests);
 protected:
+    //datapack
+    bool mHaveTheDatapack;
+    QString datapackPath;
+    QString datapackMapPath;
     //player
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
+    QString playerSkinPath;
+    QHash<QString,Tiled::Tileset *> playerTilesetCache;
+    QString lastTileset;
+    QString defaultTileset;
     int moveStep;
     CatchChallenger::Direction direction;
     quint8 x,y;
@@ -69,6 +83,16 @@ protected:
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
     Tiled::Tileset * animationTileset;
+
+    QHash<quint32,quint32> *items;
+    QHash<quint32, CatchChallenger::PlayerQuest> *quests;
+protected:
+    static QString text_DATAPACK_BASE_PATH_SKIN;
+    static QString text_DATAPACK_BASE_PATH_MAP;
+    static QString text_slashtrainerpng;
+    static QString text_slash;
+    static QString text_antislash;
+    static QString text_dotpng;
 protected slots:
     virtual void keyPressParse();
 
