@@ -100,6 +100,7 @@ protected:
     static QString text_actionOn;
     static QString text_layer;
     static QString text_tile;
+    static QString text_background;
 };
 }
 

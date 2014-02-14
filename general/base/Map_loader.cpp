@@ -1192,129 +1192,131 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
         int index=0;
         while(index<detectedMonsterCollisionMonsterType.size())
         {
-            //grass
-            quint32 tempLuckTotal=0;
-            QDomElement layer = this->map_to_send.xmlRoot.firstChildElement(detectedMonsterCollisionMonsterType.at(index));
-            if(!layer.isNull())
+            if(!detectedMonsterCollisionMonsterType.at(index).isEmpty())
             {
-                if(layer.isElement())
+                quint32 tempLuckTotal=0;
+                QDomElement layer = this->map_to_send.xmlRoot.firstChildElement(detectedMonsterCollisionMonsterType.at(index));
+                if(!layer.isNull())
                 {
-                    QDomElement monsters=layer.firstChildElement(Map_loader::text_monster);
-                    while(!monsters.isNull())
+                    if(layer.isElement())
                     {
-                        if(monsters.isElement())
+                        QDomElement monsters=layer.firstChildElement(Map_loader::text_monster);
+                        while(!monsters.isNull())
                         {
-                            if(monsters.hasAttribute(Map_loader::text_id) && ((monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel)) || monsters.hasAttribute(Map_loader::text_level)) && monsters.hasAttribute(Map_loader::text_luck))
+                            if(monsters.isElement())
                             {
-                                MapMonster mapMonster;
-                                mapMonster.id=monsters.attribute(Map_loader::text_id).toUInt(&ok);
-                                if(!ok)
-                                    qDebug() << QStringLiteral("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                if(ok)
-                                    if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(mapMonster.id))
-                                    {
-                                        qDebug() << QStringLiteral("monster %3 not found into the monster list: %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(mapMonster.id);
-                                        ok=false;
-                                    }
-                                if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
+                                if(monsters.hasAttribute(Map_loader::text_id) && ((monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel)) || monsters.hasAttribute(Map_loader::text_level)) && monsters.hasAttribute(Map_loader::text_luck))
                                 {
+                                    MapMonster mapMonster;
+                                    mapMonster.id=monsters.attribute(Map_loader::text_id).toUInt(&ok);
+                                    if(!ok)
+                                        qDebug() << QStringLiteral("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                                     if(ok)
+                                        if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(mapMonster.id))
+                                        {
+                                            qDebug() << QStringLiteral("monster %3 not found into the monster list: %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(mapMonster.id);
+                                            ok=false;
+                                        }
+                                    if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
                                     {
-                                        mapMonster.minLevel=monsters.attribute(Map_loader::text_minLevel).toUShort(&ok);
-                                        if(!ok)
-                                            qDebug() << QStringLiteral("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                        if(ok)
+                                        {
+                                            mapMonster.minLevel=monsters.attribute(Map_loader::text_minLevel).toUShort(&ok);
+                                            if(!ok)
+                                                qDebug() << QStringLiteral("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                        }
+                                        if(ok)
+                                        {
+                                            mapMonster.maxLevel=monsters.attribute(Map_loader::text_maxLevel).toUShort(&ok);
+                                            if(!ok)
+                                                qDebug() << QStringLiteral("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(ok)
+                                        {
+                                            mapMonster.maxLevel=monsters.attribute(Map_loader::text_level).toUShort(&ok);
+                                            mapMonster.minLevel=mapMonster.maxLevel;
+                                            if(!ok)
+                                                qDebug() << QStringLiteral("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                        }
                                     }
                                     if(ok)
                                     {
-                                        mapMonster.maxLevel=monsters.attribute(Map_loader::text_maxLevel).toUShort(&ok);
+                                        QString textLuck=monsters.attribute(Map_loader::text_luck);
+                                        textLuck.remove(Map_loader::text_percent);
+                                        mapMonster.luck=textLuck.toUShort(&ok);
                                         if(!ok)
-                                            qDebug() << QStringLiteral("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                            qDebug() << QStringLiteral("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                    }
+                                    if(ok)
+                                        if(mapMonster.minLevel>mapMonster.maxLevel)
+                                        {
+                                            qDebug() << QStringLiteral("min > max for the level: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                            ok=false;
+                                        }
+                                    if(ok)
+                                        if(mapMonster.luck<=0)
+                                        {
+                                            qDebug() << QStringLiteral("luck is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                            ok=false;
+                                        }
+                                    if(ok)
+                                        if(mapMonster.minLevel<=0)
+                                        {
+                                            qDebug() << QStringLiteral("min level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                            ok=false;
+                                        }
+                                    if(ok)
+                                        if(mapMonster.maxLevel<=0)
+                                        {
+                                            qDebug() << QStringLiteral("max level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                            ok=false;
+                                        }
+                                    if(ok)
+                                        if(mapMonster.luck>100)
+                                        {
+                                            qDebug() << QStringLiteral("luck is greater than 100: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                            ok=false;
+                                        }
+                                    if(ok)
+                                        if(mapMonster.minLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                                        {
+                                            qDebug() << QStringLiteral("min level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX);
+                                            ok=false;
+                                        }
+                                    if(ok)
+                                        if(mapMonster.maxLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                                        {
+                                            qDebug() << QStringLiteral("max level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX);
+                                            ok=false;
+                                        }
+                                    if(ok)
+                                    {
+                                        tempLuckTotal+=mapMonster.luck;
+                                        monsterTypeList.insert(detectedMonsterCollisionMonsterType.at(index),mapMonster);
                                     }
                                 }
                                 else
-                                {
-                                    if(ok)
-                                    {
-                                        mapMonster.maxLevel=monsters.attribute(Map_loader::text_level).toUShort(&ok);
-                                        mapMonster.minLevel=mapMonster.maxLevel;
-                                        if(!ok)
-                                            qDebug() << QStringLiteral("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                    }
-                                }
-                                if(ok)
-                                {
-                                    QString textLuck=monsters.attribute(Map_loader::text_luck);
-                                    textLuck.remove(Map_loader::text_percent);
-                                    mapMonster.luck=textLuck.toUShort(&ok);
-                                    if(!ok)
-                                        qDebug() << QStringLiteral("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                }
-                                if(ok)
-                                    if(mapMonster.minLevel>mapMonster.maxLevel)
-                                    {
-                                        qDebug() << QStringLiteral("min > max for the level: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                        ok=false;
-                                    }
-                                if(ok)
-                                    if(mapMonster.luck<=0)
-                                    {
-                                        qDebug() << QStringLiteral("luck is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                        ok=false;
-                                    }
-                                if(ok)
-                                    if(mapMonster.minLevel<=0)
-                                    {
-                                        qDebug() << QStringLiteral("min level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                        ok=false;
-                                    }
-                                if(ok)
-                                    if(mapMonster.maxLevel<=0)
-                                    {
-                                        qDebug() << QStringLiteral("max level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                        ok=false;
-                                    }
-                                if(ok)
-                                    if(mapMonster.luck>100)
-                                    {
-                                        qDebug() << QStringLiteral("luck is greater than 100: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                                        ok=false;
-                                    }
-                                if(ok)
-                                    if(mapMonster.minLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                                    {
-                                        qDebug() << QStringLiteral("min level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX);
-                                        ok=false;
-                                    }
-                                if(ok)
-                                    if(mapMonster.maxLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                                    {
-                                        qDebug() << QStringLiteral("max level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX);
-                                        ok=false;
-                                    }
-                                if(ok)
-                                {
-                                    tempLuckTotal+=mapMonster.luck;
-                                    monsterTypeList.insert(detectedMonsterCollisionMonsterType.at(index),mapMonster);
-                                }
+                                    qDebug() << QStringLiteral("Missing attribute: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
                             }
                             else
-                                qDebug() << QStringLiteral("Missing attribute: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            monsters = monsters.nextSiblingElement(Map_loader::text_monster);
                         }
-                        else
-                            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                        monsters = monsters.nextSiblingElement(Map_loader::text_monster);
+                    }
+                    else
+                        qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber());
+                    if(tempLuckTotal!=100)
+                    {
+                        qDebug() << QStringLiteral("total luck is not egal to 100 (%3) for grass into %4, monsters dropped: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber()).arg(tempLuckTotal).arg(fileName);
+                        monsterTypeList.remove(detectedMonsterCollisionMonsterType.at(index));
                     }
                 }
-                else
-                    qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber());
-                if(tempLuckTotal!=100)
-                {
-                    qDebug() << QStringLiteral("total luck is not egal to 100 (%3) for grass into %4, monsters dropped: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber()).arg(tempLuckTotal).arg(fileName);
-                    monsterTypeList.remove(detectedMonsterCollisionMonsterType.at(index));
-                }
+                /*else//do ignore for cave
+                    qDebug() << QStringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber()).arg(fileName);*/
             }
-            /*else//do ignore for cave
-                qDebug() << QStringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child.tagName(): %1 (at line: %2)").arg(layer.tagName()).arg(layer.lineNumber()).arg(fileName);*/
             index++;
         }
     }
@@ -1347,16 +1349,19 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
                     else
                         tempZoneNumberIndex=zoneNumber.value(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer);
                 }
-                MonstersCollisionValueMonster *monstersCollisionValueMonster;
                 {
                     MonstersCollisionValue *monstersCollisionValue=&this->map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
                     if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
-                        monstersCollisionValueMonster=&monstersCollisionValue->actionOn[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).item];
+                    {
+                        monstersCollisionValue->actionOn << index;
+                        monstersCollisionValue->actionOnMonsters << monsterTypeList.values(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType);
+                    }
                     else
-                        monstersCollisionValueMonster=&monstersCollisionValue->walkOn[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).item];
+                    {
+                        monstersCollisionValue->walkOn << index;
+                        monstersCollisionValue->walkOnMonsters << monsterTypeList.values(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType);
+                    }
                 }
-                monstersCollisionValueMonster->tile=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).tile;
-                monstersCollisionValueMonster->monsters=monsterTypeList.values(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterType);
             }
             index++;
         }

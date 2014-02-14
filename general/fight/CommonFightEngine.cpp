@@ -2189,12 +2189,13 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
         return false;
     }
     const MonstersCollisionValue &monstersCollisionValue=map->parsed_layer.monstersCollisionList.at(zoneCode);
-    QMapIterator<quint32/*item*/, MonstersCollisionValueMonster> i(monstersCollisionValue.walkOn);
-    while (i.hasNext()) {
-        i.next();
-        if(i.key()==0 || items.contains(i.key()))
+    int index=0;
+    while(index<monstersCollisionValue.walkOn.size())
+    {
+        const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+        if(monstersCollision.item==0 || items.contains(monstersCollision.item))
         {
-            if(i.value().monsters.isEmpty())
+            if(monstersCollisionValue.walkOnMonsters.at(index).isEmpty())
             {
                 /// no fight in this zone
                 return false;
@@ -2220,7 +2221,7 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
                     stepFight--;
                 if(stepFight==0)
                 {
-                    const PlayerMonster &monster=getRandomMonster(i.value().monsters,&ok);
+                    const PlayerMonster &monster=getRandomMonster(monstersCollisionValue.walkOnMonsters.at(index),&ok);
                     if(ok)
                     {
                         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
@@ -2237,6 +2238,7 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
                     return false;
             }
         }
+        index++;
     }
     /// no fight in this zone
     return false;
