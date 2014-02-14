@@ -372,16 +372,12 @@ enum ParsedLayerLedges
     ParsedLayerLedges_LedgesBottom=0x04
 };
 
-struct MonstersCollisionValueMonster
-{
-    QList<MapMonster> monsters;
-    QString tile;
-};
-
 struct MonstersCollisionValue
 {
-    QMap<quint32/*item*/, MonstersCollisionValueMonster> walkOn;
-    QMap<quint32/*item*/, MonstersCollisionValueMonster> actionOn;
+    QList<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> walkOn;
+    QList<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> actionOn;
+    QList<QList<MapMonster> > walkOnMonsters;
+    QList<QList<MapMonster> > actionOnMonsters;
 };
 
 struct ParsedLayer
@@ -776,6 +772,7 @@ struct MonstersCollision
     QString tile;
     QString layer;
     QString monsterType;
+    QString background;
 };
 
 struct Type
