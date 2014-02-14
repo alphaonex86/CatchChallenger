@@ -461,12 +461,50 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
         ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
         return;
     }
-    //map is grass
-    //if(MoveOnTheMap::isGrass(*map,x,y))
-        ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
-    //map is other
-/*    else
-        ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));*/
+    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*map,x,y);
+    int index=0;
+    while(index<monstersCollisionValue.walkOn.size())
+    {
+        const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+        if(monstersCollision.item==0 || items.contains(monstersCollision.item))
+        {
+            if(!monstersCollision.background.isEmpty())
+            {
+                const QString &baseSearch=CatchChallenger::Api_client_real::client->datapackPath()+QLatin1Literal(DATAPACK_BASE_PATH_MAP)+monstersCollision.background;
+                if(QFile(baseSearch+"/background.png").exists())
+                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url('")+baseSearch+QLatin1Literal("/background.png');}"));
+                else if(QFile(baseSearch+"/background.jpg").exists())
+                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url('")+baseSearch+QLatin1Literal("/background.jpg');}"));
+                else
+                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+
+                if(QFile(baseSearch+"/plateform-front.png").exists())
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.png")));
+                else if(QFile(baseSearch+"/plateform-front.gif").exists())
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.gif")));
+                else
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-front.png")));
+
+                if(QFile(baseSearch+"/plateform-background.png").exists())
+                    ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-background.png")));
+                else if(QFile(baseSearch+"/plateform-background.gif").exists())
+                    ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-background.gif")));
+                else
+                    ui->labelFightPlateformBottom->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-background.png")));
+            }
+            else
+            {
+                ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+                ui->labelFightPlateformTop->setPixmap(QPixmap(":/images/interface/fight/plateform-front.png"));
+                ui->labelFightPlateformBottom->setPixmap(QPixmap(":/images/interface/fight/plateform-background.png"));
+            }
+            return;
+        }
+        index++;
+    }
+    ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+    ui->labelFightPlateformTop->setPixmap(QPixmap(":/images/interface/fight/plateform-front.png"));
+    ui->labelFightPlateformBottom->setPixmap(QPixmap(":/images/interface/fight/plateform-background.png"));
 }
 
 void BaseWindow::init_other_monster_display()
