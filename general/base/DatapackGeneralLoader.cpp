@@ -385,7 +385,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
-                    requirementsItem = requirementsItem.nextSiblingElement(DatapackGeneralLoader::text_requirements);
+                    requirementsItem = requirementsItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
                 }
             }
             //load requirements quest
@@ -448,7 +448,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
-                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_rewards);
+                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
                 }
             }
             //load rewards item
@@ -486,7 +486,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
-                    rewardsItem = rewardsItem.nextSiblingElement(DatapackGeneralLoader::text_quest);
+                    rewardsItem = rewardsItem.nextSiblingElement(DatapackGeneralLoader::text_item);
                 }
             }
             //load rewards allow
@@ -515,7 +515,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(rewards.tagName()).arg(rewards.lineNumber());
-        rewards = rewards.nextSiblingElement("rewards");
+        rewards = rewards.nextSiblingElement(DatapackGeneralLoader::text_rewards);
     }
 
     QHash<quint8,CatchChallenger::Quest::Step> steps;
