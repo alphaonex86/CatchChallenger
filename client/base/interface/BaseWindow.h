@@ -144,6 +144,7 @@ private slots:
     void removeQuery(const QueryType &queryType);
     void updateQueryList();
     void loadSettings();
+    void loadSettingsWithDatapack();
     void updateTheWareHouseContent();
     QListWidgetItem * itemToGraphic(const quint32 &id, const quint32 &quantity);
     //player
@@ -351,7 +352,6 @@ private slots:
     void on_craftingUse_clicked();
     void on_listCraftingList_itemActivated(QListWidgetItem *);
     void on_toolButtonOptions_clicked();
-    void on_checkBoxZoom_toggled(bool checked);
     void on_checkBoxLimitFPS_toggled(bool checked);
     void on_spinBoxMaxFPS_editingFinished();
     void on_IG_dialog_text_linkActivated(const QString &rawlink);
@@ -420,6 +420,8 @@ private slots:
     void on_character_remove_clicked();
     void on_characterEntryList_itemDoubleClicked(QListWidgetItem *item);
     void on_listCraftingMaterials_itemActivated(QListWidgetItem *item);
+    void on_forceZoom_toggled(bool checked);
+    void on_zoom_valueChanged(int value);
 protected slots:
     //datapack
     void datapackParsed();

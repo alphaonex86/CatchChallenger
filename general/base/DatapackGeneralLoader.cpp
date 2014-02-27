@@ -2096,3 +2096,59 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
     }
     return returnVar;
 }
+
+LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
+{
+    LayersOptions returnVar;
+    returnVar.zoom=2;
+    QDomDocument domDocument;
+    //open and quick check the file
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    else
+    {
+        QFile xmlFile(file);
+        QByteArray xmlContent;
+        if(!xmlFile.open(QIODevice::ReadOnly))
+        {
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            return returnVar;
+        }
+        xmlContent=xmlFile.readAll();
+        xmlFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            return returnVar;
+        }
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    {
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        return returnVar;
+    }
+    if(root.hasAttribute(QLatin1Literal("zoom")))
+    {
+        bool ok;
+        returnVar.zoom=root.attribute(QLatin1Literal("zoom")).toUShort(&ok);
+        if(!ok)
+        {
+            returnVar.zoom=2;
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, zoom is not a number").arg(file));
+        }
+        else
+        {
+            if(returnVar.zoom<1 || returnVar.zoom>4)
+            {
+                returnVar.zoom=2;
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, zoom out of range 1-4").arg(file));
+            }
+        }
+    }
+
+    return returnVar;
+}

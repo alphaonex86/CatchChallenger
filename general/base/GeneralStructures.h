@@ -143,6 +143,11 @@ struct ItemFull
     QHash<quint32, Trap> trap;
 };
 
+struct LayersOptions
+{
+    quint8 zoom;
+};
+
 struct Industry
 {
     quint32 time;//should not be too short

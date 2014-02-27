@@ -72,6 +72,11 @@ void MapControllerMP::resetAll()
 
 void MapControllerMP::setScale(const float &scaleSize)
 {
+    if(scaleSize<1 || scaleSize>4)
+    {
+        qDebug() << QStringLiteral("scaleSize out of range 1-4: %1").arg(scaleSize);
+        return;
+    }
     scale(scaleSize/this->scaleSize,scaleSize/this->scaleSize);
     this->scaleSize=scaleSize;
 }

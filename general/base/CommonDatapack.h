@@ -40,6 +40,7 @@ public:
     QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
     QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
     QList<MonstersCollision> monstersCollision;
+    LayersOptions layersOptions;
 private:
     QMutex inProgress;
     bool isParsed;
@@ -60,6 +61,7 @@ private slots:
     void parseBotFights();
     void parseProfileList();
     void parseMonstersCollision();
+    void parseLayersOptions();
 };
 }
 
