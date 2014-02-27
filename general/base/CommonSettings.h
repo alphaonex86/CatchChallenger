@@ -12,6 +12,7 @@ public:
     quint32 character_delete_time;//in seconds
     quint8 forcedSpeed;
     bool dontSendPseudo;
+    bool forceClientToSendAtMapChange;
 
     //rates
     float rates_xp;
