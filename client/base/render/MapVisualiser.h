@@ -26,6 +26,7 @@
 #include <QMultiMap>
 #include <QHash>
 #include <QTime>
+#include <QDateTime>
 //#include <QGLWidget>
 
 #include "MapVisualiserThread.h"
@@ -46,6 +47,7 @@ public:
 
     QString current_map;
     QHash<QString,MapVisualiserThread::Map_full *> all_map,old_all_map;
+    QHash<QString,QDateTime> old_all_map_time;
 protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
