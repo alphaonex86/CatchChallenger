@@ -622,6 +622,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             direction=CatchChallenger::Direction_move_at_bottom;
             moveStep=0;
             moveStepSlot();
+            emit send_player_direction(direction);
             if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==(current_map_pointer->logicalMap.height-1))
                 emit send_player_direction(CatchChallenger::Direction_look_at_right);
             //startGrassAnimation(direction);
