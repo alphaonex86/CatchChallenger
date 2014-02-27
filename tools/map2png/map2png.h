@@ -83,9 +83,26 @@ class Map2Png : public QGraphicsView
 public:
     explicit Map2Png(QWidget *parent = 0);
     ~Map2Png();
-    void viewMap(const QString &fileName);
+    void viewMap(const bool &renderAll,const QString &fileName, const QString &destination=QString());
     void displayMap();
+    static QStringList listFolder(const QString& folder,const QString& suffix=QString());
     QString baseDatapack;
+    static QString text_slash;
+    static QString text_dottmx;
+    static QString text_dotpng;
+    static QString text_Moving;
+    static QString text_door;
+    static QString text_Object;
+    static QString text_bot;
+    static QString text_skin;
+    static QString text_fightertrainer;
+    static QString text_bottrainer;
+    static QString text_lookAt;
+    static QString text_empty;
+    static QString text_top;
+    static QString text_right;
+    static QString text_left;
+    static QString text_Collisions;
 private:
     struct Map_full
     {
@@ -102,6 +119,7 @@ private:
     MapItem* mapItem;
     QString mLastError;
     bool hideTheDoors;
+    bool mRenderAll;
 
     QHash<QString,Map_full *> other_map;
 private slots:
