@@ -76,6 +76,7 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
         MapVisualiserThread::Map_full * tempMapObject=old_all_map.value(resolvedFileName);
         tempMapObject->displayed=false;
         old_all_map.remove(resolvedFileName);
+        old_all_map_time.remove(resolvedFileName);
         tempMapObject->logicalMap.border.bottom.map=NULL;
         tempMapObject->logicalMap.border.top.map=NULL;
         tempMapObject->logicalMap.border.left.map=NULL;
@@ -385,11 +386,17 @@ void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 
 void MapVisualiser::removeUnusedMap()
 {
+    const QDateTime &currentTime=QDateTime::currentDateTime();
     //undisplay the unused map
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = old_all_map.constBegin();
     while (i != old_all_map.constEnd()) {
-        destroyMap(i.value());
-        i = old_all_map.constBegin();
+        if(!old_all_map_time.contains(i.key()) || (currentTime.toTime_t()-old_all_map_time.value(i.key()).toTime_t())>5*60)
+        {
+            destroyMap(i.value());
+            i = old_all_map.constBegin();
+        }
+        else
+            ++i;
     }
 }
 
@@ -412,16 +419,18 @@ void MapVisualiser::hideNotloadedMap()
 
 void MapVisualiser::passMapIntoOld()
 {
-    if(old_all_map.isEmpty())
+    const QDateTime &currentTime=QDateTime::currentDateTime();
+/*    if(old_all_map.isEmpty())
         old_all_map=all_map;
     else
-    {
+    {*/
         QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
         while (i != all_map.constEnd()) {
             old_all_map[i.key()]=i.value();
+            old_all_map_time[i.key()]=currentTime;
             ++i;
         }
-    }
+    //}
     all_map.clear();
 }
 
