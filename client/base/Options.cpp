@@ -23,9 +23,13 @@ Options::Options()
     else
         limitedFPS=true;
     if(settings->contains("zoom"))
-        zoom=settings->value("zoom").toBool();
+    {
+        zoom=settings->value("zoom").toUInt();
+        if(zoom>4)
+            zoom=0;
+    }
     else
-        zoom=true;
+        zoom=0;
     if(settings->contains("audioVolume"))
     {
         audioVolume=settings->value("audioVolume").toUInt(&ok);
@@ -67,7 +71,7 @@ void Options::setLimitedFPS(const bool &limitedFPS)
         emit newFinalFPS(0);
 }
 
-void Options::setZoomEnabled(const bool &zoom)
+void Options::setForcedZoom(const quint8 &zoom/*0 is no forced*/)
 {
     if(this->zoom==zoom)
         return;
@@ -96,17 +100,17 @@ void Options::setLanguage(const QString &language)//the main code
     emit newLanguage(language);
 }
 
-quint16 Options::getFPS()
+quint16 Options::getFPS() const
 {
     return fps;
 }
 
-bool Options::getLimitedFPS()
+bool Options::getLimitedFPS() const
 {
     return limitedFPS;
 }
 
-quint16 Options::getFinalFPS()
+quint16 Options::getFinalFPS() const
 {
     if(!limitedFPS)
         return 0;
@@ -114,17 +118,17 @@ quint16 Options::getFinalFPS()
         return fps;
 }
 
-bool Options::getZoomEnabled()
+bool Options::getForcedZoom() const/*0 is no forced*/
 {
     return zoom;
 }
 
-quint8 Options::getAudioVolume()
+quint8 Options::getAudioVolume() const
 {
     return audioVolume;
 }
 
-QString Options::getLanguage()//the main code
+QString Options::getLanguage() const//the main code
 {
     return language;
 }

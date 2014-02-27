@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2109,18 +2109,31 @@ padding-bottom:3px;
                </layout>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBoxZoom">
-                <property name="toolTip">
-                 <string>The other player is displayed in zoom 2x range.
-Without the zoom 2x, it should have display problem.</string>
-                </property>
-                <property name="text">
-                 <string>Zoom 2x (see tooltip)</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
+               <layout class="QHBoxLayout" name="horizontalLayout_58">
+                <item>
+                 <widget class="QCheckBox" name="forceZoom">
+                  <property name="text">
+                   <string>Force zoom</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSlider" name="zoom">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>4</number>
+                  </property>
+                  <property name="value">
+                   <number>2</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
               <item>
                <spacer name="verticalSpacer_4">
@@ -3333,7 +3346,7 @@ padding-bottom:3px;
           <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageEnter">
           <layout class="QHBoxLayout" name="horizontalLayout_22">
@@ -3408,6 +3421,13 @@ padding-bottom:3px;
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="toolButtonFightQuit">
+               <property name="text">
+                <string>Escape</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="verticalSpacer_14">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -3421,34 +3441,6 @@ padding-bottom:3px;
               </spacer>
              </item>
             </layout>
-           </item>
-           <item row="1" column="2">
-            <widget class="QToolButton" name="toolButtonFightQuit">
-             <property name="minimumSize">
-              <size>
-               <width>22</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>22</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QToolButton::hover {
-background-position:left center;
-}
-QToolButton::pressed {
-background-position:left bottom;
-}
-QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
-}</string>
-             </property>
-            </widget>
            </item>
           </layout>
          </widget>
