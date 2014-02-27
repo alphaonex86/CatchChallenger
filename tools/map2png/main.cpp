@@ -30,8 +30,12 @@
 
 #include <QApplication>
 #include <QFileDialog>
-
-/// \todo support (sub)folder to group the tilset loading
+#include <QStringList>
+#include <QString>
+#include <QFileInfoList>
+#include <QFileInfo>
+#include <QDir>
+#include <QTime>
 
 int main(int argc, char *argv[])
 {
@@ -47,52 +51,106 @@ int main(int argc, char *argv[])
     a.setApplicationVersion(QStringLiteral("1.0"));
 
     const QStringList &arguments=QCoreApplication::arguments();
-    QString fileToOpen;
+    QString fileToOpen,destination;
+    QFileInfo dir;
+    if(arguments.size()==2)
+        dir=QFileInfo(arguments.last());
+    if(arguments.size()==2 && dir.isDir())
     {
+        QTime time;
+        time.restart();
+        QStringList files=Map2Png::listFolder(dir.absoluteFilePath()+Map2Png::text_slash);
         int index=0;
-        while(index<arguments.size())
+        while(index<files.size())
         {
-            if(arguments.at(index).endsWith(QStringLiteral(".tmx")))
+            if(files.at(index).endsWith(Map2Png::text_dottmx))
             {
-                fileToOpen=arguments.at(index);
-                break;
+                fileToOpen=files.at(index);
+                destination=files.at(index);
+                destination.replace(Map2Png::text_dottmx,Map2Png::text_dotpng);
+                Map2Png w;
+                w.viewMap(false,dir.absoluteFilePath()+Map2Png::text_slash+fileToOpen,destination);
             }
             index++;
         }
-    }
-    Map2Png w;
-    QString previousFolder;
-    if (fileToOpen.isEmpty())
-    {
-        QString source = QFileDialog::getOpenFileName(NULL,QStringLiteral("Select map"));
-        if(source.isEmpty() || source.isNull())
-            return 0;
-        fileToOpen=source;
-    }
-    {
-        bool found=true;
-        QFileInfo dir(QFileInfo(fileToOpen).absolutePath());
-        while(!QFileInfo(dir.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
-        {
-            previousFolder=dir.absoluteFilePath();
-            dir=QFileInfo(dir.absolutePath());
-            if(previousFolder==dir.absoluteFilePath())
-            {
-                found=false;
-                break;
-            }
-        }
-        if(found)
-            w.baseDatapack=dir.absoluteFilePath();
-    }
-
-    w.viewMap(fileToOpen);
-    if(arguments.size()!=3)
-    {
-        w.show();
-        w.setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
-        return a.exec();
+        qDebug() << QString("Done into: %1s").arg(time.elapsed()/1000);
+        return 0;
     }
     else
-        return 0;
+    {
+        {
+            int index=0;
+            while(index<arguments.size())
+            {
+                if(arguments.at(index).endsWith(Map2Png::text_dottmx))
+                {
+                    fileToOpen=arguments.at(index);
+                    break;
+                }
+                index++;
+            }
+            {
+                int index=0;
+                while(index<arguments.size())
+                {
+                    if(arguments.at(index).endsWith(Map2Png::text_dotpng))
+                    {
+                        destination=arguments.at(index);
+                        break;
+                    }
+                    index++;
+                }
+            }
+        }
+        Map2Png w;
+        QString previousFolder;
+        if (fileToOpen.isEmpty())
+        {
+            QString source = QFileDialog::getOpenFileName(NULL,QStringLiteral("Select map"));
+            if(source.isEmpty() || source.isNull())
+                return 0;
+            fileToOpen=source;
+        }
+        if(destination.isEmpty())
+        {
+            destination = QFileDialog::getSaveFileName(NULL,QStringLiteral("Save the render"),QString(),QStringLiteral("Png Images (*.png)"));
+            if(destination.isEmpty())
+            {
+            }
+            else
+            {
+                if(!destination.endsWith(Map2Png::text_dotpng))
+                    destination+=Map2Png::text_dotpng;
+            }
+        }
+        {
+            bool found=true;
+            QFileInfo dir(QFileInfo(fileToOpen).absolutePath());
+            while(!QFileInfo(dir.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
+            {
+                previousFolder=dir.absoluteFilePath();
+                dir=QFileInfo(dir.absolutePath());
+                if(previousFolder==dir.absoluteFilePath())
+                {
+                    found=false;
+                    break;
+                }
+            }
+            if(found)
+                w.baseDatapack=dir.absoluteFilePath();
+        }
+
+        if(arguments.size()==1)
+        {
+            w.viewMap(true,fileToOpen,destination);
+            w.show();
+            w.setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
+            return a.exec();
+        }
+        else
+        {
+            w.viewMap(false,fileToOpen,destination);
+            return 0;
+        }
+    }
 }
