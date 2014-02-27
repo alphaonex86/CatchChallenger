@@ -53,10 +53,28 @@ int main(int argc, char *argv[])
     const QStringList &arguments=QCoreApplication::arguments();
     QString fileToOpen,destination;
     QFileInfo dir;
-    if(arguments.size()==2)
+    if(arguments.size()>1)
         dir=QFileInfo(arguments.last());
-    if(arguments.size()==2 && dir.isDir())
+    if(arguments.size()>1 && dir.isDir())
     {
+        QString baseDatapack;
+        {
+            QString previousFolder;
+            bool found=true;
+            QFileInfo dirDatapack(QFileInfo(dir.absoluteFilePath()+Map2Png::text_slash).absolutePath());
+            while(!QFileInfo(dirDatapack.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
+            {
+                previousFolder=dirDatapack.absoluteFilePath();
+                dirDatapack=QFileInfo(dirDatapack.absolutePath());
+                if(previousFolder==dirDatapack.absoluteFilePath())
+                {
+                    found=false;
+                    break;
+                }
+            }
+            if(found)
+                baseDatapack=dirDatapack.absoluteFilePath();
+        }
         QTime time;
         time.restart();
         QStringList files=Map2Png::listFolder(dir.absoluteFilePath()+Map2Png::text_slash);
@@ -69,6 +87,8 @@ int main(int argc, char *argv[])
                 destination=files.at(index);
                 destination.replace(Map2Png::text_dottmx,Map2Png::text_dotpng);
                 Map2Png w;
+                if(!baseDatapack.isEmpty())
+                    w.baseDatapack=baseDatapack;
                 w.viewMap(false,dir.absoluteFilePath()+Map2Png::text_slash+fileToOpen,destination);
             }
             index++;
@@ -103,7 +123,6 @@ int main(int argc, char *argv[])
             }
         }
         Map2Png w;
-        QString previousFolder;
         if (fileToOpen.isEmpty())
         {
             QString source = QFileDialog::getOpenFileName(NULL,QStringLiteral("Select map"));
@@ -124,6 +143,7 @@ int main(int argc, char *argv[])
             }
         }
         {
+            QString previousFolder;
             bool found=true;
             QFileInfo dir(QFileInfo(fileToOpen).absolutePath());
             while(!QFileInfo(dir.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
