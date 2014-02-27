@@ -37,6 +37,7 @@ void ProcessControler::send_settings()
 
     CommonSettings::commonSettings.forcedSpeed                      = settings->value("forcedSpeed").toUInt();
     CommonSettings::commonSettings.dontSendPseudo					= settings->value("dontSendPseudo").toBool();
+    CommonSettings::commonSettings.forceClientToSendAtBorder		= settings->value("forceClientToSendAtBorder").toBool();
     formatedServerSettings.dontSendPlayerType                       = settings->value("dontSendPlayerType").toBool();
 
     //the listen

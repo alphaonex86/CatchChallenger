@@ -96,6 +96,7 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.anonymous                                  = false;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
+    CommonSettings::commonSettings.forceClientToSendAtMapChange = true;
     CommonSettings::commonSettings.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     CommonSettings::commonSettings.dontSendPseudo         = false;
     CommonSettings::commonSettings.chat_allow_clan        = true;

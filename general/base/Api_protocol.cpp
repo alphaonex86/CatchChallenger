@@ -2447,6 +2447,21 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
                             return;
                         }
+                        {
+                            quint8 tempForceClientToSendAtBorder;
+                            in >> tempForceClientToSendAtBorder;
+                            if(tempForceClientToSendAtBorder!=0 && tempForceClientToSendAtBorder!=1)
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QStringLiteral("forceClientToSendAtBorder have wrong value, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            CommonSettings::commonSettings.forceClientToSendAtMapChange=(tempForceClientToSendAtBorder==1);
+                        }
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                            return;
+                        }
                         in >> CommonSettings::commonSettings.forcedSpeed;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {

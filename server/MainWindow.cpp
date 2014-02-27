@@ -296,6 +296,7 @@ void MainWindow::load_settings()
     ui->benchmark_seconds->setValue(settings->value("benchmark_seconds").toUInt());
     ui->benchmark_clients->setValue(settings->value("benchmark_clients").toUInt());
     ui->tolerantMode->setChecked(settings->value("tolerantMode").toBool());
+    ui->forceClientToSendAtBorder->setChecked(settings->value("forceClientToSendAtBorder").toBool());
     if(settings->value("compression").toString()=="none")
         ui->compression->setCurrentIndex(0);
     else if(settings->value("compression").toString()=="xz")
@@ -542,6 +543,7 @@ void MainWindow::send_settings()
         CommonSettings::commonSettings.forcedSpeed					= ui->speed->value();
     formatedServerSettings.dontSendPlayerType                       = ui->dontSendPlayerType->isChecked();
     CommonSettings::commonSettings.dontSendPseudo					= ui->dontSendPseudo->isChecked();
+    CommonSettings::commonSettings.forceClientToSendAtBorder		= ui->forceClientToSendAtBorder->isChecked();
 
     //the listen
     formatedServerSettings.server_port					= ui->server_port->value();
@@ -1167,4 +1169,10 @@ void CatchChallenger::MainWindow::on_rates_drop_normal_valueChanged(double arg1)
     settings->beginGroup("rates");
     settings->setValue("drop_normal",arg1);
     settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_forceClientToSendAtBorder_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    settings->setValue("forceClientToSendAtBorder",ui->forceClientToSendAtBorder->isChecked());
 }

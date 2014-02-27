@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>5</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -664,6 +664,13 @@
             </widget>
            </item>
           </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="forceClientToSendAtBorder">
+          <property name="text">
+           <string>Force client to send at border</string>
+          </property>
          </widget>
         </item>
         <item>
