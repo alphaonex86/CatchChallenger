@@ -656,8 +656,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("dontSendPseudo",false);
     if(!settings->contains("dontSendPlayerType"))
         settings->setValue("dontSendPlayerType",false);
-    if(!settings->contains("forceClientToSendAtBorder"))
-        settings->setValue("forceClientToSendAtBorder",false);
+    if(!settings->contains("forceClientToSendAtMapChange"))
+        settings->setValue("forceClientToSendAtMapChange",true);
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))
