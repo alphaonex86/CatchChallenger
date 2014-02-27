@@ -43,6 +43,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseIndustries();
     parseProfileList();
     parseMonstersCollision();
+    parseLayersOptions();
     isParsed=true;
 }
 
@@ -138,8 +139,14 @@ void CommonDatapack::parseProfileList()
 
 void CommonDatapack::parseMonstersCollision()
 {
-    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("monstersCollision.xml"),items.item);
+    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("layers.xml"),items.item);
     qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
+}
+
+void CommonDatapack::parseLayersOptions()
+{
+    layersOptions=DatapackGeneralLoader::loadLayersOptions(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("layers.xml"));
+    qDebug() << QStringLiteral("layers options parsed");
 }
 
 void CommonDatapack::unload()

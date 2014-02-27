@@ -15,6 +15,7 @@
 #include "../../general/base/DebugClass.h"
 #include "../../tiled/tiled_tile.h"
 #include "../../general/base/CommonMap.h"
+#include "../ClientVariable.h"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
 void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
@@ -57,6 +58,7 @@ void MapVisualiser::resetAll()
         j = all_map.constBegin();//needed
     }
     old_all_map.clear();
+    old_all_map_time.clear();
     all_map.clear();
     mapVisualiserThread.resetAll();
 }
@@ -390,7 +392,7 @@ void MapVisualiser::removeUnusedMap()
     //undisplay the unused map
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = old_all_map.constBegin();
     while (i != old_all_map.constEnd()) {
-        if(!old_all_map_time.contains(i.key()) || (currentTime.toTime_t()-old_all_map_time.value(i.key()).toTime_t())>5*60)
+        if(!old_all_map_time.contains(i.key()) || (currentTime.toTime_t()-old_all_map_time.value(i.key()).toTime_t())>CATCHCHALLENGER_CLIENT_MAP_CACHE_TIMEOUT || old_all_map.size()>CATCHCHALLENGER_CLIENT_MAP_CACHE_SIZE)
         {
             destroyMap(i.value());
             i = old_all_map.constBegin();

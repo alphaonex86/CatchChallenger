@@ -23,6 +23,7 @@ public:
     static QHash<quint32,quint32> loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries);
     static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint32, Item> &items,const QHash<quint32,Monster> &monsters,const QHash<QString, Reputation> &reputations);
     static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items);
+    static LayersOptions loadLayersOptions(const QString &file);
 protected:
     static QString text_list;
     static QString text_reputation;

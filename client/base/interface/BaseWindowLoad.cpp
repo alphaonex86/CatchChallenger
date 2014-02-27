@@ -348,6 +348,7 @@ void BaseWindow::datapackParsed()
     #endif
     datapackIsParsed=true;
     updateConnectingStatus();
+    loadSettingsWithDatapack();
     //updatePlayerImage();
 }
 
