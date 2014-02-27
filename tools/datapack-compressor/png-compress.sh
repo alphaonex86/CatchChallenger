@@ -1,7 +1,7 @@
 #!/bin/bash
 if [ -x /usr/bin/pngquant ]
 then
-	TEMPRANDOM=`< /dev/urandom tr -dc A-Za-z0-9 | head -c16`
+	TEMPRANDOM=`< /dev/urandom /usr/bin/tr -dc A-Za-z0-9 | head -c16`
 	for VARIABLE in `find ./ -name '*.png' -and ! -name '* *' -type f`
 	do
 		echo "compress the file ${VARIABLE}"
