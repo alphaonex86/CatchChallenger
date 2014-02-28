@@ -106,6 +106,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
             ui->monsterDetailsStatAttack->setText(tr("Attack: %1").arg(stat.attack));
             ui->monsterDetailsStatDefense->setText(tr("Defense: %1").arg(stat.defense));
             ui->monsterDetailsStatXpBar->setValue(monster.remaining_xp);
+            ui->monsterDetailsStatXpBar->repaint();
             ui->monsterDetailsStatXpBar->setMaximum(monsterGeneralInfo.level_to_xp.at(monster.level-1));
             ui->monsterDetailsStatAttackSpe->setText(tr("Special attack: %1").arg(stat.special_attack));
             ui->monsterDetailsStatDefenseSpe->setText(tr("Special defense: %1").arg(stat.special_defense));
@@ -527,11 +528,13 @@ void BaseWindow::init_current_monster_display()
         Monster::Stat fightStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(fightMonster->monster),fightMonster->level);
         ui->progressBarFightBottomHP->setMaximum(fightStat.hp);
         ui->progressBarFightBottomHP->setValue(fightMonster->hp);
+        ui->progressBarFightBottomHP->repaint();
         ui->labelFightBottomHP->setText(QStringLiteral("%1/%2").arg(fightMonster->hp).arg(fightStat.hp));
         const Monster &monsterGenericInfo=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(fightMonster->monster);
         int level_to_xp=monsterGenericInfo.level_to_xp.at(fightMonster->level-1);
         ui->progressBarFightBottomExp->setMaximum(level_to_xp);
         ui->progressBarFightBottomExp->setValue(fightMonster->remaining_xp);
+        ui->progressBarFightBottomExp->repaint();
         //do the buff
         {
             buffToGraphicalItemBottom.clear();
@@ -711,6 +714,7 @@ void BaseWindow::updateCurrentMonsterInformationXp()
         return;
     }
     ui->progressBarFightBottomExp->setValue(monster->remaining_xp);
+    ui->progressBarFightBottomExp->repaint();
     ui->labelFightBottomLevel->setText(tr("Level %1").arg(monster->level));
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster->monster);
     quint32 maxXp=monsterInformations.level_to_xp.at(monster->level-1);
@@ -867,6 +871,7 @@ void BaseWindow::moveFightMonsterTop()
                     if(currentMonster!=NULL)
                     {
                         ui->progressBarFightBottomExp->setValue(currentMonster->remaining_xp);
+                        ui->progressBarFightBottomExp->repaint();
                         ui->labelFightBottomLevel->setText(tr("Level %1").arg(currentMonster->level));
                     }
                     displayText(tr("You win!"));
@@ -1024,6 +1029,7 @@ void BaseWindow::updateOtherMonsterInformation()
         Monster::Stat otherStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         ui->progressBarFightTopHP->setMaximum(otherStat.hp);
         ui->progressBarFightTopHP->setValue(otherMonster->hp);
+        ui->progressBarFightTopHP->repaint();
         //do the buff
         {
             buffToGraphicalItemTop.clear();
@@ -2139,27 +2145,22 @@ void BaseWindow::displayAttack()
                 hp_to_change=ui->progressBarFightBottomHP->maximum();
             if(attackReturn.lifeEffectMonster.isEmpty())
                 hp_to_change=0;
-            else if(attackReturn.lifeEffectMonster.first().quantity<0)
-            {
-                hp_to_change=-hp_to_change;
-                if(attackReturn.lifeEffectMonster.first().quantity>hp_to_change)
-                    hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
-            }
-            else if(attackReturn.lifeEffectMonster.first().quantity>0)
-            {
-                if(attackReturn.lifeEffectMonster.first().quantity<hp_to_change)
-                    hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
-            }
+            else if(attackReturn.lifeEffectMonster.first().quantity!=0)
+                hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
             else
                 hp_to_change=0;
             if(hp_to_change!=0)
             {
                 CatchChallenger::ClientFightEngine::fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
                 if(applyOnOtherMonster)
+                {
                     ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+hp_to_change);
+                    ui->progressBarFightTopHP->repaint();
+                }
                 else
                 {
                     ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+hp_to_change);
+                    ui->progressBarFightBottomHP->repaint();
                     ui->labelFightBottomHP->setText(QStringLiteral("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
                 }
             }
@@ -2182,12 +2183,12 @@ void BaseWindow::displayAttack()
         else if(attackReturn.lifeEffectMonster.first().quantity<0)
         {
             hp_to_change=-hp_to_change;
-            if(attackReturn.lifeEffectMonster.first().quantity>hp_to_change)
+            if(abs(hp_to_change)>abs(attackReturn.lifeEffectMonster.first().quantity))
                 hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
         }
         else if(attackReturn.lifeEffectMonster.first().quantity>0)
         {
-            if(attackReturn.lifeEffectMonster.first().quantity<hp_to_change)
+            if(hp_to_change>attackReturn.lifeEffectMonster.first().quantity)
                 hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
         }
         else
@@ -2196,10 +2197,14 @@ void BaseWindow::displayAttack()
         {
             CatchChallenger::ClientFightEngine::fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
             if(applyOnOtherMonster)
+            {
                 ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+hp_to_change);
+                ui->progressBarFightTopHP->repaint();
+            }
             else
             {
                 ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+hp_to_change);
+                ui->progressBarFightBottomHP->repaint();
                 ui->labelFightBottomHP->setText(QStringLiteral("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
             }
         }
@@ -2219,7 +2224,10 @@ void BaseWindow::displayExperienceGain()
         return;
     }
     if(ui->progressBarFightBottomExp->value()==ui->progressBarFightBottomExp->maximum())
+    {
         ui->progressBarFightBottomExp->setValue(0);
+        ui->progressBarFightBottomExp->repaint();
+    }
     //animation finished
     if(mLastGivenXP<=0)
     {
@@ -2296,12 +2304,14 @@ void BaseWindow::displayExperienceGain()
             qDebug() << QStringLiteral("Now the old hp: %1/%2 increased of %3 for the old level %4").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()).arg(newStat.hp-oldStat.hp).arg(currentMonsterLevel);
             ui->progressBarFightBottomHP->setMaximum(ui->progressBarFightBottomHP->maximum()+(newStat.hp-oldStat.hp));
             ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+(newStat.hp-oldStat.hp));
+            ui->progressBarFightBottomHP->repaint();
             ui->labelFightBottomHP->setText(QStringLiteral("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
         }
         else
             qDebug() << QStringLiteral("The hp at level change is untouched: %1/%2 for the old level %3").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()).arg(currentMonsterLevel);
         ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.monsters.value(currentMonster->monster).level_to_xp.at(currentMonsterLevel-1));
         ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->maximum());
+        ui->progressBarFightBottomExp->repaint();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mLastGivenXP>4294000000)
         {
@@ -2330,7 +2340,10 @@ void BaseWindow::displayExperienceGain()
         return;
     }
     else
+    {
         ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->value()+xp_to_change);
+        ui->progressBarFightBottomExp->repaint();
+    }
     if(mLastGivenXP>xp_to_change)
         mLastGivenXP-=xp_to_change;
     else
