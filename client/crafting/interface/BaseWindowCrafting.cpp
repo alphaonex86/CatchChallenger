@@ -345,7 +345,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         name=tr("Unknow item (%1)").arg(content.doItemId);
         ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
     }
-    ui->labelCraftingDetails->setText(QStringLiteral("Name: <b>%1</b><br /><br />Success: <b>%2%</b><br /><br />Result: <b>%3</b>").arg(name).arg(content.success).arg(content.quantity));
+    ui->labelCraftingDetails->setText(tr("Name: <b>%1</b><br /><br />Success: <b>%2%</b><br /><br />Result: <b>%3</b>").arg(name).arg(content.success).arg(content.quantity));
 
     //load the materials
     bool haveMaterials=true;
