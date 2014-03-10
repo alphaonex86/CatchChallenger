@@ -93,6 +93,9 @@ protected:
     static QString text_slash;
     static QString text_antislash;
     static QString text_dotpng;
+    static QString text_type;
+    static QString text_zone;
+    static QString text_backgroundsound;
 protected slots:
     virtual void keyPressParse();
 

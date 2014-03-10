@@ -32,6 +32,31 @@ public:
     static QHash<QString,ClientBroadCast *> playerByPseudo;
     static QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> playerByClan;
     static QList<ClientBroadCast *> clientBroadCastList;
+
+    static QString text_chat;
+    static QString text_space;
+    static QString text_system;
+    static QString text_system_important;
+    static QString text_setrights;
+    static QString text_normal;
+    static QString text_premium;
+    static QString text_gm;
+    static QString text_dev;
+    static QString text_playerlist;
+    static QString text_startbold;
+    static QString text_stopbold;
+    static QString text_playernumber;
+    static QString text_kick;
+    static QString text_Youarealoneontheserver;
+    static QString text_playersconnected;
+    static QString text_playersconnectedspace;
+    static QString text_havebeenkickedby;
+    static QString text_unknowcommand;
+    static QString text_commandnotunderstand;
+    static QString text_command;
+    static QString text_commaspace;
+    static QString text_unabletofoundtheconnectedplayertokick;
+    static QString text_unabletofoundthisrightslevel;
 public slots:
     //global slot
     void sendPM(const QString &text,const QString &pseudo);
