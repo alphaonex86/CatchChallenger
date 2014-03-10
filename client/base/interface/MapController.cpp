@@ -24,10 +24,16 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     MapControllerMP(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection);
+    botFlags=NULL;
 }
 
 MapController::~MapController()
 {
+    if(botFlags!=NULL)
+    {
+        delete botFlags;
+        botFlags=NULL;
+    }
 }
 
 void MapController::connectAllSignals()
@@ -77,6 +83,17 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     Q_UNUSED(botId);
     if(skin.isEmpty())
         return;
+
+    if(parsedMap->logicalMap.botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+    {
+        /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)];
+        ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
+        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+        botDisplay->mapObject->setPosition(QPoint(x,y+1));
+        MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);*/
+        return;
+    }
+
     if(!ObjectGroupItem::objectGroupLink.contains(parsedMap->objectGroup))
     {
         qDebug() << QStringLiteral("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
@@ -106,12 +123,13 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
     }
-    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject=new Tiled::MapObject();
-    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset=new Tiled::Tileset(MapController::text_bot,16,24);
+
+    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)];
+    botDisplay->mapObject=new Tiled::MapObject();
+    botDisplay->tileset=new Tiled::Tileset(MapController::text_bot,16,24);
     QString skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
     if(!QFile(skinPath).exists())
         skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKINBOT+MapController::text_slash+skin+MapController::text_slashtrainerpng;
-    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)];
     if(!QFile(skinPath).exists())
     {
         qDebug() << "Unable the load the bot tileset (not found):" << skinPath;
@@ -125,13 +143,98 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             qDebug() << "Unable the load the default bot tileset";
     }
 
-    Tiled::Cell cell=botDisplay->mapObject->cell();
-    cell.tile=botDisplay->tileset->tileAt(baseTile);
-    botDisplay->mapObject->setCell(cell);
-    ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
-    //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    botDisplay->mapObject->setPosition(QPoint(x,y+1));
-    MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);
+    {
+        Tiled::Cell cell=botDisplay->mapObject->cell();
+        cell.tile=botDisplay->tileset->tileAt(baseTile);
+        botDisplay->mapObject->setCell(cell);
+
+        ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
+        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+        botDisplay->mapObject->setPosition(QPoint(x,y+1));
+        MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);
+    }
+
+    {
+        //add flags
+        if(botFlags==NULL)
+        {
+            botFlags=new Tiled::Tileset(QLatin1Literal("botflags"),16,16);
+            botFlags->loadFromImage(QImage(QStringLiteral(":/images/flags.png")),QStringLiteral(":/images/flags.png"));
+        }
+
+        if(parsedMap->logicalMap.shops.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(2);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }
+        if(parsedMap->logicalMap.learn.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(3);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }
+        if(parsedMap->logicalMap.heal.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(0);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }
+        if(parsedMap->logicalMap.market.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(4);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }
+        if(parsedMap->logicalMap.zonecapture.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(6);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }
+        if(parsedMap->logicalMap.botsFight.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(5);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }
+    }
 
     if(parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).step.contains(1))
     {

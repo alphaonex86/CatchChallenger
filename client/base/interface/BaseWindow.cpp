@@ -29,6 +29,11 @@ using namespace CatchChallenger;
 
 BaseWindow* BaseWindow::baseWindow=NULL;
 
+QString BaseWindow::text_type=QLatin1Literal("type");
+QString BaseWindow::text_lang=QLatin1Literal("lang");
+QString BaseWindow::text_en=QLatin1Literal("en");
+QString BaseWindow::text_text=QLatin1Literal("text");
+
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)
 {
@@ -1360,7 +1365,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, quint8 x, q
         newError(tr("Internal error"),"Bot trigged but no step found");
         return;
     }
-    if(actualBot.step.value(step).attribute(QStringLiteral("type"))=="fight")
+    if(actualBot.step.value(step).attribute(BaseWindow::text_type)=="fight")
     {
         if(!actualBot.step.value(step).hasAttribute("fightid"))
         {
@@ -1942,14 +1947,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
         showTip(tr("Error into the bot, repport this error please"));
         return;
     }
-    if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("text"))
+    if(actualBot.step.value(step).attribute(BaseWindow::text_type)==BaseWindow::text_text)
     {
         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        QDomElement text = actualBot.step.value(step).firstChildElement(QStringLiteral("text"));
-        if(!language.isEmpty() && language!=QStringLiteral("en"))
+        QDomElement text = actualBot.step.value(step).firstChildElement(BaseWindow::text_text);
+        if(!language.isEmpty() && language!=BaseWindow::text_en)
             while(!text.isNull())
             {
-                if(text.hasAttribute(QStringLiteral("lang")) && text.attribute(QStringLiteral("lang"))==language)
+                if(text.hasAttribute(BaseWindow::text_lang) && text.attribute(BaseWindow::text_lang)==language)
                 {
                     QString textToShow=text.text();
                     textToShow=parseHtmlToDisplay(textToShow);
@@ -1957,12 +1962,12 @@ void BaseWindow::goToBotStep(const quint8 &step)
                     ui->IG_dialog->setVisible(true);
                     return;
                 }
-                text = text.nextSiblingElement(QStringLiteral("text"));
+                text = text.nextSiblingElement(BaseWindow::text_text);
             }
-        text = actualBot.step.value(step).firstChildElement(QStringLiteral("text"));
+        text = actualBot.step.value(step).firstChildElement(BaseWindow::text_text);
         while(!text.isNull())
         {
-            if(!text.hasAttribute(QStringLiteral("lang")) || text.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+            if(!text.hasAttribute(BaseWindow::text_lang) || text.attribute(BaseWindow::text_lang)==BaseWindow::text_en)
             {
                 QString textToShow=text.text();
                 textToShow=parseHtmlToDisplay(textToShow);
@@ -1970,12 +1975,12 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 ui->IG_dialog->setVisible(true);
                 return;
             }
-            text = text.nextSiblingElement(QStringLiteral("text"));
+            text = text.nextSiblingElement(BaseWindow::text_text);
         }
         showTip(tr("Bot text not found, repport this error please"));
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("shop"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("shop"))
     {
         if(!actualBot.step.value(step).hasAttribute(QStringLiteral("shop")))
         {
@@ -2011,7 +2016,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         CatchChallenger::Api_client_real::client->getShopList(shopId);
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("sell"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("sell"))
     {
         if(!actualBot.step.value(step).hasAttribute(QStringLiteral("shop")))
         {
@@ -2042,12 +2047,12 @@ void BaseWindow::goToBotStep(const quint8 &step)
         selectObject(ObjectType_Sell);
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("learn"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("learn"))
     {
         selectObject(ObjectType_MonsterToLearn);
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("heal"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("heal"))
     {
         ClientFightEngine::fightEngine.healAllMonsters();
         CatchChallenger::Api_client_real::client->heal();
@@ -2055,7 +2060,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         showTip(tr("You are healed"));
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("quests"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("quests"))
     {
         QString textToShow;
         QList<QPair<quint32,QString> > quests=BaseWindow::getQuestList(actualBot.botId);
@@ -2079,7 +2084,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("clan"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("clan"))
     {
         QString textToShow;
         if(clan==0)
@@ -2095,7 +2100,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("warehouse"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("warehouse"))
     {
         monster_to_withdraw.clear();
         monster_to_deposit.clear();
@@ -2131,7 +2136,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         updateTheWareHouseContent();
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("market"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("market"))
     {
         ui->marketMonster->clear();
         ui->marketObject->clear();
@@ -2143,7 +2148,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->stackedWidget->setCurrentWidget(ui->page_market);
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("industry"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("industry"))
     {
         if(!actualBot.step.value(step).hasAttribute(QStringLiteral("industry")))
         {
@@ -2183,7 +2188,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         CatchChallenger::Api_client_real::client->getFactoryList(factoryId);
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("zonecapture"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("zonecapture"))
     {
         if(!actualBot.step.value(step).hasAttribute(QStringLiteral("zone")))
         {
@@ -2214,7 +2219,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         updatePageZoneCatch();
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("script"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("script"))
     {
         QScriptEngine engine;
         QString contents = actualBot.step.value(step).text();
@@ -2256,7 +2261,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         qDebug() << QStringLiteral("textEntryPoint:") << textEntryPoint;
         return;
     }
-    else if(actualBot.step.value(step).attribute(QStringLiteral("type"))==QStringLiteral("fight"))
+    else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("fight"))
     {
         if(!actualBot.step.value(step).hasAttribute(QStringLiteral("fightid")))
         {
