@@ -14,6 +14,7 @@ struct BotDisplay
 {
     Tiled::MapObject *mapObject;
     Tiled::Tileset *tileset;
+    QList<Tiled::MapObject *> flags;
 };
 
 }

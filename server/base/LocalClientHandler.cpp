@@ -18,6 +18,21 @@ QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
 QList<quint16> LocalClientHandler::marketObjectIdList;
 QRegularExpression LocalClientHandler::tmxRemove=QRegularExpression(QLatin1String("\\.tmx$"));
 
+QString LocalClientHandler::text_top=QLatin1Literal("top");
+QString LocalClientHandler::text_bottom=QLatin1Literal("bottom");
+QString LocalClientHandler::text_left=QLatin1Literal("left");
+QString LocalClientHandler::text_right=QLatin1Literal("right");
+QString LocalClientHandler::text_give=QLatin1Literal("give");
+QString LocalClientHandler::text_space=QLatin1Literal(" ");
+QString LocalClientHandler::text_0=QLatin1Literal("0");
+QString LocalClientHandler::text_1=QLatin1Literal("1");
+QString LocalClientHandler::text_take=QLatin1Literal("take");
+QString LocalClientHandler::text_tp=QLatin1Literal("tp");
+QString LocalClientHandler::text_trade=QLatin1Literal("trade");
+QString LocalClientHandler::text_battle=QLatin1Literal("battle");
+QString LocalClientHandler::text_to=QLatin1Literal("to");
+QString LocalClientHandler::text_dotcomma=QLatin1Literal(";");
+
 LocalClientHandler::LocalClientHandler()
 {
     otherCityPlayerBattle=NULL;
@@ -103,10 +118,10 @@ void LocalClientHandler::extraStop()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QStringLiteral("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1").arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
+            emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QStringLiteral("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1").arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
+            emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
         break;
     }
     //save the monster
@@ -123,7 +138,7 @@ void LocalClientHandler::extraStop()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1;")
+                    emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster
                                  .arg(playerMonster.id)
                                  .arg(player_informations->character_id)
                                  .arg(playerMonster.hp)
@@ -134,7 +149,7 @@ void LocalClientHandler::extraStop()
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1;")
+                    emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster
                                  .arg(playerMonster.id)
                                  .arg(player_informations->character_id)
                                  .arg(playerMonster.hp)
@@ -154,14 +169,14 @@ void LocalClientHandler::extraStop()
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                        emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster_skill
                                      .arg(playerSkill.endurance)
                                      .arg(playerMonster.id)
                                      .arg(playerSkill.skill)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                        emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster_skill
                                      .arg(playerSkill.endurance)
                                      .arg(playerMonster.id)
                                      .arg(playerSkill.skill)
@@ -182,24 +197,24 @@ QString LocalClientHandler::directionToStringToSave(const Direction &direction)
     {
         case Direction_look_at_top:
         case Direction_move_at_top:
-            return QLatin1String("top");
+            return LocalClientHandler::text_top;
         break;
         case Direction_look_at_right:
         case Direction_move_at_right:
-            return QLatin1String("right");
+            return LocalClientHandler::text_right;
         break;
         case Direction_look_at_bottom:
         case Direction_move_at_bottom:
-            return QLatin1String("bottom");
+            return LocalClientHandler::text_bottom;
         break;
         case Direction_look_at_left:
         case Direction_move_at_left:
-            return QLatin1String("left");
+            return LocalClientHandler::text_left;
         break;
         default:
         break;
     }
-    return QLatin1String("bottom");
+    return LocalClientHandler::text_bottom;
 }
 
 QString LocalClientHandler::orientationToStringToSave(const Orientation &orientation)
@@ -207,21 +222,21 @@ QString LocalClientHandler::orientationToStringToSave(const Orientation &orienta
     switch(orientation)
     {
         case Orientation_top:
-            return QLatin1String("top");
+            return LocalClientHandler::text_top;
         break;
         case Orientation_bottom:
-            return QLatin1String("bottom");
+            return LocalClientHandler::text_bottom;
         break;
         case Orientation_right:
-            return QLatin1String("right");
+            return LocalClientHandler::text_right;
         break;
         case Orientation_left:
-            return QLatin1String("left");
+            return LocalClientHandler::text_left;
         break;
         default:
         break;
     }
-    return QLatin1String("bottom");
+    return LocalClientHandler::text_bottom;
 }
 
 void LocalClientHandler::savePosition()
@@ -1149,12 +1164,12 @@ bool LocalClientHandler::wareHouseStoreCheck(const qint64 &cash, const QList<QPa
 
 void LocalClientHandler::sendHandlerCommand(const QString &command,const QString &extraText)
 {
-    if(command==QLatin1String("give"))
+    if(command==LocalClientHandler::text_give)
     {
         bool ok;
-        QStringList arguments=extraText.split(QLatin1String(" "),QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(LocalClientHandler::text_space,QString::SkipEmptyParts);
         if(arguments.size()==2)
-            arguments << QLatin1String("1");
+            arguments << LocalClientHandler::text_1;
         if(arguments.size()!=3)
         {
             emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /give objectId player [quantity=1]"));
@@ -1185,12 +1200,12 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         emit message(QStringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo.value(arguments.at(1))->addObjectAndSend(objectId,quantity);
     }
-    else if(command==QLatin1String("take"))
+    else if(command==LocalClientHandler::text_take)
     {
         bool ok;
-        QStringList arguments=extraText.split(QLatin1String(" "),QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(LocalClientHandler::text_space,QString::SkipEmptyParts);
         if(arguments.size()==2)
-            arguments << QLatin1String("1");
+            arguments << LocalClientHandler::text_1;
         if(arguments.size()!=3)
         {
             emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /take objectId player [quantity=1]"));
@@ -1221,12 +1236,12 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         emit message(QStringLiteral("%1 have take to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo.value(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.value(arguments.at(1))->removeObject(objectId,quantity));
     }
-    else if(command==QLatin1String("tp"))
+    else if(command==LocalClientHandler::text_tp)
     {
-        QStringList arguments=extraText.split(QLatin1String(" "),QString::SkipEmptyParts);
+        QStringList arguments=extraText.split(LocalClientHandler::text_space,QString::SkipEmptyParts);
         if(arguments.size()==3)
         {
-            if(arguments.at(1)!=QLatin1String("to"))
+            if(arguments.at(1)!=LocalClientHandler::text_to)
             {
                 emit receiveSystemText(QStringLiteral("wrong second arguement: %1, usage: /tp player1 to player2").arg(arguments.at(1)));
                 return;
@@ -1249,7 +1264,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             return;
         }
     }
-    else if(command==QLatin1String("trade"))
+    else if(command==LocalClientHandler::text_trade)
     {
         if(extraText.isEmpty())
         {
@@ -1297,7 +1312,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         otherPlayerTrade=playerByPseudo.value(extraText);
         otherPlayerTrade->registerTradeRequest(this);
     }
-    else if(command==QLatin1String("battle"))
+    else if(command==LocalClientHandler::text_battle)
     {
         if(extraText.isEmpty())
         {
@@ -1992,16 +2007,16 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QStringLiteral("INSERT INTO `factory`(`id`,`resources`,`products`,`last_update`) VALUES(%1,'%2','%3',%4);")
                              .arg(factoryId)
-                             .arg(resourcesStringList.join(";"))
-                             .arg(productsStringList.join(";"))
+                             .arg(resourcesStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(productsStringList.join(LocalClientHandler::text_dotcomma))
                              .arg(industryStatus.last_update)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4);")
                              .arg(factoryId)
-                             .arg(resourcesStringList.join(";"))
-                             .arg(productsStringList.join(";"))
+                             .arg(resourcesStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(productsStringList.join(LocalClientHandler::text_dotcomma))
                              .arg(industryStatus.last_update)
                              );
             break;
@@ -2015,16 +2030,16 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QStringLiteral("UPDATE `factory` SET `resources`='%2',`products`='%3',`last_update`=%4 WHERE `id`=%1")
                              .arg(factoryId)
-                             .arg(resourcesStringList.join(";"))
-                             .arg(productsStringList.join(";"))
+                             .arg(resourcesStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(productsStringList.join(LocalClientHandler::text_dotcomma))
                              .arg(industryStatus.last_update)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1")
                              .arg(factoryId)
-                             .arg(resourcesStringList.join(";"))
-                             .arg(productsStringList.join(";"))
+                             .arg(resourcesStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(productsStringList.join(LocalClientHandler::text_dotcomma))
                              .arg(industryStatus.last_update)
                              );
             break;
@@ -3095,9 +3110,9 @@ void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
     //add into db
     QString clan_leader;
     if(player_informations->public_and_private_informations.clan_leader)
-        clan_leader=QLatin1String("1");
+        clan_leader=LocalClientHandler::text_1;
     else
-        clan_leader=QLatin1String("0");
+        clan_leader=LocalClientHandler::text_0;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:

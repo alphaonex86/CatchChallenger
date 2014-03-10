@@ -610,6 +610,11 @@ private:
 
     QList<QOggSimplePlayer*> ambiance;
     QThread audioReadThread;
+
+    static QString text_type;
+    static QString text_lang;
+    static QString text_en;
+    static QString text_text;
 signals:
     void newError(QString error,QString detailedError);
     //datapack

@@ -109,6 +109,21 @@ private:
     //other
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
     bool otherPlayerIsInRange(LocalClientHandler * otherPlayer);
+
+    static QString text_top;
+    static QString text_bottom;
+    static QString text_left;
+    static QString text_right;
+    static QString text_give;
+    static QString text_space;
+    static QString text_0;
+    static QString text_1;
+    static QString text_take;
+    static QString text_tp;
+    static QString text_trade;
+    static QString text_battle;
+    static QString text_to;
+    static QString text_dotcomma;
 public slots:
     void put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     void createMemoryClan();

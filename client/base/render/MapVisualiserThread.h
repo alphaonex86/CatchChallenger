@@ -54,6 +54,47 @@ public:
     volatile bool stopIt;
     bool hideTheDoors;
     QString error();
+
+    static QString text_blockedtext;
+    static QString text_en;
+    static QString text_lang;
+    static QString text_Dyna_management;
+    static QString text_Moving;
+    static QString text_door;
+    static QString text_Object;
+    static QString text_bot;
+    static QString text_bots;
+    static QString text_WalkBehind;
+    static QString text_Collisions;
+    static QString text_Grass;
+    static QString text_animation;
+    static QString text_dotcomma;
+    static QString text_ms;
+    static QString text_frames;
+    static QString text_map;
+    static QString text_objectgroup;
+    static QString text_name;
+    static QString text_object;
+    static QString text_type;
+    static QString text_x;
+    static QString text_y;
+    static QString text_botfight;
+    static QString text_property;
+    static QString text_value;
+    static QString text_file;
+    static QString text_id;
+    static QString text_slash;
+    static QString text_dotxml;
+    static QString text_step;
+    static QString text_properties;
+    static QString text_shop;
+    static QString text_learn;
+    static QString text_heal;
+    static QString text_fight;
+    static QString text_zonecapture;
+    static QString text_market;
+    static QString text_zone;
+    static QString text_fightid;
 signals:
     void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);
 public slots:

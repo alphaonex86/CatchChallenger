@@ -39,6 +39,7 @@ private:
         quint8 plant_id;
         quint16 seconds_to_mature;
     };
+    Tiled::Tileset *botFlags;
 protected slots:
     //plant
     void getPlantTimerEvent();

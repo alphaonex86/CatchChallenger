@@ -49,6 +49,13 @@ public:
     quint32 group;
     quint32 id;
 
+    QMultiHash<QPair<quint8,quint8>,quint32> shops;
+    QSet<QPair<quint8,quint8> > learn;
+    QSet<QPair<quint8,quint8> > heal;
+    QSet<QPair<quint8,quint8> > market;
+    QHash<QPair<quint8,quint8>,QString> zonecapture;
+    QMultiHash<QPair<quint8,quint8>,quint32> botsFight;
+
     /*QList<MapMonster> grassMonster;
     QList<MapMonster> waterMonster;
     QList<MapMonster> caveMonster;*/
