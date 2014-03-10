@@ -88,7 +88,8 @@ HEADERS  += $$PWD/audio/QOggAudioBuffer.h \
     $$PWD/interface/NewGame.h \
     $$PWD/InternetUpdater.h \
     $$PWD/ExtraSocket.h \
-    $$PWD/LocalListener.h
+    $$PWD/LocalListener.h \
+    ../base/DisplayStructures.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

@@ -16,13 +16,7 @@ class MapServer : public CommonMap, public MapServerCrafting
 {
 public:
     QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
-    QMultiHash<QPair<quint8,quint8>,quint32> shops;
-    QSet<QPair<quint8,quint8> > learn;
-    QSet<QPair<quint8,quint8> > heal;
-    QSet<QPair<quint8,quint8> > market;
-    QHash<QPair<quint8,quint8>,QString> zonecapture;
     QHash<QPair<quint8,quint8>,Orientation> rescue;
-    QMultiHash<QPair<quint8,quint8>,quint32> botsFight;
 };
 
 class Map_server_MapVisibility_simple : public MapServer

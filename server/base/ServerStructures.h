@@ -207,6 +207,9 @@ struct ServerPrivateVariables
     QString db_query_login;
     QString db_query_insert_login;
     QString db_query_characters;
+    QString db_query_played_time;
+    QString db_query_monster_skill;
+    QString db_query_monster;
 
     //datapack
     QString datapack_mapPath;

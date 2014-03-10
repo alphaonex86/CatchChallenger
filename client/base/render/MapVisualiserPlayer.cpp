@@ -16,6 +16,9 @@ QString MapVisualiserPlayer::text_slashtrainerpng=QLatin1Literal("/trainer.png")
 QString MapVisualiserPlayer::text_slash=QLatin1Literal("/");
 QString MapVisualiserPlayer::text_antislash=QLatin1Literal("\\");
 QString MapVisualiserPlayer::text_dotpng=QLatin1Literal(".png");
+QString MapVisualiserPlayer::text_type=QLatin1Literal("type");
+QString MapVisualiserPlayer::text_zone=QLatin1Literal("zone");
+QString MapVisualiserPlayer::text_backgroundsound=QLatin1Literal("backgroundsound");
 
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
@@ -706,7 +709,17 @@ void MapVisualiserPlayer::parseAction()
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&map,&x,&y,false))
                 qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
+                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    Tiled::Cell cell=botDisplay->mapObject->cell();
+                    cell.tile=botDisplay->tileset->tileAt(4);
+                    botDisplay->mapObject->setCell(cell);
+                }
+                emit actionOn(map_client,x,y);
+            }
         }
         break;
         case CatchChallenger::Direction_look_at_right:
@@ -715,7 +728,17 @@ void MapVisualiserPlayer::parseAction()
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&map,&x,&y,false))
                 qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
+                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    Tiled::Cell cell=botDisplay->mapObject->cell();
+                    cell.tile=botDisplay->tileset->tileAt(10);
+                    botDisplay->mapObject->setCell(cell);
+                }
+                emit actionOn(map_client,x,y);
+            }
         }
         break;
         case CatchChallenger::Direction_look_at_top:
@@ -724,7 +747,17 @@ void MapVisualiserPlayer::parseAction()
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&map,&x,&y,false))
                 qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
+                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    Tiled::Cell cell=botDisplay->mapObject->cell();
+                    cell.tile=botDisplay->tileset->tileAt(7);
+                    botDisplay->mapObject->setCell(cell);
+                }
+                emit actionOn(map_client,x,y);
+            }
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
@@ -733,7 +766,17 @@ void MapVisualiserPlayer::parseAction()
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&x,&y,false))
                 qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
+                if(map_client->botsDisplay.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[QPair<quint8,quint8>(x,y)];
+                    Tiled::Cell cell=botDisplay->mapObject->cell();
+                    cell.tile=botDisplay->tileset->tileAt(1);
+                    botDisplay->mapObject->setCell(cell);
+                }
+                emit actionOn(map_client,x,y);
+            }
         }
         break;
         default:
@@ -837,12 +880,12 @@ QString MapVisualiserPlayer::currentMapType() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map.value(current_map)->tiledMap->properties().contains(QStringLiteral("type")))
-        if(!all_map.value(current_map)->tiledMap->properties().value("type").isEmpty())
-            return all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("type"));
-    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(QStringLiteral("type")))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("type")).isEmpty())
-            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("type"));
+    if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_type))
+        if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type).isEmpty())
+            return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type);
+    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(MapVisualiserPlayer::text_type))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_type).isEmpty())
+            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_type);
     return QString();
 }
 
@@ -850,12 +893,12 @@ QString MapVisualiserPlayer::currentZone() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map.value(current_map)->tiledMap->properties().contains(QStringLiteral("zone")))
-        if(!all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("zone")).isEmpty())
-            return all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("zone"));
-    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(QStringLiteral("zone")))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("zone")).isEmpty())
-            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("zone"));
+    if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_zone))
+        if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone).isEmpty())
+            return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone);
+    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(MapVisualiserPlayer::text_zone))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_zone).isEmpty())
+            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_zone);
     return QString();
 }
 
@@ -863,12 +906,12 @@ QString MapVisualiserPlayer::currentBackgroundsound() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map.value(current_map)->tiledMap->properties().contains(QStringLiteral("backgroundsound")))
-        if(!all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("backgroundsound")).isEmpty())
-            return all_map.value(current_map)->tiledMap->properties().value(QStringLiteral("backgroundsound"));
-    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(QStringLiteral("backgroundsound")))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound")).isEmpty())
-            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound"));
+    if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_backgroundsound))
+        if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound).isEmpty())
+            return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound);
+    if(all_map.value(current_map)->logicalMap.xmlRoot.hasAttribute(MapVisualiserPlayer::text_backgroundsound))
+        if(!all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_backgroundsound).isEmpty())
+            return all_map.value(current_map)->logicalMap.xmlRoot.attribute(MapVisualiserPlayer::text_backgroundsound);
     return QString();
 }
 

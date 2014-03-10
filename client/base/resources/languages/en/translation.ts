@@ -84,6 +84,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../../crafting/interface/BaseWindowCrafting.cpp" line="348"/>
+        <source>Name: &lt;b&gt;%1&lt;/b&gt;&lt;br /&gt;&lt;br /&gt;Success: &lt;b&gt;%2%&lt;/b&gt;&lt;br /&gt;&lt;br /&gt;Result: &lt;b&gt;%3&lt;/b&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../../crafting/interface/BaseWindowCrafting.cpp" line="379"/>
         <source>Needed: %1 %2
 In the inventory: %3 %4</source>

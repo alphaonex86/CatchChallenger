@@ -8,6 +8,31 @@ QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> ClientBroadCast::playerByClan;
 QList<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
 ClientBroadCast *ClientBroadCast::item;
 
+QString ClientBroadCast::text_chat=QLatin1Literal("chat");
+QString ClientBroadCast::text_space=QLatin1Literal(" ");
+QString ClientBroadCast::text_system=QLatin1Literal("system");
+QString ClientBroadCast::text_system_important=QLatin1Literal("system_important");
+QString ClientBroadCast::text_setrights=QLatin1Literal("setrights");
+QString ClientBroadCast::text_normal=QLatin1Literal("normal");
+QString ClientBroadCast::text_premium=QLatin1Literal("premium");
+QString ClientBroadCast::text_gm=QLatin1Literal("gm");
+QString ClientBroadCast::text_dev=QLatin1Literal("dev");
+QString ClientBroadCast::text_playerlist=QLatin1Literal("playerlist");
+QString ClientBroadCast::text_startbold=QLatin1Literal("<b>");
+QString ClientBroadCast::text_stopbold=QLatin1Literal("</b>");
+QString ClientBroadCast::text_playernumber=QLatin1Literal("playernumber");
+QString ClientBroadCast::text_kick=QLatin1Literal("kick");
+QString ClientBroadCast::text_Youarealoneontheserver=QLatin1Literal("You are alone on the server!");
+QString ClientBroadCast::text_playersconnected=QLatin1Literal(" players connected");
+QString ClientBroadCast::text_playersconnectedspace=QLatin1Literal("players connected ");
+QString ClientBroadCast::text_havebeenkickedby=QLatin1Literal(" have been kicked by ");
+QString ClientBroadCast::text_unknowcommand=QLatin1Literal("unknow command: %1, text: %2");
+QString ClientBroadCast::text_commandnotunderstand=QLatin1Literal("command not understand");
+QString ClientBroadCast::text_command=QLatin1Literal("command: ");
+QString ClientBroadCast::text_commaspace=QLatin1Literal(", ");
+QString ClientBroadCast::text_unabletofoundtheconnectedplayertokick=QLatin1Literal("unable to found the connected player to kick");
+QString ClientBroadCast::text_unabletofoundthisrightslevel=QLatin1Literal("unable to found this rights level: ");
+
 ClientBroadCast::ClientBroadCast()
 {
     connected_players=0;
@@ -218,69 +243,69 @@ void ClientBroadCast::kick()
 
 void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString &extraText)
 {
-    emit message(QStringLiteral("command: %1, text: %2").arg(command).arg(extraText));
-    if(command==QLatin1String("chat"))
+    emit message(ClientBroadCast::text_command+command+ClientBroadCast::text_space+extraText);
+    if(command==ClientBroadCast::text_chat)
     {
-        QStringList list=extraText.split(QLatin1String(" "));
+        QStringList list=extraText.split(ClientBroadCast::text_space);
         if(list.size()<2)
         {
-            receiveSystemText(QStringLiteral("command not understand: %1 %2").arg(command).arg(extraText));
-            emit message(QStringLiteral("command not understand: %1 %2").arg(command).arg(extraText));
+            receiveSystemText(ClientBroadCast::text_commandnotunderstand+command+ClientBroadCast::text_space+extraText);
+            emit message(ClientBroadCast::text_commandnotunderstand+command+ClientBroadCast::text_space+extraText);
             return;
         }
-        if(list.first()==QLatin1String("system"))
+        if(list.first()==ClientBroadCast::text_system)
         {
             list.removeFirst();
-            sendChatText(Chat_type_system,list.join(QLatin1String(" ")));
+            sendChatText(Chat_type_system,list.join(ClientBroadCast::text_space));
             return;
         }
-        if(list.first()==QLatin1String("system_important"))
+        if(list.first()==ClientBroadCast::text_system_important)
         {
             list.removeFirst();
-            sendChatText(Chat_type_system_important,list.join(QLatin1String(" ")));
+            sendChatText(Chat_type_system_important,list.join(ClientBroadCast::text_space));
             return;
         }
         else
         {
-            receiveSystemText(QStringLiteral("command not understand").arg(extraText));
-            emit message(QStringLiteral("command not understand").arg(extraText));
+            receiveSystemText(ClientBroadCast::text_commandnotunderstand+extraText);
+            emit message(ClientBroadCast::text_commandnotunderstand+extraText);
             return;
         }
     }
-    else if(command==QLatin1String("setrights"))
+    else if(command==ClientBroadCast::text_setrights)
     {
-        QStringList list=extraText.split(QLatin1String(" "));
+        QStringList list=extraText.split(ClientBroadCast::text_space);
         if(list.size()!=2)
         {
-            receiveSystemText(QStringLiteral("command not understand: %1 %2").arg(command).arg(extraText));
-            emit message(QStringLiteral("command not understand: %1 %2").arg(command).arg(extraText));
+            receiveSystemText(ClientBroadCast::text_commandnotunderstand+command+ClientBroadCast::text_space+extraText);
+            emit message(ClientBroadCast::text_commandnotunderstand+command+ClientBroadCast::text_space+extraText);
             return;
         }
         if(!playerByPseudo.contains(list.first()))
         {
-            receiveSystemText(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
-            emit message(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
+            receiveSystemText(ClientBroadCast::text_unabletofoundtheconnectedplayertokick+extraText);
+            emit message(ClientBroadCast::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
-        if(list.last()==QLatin1String("normal"))
+        if(list.last()==ClientBroadCast::text_normal)
             playerByPseudo.value(extraText)->setRights(Player_type_normal);
-        else if(list.last()==QLatin1String("premium"))
+        else if(list.last()==ClientBroadCast::text_premium)
             playerByPseudo.value(extraText)->setRights(Player_type_premium);
-        else if(list.last()==QLatin1String("gm"))
+        else if(list.last()==ClientBroadCast::text_gm)
             playerByPseudo.value(extraText)->setRights(Player_type_gm);
-        else if(list.last()==QLatin1String("dev"))
+        else if(list.last()==ClientBroadCast::text_dev)
             playerByPseudo.value(extraText)->setRights(Player_type_dev);
         else
         {
-            receiveSystemText(QStringLiteral("unable to found this rights level: \"%1\"").arg(list.last()));
-            emit message(QStringLiteral("unable to found this rights level: \"%1\"").arg(list.last()));
+            receiveSystemText(ClientBroadCast::text_unabletofoundthisrightslevel+list.last());
+            emit message(ClientBroadCast::text_unabletofoundthisrightslevel+list.last());
             return;
         }
     }
-    else if(command==QLatin1String("playerlist"))
+    else if(command==ClientBroadCast::text_playerlist)
     {
         if(playerByPseudo.size()==1)
-            receiveSystemText(QStringLiteral("You are alone on the server!"));
+            receiveSystemText(ClientBroadCast::text_Youarealoneontheserver);
         else
         {
             QStringList playerStringList;
@@ -288,36 +313,36 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo_end=playerByPseudo.constEnd();
             while (i_playerByPseudo != i_playerByPseudo_end)
             {
-                playerStringList << QLatin1String("<b>")+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+QLatin1String("</b>");
+                playerStringList << ClientBroadCast::text_startbold+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+ClientBroadCast::text_stopbold;
                 ++i_playerByPseudo;
             }
-            receiveSystemText(QStringLiteral("players connected: %1").arg(playerStringList.join(QLatin1String(", "))));
+            receiveSystemText(ClientBroadCast::text_playersconnectedspace+playerStringList.join(ClientBroadCast::text_commaspace));
         }
         return;
     }
-    else if(command==QLatin1String("playernumber"))
+    else if(command==ClientBroadCast::text_playernumber)
     {
         if(playerByPseudo.size()==1)
-            receiveSystemText(QStringLiteral("You are alone on the server!"));
+            receiveSystemText(ClientBroadCast::text_Youarealoneontheserver);
         else
-            receiveSystemText(QStringLiteral("<b>%1</b> players connected").arg(playerByPseudo.size()));
+            receiveSystemText(ClientBroadCast::text_startbold+QString::number(playerByPseudo.size())+ClientBroadCast::text_stopbold+ClientBroadCast::text_playersconnected);
         return;
     }
-    else if(command==QLatin1String("kick"))
+    else if(command==ClientBroadCast::text_kick)
     {
         //drop, and do the command here to separate the loop
         if(!playerByPseudo.contains(extraText))
         {
-            receiveSystemText(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
-            emit message(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
+            receiveSystemText(ClientBroadCast::text_unabletofoundtheconnectedplayertokick+extraText);
+            emit message(ClientBroadCast::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
         playerByPseudo.value(extraText)->kick();
-        sendSystemMessage(QStringLiteral("%1 have been kicked by %2").arg(extraText).arg(player_informations->public_and_private_informations.public_informations.pseudo));
+        sendSystemMessage(extraText+ClientBroadCast::text_havebeenkickedby+player_informations->public_and_private_informations.public_informations.pseudo);
         return;
     }
     else
-        emit message(QStringLiteral("unknow command: %1, text: %2").arg(command).arg(extraText));
+        emit message(ClientBroadCast::text_unknowcommand.arg(command).arg(extraText));
 }
 
 void ClientBroadCast::setRights(const Player_type& type)
