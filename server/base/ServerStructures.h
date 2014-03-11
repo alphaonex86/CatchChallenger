@@ -215,7 +215,6 @@ struct ServerPrivateVariables
     QString datapack_mapPath;
     QRegularExpression datapack_rightFileName;
     QRegularExpression datapack_rightFolderName;
-    QSet<QString> filesList;
     QHash<quint32,Shop> shops;
 
     //fight

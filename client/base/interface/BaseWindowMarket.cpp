@@ -1,7 +1,7 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "DatapackClientLoader.h"
-#include "../fight/interface/ClientFightEngine.h"
+#include "../../fight/interface/ClientFightEngine.h"
 
 #include <QInputDialog>
 
