@@ -66,12 +66,32 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList);
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
-    if(settings.contains(QStringLiteral("login")))
-        ui->lineEditLogin->setText(settings.value(QStringLiteral("login")).toString());
-    if(settings.contains(QStringLiteral("pass")))
     {
-        ui->lineEditPass->setText(settings.value(QStringLiteral("pass")).toString());
-        ui->checkBoxRememberPassword->setChecked(true);
+        serverLoginList.clear();
+        if(settings.contains(QStringLiteral("login")))
+        {
+            const QStringList &loginList=settings.value("login").toStringList();
+            int index=0;
+            while(index<loginList.size())
+            {
+                if(settings.contains(loginList.at(index)))
+                    serverLoginList[loginList.at(index)]=settings.value(loginList.at(index)).toString();
+                else
+                    serverLoginList[loginList.at(index)]=QString();
+                index++;
+            }
+            if(!loginList.isEmpty())
+                ui->lineEditLogin->setText(loginList.first());
+            else
+                ui->lineEditLogin->setText(QString());
+        }
+        else
+            ui->lineEditLogin->setText(QString());
+        if(serverLoginList.contains(ui->lineEditLogin->text()))
+            ui->lineEditPass->setText(serverLoginList.value(ui->lineEditLogin->text()));
+        else
+            ui->lineEditPass->setText(QString());
+        ui->checkBoxRememberPassword->setChecked(!ui->lineEditPass->text().isEmpty());
     }
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&MainWindow::message);
@@ -158,7 +178,10 @@ void MainWindow::changeEvent(QEvent *e)
 
 void MainWindow::on_lineEditLogin_returnPressed()
 {
-    ui->lineEditPass->setFocus();
+    if(ui->lineEditPass->text().isEmpty())
+        ui->lineEditPass->setFocus();
+    else
+        on_pushButtonTryLogin_clicked();
 }
 
 void MainWindow::on_lineEditPass_returnPressed()
@@ -173,11 +196,26 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
         return;
     }
-    settings.setValue(QStringLiteral("login"),ui->lineEditLogin->text());
+    if(ui->lineEditLogin->text().size()<3)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Your login need to be at minimum of 3 characters"));
+        return;
+    }
+    QStringList loginList=settings.value("login").toStringList();
+    if(serverLoginList.contains(ui->lineEditLogin->text()))
+        loginList.removeOne(ui->lineEditLogin->text());
     if(ui->checkBoxRememberPassword->isChecked())
-        settings.setValue(QStringLiteral("pass"),ui->lineEditPass->text());
+    {
+        serverLoginList[ui->lineEditLogin->text()]=ui->lineEditPass->text();
+        settings.setValue(ui->lineEditLogin->text(),ui->lineEditPass->text());
+    }
     else
-        settings.remove(QStringLiteral("pass"));
+    {
+        serverLoginList[ui->lineEditLogin->text()]=QString();
+        settings.remove(ui->lineEditLogin->text());
+    }
+    loginList.insert(0,ui->lineEditLogin->text());
+    settings.setValue("login",loginList);
 
     QString host=server_dns_or_ip;
     quint16 port=server_port;
@@ -336,4 +374,12 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
         ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join(QStringLiteral("<br />")));
     }
     ui->news->setVisible(true);
+}
+
+void MainWindow::on_lineEditLogin_textChanged(const QString &arg1)
+{
+    if(serverLoginList.contains(arg1))
+        ui->lineEditPass->setText(serverLoginList.value(arg1));
+    else
+        ui->lineEditPass->setText(QString());
 }

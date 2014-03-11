@@ -2,7 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
-#include "../fight/interface/ClientFightEngine.h"
+#include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "DatapackClientLoader.h"
 #include "MapController.h"

@@ -1,6 +1,6 @@
 #include "../../base/interface/MapController.h"
 #include "../../../general/base/CommonDatapack.h"
-#include "../base/interface/DatapackClientLoader.h"
+#include "../../base/interface/DatapackClientLoader.h"
 
 
 QString MapController::mapIdToString(const quint32 &mapId) const

@@ -5,7 +5,7 @@
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 #include "Chat.h"
-#include "../fight/interface/ClientFightEngine.h"
+#include "../../fight/interface/ClientFightEngine.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>

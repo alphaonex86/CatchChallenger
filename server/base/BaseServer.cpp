@@ -881,7 +881,7 @@ void BaseServer::preload_the_map()
     {
         QString fileName=returnList.at(index);
         fileName.replace(BaseServer::text_antislash,BaseServer::text_slash);
-        if(fileName.contains(mapFilter) && GlobalServerData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
+        if(fileName.contains(mapFilter))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             DebugClass::debugConsole(QStringLiteral("load the map: %1").arg(fileName));
@@ -1209,34 +1209,9 @@ void BaseServer::preload_the_skin()
 void BaseServer::preload_the_datapack()
 {
     QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
-    QSet<QString> extensionAllowed=extensionAllowedTemp.toSet();
+    ClientHeavyLoad::extensionAllowed=extensionAllowedTemp.toSet();
     QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     ClientHeavyLoad::compressedExtension=compressedExtensionAllowedTemp.toSet();
-    QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverSettings.datapack_basePath);
-    int index=0;
-    int size=returnList.size();
-    while(index<size)
-    {
-        QString fileName=returnList.at(index);
-        if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
-        {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
-            {
-                QFile file(GlobalServerData::serverSettings.datapack_basePath+returnList.at(index));
-                if(file.size()<=8*1024*1024)
-                {
-                    if(file.open(QIODevice::ReadOnly))
-                    {
-                        fileName.replace(BaseServer::text_antislash,BaseServer::text_slash);//remplace if is under windows server
-                        GlobalServerData::serverPrivateVariables.filesList << fileName;
-                        file.close();
-                    }
-                }
-            }
-        }
-        index++;
-    }
-    DebugClass::debugConsole(QStringLiteral("%1 file(s) list for datapack cached").arg(GlobalServerData::serverPrivateVariables.filesList.size()));
 }
 
 void BaseServer::preload_the_players()
@@ -1713,7 +1688,6 @@ void BaseServer::unload_the_visibility_algorithm()
 
 void BaseServer::unload_the_datapack()
 {
-    GlobalServerData::serverPrivateVariables.filesList.clear();
     ClientHeavyLoad::compressedExtension.clear();
 }
 

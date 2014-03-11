@@ -38,11 +38,13 @@ public:
     static QByteArray rawFiles,compressedFiles;
     static int rawFilesCount,compressedFilesCount;
     static QSet<QString> compressedExtension;
+    static QSet<QString> extensionAllowed;
     static QHash<quint32,quint16> clanConnectedCount;
     static QString single_quote;
     static QString antislash_single_quote;
     static QString text_dotslash;
     static QString text_slash;
+    static QString text_dotcomma;
     static QString text_double_slash;
     static QString text_antislash;
 public slots:
@@ -51,6 +53,7 @@ public slots:
     virtual void deleteCharacterNow(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
+    QSet<QString> datapack_file_list();
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();
