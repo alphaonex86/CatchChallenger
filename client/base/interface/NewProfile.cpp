@@ -11,8 +11,8 @@
 #include "../../general/base/DatapackGeneralLoader.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/DebugClass.h"
-#include "../base/interface/DatapackClientLoader.h"
-#include "../base/LanguagesSelect.h"
+#include "../../base/interface/DatapackClientLoader.h"
+#include "../../base/LanguagesSelect.h"
 
 NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     QDialog(parent),

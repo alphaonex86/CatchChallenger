@@ -47,6 +47,8 @@ private slots:
     void newUpdate(const QString &version);
     void closeEvent(QCloseEvent *event);
     void rssEntryList(const QList<RssNews::RssEntry> &entryList);
+    void on_lineEditLogin_textChanged(const QString &arg1);
+
 private:
     QSslSocket *realSocket;
     Ui::MainWindow *ui;
@@ -62,6 +64,7 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
+    QHash<QString,QString> serverLoginList;
 
     QString server_name;
     QString server_dns_or_ip;

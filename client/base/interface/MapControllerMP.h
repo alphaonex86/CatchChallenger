@@ -29,6 +29,7 @@ public slots:
     void full_reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
     void dropAllPlayerOnTheMap();
     void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
@@ -36,6 +37,7 @@ public slots:
     //the datapack
     virtual void datapackParsed();
     virtual void reinject_signals();
+    virtual void reinject_signals_on_valid_map();
 private:
     //the other player
     struct OtherPlayer
