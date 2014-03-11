@@ -103,6 +103,8 @@ private slots:
     void on_languages_clicked();
     void newUpdate(const QString &version);
     void rssEntryList(const QList<RssNews::RssEntry> &entryList);
+    void on_lineEditLogin_textChanged(const QString &arg1);
+
 private:
     enum ServerMode
     {
@@ -143,6 +145,7 @@ private:
     bool haveLaunchedGame;
     CatchChallenger::InternalServer * internalServer;
     QSet<QString> customServerName;
+    QHash<QString,QString> serverLoginList;
 };
 
 #endif // MAINWINDOW_H

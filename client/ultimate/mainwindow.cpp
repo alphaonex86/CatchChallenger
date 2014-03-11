@@ -550,12 +550,28 @@ void MainWindow::on_server_select_clicked()
         settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
     else
         settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
+    serverLoginList.clear();
     if(settings.contains(QStringLiteral("login")))
-        ui->lineEditLogin->setText(settings.value("login").toString());
+    {
+        const QStringList &loginList=settings.value("login").toStringList();
+        int index=0;
+        while(index<loginList.size())
+        {
+            if(settings.contains(loginList.at(index)))
+                serverLoginList[loginList.at(index)]=settings.value(loginList.at(index)).toString();
+            else
+                serverLoginList[loginList.at(index)]=QString();
+            index++;
+        }
+        if(!loginList.isEmpty())
+            ui->lineEditLogin->setText(loginList.first());
+        else
+            ui->lineEditLogin->setText(QString());
+    }
     else
         ui->lineEditLogin->setText(QString());
-    if(settings.contains(QStringLiteral("pass")))
-        ui->lineEditPass->setText(settings.value(QStringLiteral("pass")).toString());
+    if(serverLoginList.contains(ui->lineEditLogin->text()))
+        ui->lineEditPass->setText(serverLoginList.value(ui->lineEditLogin->text()));
     else
         ui->lineEditPass->setText(QString());
     settings.endGroup();
@@ -722,7 +738,10 @@ void MainWindow::changeEvent(QEvent *e)
 
 void MainWindow::on_lineEditLogin_returnPressed()
 {
-    ui->lineEditPass->setFocus();
+    if(ui->lineEditPass->text().isEmpty())
+        ui->lineEditPass->setFocus();
+    else
+        on_pushButtonTryLogin_clicked();
 }
 
 void MainWindow::on_lineEditPass_returnPressed()
@@ -737,16 +756,33 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
         return;
     }
+    if(ui->lineEditLogin->text().size()<3)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Your login need to be at minimum of 3 characters"));
+        return;
+    }
     serverMode=ServerMode_Remote;
     if(customServerConnexion.contains(selectedServer))
         settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
     else
         settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
-    settings.setValue(QStringLiteral("login"),ui->lineEditLogin->text());
+
+    QStringList loginList=settings.value("login").toStringList();
+    if(serverLoginList.contains(ui->lineEditLogin->text()))
+        loginList.removeOne(ui->lineEditLogin->text());
     if(ui->checkBoxRememberPassword->isChecked())
-        settings.setValue(QStringLiteral("pass"),ui->lineEditPass->text());
+    {
+        serverLoginList[ui->lineEditLogin->text()]=ui->lineEditPass->text();
+        settings.setValue(ui->lineEditLogin->text(),ui->lineEditPass->text());
+    }
     else
-        settings.remove(QStringLiteral("pass"));
+    {
+        serverLoginList[ui->lineEditLogin->text()]=QString();
+        settings.remove(ui->lineEditLogin->text());
+    }
+    loginList.insert(0,ui->lineEditLogin->text());
+    settings.setValue("login",loginList);
+
     settings.endGroup();
     if(socket!=NULL)
     {
@@ -1384,4 +1420,12 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
         ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
     }
     ui->news->setVisible(true);
+}
+
+void MainWindow::on_lineEditLogin_textChanged(const QString &arg1)
+{
+    if(serverLoginList.contains(arg1))
+        ui->lineEditPass->setText(serverLoginList.value(arg1));
+    else
+        ui->lineEditPass->setText(QString());
 }

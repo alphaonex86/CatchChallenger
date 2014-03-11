@@ -26,6 +26,7 @@ int ClientHeavyLoad::tempDatapackListReplyTestCount;
 int ClientHeavyLoad::rawFilesCount;
 int ClientHeavyLoad::compressedFilesCount;
 QSet<QString> ClientHeavyLoad::compressedExtension;
+QSet<QString> ClientHeavyLoad::extensionAllowed;
 QHash<quint32,quint16> ClientHeavyLoad::clanConnectedCount;
 QRegularExpression ClientHeavyLoad::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
 QString ClientHeavyLoad::single_quote=QLatin1Literal("'");
@@ -35,6 +36,7 @@ QString ClientHeavyLoad::text_dotslash=QLatin1Literal("./");
 QString ClientHeavyLoad::text_slash=QLatin1Literal("/");
 QString ClientHeavyLoad::text_double_slash=QLatin1Literal("//");
 QString ClientHeavyLoad::text_antislash=QLatin1Literal("\\");
+QString ClientHeavyLoad::text_dotcomma=QLatin1Literal(";");
 
 ClientHeavyLoad::ClientHeavyLoad()
 {
@@ -1384,6 +1386,37 @@ void ClientHeavyLoad::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
+QSet<QString> ClientHeavyLoad::datapack_file_list()
+{
+    QSet<QString> filesList;
+
+    QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverSettings.datapack_basePath);
+    int index=0;
+    int size=returnList.size();
+    while(index<size)
+    {
+        QString fileName=returnList.at(index);
+        if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        {
+            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            {
+                QFile file(GlobalServerData::serverSettings.datapack_basePath+returnList.at(index));
+                if(file.size()<=8*1024*1024)
+                {
+                    if(file.open(QIODevice::ReadOnly))
+                    {
+                        fileName.replace(ClientHeavyLoad::text_antislash,ClientHeavyLoad::text_slash);//remplace if is under windows server
+                        filesList << fileName;
+                        file.close();
+                    }
+                }
+            }
+        }
+        index++;
+    }
+    return filesList;
+}
+
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
 {
@@ -1395,13 +1428,13 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     compressedFilesCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
-    QSet<QString> filesList=GlobalServerData::serverPrivateVariables.filesList;
+    QSet<QString> filesList=datapack_file_list();
     QHash<QString,quint32> filesListInfo;
 
     int loop_size=files.size();
     //send the size to download on the client
     {
-        QSet<QString> filesList=GlobalServerData::serverPrivateVariables.filesList;
+        QSet<QString> filesListForSize=filesList;
         int index=0;
         quint32 datapckFileNumber=0;
         quint32 datapckFileSize=0;
@@ -1419,7 +1452,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
                 emit error(QStringLiteral("start with wrong string: %1").arg(fileName));
                 return;
             }
-            if(filesList.contains(fileName))
+            if(filesListForSize.contains(fileName))
             {
                 filesListInfo[fileName]=QFileInfo(GlobalServerData::serverSettings.datapack_basePath+fileName).lastModified().toTime_t();
                 if(filesListInfo.value(fileName)!=mtime)
@@ -1427,11 +1460,11 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
                     datapckFileNumber++;
                     datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
                 }
-                filesList.remove(fileName);
+                filesListForSize.remove(fileName);
             }
             index++;
         }
-        QSetIterator<QString> i(filesList);
+        QSetIterator<QString> i(filesListForSize);
         while (i.hasNext()) {
             datapckFileNumber++;
             datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+i.next()).size();

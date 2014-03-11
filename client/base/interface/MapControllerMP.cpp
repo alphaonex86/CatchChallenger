@@ -213,10 +213,20 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         tempPlayer.inMove=false;
         tempPlayer.stepAlternance=false;
 
-        QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
+        const QString &mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
         if(!all_map.contains(mapPath))
         {
-            qDebug() << "MapControllerMP::insert_player(): current map " << mapPath << " not loaded";
+            qDebug() << "MapControllerMP::insert_player(): current map " << mapPath << " not loaded, delayed";
+            DelayedInsert tempItem;
+            tempItem.player=player;
+            tempItem.mapId=mapId;
+            tempItem.x=x;
+            tempItem.y=y;
+            tempItem.direction=direction;
+            DelayedMultiplex multiplex;
+            multiplex.insert=tempItem;
+            multiplex.type=DelayedType_Insert;
+            delayedActions << multiplex;
             return;
         }
         //the player skin
@@ -249,33 +259,33 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             case CatchChallenger::Direction_look_at_top:
             case CatchChallenger::Direction_move_at_top:
             {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(1);
-                playerMapObject->setCell(cell);
+                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+                cell.tile=tempPlayer.playerTileset->tileAt(1);
+                tempPlayer.playerMapObject->setCell(cell);
             }
             break;
             case CatchChallenger::Direction_look_at_right:
             case CatchChallenger::Direction_move_at_right:
             {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(4);
-                playerMapObject->setCell(cell);
+                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+                cell.tile=tempPlayer.playerTileset->tileAt(4);
+                tempPlayer.playerMapObject->setCell(cell);
             }
             break;
             case CatchChallenger::Direction_look_at_bottom:
             case CatchChallenger::Direction_move_at_bottom:
             {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(7);
-                playerMapObject->setCell(cell);
+                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+                cell.tile=tempPlayer.playerTileset->tileAt(7);
+                tempPlayer.playerMapObject->setCell(cell);
             }
             break;
             case CatchChallenger::Direction_look_at_left:
             case CatchChallenger::Direction_move_at_left:
             {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(10);
-                playerMapObject->setCell(cell);
+                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+                cell.tile=tempPlayer.playerTileset->tileAt(10);
+                tempPlayer.playerMapObject->setCell(cell);
             }
             break;
             default:
@@ -438,8 +448,14 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
         QString mapPath=otherPlayerList.value(id).current_map;
         if(!haveMapInMemory(mapPath))
         {
-            /// \todo this case
             qDebug() << QStringLiteral("move_player(%1), map not already loaded").arg(id).arg(otherPlayerList.value(id).current_map);
+            DelayedMove tempItem;
+            tempItem.id=id;
+            tempItem.movement=movement;
+            DelayedMultiplex multiplex;
+            multiplex.move=tempItem;
+            multiplex.type=DelayedType_Move;
+            delayedActions << multiplex;
             return;
         }
         loadOtherMap(mapPath);
@@ -570,6 +586,11 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
 
 void MapControllerMP::remove_player(const quint16 &id)
 {
+    if(id==player_informations.public_informations.simplifiedId)
+    {
+        qDebug() << "The current player can't be removed";
+        return;
+    }
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         #ifdef DEBUG_CLIENT_LOAD_ORDER
@@ -581,15 +602,34 @@ void MapControllerMP::remove_player(const quint16 &id)
         delayedActions << multiplex;
         return;
     }
-    if(id==player_informations.public_informations.simplifiedId)
-    {
-        qDebug() << "The current player can't be removed";
-        return;
-    }
     if(!otherPlayerList.contains(id))
     {
         qDebug() << QStringLiteral("Other player (%1) not exists").arg(id);
         return;
+    }
+    {
+        int index=0;
+        while(index<delayedActions.size())
+        {
+            switch(delayedActions.at(index).type)
+            {
+                case DelayedType_Insert:
+                    if(delayedActions.at(index).insert.player.simplifiedId==id)
+                        delayedActions.removeAt(index);
+                    else
+                        index++;
+                break;
+                case DelayedType_Move:
+                    if(delayedActions.at(index).move.id==id)
+                        delayedActions.removeAt(index);
+                    else
+                        index++;
+                break;
+                default:
+                    index++;
+                break;
+            }
+        }
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     qDebug() << QStringLiteral("remove_player(%1)").arg(id);
@@ -652,6 +692,15 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
     if(!all_map.contains(otherPlayerList.value(id).current_map))
     {
         qDebug() << "internal problem, revert map (" << otherPlayerList.value(id).current_map << ") index is wrong (" << DatapackClientLoader::datapackLoader.maps.join(";") << ")";
+        DelayedReinsertSingle tempItem;
+        tempItem.id=id;
+        tempItem.x=x;
+        tempItem.y=y;
+        tempItem.direction=direction;
+        DelayedMultiplex multiplex;
+        multiplex.reinsert_single=tempItem;
+        multiplex.type=DelayedType_Reinsert_single;
+        delayedActions << multiplex;
         return;
     }
     quint32 mapId=(quint32)all_map.value(otherPlayerList.value(id).current_map)->logicalMap.id;
@@ -938,6 +987,60 @@ void MapControllerMP::reinject_signals()
     }
     else
         qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): should not pass here because all is not previously loaded");
+}
+
+void MapControllerMP::reinject_signals_on_valid_map()
+{
+    #ifdef DEBUG_CLIENT_LOAD_ORDER
+    qDebug() << QStringLiteral("MapControllerMP::reinject_signals_on_valid_map()");
+    #endif
+    int index;
+
+    if(mHaveTheDatapack && player_informations_is_set)
+    {
+        #ifdef DEBUG_CLIENT_LOAD_ORDER
+        qDebug() << QStringLiteral("MapControllerMP::reinject_signals_on_valid_map(): mHaveTheDatapack && player_informations_is_set");
+        #endif
+        index=0;
+        while(index<delayedActions.size())
+        {
+            switch(delayedActions.at(index).type)
+            {
+                case DelayedType_Insert:
+                if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
+                {
+                    const QString &mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(delayedActions.at(index).insert.mapId)).absoluteFilePath();
+                    if(all_map.contains(mapPath))
+                    {
+                        insert_player(delayedActions.at(index).insert.player,delayedActions.at(index).insert.mapId,delayedActions.at(index).insert.x,delayedActions.at(index).insert.y,delayedActions.at(index).insert.direction);
+                        delayedActions.removeAt(index);
+                        index--;
+                    }
+                }
+                break;
+                case DelayedType_Move:
+                    if(otherPlayerList.contains(delayedActions.at(index).move.id))
+                    {
+                        move_player(delayedActions.at(index).move.id,delayedActions.at(index).move.movement);
+                        delayedActions.removeAt(index);
+                        index--;
+                    }
+                break;
+                default:
+                break;
+            }
+            index++;
+        }
+    }
+    else
+        qDebug() << QStringLiteral("MapControllerMP::reinject_signals_on_valid_map(): should not pass here because all is not previously loaded");
+}
+
+bool MapControllerMP::asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject)
+{
+    const bool &result=MapVisualiserPlayer::asyncMapLoaded(fileName,tempMapObject);
+    reinject_signals_on_valid_map();
+    return result;
 }
 
 void MapControllerMP::moveOtherPlayerStepSlot()

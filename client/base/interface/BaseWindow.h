@@ -17,7 +17,7 @@
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../base/Api_client_real.h"
+#include "../Api_client_real.h"
 #include "../../general/base/Api_protocol.h"
 #include "../audio/QOggSimplePlayer.h"
 #include "MapController.h"
