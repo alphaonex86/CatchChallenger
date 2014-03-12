@@ -27,7 +27,6 @@ class MainWindow : public QMainWindow, public CatchChallenger::MoveOnTheMap
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    void start_step();
     void show_details();
     QSslSocket *sslSocket;
     CatchChallenger::ConnectedSocket socket;
@@ -35,19 +34,20 @@ private:
     CatchChallenger::Api_client_virtual api;
     //debug
     bool details;
-    //virtual action
-    void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &the_direction);
 
     static int index_loop,loop_size;
-    static QSemaphore wait_to_stop;
-    bool do_move;
+    bool have_informations;
     QSettings settings;
     bool haveShowDisconnectionReason;
+    QTimer moveTimer;
+    QTimer textTimer;
 public slots:
     void stop_move();
     void doMove();
+    void doText();
+    void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &the_new_direction);
+    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
 private slots:
-    void random_new_step();
     void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     void haveCharacter();
     void logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList);
