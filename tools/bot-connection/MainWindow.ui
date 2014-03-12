@@ -188,6 +188,20 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QCheckBox" name="randomText">
+         <property name="text">
+          <string>Random text</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="chatRandomReply">
+         <property name="text">
+          <string>Do global chat random reply</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>

@@ -4209,13 +4209,10 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
     if(output==NULL)
         return;
     output->packFullOutcommingData(0x42,0x0003,outputData);
-    if(!text.startsWith('/'))
-        emit new_chat_text(chatType,text,player_informations.public_informations.pseudo,player_informations.public_informations.type);
 }
 
 void Api_protocol::sendPM(const QString &text,const QString &pseudo)
 {
-    emit new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
     if(this->player_informations.public_informations.pseudo==pseudo)
         return;
     QByteArray outputData;

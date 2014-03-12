@@ -210,6 +210,32 @@ struct ServerPrivateVariables
     QString db_query_played_time;
     QString db_query_monster_skill;
     QString db_query_monster;
+    QString db_query_character_by_id;
+    QString db_query_update_character_time_to_delete;
+    QString db_query_update_character_last_connect;
+    QString db_query_clan;
+
+    QString db_query_monster_by_character_id;
+    QString db_query_delete_monster_buff;
+    QString db_query_delete_monster_skill;
+    QString db_query_delete_bot_already_beaten;
+    QString db_query_delete_character;
+    QString db_query_delete_item;
+    QString db_query_delete_monster;
+    QString db_query_delete_plant;
+    QString db_query_delete_quest;
+    QString db_query_delete_recipes;
+    QString db_query_delete_reputation;
+
+    QString db_query_select_character_by_pseudo;
+    QString db_query_insert_monster;
+    QString db_query_insert_monster_skill;
+    QString db_query_insert_reputation;
+    QString db_query_insert_item;
+    QString db_query_account_time_to_delete_character_by_id;
+    QString db_query_update_character_time_to_delete_by_id;
+    QString db_query_select_reputation_by_id;
+    QString db_query_select_quest_by_id;
 
     //datapack
     QString datapack_mapPath;
