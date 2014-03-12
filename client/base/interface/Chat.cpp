@@ -121,6 +121,8 @@ void Chat::lineEdit_chat_text_returnPressed()
         break;
         }
         CatchChallenger::Api_client_real::client->sendChatText(chat_type,text);
+        if(!text.startsWith('/'))
+            new_chat_text(chat_type,text,CatchChallenger::Api_client_real::client->player_informations.public_informations.pseudo,CatchChallenger::Api_client_real::client->player_informations.public_informations.type);
     }
     else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
     {
@@ -128,6 +130,7 @@ void Chat::lineEdit_chat_text_returnPressed()
         pseudo.replace(QRegularExpression("^/pm ([^ ]+) .+$"), "\\1");
         text.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
         CatchChallenger::Api_client_real::client->sendPM(text,pseudo);
+        new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
     }
 }
 

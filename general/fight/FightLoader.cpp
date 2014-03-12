@@ -1611,7 +1611,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                                         if(ok)
                                                             levelDef[number].fight << effect;
                                                         else
-                                                            DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(text));
+                                                            DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"%4\" something is wrong, or is not a number, or not into hp or defense balise: child.tagName(): %2 (at line: %3)").arg(file).arg(inFight.tagName()).arg(inFight.lineNumber()).arg(text));
                                                     }
                                                     inFight = inFight.nextSiblingElement(FightLoader::text_inFight);
                                                 }

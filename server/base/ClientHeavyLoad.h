@@ -47,6 +47,18 @@ public:
     static QString text_dotcomma;
     static QString text_double_slash;
     static QString text_antislash;
+    static QString text_normal;
+    static QString text_premium;
+    static QString text_gm;
+    static QString text_dev;
+    static QString text_top;
+    static QString text_bottom;
+    static QString text_left;
+    static QString text_right;
+    static QString text_dottmx;
+    static QString text_unknown;
+    static QString text_female;
+    static QString text_male;
 public slots:
     virtual void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
     virtual void askLoginBot(const quint8 &query_id);

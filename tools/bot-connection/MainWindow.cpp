@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include "../../general/base/CommonSettings.h"
+
 #include <QNetworkProxy>
 #include <QMessageBox>
 
@@ -11,6 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
     api(&socket,QString()),
     ui(new Ui::MainWindow)
 {
+    qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
+    qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     ui->setupUi(this);
     sslSocket->ignoreSslErrors();
     sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
@@ -19,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
     connect(&api,&CatchChallenger::Api_client_virtual::insert_player,            this,&MainWindow::insert_player);
+    connect(&api,&CatchChallenger::Api_client_virtual::new_chat_text,            this,&MainWindow::new_chat_text,Qt::QueuedConnection);
     connect(&api,&CatchChallenger::Api_client_virtual::haveCharacter,            this,&MainWindow::haveCharacter);
     connect(&api,&CatchChallenger::Api_client_virtual::logged,                   this,&MainWindow::logged);
     connect(&api,&CatchChallenger::Api_client_virtual::have_current_player_info, this,&MainWindow::have_current_player_info);
@@ -29,7 +34,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     details=false;
     haveShowDisconnectionReason=false;
-    do_move=false;
+    have_informations=false;
+    last_direction=CatchChallenger::Direction_look_at_bottom;
+    connect(&moveTimer,&QTimer::timeout,this,&MainWindow::doMove);
+    connect(&moveTimer,&QTimer::timeout,this,&MainWindow::doText);
+    moveTimer.start(1000);
+    textTimer.start(1000);
 
     if(settings.contains("login"))
         ui->login->setText(settings.value("login").toString());
@@ -70,21 +80,73 @@ void MainWindow::tryLink()
 void MainWindow::doMove()
 {
     //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket.isValid():%2, map!=NULL: %3").arg(do_step).arg(socket.isValid()).arg(map!=NULL));
-    if(do_move && socket.isValid())
+    if(have_informations && ui->move->isChecked() && socket.isValid())
     {
-        random_new_step();
-/*		if(rand()%(GlobalServerData::botNumber*10)==0)
-            api.sendChatText(Chat_type_local,"Hello world!");*/
+        if(last_direction==CatchChallenger::Direction_look_at_bottom)
+        {
+            last_direction=CatchChallenger::Direction_look_at_left;
+            send_player_move(0,last_direction);
+        }
+        else if(last_direction==CatchChallenger::Direction_look_at_left)
+        {
+            last_direction=CatchChallenger::Direction_look_at_top;
+            send_player_move(0,last_direction);
+        }
+        else if(last_direction==CatchChallenger::Direction_look_at_top)
+        {
+            last_direction=CatchChallenger::Direction_look_at_right;
+            send_player_move(0,last_direction);
+        }
+        else
+        {
+            last_direction=CatchChallenger::Direction_look_at_bottom;
+            send_player_move(0,last_direction);
+        }
     }
 }
 
-void MainWindow::start_step()
+void MainWindow::doText()
 {
-    do_move=true;
-}
-
-void MainWindow::random_new_step()
-{
+    //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket.isValid():%2, map!=NULL: %3").arg(do_step).arg(socket.isValid()).arg(map!=NULL));
+    if(have_informations && ui->move->isChecked() && socket.isValid())
+    {
+        if(CommonSettings::commonSettings.chat_allow_local && rand()%10==0)
+        {
+            switch(rand()%3)
+            {
+                case 0:
+                    api.sendChatText(CatchChallenger::Chat_type_local,"What's up?");
+                break;
+                case 1:
+                    api.sendChatText(CatchChallenger::Chat_type_local,"Have good day!");
+                break;
+                case 2:
+                    api.sendChatText(CatchChallenger::Chat_type_local,"... and now, what I have win :)");
+                break;
+            }
+        }
+        else
+        {
+            if(CommonSettings::commonSettings.chat_allow_all && rand()%100==0)
+            {
+                switch(rand()%4)
+                {
+                    case 0:
+                        api.sendChatText(CatchChallenger::Chat_type_all,"Hello world! :)");
+                    break;
+                    case 1:
+                        api.sendChatText(CatchChallenger::Chat_type_all,"It's so good game!");
+                    break;
+                    case 2:
+                        api.sendChatText(CatchChallenger::Chat_type_all,"This game have reason to ask donations!");
+                    break;
+                    case 3:
+                        api.sendChatText(CatchChallenger::Chat_type_all,"Donate if you can!");
+                    break;
+                }
+            }
+        }
+    }
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
@@ -96,6 +158,7 @@ void MainWindow::insert_player(const CatchChallenger::Player_public_informations
     Q_UNUSED(y);
     if(player.simplifiedId==api.getId())
         this->last_direction=direction;
+    have_informations=true;
 }
 
 void MainWindow::haveCharacter()
@@ -113,6 +176,7 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
         ui->characterList->addItem(character.pseudo,character.character_id);
         index++;
     }
+    ui->characterList->setEnabled(ui->characterList->count()>0);
     ui->characterSelect->setEnabled(ui->characterList->count()>0);
 }
 
@@ -151,19 +215,54 @@ void MainWindow::newSocketError(QAbstractSocket::SocketError error)
 
 }
 
+void MainWindow::send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &the_new_direction)
+{
+    api.send_player_move(moved_unit,the_new_direction);
+}
+
+void MainWindow::new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type)
+{
+    qDebug() << "Chat:" << text;
+    Q_UNUSED(type);
+    switch(chat_type)
+    {
+        case CatchChallenger::Chat_type_all:
+        if(CommonSettings::commonSettings.chat_allow_all && ui->chatRandomReply->isChecked())
+            switch(rand()%100)
+            {
+                case 0:
+                    api.sendChatText(CatchChallenger::Chat_type_local,"I'm according "+pseudo);
+                break;
+                default:
+                break;
+            }
+        break;
+        case CatchChallenger::Chat_type_local:
+        if(CommonSettings::commonSettings.chat_allow_local && ui->chatRandomReply->isChecked())
+            switch(rand()%3)
+            {
+                case 0:
+                    api.sendChatText(CatchChallenger::Chat_type_local,"You are in right "+pseudo);
+                break;
+            }
+        break;
+        case CatchChallenger::Chat_type_pm:
+        if(CommonSettings::commonSettings.chat_allow_private)
+            api.sendPM(QStringLiteral("Hello %1, I'm few bit busy for now").arg(pseudo),pseudo);
+        break;
+        default:
+        break;
+    }
+}
+
 void MainWindow::stop_move()
 {
-    do_move=false;
+    have_informations=false;
 }
 
 void MainWindow::show_details()
 {
     details=true;
-}
-
-void MainWindow::send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &the_direction)
-{
-    api.send_player_move(moved_unit,the_direction);
 }
 
 void MainWindow::on_connect_clicked()
