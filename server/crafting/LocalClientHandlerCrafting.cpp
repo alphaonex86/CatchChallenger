@@ -7,13 +7,19 @@ using namespace CatchChallenger;
 
 void LocalClientHandler::useSeed(const quint8 &plant_id)
 {
-    if(objectQuantity(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed)==0)
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.plants.value(plant_id).requirements.reputation))
+    {
+        emit error(QStringLiteral("The player have not the requirement: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
+        return;
+    }
+    else if(objectQuantity(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed)==0)
     {
         emit error(QStringLiteral("The player have not the item id: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed));
         return;
     }
     else
     {
+        appendReputationRewards(CommonDatapack::commonDatapack.plants.value(plant_id).rewards.reputation);
         removeObject(CommonDatapack::commonDatapack.plants.value(plant_id).itemUsed);
         emit seedValidated();
     }
@@ -54,7 +60,10 @@ void LocalClientHandler::useRecipe(const quint8 &query_id,const quint32 &recipe_
     }
     //give the item
     if(success)
+    {
+        appendReputationRewards(recipe.rewards.reputation);
         addObject(recipe.doItemId,recipe.quantity);
+    }
     //send the reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);

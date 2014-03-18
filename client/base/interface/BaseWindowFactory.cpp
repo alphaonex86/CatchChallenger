@@ -26,6 +26,11 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("No cash"),tr("No bash to buy this item"));
         return;
     }
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
+    {
+        QMessageBox::warning(this,tr("No requirements"),tr("You don't meet the requirements"));
+        return;
+    }
     int i=1;
     if(cash>=(price*2) && quantity>1)
     {
@@ -40,14 +45,14 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         delete item;
     else
     {
-        const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+        const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
         int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Product &product=industry.products.at(index);
             if(product.item==id)
             {
-                item->setData(98,FacilityLib::getFactoryProductPrice(quantity,product,CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId))));
+                item->setData(98,FacilityLib::getFactoryProductPrice(quantity,product,CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry)));
                 break;
             }
             index++;
@@ -61,6 +66,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     itemsToBuy << itemToSellOrBuy;
     removeCash(itemToSellOrBuy.object);
     CatchChallenger::Api_client_real::client->buyFactoryProduct(factoryId,id,i,price);
+    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
 }
 
 void BaseWindow::on_factorySell_clicked()
@@ -81,6 +87,11 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
         return;
     }
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
+    {
+        QMessageBox::warning(this,tr("No requirements"),tr("You don't meet the requirements"));
+        return;
+    }
     int i=1;
     if(items.value(id)>1 && quantity>1)
     {
@@ -98,14 +109,14 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         delete item;
     else
     {
-        const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+        const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
         int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
             if(resource.item==id)
             {
-                item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId))));
+                item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry)));
                 break;
             }
             index++;
@@ -119,6 +130,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     itemsToSell << tempItem;
     remove_to_inventory(id,i);
     CatchChallenger::Api_client_real::client->sellFactoryResource(factoryId,id,i,price);
+    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
 }
 
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice)
@@ -173,7 +185,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
         {
             if(factoryInProduction)
                 break;
-            const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+            const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
             industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
             updateFactoryStatProduction(industryStatus,industry);
         }
@@ -233,7 +245,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
         {
             if(factoryInProduction)
                 break;
-            const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+            const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
             industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
             updateFactoryStatProduction(industryStatus,industry);
         }
@@ -247,7 +259,7 @@ void BaseWindow::haveFactoryList(const quint32 &remainingProductionTime,const QL
 {
     industryStatus.products.clear();
     industryStatus.resources.clear();
-    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
     industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000+remainingProductionTime-industry.time;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";
@@ -351,7 +363,7 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
         else
             item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
-    if(!items.contains(item->data(99).toUInt()))
+    if(!items.contains(item->data(99).toUInt()) || !haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
     {
         item->setFont(MissingQuantity);
         item->setForeground(QBrush(QColor(200,20,20)));

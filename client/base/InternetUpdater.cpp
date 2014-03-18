@@ -92,6 +92,7 @@ void InternetUpdater::httpFinished()
         reply->deleteLater();
         return;
     }
+    qDebug() << "newVersion:" << newVersion;
     emit newUpdate(newVersion);
     reply->deleteLater();
 }

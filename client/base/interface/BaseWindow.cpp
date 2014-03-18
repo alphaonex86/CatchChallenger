@@ -456,7 +456,7 @@ void BaseWindow::changeEvent(QEvent *e)
     }
 }
 
-void BaseWindow::message(QString message)
+void BaseWindow::message(QString message) const
 {
     qDebug() << message;
 }
@@ -842,7 +842,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             if(havePlant(&MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap,MapController::mapController->getX(),MapController::mapController->getY())>=0)
             {
                 qDebug() << "Too slow to select a seed, have plant now";
-                showTip(QStringLiteral("Sorry, but now the dirt is not free to plant"));
+                showTip(tr("Sorry, but now the dirt is not free to plant"));
                 return;
             }
             ui->stackedWidget->setCurrentWidget(ui->page_map);
@@ -854,6 +854,12 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             {
                 qDebug() << "item id is not into the inventory";
                 break;
+            }
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(itemId)).requirements.reputation))
+            {
+                qDebug() << "You don't have the requirements to plant the seed";
+                showTip(tr("You don't have the requirements to plant the seed"));
+                return;
             }
             remove_to_inventory(itemId);
             SeedInWaiting seedInWaiting;
@@ -1093,15 +1099,31 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         ui->inventory_description->setText(tr("Unknown description"));
         return;
     }
-
     const DatapackClientLoader::ItemExtra &content=DatapackClientLoader::datapackLoader.itemsExtra.value(items_graphical.value(item));
+    ui->inventoryDestroy->setVisible(!inSelection);
+    ui->inventory_image->setPixmap(content.image);
+    ui->inventory_name->setText(content.name);
+    ui->inventory_description->setText(content.description);
+
     ui->inventoryInformation->setVisible(!inSelection &&
                                          /* is a plant */
                                          DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical.value(item))
                                          );
+    bool isRecipe=false;
+    {
+        /* is a recipe */
+        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(items_graphical.value(item));
+        if(isRecipe)
+        {
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(items_graphical.value(item))).requirements.reputation))
+            {
+                ui->inventory_description->setText(ui->inventory_description->text()+"<br />"+tr("Don't meet the requirements"));
+                isRecipe=false;
+            }
+        }
+    }
     ui->inventoryUse->setVisible(inSelection ||
-                                 /* is a recipe */
-                                 CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(items_graphical.value(item))
+                                 isRecipe
                                  ||
                                  /* is a repel */
                                  CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(items_graphical.value(item))
@@ -1118,10 +1140,6 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                  /* is a evolution item */
                                  (CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.contains(items_graphical.value(item)) && !ClientFightEngine::fightEngine.isInFight())
                                          );
-    ui->inventoryDestroy->setVisible(!inSelection);
-    ui->inventory_image->setPixmap(content.image);
-    ui->inventory_name->setText(content.name);
-    ui->inventory_description->setText(content.description);
 }
 
 void BaseWindow::tipTimeout()
@@ -1583,20 +1601,34 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
         }
         index++;
     }
-    index=0;
-    while(index<quest.requirements.reputation.size())
+    return haveReputationRequirements(quest.requirements.reputation);
+}
+
+void BaseWindow::appendReputationRewards(const QList<ReputationRewards> &reputationList)
+{
+    int index=0;
+    while(index<reputationList.size())
     {
-        const CatchChallenger::Quest::ReputationRequirements &reputation=quest.requirements.reputation.at(index);
-        if(informations.reputation.contains(reputation.type))
+        const ReputationRewards &reputationRewards=reputationList.at(index);
+        appendReputationPoint(reputationRewards.type,reputationRewards.point);
+        index++;
+    }
+}
+
+bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const
+{
+    int index=0;
+    while(index<reputationList.size())
+    {
+        const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
+        if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputation.type))
         {
-            const PlayerReputation &playerReputation=informations.reputation.value(reputation.type);
+            const PlayerReputation &playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(reputation.type);
             if(!reputation.positif)
             {
                 if(-reputation.level<playerReputation.level)
                 {
-                    #ifdef DEBUG_CLIENT_QUEST
-                    qDebug() << "reputation.level(" << reputation.level << ")<playerReputation.level(" << playerReputation.level << ")";
-                    #endif
+                    emit message(QStringLiteral("reputation.level(%1)<playerReputation.level(%2)").arg(reputation.level).arg(playerReputation.level));
                     return false;
                 }
             }
@@ -1604,9 +1636,7 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
             {
                 if(reputation.level>playerReputation.level || playerReputation.point<0)
                 {
-                    #ifdef DEBUG_CLIENT_QUEST
-                    qDebug() << "reputation.level(" << reputation.level << ")>playerReputation.level(" << playerReputation.level << ") || playerReputation.point(" << playerReputation.point << ")<0";
-                    #endif
+                    emit message(QStringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0").arg(reputation.level).arg(playerReputation.level).arg(playerReputation.point));
                     return false;
                 }
             }
@@ -1614,9 +1644,7 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
         else
             if(!reputation.positif)//default level is 0, but required level is negative
             {
-                #ifdef DEBUG_CLIENT_QUEST
-                qDebug() << "reputation.level(" << reputation.level << ")<0 and no reputation.type=" << reputation.type;
-                #endif
+                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(reputation.type));
                 return false;
             }
         index++;

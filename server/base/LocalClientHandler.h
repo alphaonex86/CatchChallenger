@@ -152,6 +152,7 @@ public slots:
     void addWarehouseObject(const quint32 &item,const quint32 &quantity=1);
     quint32 removeWarehouseObject(const quint32 &item,const quint32 &quantity=1);
 
+    bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const quint32 &monsterId);
     void sendHandlerCommand(const QString &command,const QString &extraText);
     //inventory
@@ -186,6 +187,7 @@ public slots:
     void updateAllow();
     //reputation
     void appendReputationPoint(const QString &type,const qint32 &point);
+    void appendReputationRewards(const QList<ReputationRewards> &reputationList);
     //battle
     void battleCanceled();
     void battleAccepted();
