@@ -364,21 +364,26 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     {
                         if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_type) && requirementsItem.hasAttribute(DatapackGeneralLoader::text_level))
                         {
-                            QString stringLevel=requirementsItem.attribute(DatapackGeneralLoader::text_level);
-                            bool positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
-                            if(!positif)
-                                stringLevel.remove(0,1);
-                            quint8 level=stringLevel.toUShort(&ok);
-                            if(ok)
+                            if(CommonDatapack::commonDatapack.reputation.contains(requirementsItem.attribute(DatapackGeneralLoader::text_type)))
                             {
-                                CatchChallenger::Quest::ReputationRequirements reputation;
-                                reputation.level=level;
-                                reputation.positif=positif;
-                                reputation.type=requirementsItem.attribute(DatapackGeneralLoader::text_type);
-                                quest.requirements.reputation << reputation;
+                                QString stringLevel=requirementsItem.attribute(DatapackGeneralLoader::text_level);
+                                bool positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                if(!positif)
+                                    stringLevel.remove(0,1);
+                                quint8 level=stringLevel.toUShort(&ok);
+                                if(ok)
+                                {
+                                    CatchChallenger::ReputationRequirements reputation;
+                                    reputation.level=level;
+                                    reputation.positif=positif;
+                                    reputation.type=requirementsItem.attribute(DatapackGeneralLoader::text_type);
+                                    quest.requirements.reputation << reputation;
+                                }
+                                else
+                                    qDebug() << QStringLiteral("Unable to open the file: %1, reputation is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(stringLevel);
                             }
                             else
-                                qDebug() << QStringLiteral("Unable to open the file: %1, reputation is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(stringLevel);
+                                qDebug() << QStringLiteral("Has attribute: %1, reputation not found: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                         }
                         else
                             qDebug() << QStringLiteral("Has attribute: %1, have not attribute type or level: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
@@ -435,7 +440,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                             qint32 point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                             if(ok)
                             {
-                                CatchChallenger::Quest::ReputationRewards reputation;
+                                CatchChallenger::ReputationRewards reputation;
                                 reputation.point=point;
                                 reputation.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
                                 quest.rewards.reputation << reputation;
@@ -710,6 +715,74 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                         plant.taller_seconds=0;
                         plant.flowering_seconds=0;
                         plant.itemUsed=itemUsed;
+                        {
+                            QDomElement requirementsItem = plantItem.firstChildElement(DatapackGeneralLoader::text_requirements);
+                            if(!requirementsItem.isNull() && requirementsItem.isElement())
+                            {
+                                QDomElement reputationItem = requirementsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                while(!reputationItem.isNull())
+                                {
+                                    if(reputationItem.isElement())
+                                    {
+                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
+                                        {
+                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            {
+                                                ReputationRequirements reputationRequirements;
+                                                QString stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
+                                                reputationRequirements.positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                                if(!reputationRequirements.positif)
+                                                    stringLevel.remove(0,1);
+                                                reputationRequirements.level=stringLevel.toUShort(&ok);
+                                                if(ok)
+                                                {
+                                                    reputationRequirements.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    plant.requirements.reputation << reputationRequirements;
+                                                }
+                                            }
+                                            else
+                                                qDebug() << QStringLiteral("Reputation type not found: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                        }
+                                        else
+                                            qDebug() << QStringLiteral("Unable to open the industries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    }
+                                    else
+                                        qDebug() << QStringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                }
+                            }
+                        }
+                        {
+                            QDomElement rewardsItem = plantItem.firstChildElement(DatapackGeneralLoader::text_rewards);
+                            if(!rewardsItem.isNull() && rewardsItem.isElement())
+                            {
+                                QDomElement reputationItem = rewardsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                while(!reputationItem.isNull())
+                                {
+                                    if(reputationItem.isElement())
+                                    {
+                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
+                                        {
+                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            {
+                                                ReputationRewards reputationRewards;
+                                                reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                                if(ok)
+                                                {
+                                                    reputationRewards.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    plant.rewards.reputation << reputationRewards;
+                                                }
+                                            }
+                                        }
+                                        else
+                                            qDebug() << QStringLiteral("Unable to open the industries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    }
+                                    else
+                                        qDebug() << QStringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                }
+                            }
+                        }
                         ok=false;
                         QDomElement quantity = plantItem.firstChildElement(DatapackGeneralLoader::text_quantity);
                         if(!quantity.isNull())
@@ -953,6 +1026,74 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                         recipe.itemToLearn=itemToLearn;
                         recipe.quantity=quantity;
                         recipe.success=success;
+                        {
+                            QDomElement requirementsItem = recipeItem.firstChildElement(DatapackGeneralLoader::text_requirements);
+                            if(!requirementsItem.isNull() && requirementsItem.isElement())
+                            {
+                                QDomElement reputationItem = requirementsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                while(!reputationItem.isNull())
+                                {
+                                    if(reputationItem.isElement())
+                                    {
+                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
+                                        {
+                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            {
+                                                ReputationRequirements reputationRequirements;
+                                                QString stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
+                                                reputationRequirements.positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                                if(!reputationRequirements.positif)
+                                                    stringLevel.remove(0,1);
+                                                reputationRequirements.level=stringLevel.toUShort(&ok);
+                                                if(ok)
+                                                {
+                                                    reputationRequirements.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    recipe.requirements.reputation << reputationRequirements;
+                                                }
+                                            }
+                                            else
+                                                qDebug() << QStringLiteral("Reputation type not found: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                        }
+                                        else
+                                            qDebug() << QStringLiteral("Unable to open the industries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    }
+                                    else
+                                        qDebug() << QStringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                }
+                            }
+                        }
+                        {
+                            QDomElement rewardsItem = recipeItem.firstChildElement(DatapackGeneralLoader::text_rewards);
+                            if(!rewardsItem.isNull() && rewardsItem.isElement())
+                            {
+                                QDomElement reputationItem = rewardsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                while(!reputationItem.isNull())
+                                {
+                                    if(reputationItem.isElement())
+                                    {
+                                        if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
+                                        {
+                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            {
+                                                ReputationRewards reputationRewards;
+                                                reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                                if(ok)
+                                                {
+                                                    reputationRewards.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    recipe.rewards.reputation << reputationRewards;
+                                                }
+                                            }
+                                        }
+                                        else
+                                            qDebug() << QStringLiteral("Unable to open the industries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    }
+                                    else
+                                        qDebug() << QStringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                    reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                }
+                            }
+                        }
                         QDomElement material = recipeItem.firstChildElement(DatapackGeneralLoader::text_material);
                         while(!material.isNull() && ok)
                         {
@@ -1352,9 +1493,9 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
     return industries;
 }
 
-QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries)
+QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries)
 {
-    QHash<quint32,quint32> industriesLink;
+    QHash<quint32,IndustryLink> industriesLink;
     QDomDocument domDocument;
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
@@ -1402,7 +1543,80 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
                     if(!industriesLink.contains(factory_id))
                     {
                         if(industries.contains(industry_id))
-                            industriesLink[industry_id]=industry_id;
+                        {
+                            industriesLink[industry_id].industry=industry_id;
+                            IndustryLink *industryLink=&industriesLink[industry_id];
+                            {
+                                {
+                                    QDomElement requirementsItem = linkItem.firstChildElement(DatapackGeneralLoader::text_requirements);
+                                    if(!requirementsItem.isNull() && requirementsItem.isElement())
+                                    {
+                                        QDomElement reputationItem = requirementsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                        while(!reputationItem.isNull())
+                                        {
+                                            if(reputationItem.isElement())
+                                            {
+                                                if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
+                                                {
+                                                    if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                                    {
+                                                        ReputationRequirements reputationRequirements;
+                                                        QString stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
+                                                        reputationRequirements.positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
+                                                        if(!reputationRequirements.positif)
+                                                            stringLevel.remove(0,1);
+                                                        reputationRequirements.level=stringLevel.toUShort(&ok);
+                                                        if(ok)
+                                                        {
+                                                            reputationRequirements.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                            industryLink->requirements.reputation << reputationRequirements;
+                                                        }
+                                                    }
+                                                    else
+                                                        qDebug() << QStringLiteral("Reputation type not found: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                                }
+                                                else
+                                                    qDebug() << QStringLiteral("Unable to open the industries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                            }
+                                            else
+                                                qDebug() << QStringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                            reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                        }
+                                    }
+                                }
+                                {
+                                    QDomElement rewardsItem = linkItem.firstChildElement(DatapackGeneralLoader::text_rewards);
+                                    if(!rewardsItem.isNull() && rewardsItem.isElement())
+                                    {
+                                        QDomElement reputationItem = rewardsItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                                        while(!reputationItem.isNull())
+                                        {
+                                            if(reputationItem.isElement())
+                                            {
+                                                if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
+                                                {
+                                                    if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                                    {
+                                                        ReputationRewards reputationRewards;
+                                                        reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                                        if(ok)
+                                                        {
+                                                            reputationRewards.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                            industryLink->rewards.reputation << reputationRewards;
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                    qDebug() << QStringLiteral("Unable to open the industries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                            }
+                                            else
+                                                qDebug() << QStringLiteral("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                                            reputationItem = reputationItem.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         else
                             qDebug() << QStringLiteral("Industry id for factory is not found: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(linkItem.tagName()).arg(linkItem.lineNumber());
                     }

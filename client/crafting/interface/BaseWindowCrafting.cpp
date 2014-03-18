@@ -72,8 +72,11 @@ void BaseWindow::seed_planted(const bool &ok)
 {
     removeQuery(QueryType_Seed);
     if(ok)
+    {
         /// \todo add to the map here, and don't send on the server
         showTip(tr("Seed correctly planted"));
+        appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(seed_in_waiting.first().seed)).rewards.reputation);
+    }
     else
     {
         if(!seed_in_waiting.first().map.isEmpty())
@@ -444,7 +447,8 @@ void BaseWindow::on_craftingUse_clicked()
     load_plant_inventory();
     on_listCraftingList_itemSelectionChanged();
     //send to the network
-    CatchChallenger::Api_client_real::client->useRecipe(crafting_recipes_items_graphical[selectedItem]);
+    CatchChallenger::Api_client_real::client->useRecipe(crafting_recipes_items_graphical.value(selectedItem));
+    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(crafting_recipes_items_graphical.value(selectedItem)).rewards.reputation);
     //create animation widget
     if(animationWidget!=NULL)
         delete animationWidget;
