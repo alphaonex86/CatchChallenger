@@ -196,39 +196,7 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
         }
         index++;
     }
-    index=0;
-    while(index<quest.requirements.reputation.size())
-    {
-        const CatchChallenger::Quest::ReputationRequirements &reputation=quest.requirements.reputation.at(index);
-        if(player_informations->public_and_private_informations.reputation.contains(reputation.type))
-        {
-            const PlayerReputation &playerReputation=player_informations->public_and_private_informations.reputation.value(reputation.type);
-            if(!reputation.positif)
-            {
-                if(-reputation.level<playerReputation.level)
-                {
-                    emit message(QStringLiteral("reputation.level(%1)<playerReputation.level(%2)").arg(reputation.level).arg(playerReputation.level));
-                    return false;
-                }
-            }
-            else
-            {
-                if(reputation.level>playerReputation.level || playerReputation.point<0)
-                {
-                    emit message(QStringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0").arg(reputation.level).arg(playerReputation.level).arg(playerReputation.point));
-                    return false;
-                }
-            }
-        }
-        else
-            if(!reputation.positif)//default level is 0, but required level is negative
-            {
-                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(reputation.type));
-                return false;
-            }
-        index++;
-    }
-    return true;
+    return haveReputationRequirements(quest.requirements.reputation);
 }
 
 bool LocalClientHandler::nextStepQuest(const Quest &quest)

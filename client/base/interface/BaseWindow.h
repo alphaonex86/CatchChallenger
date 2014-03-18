@@ -122,7 +122,7 @@ public slots:
     void objectSelection(const bool &ok,const quint32 &itemId=0,const quint32 &quantity=1);
     void connectAllSignals();
 private slots:
-    void message(QString message);
+    void message(QString message) const;
     void disconnected(QString reason);
     void notLogged(QString reason);
     void protocol_is_good();
@@ -296,6 +296,8 @@ private slots:
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
 
     //quest
+    bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
+    void appendReputationRewards(const QList<ReputationRewards> &reputationList);
     void getTextEntryPoint();
     void showQuestText(const quint32 &textId);
     void nextQuestStep();

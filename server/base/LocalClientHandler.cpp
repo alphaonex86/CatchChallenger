@@ -1515,6 +1515,11 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
             emit error(QStringLiteral("can't use the object: %1").arg(itemId));
             return;
         }
+        if(!haveReputationRequirements(CommonDatapack::commonDatapack.crafingRecipes.value(recipeId).requirements.reputation))
+        {
+            emit error(QStringLiteral("The player have not the requirement: %1 to to learn crafting recipe").arg(recipeId));
+            return;
+        }
         player_informations->public_and_private_informations.recipes << recipeId;
         //send the network reply
         QByteArray outputData;
@@ -2065,7 +2070,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         emit error(QStringLiteral("factory id not found"));
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
     //send the shop items (no taxes from now)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2177,7 +2182,12 @@ void LocalClientHandler::buyFactoryProduct(const quint32 &query_id,const quint32
         emit error(QStringLiteral("factory id not found in active list"));
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
+    {
+        emit error(QStringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
+        return;
+    }
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
     IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
     quint32 quantityInStock=0;
     quint32 actualPrice=0;
@@ -2240,6 +2250,7 @@ void LocalClientHandler::buyFactoryProduct(const quint32 &query_id,const quint32
     removeCash(actualPrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
     addObject(objectId,quantity);
+    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
     emit postReply(query_id,outputData);
 }
 
@@ -2270,7 +2281,12 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
         emit error(QStringLiteral("you have not the object quantity to sell at this factory"));
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId));
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.value(factoryId).requirements.reputation))
+    {
+        emit error(QStringLiteral("The player have not the requirement: %1 to use the factory").arg(factoryId));
+        return;
+    }
+    const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(factoryId).industry);
     IndustryStatus industryStatus;
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
@@ -2347,6 +2363,7 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
     removeObject(objectId,quantity);
     addCash(resourcePrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
+    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
     emit postReply(query_id,outputData);
 }
 
@@ -2396,6 +2413,17 @@ void LocalClientHandler::updateAllow()
                          .arg(player_informations->character_id)
                          );
         break;
+    }
+}
+
+void LocalClientHandler::appendReputationRewards(const QList<ReputationRewards> &reputationList)
+{
+    int index=0;
+    while(index<reputationList.size())
+    {
+        const ReputationRewards &reputationRewards=reputationList.at(index);
+        appendReputationPoint(reputationRewards.type,reputationRewards.point);
+        index++;
     }
 }
 
@@ -4433,4 +4461,41 @@ void LocalClientHandler::withdrawMarketMonster(const quint32 &query_id,const qui
 void LocalClientHandler::confirmEvolution(const quint32 &monsterId)
 {
     localClientHandlerFight.confirmEvolution(monsterId);
+}
+
+bool LocalClientHandler::haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const
+{
+    int index=0;
+    while(index<reputationList.size())
+    {
+        const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
+        if(player_informations->public_and_private_informations.reputation.contains(reputation.type))
+        {
+            const PlayerReputation &playerReputation=player_informations->public_and_private_informations.reputation.value(reputation.type);
+            if(!reputation.positif)
+            {
+                if(-reputation.level<playerReputation.level)
+                {
+                    emit message(QStringLiteral("reputation.level(%1)<playerReputation.level(%2)").arg(reputation.level).arg(playerReputation.level));
+                    return false;
+                }
+            }
+            else
+            {
+                if(reputation.level>playerReputation.level || playerReputation.point<0)
+                {
+                    emit message(QStringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0").arg(reputation.level).arg(playerReputation.level).arg(playerReputation.point));
+                    return false;
+                }
+            }
+        }
+        else
+            if(!reputation.positif)//default level is 0, but required level is negative
+            {
+                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(reputation.type));
+                return false;
+            }
+        index++;
+    }
+    return true;
 }

@@ -748,7 +748,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=objects.join(", ")+"<br />";
         }
         {
-            QList<Quest::ReputationRewards> reputationRewards=CommonDatapack::commonDatapack.quests.value(questId).rewards.reputation;
+            QList<ReputationRewards> reputationRewards=CommonDatapack::commonDatapack.quests.value(questId).rewards.reputation;
             QStringList reputations;
             int index=0;
             while(index<reputationRewards.size())

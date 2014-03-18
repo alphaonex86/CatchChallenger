@@ -334,7 +334,8 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                             lang = lang.nextSiblingElement(QStringLiteral("lang"));
                         }
                     }
-                    settings.beginGroup(QStringLiteral("Xml-%1")+server.attribute("unique_code"));
+                    settings.beginGroup(QStringLiteral("Xml-%1").arg(server.attribute("unique_code")));
+                    qDebug() << "loadXmlConnexionInfoList" << settings.group();
                     if(settings.contains(QStringLiteral("connexionCounter")))
                     {
                         connexionInfo.connexionCounter=settings.value(QStringLiteral("connexionCounter")).toUInt(&ok);
@@ -596,7 +597,18 @@ void MainWindow::on_server_remove_clicked()
         {
             customServerName.remove(serverConnexion[selectedServer]->name);
             mergedConnexionInfoList.removeAt(index);
-            saveConnexionInfoList();
+            if(customServerConnexion.contains(selectedServer))
+                saveConnexionInfoList();
+            else
+            {
+                settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
+                if(settings.contains(QStringLiteral("connexionCounter")))
+                    settings.setValue(QStringLiteral("connexionCounter"),settings.value(QStringLiteral("connexionCounter")).toUInt()+1);
+                else
+                    settings.setValue(QStringLiteral("connexionCounter"),1);
+                settings.setValue(QStringLiteral("lastConnexion"),QDateTime::currentMSecsSinceEpoch()/1000);
+                settings.endGroup();
+            }
             displayServerList();
             break;
         }

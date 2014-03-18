@@ -405,7 +405,7 @@ void BaseServer::preload_industries()
                     ok=false;
                     break;
                 }
-                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id));
+                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id).industry);
                 int indexItem=0;
                 const int &resourceslistsize=industry.resources.size();
                 while(indexItem<resourceslistsize)
@@ -458,7 +458,7 @@ void BaseServer::preload_industries()
                     ok=false;
                     break;
                 }
-                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id));
+                const Industry &industry=CommonDatapack::commonDatapack.industries.value(CommonDatapack::commonDatapack.industriesLink.value(id).industry);
                 int indexItem=0;
                 const int &productlistsize=industry.products.size();
                 while(indexItem<productlistsize)
