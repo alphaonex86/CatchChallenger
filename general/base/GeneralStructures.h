@@ -96,6 +96,19 @@ enum Plant_collect
     Plant_collect_impossible=0x04
 };
 
+struct ReputationRewards
+{
+    QString type;
+    qint32 point;
+};
+
+struct ReputationRequirements
+{
+    QString type;
+    quint8 level;
+    bool positif;
+};
+
 struct Plant
 {
     quint32 itemUsed;
@@ -107,6 +120,16 @@ struct Plant
     quint16 sprouted_seconds;
     quint16 taller_seconds;
     quint16 flowering_seconds;
+    struct Requirements
+    {
+        QList<ReputationRequirements> reputation;
+    };
+    Requirements requirements;
+    struct Rewards
+    {
+        QList<ReputationRewards> reputation;
+    };
+    Rewards rewards;
 };
 
 struct Item
@@ -146,6 +169,21 @@ struct ItemFull
 struct LayersOptions
 {
     quint8 zoom;
+};
+
+struct IndustryLink
+{
+    quint32 industry;
+    struct Requirements
+    {
+        QList<ReputationRequirements> reputation;
+    };
+    Requirements requirements;
+    struct Rewards
+    {
+        QList<ReputationRewards> reputation;
+    };
+    Rewards rewards;
 };
 
 struct Industry
@@ -445,6 +483,16 @@ struct CrafingRecipe
         quint32 quantity;
     };
     QList<Material> materials;
+    struct Requirements
+    {
+        QList<ReputationRequirements> reputation;
+    };
+    Requirements requirements;
+    struct Rewards
+    {
+        QList<ReputationRewards> reputation;
+    };
+    Rewards rewards;
 };
 
 struct Shop
@@ -623,17 +671,6 @@ struct Quest
         quint32 item;
         QList<quint32> monsters;
         quint8 rate;
-    };
-    struct ReputationRewards
-    {
-        QString type;
-        qint32 point;
-    };
-    struct ReputationRequirements
-    {
-        QString type;
-        quint8 level;
-        bool positif;
     };
     struct Requirements
     {

@@ -34,7 +34,7 @@ public:
     QHash<quint32,Buff> monsterBuffs;
     ItemFull items;
     QHash<quint32,Industry> industries;
-    QHash<quint32,quint32> industriesLink;
+    QHash<quint32,IndustryLink> industriesLink;
     QList<Profile> profileList;
     QList<Type> types;
     QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
