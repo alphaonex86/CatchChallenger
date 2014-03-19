@@ -5,6 +5,7 @@
 
 #include <QNetworkRequest>
 #include <QUrl>
+#include <QRegularExpression>
 
 #ifdef Q_OS_UNIX
     #include <unistd.h>
@@ -71,7 +72,7 @@ void InternetUpdater::downloadFile()
 void InternetUpdater::httpFinished()
 {
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    if (reply->error())
+    if(reply->error())
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
@@ -81,7 +82,19 @@ void InternetUpdater::httpFinished()
         reply->deleteLater();
         return;
     }
-    QString newVersion=QString::fromUtf8(reply->readAll());
+    const QString &newVersion=QString::fromUtf8(reply->readAll());
+    if(newVersion.isEmpty())
+    {
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("version string is empty"));
+        reply->deleteLater();
+        return;
+    }
+    if(!newVersion.contains(QRegularExpression(QLatin1Literal("^[0-9]+(\\.[0-9]+)+$"))))
+    {
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("version string don't match: %1").arg(newVersion));
+        reply->deleteLater();
+        return;
+    }
     if(newVersion==CATCHCHALLENGER_VERSION)
     {
         reply->deleteLater();

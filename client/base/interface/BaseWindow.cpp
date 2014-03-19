@@ -2508,7 +2508,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
     if(this->items.value(itemId)<quantity)
         quantity=this->items.value(itemId);
     emit destroyObject(itemId,quantity);
-    remove_to_inventory(this->items.value(itemId),quantity);
+    remove_to_inventory(itemId,quantity);
     load_inventory();
     load_plant_inventory();
 }
