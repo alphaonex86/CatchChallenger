@@ -2211,7 +2211,11 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
     {
         if(monstersCollisionItem.isElement())
         {
-            if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_type) && monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+            if(!monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_type))
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute type, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+            else if(!monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute monsterType, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+            else
             {
                 ok=true;
                 MonstersCollision monstersCollision;
@@ -2303,8 +2307,6 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                         returnVar << monstersCollision;
                 }
             }
-            else
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute type or monsterType, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
         }
         monstersCollisionItem = monstersCollisionItem.nextSiblingElement(DatapackGeneralLoader::text_monstersCollision);
     }
