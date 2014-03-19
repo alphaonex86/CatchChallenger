@@ -934,6 +934,24 @@ void MapVisualiserPlayer::resetAll()
     mapVisualiserThread.quit();
     mapVisualiserThread.wait();
     mapVisualiserThread.start(QThread::IdlePriority);
+
+    //delete playerTileset;
+    {
+        QSet<Tiled::Tileset *> deletedTileset;
+        QHashIterator<QString,Tiled::Tileset *> i(playerTilesetCache);
+        while (i.hasNext()) {
+            i.next();
+            if(!deletedTileset.contains(i.value()))
+            {
+                deletedTileset << i.value();
+                delete i.value();
+            }
+        }
+        playerTilesetCache.clear();
+    }
+    lastTileset=defaultTileset;
+    playerTileset = new Tiled::Tileset(QLatin1Literal("player"),16,24);
+    playerTilesetCache[lastTileset]=playerTileset;
 }
 
 void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
