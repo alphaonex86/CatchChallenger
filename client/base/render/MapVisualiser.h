@@ -42,6 +42,7 @@ public:
     bool showFPS();
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
+    void setOpenGl(const bool &OpenGL);
 
     MapVisualiserThread::Map_full * getMap(QString map);
 

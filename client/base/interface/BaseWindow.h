@@ -222,7 +222,6 @@ private slots:
     void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
     void battleCanceledByOther();
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
-    void sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
@@ -474,6 +473,7 @@ private:
     quint32 idMonsterEvolution;
     quint32 mLastGivenXP;
     quint32 currentMonsterLevel;
+    QSet<QString> supportedImageFormats;
 
     //plant seed in waiting
     struct SeedInWaiting
