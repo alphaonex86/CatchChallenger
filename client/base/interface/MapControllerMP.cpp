@@ -1209,6 +1209,27 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             else
             {
                 otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_left;
+                //tiger the next tile
+                {
+                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
+                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
+                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
+                    //set the final value (direction, position, ...)
+                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
+                    {
+                        case CatchChallenger::Direction_move_at_right:
+                        case CatchChallenger::Direction_move_at_top:
+                        case CatchChallenger::Direction_move_at_bottom:
+                        case CatchChallenger::Direction_move_at_left:
+                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
+                        break;
+                        default:
+                        break;
+                    }
+                    if(all_map.contains(map->map_file))
+                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+                }
                 otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
                 moveOtherPlayerStepSlot();
             }
@@ -1229,6 +1250,27 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             else
             {
                 otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_right;
+                //tiger the next tile
+                {
+                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
+                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
+                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
+                    //set the final value (direction, position, ...)
+                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
+                    {
+                        case CatchChallenger::Direction_move_at_right:
+                        case CatchChallenger::Direction_move_at_top:
+                        case CatchChallenger::Direction_move_at_bottom:
+                        case CatchChallenger::Direction_move_at_left:
+                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
+                        break;
+                        default:
+                        break;
+                    }
+                    if(all_map.contains(map->map_file))
+                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+                }
                 otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
                 moveOtherPlayerStepSlot();
             }
@@ -1239,6 +1281,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap,x,y,true))
             {
                 otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_look_at_top;
+
                 Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
                 cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(1);
                 otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
@@ -1249,6 +1292,27 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             else
             {
                 otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_top;
+                //tiger the next tile
+                {
+                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
+                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
+                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
+                    //set the final value (direction, position, ...)
+                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
+                    {
+                        case CatchChallenger::Direction_move_at_right:
+                        case CatchChallenger::Direction_move_at_top:
+                        case CatchChallenger::Direction_move_at_bottom:
+                        case CatchChallenger::Direction_move_at_left:
+                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
+                        break;
+                        default:
+                        break;
+                    }
+                    if(all_map.contains(map->map_file))
+                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+                }
                 otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
                 moveOtherPlayerStepSlot();
             }
@@ -1269,6 +1333,27 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             else
             {
                 otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_bottom;
+                //tiger the next tile
+                {
+                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
+                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
+                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
+                    //set the final value (direction, position, ...)
+                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
+                    {
+                        case CatchChallenger::Direction_move_at_right:
+                        case CatchChallenger::Direction_move_at_top:
+                        case CatchChallenger::Direction_move_at_bottom:
+                        case CatchChallenger::Direction_move_at_left:
+                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
+                        break;
+                        default:
+                        break;
+                    }
+                    if(all_map.contains(map->map_file))
+                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+                }
                 otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
                 moveOtherPlayerStepSlot();
             }

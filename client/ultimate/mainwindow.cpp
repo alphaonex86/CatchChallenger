@@ -335,7 +335,6 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                         }
                     }
                     settings.beginGroup(QStringLiteral("Xml-%1").arg(server.attribute("unique_code")));
-                    qDebug() << "loadXmlConnexionInfoList" << settings.group();
                     if(settings.contains(QStringLiteral("connexionCounter")))
                     {
                         connexionInfo.connexionCounter=settings.value(QStringLiteral("connexionCounter")).toUInt(&ok);

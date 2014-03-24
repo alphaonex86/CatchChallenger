@@ -22,6 +22,7 @@
 #include "../../client/base/Map_client.h"
 #include "../../client/base/DisplayStructures.h"
 #include "../../general/base/Map_loader.h"
+#include "../interface/MapDoor.h"
 
 class MapVisualiserThread : public QThread
 {
@@ -44,6 +45,7 @@ public:
         int relative_x,relative_y;//needed for the async load
         int relative_x_pixel,relative_y_pixel;
         bool displayed;
+        QHash<QPair<quint8,quint8>,MapDoor*> doors;
     };
     explicit MapVisualiserThread();
     ~MapVisualiserThread();

@@ -60,20 +60,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     viewport()->setAttribute(Qt::WA_TranslucentBackground);
     viewport()->setAttribute(Qt::WA_NoSystemBackground);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
-    if(OpenGL)
-    {
-        QGLFormat format=QGLFormat::defaultFormat();//(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
-        //setSampleBuffers
-        format.setRgba(true);
-        //format.setAlpha(true);
-        //format.setProfile(QGLFormat::CompatibilityProfile);
-
-        QGLWidget *widgetOpenGL=new QGLWidget(format);// | QGL::IndirectRendering -> do a crash
-        if(widgetOpenGL==NULL)
-            QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers: create widget");
-        else
-            setViewport(widgetOpenGL);
-    }
+    setOpenGl(OpenGL);
 
     tagTilesetIndex=0;
     tagTileset = new Tiled::Tileset(QStringLiteral("tags"),16,16);
@@ -111,6 +98,24 @@ MapVisualiser::~MapVisualiser()
     //delete mapItem;
     //delete playerMapObject;
     delete tagTileset;
+}
+
+void MapVisualiser::setOpenGl(const bool &OpenGL)
+{
+    if(OpenGL)
+    {
+        QGLFormat format=QGLFormat::defaultFormat();//(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
+        //setSampleBuffers
+        format.setRgba(true);
+        //format.setAlpha(true);
+        //format.setProfile(QGLFormat::CompatibilityProfile);
+
+        QGLWidget *widgetOpenGL=new QGLWidget(format);// | QGL::IndirectRendering -> do a crash
+        if(widgetOpenGL==NULL)
+            QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers: create widget");
+        else
+            setViewport(widgetOpenGL);
+    }
 }
 
 MapVisualiserThread::Map_full * MapVisualiser::getMap(QString map)

@@ -474,7 +474,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
                 const QString &baseSearch=CatchChallenger::Api_client_real::client->datapackPath()+QLatin1Literal(DATAPACK_BASE_PATH_MAP)+monstersCollision.background;
                 if(QFile(baseSearch+"/background.png").exists())
                     ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url('")+baseSearch+QLatin1Literal("/background.png');}"));
-                else if(QFile(baseSearch+"/background.jpg").exists())
+                else if(QFile(baseSearch+"/background.jpg").exists() && (supportedImageFormats.contains(QLatin1Literal("jpeg")) || supportedImageFormats.contains(QLatin1Literal("jpg"))))
                     ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url('")+baseSearch+QLatin1Literal("/background.jpg');}"));
                 else
                     ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
@@ -2721,7 +2721,7 @@ void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn
     doNextAction();
 }
 
-void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+/*void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     if(CatchChallenger::ClientFightEngine::fightEngine.haveBattleOtherMonster())
     {
@@ -2740,7 +2740,7 @@ void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackRe
         moveType=MoveType_Enter;
         moveFightMonsterTop();
     }
-}
+}*/
 
 
 void BaseWindow::on_listWidgetFightAttack_itemActivated(QListWidgetItem *item)

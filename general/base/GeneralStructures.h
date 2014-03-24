@@ -553,6 +553,12 @@ enum ApplyOn
 
 struct Skill
 {
+    enum AttackReturnCase
+    {
+        AttackReturnCase_NormalAttack=0x01,
+        AttackReturnCase_MonsterChange=0x02,
+        AttackReturnCase_ItemUsage=0x03
+    };
     struct BuffEffect
     {
         quint32 buff;
@@ -575,11 +581,19 @@ struct Skill
     struct AttackReturn
     {
         bool doByTheCurrentMonster;
+        AttackReturnCase attackReturnCase;
+        //normal attack
         bool success;
         quint32 attack;
         QList<BuffEffect> addBuffEffectMonster,removeBuffEffectMonster;
         QList<LifeEffectReturn> lifeEffectMonster;
         QList<LifeEffectReturn> buffLifeEffectMonster;
+        //change monster if monsterPlace !=0
+        quint8 monsterPlace;
+        PublicPlayerMonster publicPlayerMonster;
+        //use objet on monster if item!=0
+        bool on_current_monster;
+        quint32 item;
     };
     struct Buff
     {

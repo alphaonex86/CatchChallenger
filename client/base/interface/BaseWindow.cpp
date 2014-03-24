@@ -64,6 +64,16 @@ BaseWindow::BaseWindow() :
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     ui->label_ultimate->setVisible(false);
     #endif
+    {
+        const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
+        int index=0;
+        while(index<supportedImageFormats.size())
+        {
+            this->supportedImageFormats << QString(supportedImageFormats.at(index));
+            index++;
+        }
+    }
+
 
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
@@ -263,7 +273,6 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleAcceptedByOther,      this,&BaseWindow::battleAcceptedByOther);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleCanceledByOther,      this,&BaseWindow::battleCanceledByOther);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendBattleReturn,           this,&BaseWindow::sendBattleReturn);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendFullBattleReturn,       this,&BaseWindow::sendFullBattleReturn);
     //market
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketList,                 this,&BaseWindow::marketList);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketBuy,                  this,&BaseWindow::marketBuy);

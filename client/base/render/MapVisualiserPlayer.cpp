@@ -136,6 +136,27 @@ void MapVisualiserPlayer::keyPressParse()
                 return;//Can't do at the left!
             //the first step
             direction=CatchChallenger::Direction_move_at_left;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             inMove=true;
             moveStep=1;
             moveStepSlot();
@@ -163,6 +184,27 @@ void MapVisualiserPlayer::keyPressParse()
                 return;//Can't do at the right!
             //the first step
             direction=CatchChallenger::Direction_move_at_right;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             inMove=true;
             moveStep=1;
             moveStepSlot();
@@ -190,6 +232,27 @@ void MapVisualiserPlayer::keyPressParse()
                 return;//Can't do at the top!
             //the first step
             direction=CatchChallenger::Direction_move_at_top;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             inMove=true;
             moveStep=1;
             moveStepSlot();
@@ -217,6 +280,27 @@ void MapVisualiserPlayer::keyPressParse()
                 return;//Can't do at the bottom!
             //the first step
             direction=CatchChallenger::Direction_move_at_bottom;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             inMove=true;
             moveStep=1;
             moveStepSlot();
@@ -545,6 +629,27 @@ void MapVisualiserPlayer::finalPlayerStep()
         else
         {
             direction=CatchChallenger::Direction_move_at_left;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
@@ -571,6 +676,27 @@ void MapVisualiserPlayer::finalPlayerStep()
         else
         {
             direction=CatchChallenger::Direction_move_at_right;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
@@ -597,6 +723,27 @@ void MapVisualiserPlayer::finalPlayerStep()
         else
         {
             direction=CatchChallenger::Direction_move_at_top;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
@@ -623,6 +770,27 @@ void MapVisualiserPlayer::finalPlayerStep()
         else
         {
             direction=CatchChallenger::Direction_move_at_bottom;
+            //tiger the next tile
+            {
+                CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+                quint8 x=this->x;
+                quint8 y=this->y;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                    case CatchChallenger::Direction_move_at_left:
+                        CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                    break;
+                    default:
+                    break;
+                }
+                if(all_map.contains(map->map_file))
+                    if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+                        all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
+            }
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);

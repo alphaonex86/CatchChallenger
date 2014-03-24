@@ -129,6 +129,8 @@ void BaseWindow::serverIsReady()
 void BaseWindow::setMultiPlayer(bool multiplayer)
 {
     emit sendsetMultiPlayer(multiplayer);
+    /*if(!multiplayer)
+        MapController::mapController->setOpenGl(true);*/
     //frame_main_display_right->setVisible(multiplayer);
     //ui->frame_main_display_interface_player->setVisible(multiplayer);//displayed when have the player connected (if have)
 }
