@@ -52,7 +52,7 @@ MapVisualiserThread::MapVisualiserThread()
 {
     moveToThread(this);
     start(QThread::IdlePriority);
-    hideTheDoors=true;
+    hideTheDoors=false;
     regexMs=QRegularExpression(QStringLiteral("^[0-9]{1,5}ms$"));
     regexFrames=QRegularExpression(QStringLiteral("^[0-9]{1,3}frames$"));
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
@@ -275,7 +275,57 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                     while(index2<objects.size())
                     {
                         //remove the unknow object
-                        if(objects.at(index2)->type()!=MapVisualiserThread::text_door || hideTheDoors)
+                        if(objects.at(index2)->type()==MapVisualiserThread::text_door)
+                        {
+                            if(hideTheDoors)
+                            {
+                                objectGroup->removeObject(objects.at(index2));
+                                delete objects.at(index2);
+                            }
+                            else
+                            {
+                                quint32 x=objects.at(index2)->x();
+                                quint32 y=objects.at(index2)->y()-1;
+                                const Tiled::Tile *tile=objects.at(index2)->cell().tile;
+                                const QString &animation=tile->property(MapVisualiserThread::text_animation);
+                                if(!animation.isEmpty())
+                                {
+                                    const QStringList &animationList=animation.split(MapVisualiserThread::text_dotcomma);
+                                    if(animationList.size()==2)
+                                    {
+                                        if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
+                                        {
+                                            QString msString=animationList.at(0);
+                                            QString framesString=animationList.at(1);
+                                            msString.remove(MapVisualiserThread::text_ms);
+                                            framesString.remove(MapVisualiserThread::text_frames);
+                                            quint16 ms=msString.toUShort();
+                                            quint8 frames=framesString.toUShort();
+                                            if(ms>0 && frames>1)
+                                            {
+                                                if(!tempMapObject->doors.contains(QPair<quint8,quint8>(x,y)))
+                                                {
+                                                    MapDoor *door=new MapDoor(objects.at(index2),frames,ms);
+                                                    tempMapObject->doors[QPair<quint8,quint8>(x,y)]=door;
+                                                }
+                                            }
+                                            else
+                                                qDebug() << "ms is 0 or frame is <=1";
+                                        }
+                                        else
+                                            qDebug() << "Wrong animation tile args regex match";
+                                    }
+                                    else
+                                        qDebug() << "Wrong animation tile args count";
+                                }
+                                else
+                                {
+                                    objectGroup->removeObject(objects.at(index2));
+                                    delete objects.at(index2);
+                                }
+                            }
+                        }
+                        else
                         {
                             objectGroup->removeObject(objects.at(index2));
                             delete objects.at(index2);

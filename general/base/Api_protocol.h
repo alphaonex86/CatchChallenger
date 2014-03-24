@@ -180,7 +180,6 @@ signals:
     void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const;
     void battleCanceledByOther() const;
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn) const;
-    void sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const;
 
     //clan
     void clanActionSuccess(const quint32 &clanId) const;
