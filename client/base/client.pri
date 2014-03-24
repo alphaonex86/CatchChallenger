@@ -52,7 +52,8 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/interface/NewGame.cpp \
     $$PWD/InternetUpdater.cpp \
     $$PWD/ExtraSocket.cpp \
-    $$PWD/LocalListener.cpp
+    $$PWD/LocalListener.cpp \
+    $$PWD/interface/MapDoor.cpp
 
 HEADERS  += $$PWD/audio/QOggAudioBuffer.h \
     $$PWD/audio/QOggSimplePlayer.h \
@@ -89,7 +90,8 @@ HEADERS  += $$PWD/audio/QOggAudioBuffer.h \
     $$PWD/InternetUpdater.h \
     $$PWD/ExtraSocket.h \
     $$PWD/LocalListener.h \
-    ../base/DisplayStructures.h
+    $$PWD/DisplayStructures.h \
+    $$PWD/interface/MapDoor.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

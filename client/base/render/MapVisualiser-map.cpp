@@ -23,6 +23,13 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
     //remove from the list
+    QHashIterator<QPair<quint8,quint8>,MapDoor*> i(map->doors);
+    while (i.hasNext()) {
+        i.next();
+        //object pointer removed by group
+        i.value()->deleteLater();
+    }
+    map->doors.clear();
     if(map->tiledMap!=NULL)
         mapItem->removeMap(map->tiledMap);
     all_map.remove(map->logicalMap.map_file);
