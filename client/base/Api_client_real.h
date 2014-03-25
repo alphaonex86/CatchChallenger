@@ -59,6 +59,7 @@ private:
     QList<query_files> query_files_list;
     bool wait_datapack_content;
     QStringList datapackFilesList;
+    static QString text_slash;
 private slots:
     void disconnected();
     void writeNewFile(const QString &fileName, const QByteArray &data, const quint64 &mtime);
