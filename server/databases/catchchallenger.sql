@@ -13,8 +13,8 @@ SET time_zone = "+00:00";
 
 CREATE TABLE IF NOT EXISTS `account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `login` varchar(128) NOT NULL,
-  `password` varchar(128) NOT NULL,
+  `login` varbinary(64) NOT NULL,
+  `password` varbinary(64) NOT NULL,
   `date` int(11) unsigned NOT NULL,
   `email` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),

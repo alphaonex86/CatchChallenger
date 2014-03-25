@@ -15,10 +15,12 @@ using namespace CatchChallenger;
 
 Api_protocol* Api_client_real::client=NULL;
 
+QString Api_client_real::text_slash=QLatin1Literal("/");
+
 Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     Api_protocol(socket,tolerantMode)
 {
-    host="localhost";
+    host=QLatin1Literal("localhost");
     port=42489;
     connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
     connect(this,   &Api_client_real::newFile,      this,&Api_client_real::writeNewFile);
@@ -80,8 +82,8 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         {
                             if(boolList.first())
                             {
-                                DebugClass::debugConsole(QStringLiteral("remove the file: %1").arg(mDatapack+"/"+datapackFilesList.at(index)));
-                                QFile file(mDatapack+"/"+datapackFilesList.at(index));
+                                DebugClass::debugConsole(QStringLiteral("remove the file: %1").arg(mDatapack+text_slash+datapackFilesList.at(index)));
+                                QFile file(mDatapack+text_slash+datapackFilesList.at(index));
                                 if(!file.remove())
                                     DebugClass::debugConsole(QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
                                 //emit removeFile(datapackFilesList.at(index));
@@ -90,7 +92,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                             index++;
                         }
                         datapackFilesList.clear();
-                        cleanDatapack("");
+                        cleanDatapack(QString());
                         if(boolList.size()>=8)
                         {
                             emit newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
@@ -156,7 +158,7 @@ void Api_client_real::disconnected()
 
 void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &data,const quint64 &mtime)
 {
-    QFile file(mDatapack+"/"+fileName);
+    QFile file(mDatapack+text_slash+fileName);
     QFileInfo fileInfo(file);
 
     QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
@@ -273,7 +275,7 @@ const QStringList Api_client_real::listDatapack(QString suffix)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            returnFile << listDatapack(suffix+fileInfo.fileName()+"/");//put unix separator because it's transformed into that's under windows too
+            returnFile << listDatapack(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
         else
         {
             //if match with correct file name, considere as valid
@@ -301,7 +303,7 @@ void Api_client_real::cleanDatapack(QString suffix)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            cleanDatapack(suffix+fileInfo.fileName()+"/");//put unix separator because it's transformed into that's under windows too
+            cleanDatapack(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
         else
             return;
     }

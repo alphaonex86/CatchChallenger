@@ -4199,10 +4199,10 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
     }
     QByteArray outputData;
     QCryptographicHash hash(QCryptographicHash::Sha512);
-    hash.addData(login.toUtf8());
+    hash.addData((login+/*salt*/"RtR3bm9Z1DFMfAC3").toUtf8());
     outputData+=hash.result();
     QCryptographicHash hash2(QCryptographicHash::Sha512);
-    hash2.addData(pass.toUtf8());
+    hash2.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toUtf8());
     outputData+=hash2.result();
     const quint8 &query_number=queryNumber();
     if(output==NULL)
