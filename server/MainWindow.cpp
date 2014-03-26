@@ -12,7 +12,6 @@ MainWindow::MainWindow(QWidget *parent) :
     settings=new QSettings(QCoreApplication::applicationDirPath()+QStringLiteral("/server.properties"),QSettings::IniFormat);
     NormalServer::checkSettingsFile(settings);
     ui->setupUi(this);
-    on_MapVisibilityAlgorithm_currentIndexChanged(0);
     updateActionButton();
     qRegisterMetaType<Chat_type>("Chat_type");
     connect(&server,&NormalServer::is_started,          this,&MainWindow::server_is_started);
@@ -334,20 +333,70 @@ void MainWindow::load_settings()
     settings->endGroup();
     if(tempValue<(quint32)ui->MapVisibilityAlgorithm->count())
         ui->MapVisibilityAlgorithm->setCurrentIndex(tempValue);
+    ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(tempValue==0);
+    ui->groupBoxMapVisibilityAlgorithmWithBorder->setEnabled(tempValue==2);
 
-    quint32 reshow=0;
-    settings->beginGroup("MapVisibilityAlgorithm-Simple");
-    tempValue=settings->value("Max").toUInt();
-    reshow=settings->value("Reshow").toUInt();
-    if(reshow>tempValue)
     {
-        DebugClass::debugConsole("Reshow number corrected");
-        reshow=tempValue;
-        settings->setValue("Reshow",reshow);
+        quint32 reshow=0;
+        settings->beginGroup("MapVisibilityAlgorithm-Simple");
+        tempValue=settings->value("Max").toUInt();
+        reshow=settings->value("Reshow").toUInt();
+        if(reshow>tempValue)
+        {
+            DebugClass::debugConsole("Reshow number corrected");
+            reshow=tempValue;
+            settings->setValue("Reshow",reshow);
+        }
+        settings->endGroup();
+        ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
+        ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
+        ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(ui->MapVisibilityAlgorithmSimpleMax->value());
     }
-    settings->endGroup();
-    ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
-    ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
+    {
+        quint32 tempValueWithBorder=0;
+        quint32 reshowWithBorder=0;
+        quint32 reshow=0;
+        settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+        tempValueWithBorder=settings->value("MaxWithBorder").toUInt();
+        reshowWithBorder=settings->value("ReshowWithBorder").toUInt();
+        tempValue=settings->value("Max").toUInt();
+        reshow=settings->value("Reshow").toUInt();
+        if(reshow>tempValue)
+        {
+            DebugClass::debugConsole("Reshow number corrected");
+            reshow=tempValue;
+            settings->setValue("Reshow",reshow);
+        }
+        if(reshowWithBorder>tempValueWithBorder)
+        {
+            DebugClass::debugConsole("ReshowWithBorder number corrected");
+            reshowWithBorder=tempValueWithBorder;
+            settings->setValue("ReshowWithBorder",reshow);
+        }
+        if(tempValueWithBorder>tempValue)
+        {
+            DebugClass::debugConsole("MaxWithBorder number corrected");
+            tempValueWithBorder=tempValue;
+            settings->setValue("MaxWithBorder",reshow);
+        }
+        if(reshowWithBorder>reshow)
+        {
+            DebugClass::debugConsole("ReshowWithBorder number corrected");
+            reshowWithBorder=reshow;
+            settings->setValue("ReshowWithBorder",reshow);
+        }
+        settings->endGroup();
+        ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(tempValueWithBorder);
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setValue(reshowWithBorder);
+        ui->MapVisibilityAlgorithmWithBorderMax->setValue(tempValue);
+        ui->MapVisibilityAlgorithmWithBorderReshow->setValue(reshow);
+        ui->MapVisibilityAlgorithmWithBorderReshow->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
+        ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
+        if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
+            ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
+        else
+            ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
+    }
 
     switch(ui->MapVisibilityAlgorithm->currentIndex())
     {
@@ -622,18 +671,25 @@ void MainWindow::send_settings()
     switch(ui->MapVisibilityAlgorithm->currentIndex())
     {
         case 0:
-            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithm_simple;
+            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_Simple;
         break;
         case 1:
-            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithm_none;
+            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_None;
+        break;
+        case 2:
+            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_WithBorder;
         break;
         default:
-            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithm_simple;
+            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_Simple;
         break;
     }
 
     formatedServerSettings.mapVisibility.simple.max				= ui->MapVisibilityAlgorithmSimpleMax->value();
     formatedServerSettings.mapVisibility.simple.reshow			= ui->MapVisibilityAlgorithmSimpleReshow->value();
+    formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value();
+    formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value();
+    formatedServerSettings.mapVisibility.withBorder.max				= ui->MapVisibilityAlgorithmWithBorderMax->value();
+    formatedServerSettings.mapVisibility.withBorder.reshow			= ui->MapVisibilityAlgorithmWithBorderReshow->value();
 
     switch(ui->comboBox_city_capture_frequency->currentIndex())
     {
@@ -808,8 +864,8 @@ void MainWindow::on_pushButton_server_benchmark_clicked()
 
 void MainWindow::on_MapVisibilityAlgorithm_currentIndexChanged(int index)
 {
-    if(index==0)
-        ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(true);
+    ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(index==0);
+    ui->groupBoxMapVisibilityAlgorithmWithBorder->setEnabled(index==2);
     settings->beginGroup("MapVisibilityAlgorithm");
     settings->setValue("MapVisibilityAlgorithm",index);
     settings->endGroup();
@@ -1175,4 +1231,46 @@ void CatchChallenger::MainWindow::on_forceClientToSendAtMapChange_toggled(bool c
 {
     Q_UNUSED(checked);
     settings->setValue("forceClientToSendAtMapChange",ui->forceClientToSendAtMapChange->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderMax_editingFinished()
+{
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("Max",ui->MapVisibilityAlgorithmWithBorderMax->value());
+    settings->endGroup();
+    ui->MapVisibilityAlgorithmWithBorderReshow->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
+    ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
+    if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
+    else
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
+}
+
+void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderReshow_editingFinished()
+{
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("Reshow",ui->MapVisibilityAlgorithmSimpleReshow->value());
+    settings->endGroup();
+    if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
+    else
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
+}
+
+void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderMaxWithBorder_editingFinished()
+{
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("MaxWithBorder",ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
+    settings->endGroup();
+    if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
+    else
+        ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
+}
+
+void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderReshowWithBorder_editingFinished()
+{
+    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
+    settings->setValue("ReshowWithBorder",ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value());
+    settings->endGroup();
 }

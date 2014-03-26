@@ -40,10 +40,11 @@ struct Map_player_info
     QString skin;
 };
 
-enum MapVisibilityAlgorithm
+enum MapVisibilityAlgorithmSelection
 {
-    MapVisibilityAlgorithm_simple,
-    MapVisibilityAlgorithm_none
+    MapVisibilityAlgorithmSelection_WithBorder,
+    MapVisibilityAlgorithmSelection_Simple,
+    MapVisibilityAlgorithmSelection_None
 };
 
 enum QuestAction
@@ -159,14 +160,22 @@ struct ServerSettings
     //visibility algorithm
     struct MapVisibility
     {
-        MapVisibilityAlgorithm mapVisibilityAlgorithm;
+        MapVisibilityAlgorithmSelection mapVisibilityAlgorithm;
 
-        struct MapVisibility_simple
+        struct MapVisibility_Simple
         {
             quint16 max;
             quint16 reshow;
         };
-        MapVisibility_simple simple;
+        MapVisibility_Simple simple;
+        struct MapVisibility_WithBorder
+        {
+            quint16 maxWithBorder;
+            quint16 reshowWithBorder;
+            quint16 max;
+            quint16 reshow;
+        };
+        MapVisibility_WithBorder withBorder;
     };
     MapVisibility mapVisibility;
 

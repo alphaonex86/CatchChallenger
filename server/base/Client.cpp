@@ -29,7 +29,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     clientLocalBroadcast=new ClientLocalBroadcast();
     this->clientMapManagement=clientMapManagement;
 
-    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
+    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithmSelection_None)
     {
         connect(clientMapManagement,	&ClientMapManagement::sendFullPacket,   clientNetworkWrite,     &ClientNetworkWrite::sendFullPacket,    Qt::QueuedConnection);
         connect(clientMapManagement,	&ClientMapManagement::sendPacket,       clientNetworkWrite,     &ClientNetworkWrite::sendPacket,        Qt::QueuedConnection);
