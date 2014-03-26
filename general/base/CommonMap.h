@@ -34,7 +34,7 @@ public:
     };
     Map_Border border;
 
-    QList<CommonMap *> near_map;//not only the border
+    QList<CommonMap *> near_map,border_map;//not only the border
     struct Teleporter
     {
         quint32 x,y;

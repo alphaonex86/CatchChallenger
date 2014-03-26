@@ -55,3 +55,8 @@ void ClientMapManagement::dropAllClients()
 {
     emit sendPacket(0xC4);
 }
+
+void ClientMapManagement::dropAllBorderClients()
+{
+    emit sendPacket(0xC9);
+}

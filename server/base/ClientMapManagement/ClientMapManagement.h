@@ -25,6 +25,7 @@ public:
     Map_player_info getMapPlayerInfo();
     //drop all clients
     virtual void dropAllClients();
+    virtual void dropAllBorderClients();
 protected:
     //pass to the Map management visibility algorithm
     virtual void insertClient() = 0;

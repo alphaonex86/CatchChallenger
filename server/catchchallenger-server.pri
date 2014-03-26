@@ -30,7 +30,8 @@ SOURCES += \
     $$PWD/fight/BaseServerFight.cpp \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
     $$PWD/base/Api_client_virtual.cpp \
-    $$PWD/fight/ClientHeavyLoadFight.cpp
+    $$PWD/fight/ClientHeavyLoadFight.cpp \
+    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder.cpp
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
     $$PWD/base/SqlFunction.h \
@@ -58,7 +59,8 @@ HEADERS += \
     $$PWD/fight/ServerStructuresFight.h \
     $$PWD/base/Api_client_virtual.h \
     $$PWD/fight/BaseServerFight.h \
-    $$PWD/fight/LocalClientHandlerFight.h
+    $$PWD/fight/LocalClientHandlerFight.h \
+    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder.h
 
 RESOURCES += \
     $$PWD/all-server-resources.qrc

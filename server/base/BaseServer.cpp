@@ -88,7 +88,7 @@ BaseServer::BaseServer()
 
     GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     GlobalServerData::serverSettings.database.sqlite.file                       = QLatin1String("");
-    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithm_none;
+    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
 
     GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QLatin1String("/datapack/");
     GlobalServerData::serverSettings.server_ip                                  = QLatin1String("");
@@ -116,9 +116,13 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.database.fightSync                         = ServerSettings::Database::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.database.positionTeleportSync              = true;
     GlobalServerData::serverSettings.database.secondToPositionSync              = 0;
-    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithm_simple;
+    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithmSelection_Simple;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
+    GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder     = 20;
+    GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder  = 10;
+    GlobalServerData::serverSettings.mapVisibility.withBorder.max               = 30;
+    GlobalServerData::serverSettings.mapVisibility.withBorder.reshow            = 20;
     GlobalServerData::serverSettings.city.capture.frenquency                    = City::Capture::Frequency_week;
     GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
@@ -891,10 +895,13 @@ void BaseServer::preload_the_map()
             {
                 switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
-                    case MapVisibilityAlgorithm_simple:
+                    case MapVisibilityAlgorithmSelection_Simple:
                         GlobalServerData::serverPrivateVariables.map_list[fileName]=new Map_server_MapVisibility_simple;
                     break;
-                    case MapVisibilityAlgorithm_none:
+                    case MapVisibilityAlgorithmSelection_WithBorder:
+                        GlobalServerData::serverPrivateVariables.map_list[fileName]=new Map_server_MapVisibility_withBorder;
+                    break;
+                    case MapVisibilityAlgorithmSelection_None:
                     default:
                         GlobalServerData::serverPrivateVariables.map_list[fileName]=new MapServer;
                     break;
@@ -1092,8 +1099,6 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index));
-
         if(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->near_map.contains(GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map))
         {
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
@@ -1130,6 +1135,8 @@ void BaseServer::preload_the_map()
                 GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index))->border.bottom.map;
         }
 
+        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border_map=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map;
+        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list.value(map_name.at(index));
         index++;
     }
 
@@ -1232,14 +1239,23 @@ void BaseServer::preload_the_visibility_algorithm()
     QHash<QString,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
-        case MapVisibilityAlgorithm_simple:
+        case MapVisibilityAlgorithmSelection_Simple:
         while (i != i_end)
         {
             static_cast<Map_server_MapVisibility_simple *>(i.value())->show=true;
             i++;
         }
         break;
-        case MapVisibilityAlgorithm_none:
+        case MapVisibilityAlgorithmSelection_WithBorder:
+        while (i != i_end)
+        {
+            static_cast<Map_server_MapVisibility_withBorder *>(i.value())->show=true;
+            static_cast<Map_server_MapVisibility_withBorder *>(i.value())->showWithBorder=true;
+            static_cast<Map_server_MapVisibility_withBorder *>(i.value())->clientsOnBorder=0;
+            i++;
+        }
+        break;
+        case MapVisibilityAlgorithmSelection_None:
         break;
         default:
         break;
@@ -1841,8 +1857,47 @@ void BaseServer::loadAndFixSettings()
             //of the player
             /*player_list_size same with move, delete, ...*/+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+0/*pseudo size put directy*/+sizeof(quint8);
 
-    if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
-        GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
+    {
+        if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)
+            GlobalServerData::serverSettings.mapVisibility.simple.max=5;
+        if(GlobalServerData::serverSettings.mapVisibility.simple.reshow<3)
+            GlobalServerData::serverSettings.mapVisibility.simple.reshow=3;
+
+        if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players)
+            GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.max_players;
+        if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
+            GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
+        if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max)
+            GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.mapVisibility.simple.max;
+    }
+    {
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=3;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=2;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.max<5)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.max=5;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=3;
+
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.max_players;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.max_players;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.max_players;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.max=GlobalServerData::serverSettings.max_players;
+
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
+        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)
+            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.reshow;
+    }
 
     if(GlobalServerData::serverSettings.database.secondToPositionSync==0)
         GlobalServerData::serverPrivateVariables.positionSync.stop();
@@ -1860,11 +1915,12 @@ void BaseServer::loadAndFixSettings()
     }
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
-        case CatchChallenger::MapVisibilityAlgorithm_none:
-        case CatchChallenger::MapVisibilityAlgorithm_simple:
+        case CatchChallenger::MapVisibilityAlgorithmSelection_None:
+        case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
+        case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
         break;
         default:
-            GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm=CatchChallenger::MapVisibilityAlgorithm_simple;
+            GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm=CatchChallenger::MapVisibilityAlgorithmSelection_Simple;
             qDebug() << "Wrong visibility algorithm";
         break;
     }
@@ -2011,10 +2067,13 @@ ClientMapManagement * BaseServer::getClientMapManagement()
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         default:
-        case MapVisibilityAlgorithm_simple:
+        case MapVisibilityAlgorithmSelection_Simple:
             return new MapVisibilityAlgorithm_Simple();
         break;
-        case MapVisibilityAlgorithm_none:
+        case MapVisibilityAlgorithmSelection_WithBorder:
+            return new MapVisibilityAlgorithm_WithBorder();
+        break;
+        case MapVisibilityAlgorithmSelection_None:
             return new MapVisibilityAlgorithm_None();
         break;
     }
