@@ -42,10 +42,10 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 void MapVisibilityAlgorithm_Simple::insertClient()
 {
     Map_server_MapVisibility_simple *temp_map=static_cast<Map_server_MapVisibility_simple*>(map);
-    loop_size=temp_map->clients.size();
     if(likely(temp_map->show))
     {
-        if(loop_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
+        loop_size=temp_map->clients.size();
+        if(unlikely(loop_size>=GlobalServerData::serverSettings.mapVisibility.simple.max))
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
             emit message(QStringLiteral("insertClient() too many client, hide now, into: %1").arg(map->map_file));
@@ -60,17 +60,20 @@ void MapVisibilityAlgorithm_Simple::insertClient()
                 index++;
             }
         }
-        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message(QStringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
-        #endif
-        //insert the new client
-        index=0;
-        while(index<loop_size)
+        else//why else dropped?
         {
-            current_client=temp_map->clients.at(index);
-            current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
-            this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
-            index++;
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            emit message(QStringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+            #endif
+            //insert the new client
+            index=0;
+            while(index<loop_size)
+            {
+                current_client=temp_map->clients.at(index);
+                current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
+                this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
+                index++;
+            }
         }
     }
     else
@@ -86,7 +89,6 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction)
 {
     Map_server_MapVisibility_simple *temp_map=static_cast<Map_server_MapVisibility_simple*>(map);
-    loop_size=temp_map->clients.size();
     if(unlikely(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
@@ -111,6 +113,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
         //normal operation
         if(likely(temp_map->show))
         {
+            loop_size=temp_map->clients.size();
             index=0;
             while(index<loop_size)
             {
