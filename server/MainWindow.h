@@ -120,6 +120,14 @@ private slots:
     void on_rates_xp_pow_normal_valueChanged(double arg1);
     void on_rates_drop_normal_valueChanged(double arg1);
     void on_forceClientToSendAtMapChange_toggled(bool checked);
+    void on_MapVisibilityAlgorithmWithBorderMax_editingFinished();
+
+    void on_MapVisibilityAlgorithmWithBorderReshow_editingFinished();
+
+    void on_MapVisibilityAlgorithmWithBorderMaxWithBorder_editingFinished();
+
+    void on_MapVisibilityAlgorithmWithBorderReshowWithBorder_editingFinished();
+
 signals:
     void record_latency();
 };
