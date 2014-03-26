@@ -66,12 +66,13 @@ void MapVisibilityAlgorithm_Simple::insertClient()
             emit message(QStringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
             #endif
             //insert the new client
+            const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=player_informations->public_and_private_informations.public_informations.simplifiedId;
             index=0;
             while(index<loop_size)
             {
                 current_client=temp_map->clients.at(index);
-                current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
-                this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
+                current_client->insertAnotherClient(thisSimplifiedId,this);
+                this->insertAnotherClient(current_client);
                 index++;
             }
         }
@@ -119,7 +120,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
             {
                 current_client=temp_map->clients.at(index);
                 if(likely(current_client!=this))
-                     current_client->moveAnotherClientWithMap(player_informations->public_and_private_informations.public_informations.simplifiedId,this,movedUnit,direction);
+                     current_client->moveAnotherClientWithMap(this,movedUnit,direction);
                 index++;
             }
         }
@@ -155,12 +156,13 @@ void MapVisibilityAlgorithm_Simple::reinsertClientForOthersOnSameMap()
     emit message(QStringLiteral("reinsertClientForOthers() normal work, just remove from client on: %1").arg(map->map_file));
     #endif
     /* useless because the insert will overwrite the position */
+    const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=player_informations->public_and_private_informations.public_informations.simplifiedId;
     index=0;
     while(index<loop_size)
     {
         current_client=map_temp->clients.at(index);
         if(unlikely(current_client!=this))
-            current_client->reinsertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
+            current_client->reinsertAnotherClient(thisSimplifiedId,this);
         index++;
     }
 }
@@ -219,25 +221,40 @@ void MapVisibilityAlgorithm_Simple::reinsertAllClient()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("reinsertAllClient() %1)").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
     #endif
+    const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=player_informations->public_and_private_informations.public_informations.simplifiedId;
     index=0;
     while(index<loop_size)
     {
         current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
         if(likely(current_client!=this))
         {
-            current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
-            this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
+            current_client->insertAnotherClient(thisSimplifiedId,this);
+            this->insertAnotherClient(current_client);
         }
         index++;
     }
 }
 
 #ifdef CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR
+void MapVisibilityAlgorithm_Simple::insertAnotherClient(MapVisibilityAlgorithm_Simple *the_another_player)
+{
+    insertAnotherClient(the_another_player->player_informations->public_and_private_informations.public_informations.simplifiedId,the_another_player);
+}
+
 //remove the move/remove
 void MapVisibilityAlgorithm_Simple::insertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(the_another_player->player_informations->public_and_private_informations.public_informations.simplifiedId!=player_id)
+    {
+        emit error(QStringLiteral("insertAnotherClient(%1,%2,%3,%4) passed id is wrong!").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
+        return;
+    }
+    #endif
+
     to_send_remove.remove(player_id);
     to_send_move.remove(player_id);
+    to_send_reinsert.remove(player_id);
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
     emit message(QStringLiteral("insertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
@@ -246,18 +263,42 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const SIMPLIFIED_PLAYER_
 }
 #endif
 
+void MapVisibilityAlgorithm_Simple::reinsertAnotherClient(MapVisibilityAlgorithm_Simple *the_another_player)
+{
+    reinsertAnotherClient(the_another_player->player_informations->public_and_private_informations.public_informations.simplifiedId,the_another_player);
+}
 
-//remove the move/remove
 void MapVisibilityAlgorithm_Simple::reinsertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(the_another_player->player_informations->public_and_private_informations.public_informations.simplifiedId!=player_id)
+    {
+        emit error(QStringLiteral("insertAnotherClient(%1,%2,%3,%4) passed id is wrong!").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
+        return;
+    }
+    #endif
+
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
     emit message(QStringLiteral("reinsertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
     #endif
     to_send_reinsert[player_id]=the_another_player;
 }
 
+void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(MapVisibilityAlgorithm_Simple *the_another_player, const quint8 &movedUnit, const Direction &direction)
+{
+    moveAnotherClientWithMap(the_another_player->player_informations->public_and_private_informations.public_informations.simplifiedId,the_another_player,movedUnit,direction);
+}
+
 void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player, const quint8 &movedUnit, const Direction &direction)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(the_another_player->player_informations->public_and_private_informations.public_informations.simplifiedId!=player_id)
+    {
+        emit error(QStringLiteral("insertAnotherClient(%1,%2,%3,%4) passed id is wrong!").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
+        return;
+    }
+    #endif
+
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
     //already into over move
     if(to_send_insert.contains(player_id) || to_send_reinsert.contains(player_id))
