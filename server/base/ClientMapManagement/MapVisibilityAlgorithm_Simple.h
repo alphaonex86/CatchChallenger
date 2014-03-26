@@ -27,6 +27,7 @@ private:
     static MapVisibilityAlgorithm_Simple *current_client;//static to drop down the memory
     //overwrite
     //remove the move/remove
+    void moveAnotherClientWithMap(MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction);
     void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction);
     //for the purge buffer
     void send_insert();
@@ -34,9 +35,11 @@ private:
     void send_remove();
     void send_reinsert();
     #ifdef CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR
+    void insertAnotherClient(MapVisibilityAlgorithm_Simple *the_another_player);
     void insertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player);
     void removeAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id);
     #endif
+    void reinsertAnotherClient(MapVisibilityAlgorithm_Simple *the_another_player);
     void reinsertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player);
     //map load/unload and change
     virtual void			loadOnTheMap();
