@@ -1066,6 +1066,100 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                     emit datapackSize(datapckFileNumber,datapckFileSize);
                 }
                 break;
+                //Update file http
+                case 0x000D:
+                {
+                    QString baseHttp;
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(__LINE__)
+                                          );
+                            return;
+                        }
+                        quint8 baseHttpSize;
+                        in >> baseHttpSize;
+                        if((in.device()->size()-in.device()->pos())<(int)baseHttpSize)
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(baseHttpSize)
+                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(__LINE__)
+                                          );
+                            return;
+                        }
+                        QByteArray baseHttpRaw=data.mid(in.device()->pos(),baseHttpSize);
+                        baseHttp=QString::fromUtf8(baseHttpRaw.data(),baseHttpRaw.size());
+                        in.device()->seek(in.device()->pos()+baseHttpRaw.size());
+                        if(baseHttp.isEmpty())
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(QString(baseHttpRaw.toHex()))
+                                          .arg(baseHttpRaw.size())
+                                          .arg(__LINE__)
+                                          );
+                            return;
+                        }
+                    }
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    quint32 fileListSize;
+                    in >> fileListSize;
+                    quint32 index=0;
+                    while(index<fileListSize)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        quint8 fileNameSize;
+                        in >> fileNameSize;
+                        if((in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
+                        in.device()->seek(in.device()->pos()+rawText.size());
+                        QString fileName=QString::fromUtf8(rawText.data(),rawText.size());
+                        if(!extensionAllowed.contains(QFileInfo(fileName).suffix()))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("extension not allowed: %4 with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__).arg(QFileInfo(fileName).suffix()));
+                            if(!tolerantMode)
+                                return;
+                        }
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        quint64 mtime;
+                        in >> mtime;
+                        QDateTime date;
+                        date.setTime_t(mtime);
+                        emit newHttpFile(baseHttp+fileName,fileName,mtime);
+
+                        index++;
+                    }
+                }
+                break;
                 default:
                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                 return;

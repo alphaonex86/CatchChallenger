@@ -1460,51 +1460,130 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         out << (quint32)datapckFileSize;
         emit sendFullPacket(0xC2,0x000C,outputData);
     }
-    //validate, remove or update the file actualy on the client
+    if(GlobalServerData::serverSettings.httpDatapackMirror.isEmpty())
     {
-        int loopIndex=0;
-        while(loopIndex<loop_size)
+        //validate, remove or update the file actualy on the client
         {
-            QString fileName=files.at(loopIndex);
-            quint32 mtime=timestamps.at(loopIndex);
-            if(!filesList.contains(fileName))
-                addDatapackListReply(true);//to delete
-            //the file on the client is already updated
-            else
+            int loopIndex=0;
+            while(loopIndex<loop_size)
             {
-                const quint32 &fileInfoModTime=filesListInfo.value(fileName);
-                if(fileInfoModTime==mtime)
-                    addDatapackListReply(false);//found
+                const QString &fileName=files.at(loopIndex);
+                const quint32 &mtime=timestamps.at(loopIndex);
+                if(!filesList.contains(fileName))
+                    addDatapackListReply(true);//to delete
+                //the file on the client is already updated
                 else
                 {
-                    if(sendFile(fileName,fileInfoModTime))
-                        addDatapackListReply(false);//found but updated
+                    const quint32 &fileInfoModTime=filesListInfo.value(fileName);
+                    if(fileInfoModTime==mtime)
+                        addDatapackListReply(false);//found
                     else
                     {
-                        //disconnect to prevent desync of datapack
-                        emit error("Unable to open datapack file, disconnect to prevent desync of datapack");
-                        return;
+                        if(sendFile(fileName,fileInfoModTime))
+                            addDatapackListReply(false);//found but updated
+                        else
+                        {
+                            //disconnect to prevent desync of datapack
+                            emit error("Unable to open datapack file, disconnect to prevent desync of datapack");
+                            return;
+                        }
                     }
+                    filesList.remove(fileName);
                 }
-                filesList.remove(fileName);
+                loopIndex++;
             }
-            loopIndex++;
         }
+        if(tempDatapackListReplyTestCount!=files.size())
+        {
+            emit error("Bit count return not match");
+            return;
+        }
+        //send not in the list
+        QSetIterator<QString> i(filesList);
+        while (i.hasNext()) {
+            sendFile(i.peekNext(),filesListInfo.value(i.peekNext()));
+            i.next();
+        }
+        sendFileContent();
+        sendCompressedFileContent();
+        purgeDatapackListReply(query_id);
     }
-    if(tempDatapackListReplyTestCount!=files.size())
+    else
     {
-        emit error("Bit count return not match");
-        return;
+        QByteArray outputData;
+        outputData=FacilityLib::toUTF8(GlobalServerData::serverSettings.httpDatapackMirror);
+        if(outputData.size()>255 || outputData.isEmpty())
+        {
+            emit error(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
+            return;
+        }
+
+        QList<QString> fileHttpListName;
+        QList<quint64> fileHttpListDate;
+        //validate, remove or update the file actualy on the client
+        {
+            int loopIndex=0;
+            while(loopIndex<loop_size)
+            {
+                const QString &fileName=files.at(loopIndex);
+                const quint32 &mtime=timestamps.at(loopIndex);
+                if(!filesList.contains(fileName))
+                    addDatapackListReply(true);//to delete
+                //the file on the client is already updated
+                else
+                {
+                    const quint32 &fileInfoModTime=filesListInfo.value(fileName);
+                    if(fileInfoModTime==mtime)
+                        addDatapackListReply(false);//found
+                    else
+                    {
+                        fileHttpListName << fileName;
+                        fileHttpListDate << fileInfoModTime;
+                        addDatapackListReply(false);//found but updated
+                    }
+                    filesList.remove(fileName);
+                }
+                loopIndex++;
+            }
+        }
+        if(tempDatapackListReplyTestCount!=files.size())
+        {
+            emit error("Bit count return not match");
+            return;
+        }
+        //send not in the list
+        QSetIterator<QString> i(filesList);
+        while (i.hasNext()) {
+            fileHttpListName << i.peekNext();
+            fileHttpListDate << filesListInfo.value(i.peekNext());
+            i.next();
+        }
+        if(!fileHttpListName.isEmpty())
+        {
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out.device()->seek(out.device()->size());
+            out << (quint32)fileHttpListName.size();
+            quint32 index=0;
+            const quint32 &fileHttpListNameSize=fileHttpListName.size();
+            while(index<fileHttpListNameSize)
+            {
+                const QByteArray &rawFileName=FacilityLib::toUTF8(fileHttpListName.at(index));
+                if(rawFileName.size()>255 || rawFileName.isEmpty())
+                {
+                    emit error(QLatin1Literal("file path too big or not compatible with utf8"));
+                    return;
+                }
+                const quint64 &fileInfoModTime=fileHttpListDate.at(index);
+                outputData+=rawFileName;
+                out.device()->seek(out.device()->size());
+                out << (quint64)fileInfoModTime;
+                index++;
+            }
+            emit sendFullPacket(0xC2,0x000D,outputData);
+        }
+        purgeDatapackListReply(query_id);
     }
-    //send not in the list
-    QSetIterator<QString> i(filesList);
-    while (i.hasNext()) {
-        sendFile(i.peekNext(),filesListInfo.value(i.peekNext()));
-        i.next();
-    }
-    sendFileContent();
-    sendCompressedFileContent();
-    purgeDatapackListReply(query_id);
 }
 
 void ClientHeavyLoad::addDatapackListReply(const bool &fileRemove)
@@ -1618,7 +1697,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
 {
     if(fileName.size()>255 || fileName.isEmpty())
         return false;
-    QByteArray fileNameRaw=FacilityLib::toUTF8(fileName);
+    const QByteArray &fileNameRaw=FacilityLib::toUTF8(fileName);
     if(fileNameRaw.size()>255 || fileNameRaw.isEmpty())
         return false;
     QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
