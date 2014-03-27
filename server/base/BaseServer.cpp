@@ -87,11 +87,17 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.pvp                                    = true;
 
     GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
-    GlobalServerData::serverSettings.database.sqlite.file                       = QLatin1String("");
+    GlobalServerData::serverSettings.database.sqlite.file                       = QString();
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
 
+    GlobalServerData::serverSettings.httpDatapackMirror                         = QString();
+    GlobalServerData::serverSettings.datapackCache                              = -1;
+    #ifdef Q_OS_LINUX
+    GlobalServerData::serverSettings.linuxSettings.tcpCork                      = true;
+    #endif
+
     GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QLatin1String("/datapack/");
-    GlobalServerData::serverSettings.server_ip                                  = QLatin1String("");
+    GlobalServerData::serverSettings.server_ip                                  = QString();
     GlobalServerData::serverSettings.server_port                                = 42489;
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.anonymous                                  = false;
@@ -1219,6 +1225,7 @@ void BaseServer::preload_the_datapack()
     ClientHeavyLoad::extensionAllowed=extensionAllowedTemp.toSet();
     QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     ClientHeavyLoad::compressedExtension=compressedExtensionAllowedTemp.toSet();
+    ClientHeavyLoad::datapack_list_cache_timestamp=0;
 }
 
 void BaseServer::preload_the_players()
@@ -1850,6 +1857,15 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.server_port=42489;
     if(GlobalServerData::serverSettings.proxy_port<=0)
         GlobalServerData::serverSettings.proxy=QString();
+    if(GlobalServerData::serverSettings.datapackCache<-1)
+        GlobalServerData::serverSettings.datapackCache=-1;
+    if(!GlobalServerData::serverSettings.httpDatapackMirror.contains(QRegularExpression("^https?://[0-9a-z]")))
+        GlobalServerData::serverSettings.httpDatapackMirror.clear();
+    else
+    {
+        if(!GlobalServerData::serverSettings.httpDatapackMirror.endsWith(QLatin1Literal("/")))
+            GlobalServerData::serverSettings.httpDatapackMirror+=QLatin1Literal("/");
+    }
 
     //check the settings here
     if(GlobalServerData::serverSettings.max_players<1)

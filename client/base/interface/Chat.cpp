@@ -103,7 +103,7 @@ void Chat::lineEdit_chat_text_returnPressed()
     }
     numberForFlood++;
     lastMessageSend=text;
-    ui->lineEdit_chat_text->setText("");
+    ui->lineEdit_chat_text->setText(QString());
     if(!text.startsWith("/pm "))
     {
         Chat_type chat_type;
@@ -147,7 +147,7 @@ void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
     qDebug() << QStringLiteral("new_system_text: %1").arg(text);
     #endif
     chat_list_player_type << Player_type_normal;
-    chat_list_player_pseudo << "";
+    chat_list_player_pseudo << QString();
     chat_list_type << chat_type;
     chat_list_text << text;
     while(chat_list_player_type.size()>64)
@@ -189,34 +189,11 @@ void Chat::update_chat()
         if(chat_list_type.at(index)==Chat_type_system || chat_list_type.at(index)==Chat_type_system_important)
             addPlayerInfo=false;
         if(!addPlayerInfo)
-            nameHtml+=ChatParsing::new_chat_message("",Player_type_normal,chat_list_type.at(index),chat_list_text.at(index));
+            nameHtml+=ChatParsing::new_chat_message(QString(),Player_type_normal,chat_list_type.at(index),chat_list_text.at(index));
         else
             nameHtml+=ChatParsing::new_chat_message(chat_list_player_pseudo.at(index),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index));
         index++;
     }
     ui->textBrowser_chat->setHtml(nameHtml);
     ui->textBrowser_chat->verticalScrollBar()->setValue(ui->textBrowser_chat->verticalScrollBar()->maximum());
-}
-
-QString Chat::toHtmlEntities(QString text)
-{
-    text.replace("&","&amp;");
-    text.replace("\"","&quot;");
-    text.replace("'","&#039;");
-    text.replace("<","&lt;");
-    text.replace(">","&gt;");
-    return text;
-}
-
-QString Chat::toSmilies(QString text)
-{
-    text.replace(":)","<img src=\":/images/smiles/face-smile.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    text.replace(":|","<img src=\":/images/smiles/face-plain.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    text.replace(":(","<img src=\":/images/smiles/face-sad.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    text.replace(":P","<img src=\":/images/smiles/face-raspberry.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    text.replace(":p","<img src=\":/images/smiles/face-raspberry.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    text.replace(":D","<img src=\":/images/smiles/face-laugh.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    text.replace(":o","<img src=\":/images/smiles/face-surprise.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    text.replace(";)","<img src=\":/images/smiles/face-wink.png\" alt=\"\" style=\"vertical-align:middle;\" />");
-    return text;
 }

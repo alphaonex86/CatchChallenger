@@ -121,13 +121,15 @@ private slots:
     void on_rates_drop_normal_valueChanged(double arg1);
     void on_forceClientToSendAtMapChange_toggled(bool checked);
     void on_MapVisibilityAlgorithmWithBorderMax_editingFinished();
-
     void on_MapVisibilityAlgorithmWithBorderReshow_editingFinished();
-
     void on_MapVisibilityAlgorithmWithBorderMaxWithBorder_editingFinished();
-
     void on_MapVisibilityAlgorithmWithBorderReshowWithBorder_editingFinished();
-
+    void on_httpDatapackMirror_editingFinished();
+    void on_datapack_cache_toggled(bool checked);
+    void on_datapack_cache_timeout_checkbox_toggled(bool checked);
+    void on_datapack_cache_timeout_editingFinished();
+    void on_linux_socket_cork_toggled(bool checked);
+    void datapack_cache_save();
 signals:
     void record_latency();
 };
