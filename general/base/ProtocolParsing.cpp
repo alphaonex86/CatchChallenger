@@ -196,6 +196,7 @@ void ProtocolParsing::initialiseTheVariable()
 
     compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
     compressionMultipleCodePacketServerToClient[0xC2] << 0x0004;
+    compressionMultipleCodePacketServerToClient[0xC2] << 0x000D;
     //define the compression of the reply
     /** \note previously send by: sizeMultipleCodePacketClientToServer */
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;

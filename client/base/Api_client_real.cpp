@@ -10,6 +10,7 @@ using namespace CatchChallenger;
 
 #include <QApplication>
 #include <QRegularExpression>
+#include <QNetworkReply>
 
 //need host + port here to have datapack base
 
@@ -24,8 +25,9 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     port=42489;
     connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
     connect(this,   &Api_client_real::newFile,      this,&Api_client_real::writeNewFile);
+    connect(this,   &Api_client_real::newHttpFile,  this,&Api_client_real::getHttpFile);
     disconnected();
-    dataClear();
+    //dataClear();do into disconnected()
 }
 
 Api_client_real::~Api_client_real()
@@ -55,7 +57,8 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                     {
                         if(datapackFilesList.isEmpty() && data.size()==1)
                         {
-                            emit haveTheDatapack();
+                            if(!httpMode)
+                                emit haveTheDatapack();
                             return;
                         }
                         QList<bool> boolList;
@@ -98,7 +101,8 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                             emit newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
-                        emit haveTheDatapack();
+                        if(!httpMode)
+                            emit haveTheDatapack();
                     }
                     return;
                 break;
@@ -130,9 +134,12 @@ void Api_client_real::defineMaxPlayers(const quint16 &maxPlayers)
 
 void Api_client_real::resetAll()
 {
+    httpMode=false;
+    httpError=false;
     RXSize=0;
     TXSize=0;
     query_files_list.clear();
+    urlInWaitingList.clear();
     wait_datapack_content=false;
 
     Api_protocol::resetAll();
@@ -211,15 +218,82 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
     #endif
 }
 
-/*void Api_client_real::errorOutput(QString error,QString detailedError)
+void Api_client_real::getHttpFile(const QString &url,const QString &fileName,const quint64 &mtime)
 {
-    error_string=error;
-    emit haveNewError();
-    DebugClass::debugConsole("User message: "+error);
-    socket->disconnectFromHost();
-    if(!detailedError.isEmpty())
-        DebugClass::debugConsole(detailedError);
-}*/
+    if(httpError)
+        return;
+    if(!httpMode)
+        httpMode=true;
+    QNetworkRequest networkRequest(url);
+    QNetworkReply *reply = qnam.get(networkRequest);
+    UrlInWaiting urlInWaiting;
+    urlInWaiting.fileName=fileName;
+    urlInWaiting.mtime=mtime;
+    urlInWaitingList[reply]=urlInWaiting;
+    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinished);
+}
+
+void Api_client_real::httpFinished()
+{
+    if(httpError)
+        return;
+    if(urlInWaitingList.isEmpty())
+    {
+        httpError=true;
+        emit error(QStringLiteral("no more reply in waiting"));
+        socket->disconnectFromHost();
+        return;
+    }
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if(reply==NULL)
+    {
+        httpError=true;
+        emit error(QStringLiteral("reply for http is NULL"));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    }
+    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (!reply->isFinished())
+    {
+        httpError=true;
+        emit newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: not finished"));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    }
+    else if (reply->error())
+    {
+        httpError=true;
+        emit newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    } else if (!redirectionTarget.isNull()) {
+        httpError=true;
+        emit newError(tr("Unable to download the datapack"),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    }
+    if(!urlInWaitingList.contains(reply))
+    {
+        httpError=true;
+        emit error(QStringLiteral("reply of unknown query"));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    }
+
+    const UrlInWaiting &urlInWaiting=urlInWaitingList.value(reply);
+    writeNewFile(urlInWaiting.fileName,reply->readAll(),urlInWaiting.mtime);
+
+    if(urlInWaitingList.remove(reply)!=1)
+        DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingList.size()));
+    reply->deleteLater();
+    if(urlInWaitingList.isEmpty())
+        emit haveTheDatapack();
+}
 
 void Api_client_real::tryDisconnect()
 {
