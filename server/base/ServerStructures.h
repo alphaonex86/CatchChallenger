@@ -245,6 +245,14 @@ struct ServerPrivateVariables
     QString db_query_update_character_time_to_delete_by_id;
     QString db_query_select_reputation_by_id;
     QString db_query_select_quest_by_id;
+    QString db_query_select_recipes_by_player_id;
+    QString db_query_select_items_by_player_id;
+    QString db_query_delete_item_by_charater_item_place;
+    QString db_query_select_monsters_by_player_id;
+    QString db_query_select_monstersSkill_by_id;
+    QString db_query_select_monstersBuff_by_id;
+    QString db_query_select_bot_beaten;
+    QString db_query_update_monster_place_wearhouse;
 
     //datapack
     QString datapack_mapPath;

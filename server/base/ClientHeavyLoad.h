@@ -59,6 +59,9 @@ public:
     static QString text_unknown;
     static QString text_female;
     static QString text_male;
+    static QString text_warehouse;
+    static QString text_wear;
+    static QString text_market;
 public slots:
     virtual void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
     virtual void askLoginBot(const quint8 &query_id);
