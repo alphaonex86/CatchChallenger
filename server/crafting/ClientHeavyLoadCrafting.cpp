@@ -10,21 +10,17 @@ using namespace CatchChallenger;
 void ClientHeavyLoad::loadRecipes()
 {
     //recipes
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id.isEmpty())
     {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `recipe` FROM `recipes` WHERE `character`=%1").arg(player_informations->character_id);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT recipe FROM recipes WHERE character=%1").arg(player_informations->character_id);
-        break;
+        emit error(QStringLiteral("loadRecipes() Query is empty, bug"));
+        return;
     }
+    #endif
     bool ok;
     quint32 recipeId;
     QSqlQuery recipesQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!recipesQuery.exec(queryText))
+    if(!recipesQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id.arg(player_informations->character_id)))
         emit message(recipesQuery.lastQuery()+QLatin1String(": ")+recipesQuery.lastError().text());
     while(recipesQuery.next())
     {
@@ -44,22 +40,21 @@ void ClientHeavyLoad::loadRecipes()
 void ClientHeavyLoad::loadItems()
 {
     //do the query
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id.isEmpty())
     {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `item`,`quantity`,`place` FROM `item` WHERE `character`=%1")
-                .arg(player_informations->character_id);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT item,quantity,place FROM item WHERE character=%1")
-                .arg(player_informations->character_id);
-        break;
+        emit error(QStringLiteral("loadItems() Query is empty, bug"));
+        return;
     }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_item_by_charater_item_place.isEmpty())
+    {
+        emit error(QStringLiteral("loadItems() Query remove is empty, bug"));
+        return;
+    }
+    #endif
     bool ok;
     QSqlQuery itemQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!itemQuery.exec(queryText))
+    if(!itemQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id.arg(player_informations->character_id)))
         emit message(itemQuery.lastQuery()+QLatin1String(": ")+itemQuery.lastError().text());
     //parse the result
     while(itemQuery.next())
@@ -82,13 +77,13 @@ void ClientHeavyLoad::loadItems()
             continue;
         }
         bool warehouse;
-        if(itemQuery.value(2).toString()==QLatin1String("warehouse"))
+        if(itemQuery.value(2).toString()==ClientHeavyLoad::text_warehouse)
             warehouse=true;
         else
         {
-            if(itemQuery.value(2).toString()==QLatin1String("wear"))
+            if(itemQuery.value(2).toString()==ClientHeavyLoad::text_wear)
                 warehouse=false;
-            else if(itemQuery.value(2).toString()==QLatin1String("market"))
+            else if(itemQuery.value(2).toString()==ClientHeavyLoad::text_market)
                 continue;
             else
             {
@@ -98,23 +93,9 @@ void ClientHeavyLoad::loadItems()
         }
         if(quantity==0)
         {
-            QString queryText;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QStringLiteral("DELETE FROM `item` WHERE `character`=%1 AND `item`=%2 AND `place`='%3'")
-                                         .arg(player_informations->character_id)
-                                         .arg(id)
-                                         .arg(itemQuery.value(2).toString());
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    queryText=QStringLiteral("DELETE FROM item WHERE character=%1 AND item=%2 AND place='%3'")
-                                         .arg(player_informations->character_id)
-                                         .arg(id)
-                                         .arg(itemQuery.value(2).toString());
-                break;
-            }
+            QSqlQuery removeItemQuery(*GlobalServerData::serverPrivateVariables.db);
+            if(!removeItemQuery.exec(GlobalServerData::serverPrivateVariables.db_query_delete_item_by_charater_item_place.arg(player_informations->character_id).arg(id).arg(itemQuery.value(2).toString())))
+                emit message(itemQuery.lastQuery()+QLatin1String(": ")+itemQuery.lastError().text());
             emit message(QStringLiteral("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }

@@ -49,6 +49,9 @@ QString ClientHeavyLoad::text_dottmx=QLatin1Literal(".tmx");
 QString ClientHeavyLoad::text_unknown=QLatin1Literal("unknown");
 QString ClientHeavyLoad::text_female=QLatin1Literal("female");
 QString ClientHeavyLoad::text_male=QLatin1Literal("male");
+QString ClientHeavyLoad::text_warehouse=QLatin1Literal("warehouse");
+QString ClientHeavyLoad::text_wear=QLatin1Literal("wear");
+QString ClientHeavyLoad::text_market=QLatin1Literal("market");
 
 ClientHeavyLoad::ClientHeavyLoad()
 {
@@ -65,6 +68,23 @@ void ClientHeavyLoad::setVariable(Player_internal_informations *player_informati
 
 void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_org,const QByteArray &pass_org)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_login.isEmpty())
+    {
+        emit error(QStringLiteral("askLogin() Query login is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_insert_login.isEmpty())
+    {
+        emit error(QStringLiteral("askLogin() Query inset login is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_characters.isEmpty())
+    {
+        emit error(QStringLiteral("askLogin() Query characters is empty, bug"));
+        return;
+    }
+    #endif
     QByteArray login,pass;
     {
         QCryptographicHash hash(QCryptographicHash::Sha512);
@@ -80,9 +100,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         return;
     }
     {
-        const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_login.arg(QString(login.toHex()));
         QSqlQuery accountQuery(*GlobalServerData::serverPrivateVariables.db);
-        if(!accountQuery.exec(queryText))
+        if(!accountQuery.exec(GlobalServerData::serverPrivateVariables.db_query_login.arg(QString(login.toHex()))))
             emit message(accountQuery.lastQuery()+": "+accountQuery.lastError().text());
         bool ok;
         if(!accountQuery.next())
@@ -170,9 +189,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         quint8 max_character=CommonSettings::commonSettings.max_character;
         if(max_character==0)
             max_character=255;
-        const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_characters.arg(player_informations->account_id).arg(max_character);
         QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
-        if(!characterQuery.exec(queryText))
+        if(!characterQuery.exec(GlobalServerData::serverPrivateVariables.db_query_characters.arg(player_informations->account_id).arg(max_character)))
             emit message(characterQuery.lastQuery()+": "+characterQuery.lastError().text());
         const quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
         QList<CharacterEntry> characterEntryList;
@@ -249,10 +267,66 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
 
 void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
 {
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_monster_by_character_id;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_monster_by_character_id.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_monster_buff.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_buff is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_skill is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_bot_already_beaten is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_character.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_character is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_item.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_item is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_monster.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_plant.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_plant is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_quest.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_quest is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_recipes is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_reputation.isEmpty())
+    {
+        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_reputation is empty, bug"));
+        return;
+    }
+    #endif
     bool ok;
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!monstersQuery.exec(queryText))
+    if(!monstersQuery.exec(GlobalServerData::serverPrivateVariables.db_query_monster_by_character_id.arg(characterId)))
         emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
     while(monstersQuery.next())
     {
@@ -263,30 +337,14 @@ void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
             dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill.arg(monsterId));
         }
     }
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_character.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_item.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_monster.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_plant.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_quest.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_reputation.arg(characterId));
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_character.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_item.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_monster.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_plant.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_quest.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.arg(characterId));
-            dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_reputation.arg(characterId));
-        break;
-    }
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten.arg(characterId));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_character.arg(characterId));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_item.arg(characterId));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_monster.arg(characterId));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_plant.arg(characterId));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_quest.arg(characterId));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.arg(characterId));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_reputation.arg(characterId));
 }
 
 void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
@@ -333,6 +391,33 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
 
 void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const QString &skin)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo.isEmpty())
+    {
+        emit error(QStringLiteral("addCharacter() Query is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_insert_monster.isEmpty())
+    {
+        emit error(QStringLiteral("addCharacter() Query db_query_insert_monster is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill.isEmpty())
+    {
+        emit error(QStringLiteral("addCharacter() Query db_query_insert_monster_skill is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_insert_reputation.isEmpty())
+    {
+        emit error(QStringLiteral("addCharacter() Query db_query_insert_reputation is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_insert_item.isEmpty())
+    {
+        emit error(QStringLiteral("addCharacter() Query db_query_insert_item is empty, bug"));
+        return;
+    }
+    #endif
     if(player_informations->number_of_character>=CommonSettings::commonSettings.max_character)
     {
         emit error(QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(player_informations->number_of_character).arg(CommonSettings::commonSettings.max_character));
@@ -361,9 +446,8 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     }
 
     //check
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo;
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!monstersQuery.exec(queryText))
+    if(!monstersQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo.arg(SqlFunction::quoteSqlVariable(pseudo))))
     {
         emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
         QByteArray outputData;
@@ -400,14 +484,11 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         QString::number(player_informations->account_id)+QLatin1String(",'")+
                         pseudo+QLatin1String("','")+
                         skin+QLatin1String("',")+
-                        mapQuery+QLatin1String(",")+
-                        QLatin1String("'normal',0,")+
+                        mapQuery+QLatin1String(",'normal',0,")+
                         QString::number(profile.cash)+QLatin1String(",")+
                         mapQuery+QLatin1String(",")+
-                        mapQuery+QLatin1String(",")+
-                        QLatin1String("0,0,")+
-                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",")+
-                        QLatin1String("0,'',0,0,0,0,0,")+
+                        mapQuery+QLatin1String(",0,0,")+
+                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",0,'',0,0,0,0,0,")+
                         QString::number(profileIndex)+QLatin1String(");"));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
@@ -416,14 +497,11 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         QString::number(player_informations->account_id)+QLatin1String(",'")+
                         pseudo+QLatin1String("','")+
                         skin+QLatin1String("',")+
-                        mapQuery+QLatin1String(",")+
-                        QLatin1String("'normal',0,")+
+                        mapQuery+QLatin1String(",'normal',0,")+
                         QString::number(profile.cash)+QLatin1String(",")+
                         mapQuery+QLatin1String(",")+
-                        mapQuery+QLatin1String(",")+
-                        QLatin1String("0,0,")+
-                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",")+
-                        QLatin1String("0,'',0,0,0,0,0,")+
+                        mapQuery+QLatin1String(",0,0,")+
+                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",0,'',0,0,0,0,0,")+
                         QString::number(profileIndex)+QLatin1String(");"));
             break;
         }
@@ -467,34 +545,16 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             while(skills.size()>4)
                 skills.removeFirst();
             {
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_monster
-                           .arg(monster_id)
-                           .arg(stat.hp)
-                           .arg(characterId)
-                           .arg(monsterId)
-                           .arg(profile.monsters.at(index).level)
-                           .arg(profile.monsters.at(index).captured_with)
-                           .arg(gender)
-                           .arg(monster_position)
-                            );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_monster
-                           .arg(monster_id)
-                           .arg(stat.hp)
-                           .arg(characterId)
-                           .arg(monsterId)
-                           .arg(profile.monsters.at(index).level)
-                           .arg(profile.monsters.at(index).captured_with)
-                           .arg(gender)
-                           .arg(monster_position)
-                            );
-                    break;
-                }
+                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_monster
+                   .arg(monster_id)
+                   .arg(stat.hp)
+                   .arg(characterId)
+                   .arg(monsterId)
+                   .arg(profile.monsters.at(index).level)
+                   .arg(profile.monsters.at(index).captured_with)
+                   .arg(gender)
+                   .arg(monster_position)
+                    );
                 monster_position++;
             }
             sub_index=0;
@@ -504,26 +564,12 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                 if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills.value(sub_index).skill))
                     if(skills.value(sub_index).level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.size() && skills.value(sub_index).level>0)
                         endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.at(skills.value(sub_index).level-1).endurance;
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill
-                           .arg(monster_id)
-                           .arg(skills.value(sub_index).skill)
-                           .arg(skills.value(sub_index).level)
-                           .arg(endurance)
-                                );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill
-                           .arg(monster_id)
-                           .arg(skills.value(sub_index).skill)
-                           .arg(skills.value(sub_index).level)
-                           .arg(endurance)
-                                );
-                    break;
-                }
+                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill
+                   .arg(monster_id)
+                   .arg(skills.value(sub_index).skill)
+                   .arg(skills.value(sub_index).level)
+                   .arg(endurance)
+                        );
                 sub_index++;
             }
             index++;
@@ -537,49 +583,22 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     index=0;
     while(index<profile.reputation.size())
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_reputation
-                   .arg(characterId)
-                   .arg(profile.reputation.at(index).type)
-                   .arg(profile.reputation.at(index).point)
-                   .arg(profile.reputation.at(index).level)
-                        );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_reputation
-                   .arg(characterId)
-                   .arg(profile.reputation.at(index).type)
-                   .arg(profile.reputation.at(index).point)
-                   .arg(profile.reputation.at(index).level)
-                        );
-            break;
-        }
+        dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_reputation
+           .arg(characterId)
+           .arg(profile.reputation.at(index).type)
+           .arg(profile.reputation.at(index).point)
+           .arg(profile.reputation.at(index).level)
+                );
         index++;
     }
     index=0;
     while(index<profile.items.size())
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_item
-                   .arg(profile.items.at(index).id)
-                   .arg(characterId)
-                   .arg(profile.items.at(index).quantity)
-                        );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_item
-                   .arg(profile.items.at(index).id)
-                   .arg(characterId)
-                   .arg(profile.items.at(index).quantity)
-                        );
-            break;
-        }
+        dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_item
+           .arg(profile.items.at(index).id)
+           .arg(characterId)
+           .arg(profile.items.at(index).quantity)
+                );
         index++;
     }
 
@@ -593,9 +612,20 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
 
 void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &characterId)
 {
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id.isEmpty())
+    {
+        emit error(QStringLiteral("removeCharacter() Query is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete_by_id.isEmpty())
+    {
+        emit error(QStringLiteral("removeCharacter() Query db_query_update_character_time_to_delete_by_id is empty, bug"));
+        return;
+    }
+    #endif
     QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!characterQuery.exec(queryText))
+    if(!characterQuery.exec(GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id.arg(characterId)))
     {
         characterSelectionIsWrong(query_id,"Character not found",characterQuery.lastQuery()+": "+characterQuery.lastError().text());
         return;
@@ -633,14 +663,30 @@ void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &cha
 
 void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &characterId)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_character_by_id.isEmpty())
+    {
+        emit error(QStringLiteral("selectCharacter() Query is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect.isEmpty())
+    {
+        emit error(QStringLiteral("selectCharacter() Query db_query_update_character_last_connect is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.isEmpty())
+    {
+        emit error(QStringLiteral("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug"));
+        return;
+    }
+    #endif
     /*account(0),pseudo(1),skin(2),x(3),y(4),orientation(5),map(6),type(7),clan(8),cash(9),
     rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13),unvalidated_rescue_map(14),
     unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17),
     warehouse_cash(18),allow(19),clan_leader(20),bitcoin_offset(21),market_cash(22),market_bitcoin(23),
     time_to_delete(24),*/
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_character_by_id.arg(characterId);
     QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!characterQuery.exec(queryText))
+    if(!characterQuery.exec(GlobalServerData::serverPrivateVariables.db_query_character_by_id.arg(characterId)))
     {
         characterSelectionIsWrong(query_id,QLatin1String("Character not found"),characterQuery.lastQuery()+QLatin1String(": ")+characterQuery.lastError().text());
         return;
@@ -1069,6 +1115,13 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
                   CommonMap *unvalidated_rescue_map, const quint8 &unvalidated_rescue_x, const quint8 &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                   )
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_clan.isEmpty())
+    {
+        emit error(QStringLiteral("loginIsRightWithParsedRescue() Query is empty, bug"));
+        return;
+    }
+    #endif
     //load the variables
     player_informations->character_id=characterId;
     GlobalServerData::serverPrivateVariables.connected_players_id_list << characterId;
@@ -1100,9 +1153,8 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
             clanConnectedCount[player_informations->public_and_private_informations.clan]=1;
             emit message(QStringLiteral("First client of the clan: %1, get the info").arg(player_informations->public_and_private_informations.clan));
             //do the query
-            const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_clan;
             QSqlQuery clanQuery(*GlobalServerData::serverPrivateVariables.db);
-            if(!clanQuery.exec(queryText))
+            if(!clanQuery.exec(GlobalServerData::serverPrivateVariables.db_query_clan.arg(player_informations->public_and_private_informations.clan)))
                 emit message(clanQuery.lastQuery()+": "+clanQuery.lastError().text());
             //parse the result
             if(clanQuery.next())
@@ -1604,6 +1656,13 @@ QString ClientHeavyLoad::SQL_text_quote(QString text)
 
 void ClientHeavyLoad::dbQuery(const QString &queryText)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(queryText.isEmpty())
+    {
+        emit error(QStringLiteral("dbQuery() Query is empty, bug"));
+        return;
+    }
+    #endif
     if(player_informations->isFake)
     {
         emit message(QStringLiteral("Query canceled because is fake: %1").arg(queryText));
@@ -1620,11 +1679,17 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
 
 void ClientHeavyLoad::loadReputation()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id.isEmpty())
+    {
+        emit error(QStringLiteral("loadReputation() Query is empty, bug"));
+        return;
+    }
+    #endif
     //do the query
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id.arg(player_informations->character_id);
     bool ok;
     QSqlQuery reputationQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!reputationQuery.exec(queryText))
+    if(!reputationQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id.arg(player_informations->character_id)))
         emit message(reputationQuery.lastQuery()+QLatin1String(": ")+reputationQuery.lastError().text());
     //parse the result
     while(reputationQuery.next())
@@ -1701,11 +1766,17 @@ void ClientHeavyLoad::loadReputation()
 
 void ClientHeavyLoad::loadQuests()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id.isEmpty())
+    {
+        emit error(QStringLiteral("loadQuests() Query is empty, bug"));
+        return;
+    }
+    #endif
     //do the query
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id.arg(player_informations->character_id);
     bool ok,ok2;
     QSqlQuery questsQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!questsQuery.exec(queryText))
+    if(!questsQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id.arg(player_informations->character_id)))
         emit message(questsQuery.lastQuery()+": "+questsQuery.lastError().text());
     //parse the result
     while(questsQuery.next())
