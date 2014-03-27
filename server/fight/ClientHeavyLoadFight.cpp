@@ -10,23 +10,24 @@ using namespace CatchChallenger;
 
 void ClientHeavyLoad::loadMonsters()
 {
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id.isEmpty())
     {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`place` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC").arg(player_informations->character_id);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE character=%1 ORDER BY position ASC").arg(player_informations->character_id);
-        break;
+        emit error(QStringLiteral("loadMonsters() Query is empty, bug"));
+        return;
     }
+    if(GlobalServerData::serverPrivateVariables.db_query_update_monster_place_wearhouse.isEmpty())
+    {
+        emit error(QStringLiteral("loadMonsters() Query monster place is empty, bug"));
+        return;
+    }
+    #endif
 
     bool warehouse;
     bool ok;
     Monster monster;
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!monstersQuery.exec(queryText))
+    if(!monstersQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id.arg(player_informations->character_id)))
         emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
     while(monstersQuery.next())
     {
@@ -103,11 +104,11 @@ void ClientHeavyLoad::loadMonsters()
         }
         if(ok)
         {
-            if(monstersQuery.value(7).toString()==QLatin1String("male"))
+            if(monstersQuery.value(7).toString()==ClientHeavyLoad::text_male)
                 playerMonster.gender=Gender_Male;
-            else if(monstersQuery.value(7).toString()==QLatin1String("female"))
+            else if(monstersQuery.value(7).toString()==ClientHeavyLoad::text_female)
                 playerMonster.gender=Gender_Female;
-            else if(monstersQuery.value(7).toString()==QLatin1String("unknown"))
+            else if(monstersQuery.value(7).toString()==ClientHeavyLoad::text_unknown)
                 playerMonster.gender=Gender_Unknown;
             else
             {
@@ -124,13 +125,13 @@ void ClientHeavyLoad::loadMonsters()
         }
         if(ok)
         {
-            if(monstersQuery.value(9).toString()==QLatin1String("warehouse"))
+            if(monstersQuery.value(9).toString()==ClientHeavyLoad::text_warehouse)
                 warehouse=true;
             else
             {
-                if(monstersQuery.value(9).toString()==QLatin1String("wear"))
+                if(monstersQuery.value(9).toString()==ClientHeavyLoad::text_wear)
                     warehouse=false;
-                else if(monstersQuery.value(9).toString()==QLatin1String("market"))
+                else if(monstersQuery.value(9).toString()==ClientHeavyLoad::text_market)
                     continue;
                 else
                 {
@@ -142,20 +143,7 @@ void ClientHeavyLoad::loadMonsters()
         if(!warehouse && player_informations->public_and_private_informations.playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
         {
             warehouse=true;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QStringLiteral("UPDATE `monster` SET `place`='warehouse' WHERE `id`=%1;")
-                                 .arg(playerMonster.id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QStringLiteral("UPDATE monster SET place='warehouse' WHERE id=%1;")
-                                 .arg(playerMonster.id)
-                                 );
-                break;
-            }
+            dbQuery(GlobalServerData::serverPrivateVariables.db_query_update_monster_place_wearhouse.arg(playerMonster.id));
         }
         //stats
         if(ok)
@@ -193,22 +181,18 @@ void ClientHeavyLoad::loadMonsters()
 
 QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
 {
-    QList<PlayerBuff> buffs;
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id.isEmpty())
     {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(monsterId);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
-        break;
+        emit error(QStringLiteral("loadMonsterBuffs() Query is empty, bug"));
+        return QList<PlayerBuff>();
     }
+    #endif
+    QList<PlayerBuff> buffs;
 
     bool ok;
     QSqlQuery monsterBuffsQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!monsterBuffsQuery.exec(queryText))
+    if(!monsterBuffsQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id.arg(monsterId)))
         emit message(monsterBuffsQuery.lastQuery()+": "+monsterBuffsQuery.lastError().text());
     while(monsterBuffsQuery.next())
     {
@@ -254,22 +238,18 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
 
 QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint32 &monsterId)
 {
-    QList<PlayerMonster::PlayerSkill> skills;
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id.isEmpty())
     {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(monsterId);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
-        break;
+        emit error(QStringLiteral("loadMonsterSkills() Query is empty, bug"));
+        return QList<PlayerMonster::PlayerSkill>();
     }
+    #endif
+    QList<PlayerMonster::PlayerSkill> skills;
 
     bool ok;
     QSqlQuery monsterSkillsQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!monsterSkillsQuery.exec(queryText))
+    if(!monsterSkillsQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id.arg(monsterId)))
         emit message(monsterSkillsQuery.lastQuery()+QLatin1String(": ")+monsterSkillsQuery.lastError().text());
     while(monsterSkillsQuery.next())
     {
@@ -336,23 +316,17 @@ void ClientHeavyLoad::askedRandomNumber()
 
 void ClientHeavyLoad::loadBotAlreadyBeaten()
 {
-    //do the query
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten.isEmpty())
     {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QStringLiteral("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1")
-                .arg(player_informations->character_id);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1")
-                .arg(player_informations->character_id);
-        break;
+        emit error(QStringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
+        return;
     }
+    #endif
+    //do the query
     bool ok;
     QSqlQuery botAlreadyBeatenQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!botAlreadyBeatenQuery.exec(queryText))
+    if(!botAlreadyBeatenQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten.arg(player_informations->character_id)))
         emit message(botAlreadyBeatenQuery.lastQuery()+QLatin1String(": ")+botAlreadyBeatenQuery.lastError().text());
     //parse the result
     while(botAlreadyBeatenQuery.next())
