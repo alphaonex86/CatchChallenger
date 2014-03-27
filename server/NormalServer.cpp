@@ -4,9 +4,12 @@
 #include <QSslSocket>
 #include <QNetworkProxy>
 
-/*
-  When disconnect the fake client, stop the benchmark
-  */
+#ifdef Q_OS_LINUX
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
 
 using namespace CatchChallenger;
 
@@ -248,6 +251,20 @@ void NormalServer::start_internal_server()
         emit error(QStringLiteral("Unable to listen the internal server"));
         return;
     }
+    #ifdef Q_OS_LINUX
+    if(GlobalServerData::serverSettings.linuxSettings.tcpCork)
+    {
+        qintptr socketDescriptor=server->socketDescriptor();
+        if(socketDescriptor!=-1)
+        {
+            int state = 1;
+            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+    }
+    #endif
 
     if(GlobalServerData::serverSettings.server_ip.isEmpty())
         DebugClass::debugConsole(QStringLiteral("Listen *:%1").arg(GlobalServerData::serverSettings.server_port));
@@ -540,6 +557,20 @@ void NormalServer::newConnection()
             connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
             if(socket!=NULL)
             {
+                #ifdef Q_OS_LINUX
+                if(GlobalServerData::serverSettings.linuxSettings.tcpCork)
+                {
+                    qintptr socketDescriptor=socket->socketDescriptor();
+                    if(socketDescriptor!=-1)
+                    {
+                        int state = 1;
+                        if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                            DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
+                    }
+                    else
+                        DebugClass::debugConsole(QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+                }
+                #endif
                 //DebugClass::debugConsole(QStringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
                 connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
             }
@@ -658,6 +689,17 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("dontSendPlayerType"),false);
     if(!settings->contains(QLatin1Literal("forceClientToSendAtMapChange")))
         settings->setValue(QLatin1Literal("forceClientToSendAtMapChange"),true);
+    if(!settings->contains(QLatin1Literal("httpDatapackMirror")))
+        settings->setValue(QLatin1Literal("httpDatapackMirror"),QString());
+    if(!settings->contains(QLatin1Literal("datapackCache")))
+        settings->setValue(QLatin1Literal("datapackCache"),-1);
+
+    #ifdef Q_OS_LINUX
+    settings->beginGroup(QLatin1Literal("Linux"));
+    if(!settings->contains(QLatin1Literal("tcpCork")))
+        settings->setValue(QLatin1Literal("tcpCork"),true);
+    settings->endGroup();
+    #endif
 
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
     if(!settings->contains(QLatin1Literal("MapVisibilityAlgorithm")))

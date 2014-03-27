@@ -7,6 +7,13 @@
 #include <QNetworkProxy>
 #include <QStandardPaths>
 
+#ifdef Q_OS_LINUX
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
+
 #define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
 //#define SERVER_DNS_OR_IP "localhost"
 #define SERVER_NAME tr("Official server")
@@ -22,6 +29,17 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QList<RssNews::RssEntry> >("QList<RssNews::RssEntry>");
 
     realSocket=new QSslSocket();
+    #ifdef Q_OS_LINUX
+    qintptr socketDescriptor=realSocket->socketDescriptor();
+    if(socketDescriptor!=-1)
+    {
+        int state = 1;
+        if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+            qDebug() << QStringLiteral("Unable to apply tcp cork under linux");
+    }
+    else
+        qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");
+    #endif
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
     connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);

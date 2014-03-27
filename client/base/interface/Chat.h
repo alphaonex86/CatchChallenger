@@ -31,8 +31,6 @@ private slots:
     void lineEdit_chat_text_returnPressed();
     void removeNumberForFlood();
     void update_chat();
-    QString toHtmlEntities(QString text);
-    QString toSmilies(QString text);
     void comboBox_chat_type_currentIndexChanged(int index);
 private:
     Ui::Chat *ui;

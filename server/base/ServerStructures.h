@@ -105,6 +105,14 @@ struct ServerSettings
     bool anonymous;
     QString server_message;
     bool dontSendPlayerType;
+    QString httpDatapackMirror;
+    qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
+
+    struct LinuxSettings
+    {
+        bool tcpCork;
+    };
+    LinuxSettings linuxSettings;
 
     struct Database
     {
