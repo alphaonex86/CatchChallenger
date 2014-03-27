@@ -27,7 +27,7 @@ ProcessControler::~ProcessControler()
 
 void ProcessControler::send_settings()
 {
-    CatchChallenger::ServerSettings formatedServerSettings=server.getSettings();;
+    CatchChallenger::ServerSettings formatedServerSettings=server.getSettings();
 
     //common var
     CommonSettings::commonSettings.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
@@ -48,12 +48,20 @@ void ProcessControler::send_settings()
     formatedServerSettings.proxy					    = settings->value(QLatin1Literal("proxy")).toString();
     formatedServerSettings.proxy_port					= settings->value(QLatin1Literal("proxy_port")).toUInt();
 
+    formatedServerSettings.httpDatapackMirror			= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
+    formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
+    #ifdef Q_OS_LINUX
+    settings->beginGroup(QLatin1Literal("Linux"));
+    formatedServerSettings.linuxSettings.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
+    settings->endGroup();
+    #endif
+
     //fight
     //CommonSettings::commonSettings.pvp			= settings->value(QLatin1Literal("pvp")).toBool();
     formatedServerSettings.sendPlayerNumber         = settings->value(QLatin1Literal("sendPlayerNumber")).toBool();
 
     //rates
-    settings->beginGroup("rates");
+    settings->beginGroup(QLatin1Literal("rates"));
     CommonSettings::commonSettings.rates_xp             = settings->value(QLatin1Literal("xp_normal")).toReal();
     CommonSettings::commonSettings.rates_gold			= settings->value(QLatin1Literal("gold_normal")).toReal();
     CommonSettings::commonSettings.rates_xp_pow			= settings->value(QLatin1Literal("xp_pow_normal")).toReal();
@@ -65,7 +73,7 @@ void ProcessControler::send_settings()
     settings->endGroup();
 
     //chat allowed
-    settings->beginGroup("chat");
+    settings->beginGroup(QLatin1Literal("chat"));
     CommonSettings::commonSettings.chat_allow_all         = settings->value(QLatin1Literal("allow-all")).toBool();
     CommonSettings::commonSettings.chat_allow_local		= settings->value(QLatin1Literal("allow-local")).toBool();
     CommonSettings::commonSettings.chat_allow_private		= settings->value(QLatin1Literal("allow-private")).toBool();

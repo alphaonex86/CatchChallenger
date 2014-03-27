@@ -12,6 +12,13 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef Q_OS_LINUX
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
+
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../base/LanguagesSelect.h"
@@ -804,6 +811,17 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         realSocket=NULL;
     }
     realSocket=new QSslSocket();
+    #ifdef Q_OS_LINUX
+    qintptr socketDescriptor=realSocket->socketDescriptor();
+    if(socketDescriptor!=-1)
+    {
+        int state = 1;
+        if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+            qDebug() << QStringLiteral("Unable to apply tcp cork under linux");
+    }
+    else
+        qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");
+    #endif
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
     if(!serverConnexion[selectedServer]->proxyHost.isEmpty())

@@ -28,6 +28,8 @@ int ClientHeavyLoad::compressedFilesCount;
 QSet<QString> ClientHeavyLoad::compressedExtension;
 QSet<QString> ClientHeavyLoad::extensionAllowed;
 QHash<quint32,quint16> ClientHeavyLoad::clanConnectedCount;
+quint64 ClientHeavyLoad::datapack_list_cache_timestamp;
+QSet<QString> ClientHeavyLoad::datapack_file_list_cache;
 QRegularExpression ClientHeavyLoad::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
 QString ClientHeavyLoad::single_quote=QLatin1Literal("'");
 QString ClientHeavyLoad::antislash_single_quote=QLatin1Literal("\\'");
@@ -1343,6 +1345,31 @@ void ClientHeavyLoad::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
+QSet<QString> ClientHeavyLoad::datapack_file_list_cached()
+{
+    if(GlobalServerData::serverSettings.datapackCache==-1)
+        return datapack_file_list();
+    else if(GlobalServerData::serverSettings.datapackCache==0)
+    {
+        if(ClientHeavyLoad::datapack_list_cache_timestamp==0)
+        {
+            ClientHeavyLoad::datapack_list_cache_timestamp=QDateTime::currentMSecsSinceEpoch()/1000;
+            ClientHeavyLoad::datapack_file_list_cache=datapack_file_list();
+        }
+        return ClientHeavyLoad::datapack_file_list_cache;
+    }
+    else
+    {
+        const quint64 &currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
+        if(ClientHeavyLoad::datapack_list_cache_timestamp<(currentTime-GlobalServerData::serverSettings.datapackCache))
+        {
+            ClientHeavyLoad::datapack_list_cache_timestamp=currentTime;
+            ClientHeavyLoad::datapack_file_list_cache=datapack_file_list();
+        }
+        return ClientHeavyLoad::datapack_file_list_cache;
+    }
+}
+
 QSet<QString> ClientHeavyLoad::datapack_file_list()
 {
     QSet<QString> filesList;
@@ -1385,7 +1412,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     compressedFilesCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
-    QSet<QString> filesList=datapack_file_list();
+    QSet<QString> filesList=datapack_file_list_cached();
     QHash<QString,quint32> filesListInfo;
 
     int loop_size=files.size();

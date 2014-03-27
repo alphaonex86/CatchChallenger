@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    settings=new QSettings(QCoreApplication::applicationDirPath()+QStringLiteral("/server.properties"),QSettings::IniFormat);
+    settings=new QSettings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),QSettings::IniFormat);
     NormalServer::checkSettingsFile(settings);
     ui->setupUi(this);
     updateActionButton();
@@ -137,13 +137,13 @@ void MainWindow::new_player_is_connected(Player_internal_informations player)
     switch(player.public_and_private_informations.public_informations.type)
     {
         case Player_type_premium:
-            icon=QIcon(":/images/chat/premium.png");
+            icon=QIcon(QLatin1Literal(":/images/chat/premium.png"));
         break;
         case Player_type_gm:
-            icon=QIcon(":/images/chat/admin.png");
+            icon=QIcon(QLatin1Literal(":/images/chat/admin.png"));
         break;
         case Player_type_dev:
-            icon=QIcon(":/images/chat/developer.png");
+            icon=QIcon(QLatin1Literal(":/images/chat/developer.png"));
         break;
         default:
         break;
@@ -286,34 +286,73 @@ void MainWindow::clean_updated_info()
 void MainWindow::load_settings()
 {
     // --------------------------------------------------
-    ui->max_player->setValue(settings->value("max-players").toUInt());
-    ui->server_ip->setText(settings->value("server-ip").toString());
-    ui->pvp->setChecked(settings->value("pvp").toBool());
-    ui->sendPlayerNumber->setChecked(settings->value("sendPlayerNumber").toBool());
-    ui->server_port->setValue(settings->value("server-port").toUInt());
-    ui->benchmark_benchmarkMap->setChecked(settings->value("benchmark_map").toBool());
-    ui->benchmark_seconds->setValue(settings->value("benchmark_seconds").toUInt());
-    ui->benchmark_clients->setValue(settings->value("benchmark_clients").toUInt());
-    ui->tolerantMode->setChecked(settings->value("tolerantMode").toBool());
-    ui->forceClientToSendAtMapChange->setChecked(settings->value("forceClientToSendAtMapChange").toBool());
-    if(settings->value("compression").toString()=="none")
+    ui->max_player->setValue(settings->value(QLatin1Literal("max-players")).toUInt());
+    ui->server_ip->setText(settings->value(QLatin1Literal("server-ip")).toString());
+    ui->pvp->setChecked(settings->value(QLatin1Literal("pvp")).toBool());
+    ui->sendPlayerNumber->setChecked(settings->value(QLatin1Literal("sendPlayerNumber")).toBool());
+    ui->server_port->setValue(settings->value(QLatin1Literal("server-port")).toUInt());
+    ui->benchmark_benchmarkMap->setChecked(settings->value(QLatin1Literal("benchmark_map")).toBool());
+    ui->benchmark_seconds->setValue(settings->value(QLatin1Literal("benchmark_seconds")).toUInt());
+    ui->benchmark_clients->setValue(settings->value(QLatin1Literal("benchmark_clients")).toUInt());
+    ui->tolerantMode->setChecked(settings->value(QLatin1Literal("tolerantMode")).toBool());
+    ui->forceClientToSendAtMapChange->setChecked(settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool());
+    if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("none"))
         ui->compression->setCurrentIndex(0);
-    else if(settings->value("compression").toString()=="xz")
+    else if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("xz"))
         ui->compression->setCurrentIndex(2);
     else
         ui->compression->setCurrentIndex(1);
-    ui->min_character->setValue(settings->value("min_character").toUInt());
-    ui->max_character->setValue(settings->value("max_character").toUInt());
-    ui->max_pseudo_size->setValue(settings->value("max_pseudo_size").toUInt());
-    ui->character_delete_time->setValue(settings->value("character_delete_time").toUInt()/3600);
-    ui->automatic_account_creation->setChecked(settings->value("automatic_account_creation").toBool());
-    ui->anonymous->setChecked(settings->value("anonymous").toBool());
+    ui->min_character->setValue(settings->value(QLatin1Literal("min_character")).toUInt());
+    ui->max_character->setValue(settings->value(QLatin1Literal("max_character")).toUInt());
+    ui->max_pseudo_size->setValue(settings->value(QLatin1Literal("max_pseudo_size")).toUInt());
+    ui->character_delete_time->setValue(settings->value(QLatin1Literal("character_delete_time")).toUInt()/3600);
+    ui->automatic_account_creation->setChecked(settings->value(QLatin1Literal("automatic_account_creation")).toBool());
+    ui->anonymous->setChecked(settings->value(QLatin1Literal("anonymous")).toBool());
     ui->min_character->setMaximum(ui->max_character->value());
     ui->max_character->setMinimum(ui->min_character->value());
-    ui->server_message->setPlainText(settings->value("server_message").toString());
-    ui->proxy->setText(settings->value("proxy").toString());
-    ui->proxy_port->setValue(settings->value("proxy_port").toUInt());
-    if(settings->value("forcedSpeed").toUInt()==0)
+    ui->server_message->setPlainText(settings->value(QLatin1Literal("server_message")).toString());
+    ui->proxy->setText(settings->value(QLatin1Literal("proxy")).toString());
+    ui->proxy_port->setValue(settings->value(QLatin1Literal("proxy_port")).toUInt());
+    ui->httpDatapackMirror->setText(settings->value(QLatin1Literal("httpDatapackMirror")).toString());
+    {
+        const qint32 &datapackCache=settings->value(QLatin1Literal("datapackCache")).toInt();
+        if(datapackCache<0)
+        {
+            ui->datapack_cache->setChecked(false);
+            ui->datapack_cache_timeout_checkbox->setChecked(false);
+            ui->datapack_cache_timeout->setValue(30);
+            ui->datapack_cache_timeout_checkbox->setEnabled(ui->datapack_cache->isChecked());
+            ui->datapack_cache_timeout->setEnabled(ui->datapack_cache->isChecked() && ui->datapack_cache_timeout_checkbox->isChecked());
+        }
+        else if(datapackCache==0)
+        {
+            ui->datapack_cache->setChecked(true);
+            ui->datapack_cache_timeout_checkbox->setChecked(false);
+            ui->datapack_cache_timeout->setValue(30);
+            ui->datapack_cache_timeout_checkbox->setEnabled(ui->datapack_cache->isChecked());
+            ui->datapack_cache_timeout->setEnabled(ui->datapack_cache->isChecked() && ui->datapack_cache_timeout_checkbox->isChecked());
+        }
+        else
+        {
+            ui->datapack_cache->setChecked(true);
+            ui->datapack_cache_timeout_checkbox->setChecked(true);
+            ui->datapack_cache_timeout->setValue(datapackCache);
+            ui->datapack_cache_timeout_checkbox->setEnabled(ui->datapack_cache->isChecked());
+            ui->datapack_cache_timeout->setEnabled(ui->datapack_cache->isChecked() && ui->datapack_cache_timeout_checkbox->isChecked());
+        }
+    }
+    {
+        #ifdef Q_OS_LINUX
+        bool tcpCork=true;
+        settings->beginGroup(QLatin1Literal("Linux"));
+        tcpCork=settings->value(QLatin1Literal("tcpCork")).toBool();
+        settings->endGroup();
+        ui->linux_socket_cork->setChecked(tcpCork);
+        #else
+        ui->linux_socket_cork->setEnabled(false);
+        #endif
+    }
+    if(settings->value(QLatin1Literal("forcedSpeed")).toUInt()==0)
     {
         ui->forceSpeed->setChecked(true);
         ui->speed->setEnabled(false);
@@ -321,15 +360,15 @@ void MainWindow::load_settings()
     else
     {
         ui->forceSpeed->setChecked(false);
-        ui->speed->setValue(settings->value("forcedSpeed").toUInt());
+        ui->speed->setValue(settings->value(QLatin1Literal("forcedSpeed")).toUInt());
         ui->speed->setEnabled(true);
     }
-    ui->dontSendPseudo->setChecked(settings->value("dontSendPseudo").toBool());
-    ui->dontSendPlayerType->setChecked(settings->value("dontSendPlayerType").toBool());
+    ui->dontSendPseudo->setChecked(settings->value(QLatin1Literal("dontSendPseudo")).toBool());
+    ui->dontSendPlayerType->setChecked(settings->value(QLatin1Literal("dontSendPlayerType")).toBool());
 
     quint32 tempValue=0;
-    settings->beginGroup("MapVisibilityAlgorithm");
-    tempValue=settings->value("MapVisibilityAlgorithm").toUInt();
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
+    tempValue=settings->value(QLatin1Literal("MapVisibilityAlgorithm")).toUInt();
     settings->endGroup();
     if(tempValue<(quint32)ui->MapVisibilityAlgorithm->count())
         ui->MapVisibilityAlgorithm->setCurrentIndex(tempValue);
@@ -338,14 +377,14 @@ void MainWindow::load_settings()
 
     {
         quint32 reshow=0;
-        settings->beginGroup("MapVisibilityAlgorithm-Simple");
-        tempValue=settings->value("Max").toUInt();
-        reshow=settings->value("Reshow").toUInt();
+        settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
+        tempValue=settings->value(QLatin1Literal("Max")).toUInt();
+        reshow=settings->value(QLatin1Literal("Reshow")).toUInt();
         if(reshow>tempValue)
         {
             DebugClass::debugConsole("Reshow number corrected");
             reshow=tempValue;
-            settings->setValue("Reshow",reshow);
+            settings->setValue(QLatin1Literal("Reshow"),reshow);
         }
         settings->endGroup();
         ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
@@ -356,34 +395,34 @@ void MainWindow::load_settings()
         quint32 tempValueWithBorder=0;
         quint32 reshowWithBorder=0;
         quint32 reshow=0;
-        settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-        tempValueWithBorder=settings->value("MaxWithBorder").toUInt();
-        reshowWithBorder=settings->value("ReshowWithBorder").toUInt();
-        tempValue=settings->value("Max").toUInt();
-        reshow=settings->value("Reshow").toUInt();
+        settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
+        tempValueWithBorder=settings->value(QLatin1Literal("MaxWithBorder")).toUInt();
+        reshowWithBorder=settings->value(QLatin1Literal("ReshowWithBorder")).toUInt();
+        tempValue=settings->value(QLatin1Literal("Max")).toUInt();
+        reshow=settings->value(QLatin1Literal("Reshow")).toUInt();
         if(reshow>tempValue)
         {
             DebugClass::debugConsole("Reshow number corrected");
             reshow=tempValue;
-            settings->setValue("Reshow",reshow);
+            settings->setValue(QLatin1Literal("Reshow"),reshow);
         }
         if(reshowWithBorder>tempValueWithBorder)
         {
             DebugClass::debugConsole("ReshowWithBorder number corrected");
             reshowWithBorder=tempValueWithBorder;
-            settings->setValue("ReshowWithBorder",reshow);
+            settings->setValue(QLatin1Literal("ReshowWithBorder"),reshow);
         }
         if(tempValueWithBorder>tempValue)
         {
             DebugClass::debugConsole("MaxWithBorder number corrected");
             tempValueWithBorder=tempValue;
-            settings->setValue("MaxWithBorder",reshow);
+            settings->setValue(QLatin1Literal("MaxWithBorder"),reshow);
         }
         if(reshowWithBorder>reshow)
         {
             DebugClass::debugConsole("ReshowWithBorder number corrected");
             reshowWithBorder=reshow;
-            settings->setValue("ReshowWithBorder",reshow);
+            settings->setValue(QLatin1Literal("ReshowWithBorder"),reshow);
         }
         settings->endGroup();
         ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(tempValueWithBorder);
@@ -408,11 +447,11 @@ void MainWindow::load_settings()
     }
 
     {
-        settings->beginGroup("rates");
-        double rates_xp_normal=settings->value("xp_normal").toFloat();
-        double rates_gold_normal=settings->value("gold_normal").toFloat();
-        double rates_xp_pow_normal=settings->value("xp_pow_normal").toFloat();
-        double rates_drop_normal=settings->value("drop_normal").toFloat();
+        settings->beginGroup(QLatin1Literal("rates"));
+        double rates_xp_normal=settings->value(QLatin1Literal("xp_normal")).toFloat();
+        double rates_gold_normal=settings->value(QLatin1Literal("gold_normal")).toFloat();
+        double rates_xp_pow_normal=settings->value(QLatin1Literal("xp_pow_normal")).toFloat();
+        double rates_drop_normal=settings->value(QLatin1Literal("drop_normal")).toFloat();
         settings->endGroup();
 
         ui->rates_xp_normal->setValue(rates_xp_normal);
@@ -422,11 +461,11 @@ void MainWindow::load_settings()
     }
 
     {
-        settings->beginGroup("chat");
-        bool chat_allow_all=settings->value("allow-all").toBool();
-        bool chat_allow_local=settings->value("allow-local").toBool();
-        bool chat_allow_private=settings->value("allow-private").toBool();
-        bool chat_allow_clan=settings->value("allow-clan").toBool();
+        settings->beginGroup(QLatin1Literal("chat"));
+        bool chat_allow_all=settings->value(QLatin1Literal("allow-all")).toBool();
+        bool chat_allow_local=settings->value(QLatin1Literal("allow-local")).toBool();
+        bool chat_allow_private=settings->value(QLatin1Literal("allow-private")).toBool();
+        bool chat_allow_clan=settings->value(QLatin1Literal("allow-clan")).toBool();
         settings->endGroup();
 
         ui->chat_allow_all->setChecked(chat_allow_all);
@@ -435,23 +474,23 @@ void MainWindow::load_settings()
         ui->chat_allow_clan->setChecked(chat_allow_clan);
     }
 
-    settings->beginGroup("db");
-    QString db_type=settings->value("type").toString();
-    QString db_mysql_host=settings->value("mysql_host").toString();
-    QString db_mysql_login=settings->value("mysql_login").toString();
-    QString db_mysql_pass=settings->value("mysql_pass").toString();
-    QString db_mysql_base=settings->value("mysql_db").toString();
-    QString db_fight_sync=settings->value("db_fight_sync").toString();
-    bool positionTeleportSync=settings->value("positionTeleportSync").toBool();
-    quint32 secondToPositionSync=settings->value("secondToPositionSync").toUInt();
+    settings->beginGroup(QLatin1Literal("db"));
+    QString db_type=settings->value(QLatin1Literal("type")).toString();
+    QString db_mysql_host=settings->value(QLatin1Literal("mysql_host")).toString();
+    QString db_mysql_login=settings->value(QLatin1Literal("mysql_login")).toString();
+    QString db_mysql_pass=settings->value(QLatin1Literal("mysql_pass")).toString();
+    QString db_mysql_base=settings->value(QLatin1Literal("mysql_db")).toString();
+    QString db_fight_sync=settings->value(QLatin1Literal("db_fight_sync")).toString();
+    bool positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
+    quint32 secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
 
-    if(!settings->contains("db_fight_sync"))
-        settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
+    if(!settings->contains(QLatin1Literal("db_fight_sync")))
+        settings->setValue(QLatin1Literal("db_fight_sync"),"FightSync_AtTheEndOfBattle");
     settings->endGroup();
 
-    if(db_type=="mysql")
+    if(db_type==QLatin1Literal("mysql"))
         ui->db_type->setCurrentIndex(0);
-    else if(db_type=="sqlite")
+    else if(db_type==QLatin1Literal("sqlite"))
         ui->db_type->setCurrentIndex(1);
     else
         ui->db_type->setCurrentIndex(0);
@@ -459,59 +498,59 @@ void MainWindow::load_settings()
     ui->db_mysql_login->setText(db_mysql_login);
     ui->db_mysql_pass->setText(db_mysql_pass);
     ui->db_mysql_base->setText(db_mysql_base);
-    if(db_fight_sync=="FightSync_AtEachTurn")
+    if(db_fight_sync==QLatin1Literal("FightSync_AtEachTurn"))
         ui->db_fight_sync->setCurrentIndex(0);
-    else if(db_fight_sync=="FightSync_AtTheEndOfBattle")
+    else if(db_fight_sync==QLatin1Literal("FightSync_AtTheEndOfBattle"))
         ui->db_fight_sync->setCurrentIndex(1);
-    else if(db_fight_sync=="FightSync_AtTheDisconnexion")
+    else if(db_fight_sync==QLatin1Literal("FightSync_AtTheDisconnexion"))
         ui->db_fight_sync->setCurrentIndex(2);
     else
         ui->db_fight_sync->setCurrentIndex(0);
     ui->positionTeleportSync->setChecked(positionTeleportSync);
     ui->secondToPositionSync->setValue(secondToPositionSync);
 
-    ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+"/catchchallenger.db.sqlite");
+    ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+QLatin1Literal("/catchchallenger.db.sqlite"));
 
     {
-        settings->beginGroup("city");
-        if(!settings->contains("capture_frequency"))
-            settings->setValue("capture_frequency","day");
+        settings->beginGroup(QLatin1Literal("city"));
+        if(!settings->contains(QLatin1Literal("capture_frequency")))
+            settings->setValue(QLatin1Literal("capture_frequency"),QLatin1Literal("day"));
         int capture_frequency_int=0;
-        if(settings->value("capture_frequency").toString()=="week")
+        if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("week"))
             capture_frequency_int=0;
-        else if(settings->value("capture_frequency").toString()=="month")
+        else if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("month"))
             capture_frequency_int=1;
         update_capture();
         int capture_day_int=0;
-        if(settings->value("capture_day").toString()=="monday")
+        if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("monday"))
             capture_day_int=0;
-        else if(settings->value("capture_day").toString()=="tuesday")
+        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("tuesday"))
             capture_day_int=1;
-        else if(settings->value("capture_day").toString()=="wednesday")
+        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("wednesday"))
             capture_day_int=2;
-        else if(settings->value("capture_day").toString()=="thursday")
+        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("thursday"))
             capture_day_int=3;
-        else if(settings->value("capture_day").toString()=="friday")
+        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("friday"))
             capture_day_int=4;
-        else if(settings->value("capture_day").toString()=="saturday")
+        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("saturday"))
             capture_day_int=5;
-        else if(settings->value("capture_day").toString()=="sunday")
+        else if(settings->value(QLatin1Literal("capture_day")).toString()==QLatin1Literal("sunday"))
             capture_day_int=6;
         int capture_time_hours=0,capture_time_minutes=0;
-        QStringList capture_time_string_list=settings->value("capture_time").toString().split(":");
+        QStringList capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
         if(capture_time_string_list.size()!=2)
-            settings->setValue("capture_time",QStringLiteral("0:0"));
+            settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
         else
         {
             bool ok;
             capture_time_hours=capture_time_string_list.first().toUInt(&ok);
             if(!ok)
-                settings->setValue("capture_time",QStringLiteral("0:0"));
+                settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
             else
             {
                 capture_time_minutes=capture_time_string_list.last().toUInt(&ok);
                 if(!ok)
-                    settings->setValue("capture_time",QStringLiteral("0:0"));
+                    settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
             }
         }
         settings->endGroup();
@@ -523,41 +562,41 @@ void MainWindow::load_settings()
     {
         bool ok;
         ServerSettings::Bitcoin bitcoin;
-        settings->beginGroup("bitcoin");
-        if(!settings->contains("enabled"))
-            settings->setValue("enabled",false);
-        if(!settings->contains("address"))
-            settings->setValue("address","1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ");
-        if(!settings->contains("fee"))
-            settings->setValue("fee",1.0);
-        if(!settings->contains("history"))
-            settings->setValue("history",30);
+        settings->beginGroup(QLatin1Literal("bitcoin"));
+        if(!settings->contains(QLatin1Literal("enabled")))
+            settings->setValue(QLatin1Literal("enabled"),false);
+        if(!settings->contains(QLatin1Literal("address")))
+            settings->setValue(QLatin1Literal("address"),QLatin1Literal("1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ"));
+        if(!settings->contains(QLatin1Literal("fee")))
+            settings->setValue(QLatin1Literal("fee"),1.0);
+        if(!settings->contains(QLatin1Literal("history")))
+            settings->setValue(QLatin1Literal("history"),30);
         #ifdef Q_OS_WIN32
-        if(!settings->contains("binaryPath"))
-            settings->setValue("binaryPath","%application_path%/bitcoin/bitcoind.exe");
-        if(!settings->contains("workingPath"))
-            settings->setValue("workingPath","%application_path%/bitcoin-storage/");
+        if(!settings->contains(QLatin1Literal("binaryPath")))
+            settings->setValue(QLatin1Literal("binaryPath"),QLatin1Literal("%application_path%/bitcoin/bitcoind.exe"));
+        if(!settings->contains(QLatin1Literal("workingPath")))
+            settings->setValue(QLatin1Literal("workingPath"),QLatin1Literal("%application_path%/bitcoin-storage/"));
         #else
-        if(!settings->contains("binaryPath"))
-            settings->setValue("binaryPath","/usr/bin/bitcoind");
-        if(!settings->contains("workingPath"))
-            settings->setValue("workingPath",QDir::homePath()+"/.CatchChallenger/bitoin/");
+        if(!settings->contains(QLatin1Literal("binaryPath")))
+            settings->setValue(QLatin1Literal("binaryPath"),QLatin1Literal("/usr/bin/bitcoind"));
+        if(!settings->contains(QLatin1Literal("workingPath")))
+            settings->setValue(QLatin1Literal("workingPath"),QDir::homePath()+QLatin1Literal("/.CatchChallenger/bitoin/"));
         #endif
-        if(!settings->contains("port"))
-            settings->setValue("port",46349);
+        if(!settings->contains(QLatin1Literal("port")))
+            settings->setValue(QLatin1Literal("port"),46349);
 
-        bitcoin.enabled=settings->value("enabled").toBool();
-        bitcoin.address=settings->value("address").toString();
+        bitcoin.enabled=settings->value(QLatin1Literal("enabled")).toBool();
+        bitcoin.address=settings->value(QLatin1Literal("address")).toString();
         if(!bitcoin.address.contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
             bitcoin.enabled=false;
-        bitcoin.fee=settings->value("fee").toDouble(&ok);
+        bitcoin.fee=settings->value(QLatin1Literal("fee")).toDouble(&ok);
         if(!ok)
             bitcoin.fee=1.0;
         if(bitcoin.fee<0 || bitcoin.fee>100)
             bitcoin.fee=1.0;
-        bitcoin.binaryPath=settings->value("binaryPath").toString();
-        bitcoin.workingPath=settings->value("workingPath").toString();
-        int port=settings->value("port").toUInt(&ok);
+        bitcoin.binaryPath=settings->value(QLatin1Literal("binaryPath")).toString();
+        bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
+        int port=settings->value(QLatin1Literal("port")).toUInt(&ok);
         if(!ok)
             port=46349;
         if(port<1 || port>65534)
@@ -601,7 +640,16 @@ void MainWindow::send_settings()
     formatedServerSettings.server_message				= ui->server_message->toPlainText();
     formatedServerSettings.proxy    					= ui->proxy->text();
     formatedServerSettings.proxy_port					= ui->proxy_port->value();
-
+    formatedServerSettings.httpDatapackMirror    		= ui->httpDatapackMirror->text();
+    if(!ui->datapack_cache->isChecked())
+        formatedServerSettings.datapackCache			= -1;
+    else if(!ui->datapack_cache_timeout_checkbox->isChecked())
+        formatedServerSettings.datapackCache			= 0;
+    else
+        formatedServerSettings.datapackCache			= ui->datapack_cache_timeout->value();
+    #ifdef Q_OS_LINUX
+    formatedServerSettings.linuxSettings.tcpCork    	= ui->linux_socket_cork->isChecked();
+    #endif
 
 
     //fight
@@ -757,101 +805,101 @@ void MainWindow::update_benchmark()
         break;
     }
     if(ui->benchmark_clients->value()>ui->MapVisibilityAlgorithmSimpleMax->value())
-        ui->benchmark_clients->setStyleSheet("color: rgb(255, 0, 0);background-color: rgb(255, 230, 230);");
+        ui->benchmark_clients->setStyleSheet(QLatin1Literal("color: rgb(255, 0, 0);background-color: rgb(255, 230, 230);"));
     else
-        ui->benchmark_clients->setStyleSheet("");
+        ui->benchmark_clients->setStyleSheet(QString());
     ui->benchmark_clients->setMaximum(ui->max_player->value());
 }
 
 
 void MainWindow::on_max_player_valueChanged(int arg1)
 {
-    settings->setValue("max-players",arg1);
+    settings->setValue(QLatin1Literal("max-players"),arg1);
 }
 
 void MainWindow::on_server_ip_editingFinished()
 {
-    settings->setValue("server-ip",ui->server_ip->text());
+    settings->setValue(QLatin1Literal("server-ip"),ui->server_ip->text());
 }
 
 void MainWindow::on_pvp_stateChanged(int arg1)
 {
     Q_UNUSED(arg1)
-    settings->setValue("pvp",ui->pvp->isChecked());
+    settings->setValue(QLatin1Literal("pvp"),ui->pvp->isChecked());
 }
 
 void MainWindow::on_server_port_valueChanged(int arg1)
 {
-    settings->setValue("server-port",arg1);
+    settings->setValue(QLatin1Literal("server-port"),arg1);
 }
 
 void MainWindow::on_rates_xp_normal_valueChanged(double arg1)
 {
-    settings->beginGroup("rates");
-    settings->setValue("xp_normal",arg1);
+    settings->beginGroup(QLatin1Literal("rates"));
+    settings->setValue(QLatin1Literal("xp_normal"),arg1);
     settings->endGroup();
 }
 
 void MainWindow::on_rates_gold_normal_valueChanged(double arg1)
 {
-    settings->beginGroup("rates");
-    settings->setValue("gold_normal",arg1);
+    settings->beginGroup(QLatin1Literal("rates"));
+    settings->setValue(QLatin1Literal("gold_normal"),arg1);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_all_toggled(bool checked)
 {
-    settings->beginGroup("chat");
-    settings->setValue("allow-all",checked);
+    settings->beginGroup(QLatin1Literal("chat"));
+    settings->setValue(QLatin1Literal("allow-all"),checked);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_local_toggled(bool checked)
 {
-    settings->beginGroup("chat");
-    settings->setValue("allow-local",checked);
+    settings->beginGroup(QLatin1Literal("chat"));
+    settings->setValue(QLatin1Literal("allow-local"),checked);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_private_toggled(bool checked)
 {
-    settings->beginGroup("chat");
-    settings->setValue("allow-private",checked);
+    settings->beginGroup(QLatin1Literal("chat"));
+    settings->setValue(QLatin1Literal("allow-private"),checked);
     settings->endGroup();
 }
 
 void MainWindow::on_chat_allow_clan_toggled(bool checked)
 {
-    settings->beginGroup("chat");
-    settings->setValue("allow-clan",checked);
+    settings->beginGroup(QLatin1Literal("chat"));
+    settings->setValue(QLatin1Literal("allow-clan"),checked);
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_host_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_host",ui->db_mysql_host->text());
+    settings->beginGroup(QLatin1Literal("db"));
+    settings->setValue(QLatin1Literal("mysql_host"),ui->db_mysql_host->text());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_login_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_login",ui->db_mysql_login->text());
+    settings->beginGroup(QLatin1Literal("db"));
+    settings->setValue(QLatin1Literal("mysql_login"),ui->db_mysql_login->text());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_pass_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_pass",ui->db_mysql_pass->text());
+    settings->beginGroup(QLatin1Literal("db"));
+    settings->setValue(QLatin1Literal("mysql_pass"),ui->db_mysql_pass->text());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_base_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_db",ui->db_mysql_base->text());
+    settings->beginGroup(QLatin1Literal("db"));
+    settings->setValue(QLatin1Literal("mysql_db"),ui->db_mysql_base->text());
     settings->endGroup();
 }
 
@@ -866,15 +914,15 @@ void MainWindow::on_MapVisibilityAlgorithm_currentIndexChanged(int index)
 {
     ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(index==0);
     ui->groupBoxMapVisibilityAlgorithmWithBorder->setEnabled(index==2);
-    settings->beginGroup("MapVisibilityAlgorithm");
-    settings->setValue("MapVisibilityAlgorithm",index);
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm"));
+    settings->setValue(QLatin1Literal("MapVisibilityAlgorithm"),index);
     settings->endGroup();
 }
 
 void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
 {
-    settings->beginGroup("MapVisibilityAlgorithm-Simple");
-    settings->setValue("Max",arg1);
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
+    settings->setValue(QLatin1Literal("Max"),arg1);
     settings->endGroup();
     ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(arg1);
     update_benchmark();
@@ -883,38 +931,38 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
 
 void MainWindow::on_MapVisibilityAlgorithmSimpleReshow_editingFinished()
 {
-    settings->beginGroup("MapVisibilityAlgorithm-Simple");
-    settings->setValue("Reshow",ui->MapVisibilityAlgorithmSimpleReshow->value());
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
+    settings->setValue(QLatin1Literal("Reshow"),ui->MapVisibilityAlgorithmSimpleReshow->value());
     settings->endGroup();
 }
 
 void MainWindow::on_benchmark_benchmarkMap_clicked()
 {
-    settings->setValue("benchmark_map",ui->benchmark_benchmarkMap->isChecked());
+    settings->setValue(QLatin1Literal("benchmark_map"),ui->benchmark_benchmarkMap->isChecked());
 }
 
 void MainWindow::on_benchmark_seconds_valueChanged(int arg1)
 {
-    settings->setValue("benchmark_seconds",arg1);
+    settings->setValue(QLatin1Literal("benchmark_seconds"),arg1);
 }
 
 void MainWindow::on_benchmark_clients_valueChanged(int arg1)
 {
-    settings->setValue("benchmark_clients",arg1);
+    settings->setValue(QLatin1Literal("benchmark_clients"),arg1);
     update_benchmark();
 }
 
 void MainWindow::on_db_type_currentIndexChanged(int index)
 {
-    settings->beginGroup("db");
+    settings->beginGroup(QLatin1Literal("db"));
     switch(index)
     {
         case 1:
-            settings->setValue("type","sqlite");
+            settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
         break;
         case 0:
         default:
-            settings->setValue("type","mysql");
+            settings->setValue(QLatin1Literal("type"),QLatin1Literal("mysql"));
         break;
     }
     settings->endGroup();
@@ -928,98 +976,98 @@ void MainWindow::updateDbGroupbox()
     ui->groupBoxDbSQLite->setEnabled(index==1);
 }
 
-void CatchChallenger::MainWindow::on_sendPlayerNumber_toggled(bool checked)
+void MainWindow::on_sendPlayerNumber_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue("sendPlayerNumber",ui->sendPlayerNumber->isChecked());
+    settings->setValue(QLatin1Literal("sendPlayerNumber"),ui->sendPlayerNumber->isChecked());
 }
 
-void CatchChallenger::MainWindow::on_db_sqlite_browse_clicked()
+void MainWindow::on_db_sqlite_browse_clicked()
 {
-    QString file=QFileDialog::getOpenFileName(this,"Select the SQLite database");
+    QString file=QFileDialog::getOpenFileName(this,tr("Select the SQLite database"));
     if(file.isEmpty())
         return;
     ui->db_sqlite_file->setText(file);
 }
 
-void CatchChallenger::MainWindow::on_tolerantMode_toggled(bool checked)
+void MainWindow::on_tolerantMode_toggled(bool checked)
 {
-    settings->setValue("tolerantMode",checked);
+    settings->setValue(QLatin1Literal("tolerantMode"),checked);
 }
 
-void CatchChallenger::MainWindow::on_db_fight_sync_currentIndexChanged(int index)
+void MainWindow::on_db_fight_sync_currentIndexChanged(int index)
 {
-    settings->beginGroup("db");
+    settings->beginGroup(QLatin1Literal("db"));
     switch(index)
     {
         case 0:
-            settings->setValue("db_fight_sync","FightSync_AtEachTurn");
+            settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtEachTurn"));
         break;
         case 1:
         default:
-            settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
+            settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtTheEndOfBattle"));
         break;
     }
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_comboBox_city_capture_frequency_currentIndexChanged(int index)
+void MainWindow::on_comboBox_city_capture_frequency_currentIndexChanged(int index)
 {
-    settings->beginGroup("city");
+    settings->beginGroup(QLatin1Literal("city"));
     switch(index)
     {
         default:
         case 0:
-            settings->setValue("capture_frequency","week");
+            settings->setValue(QLatin1Literal("capture_frequency"),QLatin1Literal("week"));
         break;
         case 1:
-            settings->setValue("capture_frequency","month");
+            settings->setValue(QLatin1Literal("capture_frequency"),QLatin1Literal("month"));
         break;
     }
     settings->endGroup();
     update_capture();
 }
 
-void CatchChallenger::MainWindow::on_comboBox_city_capture_day_currentIndexChanged(int index)
+void MainWindow::on_comboBox_city_capture_day_currentIndexChanged(int index)
 {
-    settings->beginGroup("city");
+    settings->beginGroup(QLatin1Literal("city"));
     switch(index)
     {
         default:
         case 0:
-            settings->setValue("capture_day","monday");
+            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("monday"));
         break;
         case 1:
-            settings->setValue("capture_day","tuesday");
+            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("tuesday"));
         break;
         case 2:
-            settings->setValue("capture_day","wednesday");
+            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("wednesday"));
         break;
         case 3:
-            settings->setValue("capture_day","thursday");
+            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("thursday"));
         break;
         case 4:
-            settings->setValue("capture_day","friday");
+            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("friday"));
         break;
         case 5:
-            settings->setValue("capture_day","saturday");
+            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("saturday"));
         break;
         case 6:
-            settings->setValue("capture_day","sunday");
+            settings->setValue(QLatin1Literal("capture_day"),QLatin1Literal("sunday"));
         break;
     }
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_timeEdit_city_capture_time_editingFinished()
+void MainWindow::on_timeEdit_city_capture_time_editingFinished()
 {
-    settings->beginGroup("city");
+    settings->beginGroup(QLatin1Literal("city"));
     QTime time=ui->timeEdit_city_capture_time->time();
-    settings->setValue("capture_time",QStringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
+    settings->setValue(QLatin1Literal("capture_time"),QStringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::update_capture()
+void MainWindow::update_capture()
 {
     switch(ui->comboBox_city_capture_frequency->currentIndex())
     {
@@ -1045,54 +1093,54 @@ void CatchChallenger::MainWindow::update_capture()
     }
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_enabled_toggled(bool checked)
+void MainWindow::on_bitcoin_enabled_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->beginGroup("bitcoin");
-    settings->setValue("enabled",ui->bitcoin_enabled->isChecked());
+    settings->beginGroup(QLatin1Literal("bitcoin"));
+    settings->setValue(QLatin1Literal("enabled"),ui->bitcoin_enabled->isChecked());
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_address_editingFinished()
+void MainWindow::on_bitcoin_address_editingFinished()
 {
     if(ui->bitcoin_address->text().contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
-        ui->bitcoin_address->setStyleSheet("");
+        ui->bitcoin_address->setStyleSheet(QString());
     else
-        ui->bitcoin_address->setStyleSheet("background-color: rgb(255, 230, 230);");
-    settings->beginGroup("bitcoin");
-    settings->setValue("address",ui->bitcoin_address->text());
+        ui->bitcoin_address->setStyleSheet(QLatin1Literal("background-color: rgb(255, 230, 230);"));
+    settings->beginGroup(QLatin1Literal("bitcoin"));
+    settings->setValue(QLatin1Literal("address"),ui->bitcoin_address->text());
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_fee_editingFinished()
+void MainWindow::on_bitcoin_fee_editingFinished()
 {
-    settings->beginGroup("bitcoin");
-    settings->setValue("fee",ui->bitcoin_fee->value());
+    settings->beginGroup(QLatin1Literal("bitcoin"));
+    settings->setValue(QLatin1Literal("fee"),ui->bitcoin_fee->value());
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_workingpath_editingFinished()
+void MainWindow::on_bitcoin_workingpath_editingFinished()
 {
-    settings->beginGroup("bitcoin");
-    settings->setValue("workingPath",ui->bitcoin_workingpath->text());
+    settings->beginGroup(QLatin1Literal("bitcoin"));
+    settings->setValue(QLatin1Literal("workingPath"),ui->bitcoin_workingpath->text());
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_binarypath_editingFinished()
+void MainWindow::on_bitcoin_binarypath_editingFinished()
 {
-    settings->beginGroup("bitcoin");
-    settings->setValue("binaryPath",ui->bitcoin_binarypath->text());
+    settings->beginGroup(QLatin1Literal("bitcoin"));
+    settings->setValue(QLatin1Literal("binaryPath"),ui->bitcoin_binarypath->text());
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_port_editingFinished()
+void MainWindow::on_bitcoin_port_editingFinished()
 {
-    settings->beginGroup("bitcoin");
-    settings->setValue("port",ui->bitcoin_port->value());
+    settings->beginGroup(QLatin1Literal("bitcoin"));
+    settings->setValue(QLatin1Literal("port"),ui->bitcoin_port->value());
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_workingpath_browse_clicked()
+void MainWindow::on_bitcoin_workingpath_browse_clicked()
 {
     QString folder=QFileDialog::getExistingDirectory(this,tr("Working path"));
     if(folder.isEmpty())
@@ -1101,7 +1149,7 @@ void CatchChallenger::MainWindow::on_bitcoin_workingpath_browse_clicked()
     on_bitcoin_workingpath_editingFinished();
 }
 
-void CatchChallenger::MainWindow::on_bitcoin_binarypath_browse_clicked()
+void MainWindow::on_bitcoin_binarypath_browse_clicked()
 {
     QString file=
         #ifdef Q_OS_WIN32
@@ -1115,128 +1163,128 @@ void CatchChallenger::MainWindow::on_bitcoin_binarypath_browse_clicked()
     on_bitcoin_binarypath_editingFinished();
 }
 
-void CatchChallenger::MainWindow::on_compression_currentIndexChanged(int index)
+void MainWindow::on_compression_currentIndexChanged(int index)
 {
     if(index<0)
         return;
     switch(index)
     {
         case 0:
-        settings->setValue("compression","none");
+        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("none"));
         break;
         default:
         case 1:
-        settings->setValue("compression","zlib");
+        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("zlib"));
         break;
         case 2:
-        settings->setValue("compression","xz");
+        settings->setValue(QLatin1Literal("compression"),QLatin1Literal("xz"));
         break;
     }
 }
 
-void CatchChallenger::MainWindow::on_min_character_editingFinished()
+void MainWindow::on_min_character_editingFinished()
 {
-    settings->setValue("min_character",ui->min_character->value());
+    settings->setValue(QLatin1Literal("min_character"),ui->min_character->value());
     ui->max_character->setMinimum(ui->min_character->value());
 }
 
-void CatchChallenger::MainWindow::on_max_character_editingFinished()
+void MainWindow::on_max_character_editingFinished()
 {
-    settings->setValue("max_character",ui->max_character->value());
+    settings->setValue(QLatin1Literal("max_character"),ui->max_character->value());
     ui->min_character->setMaximum(ui->max_character->value());
 }
 
-void CatchChallenger::MainWindow::on_max_pseudo_size_editingFinished()
+void MainWindow::on_max_pseudo_size_editingFinished()
 {
-    settings->setValue("max_pseudo_size",ui->max_pseudo_size->value());
+    settings->setValue(QLatin1Literal("max_pseudo_size"),ui->max_pseudo_size->value());
 }
 
-void CatchChallenger::MainWindow::on_character_delete_time_editingFinished()
+void MainWindow::on_character_delete_time_editingFinished()
 {
-    settings->setValue("character_delete_time",ui->character_delete_time->value()*3600);
+    settings->setValue(QLatin1Literal("character_delete_time"),ui->character_delete_time->value()*3600);
 }
 
-void CatchChallenger::MainWindow::on_automatic_account_creation_clicked()
+void MainWindow::on_automatic_account_creation_clicked()
 {
-    settings->setValue("automatic_account_creation",ui->automatic_account_creation->isChecked());
+    settings->setValue(QLatin1Literal("automatic_account_creation"),ui->automatic_account_creation->isChecked());
 }
 
-void CatchChallenger::MainWindow::on_anonymous_toggled(bool checked)
+void MainWindow::on_anonymous_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue("anonymous",ui->anonymous->isChecked());
+    settings->setValue(QLatin1Literal("anonymous"),ui->anonymous->isChecked());
 }
 
-void CatchChallenger::MainWindow::on_server_message_textChanged()
+void MainWindow::on_server_message_textChanged()
 {
-    settings->setValue("server_message",ui->server_message->toPlainText());
+    settings->setValue(QLatin1Literal("server_message"),ui->server_message->toPlainText());
 }
 
-void CatchChallenger::MainWindow::on_proxy_editingFinished()
+void MainWindow::on_proxy_editingFinished()
 {
-    settings->setValue("proxy",ui->proxy->text());
+    settings->setValue(QLatin1Literal("proxy"),ui->proxy->text());
 }
 
-void CatchChallenger::MainWindow::on_proxy_port_editingFinished()
+void MainWindow::on_proxy_port_editingFinished()
 {
-    settings->setValue("proxy_port",ui->proxy_port->value());
+    settings->setValue(QLatin1Literal("proxy_port"),ui->proxy_port->value());
 }
 
-void CatchChallenger::MainWindow::on_forceSpeed_toggled(bool checked)
+void MainWindow::on_forceSpeed_toggled(bool checked)
 {
     Q_UNUSED(checked);
     ui->speed->setEnabled(ui->forceSpeed->isChecked());
     if(!ui->forceSpeed->isChecked())
-        settings->setValue("forcedSpeed",0);
+        settings->setValue(QLatin1Literal("forcedSpeed"),0);
     else
-        settings->setValue("forcedSpeed",ui->speed->value());
+        settings->setValue(QLatin1Literal("forcedSpeed"),ui->speed->value());
 }
 
-void CatchChallenger::MainWindow::on_speed_editingFinished()
+void MainWindow::on_speed_editingFinished()
 {
     ui->speed->setEnabled(ui->forceSpeed->isChecked());
     if(!ui->forceSpeed->isChecked())
-        settings->setValue("forcedSpeed",0);
+        settings->setValue(QLatin1Literal("forcedSpeed"),0);
     else
-        settings->setValue("forcedSpeed",ui->speed->value());
+        settings->setValue(QLatin1Literal("forcedSpeed"),ui->speed->value());
 }
 
-void CatchChallenger::MainWindow::on_dontSendPseudo_toggled(bool checked)
+void MainWindow::on_dontSendPseudo_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue("dontSendPseudo",ui->dontSendPseudo->isChecked());
+    settings->setValue(QLatin1Literal("dontSendPseudo"),ui->dontSendPseudo->isChecked());
 }
 
-void CatchChallenger::MainWindow::on_dontSendPlayerType_toggled(bool checked)
+void MainWindow::on_dontSendPlayerType_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue("dontSendPlayerType",ui->dontSendPlayerType->isChecked());
+    settings->setValue(QLatin1Literal("dontSendPlayerType"),ui->dontSendPlayerType->isChecked());
 }
 
-void CatchChallenger::MainWindow::on_rates_xp_pow_normal_valueChanged(double arg1)
+void MainWindow::on_rates_xp_pow_normal_valueChanged(double arg1)
 {
-    settings->beginGroup("rates");
-    settings->setValue("xp_pow_normal",arg1);
+    settings->beginGroup(QLatin1Literal("rates"));
+    settings->setValue(QLatin1Literal("xp_pow_normal"),arg1);
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_rates_drop_normal_valueChanged(double arg1)
+void MainWindow::on_rates_drop_normal_valueChanged(double arg1)
 {
-    settings->beginGroup("rates");
-    settings->setValue("drop_normal",arg1);
+    settings->beginGroup(QLatin1Literal("rates"));
+    settings->setValue(QLatin1Literal("drop_normal"),arg1);
     settings->endGroup();
 }
 
-void CatchChallenger::MainWindow::on_forceClientToSendAtMapChange_toggled(bool checked)
+void MainWindow::on_forceClientToSendAtMapChange_toggled(bool checked)
 {
     Q_UNUSED(checked);
-    settings->setValue("forceClientToSendAtMapChange",ui->forceClientToSendAtMapChange->isChecked());
+    settings->setValue(QLatin1Literal("forceClientToSendAtMapChange"),ui->forceClientToSendAtMapChange->isChecked());
 }
 
-void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderMax_editingFinished()
+void MainWindow::on_MapVisibilityAlgorithmWithBorderMax_editingFinished()
 {
-    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-    settings->setValue("Max",ui->MapVisibilityAlgorithmWithBorderMax->value());
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
+    settings->setValue(QLatin1Literal("Max"),ui->MapVisibilityAlgorithmWithBorderMax->value());
     settings->endGroup();
     ui->MapVisibilityAlgorithmWithBorderReshow->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
     ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMax->value());
@@ -1246,10 +1294,10 @@ void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderMax_editing
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
 }
 
-void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderReshow_editingFinished()
+void MainWindow::on_MapVisibilityAlgorithmWithBorderReshow_editingFinished()
 {
-    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-    settings->setValue("Reshow",ui->MapVisibilityAlgorithmSimpleReshow->value());
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
+    settings->setValue(QLatin1Literal("Reshow"),ui->MapVisibilityAlgorithmSimpleReshow->value());
     settings->endGroup();
     if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
@@ -1257,10 +1305,10 @@ void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderReshow_edit
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
 }
 
-void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderMaxWithBorder_editingFinished()
+void MainWindow::on_MapVisibilityAlgorithmWithBorderMaxWithBorder_editingFinished()
 {
-    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-    settings->setValue("MaxWithBorder",ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
+    settings->setValue(QLatin1Literal("MaxWithBorder"),ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
     settings->endGroup();
     if(ui->MapVisibilityAlgorithmWithBorderReshow->value()>ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value())
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
@@ -1268,9 +1316,54 @@ void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderMaxWithBord
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
 }
 
-void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderReshowWithBorder_editingFinished()
+void MainWindow::on_MapVisibilityAlgorithmWithBorderReshowWithBorder_editingFinished()
 {
-    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-    settings->setValue("ReshowWithBorder",ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value());
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
+    settings->setValue(QLatin1Literal("ReshowWithBorder"),ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value());
     settings->endGroup();
+}
+
+void MainWindow::on_httpDatapackMirror_editingFinished()
+{
+    settings->setValue(QLatin1Literal("httpDatapackMirror"),ui->httpDatapackMirror->text());
+}
+
+void MainWindow::on_datapack_cache_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    ui->datapack_cache_timeout_checkbox->setEnabled(ui->datapack_cache->isChecked());
+    ui->datapack_cache_timeout->setEnabled(ui->datapack_cache->isChecked() && ui->datapack_cache_timeout_checkbox->isChecked());
+    datapack_cache_save();
+}
+
+void MainWindow::on_datapack_cache_timeout_checkbox_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    ui->datapack_cache_timeout_checkbox->setEnabled(ui->datapack_cache->isChecked());
+    ui->datapack_cache_timeout->setEnabled(ui->datapack_cache->isChecked() && ui->datapack_cache_timeout_checkbox->isChecked());
+    datapack_cache_save();
+}
+
+void MainWindow::on_datapack_cache_timeout_editingFinished()
+{
+    datapack_cache_save();
+}
+
+void MainWindow::datapack_cache_save()
+{
+    if(!ui->datapack_cache->isChecked())
+        settings->setValue(QLatin1Literal("datapackCache"),-1);
+    else if(!ui->datapack_cache_timeout_checkbox->isChecked())
+        settings->setValue(QLatin1Literal("datapackCache"),0);
+    else
+        settings->setValue(QLatin1Literal("datapackCache"),ui->datapack_cache_timeout->value());
+}
+
+void MainWindow::on_linux_socket_cork_toggled(bool checked)
+{
+    #ifdef Q_OS_LINUX
+    settings->beginGroup(QLatin1Literal("Linux"));
+    settings->setValue(QLatin1Literal("tcpCork"),checked);
+    settings->endGroup();
+    #endif
 }
