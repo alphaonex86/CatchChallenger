@@ -72,7 +72,13 @@ void InternetUpdater::downloadFile()
 void InternetUpdater::httpFinished()
 {
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    if(reply->error())
+    if (!reply->isFinished())
+    {
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: not finished"));
+        reply->deleteLater();
+        return;
+    }
+    else if(reply->error())
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
