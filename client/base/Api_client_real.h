@@ -10,9 +10,11 @@
 #include <QList>
 #include <QPair>
 #include <QDir>
+#include <QHash>
 #include <QFileInfo>
 #include <QDateTime>
 #include <QCryptographicHash>
+#include <QNetworkAccessManager>
 
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
@@ -60,9 +62,19 @@ private:
     bool wait_datapack_content;
     QStringList datapackFilesList;
     static QString text_slash;
+    bool httpMode,httpError;
+    QNetworkAccessManager qnam;
+    struct UrlInWaiting
+    {
+        QString fileName;
+        quint64 mtime;
+    };
+    QHash<QNetworkReply *,UrlInWaiting> urlInWaitingList;
 private slots:
     void disconnected();
     void writeNewFile(const QString &fileName, const QByteArray &data, const quint64 &mtime);
+    void getHttpFile(const QString &url, const QString &fileName, const quint64 &mtime);
+    void httpFinished();
 signals:
     void newDatapackFile(const quint32 &size) const;
 };
