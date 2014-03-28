@@ -89,10 +89,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     #endif
     QByteArray login,pass;
     {
-        QCryptographicHash hash(QCryptographicHash::Sha512);
+        QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(login_org.toHex());
         login=hash.result();
-        QCryptographicHash hash2(QCryptographicHash::Sha512);
+        QCryptographicHash hash2(QCryptographicHash::Sha224);
         hash2.addData(pass_org.toHex());
         pass=hash2.result();
     }

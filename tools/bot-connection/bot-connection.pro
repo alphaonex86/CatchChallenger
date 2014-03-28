@@ -1,5 +1,7 @@
 include(../../general/general.pri)
 include(../../server/catchchallenger-server.pri)
+include(../../client/base/client.pri)
+include(../../client/base/multi.pri)
 
 QT       += core gui xml network sql
 

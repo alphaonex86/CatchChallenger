@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QObject>
 #include <QTimer>
+#include <QList>
 #include <QSemaphore>
 #include <QByteArray>
 #include <QSettings>
@@ -11,43 +12,54 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/ConnectedSocket.h"
-#include "../../server/base/Api_client_virtual.h"
+#include "../../general/base/CommonDatapack.h"
+#include "../../client/base/Api_client_real.h"
 
 namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow, public CatchChallenger::MoveOnTheMap
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    void show_details();
-    QSslSocket *sslSocket;
-    CatchChallenger::ConnectedSocket socket;
 private:
-    CatchChallenger::Api_client_virtual api;
-    //debug
-    bool details;
+    struct CatchChallengerClient
+    {
+        QSslSocket *sslSocket;
+        CatchChallenger::ConnectedSocket *socket;
+        CatchChallenger::Api_client_real *api;
+        bool have_informations;
+        bool haveShowDisconnectionReason;
+        CatchChallenger::Direction direction;
+        QList<CatchChallenger::CharacterEntry> charactersList;
+        quint16 number;
+        QString login;
+        bool selectedCharacter;
+    };
+    QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
+    QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
+    QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
 
-    static int index_loop,loop_size;
-    bool have_informations;
     QSettings settings;
-    bool haveShowDisconnectionReason;
     QTimer moveTimer;
     QTimer textTimer;
+    QFileInfoList skinsList;
+    quint16 number;
+    QSet<quint32> characterOnMap;
+    quint16 numberOfBotConnected;
+    quint16 numberOfSelectedCharacter;
 public slots:
-    void stop_move();
     void doMove();
     void doText();
-    void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &the_new_direction);
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
 private slots:
+    CatchChallengerClient * createClient();
     void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     void haveCharacter();
     void logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList);
@@ -59,7 +71,8 @@ private slots:
     void on_connect_clicked();
     void sslErrors(const QList<QSslError> &errors);
     void on_characterSelect_clicked();
-
+    void haveTheDatapack();
+    void newCharacterId(const quint32 &characterId);
 signals:
     void isDisconnected();
 private:

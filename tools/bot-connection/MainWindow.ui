@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>448</width>
-    <height>358</height>
+    <width>439</width>
+    <height>530</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -104,6 +104,40 @@
         </layout>
        </item>
        <item>
+        <widget class="QCheckBox" name="multipleConnexion">
+         <property name="text">
+          <string>Multiple connexion where %NUMBER% into login change</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Connexion count:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="connexionCount">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>999</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
           <string>Proxy</string>
@@ -154,23 +188,34 @@
       <property name="title">
        <string>Character</string>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
-        <widget class="QComboBox" name="characterList">
-         <property name="enabled">
-          <bool>false</bool>
+        <widget class="QCheckBox" name="autoCreateCharacter">
+         <property name="text">
+          <string>Autocreate if no one exists</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="characterSelect">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Select</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QComboBox" name="characterList">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="characterSelect">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Select</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -205,11 +250,67 @@
       </layout>
      </widget>
     </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox_5">
+      <property name="title">
+       <string>Connexion informations</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <widget class="QLabel" name="numberOfBotConnected">
+         <property name="text">
+          <string>Number of bot connected: ?</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="numberOfSelectedCharacter">
+         <property name="text">
+          <string>Selected character: ?</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>multipleConnexion</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_4</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>137</x>
+     <y>98</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>126</x>
+     <y>124</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>multipleConnexion</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>connexionCount</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>323</x>
+     <y>98</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>321</x>
+     <y>123</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
