@@ -165,57 +165,65 @@ void Api_client_real::disconnected()
 
 void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &data,const quint64 &mtime)
 {
-    QFile file(mDatapack+text_slash+fileName);
-    QFileInfo fileInfo(file);
+    const QString &fullPath=mDatapack+text_slash+fileName;
+    //to be sure the QFile is destroyed
+    {
+        QFile file(fullPath);
+        QFileInfo fileInfo(file);
 
-    QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
+        QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
 
-    if(file.exists())
-        if(!file.remove())
+        if(file.exists())
+            if(!file.remove())
+            {
+                DebugClass::debugConsole(QStringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+                return;
+            }
+        if(!file.open(QIODevice::WriteOnly))
         {
-            DebugClass::debugConsole(QStringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+            DebugClass::debugConsole(QStringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
             return;
         }
-    if(!file.open(QIODevice::WriteOnly))
-    {
-        DebugClass::debugConsole(QStringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
-        return;
-    }
-    if(file.write(data)!=data.size())
-    {
+        if(file.write(data)!=data.size())
+        {
+            file.close();
+            DebugClass::debugConsole(QStringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
+            return;
+        }
+        file.flush();
         file.close();
-        DebugClass::debugConsole(QStringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
-        return;
     }
-    file.close();
 
-    time_t actime=QFileInfo(file).lastRead().toTime_t();
-    //protect to wrong actime
-    if(actime<0)
-        actime=0;
-    time_t modtime=mtime;
-    if(modtime<0)
+    //set the modification time
     {
-        DebugClass::debugConsole(QStringLiteral("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
-        return;
-    }
-    emit newDatapackFile(data.size());
-    #ifdef Q_CC_GNU
-        //this function avalaible on unix and mingw
-        utimbuf butime;
-        butime.actime=actime;
-        butime.modtime=modtime;
-        int returnVal=utime(file.fileName().toLocal8Bit().data(),&butime);
-        if(returnVal==0)
-            return;
-        else
+        time_t actime=QFileInfo(fullPath).lastRead().toTime_t();
+        //protect to wrong actime
+        if(actime<0)
+            actime=0;
+        time_t modtime=mtime;
+        if(modtime<0)
         {
-            DebugClass::debugConsole(QStringLiteral("Can't set time: %1").arg(fileName));
+            DebugClass::debugConsole(QStringLiteral("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
             return;
         }
-    #else
-        #error "Not supported on this platform"
-    #endif
+        emit newDatapackFile(data.size());
+        #ifdef Q_CC_GNU
+            //this function avalaible on unix and mingw
+            utimbuf butime;
+            butime.actime=actime;
+            butime.modtime=modtime;
+            int returnVal=utime(fullPath.toLocal8Bit().data(),&butime);
+            if(returnVal==0)
+                return;
+            else
+            {
+                DebugClass::debugConsole(QStringLiteral("Can't set time: %1").arg(fileName));
+                return;
+            }
+        #else
+            #error "Not supported on this platform"
+        #endif
+    }
 }
 
 void Api_client_real::getHttpFile(const QString &url,const QString &fileName,const quint64 &mtime)
