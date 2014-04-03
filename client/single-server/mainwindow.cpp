@@ -261,6 +261,20 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
+    if(socketState==QAbstractSocket::ConnectedState)
+    {
+        #ifdef Q_OS_LINUX
+        qintptr socketDescriptor=realSocket->socketDescriptor();
+        if(socketDescriptor!=-1)
+        {
+            int state = 1;
+            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                qDebug() << QStringLiteral("Unable to apply tcp cork under linux");
+        }
+        else
+            qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");
+        #endif
+    }
     qDebug() << QStringLiteral("socketState:") << (int)socketState;
     if(socketState==QAbstractSocket::UnconnectedState)
     {

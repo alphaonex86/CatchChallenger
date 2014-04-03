@@ -27,7 +27,7 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket,QObject *parent) :
     connect(socket,&QSslSocket::encrypted,      this,&ConnectedSocket::encrypted,Qt::QueuedConnection);
     connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::connected,Qt::QueuedConnection);
     connect(socket,&QSslSocket::destroyed,      this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
-    connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::startHandshake,Qt::QueuedConnection);
+    //connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::startHandshake,Qt::QueuedConnection);
     connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
     connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
     connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection);
@@ -97,12 +97,12 @@ void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
         sslSocket->connectToHost(address,port);
 }
 
-void ConnectedSocket::startHandshake()
+/*void ConnectedSocket::startHandshake()
 {
-/*    if(sslSocket!=NULL)
+    if(sslSocket!=NULL)
         if(!sslSocket->isEncrypted())
-            sslSocket->startClientEncryption();*/
-}
+            sslSocket->startClientEncryption();
+}*/
 
 void ConnectedSocket::disconnectFromHost()
 {

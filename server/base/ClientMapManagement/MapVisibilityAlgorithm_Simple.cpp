@@ -402,7 +402,7 @@ void MapVisibilityAlgorithm_Simple::purgeBuffer()
 //for the purge buffer
 void MapVisibilityAlgorithm_Simple::send_insert()
 {
-    if(to_send_insert.size()==0)
+    if(to_send_insert.isEmpty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("send_insert() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
@@ -474,7 +474,7 @@ void MapVisibilityAlgorithm_Simple::send_insert()
 
 void MapVisibilityAlgorithm_Simple::send_move()
 {
-    if(to_send_move.size()==0)
+    if(to_send_move.isEmpty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("send_move() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
@@ -525,7 +525,7 @@ void MapVisibilityAlgorithm_Simple::send_move()
 
 void MapVisibilityAlgorithm_Simple::send_remove()
 {
-    if(to_send_remove.size()==0)
+    if(to_send_remove.isEmpty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("send_remove() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
@@ -564,7 +564,7 @@ void MapVisibilityAlgorithm_Simple::send_remove()
 
 void MapVisibilityAlgorithm_Simple::send_reinsert()
 {
-    if(to_send_reinsert.size()==0)
+    if(to_send_reinsert.isEmpty())
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("send_reinsert() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));

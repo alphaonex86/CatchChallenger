@@ -3,10 +3,10 @@
 using namespace CatchChallenger;
 
 ClientNetworkWrite::ClientNetworkWrite(Player_internal_informations *player_informations,ConnectedSocket * socket) :
-    ProtocolParsingOutput(socket,PacketModeTransmission_Server)
+    ProtocolParsingOutput(socket,PacketModeTransmission_Server),
+    socket(socket),
+    player_informations(player_informations)
 {
-    this->socket=socket;
-    this->player_informations=player_informations;
 }
 
 ClientNetworkWrite::~ClientNetworkWrite()
