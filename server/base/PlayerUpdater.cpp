@@ -3,10 +3,10 @@
 #include "GlobalServerData.h"
 
 using namespace CatchChallenger;
-PlayerUpdater::PlayerUpdater()
+PlayerUpdater::PlayerUpdater() :
+    connected_players(0),
+    sended_connected_players(0)
 {
-    connected_players=0;
-    sended_connected_players=0;
     next_send_timer.setSingleShot(true);
 
     //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=9*16*4=576B/s

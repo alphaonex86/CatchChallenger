@@ -34,20 +34,19 @@ public:
     QString getPseudo();
 private:
     bool ask_is_ready_to_stop;
+    quint8 stopped_object;
+    ConnectedSocket *socket;
     //-------------------
     Player_internal_informations player_informations;
-    ClientBroadCast *clientBroadCast;
-    ClientHeavyLoad *clientHeavyLoad;
+    ClientBroadCast clientBroadCast;
+    ClientHeavyLoad clientHeavyLoad;
+    ClientNetworkRead clientNetworkRead;
+    ClientNetworkWrite clientNetworkWrite;
+    LocalClientHandler localClientHandler;
+    ClientLocalBroadcast clientLocalBroadcast;
     ClientMapManagement *clientMapManagement;
-    ClientNetworkRead *clientNetworkRead;
-    ClientNetworkWrite *clientNetworkWrite;
-    LocalClientHandler *localClientHandler;
-    ClientLocalBroadcast *clientLocalBroadcast;
 
-    //socket related
-    ConnectedSocket *socket;
 
-    quint8 stopped_object;
 private slots:
     //socket related
     void connectionError(QAbstractSocket::SocketError);

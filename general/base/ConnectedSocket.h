@@ -52,7 +52,7 @@ signals:
 private slots:
     void destroyedSocket();
     void encrypted();
-    void startHandshake();
+    //void startHandshake();
 };
 }
 

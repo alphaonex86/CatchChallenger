@@ -92,6 +92,7 @@ BaseServer::BaseServer()
 
     GlobalServerData::serverSettings.httpDatapackMirror                         = QString();
     GlobalServerData::serverSettings.datapackCache                              = -1;
+    GlobalServerData::serverSettings.datapackCacheMtime                         = false;
     #ifdef Q_OS_LINUX
     GlobalServerData::serverSettings.linuxSettings.tcpCork                      = true;
     #endif
