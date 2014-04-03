@@ -33,10 +33,10 @@ QString ClientBroadCast::text_commaspace=QLatin1Literal(", ");
 QString ClientBroadCast::text_unabletofoundtheconnectedplayertokick=QLatin1Literal("unable to found the connected player to kick");
 QString ClientBroadCast::text_unabletofoundthisrightslevel=QLatin1Literal("unable to found this rights level: ");
 
-ClientBroadCast::ClientBroadCast()
+ClientBroadCast::ClientBroadCast():
+    connected_players(0),
+    clan(0)
 {
-    connected_players=0;
-    clan=0;
 }
 
 ClientBroadCast::~ClientBroadCast()

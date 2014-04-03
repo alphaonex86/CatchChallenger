@@ -811,17 +811,6 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         realSocket=NULL;
     }
     realSocket=new QSslSocket();
-    #ifdef Q_OS_LINUX
-    qintptr socketDescriptor=realSocket->socketDescriptor();
-    if(socketDescriptor!=-1)
-    {
-        int state = 1;
-        if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-            qDebug() << QStringLiteral("Unable to apply tcp cork under linux");
-    }
-    else
-        qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");
-    #endif
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
     if(!serverConnexion[selectedServer]->proxyHost.isEmpty())
@@ -876,6 +865,20 @@ QString MainWindow::serverToDatapachPath(ListEntryEnvolued * selectedServer) con
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
+    if(socketState==QAbstractSocket::ConnectedState && realSocket!=NULL)
+    {
+        #ifdef Q_OS_LINUX
+        qintptr socketDescriptor=realSocket->socketDescriptor();
+        if(socketDescriptor!=-1)
+        {
+            int state = 1;
+            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                qDebug() << QStringLiteral("Unable to apply tcp cork under linux");
+        }
+        else
+            qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");
+        #endif
+    }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
         if(!isVisible() && internalServer==NULL)

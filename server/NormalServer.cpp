@@ -122,7 +122,7 @@ void NormalServer::load_settings()
 //start with allow real player to connect
 void NormalServer::start_internal_server()
 {
-    if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() && !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
+    if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
     {
         QStringList args;
         args << "req" << "-newkey" << "rsa:4096" << "-sha512" << "-x509" << "-nodes" << "-days" << "3560" << "-out" << QCoreApplication::applicationDirPath()+"/server.crt"
@@ -693,6 +693,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("httpDatapackMirror"),QString());
     if(!settings->contains(QLatin1Literal("datapackCache")))
         settings->setValue(QLatin1Literal("datapackCache"),-1);
+    if(!settings->contains(QLatin1Literal("datapackCacheMtime")))
+        settings->setValue(QLatin1Literal("datapackCacheMtime"),false);
 
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));

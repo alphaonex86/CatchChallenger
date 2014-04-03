@@ -136,9 +136,9 @@ QByteArray lzmaUncompress(QByteArray data)
     return arr;
 }
 
-ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
+ProtocolParsing::ProtocolParsing(ConnectedSocket * socket) :
+    socket(socket)
 {
-    this->socket=socket;
     connect(socket,&ConnectedSocket::disconnected,this,&ProtocolParsing::reset,Qt::QueuedConnection);
 }
 
@@ -233,14 +233,15 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 }
 
 ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
-    ProtocolParsing(socket)
+    ProtocolParsing(socket),
+    canStartReadData(false),
+    haveData(false),
+    dataSize(0),
+    RXSize(0)
 {
-    canStartReadData=false;
-    RXSize=0;
     if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData))
         DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
-    dataClear();
 }
 
 bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data) const
@@ -273,9 +274,9 @@ quint64 ProtocolParsingInput::getRXSize() const
 }
 
 ProtocolParsingOutput::ProtocolParsingOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
-    ProtocolParsing(socket)
+    ProtocolParsing(socket),
+    TXSize(0)
 {
-    TXSize=0;
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
