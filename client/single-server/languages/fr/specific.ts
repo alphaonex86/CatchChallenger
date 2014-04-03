@@ -34,123 +34,123 @@
         <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Site&lt;/span&gt;&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="47"/>
+        <location filename="../../mainwindow.cpp" line="65"/>
         <source>Hidden server</source>
         <translation>Serveur caché</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="58"/>
+        <location filename="../../mainwindow.cpp" line="76"/>
         <source>Register</source>
         <translation>S&apos;enregistrer</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="59"/>
+        <location filename="../../mainwindow.cpp" line="77"/>
         <source>Web site</source>
         <translation>Site web</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="162"/>
+        <location filename="../../mainwindow.cpp" line="180"/>
         <source>Disconnected</source>
         <translation>Déconnecté</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="162"/>
+        <location filename="../../mainwindow.cpp" line="180"/>
         <source>Disconnected by the reason: %1</source>
         <translation>Déconnecté par la raison: %1</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="196"/>
-        <location filename="../../mainwindow.cpp" line="201"/>
-        <location filename="../../mainwindow.cpp" line="336"/>
+        <location filename="../../mainwindow.cpp" line="214"/>
+        <location filename="../../mainwindow.cpp" line="219"/>
+        <location filename="../../mainwindow.cpp" line="354"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="196"/>
+        <location filename="../../mainwindow.cpp" line="214"/>
         <source>Your password need to be at minimum of 6 characters</source>
         <translation>Votre mot de passe doit faire au moins 6 caractéres</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="201"/>
+        <location filename="../../mainwindow.cpp" line="219"/>
         <source>Your login need to be at minimum of 3 characters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="236"/>
+        <location filename="../../mainwindow.cpp" line="254"/>
         <source>Not able to create the folder %1</source>
         <translation>Impossible de créer le dossier %1</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="270"/>
-        <location filename="../../mainwindow.cpp" line="273"/>
-        <location filename="../../mainwindow.cpp" line="276"/>
-        <location filename="../../mainwindow.cpp" line="279"/>
-        <location filename="../../mainwindow.cpp" line="282"/>
-        <location filename="../../mainwindow.cpp" line="285"/>
         <location filename="../../mainwindow.cpp" line="288"/>
         <location filename="../../mainwindow.cpp" line="291"/>
         <location filename="../../mainwindow.cpp" line="294"/>
+        <location filename="../../mainwindow.cpp" line="297"/>
+        <location filename="../../mainwindow.cpp" line="300"/>
+        <location filename="../../mainwindow.cpp" line="303"/>
+        <location filename="../../mainwindow.cpp" line="306"/>
+        <location filename="../../mainwindow.cpp" line="309"/>
+        <location filename="../../mainwindow.cpp" line="312"/>
         <source>Connection closed</source>
         <translation>Connexion fermé</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="270"/>
+        <location filename="../../mainwindow.cpp" line="288"/>
         <source>Connection closed by the server</source>
         <translation>Connexion fermé par le serveur</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="273"/>
+        <location filename="../../mainwindow.cpp" line="291"/>
         <source>Connection refused by the server</source>
         <translation>Connexion refusé par le serveur</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="276"/>
+        <location filename="../../mainwindow.cpp" line="294"/>
         <source>Socket time out, server too long</source>
         <translation>Socket délais dépassé, server trop long</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="279"/>
+        <location filename="../../mainwindow.cpp" line="297"/>
         <source>The host address was not found.</source>
         <translation>L&apos;addresse de l&apos;hote n&apos;as pas été trouvé.</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="282"/>
+        <location filename="../../mainwindow.cpp" line="300"/>
         <source>The socket operation failed because the application lacked the required privileges.</source>
         <translation>L&apos;operation du socket à échoué par manque de privilége.</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="285"/>
+        <location filename="../../mainwindow.cpp" line="303"/>
         <source>The local system ran out of resources</source>
         <translation>Le systéme est à cour de ressources</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="288"/>
+        <location filename="../../mainwindow.cpp" line="306"/>
         <source>An error occurred with the network</source>
         <translation>Une erreur s&apos;est produite avec le réseau</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="291"/>
+        <location filename="../../mainwindow.cpp" line="309"/>
         <source>The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)</source>
         <translation>L&apos;operation sur le socket n&apos;est pas supporté par l&apos;OS (comme le manque du support de l&apos;IPv6)</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="294"/>
+        <location filename="../../mainwindow.cpp" line="312"/>
         <source>The SSL/TLS handshake failed, so the connection was closed</source>
         <translation>La négociation SSL/TLS à échoué, donc la connexion à été fermé</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="297"/>
+        <location filename="../../mainwindow.cpp" line="315"/>
         <source>Connection error</source>
         <translation>Erreur de connexion</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="297"/>
+        <location filename="../../mainwindow.cpp" line="315"/>
         <source>Connection error: %1</source>
         <translation>Erreur de connexion: %1</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="364"/>
-        <location filename="../../mainwindow.cpp" line="374"/>
+        <location filename="../../mainwindow.cpp" line="382"/>
+        <location filename="../../mainwindow.cpp" line="392"/>
         <source>Latest news:</source>
         <translation>Derniéres news:</translation>
     </message>

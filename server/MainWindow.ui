@@ -489,14 +489,14 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="7" column="0">
          <widget class="QCheckBox" name="datapack_cache_timeout_checkbox">
           <property name="text">
            <string>Datapack cache timeout:</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
+        <item row="7" column="1">
          <widget class="QSpinBox" name="datapack_cache_timeout">
           <property name="suffix">
            <string>s</string>
@@ -512,10 +512,17 @@
           </property>
          </widget>
         </item>
-        <item row="7" column="0">
+        <item row="8" column="0">
          <widget class="QCheckBox" name="linux_socket_cork">
           <property name="text">
            <string>Socket cork (linux only)</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QCheckBox" name="datapack_cache_mtime">
+          <property name="text">
+           <string>Datapack cache mtime</string>
           </property>
          </widget>
         </item>

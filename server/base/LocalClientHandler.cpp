@@ -33,13 +33,12 @@ QString LocalClientHandler::text_battle=QLatin1Literal("battle");
 QString LocalClientHandler::text_to=QLatin1Literal("to");
 QString LocalClientHandler::text_dotcomma=QLatin1Literal(";");
 
-LocalClientHandler::LocalClientHandler()
+LocalClientHandler::LocalClientHandler() :
+    otherPlayerTrade(NULL),
+    tradeIsValidated(false),
+    clan(NULL),
+    otherCityPlayerBattle(NULL)
 {
-    otherCityPlayerBattle=NULL;
-    otherPlayerTrade=NULL;
-    clan=NULL;
-    tradeIsValidated=false;
-
     connect(&localClientHandlerFight,&LocalClientHandlerFight::message,             this,&LocalClientHandler::message);
     connect(&localClientHandlerFight,&LocalClientHandlerFight::error,               this,&LocalClientHandler::error);
     connect(&localClientHandlerFight,&LocalClientHandlerFight::dbQuery,             this,&LocalClientHandler::dbQuery);

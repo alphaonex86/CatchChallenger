@@ -12,10 +12,10 @@ using namespace CatchChallenger;
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
 
-MapBasicMove::MapBasicMove()
+MapBasicMove::MapBasicMove() :
+    player_informations(NULL),
+    map(NULL)
 {
-    map=NULL;
-    player_informations=NULL;
 }
 
 MapBasicMove::~MapBasicMove()

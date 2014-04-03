@@ -41,7 +41,7 @@ public:
     static QSet<QString> extensionAllowed;
     static QHash<quint32,quint16> clanConnectedCount;
     static quint64 datapack_list_cache_timestamp;
-    static QSet<QString> datapack_file_list_cache;
+    static QHash<QString,quint32> datapack_file_list_cache;
     static QString single_quote;
     static QString antislash_single_quote;
     static QString text_dotslash;
@@ -70,8 +70,8 @@ public slots:
     virtual void deleteCharacterNow(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
-    QSet<QString> datapack_file_list();
-    QSet<QString> datapack_file_list_cached();
+    QHash<QString,quint32> datapack_file_list();
+    QHash<QString,quint32> datapack_file_list_cached();
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();

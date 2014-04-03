@@ -9,14 +9,13 @@ QRegularExpression ClientNetworkRead::commandRegExpWithArgs=QRegularExpression(Q
 QRegularExpression ClientNetworkRead::isolateTheMainCommand=QRegularExpression(QLatin1String("^ (.*)$"));
 
 ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,ConnectedSocket * socket) :
-    ProtocolParsingInput(socket,PacketModeTransmission_Server)
+    ProtocolParsingInput(socket,PacketModeTransmission_Server),
+    have_send_protocol(false),
+    is_logging_in_progess(false),
+    stopIt(false),
+    socket(socket),
+    player_informations(player_informations)
 {
-    have_send_protocol=false;
-    is_logging_in_progess=false;
-    stopIt=false;
-    this->player_informations=player_informations;
-    this->socket=socket;
-
     queryNumberList.reserve(256);
     int index=0;
     while(index<256)
