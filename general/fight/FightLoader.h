@@ -13,11 +13,11 @@ class FightLoader
 {
 public:
     static QList<Type> loadTypes(const QString &file);
-    static QHash<quint32,Monster> loadMonster(const QString &file, const QHash<quint32,Skill> &monsterSkills, const QList<Type> &types, const QHash<quint32, Item> &items);
+    static QHash<quint32,Monster> loadMonster(const QString &folder, const QHash<quint32,Skill> &monsterSkills, const QList<Type> &types, const QHash<quint32, Item> &items);
     static QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > loadMonsterEvolutionItems(const QHash<quint32,Monster> &monsters);
     static QHash<quint32/*item*/, QSet<quint32/*monster*/> > loadMonsterItemToLearn(const QHash<quint32,Monster> &monsters, const QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > &evolutionItem);
-    static QHash<quint32,Skill> loadMonsterSkill(const QString &file, const QHash<quint32,Buff> &monsterBuffs, const QList<Type> &types);
-    static QHash<quint32,Buff> loadMonsterBuff(const QString &file);
+    static QHash<quint32,Skill> loadMonsterSkill(const QString &folder, const QHash<quint32,Buff> &monsterBuffs, const QList<Type> &types);
+    static QHash<quint32,Buff> loadMonsterBuff(const QString &folder);
     static QHash<quint32,BotFight> loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills);
     static QList<PlayerMonster::PlayerSkill> loadDefaultAttack(const quint32 &monsterId, const quint8 &level, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills);
     static QString text_type;
@@ -29,6 +29,10 @@ public:
     static QString text_dotcoma;
     static QString text_list;
     static QString text_monster;
+    static QString text_monsters;
+    static QString text_dotxml;
+    static QString text_skills;
+    static QString text_buffs;
     static QString text_egg_step;
     static QString text_xp_for_max_level;
     static QString text_xp_max;

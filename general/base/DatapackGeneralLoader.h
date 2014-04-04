@@ -26,6 +26,7 @@ public:
     static LayersOptions loadLayersOptions(const QString &file);
 protected:
     static QString text_list;
+    static QString text_dotxml;
     static QString text_reputation;
     static QString text_type;
     static QString text_level;
