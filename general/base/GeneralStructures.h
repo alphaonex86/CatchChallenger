@@ -520,7 +520,8 @@ struct Buff
         enum EffectOn
         {
             EffectOn_HP,
-            EffectOn_Defense
+            EffectOn_Defense,
+            EffectOn_Attack
         };
         EffectOn on;
         qint32 quantity;

@@ -46,16 +46,20 @@ QString DatapackClientLoader::text_items=QLatin1Literal("items");
 QString DatapackClientLoader::text_zone=QLatin1Literal("zone");
 
 QString DatapackClientLoader::text_monster=QLatin1Literal("monster");
+QString DatapackClientLoader::text_monsters=QLatin1Literal("monsters");
 QString DatapackClientLoader::text_kind=QLatin1Literal("kind");
 QString DatapackClientLoader::text_habitat=QLatin1Literal("habitat");
 QString DatapackClientLoader::text_slash=QLatin1Literal("/");
 QString DatapackClientLoader::text_types=QLatin1Literal("types");
 QString DatapackClientLoader::text_buff=QLatin1Literal("buff");
 QString DatapackClientLoader::text_skill=QLatin1Literal("skill");
+QString DatapackClientLoader::text_buffs=QLatin1Literal("buffs");
+QString DatapackClientLoader::text_skills=QLatin1Literal("skills");
 QString DatapackClientLoader::text_fight=QLatin1Literal("buff");
 QString DatapackClientLoader::text_fights=QLatin1Literal("skill");
 QString DatapackClientLoader::text_start=QLatin1Literal("start");
 QString DatapackClientLoader::text_win=QLatin1Literal("win");
+QString DatapackClientLoader::text_dotxml=QLatin1Literal(".xml");
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -388,174 +392,194 @@ void DatapackClientLoader::parseReputationExtra()
 
 void DatapackClientLoader::parseItemsExtra()
 {
-    QDomDocument domDocument;
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+QStringLiteral("items.xml");
-    //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
-    else
+    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
+    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    int file_index=0;
+    while(file_index<fileList.size())
     {
-        QFile itemsFile(file);
-        QByteArray xmlContent;
-        if(!itemsFile.open(QIODevice::ReadOnly))
+        if(!fileList.at(file_index).isFile())
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
-            return;
+            file_index++;
+            continue;
         }
-        xmlContent=itemsFile.readAll();
-        itemsFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        QDomDocument domDocument;
+        const QString &file=fileList.at(file_index).absoluteFilePath();
+        if(!file.endsWith(DatapackClientLoader::text_dotxml))
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
-            return;
+            file_index++;
+            continue;
         }
-        qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
-    }
-    QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=DatapackClientLoader::text_items)
-    {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
-        return;
-    }
-
-    //load the content
-    bool ok;
-    QDomElement item = root.firstChildElement(DatapackClientLoader::text_item);
-    while(!item.isNull())
-    {
-        if(item.isElement())
+        //open and quick check the file
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        else
         {
-            if(item.hasAttribute(DatapackClientLoader::text_id))
+            QFile itemsFile(file);
+            QByteArray xmlContent;
+            if(!itemsFile.open(QIODevice::ReadOnly))
             {
-                quint32 id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
-                if(ok)
+                qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
+                file_index++;
+                continue;
+            }
+            xmlContent=itemsFile.readAll();
+            itemsFile.close();
+            QString errorStr;
+            int errorLine,errorColumn;
+            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+            {
+                qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+                file_index++;
+                continue;
+            }
+            qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+        }
+        QDomElement root = domDocument.documentElement();
+        if(root.tagName()!=DatapackClientLoader::text_items)
+        {
+            qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
+            file_index++;
+            continue;
+        }
+
+        //load the content
+        bool ok;
+        QDomElement item = root.firstChildElement(DatapackClientLoader::text_item);
+        while(!item.isNull())
+        {
+            if(item.isElement())
+            {
+                if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    if(!DatapackClientLoader::itemsExtra.contains(id))
+                    quint32 id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    if(ok)
                     {
-                        //load the image
-                        if(item.hasAttribute(DatapackClientLoader::text_image))
+                        if(!DatapackClientLoader::itemsExtra.contains(id))
                         {
-                            QPixmap image(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute("image"));
-                            if(image.isNull())
+                            //load the image
+                            if(item.hasAttribute(DatapackClientLoader::text_image))
                             {
-                                qDebug() << QStringLiteral("Unable to open the items image: %1: child.tagName(): %2 (at line: %3)").arg(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(QStringLiteral("image"))).arg(item.tagName()).arg(item.lineNumber());
-                                DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
-                                DatapackClientLoader::itemsExtra[id].imagePath=QStringLiteral(":/images/inventory/unknow-object.png");
+                                QPixmap image(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute("image"));
+                                if(image.isNull())
+                                {
+                                    qDebug() << QStringLiteral("Unable to open the items image: %1: child.tagName(): %2 (at line: %3)").arg(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(QStringLiteral("image"))).arg(item.tagName()).arg(item.lineNumber());
+                                    DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
+                                    DatapackClientLoader::itemsExtra[id].imagePath=QStringLiteral(":/images/inventory/unknow-object.png");
+                                }
+                                else
+                                {
+                                    DatapackClientLoader::itemsExtra[id].imagePath=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(DatapackClientLoader::text_image)).absoluteFilePath();
+                                    DatapackClientLoader::itemsExtra[id].image=image;
+                                }
                             }
                             else
                             {
-                                DatapackClientLoader::itemsExtra[id].imagePath=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(DatapackClientLoader::text_image)).absoluteFilePath();
-                                DatapackClientLoader::itemsExtra[id].image=image;
+                                qDebug() << QStringLiteral("For parse item: Have not image attribute: child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(file).arg(item.lineNumber());
+                                DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
+                                DatapackClientLoader::itemsExtra[id].imagePath=QStringLiteral(":/images/inventory/unknow-object.png");
+                            }
+                            // base size: 24x24
+                            DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra.value(id).image.scaled(72,72);//then zoom: 3x
+
+                            //load the name
+                            {
+                                bool name_found=false;
+                                QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                                if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
+                                    while(!name.isNull())
+                                    {
+                                        if(name.isElement())
+                                        {
+                                            if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
+                                            {
+                                                DatapackClientLoader::itemsExtra[id].name=name.text();
+                                                name_found=true;
+                                                break;
+                                            }
+                                        }
+                                        name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                                    }
+                                if(!name_found)
+                                {
+                                    name = item.firstChildElement(DatapackClientLoader::text_name);
+                                    while(!name.isNull())
+                                    {
+                                        if(name.isElement())
+                                        {
+                                            if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
+                                            {
+                                                DatapackClientLoader::itemsExtra[id].name=name.text();
+                                                name_found=true;
+                                                break;
+                                            }
+                                        }
+                                        name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                                    }
+                                }
+                                if(!name_found)
+                                {
+                                    DatapackClientLoader::itemsExtra[id].name=tr("Unknown object");
+                                    qDebug() << QStringLiteral("English name not found for the item with id: %1").arg(id);
+                                }
+                            }
+
+                            //load the description
+                            {
+                                bool description_found=false;
+                                QDomElement description = item.firstChildElement(DatapackClientLoader::text_description);
+                                if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
+                                    while(!description.isNull())
+                                    {
+                                        if(description.isElement())
+                                        {
+                                            if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
+                                            {
+                                                DatapackClientLoader::itemsExtra[id].description=description.text();
+                                                description_found=true;
+                                                break;
+                                            }
+                                        }
+                                        description = description.nextSiblingElement(DatapackClientLoader::text_description);
+                                    }
+                                if(!description_found)
+                                {
+                                    description = item.firstChildElement(DatapackClientLoader::text_description);
+                                    while(!description.isNull())
+                                    {
+                                        if(description.isElement())
+                                        {
+                                            if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
+                                            {
+                                                DatapackClientLoader::itemsExtra[id].description=description.text();
+                                                description_found=true;
+                                                break;
+                                            }
+                                        }
+                                        description = description.nextSiblingElement(DatapackClientLoader::text_description);
+                                    }
+                                }
+                                if(!description_found)
+                                {
+                                    DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
+                                    //qDebug() << QStringLiteral("English description not found for the item with id: %1").arg(id);
+                                }
                             }
                         }
                         else
-                        {
-                            qDebug() << QStringLiteral("For parse item: Have not image attribute: child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(file).arg(item.lineNumber());
-                            DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
-                            DatapackClientLoader::itemsExtra[id].imagePath=QStringLiteral(":/images/inventory/unknow-object.png");
-                        }
-                        // base size: 24x24
-                        DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra.value(id).image.scaled(72,72);//then zoom: 3x
-
-                        //load the name
-                        {
-                            bool name_found=false;
-                            QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
-                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                                while(!name.isNull())
-                                {
-                                    if(name.isElement())
-                                    {
-                                        if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
-                                        {
-                                            DatapackClientLoader::itemsExtra[id].name=name.text();
-                                            name_found=true;
-                                            break;
-                                        }
-                                    }
-                                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
-                                }
-                            if(!name_found)
-                            {
-                                name = item.firstChildElement(DatapackClientLoader::text_name);
-                                while(!name.isNull())
-                                {
-                                    if(name.isElement())
-                                    {
-                                        if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                        {
-                                            DatapackClientLoader::itemsExtra[id].name=name.text();
-                                            name_found=true;
-                                            break;
-                                        }
-                                    }
-                                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
-                                }
-                            }
-                            if(!name_found)
-                            {
-                                DatapackClientLoader::itemsExtra[id].name=tr("Unknown object");
-                                qDebug() << QStringLiteral("English name not found for the item with id: %1").arg(id);
-                            }
-                        }
-
-                        //load the description
-                        {
-                            bool description_found=false;
-                            QDomElement description = item.firstChildElement(DatapackClientLoader::text_description);
-                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                                while(!description.isNull())
-                                {
-                                    if(description.isElement())
-                                    {
-                                        if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
-                                        {
-                                            DatapackClientLoader::itemsExtra[id].description=description.text();
-                                            description_found=true;
-                                            break;
-                                        }
-                                    }
-                                    description = description.nextSiblingElement(DatapackClientLoader::text_description);
-                                }
-                            if(!description_found)
-                            {
-                                description = item.firstChildElement(DatapackClientLoader::text_description);
-                                while(!description.isNull())
-                                {
-                                    if(description.isElement())
-                                    {
-                                        if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                        {
-                                            DatapackClientLoader::itemsExtra[id].description=description.text();
-                                            description_found=true;
-                                            break;
-                                        }
-                                    }
-                                    description = description.nextSiblingElement(DatapackClientLoader::text_description);
-                                }
-                            }
-                            if(!description_found)
-                            {
-                                DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
-                                //qDebug() << QStringLiteral("English description not found for the item with id: %1").arg(id);
-                            }
-                        }
+                            qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
                     }
                     else
-                        qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                        qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
             }
             else
-                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+            item = item.nextSiblingElement(DatapackClientLoader::text_item);
         }
-        else
-            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement(DatapackClientLoader::text_item);
+        file_index++;
     }
 
     qDebug() << QStringLiteral("%1 item(s) extra loaded").arg(DatapackClientLoader::itemsExtra.size());

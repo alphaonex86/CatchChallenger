@@ -13,6 +13,7 @@
 using namespace CatchChallenger;
 
 QString DatapackGeneralLoader::text_list=QLatin1String("list");
+QString DatapackGeneralLoader::text_dotxml=QLatin1String(".xml");
 QString DatapackGeneralLoader::text_reputation=QLatin1String("reputation");
 QString DatapackGeneralLoader::text_type=QLatin1String("type");
 QString DatapackGeneralLoader::text_level=QLatin1String("level");
@@ -1639,271 +1640,291 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
 ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quint32,Buff> &monsterBuffs)
 {
     ItemFull items;
-    QDomDocument domDocument;
-    //open and quick check the file
-    const QString &file=folder+QLatin1String("items.xml");
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
-        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
-    else
+    QDir dir(folder);
+    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    int file_index=0;
+    while(file_index<fileList.size())
     {
-        QFile itemsFile(file);
-        QByteArray xmlContent;
-        if(!itemsFile.open(QIODevice::ReadOnly))
+        if(!fileList.at(file_index).isFile())
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
-            return items;
+            file_index++;
+            continue;
         }
-        xmlContent=itemsFile.readAll();
-        itemsFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        QDomDocument domDocument;
+        //open and quick check the file
+        const QString &file=fileList.at(file_index).absoluteFilePath();
+        if(!file.endsWith(DatapackGeneralLoader::text_dotxml))
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
-            return items;
+            file_index++;
+            continue;
         }
-        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
-    }
-    QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_items)
-    {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
-        return items;
-    }
-
-    //load the content
-    bool ok;
-    QDomElement item = root.firstChildElement(DatapackGeneralLoader::text_item);
-    while(!item.isNull())
-    {
-        if(item.isElement())
+        if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+            domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+        else
         {
-            if(item.hasAttribute(DatapackGeneralLoader::text_id))
+            QFile itemsFile(file);
+            QByteArray xmlContent;
+            if(!itemsFile.open(QIODevice::ReadOnly))
             {
-                quint32 id=item.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
-                if(ok)
+                qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
+                file_index++;
+                continue;
+            }
+            xmlContent=itemsFile.readAll();
+            itemsFile.close();
+            QString errorStr;
+            int errorLine,errorColumn;
+            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+            {
+                qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+                file_index++;
+                continue;
+            }
+            CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+        }
+        QDomElement root = domDocument.documentElement();
+        if(root.tagName()!=DatapackGeneralLoader::text_items)
+        {
+            qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
+            file_index++;
+            continue;
+        }
+
+        //load the content
+        bool ok;
+        QDomElement item = root.firstChildElement(DatapackGeneralLoader::text_item);
+        while(!item.isNull())
+        {
+            if(item.isElement())
+            {
+                if(item.hasAttribute(DatapackGeneralLoader::text_id))
                 {
-                    if(!items.item.contains(id))
+                    quint32 id=item.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                    if(ok)
                     {
-                        //load the price
+                        if(!items.item.contains(id))
                         {
-                            if(item.hasAttribute(DatapackGeneralLoader::text_price))
+                            //load the price
                             {
-                                bool ok;
-                                items.item[id].price=item.attribute(DatapackGeneralLoader::text_price).toUInt(&ok);
-                                if(!ok)
+                                if(item.hasAttribute(DatapackGeneralLoader::text_price))
                                 {
-                                    qDebug() << QStringLiteral("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
+                                    bool ok;
+                                    items.item[id].price=item.attribute(DatapackGeneralLoader::text_price).toUInt(&ok);
+                                    if(!ok)
+                                    {
+                                        qDebug() << QStringLiteral("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
+                                        items.item[id].price=0;
+                                    }
+                                }
+                                else
+                                {
+                                    /*if(!item.hasAttribute(DatapackGeneralLoader::text_quest) || item.attribute(DatapackGeneralLoader::text_quest)!=DatapackGeneralLoader::text_yes)
+                                        qDebug() << QStringLiteral("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(file).arg(item.lineNumber());*/
                                     items.item[id].price=0;
                                 }
                             }
-                            else
+                            //load the consumeAtUse
                             {
-                                /*if(!item.hasAttribute(DatapackGeneralLoader::text_quest) || item.attribute(DatapackGeneralLoader::text_quest)!=DatapackGeneralLoader::text_yes)
-                                    qDebug() << QStringLiteral("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(file).arg(item.lineNumber());*/
-                                items.item[id].price=0;
-                            }
-                        }
-                        //load the consumeAtUse
-                        {
-                            if(item.hasAttribute(DatapackGeneralLoader::text_consumeAtUse))
-                            {
-                                if(item.attribute(DatapackGeneralLoader::text_consumeAtUse)==DatapackGeneralLoader::text_false)
-                                    items.item[id].consumeAtUse=false;
+                                if(item.hasAttribute(DatapackGeneralLoader::text_consumeAtUse))
+                                {
+                                    if(item.attribute(DatapackGeneralLoader::text_consumeAtUse)==DatapackGeneralLoader::text_false)
+                                        items.item[id].consumeAtUse=false;
+                                    else
+                                        items.item[id].consumeAtUse=true;
+                                }
                                 else
                                     items.item[id].consumeAtUse=true;
                             }
-                            else
-                                items.item[id].consumeAtUse=true;
-                        }
-                        bool haveAnEffect=false;
-                        //load the trap
-                        if(!haveAnEffect)
-                        {
-                            QDomElement trapItem = item.firstChildElement(DatapackGeneralLoader::text_trap);
-                            if(!trapItem.isNull())
+                            bool haveAnEffect=false;
+                            //load the trap
+                            if(!haveAnEffect)
                             {
-                                if(trapItem.isElement())
+                                QDomElement trapItem = item.firstChildElement(DatapackGeneralLoader::text_trap);
+                                if(!trapItem.isNull())
                                 {
-                                    Trap trap;
-                                    trap.bonus_rate=1.0;
-                                    if(trapItem.hasAttribute(DatapackGeneralLoader::text_bonus_rate))
+                                    if(trapItem.isElement())
                                     {
-                                        float bonus_rate=trapItem.attribute(DatapackGeneralLoader::text_bonus_rate).toFloat(&ok);
-                                        if(ok)
-                                            trap.bonus_rate=bonus_rate;
-                                        else
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, bonus_rate is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(trapItem.tagName()).arg(trapItem.lineNumber());
-                                    }
-                                    else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute bonus_rate: child.tagName(): %2 (at line: %3)").arg(file).arg(trapItem.tagName()).arg(trapItem.lineNumber());
-                                    items.trap[id]=trap;
-                                    haveAnEffect=true;
-                                }
-                            }
-                        }
-                        //load the repel
-                        if(!haveAnEffect)
-                        {
-                            QDomElement repelItem = item.firstChildElement(DatapackGeneralLoader::text_repel);
-                            if(!repelItem.isNull())
-                            {
-                                if(repelItem.isElement())
-                                {
-                                    if(repelItem.hasAttribute(DatapackGeneralLoader::text_step))
-                                    {
-                                        quint32 step=repelItem.attribute(DatapackGeneralLoader::text_step).toUInt(&ok);
-                                        if(ok)
+                                        Trap trap;
+                                        trap.bonus_rate=1.0;
+                                        if(trapItem.hasAttribute(DatapackGeneralLoader::text_bonus_rate))
                                         {
-                                            if(step>0)
-                                            {
-                                                items.repel[id]=step;
-                                                haveAnEffect=true;
-                                            }
+                                            float bonus_rate=trapItem.attribute(DatapackGeneralLoader::text_bonus_rate).toFloat(&ok);
+                                            if(ok)
+                                                trap.bonus_rate=bonus_rate;
                                             else
-                                                qDebug() << QStringLiteral("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, bonus_rate is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(trapItem.tagName()).arg(trapItem.lineNumber());
                                         }
                                         else
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute bonus_rate: child.tagName(): %2 (at line: %3)").arg(file).arg(trapItem.tagName()).arg(trapItem.lineNumber());
+                                        items.trap[id]=trap;
+                                        haveAnEffect=true;
                                     }
-                                    else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
                                 }
                             }
-                        }
-                        //load the monster effect
-                        if(!haveAnEffect)
-                        {
+                            //load the repel
+                            if(!haveAnEffect)
                             {
-                                QDomElement hpItem = item.firstChildElement(DatapackGeneralLoader::text_hp);
-                                while(!hpItem.isNull())
+                                QDomElement repelItem = item.firstChildElement(DatapackGeneralLoader::text_repel);
+                                if(!repelItem.isNull())
                                 {
-                                    if(hpItem.isElement())
+                                    if(repelItem.isElement())
                                     {
-                                        if(hpItem.hasAttribute(DatapackGeneralLoader::text_add))
+                                        if(repelItem.hasAttribute(DatapackGeneralLoader::text_step))
                                         {
-                                            if(hpItem.attribute(DatapackGeneralLoader::text_add)==DatapackGeneralLoader::text_all)
+                                            quint32 step=repelItem.attribute(DatapackGeneralLoader::text_step).toUInt(&ok);
+                                            if(ok)
                                             {
-                                                MonsterItemEffect monsterItemEffect;
-                                                monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                monsterItemEffect.value=-1;
-                                                items.monsterItemEffect.insert(id,monsterItemEffect);
-                                            }
-                                            else
-                                            {
-                                                qint32 add=hpItem.attribute(DatapackGeneralLoader::text_add).toUInt(&ok);
-                                                if(ok)
+                                                if(step>0)
                                                 {
-                                                    if(add>0)
-                                                    {
-                                                        MonsterItemEffect monsterItemEffect;
-                                                        monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                        monsterItemEffect.value=add;
-                                                        items.monsterItemEffect.insert(id,monsterItemEffect);
-                                                    }
-                                                    else
-                                                        qDebug() << QStringLiteral("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                                    items.repel[id]=step;
+                                                    haveAnEffect=true;
                                                 }
                                                 else
-                                                    qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
-                                            }
-                                        }
-                                        else
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
-                                    }
-                                    hpItem = hpItem.nextSiblingElement(DatapackGeneralLoader::text_hp);
-                                }
-                            }
-                            {
-                                QDomElement buffItem = item.firstChildElement(DatapackGeneralLoader::text_buff);
-                                while(!buffItem.isNull())
-                                {
-                                    if(buffItem.isElement())
-                                    {
-                                        if(buffItem.hasAttribute(DatapackGeneralLoader::text_remove))
-                                        {
-                                            if(buffItem.attribute(DatapackGeneralLoader::text_remove)==DatapackGeneralLoader::text_all)
-                                            {
-                                                MonsterItemEffect monsterItemEffect;
-                                                monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                monsterItemEffect.value=-1;
-                                                items.monsterItemEffect.insert(id,monsterItemEffect);
+                                                    qDebug() << QStringLiteral("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
                                             }
                                             else
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                        }
+                                        else
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                    }
+                                }
+                            }
+                            //load the monster effect
+                            if(!haveAnEffect)
+                            {
+                                {
+                                    QDomElement hpItem = item.firstChildElement(DatapackGeneralLoader::text_hp);
+                                    while(!hpItem.isNull())
+                                    {
+                                        if(hpItem.isElement())
+                                        {
+                                            if(hpItem.hasAttribute(DatapackGeneralLoader::text_add))
                                             {
-                                                qint32 remove=buffItem.attribute(DatapackGeneralLoader::text_remove).toUInt(&ok);
-                                                if(ok)
+                                                if(hpItem.attribute(DatapackGeneralLoader::text_add)==DatapackGeneralLoader::text_all)
                                                 {
-                                                    if(remove>0)
+                                                    MonsterItemEffect monsterItemEffect;
+                                                    monsterItemEffect.type=MonsterItemEffectType_AddHp;
+                                                    monsterItemEffect.value=-1;
+                                                    items.monsterItemEffect.insert(id,monsterItemEffect);
+                                                }
+                                                else
+                                                {
+                                                    qint32 add=hpItem.attribute(DatapackGeneralLoader::text_add).toUInt(&ok);
+                                                    if(ok)
                                                     {
-                                                        if(monsterBuffs.contains(remove))
+                                                        if(add>0)
                                                         {
                                                             MonsterItemEffect monsterItemEffect;
-                                                            monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                            monsterItemEffect.value=remove;
+                                                            monsterItemEffect.type=MonsterItemEffectType_AddHp;
+                                                            monsterItemEffect.value=add;
                                                             items.monsterItemEffect.insert(id,monsterItemEffect);
                                                         }
                                                         else
-                                                            qDebug() << QStringLiteral("Unable to open the file: %1, buff item to remove is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                            qDebug() << QStringLiteral("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
                                                     }
                                                     else
-                                                        qDebug() << QStringLiteral("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                        qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                                }
+                                            }
+                                            else
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                        }
+                                        hpItem = hpItem.nextSiblingElement(DatapackGeneralLoader::text_hp);
+                                    }
+                                }
+                                {
+                                    QDomElement buffItem = item.firstChildElement(DatapackGeneralLoader::text_buff);
+                                    while(!buffItem.isNull())
+                                    {
+                                        if(buffItem.isElement())
+                                        {
+                                            if(buffItem.hasAttribute(DatapackGeneralLoader::text_remove))
+                                            {
+                                                if(buffItem.attribute(DatapackGeneralLoader::text_remove)==DatapackGeneralLoader::text_all)
+                                                {
+                                                    MonsterItemEffect monsterItemEffect;
+                                                    monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
+                                                    monsterItemEffect.value=-1;
+                                                    items.monsterItemEffect.insert(id,monsterItemEffect);
                                                 }
                                                 else
-                                                    qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                {
+                                                    qint32 remove=buffItem.attribute(DatapackGeneralLoader::text_remove).toUInt(&ok);
+                                                    if(ok)
+                                                    {
+                                                        if(remove>0)
+                                                        {
+                                                            if(monsterBuffs.contains(remove))
+                                                            {
+                                                                MonsterItemEffect monsterItemEffect;
+                                                                monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
+                                                                monsterItemEffect.value=remove;
+                                                                items.monsterItemEffect.insert(id,monsterItemEffect);
+                                                            }
+                                                            else
+                                                                qDebug() << QStringLiteral("Unable to open the file: %1, buff item to remove is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                        }
+                                                        else
+                                                            qDebug() << QStringLiteral("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                    }
+                                                    else
+                                                        qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                }
+                                            }
+                                            else
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                        }
+                                        buffItem = buffItem.nextSiblingElement(DatapackGeneralLoader::text_buff);
+                                    }
+                                }
+                                if(items.monsterItemEffect.contains(id))
+                                    haveAnEffect=true;
+                            }
+                            //load the monster offline effect
+                            if(!haveAnEffect)
+                            {
+                                QDomElement levelItem = item.firstChildElement(DatapackGeneralLoader::text_level);
+                                while(!levelItem.isNull())
+                                {
+                                    if(levelItem.isElement())
+                                    {
+                                        if(levelItem.hasAttribute(DatapackGeneralLoader::text_up))
+                                        {
+                                            const quint32 &levelUp=levelItem.attribute(DatapackGeneralLoader::text_up).toUInt(&ok);
+                                            if(!ok)
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, level up is not possitive number: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
+                                            else if(levelUp<=0)
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, level up is greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
+                                            else
+                                            {
+                                                MonsterItemEffectOutOfFight monsterItemEffectOutOfFight;
+                                                monsterItemEffectOutOfFight.type=MonsterItemEffectTypeOutOfFight_AddLevel;
+                                                monsterItemEffectOutOfFight.value=levelUp;
+                                                items.monsterItemEffectOutOfFight.insert(id,monsterItemEffectOutOfFight);
                                             }
                                         }
                                         else
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, level have not the attribute up: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
                                     }
-                                    buffItem = buffItem.nextSiblingElement(DatapackGeneralLoader::text_buff);
+                                    levelItem = levelItem.nextSiblingElement(DatapackGeneralLoader::text_level);
                                 }
                             }
-                            if(items.monsterItemEffect.contains(id))
-                                haveAnEffect=true;
                         }
-                        //load the monster offline effect
-                        if(!haveAnEffect)
-                        {
-                            QDomElement levelItem = item.firstChildElement(DatapackGeneralLoader::text_level);
-                            while(!levelItem.isNull())
-                            {
-                                if(levelItem.isElement())
-                                {
-                                    if(levelItem.hasAttribute(DatapackGeneralLoader::text_up))
-                                    {
-                                        const quint32 &levelUp=levelItem.attribute(DatapackGeneralLoader::text_up).toUInt(&ok);
-                                        if(!ok)
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, level up is not possitive number: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
-                                        else if(levelUp<=0)
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, level up is greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
-                                        else
-                                        {
-                                            MonsterItemEffectOutOfFight monsterItemEffectOutOfFight;
-                                            monsterItemEffectOutOfFight.type=MonsterItemEffectTypeOutOfFight_AddLevel;
-                                            monsterItemEffectOutOfFight.value=levelUp;
-                                            items.monsterItemEffectOutOfFight.insert(id,monsterItemEffectOutOfFight);
-                                        }
-                                    }
-                                    else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, level have not the attribute up: child.tagName(): %2 (at line: %3)").arg(file).arg(levelItem.tagName()).arg(levelItem.lineNumber());
-                                }
-                                levelItem = levelItem.nextSiblingElement(DatapackGeneralLoader::text_level);
-                            }
-                        }
+                        else
+                            qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
                     }
                     else
-                        qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                        qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
             }
             else
-                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+            item = item.nextSiblingElement(DatapackGeneralLoader::text_item);
         }
-        else
-            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement(DatapackGeneralLoader::text_item);
+        file_index++;
     }
     return items;
 }
