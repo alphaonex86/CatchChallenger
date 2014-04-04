@@ -165,16 +165,20 @@ protected:
     static QString text_zone;
 
     static QString text_monster;
+    static QString text_monsters;
     static QString text_kind;
     static QString text_habitat;
     static QString text_slash;
     static QString text_types;
     static QString text_buff;
     static QString text_skill;
+    static QString text_buffs;
+    static QString text_skills;
     static QString text_fight;
     static QString text_fights;
     static QString text_start;
     static QString text_win;
+    static QString text_dotxml;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

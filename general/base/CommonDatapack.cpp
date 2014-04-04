@@ -97,19 +97,19 @@ void CommonDatapack::parseReputation()
 
 void CommonDatapack::parseBuff()
 {
-    monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("buff.xml"));
+    monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_BUFF));
     qDebug() << QStringLiteral("%1 monster buff(s) loaded").arg(monsterBuffs.size());
 }
 
 void CommonDatapack::parseSkills()
 {
-    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("skill.xml"),monsterBuffs,types);
+    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKILL),monsterBuffs,types);
     qDebug() << QStringLiteral("%1 monster skill(s) loaded").arg(monsterSkills.size());
 }
 
 void CommonDatapack::parseMonsters()
 {
-    monsters=FightLoader::loadMonster(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("monster.xml"),monsterSkills,types,items.item);
+    monsters=FightLoader::loadMonster(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS),monsterSkills,types,items.item);
     qDebug() << QStringLiteral("%1 monster(s) loaded").arg(monsters.size());
 }
 

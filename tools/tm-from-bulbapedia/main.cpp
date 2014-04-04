@@ -134,9 +134,9 @@ bool loadHtmlTM(QString data,QString fulldata)
 
     const QString &preg=QStringLiteral(
                "<tr[^>]*>[\n\r\t ]*"
-               "<td[^>]*>[\n\r\t ]*<a href[^>]*><img alt=\"Bag TM ([a-zA-Z]+) Sprite.png\"[^>]*></a>[\n\r\t ]*"
+               "<td[^>]*>[\n\r\t ]*<a href[^>]*><img alt=\"Bag (TM|HM) ([a-zA-Z]+) Sprite.png\"[^>]*></a>[\n\r\t ]*"
                "</td>[\n\r\t ]*"
-               "<td[^>]*>[\n\r\t ]*<a href=[^>]* title=\"(TM[^\"]*)\">(<span[^>]*>)?[^<]*(</span>)?</a>[\n\r\t ]*"
+               "<td[^>]*>[\n\r\t ]*<a href=[^>]* title=\"((TM|HM)[^\"]*)\">(<span[^>]*>)?[^<]*(</span>)?</a>[\n\r\t ]*"
                "</td>[\n\r\t ]*"
                "<td[^>]*>[\n\r\t ]*<a href=[^>]*>(<span[^>]*>)?([^<]*)(</span>)?</a>[\n\r\t ]*"
  /*              "</td>[\n\r\t ]*"
@@ -156,20 +156,19 @@ bool loadHtmlTM(QString data,QString fulldata)
     {
         Link link;
         QString tempString=itemStringTempList.at(index);
-        qDebug() << tempString;
 
         if(tempString.contains(QRegularExpression(preg,QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption)))
         {
             link.tm=tempString;
-            link.tm.replace(QRegularExpression(".*"+preg+".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\2");
+            link.tm.replace(QRegularExpression(".*"+preg+".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\3");
             link.tm.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
             link.tm.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
             link.skill=tempString;
-            link.skill.replace(QRegularExpression(".*"+preg+".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\6");
+            link.skill.replace(QRegularExpression(".*"+preg+".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\8");
             link.skill.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
             link.skill.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
             QString type=tempString;
-            type.replace(QRegularExpression(".*"+preg+".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+            type.replace(QRegularExpression(".*"+preg+".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\2");
             type.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
             type.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
             TMtoType[link.tm]=type.toLower();
@@ -667,34 +666,38 @@ int main(int argc, char *argv[])
         bool test=false;
         if(!test)
         {
-            const QStringList &fileList=listFolder(QDir::currentPath());
+            QString currentPath=QDir::currentPath();
+            if(!currentPath.endsWith("/") || !currentPath.endsWith("\\"))
+                currentPath+="/";
+            const QStringList &fileList=listFolder(currentPath);
             int index=0;
             while(index<fileList.size())
             {
+                if(index%1000==0 && index>0)
+                    qDebug() << "Number of file done" << index << "on" << fileList.size();
                 //filter by generation
-                const QString &filePath=fileList.at(index);
-                if(filePath.endsWith("Generation_III_learnset.html"))
+                const QString &filePath=currentPath+fileList.at(index);
+                QFile file(filePath);
+                if(file.open(QIODevice::ReadOnly))
                 {
-                    QFile file(filePath);
-                    if(file.open(QIODevice::ReadOnly))
-                    {
-                        QByteArray rawData=file.readAll();
-                        rawData.replace(endOfString,QByteArray());
-                        QString data=QString::fromUtf8(rawData);
-                        QString fulldata=data;
-                        file.close();
-                        data.remove(QRegularExpression("<span[^>]*>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption));
-                        data.remove("</span>");
-                        data.remove(QRegularExpression("<a[^>]*>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption));
-                        data.remove("</a>");
-                        data.remove(QRegularExpression("<p[^>]*>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption));
-                        data.remove("</p>");
-                        data.replace(QRegularExpression("<br />[^>]+[ \r\t\n]*</td>"),"</td>");
-                        loadHtmlTM(data,fulldata);//bool used=
-                        //if(!used)
-                        //    qDebug() << "Not used:" << file.fileName();
-                    }
+                    QByteArray rawData=file.readAll();
+                    rawData.replace(endOfString,QByteArray());
+                    QString data=QString::fromUtf8(rawData);
+                    QString fulldata=data;
+                    file.close();
+                    data.remove(QRegularExpression("<span[^>]*>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption));
+                    data.remove("</span>");
+                    data.remove(QRegularExpression("<a[^>]*>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption));
+                    data.remove("</a>");
+                    data.remove(QRegularExpression("<p[^>]*>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption));
+                    data.remove("</p>");
+                    data.replace(QRegularExpression("<br />[^>]+[ \r\t\n]*</td>"),"</td>");
+                    loadHtmlTM(data,fulldata);//bool used=
+                    //if(!used)
+                    //    qDebug() << "Not used:" << file.fileName();
                 }
+                else
+                    qDebug() << "Unable to open the file" << filePath;
                 index++;
             }
         }
