@@ -112,7 +112,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
             {
                 GlobalServerData::serverPrivateVariables.maxAccountId++;
                 player_informations->account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
-                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_login.arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+                dbQuery(GlobalServerData::serverPrivateVariables.db_query_insert_login.arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()));
             }
             else
             {
@@ -194,7 +194,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
         if(!characterQuery.exec(GlobalServerData::serverPrivateVariables.db_query_characters.arg(player_informations->account_id).arg(max_character)))
             emit message(characterQuery.lastQuery()+": "+characterQuery.lastError().text());
-        const quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+        const quint64 current_time=QDateTime::currentDateTime().toTime_t();
         QList<CharacterEntry> characterEntryList;
         bool ok;
         while(characterQuery.next())
@@ -490,7 +490,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         QString::number(profile.cash)+QLatin1String(",")+
                         mapQuery+QLatin1String(",")+
                         mapQuery+QLatin1String(",0,0,")+
-                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",0,'',0,0,0,0,0,")+
+                        QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,'',0,0,0,0,0,")+
                         QString::number(profileIndex)+QLatin1String(");"));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
@@ -503,7 +503,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         QString::number(profile.cash)+QLatin1String(",")+
                         mapQuery+QLatin1String(",")+
                         mapQuery+QLatin1String(",0,0,")+
-                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QLatin1String(",0,'',0,0,0,0,0,")+
+                        QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,'',0,0,0,0,0,")+
                         QString::number(profileIndex)+QLatin1String(");"));
             break;
         }
@@ -740,7 +740,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     const quint32 &time_to_delete=characterQuery.value(24).toUInt(&ok);
     if(!ok || time_to_delete>0)
         dbQuery(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.arg(characterId));
-    dbQuery(GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+    dbQuery(GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
 
     player_informations->public_and_private_informations.clan=characterQuery.value(8).toUInt(&ok);
     if(!ok)
@@ -1353,14 +1353,14 @@ QHash<QString, quint32> ClientHeavyLoad::datapack_file_list_cached()
     {
         if(ClientHeavyLoad::datapack_list_cache_timestamp==0)
         {
-            ClientHeavyLoad::datapack_list_cache_timestamp=QDateTime::currentMSecsSinceEpoch()/1000;
+            ClientHeavyLoad::datapack_list_cache_timestamp=QDateTime::currentDateTime().toTime_t();
             ClientHeavyLoad::datapack_file_list_cache=datapack_file_list();
         }
         return ClientHeavyLoad::datapack_file_list_cache;
     }
     else
     {
-        const quint64 &currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
+        const quint64 &currentTime=QDateTime::currentDateTime().toTime_t();
         if(ClientHeavyLoad::datapack_list_cache_timestamp<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             ClientHeavyLoad::datapack_list_cache_timestamp=currentTime;
@@ -1390,7 +1390,10 @@ QHash<QString,quint32> ClientHeavyLoad::datapack_file_list()
                     if(file.open(QIODevice::ReadOnly))
                     {
                         fileName.replace(ClientHeavyLoad::text_antislash,ClientHeavyLoad::text_slash);//remplace if is under windows server
-                        filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
+                        if(GlobalServerData::serverSettings.datapackCacheMtime)
+                            filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
+                        else
+                            filesList[fileName]=0;
                         file.close();
                     }
                 }
