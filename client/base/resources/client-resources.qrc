@@ -2,7 +2,6 @@
     <qresource prefix="/">
         <file>images/catchchallenger.png</file>
         <file>images/background-dialog.png</file>
-        <file>images/background.png</file>
         <file>images/empty.png</file>
         <file>images/light-white.png</file>
         <file>images/player_default/back.png</file>
@@ -20,11 +19,9 @@
         <file>images/interface/player.png</file>
         <file>images/interface/pokemonbar.png</file>
         <file>images/interface/player/point.png</file>
-        <file>images/interface/player/background.png</file>
         <file>images/interface/player/player_background.png</file>
         <file>images/interface/player/bande.png</file>
         <file>images/inventory/type.png</file>
-        <file>images/inventory/background.png</file>
         <file>images/inventory/bag1.png</file>
         <file>images/inventory/bag2.png</file>
         <file>images/inventory/bag3.png</file>
@@ -50,5 +47,8 @@
         <file>qml/star.png</file>
         <file>images/player-select.png</file>
         <file>images/flags.png</file>
+        <file>images/background.jpg</file>
+        <file>images/interface/player/background.jpg</file>
+        <file>images/inventory/background.jpg</file>
     </qresource>
 </RCC>
