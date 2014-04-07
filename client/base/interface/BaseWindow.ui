@@ -50,11 +50,11 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>18</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
-         <string notr="true">#page_init{background-image: url(:/images/background.png);}</string>
+         <string notr="true">#page_init{background-image: url(:/images/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="bottomMargin">
@@ -122,7 +122,7 @@ color: rgb(255, 255, 255);</string>
        </widget>
        <widget class="QWidget" name="page_character">
         <property name="styleSheet">
-         <string notr="true">#page_character{background-image: url(:/images/background.png);}</string>
+         <string notr="true">#page_character{background-image: url(:/images/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_34">
          <item>
@@ -906,7 +906,7 @@ background-image: url(:/images/empty.png);</string>
        </widget>
        <widget class="QWidget" name="page_player">
         <property name="styleSheet">
-         <string notr="true">#page_player{background-image: url(:/images/interface/player/background.png);}</string>
+         <string notr="true">#page_player{background-image: url(:/images/interface/player/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
          <property name="spacing">
@@ -1751,7 +1751,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_inventory">
         <property name="styleSheet">
-         <string notr="true">#page_inventory{background-image: url(:/images/inventory/background.png);}
+         <string notr="true">#page_inventory{background-image: url(:/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -2064,7 +2064,7 @@ padding-bottom:3px;
        </widget>
        <widget class="QWidget" name="page_options">
         <property name="styleSheet">
-         <string notr="true">#page_options{background-image: url(:/images/background.png);}</string>
+         <string notr="true">#page_options{background-image: url(:/images/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_13">
          <item>
@@ -2421,7 +2421,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_plants">
         <property name="styleSheet">
-         <string notr="true">#page_plants{background-image: url(:/images/interface/player/background.png);}</string>
+         <string notr="true">#page_plants{background-image: url(:/images/interface/player/background.jpg);}</string>
         </property>
         <widget class="QFrame" name="framePlantsLeft">
          <property name="geometry">
@@ -2831,7 +2831,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_crafting">
         <property name="styleSheet">
-         <string notr="true">#page_crafting{background-image: url(:/images/interface/player/background.png);}</string>
+         <string notr="true">#page_crafting{background-image: url(:/images/interface/player/background.jpg);}</string>
         </property>
         <widget class="QFrame" name="frameCraftingLeft">
          <property name="geometry">
@@ -3087,7 +3087,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_shop">
         <property name="styleSheet">
-         <string notr="true">#page_shop{background-image: url(:/images/inventory/background.png);}
+         <string notr="true">#page_shop{background-image: url(:/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -3512,7 +3512,7 @@ padding-bottom:3px;
           </rect>
          </property>
          <property name="styleSheet">
-          <string notr="true">#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}</string>
+          <string notr="true">#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}</string>
          </property>
          <widget class="QLabel" name="labelFightPlateformBottom">
           <property name="geometry">
@@ -4034,7 +4034,7 @@ padding:6px 6px 6px 14px;
        </widget>
        <widget class="QWidget" name="page_monster">
         <property name="styleSheet">
-         <string notr="true">#page_monster{background-image: url(:/images/interface/player/background.png);}</string>
+         <string notr="true">#page_monster{background-image: url(:/images/interface/player/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_33">
          <item>
@@ -4157,7 +4157,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_trade">
         <property name="styleSheet">
-         <string notr="true">#page_trade{background-image: url(:/images/interface/player/background.png);}</string>
+         <string notr="true">#page_trade{background-image: url(:/images/interface/player/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_22">
          <item>
@@ -4463,7 +4463,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_learn">
         <property name="styleSheet">
-         <string notr="true">#page_learn{background-image: url(:/images/inventory/background.png);}
+         <string notr="true">#page_learn{background-image: url(:/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_35">
@@ -4669,7 +4669,7 @@ padding-bottom:3px;
        </widget>
        <widget class="QWidget" name="page_warehouse">
         <property name="styleSheet">
-         <string notr="true">#page_warehouse{background-image: url(:/images/inventory/background.png);}</string>
+         <string notr="true">#page_warehouse{background-image: url(:/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_26">
          <item>
@@ -5167,7 +5167,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_zonecatch">
         <property name="styleSheet">
-         <string notr="true">#page_zonecapture{background-image: url(:/images/inventory/background.png);}</string>
+         <string notr="true">#page_zonecatch{background-image: url(:/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_50">
          <item>
@@ -5264,7 +5264,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_factory">
         <property name="styleSheet">
-         <string notr="true">#page_factory{background-image: url(:/images/inventory/background.png);}
+         <string notr="true">#page_factory{background-image: url(:/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_51">
@@ -5585,7 +5585,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_monsterdetails">
         <property name="styleSheet">
-         <string notr="true">#page_monsterdetails{background-image: url(:/images/inventory/background.png);}</string>
+         <string notr="true">#page_monsterdetails{background-image: url(:/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_32">
          <property name="spacing">
@@ -5998,7 +5998,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_market">
         <property name="styleSheet">
-         <string notr="true">#page_market{background-image: url(:/images/inventory/background.png);}</string>
+         <string notr="true">#page_market{background-image: url(:/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_55">
          <property name="spacing">

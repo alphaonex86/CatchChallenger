@@ -171,8 +171,26 @@ bool loadHtmlTM(QString data,QString fulldata)
             type.replace(QRegularExpression(".*"+preg+".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\2");
             type.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
             type.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
-            TMtoType[link.tm]=type.toLower();
-            monsterToLink[name] << link;
+            bool needSkip=false;
+            if(monsterToLink.contains(name))
+            {
+                const QList<Link> &linkTemp=monsterToLink.value(name);
+                int index=0;
+                while(index<linkTemp.size())
+                {
+                    if(linkTemp.at(index).skill==link.skill || linkTemp.at(index).tm==link.tm)
+                    {
+                        needSkip=true;
+                        break;
+                    }
+                    index++;
+                }
+            }
+            if(!needSkip)
+            {
+                TMtoType[link.tm]=type.toLower();
+                monsterToLink[name] << link;
+            }
         }
         /*else
             qDebug() << QStringLiteral("link ignored:") << tempString;*/
@@ -263,7 +281,7 @@ void parseItemsExtra()
 void parseSkillsExtra()
 {
     //open and quick check the file
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("skill.xml");
+    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("/skill/skill.xml");
     QDomDocument domDocument;
     QFile xmlFile(file);
     QByteArray xmlContent;
@@ -282,7 +300,7 @@ void parseSkillsExtra()
         return;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=text_list)
+    if(root.tagName()!="skills")
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
@@ -382,7 +400,7 @@ void parseMonstersExtra()
         return;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=text_list)
+    if(root.tagName()!="monsters")
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
@@ -484,7 +502,7 @@ void updateMonsterXml(const QString &file)
         return;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=text_list)
+    if(root.tagName()!="monsters")
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
@@ -505,6 +523,8 @@ void updateMonsterXml(const QString &file)
             }
             if(attributeIsOk)
             {
+                QSet<quint32> byitemAlreadySet;
+                QSet<quint32> skillAlreadySet;
                 quint32 id=item.attribute(text_id).toUInt(&ok);
                 if(!ok)
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
@@ -558,8 +578,6 @@ void updateMonsterXml(const QString &file)
                                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
                                         attack = attack.nextSiblingElement(text_attack);
                                     }
-                                    QSet<quint32> byitemAlreadySet;
-                                    QSet<quint32> skillAlreadySet;
                                     //add the missing skill
                                     if(monsterIdToName.contains(id))
                                         if(monsterToLink.contains(monsterIdToName.value(id)))
@@ -572,13 +590,13 @@ void updateMonsterXml(const QString &file)
                                                 if(itemNameToId.contains(link.skill))
                                                     if(skillNameToId.contains(link.skill))
                                                     {
-                                                        QDomElement newElement=attack_list.ownerDocument().createElement("attack");
                                                         quint32 byitem=itemNameToId.value(link.skill);
                                                         quint32 skill=skillNameToId.value(link.skill);
                                                         if(!byitemAlreadySet.contains(byitem) && !skillAlreadySet.contains(skill))
                                                         {
                                                             byitemAlreadySet << byitem;
                                                             skillAlreadySet << skill;
+                                                            QDomElement newElement=attack_list.ownerDocument().createElement("attack");
                                                             newElement.setAttribute("byitem",byitem);
                                                             newElement.setAttribute("id",skill);
                                                             if(!newElement.isNull())
@@ -648,9 +666,9 @@ int main(int argc, char *argv[])
         qDebug() << "missing items/items.xml into the path given";
         return 2;
     }
-    if(!QFile(arguments.last()+"/monsters/skill.xml").exists())
+    if(!QFile(arguments.last()+"/monsters/skill/skill.xml").exists())
     {
-        qDebug() << "missing monsters/skill.xml into the path given";
+        qDebug() << "missing monsters/skill/skill.xml.xml into the path given";
         return 2;
     }
     if(!QFile(arguments.last()+"/monsters/monster.xml").exists())
