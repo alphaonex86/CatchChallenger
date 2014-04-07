@@ -186,6 +186,18 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.value(flag)->setZValue(y);
         }
+        /*if(parsedMap->logicalMap.clan.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(7);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }*/
         if(parsedMap->logicalMap.heal.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
@@ -222,6 +234,18 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.value(flag)->setZValue(y);
         }
+        /*if(parsedMap->logicalMap.industry.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            botDisplay->flags << flag;
+            Tiled::Cell cell=flag->cell();
+            cell.tile=botFlags->tileAt(8);
+            flag->setCell(cell);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(y);
+        }*/
         if(parsedMap->logicalMap.botsFight.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
