@@ -459,7 +459,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
     //map not located
     if(map==NULL)
     {
-        ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+        ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
         return;
     }
     const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*map,x,y);
@@ -477,7 +477,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
                 else if(QFile(baseSearch+"/background.jpg").exists() && (supportedImageFormats.contains(QLatin1Literal("jpeg")) || supportedImageFormats.contains(QLatin1Literal("jpg"))))
                     ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url('")+baseSearch+QLatin1Literal("/background.jpg');}"));
                 else
-                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
 
                 if(QFile(baseSearch+"/plateform-front.png").exists())
                     ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.png")));
