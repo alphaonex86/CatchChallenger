@@ -63,7 +63,7 @@ public slots:
     void receiveChatText(const Chat_type &chatType, const QString &text, const Player_internal_informations *sender_informations);
     void receiveSystemText(const QString &text,const bool &important=false);
     void sendChatText(const Chat_type &chatType,const QString &text);
-    void receive_instant_player_number(qint32 connected_players);
+    void receive_instant_player_number(const quint16 &connected_players);
     void kick();
     void sendBroadCastCommand(const QString &command,const QString &extraText);
     void setRights(const Player_type& type);

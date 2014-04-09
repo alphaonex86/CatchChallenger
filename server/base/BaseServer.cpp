@@ -1246,6 +1246,8 @@ void BaseServer::preload_the_players()
         ClientHeavyLoad::simplifiedIdList << index;
         index++;
     }
+
+    connect(&GlobalServerData::serverPrivateVariables.player_updater,&PlayerUpdater::newConnectedPlayer,&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::receive_instant_player_number,Qt::QueuedConnection);
 }
 
 void BaseServer::preload_the_visibility_algorithm()

@@ -46,8 +46,6 @@ ClientBroadCast::~ClientBroadCast()
 void ClientBroadCast::setVariable(Player_internal_informations *player_informations)
 {
     this->player_informations=player_informations;
-    if(GlobalServerData::serverSettings.sendPlayerNumber)
-        connect(&GlobalServerData::serverPrivateVariables.player_updater,&PlayerUpdater::newConnectedPlayer,this,&ClientBroadCast::receive_instant_player_number,Qt::QueuedConnection);
 }
 
 //without verification of rights
@@ -219,7 +217,7 @@ void ClientBroadCast::send_player_informations()
     clientBroadCastList << this;
 }
 
-void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
+void ClientBroadCast::receive_instant_player_number(const quint16 &connected_players)
 {
     if(!player_informations->character_loaded)
         return;
