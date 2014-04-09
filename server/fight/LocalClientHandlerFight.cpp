@@ -346,9 +346,7 @@ bool LocalClientHandlerFight::botFightCollision(CommonMap *map,const COORD_TYPE 
         emit error(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
     }
-    if(player_informations->isFake)
-        return false;
-    QList<quint32> botList=static_cast<MapServer *>(map)->botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+    const QList<quint32> &botList=static_cast<MapServer *>(map)->botsFightTrigger.values(QPair<quint8,quint8>(x,y));
     int index=0;
     while(index<botList.size())
     {

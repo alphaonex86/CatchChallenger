@@ -3,6 +3,7 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "GlobalServerData.h"
+#include "LocalClientHandlerWithoutSender.h"
 
 #include <QStringList>
 
@@ -101,6 +102,8 @@ void LocalClientHandler::removeFromClan()
 /// \todo battle with capture city canceled
 void LocalClientHandler::extraStop()
 {
+    LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.allClient.removeOne(this);
+
     tradeCanceled();
     localClientHandlerFight.battleCanceled();
     if(player_informations->character_loaded)
@@ -111,7 +114,7 @@ void LocalClientHandler::extraStop()
     }
     removeFromClan();
 
-    if(!player_informations->character_loaded || player_informations->isFake)
+    if(!player_informations->character_loaded)
         return;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -240,8 +243,6 @@ QString LocalClientHandler::orientationToStringToSave(const Orientation &orienta
 
 void LocalClientHandler::savePosition()
 {
-    if(player_informations->isFake)
-        return;
     //virtual stop the player
     //Orientation orientation;
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
@@ -362,8 +363,6 @@ void LocalClientHandler::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const
     playerById[player_informations->character_id]=this;
     if(player_informations->public_and_private_informations.clan>0)
         sendClanInfo();
-    if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
-        QObject::connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
 
     localClientHandlerFight.updateCanDoFight();
     if(localClientHandlerFight.getAbleToFight())
@@ -377,6 +376,8 @@ void LocalClientHandler::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const
         emit receiveSystemText(GlobalServerData::serverPrivateVariables.server_message.at(index));
         index++;
     }
+
+    LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.allClient << this;
 }
 
 void LocalClientHandler::createMemoryClan()
@@ -2672,8 +2673,6 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
         emit error("Try requestFight when is in capture city");
         return;
     }
-    if(player_informations->isFake)
-        return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("request fight at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
     #endif

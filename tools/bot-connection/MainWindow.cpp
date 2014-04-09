@@ -46,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->multipleConnexion->setChecked(true);
             ui->connexionCount->setValue(settings.value("multipleConnexion").toUInt());
         }
+        ui->connectBySeconds->setValue(settings.value("connectBySeconds").toUInt());
     }
     if(settings.contains("autoCreateCharacter"))
         ui->autoCreateCharacter->setChecked(settings.value("autoCreateCharacter").toBool());
@@ -309,6 +310,11 @@ void MainWindow::haveTheDatapack()
             index++;
         }
     }
+    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.isEmpty())
+    {
+        qDebug() << "Profile list is empty";
+        return;
+    }
 
     if(apiToCatchChallengerClient[senderObject]->charactersList.count()<=0)
     {
@@ -332,11 +338,12 @@ void MainWindow::haveTheDatapack()
     }
     if(ui->multipleConnexion->isChecked())
     {
-        //fopr the other client
+        connect(&connectTimer,&QTimer::timeout,this,&MainWindow::connectTimerSlot);
+        connectTimer.start(1000/ui->connectBySeconds->value());
+
+        //for the other client
         ui->characterSelect->setEnabled(false);
         ui->characterList->setEnabled(false);
-        while(apiToCatchChallengerClient.size()<ui->connexionCount->value())
-            createClient()->socket->connectToHost(ui->host->text(),ui->port->value());
 
         //the actual client
         const quint32 &character_id=apiToCatchChallengerClient[senderObject]->charactersList.at(rand()%apiToCatchChallengerClient[senderObject]->charactersList.size()).character_id;
@@ -349,6 +356,14 @@ void MainWindow::haveTheDatapack()
 
         return;
     }
+}
+
+void MainWindow::connectTimerSlot()
+{
+    if(apiToCatchChallengerClient.size()<ui->connexionCount->value())
+        createClient()->socket->connectToHost(ui->host->text(),ui->port->value());
+    else
+        connectTimer.stop();
 }
 
 void MainWindow::newCharacterId(const quint32 &characterId)
@@ -481,6 +496,7 @@ void MainWindow::on_connect_clicked()
         settings.setValue("multipleConnexion",ui->connexionCount->value());
     else
         settings.setValue("multipleConnexion",0);
+    settings.setValue("connectBySeconds",ui->connectBySeconds->value());
     settings.setValue("autoCreateCharacter",ui->autoCreateCharacter->isChecked());
 
     if(!ui->connect->isEnabled())

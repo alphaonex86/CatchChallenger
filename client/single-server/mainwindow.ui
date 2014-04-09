@@ -44,7 +44,7 @@
       </property>
       <widget class="QWidget" name="page_login">
        <property name="styleSheet">
-        <string notr="true">#page_login{background-image: url(:/images/background.png);}</string>
+        <string notr="true">#page_login{background-image: url(:/images/background.jpg);}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>

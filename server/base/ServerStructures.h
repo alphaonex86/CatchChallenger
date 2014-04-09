@@ -66,7 +66,6 @@ struct MonsterDrops
 struct Player_internal_informations
 {
     Player_private_and_public_informations public_and_private_informations;
-    bool isFake;
     quint32 account_id;//0 if not logged
     quint8 number_of_character;
     bool character_loaded;
@@ -298,8 +297,8 @@ struct ServerPrivateVariables
     //map
     QHash<QString,CommonMap *> map_list;
     QHash<quint32,QString> id_map_to_map;
-    QTimer timer_to_send_insert_move_remove;/// \todo put on timer by thread without Qt::QueuedConnection to improve the performance
-    QTimer positionSync;/// \todo put into the local thread to drop Qt::QueuedConnection and improve the performance
+    QTimer *timer_to_send_insert_move_remove;
+    QTimer positionSync;
     qint8 sizeofInsertRequest;
 
     //connection
@@ -308,16 +307,6 @@ struct ServerPrivateVariables
     QSet<quint32> connected_players_id_list;
     QStringList server_message;
 
-    //bot
-    struct BotSpawn
-    {
-        QString map;
-        COORD_TYPE x;
-        COORD_TYPE y;
-    };
-    QList<BotSpawn> botSpawn;
-    QSet<FakeBot *> fakeBotList;
-    QSet<QFakeSocket *> botSockets;
     quint32 number_of_bots_logged;
     int botSpawnIndex;
     QHash<quint32,IndustryStatus> industriesStatus;

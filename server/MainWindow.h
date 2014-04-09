@@ -59,7 +59,6 @@ private slots:
     void stop_calculate_latency();
     void benchmark_result(int latency,double TX_speed,double RX_speed,double TX_size,double RX_size,double second);
     void clean_updated_info();
-    void update_benchmark();
     void update_capture();
     //auto slots
     void on_pushButton_server_start_clicked();
@@ -79,13 +78,9 @@ private slots:
     void on_db_mysql_login_editingFinished();
     void on_db_mysql_pass_editingFinished();
     void on_db_mysql_base_editingFinished();
-    void on_pushButton_server_benchmark_clicked();
     void on_MapVisibilityAlgorithm_currentIndexChanged(int index);
     void on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1);
     void on_MapVisibilityAlgorithmSimpleReshow_editingFinished();
-    void on_benchmark_benchmarkMap_clicked();
-    void on_benchmark_seconds_valueChanged(int arg1);
-    void on_benchmark_clients_valueChanged(int arg1);
     void on_db_type_currentIndexChanged(int index);
     void updateDbGroupbox();
     void on_sendPlayerNumber_toggled(bool checked);

@@ -454,7 +454,6 @@ struct Map_to_send
         COORD_TYPE x,y;
     };
     QList<Map_Point> rescue_points;
-    QList<Map_Point> bot_spawn_points;
 
     struct Bot_Semi
     {

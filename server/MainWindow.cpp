@@ -21,7 +21,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&server,&NormalServer::player_is_disconnected,this,&MainWindow::player_is_disconnected);
     connect(&server,&NormalServer::new_chat_message,    this,&MainWindow::new_chat_message);
     connect(&server,&NormalServer::error,               this,&MainWindow::server_error);
-    connect(&server,&NormalServer::benchmark_result,    this,&MainWindow::benchmark_result);
     connect(&timer_update_the_info,&QTimer::timeout,    this,&MainWindow::update_the_info);
     connect(&check_latency,&QTimer::timeout,            this,&MainWindow::start_calculate_latency);
     connect(this,&MainWindow::record_latency,           this,&MainWindow::stop_calculate_latency,Qt::QueuedConnection);
@@ -75,7 +74,6 @@ void MainWindow::updateActionButton()
     ui->pushButton_server_start->setEnabled(server.isStopped());
     ui->pushButton_server_restart->setEnabled(server.isListen());
     ui->pushButton_server_stop->setEnabled(server.isListen());
-    ui->pushButton_server_benchmark->setEnabled(server.isStopped());
 }
 
 void MainWindow::on_pushButton_server_start_clicked()
@@ -204,7 +202,7 @@ void MainWindow::update_the_info()
         ui->listLatency->addItem(tr("%1ms").arg(internal_currentLatency));
     else
         ui->listLatency->item(0)->setText(tr("%1ms").arg(internal_currentLatency));
-    if(server.isListen() || server.isInBenchmark())
+    if(server.isListen())
     {
         quint16 player_current,player_max;
         player_current=server.player_current();
@@ -291,9 +289,6 @@ void MainWindow::load_settings()
     ui->pvp->setChecked(settings->value(QLatin1Literal("pvp")).toBool());
     ui->sendPlayerNumber->setChecked(settings->value(QLatin1Literal("sendPlayerNumber")).toBool());
     ui->server_port->setValue(settings->value(QLatin1Literal("server-port")).toUInt());
-    ui->benchmark_benchmarkMap->setChecked(settings->value(QLatin1Literal("benchmark_map")).toBool());
-    ui->benchmark_seconds->setValue(settings->value(QLatin1Literal("benchmark_seconds")).toUInt());
-    ui->benchmark_clients->setValue(settings->value(QLatin1Literal("benchmark_clients")).toUInt());
     ui->tolerantMode->setChecked(settings->value(QLatin1Literal("tolerantMode")).toBool());
     ui->forceClientToSendAtMapChange->setChecked(settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool());
     if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("none"))
@@ -437,15 +432,6 @@ void MainWindow::load_settings()
             ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value());
         else
             ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setMaximum(ui->MapVisibilityAlgorithmWithBorderReshow->value());
-    }
-
-    switch(ui->MapVisibilityAlgorithm->currentIndex())
-    {
-        case 0:
-            update_benchmark();
-        break;
-        default:
-        break;
     }
 
     {
@@ -791,30 +777,6 @@ void MainWindow::send_settings()
     server.setSettings(formatedServerSettings);
 }
 
-void MainWindow::update_benchmark()
-{
-    switch(ui->MapVisibilityAlgorithm->currentIndex())
-    {
-        case 0:
-            ui->labelBenchTip->setText(tr("The number of bot should be lower than %1*number of map\nSee the max client into the visibility algorithm\nNeed be lower than max player: %2")
-                                       .arg(ui->MapVisibilityAlgorithmSimpleMax->value())
-                                       .arg(ui->max_player->value())
-                                       );
-            ui->pushButton_server_benchmark->setEnabled(true);
-        break;
-        default:
-            ui->labelBenchTip->setText(tr("You need select another visibility algorithm"));
-            ui->pushButton_server_benchmark->setEnabled(false);
-        break;
-    }
-    if(ui->benchmark_clients->value()>ui->MapVisibilityAlgorithmSimpleMax->value())
-        ui->benchmark_clients->setStyleSheet(QLatin1Literal("color: rgb(255, 0, 0);background-color: rgb(255, 230, 230);"));
-    else
-        ui->benchmark_clients->setStyleSheet(QString());
-    ui->benchmark_clients->setMaximum(ui->max_player->value());
-}
-
-
 void MainWindow::on_max_player_valueChanged(int arg1)
 {
     settings->setValue(QLatin1Literal("max-players"),arg1);
@@ -906,13 +868,6 @@ void MainWindow::on_db_mysql_base_editingFinished()
     settings->endGroup();
 }
 
-void MainWindow::on_pushButton_server_benchmark_clicked()
-{
-    send_settings();
-    server.start_benchmark(ui->benchmark_seconds->value(),ui->benchmark_clients->value(),ui->benchmark_benchmarkMap->isChecked());
-    updateActionButton();
-}
-
 void MainWindow::on_MapVisibilityAlgorithm_currentIndexChanged(int index)
 {
     ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(index==0);
@@ -928,7 +883,6 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
     settings->setValue(QLatin1Literal("Max"),arg1);
     settings->endGroup();
     ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(arg1);
-    update_benchmark();
 }
 
 
@@ -937,22 +891,6 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleReshow_editingFinished()
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
     settings->setValue(QLatin1Literal("Reshow"),ui->MapVisibilityAlgorithmSimpleReshow->value());
     settings->endGroup();
-}
-
-void MainWindow::on_benchmark_benchmarkMap_clicked()
-{
-    settings->setValue(QLatin1Literal("benchmark_map"),ui->benchmark_benchmarkMap->isChecked());
-}
-
-void MainWindow::on_benchmark_seconds_valueChanged(int arg1)
-{
-    settings->setValue(QLatin1Literal("benchmark_seconds"),arg1);
-}
-
-void MainWindow::on_benchmark_clients_valueChanged(int arg1)
-{
-    settings->setValue(QLatin1Literal("benchmark_clients"),arg1);
-    update_benchmark();
 }
 
 void MainWindow::on_db_type_currentIndexChanged(int index)
