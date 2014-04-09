@@ -5,16 +5,14 @@
 using namespace CatchChallenger;
 PlayerUpdater::PlayerUpdater() :
     connected_players(0),
-    sended_connected_players(0)
+    sended_connected_players(0),
+    next_send_timer(NULL)
 {
-    next_send_timer.setSingleShot(true);
-
-    //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=9*16*4=576B/s
-    next_send_timer.setInterval(250);
-
     connect(this,&PlayerUpdater::send_addConnectedPlayer,this,&PlayerUpdater::internal_addConnectedPlayer,Qt::QueuedConnection);
     connect(this,&PlayerUpdater::send_removeConnectedPlayer,this,&PlayerUpdater::internal_removeConnectedPlayer,Qt::QueuedConnection);
-    connect(&next_send_timer,&QTimer::timeout,this,&PlayerUpdater::send_timer,Qt::QueuedConnection);
+
+    connect(this,&PlayerUpdater::try_initAll,                  this,&PlayerUpdater::initAll,              Qt::QueuedConnection);
+    emit try_initAll();
 }
 
 void PlayerUpdater::addConnectedPlayer()
@@ -27,6 +25,20 @@ void PlayerUpdater::removeConnectedPlayer()
     emit send_removeConnectedPlayer();
 }
 
+void PlayerUpdater::initAll()
+{
+    if(next_send_timer==NULL)
+    {
+        next_send_timer=new QTimer();
+        next_send_timer->setSingleShot(true);
+
+        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=9*16*4=576B/s
+        next_send_timer->setInterval(250);
+
+        connect(next_send_timer,&QTimer::timeout,this,&PlayerUpdater::send_timer,Qt::QueuedConnection);
+    }
+}
+
 void PlayerUpdater::internal_addConnectedPlayer()
 {
     connected_players++;
@@ -34,26 +46,26 @@ void PlayerUpdater::internal_addConnectedPlayer()
     {
         //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=49*16*1=735B/s
         case 10:
-            next_send_timer.setInterval(1000);
+            next_send_timer->setInterval(1000);
         break;
         //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=99*16*0.5=792B/s
         case 50:
-            next_send_timer.setInterval(2000);
+            next_send_timer->setInterval(2000);
         break;
         //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=999*16*0.1=1.6KB/s
         case 100:
-            next_send_timer.setInterval(10000);
+            next_send_timer->setInterval(10000);
         break;
         //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=65535*16*0.016=16.7KB/s
         case 1000:
-            next_send_timer.setInterval(60000);
+            next_send_timer->setInterval(60000);
         break;
         default:
         break;
     }
 
-    if(!next_send_timer.isActive())
-        next_send_timer.start();
+    if(!next_send_timer->isActive())
+        next_send_timer->start();
 }
 
 void PlayerUpdater::internal_removeConnectedPlayer()
@@ -62,22 +74,22 @@ void PlayerUpdater::internal_removeConnectedPlayer()
     switch(connected_players)
     {
         case (10-1):
-            next_send_timer.setInterval(250);
+            next_send_timer->setInterval(250);
         break;
         case (50-1):
-            next_send_timer.setInterval(1000);
+            next_send_timer->setInterval(1000);
         break;
         case (100-1):
-            next_send_timer.setInterval(2000);
+            next_send_timer->setInterval(2000);
         break;
         case (1000-1):
-            next_send_timer.setInterval(10000);
+            next_send_timer->setInterval(10000);
         break;
         default:
         break;
     }
-    if(!next_send_timer.isActive())
-        next_send_timer.start();
+    if(!next_send_timer->isActive())
+        next_send_timer->start();
 }
 
 void PlayerUpdater::send_timer()
