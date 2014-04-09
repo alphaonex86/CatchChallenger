@@ -36,7 +36,6 @@ public:
     explicit NormalServer();
     virtual ~NormalServer();
     //stat function
-    bool isInBenchmark();
     quint16 player_current();
     quint16 player_max();
     //stat function
@@ -47,7 +46,6 @@ public slots:
     //to manipulate the server for restart and stop
     void start_server();
     void stop_server();
-    void start_benchmark(quint16 second,quint16 number_of_client,bool benchmark_map);
     //todo
     /*void send_system_message(QString text);
     void send_pm_message(QString pseudo,QString text);*/
@@ -60,13 +58,7 @@ private:
     QString listenIpAndPort(QString server_ip,quint16 server_port);
     //store about the network
     QSslServer *server;
-    //store benchmark related
-    bool in_benchmark_mode;
-    bool benchmark_map;
     int number_of_client;
-    int benchmark_latency;
-    QTimer *timer_benchmark_stop;
-    QTime time_benchmark_first_client;
     EventThreader * botThread;
     EventThreader * eventDispatcherThread;
     //to check double instance
@@ -75,37 +67,29 @@ private:
     QSslCertificate *sslCertificate;
     QSslKey *sslKey;
 
-    //bot related
-    void removeBots();
-    void addBot();
-    QTimer nextStep;//all function call singal sync, then not pointer needed
+    static QString text_restart;
+    static QString text_stop;
 private slots:
     //new connection
     void newConnection();
     //remove all finished client
     void removeOneClient();
-    void removeOneBot();
     //void removeOneBot();
     //parse general order from the client
     void serverCommand(const QString &command,const QString &extraText);
     //starting function
     void stop_internal_server();
-    void stop_benchmark();
     bool check_if_now_stopped();
-    void start_internal_benchmark(quint16 second, quint16 number_of_client);
     void start_internal_server();
     void sslErrors(const QList<QSslError> &errors);
 signals:
     //async the call
     void need_be_stopped();
     void need_be_restarted();
-    void try_start_benchmark(const quint16 &second,const quint16 &number_of_client,const bool &benchmark_map);
     //stat player
     void new_player_is_connected(const Player_internal_informations &player);
     void player_is_disconnected(const QString &pseudo);
     void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
-    //benchmark
-    void benchmark_result(const int &latency,const double &TX_speed,const double &RX_speed,const double &TX_size,const double &RX_size,const double &second);
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &map_to_send,const QString &map_file);
 };

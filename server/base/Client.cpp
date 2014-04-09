@@ -10,7 +10,7 @@ using namespace CatchChallenger;
 
 #define OBJECTTOSTOP 7
 
-Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMapManagement) :
+Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement) :
     ask_is_ready_to_stop(false),
     stopped_object(0),
     socket(socket),
@@ -22,7 +22,6 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     clientLocalBroadcast(),
     clientMapManagement(clientMapManagement)
 {
-    player_informations.isFake=isFake;
     player_informations.character_loaded=false;
     player_informations.character_id=0;
     player_informations.account_id=0;
@@ -53,7 +52,6 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
         connect(&clientNetworkRead,      &ClientNetworkRead::teleportValidatedTo,clientMapManagement,	&ClientMapManagement::teleportValidatedTo,coTypeAsync);
         connect(clientMapManagement,	&ClientMapManagement::error,			this,                   &Client::errorOutput,                   coTypeAsync);
         connect(clientMapManagement,	&ClientMapManagement::message,			this,                   &Client::normalOutput,                  coTypeAsync);
-        connect(&GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,clientMapManagement,&ClientMapManagement::purgeBuffer,coTypeAsync);
     }
 
     connect(socket,	static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error),         this, &Client::connectionError);
@@ -158,9 +156,12 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     //packet parsed (broadcast)
     connect(&localClientHandler,	&LocalClientHandler::receiveSystemText,     &clientBroadCast,	&ClientBroadCast::receiveSystemText,        coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendChatText,			&clientBroadCast,	&ClientBroadCast::sendChatText,				coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendLocalChatText,      &clientLocalBroadcast,&ClientLocalBroadcast::sendLocalChatText,	coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendPM,                 &clientBroadCast,	&ClientBroadCast::sendPM,                   coTypeAsync);
+    if(CommonSettings::commonSettings.chat_allow_clan || CommonSettings::commonSettings.chat_allow_all)
+        connect(&clientNetworkRead,	&ClientNetworkRead::sendChatText,			&clientBroadCast,	&ClientBroadCast::sendChatText,				coTypeAsync);
+    if(CommonSettings::commonSettings.chat_allow_local)
+        connect(&clientNetworkRead,	&ClientNetworkRead::sendLocalChatText,      &clientLocalBroadcast,&ClientLocalBroadcast::sendLocalChatText,	coTypeAsync);
+    if(CommonSettings::commonSettings.chat_allow_private)
+        connect(&clientNetworkRead,	&ClientNetworkRead::sendPM,                 &clientBroadCast,	&ClientBroadCast::sendPM,                   coTypeAsync);
     connect(&clientNetworkRead,	&ClientNetworkRead::sendBroadCastCommand,	&clientBroadCast,	&ClientBroadCast::sendBroadCastCommand,		coTypeAsync);
     connect(&clientNetworkRead,	&ClientNetworkRead::sendHandlerCommand,		&localClientHandler,	&LocalClientHandler::sendHandlerCommand,	coTypeAsync);
     connect(&clientNetworkRead,	&ClientNetworkRead::destroyObject,          &localClientHandler,	&LocalClientHandler::destroyObject,         coTypeAsync);
@@ -380,11 +381,6 @@ void Client::send_player_informations()
     GlobalServerData::serverPrivateVariables.connected_players++;
     if(GlobalServerData::serverSettings.sendPlayerNumber)
         GlobalServerData::serverPrivateVariables.player_updater.addConnectedPlayer();
-
-    //remove the useless connection
-    /*disconnect(&clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));
-    disconnect(&clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()));
-    disconnect(&clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)));*/
 }
 
 QString Client::getPseudo()

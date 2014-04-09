@@ -1,4 +1,5 @@
 #include "MapVisibilityAlgorithm_Simple.h"
+#include "MapVisibilityAlgorithm_WithoutSender.h"
 #include "../GlobalServerData.h"
 #include "../../VariableServer.h"
 
@@ -28,7 +29,8 @@ bool MapVisibilityAlgorithm_Simple::mapHaveChanged;
 //temp variable to move on the map
 map_management_movement MapVisibilityAlgorithm_Simple::moveClient_tempMov;
 
-MapVisibilityAlgorithm_Simple::MapVisibilityAlgorithm_Simple()
+MapVisibilityAlgorithm_Simple::MapVisibilityAlgorithm_Simple() :
+    haveBufferToPurge(false)
 {
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     previousMovedUnitBlocked=0;
@@ -260,6 +262,7 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const SIMPLIFIED_PLAYER_
     emit message(QStringLiteral("insertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
     #endif
     to_send_insert[player_id]=the_another_player;
+    haveBufferToPurge=true;
 }
 #endif
 
@@ -282,6 +285,7 @@ void MapVisibilityAlgorithm_Simple::reinsertAnotherClient(const SIMPLIFIED_PLAYE
     emit message(QStringLiteral("reinsertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
     #endif
     to_send_reinsert[player_id]=the_another_player;
+    haveBufferToPurge=true;
 }
 
 void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(MapVisibilityAlgorithm_Simple *the_another_player, const quint8 &movedUnit, const Direction &direction)
@@ -350,6 +354,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
     moveClient_tempMov.movedUnit=movedUnit;
     moveClient_tempMov.direction=direction;
     to_send_move[player_id] << moveClient_tempMov;
+    haveBufferToPurge=true;
 }
 
 #ifdef CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR
@@ -379,11 +384,14 @@ void MapVisibilityAlgorithm_Simple::removeAnotherClient(const SIMPLIFIED_PLAYER_
     to_send_map_management_move.remove(player_id);
     #endif */
     to_send_remove << player_id;
+    haveBufferToPurge=true;
 }
 #endif
 
 void MapVisibilityAlgorithm_Simple::extraStop()
 {
+    haveBufferToPurge=false;
+    MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.allClient.removeOne(this);
     unloadFromTheMap();//product remove on the map
 
     to_send_insert.clear();
@@ -393,10 +401,14 @@ void MapVisibilityAlgorithm_Simple::extraStop()
 
 void MapVisibilityAlgorithm_Simple::purgeBuffer()
 {
-    send_insert();
-    send_move();
-    send_remove();
-    send_reinsert();
+    if(haveBufferToPurge)
+    {
+        send_insert();
+        send_move();
+        send_remove();
+        send_reinsert();
+        haveBufferToPurge=false;
+    }
 }
 
 //for the purge buffer
@@ -658,6 +670,7 @@ void MapVisibilityAlgorithm_Simple::unloadFromTheMap()
 //map slots, transmited by the current ClientNetworkRead
 void MapVisibilityAlgorithm_Simple::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
+    MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.allClient << static_cast<void*>(this);
     MapBasicMove::put_on_the_map(map,x,y,orientation);
     loadOnTheMap();
 }

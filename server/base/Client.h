@@ -28,7 +28,7 @@ class Client : public QObject
 {
     Q_OBJECT
 public:
-    explicit Client(ConnectedSocket *socket, bool isFake, ClientMapManagement *clientMapManagement);
+    explicit Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement);
     ~Client();
     //to get some info
     QString getPseudo();

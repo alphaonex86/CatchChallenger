@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -1513,110 +1513,6 @@
         </item>
         <item row="1" column="0" colspan="3">
          <widget class="QListWidget" name="listLatency"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="benchmark">
-       <attribute name="title">
-        <string>Benchmark</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <widget class="QGroupBox" name="groupBox">
-          <property name="title">
-           <string>Options</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_15">
-             <property name="text">
-              <string>Seconds:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QSpinBox" name="benchmark_seconds">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>999999</number>
-             </property>
-             <property name="value">
-              <number>60</number>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_17">
-             <property name="text">
-              <string>Clients:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QSpinBox" name="benchmark_clients">
-             <property name="styleSheet">
-              <string notr="true">background-color: rgb(255, 230, 230);</string>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>65535</number>
-             </property>
-             <property name="value">
-              <number>200</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="benchmark_benchmarkMap">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="text">
-           <string>Benchmark map</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="labelBenchTip">
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(255, 255, 163);
-border: 1px solid rgb(255, 221, 50);
-border-radius:5px;</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_server_benchmark">
-          <property name="text">
-           <string>Benchmark</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>220</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </widget>

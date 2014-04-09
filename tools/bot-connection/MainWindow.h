@@ -46,6 +46,7 @@ private:
     QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
     QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
 
+    QTimer connectTimer;
     QSettings settings;
     QTimer moveTimer;
     QTimer textTimer;
@@ -72,6 +73,7 @@ private slots:
     void sslErrors(const QList<QSslError> &errors);
     void on_characterSelect_clicked();
     void haveTheDatapack();
+    void connectTimerSlot();
     void newCharacterId(const quint32 &characterId);
 signals:
     void isDisconnected();

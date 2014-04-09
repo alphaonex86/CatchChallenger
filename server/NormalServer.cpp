@@ -15,11 +15,13 @@ using namespace CatchChallenger;
 
 bool NormalServer::oneInstanceRunning=false;
 
+QString NormalServer::text_restart=QLatin1Literal("restart");
+QString NormalServer::text_stop=QLatin1Literal("stop");
+
 NormalServer::NormalServer() :
     BaseServer()
 {
     server                  = NULL;
-    timer_benchmark_stop    = NULL;
     sslCertificate          = NULL;
     sslKey                  = NULL;
 
@@ -29,16 +31,11 @@ NormalServer::NormalServer() :
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//heavy load (3)
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//local calcule (4)
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//local broad cast (5)
+    moveToThreadForContructor();
 
     botThread = new EventThreader();
     eventDispatcherThread = new EventThreader();
     moveToThread(eventDispatcherThread);
-
-    connect(this,&NormalServer::try_start_benchmark,this,&NormalServer::start_internal_benchmark,Qt::QueuedConnection);
-
-    in_benchmark_mode=false;
-
-    nextStep.start(CATCHCHALLENGER_SERVER_NORMAL_SPEED);
 
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::serverCommand,this,&NormalServer::serverCommand,Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_player_is_connected,this,&NormalServer::new_player_is_connected,Qt::QueuedConnection);
@@ -50,7 +47,6 @@ NormalServer::NormalServer() :
  * \warning this function is thread safe because it quit all thread before remove */
 NormalServer::~NormalServer()
 {
-    timer_benchmark_stop->deleteLater();
     int index=0;
     while(index<GlobalServerData::serverPrivateVariables.eventThreaderList.size())
     {
@@ -85,10 +81,6 @@ NormalServer::~NormalServer()
 
 void NormalServer::initAll()
 {
-    timer_benchmark_stop=new QTimer();
-    timer_benchmark_stop->setInterval(60000);//1min
-    timer_benchmark_stop->setSingleShot(true);
-    connect(timer_benchmark_stop,&QTimer::timeout,this,&NormalServer::stop_benchmark,Qt::QueuedConnection);
     BaseServer::initAll();
 }
 
@@ -96,21 +88,8 @@ void NormalServer::initAll()
 
 void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const QString &map_file)
 {
-    if(in_benchmark_mode)
-    {
-        int index_sub=0;
-        int size_sub_loop=map_to_send.bot_spawn_points.size();
-        while(index_sub<size_sub_loop)
-        {
-            ServerPrivateVariables::BotSpawn tempPoint;
-            tempPoint.map=map_file;
-            tempPoint.x=map_to_send.bot_spawn_points.at(index_sub).x;
-            tempPoint.y=map_to_send.bot_spawn_points.at(index_sub).y;
-            GlobalServerData::serverPrivateVariables.botSpawn << tempPoint;
-            DebugClass::debugConsole(QStringLiteral("BotSpawn (bot_spawn_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
-            index_sub++;
-        }
-    }
+    Q_UNUSED(map_to_send);
+    Q_UNUSED(map_file);
 }
 
 void NormalServer::load_settings()
@@ -296,79 +275,10 @@ void NormalServer::start_internal_server()
     return;
 }
 
-//start without real player possibility
-void NormalServer::start_internal_benchmark(quint16 second,quint16 number_of_client)
-{
-    if(oneInstanceRunning)
-    {
-        DebugClass::debugConsole("Other instance already running");
-        return;
-    }
-    if(stat!=Down)
-    {
-        DebugClass::debugConsole("Is in wrong stat for benchmark");
-        return;
-    }
-    timer_benchmark_stop->setInterval(second*1000);
-    benchmark_latency=0;
-    stat=InUp;
-    load_settings();
-    //firstly get the spawn point
-    preload_the_data();
-
-    int index=0;
-    while(index<number_of_client)
-    {
-        addBot();
-        index++;
-    }
-    timer_benchmark_stop->start();
-    stat=Up;
-    oneInstanceRunning=true;
-}
-
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
-
-//call by stop benchmark
-void NormalServer::stop_benchmark()
-{
-    if(in_benchmark_mode==false)
-    {
-        DebugClass::debugConsole("Double stop_benchmark detected!");
-        return;
-    }
-    DebugClass::debugConsole("Stop the benchmark");
-    double TX_speed=0;
-    double RX_speed=0;
-    double TX_size=0;
-    double RX_size=0;
-    double second=0;
-
-    if(GlobalServerData::serverPrivateVariables.fakeBotList.size()>=1)
-    {
-        second=((double)time_benchmark_first_client.elapsed()/1000);
-        if(second>0)
-        {
-            QSetIterator<FakeBot *> i(GlobalServerData::serverPrivateVariables.fakeBotList);
-            FakeBot *firstBot=i.next();
-            TX_size=firstBot->get_TX_size();
-            RX_size=firstBot->get_RX_size();
-            TX_speed=((double)TX_size)/second;
-            RX_speed=((double)RX_size)/second;
-        }
-    }
-    stat=Up;
-    stop_internal_server();
-    stat=Down;
-    oneInstanceRunning=false;
-    in_benchmark_mode=false;
-    emit benchmark_result(benchmark_latency,TX_speed,RX_speed,TX_size,RX_size,second);
-}
 
 bool NormalServer::check_if_now_stopped()
 {
-    if(GlobalServerData::serverPrivateVariables.fakeBotList.size()!=0)
-        return false;
     if(!BaseServer::check_if_now_stopped())
         return false;
     oneInstanceRunning=false;
@@ -386,7 +296,6 @@ void NormalServer::stop_internal_server()
 {
     BaseServer::stop_internal_server();
 
-    removeBots();
     if(server!=NULL)
     {
         server->close();
@@ -415,106 +324,21 @@ void NormalServer::removeOneClient()
     check_if_now_stopped();
 }
 
-void NormalServer::removeOneBot()
-{
-    FakeBot *client=qobject_cast<FakeBot *>(QObject::sender());
-    if(client==NULL)
-    {
-        DebugClass::debugConsole("removeOneBot(): NULL client at disconnection");
-        return;
-    }
-    GlobalServerData::serverPrivateVariables.fakeBotList.remove(client);
-    client->deleteLater();
-    check_if_now_stopped();
-}
-
-void NormalServer::removeBots()
-{
-    QSetIterator<FakeBot *> i(GlobalServerData::serverPrivateVariables.fakeBotList);
-    while(i.hasNext())
-        i.next()->disconnect();
-}
-
-/////////////////////////////////////// Add object //////////////////////////////////////
-
-void NormalServer::addBot()
-{
-    FakeBot * newFakeBot=new FakeBot();
-    GlobalServerData::serverPrivateVariables.fakeBotList << newFakeBot;
-    GlobalServerData::serverPrivateVariables.botSockets << &newFakeBot->fakeSocket;
-
-    if(GlobalServerData::serverPrivateVariables.fakeBotList.size()==1)
-    {
-        //GlobalServerData::serverPrivateVariables.fake_clients.last()->show_details();
-        time_benchmark_first_client.start();
-    }
-    newFakeBot->moveToThread(botThread);
-    newFakeBot->start_step();
-    connect(&nextStep,&QTimer::timeout,newFakeBot,&FakeBot::doStep,Qt::QueuedConnection);
-    connect(newFakeBot,&FakeBot::isDisconnected,this,&NormalServer::removeOneBot,Qt::QueuedConnection);
-}
-
 ///////////////////////////////////// Generic command //////////////////////////////////
 
 void NormalServer::serverCommand(const QString &command, const QString &extraText)
 {
+    Q_UNUSED(extraText);
     Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
     {
         DebugClass::debugConsole("NULL client at serverCommand()");
         return;
     }
-    if(command=="restart")
+    if(command==NormalServer::text_restart)
         emit need_be_restarted();
-    else if(command=="stop")
+    else if(command==NormalServer::text_stop)
         emit need_be_stopped();
-    else if(command=="addbots" || command=="removebots")
-    {
-        if(stat!=Up)
-        {
-            DebugClass::debugConsole("Is in wrong stat for bots manipulation");
-            return;
-        }
-        if(in_benchmark_mode)
-        {
-            DebugClass::debugConsole("Is in benchmark mode, unable to do bots manipulation");
-            return;
-        }
-        if(command=="addbots")
-        {
-            if(!GlobalServerData::serverPrivateVariables.fakeBotList.empty())
-            {
-                //client->local_sendPM(client->getPseudo(),"Remove previous bots firstly");
-                DebugClass::debugConsole("Remove previous bots firstly");
-                return;
-            }
-            quint16 number_player=2;
-            if(extraText!="")
-            {
-                bool ok;
-                number_player=extraText.toUInt(&ok);
-                if(!ok)
-                {
-                    DebugClass::debugConsole("the arguement is not as number!");
-                    return;
-                }
-            }
-            if(number_player>(GlobalServerData::serverSettings.max_players-client_list.size()))
-                number_player=GlobalServerData::serverSettings.max_players-client_list.size();
-            int index=0;
-            while(index<number_player && client_list.size()<GlobalServerData::serverSettings.max_players)
-            {
-                addBot();//add way to locate the bot spawn
-                index++;
-            }
-        }
-        else if(command=="removebots")
-        {
-            removeBots();
-        }
-        else
-            DebugClass::debugConsole(QStringLiteral("unknow command in bots case: %1").arg(command));
-    }
     else
         DebugClass::debugConsole(QStringLiteral("unknow command: %1").arg(command));
 }
@@ -522,7 +346,7 @@ void NormalServer::serverCommand(const QString &command, const QString &extraTex
 //////////////////////////////////// Function secondary //////////////////////////////
 QString NormalServer::listenIpAndPort(QString server_ip,quint16 server_port)
 {
-    if(server_ip=="")
+    if(server_ip.isEmpty())
         server_ip="*";
     return server_ip+":"+QString::number(server_port);
 }
@@ -534,18 +358,8 @@ void NormalServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
-            //to know if need login or not
-            if(GlobalServerData::serverPrivateVariables.botSockets.contains(socket->getTheOtherSocket()))
-            {
-                DebugClass::debugConsole(QStringLiteral("new client connected by fake socket"));
-                GlobalServerData::serverPrivateVariables.botSockets.remove(socket->getTheOtherSocket());
-                connect_the_last_client(new Client(new ConnectedSocket(socket),true,getClientMapManagement()));
-            }
-            else
-            {
-                DebugClass::debugConsole(QStringLiteral("new bot connected by fake socket"));
-                connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
-            }
+            DebugClass::debugConsole(QStringLiteral("new client connected on internal socket"));
+            connect_the_last_client(new Client(new ConnectedSocket(socket),getClientMapManagement()));
         }
         else
             DebugClass::debugConsole("NULL client with fake socket");
@@ -572,7 +386,7 @@ void NormalServer::newConnection()
                 }
                 #endif
                 //DebugClass::debugConsole(QStringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
-                connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
+                connect_the_last_client(new Client(new ConnectedSocket(socket),getClientMapManagement()));
             }
             else
                 DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
@@ -591,21 +405,12 @@ void NormalServer::sslErrors(const QList<QSslError> &errors)
 
 bool NormalServer::isListen()
 {
-    if(in_benchmark_mode)
-        return false;
     return BaseServer::isListen();
 }
 
 bool NormalServer::isStopped()
 {
-    if(in_benchmark_mode)
-        return false;
     return BaseServer::isStopped();
-}
-
-bool NormalServer::isInBenchmark()
-{
-    return in_benchmark_mode;
 }
 
 quint16 NormalServer::player_current()
@@ -630,17 +435,6 @@ void NormalServer::stop_server()
     emit try_stop_server();
 }
 
-void NormalServer::start_benchmark(quint16 second,quint16 number_of_client,bool benchmark_map)
-{
-    if(in_benchmark_mode)
-    {
-        DebugClass::debugConsole("Already in benchmark");
-        return;
-    }
-    in_benchmark_mode=true;
-    emit try_start_benchmark(second,number_of_client,benchmark_map);
-}
-
 void NormalServer::checkSettingsFile(QSettings *settings)
 {
     if(!settings->contains(QLatin1Literal("max-players")))
@@ -651,12 +445,6 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("pvp"),true);
     if(!settings->contains(QLatin1Literal("server-port")))
         settings->setValue(QLatin1Literal("server-port"),42489);
-    if(!settings->contains(QLatin1Literal("benchmark_map")))
-        settings->setValue(QLatin1Literal("benchmark_map"),true);
-    if(!settings->contains(QLatin1Literal("benchmark_seconds")))
-        settings->setValue(QLatin1Literal("benchmark_seconds"),60);
-    if(!settings->contains(QLatin1Literal("benchmark_clients")))
-        settings->setValue(QLatin1Literal("benchmark_clients"),400);
     if(!settings->contains(QLatin1Literal("sendPlayerNumber")))
         settings->setValue(QLatin1Literal("sendPlayerNumber"),false);
     if(!settings->contains(QLatin1Literal("tolerantMode")))

@@ -151,6 +151,28 @@ private:
     static QRegularExpression commandRegExp;
     static QRegularExpression commandRegExpWithArgs;
     static QRegularExpression isolateTheMainCommand;
+
+    static QString text_server_full;
+    static QString text_slashpmspace;
+    static QString text_space;
+    static QString text_slash;
+    static QString text_regexresult1;
+    static QString text_regexresult2;
+    static QString text_send_command_slash;
+    static QString text_playernumber;
+    static QString text_playerlist;
+    static QString text_trade;
+    static QString text_battle;
+    static QString text_give;
+    static QString text_take;
+    static QString text_tp;
+    static QString text_kick;
+    static QString text_chat;
+    static QString text_setrights;
+    static QString text_stop;
+    static QString text_restart;
+    static QString text_unknown_send_command_slash;
+    static QString text_commands_seem_not_right;
 };
 }
 

@@ -67,6 +67,7 @@ private:
     static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove_end;
     static CommonMap*			old_map;
     static CommonMap*			new_map;
+    bool haveBufferToPurge;
 
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     quint8 previousMovedUnitBlocked;

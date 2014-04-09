@@ -8,6 +8,28 @@ QRegularExpression ClientNetworkRead::commandRegExp=QRegularExpression(QLatin1St
 QRegularExpression ClientNetworkRead::commandRegExpWithArgs=QRegularExpression(QLatin1String("^/([a-z]+)( [^ ].*)$"));
 QRegularExpression ClientNetworkRead::isolateTheMainCommand=QRegularExpression(QLatin1String("^ (.*)$"));
 
+QString ClientNetworkRead::text_server_full=QLatin1String("Server full");
+QString ClientNetworkRead::text_slashpmspace=QLatin1String("/pm ");
+QString ClientNetworkRead::text_space=QLatin1String(" ");
+QString ClientNetworkRead::text_slash=QLatin1String("/");
+QString ClientNetworkRead::text_regexresult1=QLatin1String("\\1");
+QString ClientNetworkRead::text_regexresult2=QLatin1String("\\2");
+QString ClientNetworkRead::text_send_command_slash=QLatin1String("send command: /");
+QString ClientNetworkRead::text_playernumber=QLatin1String("playernumber");
+QString ClientNetworkRead::text_playerlist=QLatin1String("playerlist");
+QString ClientNetworkRead::text_trade=QLatin1String("trade");
+QString ClientNetworkRead::text_battle=QLatin1String("battle");
+QString ClientNetworkRead::text_give=QLatin1String("give");
+QString ClientNetworkRead::text_take=QLatin1String("take");
+QString ClientNetworkRead::text_tp=QLatin1String("tp");
+QString ClientNetworkRead::text_kick=QLatin1String("kick");
+QString ClientNetworkRead::text_chat=QLatin1String("chat");
+QString ClientNetworkRead::text_setrights=QLatin1String("setrights");
+QString ClientNetworkRead::text_stop=QLatin1String("stop");
+QString ClientNetworkRead::text_restart=QLatin1String("restart");
+QString ClientNetworkRead::text_unknown_send_command_slash=QLatin1String("unknown send command: /");
+QString ClientNetworkRead::text_commands_seem_not_right=QLatin1String("commands seem not right: /");
+
 ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,ConnectedSocket * socket) :
     ProtocolParsingInput(socket,PacketModeTransmission_Server),
     have_send_protocol(false),
@@ -28,8 +50,6 @@ ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_inform
 void ClientNetworkRead::stopRead()
 {
     stopIt=true;
-//	if(socket)
-//		disconnect(socket,SIGNAL(readyRead()),this,SLOT(readyRead()));
 }
 
 void ClientNetworkRead::askIfIsReadyToStop()
@@ -115,9 +135,9 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                     if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
                     {
                         out << (quint8)0x03;		//server full
-                        out << QStringLiteral("Server full");
+                        out << ClientNetworkRead::text_server_full;
                         emit postReply(queryNumber,outputData);
-                        emit error(QStringLiteral("Server full (%1/%2)").arg(GlobalServerData::serverPrivateVariables.connected_players).arg(GlobalServerData::serverSettings.max_players));
+                        emit error(ClientNetworkRead::text_server_full);
                         return;
                     }
                     if(protocol==PROTOCOL_HEADER)
@@ -310,16 +330,24 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                 }
                 if(chatType==Chat_type_pm)
                 {
-                    if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                    if(CommonSettings::commonSettings.chat_allow_private)
+                    {
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            return;
+                        QString text;
+                        in >> text;
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            return;
+                        QString pseudo;
+                        in >> pseudo;
+                        emit message(ClientNetworkRead::text_slashpmspace+pseudo+ClientNetworkRead::text_space+text);
+                        emit sendPM(text,pseudo);
+                    }
+                    else
+                    {
+                        parseError("can't send pm because is disabled: "+QString::number(chatType));
                         return;
-                    QString text;
-                    in >> text;
-                    if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                        return;
-                    QString pseudo;
-                    in >> pseudo;
-                    emit message(QStringLiteral("/pm ")+pseudo+QLatin1String(" ")+text);
-                    emit sendPM(text,pseudo);
+                    }
                 }
                 else
                 {
@@ -328,12 +356,28 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     QString text;
                     in >> text;
 
-                    if(!text.startsWith(QLatin1String("/")))
+                    if(!text.startsWith(ClientNetworkRead::text_slash))
                     {
                         if(chatType==Chat_type_local)
-                            emit sendLocalChatText(text);
+                        {
+                            if(CommonSettings::commonSettings.chat_allow_local)
+                                emit sendLocalChatText(text);
+                            else
+                            {
+                                parseError("can't send chat local because is disabled: "+QString::number(chatType));
+                                return;
+                            }
+                        }
                         else
-                            emit sendChatText((Chat_type)chatType,text);
+                        {
+                            if(CommonSettings::commonSettings.chat_allow_clan || CommonSettings::commonSettings.chat_allow_all)
+                                emit sendChatText((Chat_type)chatType,text);
+                            else
+                            {
+                                parseError("can't send chat other because is disabled: "+QString::number(chatType));
+                                return;
+                            }
+                        }
                     }
                     else
                     {
@@ -341,101 +385,96 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                         {
                             //isolate the main command (the first word)
                             QString command=text;
-                            command.replace(commandRegExp,QLatin1String("\\1"));
+                            command.replace(commandRegExp,ClientNetworkRead::text_regexresult1);
 
                             //isolate the arguements
                             if(text.contains(commandRegExp))
                             {
-                                text.replace(commandRegExp,QLatin1String("\\2"));
-                                text.replace(isolateTheMainCommand,QLatin1String("\\1"));
+                                text.replace(commandRegExp,ClientNetworkRead::text_regexresult2);
+                                text.replace(isolateTheMainCommand,ClientNetworkRead::text_regexresult1);
                             }
                             else
-                                text=QLatin1String("");
+                                text=QString();
 
                             //the normal player command
                             {
-                                if(command==QLatin1String("playernumber"))
+                                if(command==ClientNetworkRead::text_playernumber)
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                     return;
                                 }
-                                else if(command==QLatin1String("playerlist"))
+                                else if(command==ClientNetworkRead::text_playerlist)
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message("send command: /"+command+" "+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+" "+text);
                                     return;
                                 }
-                                else if(command==QLatin1String("trade"))
+                                else if(command==ClientNetworkRead::text_trade)
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                     return;
                                 }
-                                else if(command==QLatin1String("battle"))
+                                else if(command==ClientNetworkRead::text_battle)
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                     return;
                                 }
                             }
                             //the admin command
                             if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
                             {
-                                if(command==QLatin1String("give"))
+                                if(command==ClientNetworkRead::text_give)
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
-                                else if(command==QLatin1String("take"))
+                                else if(command==ClientNetworkRead::text_take)
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
-                                else if(command==QLatin1String("tp"))
+                                else if(command==ClientNetworkRead::text_tp)
                                 {
                                     emit sendHandlerCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
-                                else if(command==QLatin1String("kick"))
+                                else if(command==ClientNetworkRead::text_kick)
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
-                                else if(command==QLatin1String("chat"))
+                                else if(command==ClientNetworkRead::text_chat)
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
-                                else if(command==QLatin1String("setrights"))
+                                else if(command==ClientNetworkRead::text_setrights)
                                 {
                                     emit sendBroadCastCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
-                                else if(command==QLatin1String("stop") || command==QLatin1String("restart"))
+                                else if(command==ClientNetworkRead::text_stop || command==ClientNetworkRead::text_restart)
                                 {
                                     BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
-                                }
-                                else if(command==QLatin1String("addbots") || command==QLatin1String("removebots"))
-                                {
-                                    BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                                    emit message(QStringLiteral("send command: /")+command+QLatin1String(" ")+text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else
                                 {
-                                    emit message(QStringLiteral("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
-                                    receiveSystemText(QLatin1String("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
+                                    emit message(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    receiveSystemText(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                             }
                             else
                             {
-                                emit message(QStringLiteral("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
-                                receiveSystemText(QLatin1String("unknown send command: /")+command+QLatin1String(" and \"")+text+QLatin1String("\""));
+                                emit message(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                receiveSystemText(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
                             }
                         }
                         else
-                            emit message(QStringLiteral("commands seem not right: \"")+text+QLatin1String("\""));
+                            emit message(ClientNetworkRead::text_commands_seem_not_right+text);
                     }
                 }
                 return;

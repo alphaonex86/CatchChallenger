@@ -9,7 +9,6 @@ ProcessControler::ProcessControler()
     connect(&server,&CatchChallenger::NormalServer::is_started,this,&ProcessControler::server_is_started);
     connect(&server,&CatchChallenger::NormalServer::need_be_stopped,this,&ProcessControler::server_need_be_stopped);
     connect(&server,&CatchChallenger::NormalServer::need_be_restarted,this,&ProcessControler::server_need_be_restarted);
-    connect(&server,&CatchChallenger::NormalServer::benchmark_result,this,&ProcessControler::benchmark_result);
     connect(&server,&CatchChallenger::NormalServer::error,this,&ProcessControler::error);
     need_be_restarted=false;
     need_be_closed=false;

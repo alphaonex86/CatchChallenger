@@ -467,11 +467,11 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     tempPoint.x=object_x;
                                     tempPoint.y=object_y;
                                     map_to_send_temp.rescue_points << tempPoint;
-                                    map_to_send_temp.bot_spawn_points << tempPoint;
+                                    //map_to_send_temp.bot_spawn_points << tempPoint;
                                 }
                                 else if(type==Map_loader::text_bot_spawn)
                                 {
-                                    #ifdef DEBUG_MESSAGE_MAP
+                                    /*#ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, bot spawn")
                                          .arg(type)
                                          .arg(object_x)
@@ -481,7 +481,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     Map_to_send::Map_Point tempPoint;
                                     tempPoint.x=object_x;
                                     tempPoint.y=object_y;
-                                    map_to_send_temp.bot_spawn_points << tempPoint;
+                                    map_to_send_temp.bot_spawn_points << tempPoint;*/
                                 }
                                 else
                                 {

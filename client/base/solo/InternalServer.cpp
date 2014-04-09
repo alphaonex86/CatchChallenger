@@ -13,6 +13,7 @@ InternalServer::InternalServer() :
     GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//heavy load (3)
     GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//local calcule (4)
     GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//local broad cast (5)
+    moveToThreadForContructor();
 }
 
 /** call only when the server is down
