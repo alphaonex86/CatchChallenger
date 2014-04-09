@@ -22,7 +22,7 @@ public:
     virtual ~ClientMapManagement();
     virtual void setVariable(Player_internal_informations *player_informations);
     /// \bug is not thread safe, and called by another thread, error can occure
-    Map_player_info getMapPlayerInfo();
+    inline Map_player_info getMapPlayerInfo() const;
     //drop all clients
     virtual void dropAllClients();
     virtual void dropAllBorderClients();

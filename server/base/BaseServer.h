@@ -52,6 +52,7 @@ protected slots:
     virtual void stop_internal_server();
     //init, constructor, destructor
     virtual void initAll();//call before all
+    virtual void moveToThreadForContructor();
     //remove all finished client
     virtual void removeOneClient();
     //new connection

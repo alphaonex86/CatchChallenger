@@ -28,7 +28,8 @@ bool MapVisibilityAlgorithm_WithBorder::mapHaveChanged;
 //temp variable to move on the map
 map_management_movement MapVisibilityAlgorithm_WithBorder::moveClient_tempMov;
 
-MapVisibilityAlgorithm_WithBorder::MapVisibilityAlgorithm_WithBorder()
+MapVisibilityAlgorithm_WithBorder::MapVisibilityAlgorithm_WithBorder() :
+    haveBufferToPurge(false)
 {
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     previousMovedUnitBlocked=0;
@@ -478,6 +479,7 @@ void MapVisibilityAlgorithm_WithBorder::insertAnotherClient(const SIMPLIFIED_PLA
     emit message(QStringLiteral("insertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
     #endif
     to_send_insert[player_id]=the_another_player;
+    haveBufferToPurge=true;
 }
 #endif
 
@@ -499,6 +501,7 @@ void MapVisibilityAlgorithm_WithBorder::reinsertAnotherClient(const SIMPLIFIED_P
     emit message(QStringLiteral("reinsertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
     #endif
     to_send_reinsert[player_id]=the_another_player;
+    haveBufferToPurge=true;
 }
 
 void MapVisibilityAlgorithm_WithBorder::moveAnotherClientWithMap(MapVisibilityAlgorithm_WithBorder *the_another_player, const quint8 &movedUnit, const Direction &direction)
@@ -566,6 +569,7 @@ void MapVisibilityAlgorithm_WithBorder::moveAnotherClientWithMap(const SIMPLIFIE
     moveClient_tempMov.movedUnit=movedUnit;
     moveClient_tempMov.direction=direction;
     to_send_move[player_id] << moveClient_tempMov;
+    haveBufferToPurge=true;
 }
 
 #ifdef CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR
@@ -595,11 +599,13 @@ void MapVisibilityAlgorithm_WithBorder::removeAnotherClient(const SIMPLIFIED_PLA
     to_send_map_management_move.remove(player_id);
     #endif */
     to_send_remove << player_id;
+    haveBufferToPurge=true;
 }
 #endif
 
 void MapVisibilityAlgorithm_WithBorder::extraStop()
 {
+    haveBufferToPurge=false;
     unloadFromTheMap();//product remove on the map
 
     to_send_insert.clear();
@@ -609,10 +615,14 @@ void MapVisibilityAlgorithm_WithBorder::extraStop()
 
 void MapVisibilityAlgorithm_WithBorder::purgeBuffer()
 {
-    send_insert();
-    send_move();
-    send_remove();
-    send_reinsert();
+    if(haveBufferToPurge)
+    {
+        send_insert();
+        send_move();
+        send_remove();
+        send_reinsert();
+        haveBufferToPurge=false;
+    }
 }
 
 //for the purge buffer

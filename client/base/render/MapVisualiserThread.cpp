@@ -230,7 +230,6 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     }
 
     tempMapObject->logicalMap.rescue_points            = map_loader.map_to_send.rescue_points;
-    tempMapObject->logicalMap.bot_spawn_points         = map_loader.map_to_send.bot_spawn_points;
 
     //load the render
     switch (tempMapObject->tiledMap->orientation()) {

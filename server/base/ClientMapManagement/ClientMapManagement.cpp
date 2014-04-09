@@ -20,7 +20,7 @@ ClientMapManagement::~ClientMapManagement()
 {
 }
 
-Map_player_info ClientMapManagement::getMapPlayerInfo()
+Map_player_info ClientMapManagement::getMapPlayerInfo() const
 {
     Map_player_info temp;
     temp.map		= map;

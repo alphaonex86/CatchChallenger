@@ -9,9 +9,9 @@ QMutex mutexForDebugClass;
 
 void DebugClass::debugConsole(const QString &errorString)
 {
-	QMutexLocker lock(&mutexForDebugClass);
+    QMutexLocker lock(&mutexForDebugClass);
     if(!redirection)
-        qDebug() << errorString.toUtf8().constData();
+        qDebug() << qPrintable(errorString);
     else
         log << errorString;
 }

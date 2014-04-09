@@ -96,11 +96,6 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         hash2.addData(pass_org.toHex());
         pass=hash2.result();
     }
-    if(player_informations->isFake)
-    {
-        askLoginBot(query_id);
-        return;
-    }
     {
         QSqlQuery accountQuery(*GlobalServerData::serverPrivateVariables.db);
         if(!accountQuery.exec(GlobalServerData::serverPrivateVariables.db_query_login.arg(QString(login.toHex()))))
@@ -347,48 +342,6 @@ void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
     dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_quest.arg(characterId));
     dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.arg(characterId));
     dbQuery(GlobalServerData::serverPrivateVariables.db_query_delete_reputation.arg(characterId));
-}
-
-void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
-{
-    if(GlobalServerData::serverPrivateVariables.botSpawn.isEmpty())
-        loginIsWrong(query_id,"Not bot point","Not bot point");
-    else
-    {
-        if(!GlobalServerData::serverPrivateVariables.map_list.contains(GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).map))
-            loginIsWrong(query_id,"Bot point not resolved","Bot point not resolved");
-        else if(simplifiedIdList.size()<=0)
-            loginIsWrong(query_id,"Not free id to login","Not free id to login");
-        else
-        {
-            player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
-            player_informations->public_and_private_informations.clan=0;
-            player_informations->public_and_private_informations.clan_leader=false;
-            player_informations->character_id=999999999-GlobalServerData::serverPrivateVariables.number_of_bots_logged;
-            player_informations->public_and_private_informations.public_informations.pseudo=QStringLiteral("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
-            player_informations->public_and_private_informations.public_informations.skinId=0x00;//use the first skin by alaphabetic order
-            player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
-            player_informations->public_and_private_informations.cash=0;
-            player_informations->public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
-            if(!loadTheRawUTF8String())
-                loginIsWrong(query_id,"Convert into utf8 have wrong size",QStringLiteral("Unable to convert the pseudo to utf8 at bot: %1").arg(QStringLiteral("bot_%1").arg(player_informations->character_id)));
-            else
-            //all is rights
-            {
-                loginIsRight(query_id,
-                     player_informations->character_id,
-                     GlobalServerData::serverPrivateVariables.map_list.value(GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).map),
-                     GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).x,
-                     GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).y,
-                     Orientation_bottom);
-
-                GlobalServerData::serverPrivateVariables.botSpawnIndex++;
-                if(GlobalServerData::serverPrivateVariables.botSpawnIndex>=GlobalServerData::serverPrivateVariables.botSpawn.size())
-                    GlobalServerData::serverPrivateVariables.botSpawnIndex=0;
-                GlobalServerData::serverPrivateVariables.number_of_bots_logged++;
-            }
-        }
-    }
 }
 
 void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const QString &skin)
@@ -1308,8 +1261,6 @@ void ClientHeavyLoad::characterSelectionIsWrong(const quint8 &query_id,const QSt
 //load linked data (like item, quests, ...)
 void ClientHeavyLoad::loadLinkedData()
 {
-    if(player_informations->isFake)
-        return;
     loadItems();
     loadRecipes();
     loadMonsters();
@@ -1738,11 +1689,6 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
         return;
     }
     #endif
-    if(player_informations->isFake)
-    {
-        emit message(QStringLiteral("Query canceled because is fake: %1").arg(queryText));
-        return;
-    }
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     emit message(QStringLiteral("Do mysql query: ")+queryText);
     #endif

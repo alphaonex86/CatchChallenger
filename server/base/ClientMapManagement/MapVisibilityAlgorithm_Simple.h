@@ -8,12 +8,14 @@
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple : public ClientMapManagement
 {
+    Q_OBJECT
 public:
     explicit MapVisibilityAlgorithm_Simple();
     virtual ~MapVisibilityAlgorithm_Simple();
     void reinsertAllClient();
     //drop all clients
     virtual void dropAllClients();
+    virtual void purgeBuffer();
 protected:
     //add clients linked
     void insertClient();
@@ -64,6 +66,7 @@ private:
     static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove_end;
     static CommonMap*			old_map;
     static CommonMap*			new_map;
+    bool haveBufferToPurge;
 
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     quint8 previousMovedUnitBlocked;
@@ -74,11 +77,10 @@ private:
 
     // stuff to send
     QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>			to_send_insert;
-    QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >	to_send_move;
-    QSet<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
+    QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >           to_send_move;
+    QSet<SIMPLIFIED_PLAYER_ID_TYPE>                                             to_send_remove;
     QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>			to_send_reinsert;
 public slots:
-    virtual void purgeBuffer();
     //map slots, transmited by the current ClientNetworkRead
     virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);

@@ -3,11 +3,14 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/DatapackGeneralLoader.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h"
+#include "LocalClientHandlerWithoutSender.h"
 
 #include <QFile>
 #include <QByteArray>
 #include <QDateTime>
 #include <QTime>
+#include <QTimer>
 
 using namespace CatchChallenger;
 
@@ -77,8 +80,7 @@ BaseServer::BaseServer()
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
-
-    GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
+    GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
 
     GlobalServerData::serverSettings.automatic_account_creation             = false;
     GlobalServerData::serverSettings.max_players                            = 1;
@@ -190,9 +192,14 @@ void BaseServer::closeDB()
 
 void BaseServer::initAll()
 {
-    /// \bug QObject::moveToThread: Current thread (0x79e1f0) is not the object's thread (0x6b4690)
+}
+
+void BaseServer::moveToThreadForContructor()
+{
     GlobalServerData::serverPrivateVariables.player_updater.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
     BroadCastWithoutSender::broadCastWithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
+    MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(1));
+    LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(4));
 }
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
@@ -1248,6 +1255,14 @@ void BaseServer::preload_the_visibility_algorithm()
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithmSelection_Simple:
+        if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
+        {
+            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
+            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
+        }
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new QTimer();
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
+        connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,&MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender,&MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer,Qt::QueuedConnection);
         while (i != i_end)
         {
             static_cast<Map_server_MapVisibility_simple *>(i.value())->show=true;
@@ -1255,6 +1270,14 @@ void BaseServer::preload_the_visibility_algorithm()
         }
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
+        if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
+        {
+            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
+            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
+        }
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new QTimer();
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
+        connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,&MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender,&MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer,Qt::QueuedConnection);
         while (i != i_end)
         {
             static_cast<Map_server_MapVisibility_withBorder *>(i.value())->show=true;
@@ -1768,7 +1791,6 @@ void BaseServer::unload_the_map()
         i++;
     }
     GlobalServerData::serverPrivateVariables.map_list.clear();
-    GlobalServerData::serverPrivateVariables.botSpawn.clear();
     botIdLoaded.clear();
 }
 
@@ -1779,6 +1801,11 @@ void BaseServer::unload_the_skin()
 
 void BaseServer::unload_the_visibility_algorithm()
 {
+    if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
+    {
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
+    }
 }
 
 void BaseServer::unload_the_datapack()
@@ -1936,7 +1963,10 @@ void BaseServer::loadAndFixSettings()
     if(GlobalServerData::serverSettings.database.secondToPositionSync==0)
         GlobalServerData::serverPrivateVariables.positionSync.stop();
     else
+    {
         GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000);
+        connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,&LocalClientHandlerWithoutSender::localClientHandlerWithoutSender,&LocalClientHandlerWithoutSender::doAllAction,Qt::QueuedConnection);
+    }
 
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -2138,7 +2168,7 @@ void BaseServer::newConnection()
         if(socket!=NULL)
         {
             DebugClass::debugConsole(QStringLiteral("newConnection(): new client connected by fake socket"));
-            connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
+            connect_the_last_client(new Client(new ConnectedSocket(socket),getClientMapManagement()));
         }
         else
             DebugClass::debugConsole("NULL client at BaseServer::newConnection()");
@@ -2148,7 +2178,7 @@ void BaseServer::newConnection()
 void BaseServer::connect_the_last_client(Client * client)
 {
     client_list << client;
-    connect(client,SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
+    connect(client,&Client::isReadyToDelete,this,&BaseServer::removeOneClient,Qt::QueuedConnection);
 }
 
 bool BaseServer::isListen()

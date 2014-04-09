@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>439</width>
-    <height>530</height>
+    <height>560</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -132,6 +132,39 @@
            </property>
            <property name="maximum">
             <number>999</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QLabel" name="label_connectBySeconds">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Connect by seconds</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="connectBySeconds">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="suffix">
+            <string> connect/s</string>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>20</number>
+           </property>
+           <property name="value">
+            <number>5</number>
            </property>
           </widget>
          </item>
@@ -309,6 +342,38 @@
     <hint type="destinationlabel">
      <x>321</x>
      <y>123</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>multipleConnexion</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_connectBySeconds</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>189</x>
+     <y>99</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>171</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>multipleConnexion</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>connectBySeconds</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>291</x>
+     <y>101</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>285</x>
+     <y>151</y>
     </hint>
    </hints>
   </connection>
