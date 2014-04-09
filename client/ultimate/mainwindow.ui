@@ -43,11 +43,11 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
-        <string notr="true">#mode{background-image: url(:/images/background.png);}</string>
+        <string notr="true">#mode{background-image: url(:/images/background.jpg);}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_9">
         <item>
@@ -208,7 +208,7 @@ border-radius:5px;</string>
       </widget>
       <widget class="QWidget" name="multi">
        <property name="styleSheet">
-        <string notr="true">#multi{background-image: url(:/images/background.png);}</string>
+        <string notr="true">#multi{background-image: url(:/images/background.jpg);}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
@@ -517,6 +517,9 @@ border-radius:5px;</string>
        </layout>
       </widget>
       <widget class="QWidget" name="datapack">
+       <property name="styleSheet">
+        <string notr="true">#datapack{background-image: url(:/images/background.jpg);}</string>
+       </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <spacer name="verticalSpacer_2">
@@ -732,7 +735,7 @@ QLabel { padding:2px; }</string>
       </widget>
       <widget class="QWidget" name="login">
        <property name="styleSheet">
-        <string notr="true">#login{background-image: url(:/images/background.png);}</string>
+        <string notr="true">#login{background-image: url(:/images/background.jpg);}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>

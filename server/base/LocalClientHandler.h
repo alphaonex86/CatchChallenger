@@ -129,6 +129,7 @@ public slots:
     void createMemoryClan();
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     Direction lookToMove(const Direction &direction);
+    void savePosition();
     //seed
     void useSeed(const quint8 &plant_id);
     //crafting
@@ -231,7 +232,6 @@ public slots:
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
 private slots:
     virtual void extraStop();
-    void savePosition();
     static QString directionToStringToSave(const Direction &direction);
     static QString orientationToStringToSave(const Orientation &orientation);
     //quest

@@ -10,7 +10,7 @@ QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeC
 //if is a query
 QSet<quint8>                        ProtocolParsing::mainCode_IsQueryClientToServer;
 quint8                              ProtocolParsing::replyCodeClientToServer;
-ProtocolParsing::CompressionType    ProtocolParsing::compressionType;
+ProtocolParsing::CompressionType    ProtocolParsing::compressionType=CompressionType_None;
 //predefined size
 QHash<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
@@ -234,10 +234,21 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 
 ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
     ProtocolParsing(socket),
+    // for data
     canStartReadData(false),
     haveData(false),
+    haveData_dataSize(0),
+    is_reply(false),
     dataSize(0),
-    RXSize(0)
+    //to parse the netwrok stream
+    RXSize(0),
+    mainCodeType(0),
+    subCodeType(0),
+    queryNumber(0),
+    have_subCodeType(false),
+    need_subCodeType(false),
+    need_query_number(false),
+    have_query_number(false)
 {
     if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData))
         DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
@@ -275,7 +286,8 @@ quint64 ProtocolParsingInput::getRXSize() const
 
 ProtocolParsingOutput::ProtocolParsingOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
     ProtocolParsing(socket),
-    TXSize(0)
+    TXSize(0),
+    byteWriten(0)
 {
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
