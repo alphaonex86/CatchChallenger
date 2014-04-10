@@ -44,12 +44,12 @@ void MapVisibilityAlgorithm_WithBorder::insertClient()
 {
     Map_server_MapVisibility_withBorder *temp_map=static_cast<Map_server_MapVisibility_withBorder*>(map);
     //local map
-    if(likely(temp_map->show))
+    if(Q_LIKELY(temp_map->show))
     {
         loop_size=temp_map->clients.size();
-        if(likely(temp_map->showWithBorder))
+        if(Q_LIKELY(temp_map->showWithBorder))
         {
-            if(unlikely((loop_size+temp_map->clientsOnBorder)>=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder))
+            if(Q_UNLIKELY((loop_size+temp_map->clientsOnBorder)>=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder))
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                 emit message(QStringLiteral("insertClient() too many client, hide now, into: %1").arg(map->map_file));
@@ -57,7 +57,7 @@ void MapVisibilityAlgorithm_WithBorder::insertClient()
                 temp_map->showWithBorder=false;
                 //drop all show client because it have excess the limit
                 //drop on all client
-                if(unlikely(loop_size>=GlobalServerData::serverSettings.mapVisibility.withBorder.max))
+                if(Q_UNLIKELY(loop_size>=GlobalServerData::serverSettings.mapVisibility.withBorder.max))
                 {}
                 else
                 {
@@ -70,7 +70,7 @@ void MapVisibilityAlgorithm_WithBorder::insertClient()
                 }
             }
         }
-        if(unlikely(loop_size>=GlobalServerData::serverSettings.mapVisibility.withBorder.max))
+        if(Q_UNLIKELY(loop_size>=GlobalServerData::serverSettings.mapVisibility.withBorder.max))
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
             emit message(QStringLiteral("insertClient() too many client, hide now, into: %1").arg(map->map_file));
@@ -130,10 +130,10 @@ void MapVisibilityAlgorithm_WithBorder::insertClient()
                 }
             }
             //insert the new client on border map
-            if(likely(temp_border_map->showWithBorder))
+            if(Q_LIKELY(temp_border_map->showWithBorder))
             {
                 temp_border_map->clientsOnBorder++;
-                if(unlikely((loop_size+temp_border_map->clientsOnBorder)>=GlobalServerData::serverSettings.mapVisibility.withBorder.max))
+                if(Q_UNLIKELY((loop_size+temp_border_map->clientsOnBorder)>=GlobalServerData::serverSettings.mapVisibility.withBorder.max))
                 {
                     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                     emit message(QStringLiteral("insertClient() too many client, hide now, into: %1").arg(map->map_file));
@@ -171,12 +171,12 @@ void MapVisibilityAlgorithm_WithBorder::moveClient(const quint8 &movedUnit,const
 {
     Map_server_MapVisibility_withBorder *temp_map=static_cast<Map_server_MapVisibility_withBorder*>(map);
     loop_size=temp_map->clients.size();
-    if(unlikely(mapHaveChanged))
+    if(Q_UNLIKELY(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
         emit message(QStringLiteral("map have change, direction: %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
         #endif
-        if(likely(temp_map->show))
+        if(Q_LIKELY(temp_map->show))
         {
             //insert the new client, do into insertClient(), call by singleMove()
         }
@@ -193,13 +193,13 @@ void MapVisibilityAlgorithm_WithBorder::moveClient(const quint8 &movedUnit,const
         #endif
 
         //normal operation
-        if(likely(temp_map->show))
+        if(Q_LIKELY(temp_map->show))
         {
             index=0;
             while(index<loop_size)
             {
                 current_client=temp_map->clients.at(index);
-                if(likely(current_client!=this))
+                if(Q_LIKELY(current_client!=this))
                      current_client->moveAnotherClientWithMap(player_informations->public_and_private_informations.public_informations.simplifiedId,this,movedUnit,direction);
                 index++;
             }
@@ -254,7 +254,7 @@ void MapVisibilityAlgorithm_WithBorder::dropAllBorderClients()
 void MapVisibilityAlgorithm_WithBorder::reinsertClientForOthersOnSameMap()
 {
     Map_server_MapVisibility_withBorder* map_temp=static_cast<Map_server_MapVisibility_withBorder*>(map);
-    if(unlikely(map_temp->show==false))
+    if(Q_UNLIKELY(map_temp->show==false))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QStringLiteral("reinsertClientForOthers() skip because not show").arg(map->map_file));
@@ -271,7 +271,7 @@ void MapVisibilityAlgorithm_WithBorder::reinsertClientForOthersOnSameMap()
     while(index<loop_size)
     {
         current_client=map_temp->clients.at(index);
-        if(unlikely(current_client!=this))
+        if(Q_UNLIKELY(current_client!=this))
             current_client->reinsertAnotherClient(thisSimplifiedId,this);
         index++;
     }
@@ -281,16 +281,16 @@ void MapVisibilityAlgorithm_WithBorder::removeClient()
 {
     Map_server_MapVisibility_withBorder *temp_map=static_cast<Map_server_MapVisibility_withBorder*>(map);
     loop_size=temp_map->clients.size();
-    if(unlikely(temp_map->show==false))
+    if(Q_UNLIKELY(temp_map->show==false))
     {
-        if(unlikely(loop_size<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)))
+        if(Q_UNLIKELY(loop_size<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)))
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
             emit message(QStringLiteral("removeClient() client of the map is now under the limit, reinsert all into: %1").arg(map->map_file));
             #endif
             temp_map->show=true;
             //insert all the client because it start to be visible
-            if(unlikely((loop_size+temp_map->clientsOnBorder)<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder)))
+            if(Q_UNLIKELY((loop_size+temp_map->clientsOnBorder)<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder)))
             {
                 temp_map->showWithBorder=true;
                 index=0;
@@ -320,9 +320,9 @@ void MapVisibilityAlgorithm_WithBorder::removeClient()
     }
     else //normal working
     {
-        if(unlikely(temp_map->showWithBorder==false))
+        if(Q_UNLIKELY(temp_map->showWithBorder==false))
         {
-            if(unlikely((loop_size+temp_map->clientsOnBorder)<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder)))
+            if(Q_UNLIKELY((loop_size+temp_map->clientsOnBorder)<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder)))
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                 emit message(QStringLiteral("removeClient() client of the map is now under the limit, reinsert all into: %1").arg(map->map_file));
@@ -366,7 +366,7 @@ void MapVisibilityAlgorithm_WithBorder::removeClient()
             Map_server_MapVisibility_withBorder *temp_border_map=static_cast<Map_server_MapVisibility_withBorder*>(map->border_map.at(border_map_index));
             loop_size=temp_border_map->clients.size();
             //remove border client on this
-            if(likely(temp_map->showWithBorder==true))
+            if(Q_LIKELY(temp_map->showWithBorder==true))
             {
                 index=0;
                 while(index<loop_size)
@@ -376,7 +376,7 @@ void MapVisibilityAlgorithm_WithBorder::removeClient()
                 }
             }
             //remove this ont border client
-            if(likely(temp_border_map->showWithBorder==true))
+            if(Q_LIKELY(temp_border_map->showWithBorder==true))
             {
                 index=0;
                 while(index<loop_size)
@@ -387,7 +387,7 @@ void MapVisibilityAlgorithm_WithBorder::removeClient()
             }
             else
             {
-                if(unlikely((loop_size+temp_border_map->clientsOnBorder)<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder)))
+                if(Q_UNLIKELY((loop_size+temp_border_map->clientsOnBorder)<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder)))
                 {
                     temp_border_map->showWithBorder=true;
                     //insert only the border client because it start to be visible
@@ -420,7 +420,7 @@ void MapVisibilityAlgorithm_WithBorder::reinsertAllClient()
     while(index<loop_size)
     {
         current_client=static_cast<Map_server_MapVisibility_withBorder*>(map)->clients.at(index);
-        if(likely(current_client!=this))
+        if(Q_LIKELY(current_client!=this))
         {
             current_client->insertAnotherClient(thisSimplifiedId,this);
             this->insertAnotherClient(current_client);
@@ -529,7 +529,7 @@ void MapVisibilityAlgorithm_WithBorder::moveAnotherClientWithMap(const SIMPLIFIE
         return;//quit now
     }
     //go into over move
-    else if(unlikely(
+    else if(Q_UNLIKELY(
                 ((quint32)to_send_move.value(player_id).size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
                 >=
                     //size of on insert
@@ -577,7 +577,7 @@ void MapVisibilityAlgorithm_WithBorder::moveAnotherClientWithMap(const SIMPLIFIE
 void MapVisibilityAlgorithm_WithBorder::removeAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(unlikely(to_send_remove.contains(player_id)))
+    if(Q_UNLIKELY(to_send_remove.contains(player_id)))
     {
         emit message("removeAnotherClient() try dual remove");
         return;

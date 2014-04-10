@@ -4,10 +4,10 @@
 using namespace CatchChallenger;
 
 ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
-    QIODevice(parent)
+    QIODevice(parent),
+    fakeSocket(socket),
+    sslSocket(NULL)
 {
-    this->fakeSocket=socket;
-    this->sslSocket=NULL;
     connect(socket,&QFakeSocket::destroyed,     this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
     connect(socket,&QFakeSocket::connected,     this,&ConnectedSocket::connected,Qt::QueuedConnection);
     connect(socket,&QFakeSocket::disconnected,  this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
@@ -18,10 +18,10 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
 }
 
 ConnectedSocket::ConnectedSocket(QSslSocket *socket,QObject *parent) :
-    QIODevice(parent)
+    QIODevice(parent),
+    fakeSocket(NULL),
+    sslSocket(socket)
 {
-    this->fakeSocket=NULL;
-    this->sslSocket=socket;
     socket->setSocketOption(QAbstractSocket::KeepAliveOption,1);
     connect(socket,&QSslSocket::readyRead,      this,&ConnectedSocket::readyRead,Qt::DirectConnection);
     connect(socket,&QSslSocket::encrypted,      this,&ConnectedSocket::encrypted,Qt::QueuedConnection);

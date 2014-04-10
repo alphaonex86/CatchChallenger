@@ -307,7 +307,11 @@ void ClientHeavyLoad::askedRandomNumber()
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)
     {
+        #if RAND_MAX >= 65535
+        randomDataStream << quint16(rand()%65536);
+        #else
         randomDataStream << quint8(rand()%256);
+        #endif
         index++;
     }
     emit newRandomNumber(randomData);
@@ -331,7 +335,7 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
     //parse the result
     while(botAlreadyBeatenQuery.next())
     {
-        quint32 id=botAlreadyBeatenQuery.value(0).toUInt(&ok);
+        const quint32 &id=botAlreadyBeatenQuery.value(0).toUInt(&ok);
         if(!ok)
         {
             emit message(QStringLiteral("wrong value type for quest, skip: %1").arg(id));

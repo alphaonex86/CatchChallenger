@@ -132,7 +132,7 @@ void LocalClientHandler::extraStop()
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
     {
         int index=0;
-        int size=player_informations->public_and_private_informations.playerMonster.size();
+        const int &size=player_informations->public_and_private_informations.playerMonster.size();
         while(index<size)
         {
             const PlayerMonster &playerMonster=player_informations->public_and_private_informations.playerMonster.at(index);
@@ -163,7 +163,7 @@ void LocalClientHandler::extraStop()
                 break;
             }
             int sub_index=0;
-            int sub_size=playerMonster.skills.size();
+            const int &sub_size=playerMonster.skills.size();
             while(sub_index<sub_size)
             {
                 const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);

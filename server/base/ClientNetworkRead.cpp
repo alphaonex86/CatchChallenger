@@ -196,12 +196,10 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                 else
                 {
                     is_logging_in_progess=true;
-                    QByteArray data_extracted;
-                    data_extracted=data.right(data.size()-in.device()->pos());
-                    QByteArray hash,login;
-                    login=data_extracted.mid(0,64);
+                    QByteArray data_extracted(data.right(data.size()-in.device()->pos()));
+                    const QByteArray &login=data_extracted.mid(0,64);
                     data_extracted.remove(0,64);
-                    hash=data_extracted;
+                    const QByteArray &hash=data_extracted;
                     emit askLogin(queryNumber,login,hash);
                     return;
                 }

@@ -31,7 +31,6 @@ public:
 public slots:
     //chat
     void sendLocalChatText(const QString &text);
-    void receiveChatText(const QString &text, const Player_internal_informations *sender_informations);
     //map move
     bool singleMove(const Direction &direction);
     virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
@@ -46,8 +45,6 @@ protected:
     virtual void removeClient(CommonMap *map,const bool &withDestroy=false);
     virtual void sendNearPlant();
     virtual void removeNearPlant();
-    virtual void receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time);
-    virtual void removeSeed(const MapServerCrafting::PlantOnMap &plantOnMap);
 
     struct PlantInWaiting
     {
@@ -65,6 +62,8 @@ signals:
     void addObjectAndSend(const quint32 &item,const quint32 &quantity=1) const;
     //db
     void dbQuery(const QString &sqlQuery) const;
+
+    bool sendRawSmallPacket(const QByteArray &data) const;
 };
 }
 

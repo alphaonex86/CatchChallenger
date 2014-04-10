@@ -46,7 +46,10 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->multipleConnexion->setChecked(true);
             ui->connexionCount->setValue(settings.value("multipleConnexion").toUInt());
         }
-        ui->connectBySeconds->setValue(settings.value("connectBySeconds").toUInt());
+        if(settings.contains("connectBySeconds"))
+            ui->connectBySeconds->setValue(settings.value("connectBySeconds").toUInt());
+        if(settings.contains("maxDiffConnectedSelected"))
+            ui->maxDiffConnectedSelected->setValue(settings.value("maxDiffConnectedSelected").toUInt());
     }
     if(settings.contains("autoCreateCharacter"))
         ui->autoCreateCharacter->setChecked(settings.value("autoCreateCharacter").toBool());
@@ -344,6 +347,7 @@ void MainWindow::haveTheDatapack()
         //for the other client
         ui->characterSelect->setEnabled(false);
         ui->characterList->setEnabled(false);
+        ui->groupBox_MultipleConnexion->setEnabled(false);
 
         //the actual client
         const quint32 &character_id=apiToCatchChallengerClient[senderObject]->charactersList.at(rand()%apiToCatchChallengerClient[senderObject]->charactersList.size()).character_id;
@@ -361,7 +365,11 @@ void MainWindow::haveTheDatapack()
 void MainWindow::connectTimerSlot()
 {
     if(apiToCatchChallengerClient.size()<ui->connexionCount->value())
-        createClient()->socket->connectToHost(ui->host->text(),ui->port->value());
+    {
+        const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
+        if(diff<=(quint32)ui->maxDiffConnectedSelected->value())
+            createClient()->socket->connectToHost(ui->host->text(),ui->port->value());
+    }
     else
         connectTimer.stop();
 }
@@ -486,6 +494,8 @@ void MainWindow::on_connect_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Your login need to be at minimum of 3 characters"));
         return;
     }
+    ui->groupBox_MultipleConnexion->setEnabled(false);
+    ui->groupBox_Proxy->setEnabled(false);
     settings.setValue("login",ui->login->text());
     settings.setValue("pass",ui->pass->text());
     settings.setValue("host",ui->host->text());
@@ -497,6 +507,7 @@ void MainWindow::on_connect_clicked()
     else
         settings.setValue("multipleConnexion",0);
     settings.setValue("connectBySeconds",ui->connectBySeconds->value());
+    settings.setValue("maxDiffConnectedSelected",ui->maxDiffConnectedSelected->value());
     settings.setValue("autoCreateCharacter",ui->autoCreateCharacter->isChecked());
 
     if(!ui->connect->isEnabled())

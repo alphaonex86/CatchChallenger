@@ -52,6 +52,25 @@ void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const QByteArray 
     }
 }
 
+void ClientNetworkWrite::sendRawSmallPacket(const QByteArray &data)
+{
+    if(!player_informations->isConnected)
+    {
+        emit message(QStringLiteral("sendRawSmallPacket(%1) when is not connected").arg(QString(data.toHex())));
+        return;
+    }
+    #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+    emit message(QStringLiteral("sendRawSmallPacket(%1)").arg(QString(data.toHex())));
+    #endif
+    if(!ProtocolParsingOutput::internalSendRawSmallPacket(data))
+        return;
+    if(!socket->isValid())
+    {
+        emit error("device is not valid at sendPacket(mainCodeType)");
+        return;
+    }
+}
+
 void ClientNetworkWrite::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data)
 {
     if(!player_informations->isConnected)
