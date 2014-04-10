@@ -36,7 +36,7 @@ void LocalClientHandler::useRecipe(const quint8 &query_id,const quint32 &recipe_
     const CrafingRecipe &recipe=CommonDatapack::commonDatapack.crafingRecipes.value(recipe_id);
     //check if have material
     int index=0;
-    int materials_size=recipe.materials.size();
+    const int &materials_size=recipe.materials.size();
     while(index<materials_size)
     {
         if(objectQuantity(recipe.materials.at(index).item)<recipe.materials.at(index).quantity)

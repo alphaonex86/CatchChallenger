@@ -120,13 +120,25 @@ public:
 
     //send message without reply
     bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
-    bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data);
+    bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
     //send query with reply
     bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data);
+    bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
     //send reply
-    bool postReplyData(const quint8 &queryNumber, QByteArray data);
+    bool postReplyData(const quint8 &queryNumber, const QByteArray &data);
     quint64 getTXSize() const;
+
+    //compute some packet
+    //send message without reply
+    static QByteArray computeOutcommingData(const bool &isClient,const quint8 &mainCodeType,const QByteArray &data);
+    static QByteArray computeFullOutcommingData(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+    //send query with reply
+    static QByteArray computeOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+    static QByteArray computeFullOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    //send reply
+    QByteArray computeReplyData(const quint8 &queryNumber, const QByteArray &data);
+    //compression
+    static QByteArray computeCompression(const QByteArray &data);
 private:
     bool internalPackOutcommingData(QByteArray data);
     static QByteArray encodeSize(quint32 size);
@@ -147,6 +159,9 @@ signals:
 public slots:
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+protected:
+    //no control to be more fast
+    bool internalSendRawSmallPacket(const QByteArray &data);
 private slots:
     void reset();
 };

@@ -63,7 +63,7 @@ public slots:
     void receiveChatText(const Chat_type &chatType, const QString &text, const Player_internal_informations *sender_informations);
     void receiveSystemText(const QString &text,const bool &important=false);
     void sendChatText(const Chat_type &chatType,const QString &text);
-    void receive_instant_player_number(const quint16 &connected_players);
+    void receive_instant_player_number(const quint16 &connected_players, const QByteArray &outputData);
     void kick();
     void sendBroadCastCommand(const QString &command,const QString &extraText);
     void setRights(const Player_type& type);
@@ -83,6 +83,7 @@ signals:
     //send packet on network
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
+    bool sendRawSmallPacket(const QByteArray &data) const;
 private:
     //local data
     qint32 connected_players;//it's th last number of connected player send

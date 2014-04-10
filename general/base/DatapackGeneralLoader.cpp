@@ -102,13 +102,12 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
     {
         //open and quick check the file
         QFile itemsFile(file);
-        QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString()));
             return reputation;
         }
-        xmlContent=itemsFile.readAll();
+        const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -119,7 +118,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
         DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file));
@@ -145,7 +144,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                     {
                         if(level.hasAttribute(DatapackGeneralLoader::text_point))
                         {
-                            qint32 point=level.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                            const qint32 &point=level.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                             QString text_val;
                             if(ok)
                             {
@@ -273,7 +272,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
             index++;
             continue;
         }
-        quint32 questId=entryList.at(index).fileName().toUInt(&ok);
+        const quint32 &questId=entryList.at(index).fileName().toUInt(&ok);
         if(ok)
         {
             //add it, all seam ok
@@ -304,13 +303,12 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
     else
     {
         QFile itemsFile(file);
-        QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
             return QPair<bool,Quest>(false,quest);
         }
-        xmlContent=itemsFile.readAll();
+        const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
 
         QString errorStr;
@@ -322,7 +320,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_quest)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
@@ -339,7 +337,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
             quest.repeatable=true;
     if(root.hasAttribute(DatapackGeneralLoader::text_bot))
     {
-        QStringList tempStringList=root.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
+        const QStringList &tempStringList=root.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
         int index=0;
         while(index<tempStringList.size())
         {
@@ -403,7 +401,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     {
                         if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_id))
                         {
-                            quint32 questId=requirementsItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                            const quint32 &questId=requirementsItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                             if(ok)
                                 quest.requirements.quests << questId;
                             else
@@ -438,7 +436,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     {
                         if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
                         {
-                            qint32 point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                            const qint32 &point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                             if(ok)
                             {
                                 CatchChallenger::ReputationRewards reputation;
@@ -533,17 +531,17 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
         {
             if(step.hasAttribute(DatapackGeneralLoader::text_id))
             {
-                quint32 id=step.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                const quint32 &id=step.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                 if(ok)
                 {
                     CatchChallenger::Quest::Step stepObject;
                     if(step.hasAttribute(DatapackGeneralLoader::text_bot))
                     {
-                        QStringList tempStringList=step.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
+                        const QStringList &tempStringList=step.attribute(DatapackGeneralLoader::text_bot).split(DatapackGeneralLoader::text_dotcomma);
                         int index=0;
                         while(index<tempStringList.size())
                         {
-                            quint32 tempInt=tempStringList.at(index).toUInt(&ok);
+                            const quint32 &tempInt=tempStringList.at(index).toUInt(&ok);
                             if(ok)
                                 stepObject.bots << tempInt;
                             index++;
@@ -582,11 +580,11 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                                             CatchChallenger::Quest::ItemMonster itemMonster;
                                             itemMonster.item=item.item;
 
-                                            QStringList tempStringList=stepItem.attribute(DatapackGeneralLoader::text_monster).split(DatapackGeneralLoader::text_dotcomma);
+                                            const QStringList &tempStringList=stepItem.attribute(DatapackGeneralLoader::text_monster).split(DatapackGeneralLoader::text_dotcomma);
                                             int index=0;
                                             while(index<tempStringList.size())
                                             {
-                                                quint32 tempInt=tempStringList.at(index).toUInt(&ok);
+                                                const quint32 &tempInt=tempStringList.at(index).toUInt(&ok);
                                                 if(ok)
                                                     itemMonster.monsters << tempInt;
                                                 index++;
@@ -619,7 +617,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                             {
                                 if(fightItem.hasAttribute(DatapackGeneralLoader::text_id))
                                 {
-                                    quint32 fightId=fightItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                                    const quint32 &fightId=fightItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                                     if(ok)
                                         stepObject.requirements.fightId << fightId;
                                     else
@@ -670,13 +668,12 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
     else
     {
         QFile plantsFile(file);
-        QByteArray xmlContent;
         if(!plantsFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the plants file: %1, error: %2").arg(file).arg(plantsFile.errorString());
             return plants;
         }
-        xmlContent=plantsFile.readAll();
+        const QByteArray &xmlContent=plantsFile.readAll();
         plantsFile.close();
 
         QString errorStr;
@@ -688,7 +685,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_plants)
     {
         qDebug() << QStringLiteral("Unable to open the plants file: %1, \"plants\" root balise not found for the xml file").arg(file);
@@ -704,8 +701,8 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
         {
             if(plantItem.hasAttribute(DatapackGeneralLoader::text_id) && plantItem.hasAttribute(DatapackGeneralLoader::text_itemUsed))
             {
-                quint8 id=plantItem.attribute(DatapackGeneralLoader::text_id).toUShort(&ok);
-                quint32 itemUsed=plantItem.attribute(DatapackGeneralLoader::text_itemUsed).toUInt(&ok2);
+                const quint8 &id=plantItem.attribute(DatapackGeneralLoader::text_id).toUShort(&ok);
+                const quint32 &itemUsed=plantItem.attribute(DatapackGeneralLoader::text_itemUsed).toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!plants.contains(id))
@@ -790,8 +787,8 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                         {
                             if(quantity.isElement())
                             {
-                                float float_quantity=quantity.text().toFloat(&ok2);
-                                int integer_part=float_quantity;
+                                const float &float_quantity=quantity.text().toFloat(&ok2);
+                                const int &integer_part=float_quantity;
                                 float random_part=float_quantity-integer_part;
                                 random_part*=RANDOM_FLOAT_PART_DIVIDER;
                                 plant.fix_quantity=integer_part;
@@ -805,7 +802,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                         {
                             if(grow.isElement())
                             {
-                                QDomElement fruits = grow.firstChildElement(DatapackGeneralLoader::text_fruits);
+                                const QDomElement &fruits = grow.firstChildElement(DatapackGeneralLoader::text_fruits);
                                 if(!fruits.isNull())
                                 {
                                     if(fruits.isElement())
@@ -831,7 +828,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     ok=false;
                                     qDebug() << QStringLiteral("Unable to parse the plants file: %1, fruits is null: child.tagName(): %2 (at line: %3)").arg(file).arg(grow.tagName()).arg(grow.lineNumber());
                                 }
-                                QDomElement sprouted = grow.firstChildElement(DatapackGeneralLoader::text_sprouted);
+                                const QDomElement &sprouted = grow.firstChildElement(DatapackGeneralLoader::text_sprouted);
                                 if(!sprouted.isNull())
                                 {
                                     if(sprouted.isElement())
@@ -848,7 +845,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     else
                                         qDebug() << QStringLiteral("Unable to parse the plants file: %1, sprouted is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(sprouted.tagName()).arg(sprouted.lineNumber());
                                 }
-                                QDomElement taller = grow.firstChildElement(DatapackGeneralLoader::text_taller);
+                                const QDomElement &taller = grow.firstChildElement(DatapackGeneralLoader::text_taller);
                                 if(!taller.isNull())
                                 {
                                     if(taller.isElement())
@@ -865,7 +862,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     else
                                         qDebug() << QStringLiteral("Unable to parse the plants file: %1, taller is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(taller.tagName()).arg(taller.lineNumber());
                                 }
-                                QDomElement flowering = grow.firstChildElement(DatapackGeneralLoader::text_flowering);
+                                const QDomElement &flowering = grow.firstChildElement(DatapackGeneralLoader::text_flowering);
                                 if(!flowering.isNull())
                                 {
                                     if(flowering.isElement())
@@ -951,13 +948,12 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
     else
     {
         QFile craftingRecipesFile(file);
-        QByteArray xmlContent;
         if(!craftingRecipesFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, error: %2").arg(file).arg(craftingRecipesFile.errorString());
             return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
         }
-        xmlContent=craftingRecipesFile.readAll();
+        const QByteArray &xmlContent=craftingRecipesFile.readAll();
         craftingRecipesFile.close();
 
         QString errorStr;
@@ -969,7 +965,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_recipes)
     {
         qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, \"recipes\" root balise not found for the xml file").arg(file);
@@ -988,7 +984,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                 quint8 success=100;
                 if(recipeItem.hasAttribute(DatapackGeneralLoader::text_success))
                 {
-                    quint8 tempShort=recipeItem.attribute(DatapackGeneralLoader::text_success).toUShort(&ok);
+                    const quint8 &tempShort=recipeItem.attribute(DatapackGeneralLoader::text_success).toUShort(&ok);
                     if(ok)
                     {
                         if(tempShort>100)
@@ -1002,7 +998,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                 quint16 quantity=1;
                 if(recipeItem.hasAttribute(DatapackGeneralLoader::text_quantity))
                 {
-                    quint32 tempShort=recipeItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                    const quint32 &tempShort=recipeItem.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                     if(ok)
                     {
                         if(tempShort>65535)
@@ -1014,9 +1010,9 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                         qDebug() << QStringLiteral("preload_crafting_recipes() quantity in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                 }
 
-                quint32 id=recipeItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
-                quint32 itemToLearn=recipeItem.attribute(DatapackGeneralLoader::text_itemToLearn).toUInt(&ok2);
-                quint32 doItemId=recipeItem.attribute(DatapackGeneralLoader::text_doItemId).toUInt(&ok3);
+                const quint32 &id=recipeItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                const quint32 &itemToLearn=recipeItem.attribute(DatapackGeneralLoader::text_itemToLearn).toUInt(&ok2);
+                const quint32 &doItemId=recipeItem.attribute(DatapackGeneralLoader::text_doItemId).toUInt(&ok3);
                 if(ok && ok2 && ok3)
                 {
                     if(!crafingRecipes.contains(id))
@@ -1102,7 +1098,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                             {
                                 if(material.hasAttribute(DatapackGeneralLoader::text_itemId))
                                 {
-                                    quint32 itemId=material.attribute(DatapackGeneralLoader::text_itemId).toUInt(&ok2);
+                                    const quint32 &itemId=material.attribute(DatapackGeneralLoader::text_itemId).toUInt(&ok2);
                                     if(!ok2)
                                     {
                                         ok=false;
@@ -1112,7 +1108,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                                     quint16 quantity=1;
                                     if(material.hasAttribute(DatapackGeneralLoader::text_quantity))
                                     {
-                                        quint32 tempShort=material.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok2);
+                                        const quint32 &tempShort=material.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok2);
                                         if(ok2)
                                         {
                                             if(tempShort>65535)
@@ -1236,7 +1232,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
 {
     QHash<quint32,Industry> industries;
     QDir dir(folder);
-    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    const QFileInfoList &fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -1253,14 +1249,13 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
         else
         {
             QFile industryFile(file);
-            QByteArray xmlContent;
             if(!industryFile.open(QIODevice::ReadOnly))
             {
                 qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, error: %2").arg(file).arg(industryFile.errorString());
                 file_index++;
                 continue;
             }
-            xmlContent=industryFile.readAll();
+            const QByteArray &xmlContent=industryFile.readAll();
             industryFile.close();
             QString errorStr;
             int errorLine,errorColumn;
@@ -1272,7 +1267,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
             }
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        QDomElement root = domDocument.documentElement();
+        const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackGeneralLoader::text_industries)
         {
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(file);
@@ -1290,7 +1285,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                 if(industryItem.hasAttribute(DatapackGeneralLoader::text_id) && industryItem.hasAttribute(DatapackGeneralLoader::text_time) && industryItem.hasAttribute(DatapackGeneralLoader::text_cycletobefull))
                 {
                     Industry industry;
-                    quint32 id=industryItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                    const quint32 &id=industryItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                     industry.time=industryItem.attribute(DatapackGeneralLoader::text_time).toUInt(&ok2);
                     industry.cycletobefull=industryItem.attribute(DatapackGeneralLoader::text_cycletobefull).toUInt(&ok3);
                     if(ok && ok2 && ok3)
@@ -1504,13 +1499,12 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
     else
     {
         QFile industriesLinkFile(file);
-        QByteArray xmlContent;
         if(!industriesLinkFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, error: %2").arg(file).arg(industriesLinkFile.errorString());
             return industriesLink;
         }
-        xmlContent=industriesLinkFile.readAll();
+        const QByteArray &xmlContent=industriesLinkFile.readAll();
         industriesLinkFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -1521,7 +1515,7 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_industries)
     {
         qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(file);
@@ -1537,8 +1531,8 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
         {
             if(linkItem.hasAttribute(DatapackGeneralLoader::text_industrialrecipe) && linkItem.hasAttribute(DatapackGeneralLoader::text_industry))
             {
-                quint32 industry_id=linkItem.attribute(DatapackGeneralLoader::text_industrialrecipe).toUInt(&ok);
-                quint32 factory_id=linkItem.attribute(DatapackGeneralLoader::text_industry).toUInt(&ok2);
+                const quint32 &industry_id=linkItem.attribute(DatapackGeneralLoader::text_industrialrecipe).toUInt(&ok);
+                const quint32 &factory_id=linkItem.attribute(DatapackGeneralLoader::text_industry).toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!industriesLink.contains(factory_id))
@@ -1641,7 +1635,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
 {
     ItemFull items;
     QDir dir(folder);
-    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    const QFileInfoList &fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -1663,14 +1657,13 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
         else
         {
             QFile itemsFile(file);
-            QByteArray xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
                 file_index++;
                 continue;
             }
-            xmlContent=itemsFile.readAll();
+            const QByteArray &xmlContent=itemsFile.readAll();
             itemsFile.close();
             QString errorStr;
             int errorLine,errorColumn;
@@ -1682,7 +1675,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
             }
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        QDomElement root = domDocument.documentElement();
+        const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackGeneralLoader::text_items)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
@@ -1699,7 +1692,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
             {
                 if(item.hasAttribute(DatapackGeneralLoader::text_id))
                 {
-                    quint32 id=item.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                    const quint32 &id=item.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                     if(ok)
                     {
                         if(!items.item.contains(id))
@@ -1850,7 +1843,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                                 }
                                                 else
                                                 {
-                                                    qint32 remove=buffItem.attribute(DatapackGeneralLoader::text_remove).toUInt(&ok);
+                                                    const qint32 &remove=buffItem.attribute(DatapackGeneralLoader::text_remove).toUInt(&ok);
                                                     if(ok)
                                                     {
                                                         if(remove>0)
@@ -1939,13 +1932,12 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
     else
     {
         QFile xmlFile(file);
-        QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
-        xmlContent=xmlFile.readAll();
+        const QByteArray &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -1956,7 +1948,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
@@ -1971,7 +1963,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         if(startItem.isElement())
         {
             Profile profile;
-            QDomElement map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
+            const QDomElement &map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
             if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
             {
                 profile.map=map.attribute(DatapackGeneralLoader::text_file);
@@ -2002,7 +1994,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                 continue;
             }
-            QDomElement forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
+            const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
             if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
             {
                 profile.forcedskin=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
@@ -2019,7 +2011,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 }
             }
             profile.cash=0;
-            QDomElement cash = startItem.firstChildElement(DatapackGeneralLoader::text_cash);
+            const QDomElement &cash = startItem.firstChildElement(DatapackGeneralLoader::text_cash);
             if(!cash.isNull() && cash.isElement() && cash.hasAttribute(DatapackGeneralLoader::text_value))
             {
                 profile.cash=cash.attribute(DatapackGeneralLoader::text_value).toULongLong(&ok);
@@ -2201,13 +2193,12 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
     else
     {
         QFile xmlFile(file);
-        QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
-        xmlContent=xmlFile.readAll();
+        const QByteArray &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -2218,7 +2209,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
@@ -2345,13 +2336,12 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
     else
     {
         QFile xmlFile(file);
-        QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
-        xmlContent=xmlFile.readAll();
+        const QByteArray &xmlContent=xmlFile.readAll();
         xmlFile.close();
         QString errorStr;
         int errorLine,errorColumn;

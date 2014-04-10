@@ -34,7 +34,7 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
         int index=1;
         while(index<GlobalServerData::serverPrivateVariables.eventThreaderList.size())
         {
-            if(likely(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0)!=GlobalServerData::serverPrivateVariables.eventThreaderList.at(index)))
+            if(Q_LIKELY(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0)!=GlobalServerData::serverPrivateVariables.eventThreaderList.at(index)))
             {
                 coTypeAsync=Qt::QueuedConnection;
                 break;
@@ -72,156 +72,159 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
     clientLocalBroadcast.setVariable(&player_informations);
 
     //connect input/ouput
-    connect(&clientNetworkRead,	&ClientNetworkRead::newFullInputQuery,      &clientNetworkWrite,&ClientNetworkWrite::newFullInputQuery,  coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::newInputQuery,          &clientNetworkWrite,&ClientNetworkWrite::newInputQuery,      coTypeAsync);
-    connect(&clientNetworkWrite,	&ClientNetworkWrite::newFullOutputQuery,	&clientNetworkRead,&ClientNetworkRead::newFullOutputQuery,   coTypeAsync);
-    connect(&clientNetworkWrite,	&ClientNetworkWrite::newOutputQuery,		&clientNetworkRead,&ClientNetworkRead::newOutputQuery,       coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::newFullInputQuery,      &clientNetworkWrite,    &ClientNetworkWrite::newFullInputQuery, coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::newInputQuery,          &clientNetworkWrite,    &ClientNetworkWrite::newInputQuery,     coTypeAsync);
+    connect(&clientNetworkWrite,	&ClientNetworkWrite::newFullOutputQuery,	&clientNetworkRead,     &ClientNetworkRead::newFullOutputQuery, coTypeAsync);
+    connect(&clientNetworkWrite,	&ClientNetworkWrite::newOutputQuery,		&clientNetworkRead,     &ClientNetworkRead::newOutputQuery,     coTypeAsync);
 
     //connect the write, to send packet on the network
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendFullPacket, &clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,coTypeAsync);
-    connect(&clientBroadCast,	&ClientBroadCast::sendFullPacket,   &clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::sendFullPacket,   &clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,coTypeAsync);
-    connect(&localClientHandler,	&MapBasicMove::sendFullPacket,      &clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,coTypeAsync);
-    connect(&clientLocalBroadcast,&MapBasicMove::sendFullPacket,     &clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendPacket,     &clientNetworkWrite,&ClientNetworkWrite::sendPacket,coTypeAsync);
-    connect(&clientBroadCast,	&ClientBroadCast::sendPacket,       &clientNetworkWrite,&ClientNetworkWrite::sendPacket,coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::sendPacket,       &clientNetworkWrite,&ClientNetworkWrite::sendPacket,coTypeAsync);
-    connect(&localClientHandler,	&MapBasicMove::sendPacket,          &clientNetworkWrite,&ClientNetworkWrite::sendPacket,coTypeAsync);
-    connect(&clientLocalBroadcast,&MapBasicMove::sendPacket,         &clientNetworkWrite,&ClientNetworkWrite::sendPacket,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::sendFullPacket,         &clientNetworkWrite,    &ClientNetworkWrite::sendFullPacket,    coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::sendFullPacket,           &clientNetworkWrite,    &ClientNetworkWrite::sendFullPacket,    coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::sendFullPacket,           &clientNetworkWrite,    &ClientNetworkWrite::sendFullPacket,    coTypeAsync);
+    connect(&localClientHandler,	&MapBasicMove::sendFullPacket,              &clientNetworkWrite,    &ClientNetworkWrite::sendFullPacket,    coTypeAsync);
+    connect(&clientLocalBroadcast,  &MapBasicMove::sendFullPacket,              &clientNetworkWrite,    &ClientNetworkWrite::sendFullPacket,    coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::sendPacket,             &clientNetworkWrite,    &ClientNetworkWrite::sendPacket,        coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::sendPacket,               &clientNetworkWrite,    &ClientNetworkWrite::sendPacket,        coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::sendPacket,               &clientNetworkWrite,    &ClientNetworkWrite::sendPacket,        coTypeAsync);
+    connect(&localClientHandler,	&MapBasicMove::sendPacket,                  &clientNetworkWrite,    &ClientNetworkWrite::sendPacket,        coTypeAsync);
+    connect(&clientLocalBroadcast,  &MapBasicMove::sendPacket,                  &clientNetworkWrite,    &ClientNetworkWrite::sendPacket,        coTypeAsync);
 
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendQuery,      &clientNetworkWrite,&ClientNetworkWrite::sendQuery,coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::sendRawSmallPacket,       &clientNetworkWrite,    &ClientNetworkWrite::sendRawSmallPacket,coTypeAsync);
+    connect(&clientLocalBroadcast,	&ClientLocalBroadcast::sendRawSmallPacket,  &clientNetworkWrite,    &ClientNetworkWrite::sendRawSmallPacket,coTypeAsync);
 
-    connect(&clientNetworkRead,	&ClientNetworkRead::postReply,      &clientNetworkWrite,&ClientNetworkWrite::postReply,coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::postReply,        &clientNetworkWrite,&ClientNetworkWrite::postReply,coTypeAsync);
-    connect(&clientLocalBroadcast,&ClientLocalBroadcast::postReply,  &clientNetworkWrite,&ClientNetworkWrite::postReply,coTypeAsync);
-    connect(&localClientHandler,&LocalClientHandler::postReply,      &clientNetworkWrite,&ClientNetworkWrite::postReply,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::sendQuery,              &clientNetworkWrite,    &ClientNetworkWrite::sendQuery,         coTypeAsync);
 
-    connect(&clientNetworkRead,	 &ClientNetworkRead::addCharacter,      &clientHeavyLoad,&ClientHeavyLoad::addCharacter,              coTypeAsync);
-    connect(&clientNetworkRead,	 &ClientNetworkRead::removeCharacter,   &clientHeavyLoad,&ClientHeavyLoad::removeCharacter,           coTypeAsync);
-    connect(&clientNetworkRead,	 &ClientNetworkRead::selectCharacter,   &clientHeavyLoad,&ClientHeavyLoad::selectCharacter,           coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::postReply,              &clientNetworkWrite,    &ClientNetworkWrite::postReply,         coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::postReply,                &clientNetworkWrite,    &ClientNetworkWrite::postReply,         coTypeAsync);
+    connect(&clientLocalBroadcast,  &ClientLocalBroadcast::postReply,           &clientNetworkWrite,    &ClientNetworkWrite::postReply,         coTypeAsync);
+    connect(&localClientHandler,    &LocalClientHandler::postReply,             &clientNetworkWrite,    &ClientNetworkWrite::postReply,         coTypeAsync);
 
-    connect(&localClientHandler,  &LocalClientHandler::dbQuery,      &clientHeavyLoad,&ClientHeavyLoad::dbQuery,              coTypeAsync);
-    connect(&clientLocalBroadcast,&ClientLocalBroadcast::dbQuery,    &clientHeavyLoad,&ClientHeavyLoad::dbQuery,              coTypeAsync);
-    connect(&localClientHandler,  &LocalClientHandler::askRandomNumber,&clientHeavyLoad,&ClientHeavyLoad::askedRandomNumber,  coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::addCharacter,           &clientHeavyLoad,       &ClientHeavyLoad::addCharacter,         coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::removeCharacter,        &clientHeavyLoad,       &ClientHeavyLoad::removeCharacter,      coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::selectCharacter,        &clientHeavyLoad,       &ClientHeavyLoad::selectCharacter,      coTypeAsync);
+
+    connect(&localClientHandler,    &LocalClientHandler::dbQuery,               &clientHeavyLoad,       &ClientHeavyLoad::dbQuery,              coTypeAsync);
+    connect(&clientLocalBroadcast,  &ClientLocalBroadcast::dbQuery,             &clientHeavyLoad,       &ClientHeavyLoad::dbQuery,              coTypeAsync);
+    connect(&localClientHandler,    &LocalClientHandler::askRandomNumber,       &clientHeavyLoad,       &ClientHeavyLoad::askedRandomNumber,    coTypeAsync);
 
     //connect for the seed
-    connect(&localClientHandler,  &LocalClientHandler::seedValidated,    &clientLocalBroadcast,&ClientLocalBroadcast::seedValidated,  coTypeAsync);
-    connect(&clientLocalBroadcast,&ClientLocalBroadcast::useSeed,        &localClientHandler,&LocalClientHandler::useSeed,            coTypeAsync);
-    connect(&clientLocalBroadcast,&ClientLocalBroadcast::addObjectAndSend,&localClientHandler,&LocalClientHandler::addObjectAndSend,  coTypeAsync);
-    connect(&clientNetworkRead,	 &ClientNetworkRead::plantSeed,         &clientLocalBroadcast,&ClientLocalBroadcast::plantSeed,      coTypeAsync);
-    connect(&clientNetworkRead,	 &ClientNetworkRead::collectPlant,		&clientLocalBroadcast,&ClientLocalBroadcast::collectPlant,   coTypeAsync);
+    connect(&localClientHandler,    &LocalClientHandler::seedValidated,         &clientLocalBroadcast,  &ClientLocalBroadcast::seedValidated,   coTypeAsync);
+    connect(&clientLocalBroadcast,  &ClientLocalBroadcast::useSeed,             &localClientHandler,    &LocalClientHandler::useSeed,           coTypeAsync);
+    connect(&clientLocalBroadcast,  &ClientLocalBroadcast::addObjectAndSend,    &localClientHandler,    &LocalClientHandler::addObjectAndSend,  coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::plantSeed,              &clientLocalBroadcast,  &ClientLocalBroadcast::plantSeed,       coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::collectPlant,           &clientLocalBroadcast,  &ClientLocalBroadcast::collectPlant,    coTypeAsync);
 
     //connect for crafting
-    connect(&clientNetworkRead,	&ClientNetworkRead::useRecipe,	&localClientHandler,&LocalClientHandler::useRecipe,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::useRecipe,              &localClientHandler,    &LocalClientHandler::useRecipe,         coTypeAsync);
 
     //connect for trade
-    connect(&localClientHandler,	&LocalClientHandler::sendTradeRequest,          &clientNetworkRead,&ClientNetworkRead::sendTradeRequest,     coTypeAsync);
-    connect(&localClientHandler,	&LocalClientHandler::sendBattleRequest,         &clientNetworkRead,&ClientNetworkRead::sendBattleRequest,    coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::tradeAccepted,              &localClientHandler,&LocalClientHandler::tradeAccepted,      coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::tradeCanceled,              &localClientHandler,&LocalClientHandler::tradeCanceled,      coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::battleAccepted,             &localClientHandler,&LocalClientHandler::battleAccepted,     coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::battleCanceled,             &localClientHandler,&LocalClientHandler::battleCanceled,     coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::tradeFinished,              &localClientHandler,&LocalClientHandler::tradeFinished,      coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::tradeAddTradeCash,          &localClientHandler,&LocalClientHandler::tradeAddTradeCash,  coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::tradeAddTradeObject,        &localClientHandler,&LocalClientHandler::tradeAddTradeObject,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::tradeAddTradeMonster,       &localClientHandler,&LocalClientHandler::tradeAddTradeMonster,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::newQuestAction,             &localClientHandler,&LocalClientHandler::newQuestAction,     coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::clanAction,                 &localClientHandler,&LocalClientHandler::clanAction,         coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::clanInvite,                 &localClientHandler,&LocalClientHandler::clanInvite,         coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::waitingForCityCaputre,      &localClientHandler,&LocalClientHandler::waitingForCityCaputre,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::moveMonster,                &localClientHandler,&LocalClientHandler::moveMonster,        coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::changeOfMonsterInFight,     &localClientHandler,&LocalClientHandler::changeOfMonsterInFight,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::confirmEvolution,           &localClientHandler,&LocalClientHandler::confirmEvolution,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::useObjectOnMonster,         &localClientHandler,&LocalClientHandler::useObjectOnMonster, coTypeAsync);
+    connect(&localClientHandler,	&LocalClientHandler::sendTradeRequest,      &clientNetworkRead,     &ClientNetworkRead::sendTradeRequest,       coTypeAsync);
+    connect(&localClientHandler,	&LocalClientHandler::sendBattleRequest,     &clientNetworkRead,     &ClientNetworkRead::sendBattleRequest,      coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::tradeAccepted,          &localClientHandler,    &LocalClientHandler::tradeAccepted,         coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::tradeCanceled,          &localClientHandler,    &LocalClientHandler::tradeCanceled,         coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::battleAccepted,         &localClientHandler,    &LocalClientHandler::battleAccepted,        coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::battleCanceled,         &localClientHandler,    &LocalClientHandler::battleCanceled,        coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::tradeFinished,          &localClientHandler,    &LocalClientHandler::tradeFinished,         coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::tradeAddTradeCash,      &localClientHandler,    &LocalClientHandler::tradeAddTradeCash,     coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::tradeAddTradeObject,    &localClientHandler,    &LocalClientHandler::tradeAddTradeObject,   coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::tradeAddTradeMonster,   &localClientHandler,    &LocalClientHandler::tradeAddTradeMonster,  coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::newQuestAction,         &localClientHandler,    &LocalClientHandler::newQuestAction,        coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::clanAction,             &localClientHandler,    &LocalClientHandler::clanAction,            coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::clanInvite,             &localClientHandler,    &LocalClientHandler::clanInvite,            coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::waitingForCityCaputre,  &localClientHandler,    &LocalClientHandler::waitingForCityCaputre, coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::moveMonster,            &localClientHandler,    &LocalClientHandler::moveMonster,           coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::changeOfMonsterInFight, &localClientHandler,    &LocalClientHandler::changeOfMonsterInFight,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::confirmEvolution,       &localClientHandler,    &LocalClientHandler::confirmEvolution,      coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::useObjectOnMonster,     &localClientHandler,    &LocalClientHandler::useObjectOnMonster,    coTypeAsync);
 
     //connect the player information
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		&clientBroadCast,	&ClientBroadCast::send_player_informations, coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               &localClientHandler,	&LocalClientHandler::put_on_the_map,        coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               &clientLocalBroadcast,&ClientLocalBroadcast::put_on_the_map,     coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		this,               &Client::send_player_informations,          coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::newRandomNumber,              &localClientHandler,	&LocalClientHandler::newRandomNumber,       coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::haveClanInfo,                 &localClientHandler,	&LocalClientHandler::haveClanInfo,          coTypeAsync);
-    connect(&localClientHandler,	&LocalClientHandler::clanChange,                &clientBroadCast,	&ClientBroadCast::clanChange,               coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::send_player_informations,	&clientBroadCast,       &ClientBroadCast::send_player_informations, coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::put_on_the_map,           &localClientHandler,	&LocalClientHandler::put_on_the_map,        coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::put_on_the_map,           &clientLocalBroadcast,  &ClientLocalBroadcast::put_on_the_map,      coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::send_player_informations,	this,                   &Client::send_player_informations,          coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::newRandomNumber,          &localClientHandler,	&LocalClientHandler::newRandomNumber,       coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::haveClanInfo,             &localClientHandler,	&LocalClientHandler::haveClanInfo,          coTypeAsync);
+    connect(&localClientHandler,	&LocalClientHandler::clanChange,            &clientBroadCast,       &ClientBroadCast::clanChange,               coTypeAsync);
 
     //packet parsed (heavy)
-    connect(&clientNetworkRead,&ClientNetworkRead::askLogin,&clientHeavyLoad,&ClientHeavyLoad::askLogin,          coTypeAsync);
-    connect(&clientNetworkRead,&ClientNetworkRead::datapackList,&clientHeavyLoad,&ClientHeavyLoad::datapackList,  coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::askLogin,               &clientHeavyLoad,       &ClientHeavyLoad::askLogin,                 coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::datapackList,           &clientHeavyLoad,       &ClientHeavyLoad::datapackList,             coTypeAsync);
 
     //packet parsed (map management)
-    connect(&clientNetworkRead,	&ClientNetworkRead::moveThePlayer,			&localClientHandler,	&LocalClientHandler::moveThePlayer,         coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::moveThePlayer,			&clientLocalBroadcast,&MapBasicMove::moveThePlayer,              coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::teleportValidatedTo,	&localClientHandler,	&LocalClientHandler::teleportValidatedTo,	coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::teleportValidatedTo,	&clientLocalBroadcast,&ClientLocalBroadcast::teleportValidatedTo,coTypeAsync);
-    connect(&localClientHandler,	&LocalClientHandler::teleportTo,            &clientNetworkRead,	&ClientNetworkRead::teleportTo,             coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::moveThePlayer,			&localClientHandler,	&LocalClientHandler::moveThePlayer,         coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::moveThePlayer,			&clientLocalBroadcast,  &MapBasicMove::moveThePlayer,               coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::teleportValidatedTo,	&localClientHandler,	&LocalClientHandler::teleportValidatedTo,	coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::teleportValidatedTo,	&clientLocalBroadcast,  &ClientLocalBroadcast::teleportValidatedTo, coTypeAsync);
+    connect(&localClientHandler,	&LocalClientHandler::teleportTo,            &clientNetworkRead,     &ClientNetworkRead::teleportTo,             coTypeAsync);
 
     //packet parsed (broadcast)
-    connect(&localClientHandler,	&LocalClientHandler::receiveSystemText,     &clientBroadCast,	&ClientBroadCast::receiveSystemText,        coTypeAsync);
+    connect(&localClientHandler,	&LocalClientHandler::receiveSystemText,     &clientBroadCast,       &ClientBroadCast::receiveSystemText,        coTypeAsync);
     if(CommonSettings::commonSettings.chat_allow_clan || CommonSettings::commonSettings.chat_allow_all)
-        connect(&clientNetworkRead,	&ClientNetworkRead::sendChatText,			&clientBroadCast,	&ClientBroadCast::sendChatText,				coTypeAsync);
+        connect(&clientNetworkRead,	&ClientNetworkRead::sendChatText,			&clientBroadCast,       &ClientBroadCast::sendChatText,				coTypeAsync);
     if(CommonSettings::commonSettings.chat_allow_local)
-        connect(&clientNetworkRead,	&ClientNetworkRead::sendLocalChatText,      &clientLocalBroadcast,&ClientLocalBroadcast::sendLocalChatText,	coTypeAsync);
+        connect(&clientNetworkRead,	&ClientNetworkRead::sendLocalChatText,      &clientLocalBroadcast,  &ClientLocalBroadcast::sendLocalChatText,	coTypeAsync);
     if(CommonSettings::commonSettings.chat_allow_private)
-        connect(&clientNetworkRead,	&ClientNetworkRead::sendPM,                 &clientBroadCast,	&ClientBroadCast::sendPM,                   coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendBroadCastCommand,	&clientBroadCast,	&ClientBroadCast::sendBroadCastCommand,		coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sendHandlerCommand,		&localClientHandler,	&LocalClientHandler::sendHandlerCommand,	coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::destroyObject,          &localClientHandler,	&LocalClientHandler::destroyObject,         coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::useObject,              &localClientHandler,	&LocalClientHandler::useObject,             coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::wareHouseStore,         &localClientHandler,	&LocalClientHandler::wareHouseStore,        coTypeAsync);
-    connect(&clientBroadCast,	&ClientBroadCast::kicked,                   this,               &Client::kicked,                            coTypeAsync);
+        connect(&clientNetworkRead,	&ClientNetworkRead::sendPM,                 &clientBroadCast,       &ClientBroadCast::sendPM,                   coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::sendBroadCastCommand,	&clientBroadCast,       &ClientBroadCast::sendBroadCastCommand,		coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::sendHandlerCommand,		&localClientHandler,	&LocalClientHandler::sendHandlerCommand,	coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::destroyObject,          &localClientHandler,	&LocalClientHandler::destroyObject,         coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::useObject,              &localClientHandler,	&LocalClientHandler::useObject,             coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::wareHouseStore,         &localClientHandler,	&LocalClientHandler::wareHouseStore,        coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::kicked,                   this,                   &Client::kicked,                            coTypeAsync);
 
     //shops
-    connect(&clientNetworkRead,	&ClientNetworkRead::getShopList,            &localClientHandler,	&LocalClientHandler::getShopList,           coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::buyObject,              &localClientHandler,	&LocalClientHandler::buyObject,             coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sellObject,             &localClientHandler,	&LocalClientHandler::sellObject,            coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::getShopList,            &localClientHandler,	&LocalClientHandler::getShopList,           coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::buyObject,              &localClientHandler,	&LocalClientHandler::buyObject,             coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::sellObject,             &localClientHandler,	&LocalClientHandler::sellObject,            coTypeAsync);
 
     //factory
-    connect(&clientNetworkRead,	&ClientNetworkRead::getFactoryList,         &localClientHandler,	&LocalClientHandler::getFactoryList,        coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::buyFactoryObject,       &localClientHandler,	&LocalClientHandler::buyFactoryProduct,      coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::sellFactoryObject,      &localClientHandler,	&LocalClientHandler::sellFactoryResource,     coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::getFactoryList,         &localClientHandler,	&LocalClientHandler::getFactoryList,        coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::buyFactoryObject,       &localClientHandler,	&LocalClientHandler::buyFactoryProduct,     coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::sellFactoryObject,      &localClientHandler,	&LocalClientHandler::sellFactoryResource,   coTypeAsync);
 
     //fight
-    connect(&clientNetworkRead,	&ClientNetworkRead::tryEscape,              &localClientHandler,	&LocalClientHandler::tryEscape,             coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::useSkill,               &localClientHandler,	&LocalClientHandler::useSkill,              coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::learnSkill,             &localClientHandler,	&LocalClientHandler::learnSkill,            coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::heal,                   &localClientHandler,	&LocalClientHandler::heal,                  coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::requestFight,           &localClientHandler,	&LocalClientHandler::requestFight,          coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::tryEscape,              &localClientHandler,	&LocalClientHandler::tryEscape,             coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::useSkill,               &localClientHandler,	&LocalClientHandler::useSkill,              coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::learnSkill,             &localClientHandler,	&LocalClientHandler::learnSkill,            coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::heal,                   &localClientHandler,	&LocalClientHandler::heal,                  coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::requestFight,           &localClientHandler,	&LocalClientHandler::requestFight,          coTypeAsync);
 
     //market
-    connect(&clientNetworkRead,	&ClientNetworkRead::getMarketList,          &localClientHandler,	&LocalClientHandler::getMarketList,         coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::buyMarketObject,        &localClientHandler,	&LocalClientHandler::buyMarketObject,       coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::buyMarketMonster,       &localClientHandler,	&LocalClientHandler::buyMarketMonster,      coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::putMarketObject,        &localClientHandler,	&LocalClientHandler::putMarketObject,       coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::putMarketMonster,       &localClientHandler,	&LocalClientHandler::putMarketMonster,      coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::recoverMarketCash,      &localClientHandler,	&LocalClientHandler::recoverMarketCash,     coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::withdrawMarketObject,   &localClientHandler,	&LocalClientHandler::withdrawMarketObject,  coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::withdrawMarketMonster,  &localClientHandler,	&LocalClientHandler::withdrawMarketMonster, coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::getMarketList,          &localClientHandler,	&LocalClientHandler::getMarketList,         coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::buyMarketObject,        &localClientHandler,	&LocalClientHandler::buyMarketObject,       coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::buyMarketMonster,       &localClientHandler,	&LocalClientHandler::buyMarketMonster,      coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::putMarketObject,        &localClientHandler,	&LocalClientHandler::putMarketObject,       coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::putMarketMonster,       &localClientHandler,	&LocalClientHandler::putMarketMonster,      coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::recoverMarketCash,      &localClientHandler,	&LocalClientHandler::recoverMarketCash,     coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::withdrawMarketObject,   &localClientHandler,	&LocalClientHandler::withdrawMarketObject,  coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::withdrawMarketMonster,  &localClientHandler,	&LocalClientHandler::withdrawMarketMonster, coTypeAsync);
 
     //connect the message
-    connect(&clientBroadCast,	&ClientBroadCast::error,					this,	&Client::errorOutput,coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::error,					this,	&Client::errorOutput,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::error,					this,	&Client::errorOutput,coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::error,					this,	&Client::errorOutput,coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::error,					this,	&Client::errorOutput,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::error,					this,	&Client::errorOutput,coTypeAsync);
     connect(&clientNetworkWrite,	&ClientNetworkWrite::error,					this,	&Client::errorOutput,coTypeAsync);
     connect(&localClientHandler,	&MapBasicMove::error,						this,	&Client::errorOutput,coTypeAsync);
-    connect(&clientLocalBroadcast,&ClientLocalBroadcast::error,				this,	&Client::errorOutput,coTypeAsync);
-    connect(&clientNetworkRead,  &ClientNetworkRead::needDisconnectTheClient,this,	&Client::disconnectClient,coTypeAsync);
-    connect(&clientBroadCast,	&ClientBroadCast::message,					this,	&Client::normalOutput,coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::message,					this,	&Client::normalOutput,coTypeAsync);
-    connect(&clientNetworkRead,	&ClientNetworkRead::message,				this,	&Client::normalOutput,coTypeAsync);
+    connect(&clientLocalBroadcast,  &ClientLocalBroadcast::error,				this,	&Client::errorOutput,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::needDisconnectTheClient,this,	&Client::disconnectClient,coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::message,					this,	&Client::normalOutput,coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::message,					this,	&Client::normalOutput,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::message,				this,	&Client::normalOutput,coTypeAsync);
     connect(&clientNetworkWrite,	&ClientNetworkWrite::message,				this,	&Client::normalOutput,coTypeAsync);
     connect(&localClientHandler,	&MapBasicMove::message,                     this,	&Client::normalOutput,coTypeAsync);
-    connect(&clientLocalBroadcast,&ClientLocalBroadcast::message,			this,	&Client::normalOutput,coTypeAsync);
+    connect(&clientLocalBroadcast,  &ClientLocalBroadcast::message,			this,	&Client::normalOutput,coTypeAsync);
 
     //connect to quit
-    connect(&clientNetworkRead,	&ClientNetworkRead::isReadyToStop,          this,&Client::disconnectNextStep,coTypeAsync);
-    connect(clientMapManagement,&ClientMapManagement::isReadyToStop,        this,&Client::disconnectNextStep,coTypeAsync);
-    connect(&clientBroadCast,	&ClientBroadCast::isReadyToStop,            this,&Client::disconnectNextStep,coTypeAsync);
-    connect(&clientHeavyLoad,	&ClientHeavyLoad::isReadyToStop,            this,&Client::disconnectNextStep,coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::isReadyToStop,          this,&Client::disconnectNextStep,coTypeAsync);
+    connect(clientMapManagement,    &ClientMapManagement::isReadyToStop,        this,&Client::disconnectNextStep,coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::isReadyToStop,            this,&Client::disconnectNextStep,coTypeAsync);
+    connect(&clientHeavyLoad,       &ClientHeavyLoad::isReadyToStop,            this,&Client::disconnectNextStep,coTypeAsync);
     connect(&clientNetworkWrite,	&ClientNetworkWrite::isReadyToStop,         this,&Client::disconnectNextStep,coTypeAsync);
     connect(&localClientHandler,	&LocalClientHandler::isReadyToStop,         this,&Client::disconnectNextStep,coTypeAsync);
-    connect(&clientLocalBroadcast,&ClientLocalBroadcast::isReadyToStop,      this,&Client::disconnectNextStep,coTypeAsync);
+    connect(&clientLocalBroadcast,  &ClientLocalBroadcast::isReadyToStop,      this,&Client::disconnectNextStep,coTypeAsync);
     //stop
     connect(this,&Client::askIfIsReadyToStop,&clientNetworkRead,         &ClientNetworkRead::askIfIsReadyToStop,     coTypeAsync);
-    connect(this,&Client::askIfIsReadyToStop,clientMapManagement,       &ClientMapManagement::askIfIsReadyToStop,   coTypeAsync);
+    connect(this,&Client::askIfIsReadyToStop,clientMapManagement,        &ClientMapManagement::askIfIsReadyToStop,   coTypeAsync);
     connect(this,&Client::askIfIsReadyToStop,&clientBroadCast,           &ClientBroadCast::askIfIsReadyToStop,       coTypeAsync);
     connect(this,&Client::askIfIsReadyToStop,&clientHeavyLoad,           &ClientHeavyLoad::askIfIsReadyToStop,       coTypeAsync);
     connect(this,&Client::askIfIsReadyToStop,&clientNetworkWrite,        &ClientNetworkWrite::askIfIsReadyToStop,    coTypeAsync);

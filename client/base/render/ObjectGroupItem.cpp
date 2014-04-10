@@ -14,7 +14,7 @@ ObjectGroupItem::ObjectGroupItem(Tiled::ObjectGroup *objectGroup,
 
     // Create a child item for each object
     QList<Tiled::MapObject *> objects=mObjectGroup->objects();
-    int loopSize=objects.size();
+    const int &loopSize=objects.size();
     int index=0;
     while(index<loopSize)
     {
@@ -27,7 +27,7 @@ ObjectGroupItem::~ObjectGroupItem()
 {
     {
         QList<Tiled::MapObject *> objects=mObjectGroup->objects();
-        int loopSize=objects.size();
+        const int &loopSize=objects.size();
         int index=0;
         while(index<loopSize)
         {
