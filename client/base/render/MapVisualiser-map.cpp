@@ -214,8 +214,8 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
                         {
-                            int offset=border_map->logicalMap.border_semi.bottom.x_offset-tempMapObject->logicalMap.border_semi.top.x_offset;
-                            int offset_pixel=border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth()-tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth();
+                            const int &offset=border_map->logicalMap.border_semi.bottom.x_offset-tempMapObject->logicalMap.border_semi.top.x_offset;
+                            const int &offset_pixel=border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth()-tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth();
                             tempMapObject->relative_x=border_map->relative_x+offset;
                             tempMapObject->relative_y=border_map->relative_y+border_map->logicalMap.height;
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel+offset_pixel;
@@ -243,8 +243,8 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
                         {
-                            int offset=border_map->logicalMap.border_semi.top.x_offset-tempMapObject->logicalMap.border_semi.bottom.x_offset;
-                            int offset_pixel=border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth()-tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth();
+                            const int &offset=border_map->logicalMap.border_semi.top.x_offset-tempMapObject->logicalMap.border_semi.bottom.x_offset;
+                            const int &offset_pixel=border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth()-tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth();
                             tempMapObject->relative_x=border_map->relative_x+offset;
                             tempMapObject->relative_y=border_map->relative_y-tempMapObject->logicalMap.height;
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel+offset_pixel;
@@ -272,8 +272,8 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
                         {
-                            int offset=border_map->logicalMap.border_semi.left.y_offset-tempMapObject->logicalMap.border_semi.right.y_offset;
-                            int offset_pixel=border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight()-tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight();
+                            const int &offset=border_map->logicalMap.border_semi.left.y_offset-tempMapObject->logicalMap.border_semi.right.y_offset;
+                            const int &offset_pixel=border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight()-tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight();
                             tempMapObject->relative_x=border_map->relative_x-tempMapObject->logicalMap.width;
                             tempMapObject->relative_y=border_map->relative_y+offset;
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
@@ -301,8 +301,8 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
                         {
-                            int offset=border_map->logicalMap.border_semi.right.y_offset-tempMapObject->logicalMap.border_semi.left.y_offset;
-                            int offset_pixel=border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight()-tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight();
+                            const int &offset=border_map->logicalMap.border_semi.right.y_offset-tempMapObject->logicalMap.border_semi.left.y_offset;
+                            const int &offset_pixel=border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight()-tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight();
                             tempMapObject->relative_x=border_map->relative_x+border_map->logicalMap.width;
                             tempMapObject->relative_y=border_map->relative_y+offset;
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
@@ -339,7 +339,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
 void MapVisualiser::applyTheAnimationTimer()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
-    quint16 interval=timer->interval();
+    const quint16 &interval=timer->interval();
     bool isUsed=false;
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {

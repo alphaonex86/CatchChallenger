@@ -60,6 +60,7 @@ QString DatapackClientLoader::text_fights=QLatin1Literal("skill");
 QString DatapackClientLoader::text_start=QLatin1Literal("start");
 QString DatapackClientLoader::text_win=QLatin1Literal("win");
 QString DatapackClientLoader::text_dotxml=QLatin1Literal(".xml");
+QString DatapackClientLoader::text_dottsx=QLatin1Literal(".tsx");
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -139,13 +140,12 @@ void DatapackClientLoader::parseReputationExtra()
     else
     {
         QFile itemsFile(file);
-        QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
             qDebug() << (QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString()));
             return;
         }
-        xmlContent=itemsFile.readAll();
+        const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -157,7 +157,7 @@ void DatapackClientLoader::parseReputationExtra()
         qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_list)
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file));
@@ -227,7 +227,7 @@ void DatapackClientLoader::parseReputationExtra()
                     {
                         if(level.hasAttribute(DatapackClientLoader::text_point))
                         {
-                            qint32 point=level.attribute(DatapackClientLoader::text_point).toInt(&ok);
+                            const qint32 &point=level.attribute(DatapackClientLoader::text_point).toInt(&ok);
                             //QString text_val;
                             if(ok)
                             {
@@ -393,7 +393,7 @@ void DatapackClientLoader::parseReputationExtra()
 void DatapackClientLoader::parseItemsExtra()
 {
     QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
-    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    const QFileInfoList &fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -415,14 +415,13 @@ void DatapackClientLoader::parseItemsExtra()
         else
         {
             QFile itemsFile(file);
-            QByteArray xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
                 file_index++;
                 continue;
             }
-            xmlContent=itemsFile.readAll();
+            const QByteArray &xmlContent=itemsFile.readAll();
             itemsFile.close();
             QString errorStr;
             int errorLine,errorColumn;
@@ -435,7 +434,7 @@ void DatapackClientLoader::parseItemsExtra()
             qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
             CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        QDomElement root = domDocument.documentElement();
+        const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_items)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
@@ -452,7 +451,7 @@ void DatapackClientLoader::parseItemsExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    quint32 id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    const quint32 &id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                     if(ok)
                     {
                         if(!DatapackClientLoader::itemsExtra.contains(id))
@@ -587,10 +586,10 @@ void DatapackClientLoader::parseItemsExtra()
 
 void DatapackClientLoader::parseMaps()
 {
-    QStringList returnList=CatchChallenger::FacilityLib::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
+    const QStringList &returnList=CatchChallenger::FacilityLib::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
 
     //load the map
-    int size=returnList.size();
+    const int &size=returnList.size();
     int index=0;
     QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
     while(index<size)
@@ -655,7 +654,7 @@ void DatapackClientLoader::resetAll()
 void DatapackClientLoader::parseQuestsExtra()
 {
     //open and quick check the file
-    QFileInfoList entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     while(index<entryList.size())
     {
@@ -666,7 +665,7 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
         bool ok;
-        quint32 id=entryList.at(index).fileName().toUInt(&ok);
+        const quint32 &id=entryList.at(index).fileName().toUInt(&ok);
         if(!ok)
         {
             qDebug() << QStringLiteral("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
@@ -680,14 +679,13 @@ void DatapackClientLoader::parseQuestsExtra()
         else
         {
             QFile itemsFile(file);
-            QByteArray xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
                 index++;
                 continue;
             }
-            xmlContent=itemsFile.readAll();
+            const QByteArray &xmlContent=itemsFile.readAll();
             itemsFile.close();
             QString errorStr;
             int errorLine,errorColumn;
@@ -700,7 +698,7 @@ void DatapackClientLoader::parseQuestsExtra()
             qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
             CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
-        QDomElement root = domDocument.documentElement();
+        const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_quest)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
@@ -752,7 +750,7 @@ void DatapackClientLoader::parseQuestsExtra()
 
         //load showRewards
         {
-            QDomElement rewards = root.firstChildElement(DatapackClientLoader::text_rewards);
+            const QDomElement &rewards = root.firstChildElement(DatapackClientLoader::text_rewards);
             if(!rewards.isNull() && rewards.isElement())
             {
                 if(rewards.hasAttribute(DatapackClientLoader::text_show))
@@ -771,7 +769,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 {
                     if(step.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        quint32 id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                        const quint32 &id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                         if(ok)
                         {
                             CatchChallenger::Quest::Step stepObject;
@@ -862,7 +860,7 @@ void DatapackClientLoader::parseQuestsExtra()
 void DatapackClientLoader::parseQuestsText()
 {
     //open and quick check the file
-    QFileInfoList entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     while(index<entryList.size())
     {
@@ -873,14 +871,13 @@ void DatapackClientLoader::parseQuestsText()
         }
         const QString &file=entryList.at(index).absoluteFilePath()+QStringLiteral("/text.xml");
         QFile itemsFile(file);
-        QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
             index++;
             continue;
         }
-        xmlContent=itemsFile.readAll();
+        const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
         QDomDocument domDocument;
         QString errorStr;
@@ -891,7 +888,7 @@ void DatapackClientLoader::parseQuestsText()
             index++;
             continue;
         }
-        QDomElement root = domDocument.documentElement();
+        const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_text)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
@@ -910,7 +907,7 @@ void DatapackClientLoader::parseQuestsText()
             {
                 if(client_logic.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    quint32 id=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    const quint32 &id=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                     if(ok)
                     {
                         QDomElement text = client_logic.firstChildElement(DatapackClientLoader::text_text);
@@ -978,13 +975,12 @@ void DatapackClientLoader::parseAudioAmbiance()
     else
     {
         QFile itemsFile(file);
-        QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
             return;
         }
-        xmlContent=itemsFile.readAll();
+        const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
 
         QString errorStr;
@@ -997,7 +993,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_list)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
@@ -1012,7 +1008,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         {
             if(item.hasAttribute(DatapackClientLoader::text_type))
             {
-                QString type=item.attribute(DatapackClientLoader::text_type);
+                const QString &type=item.attribute(DatapackClientLoader::text_type);
                 if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
                     audioAmbiance[type]=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+item.text();
                 else
@@ -1069,14 +1065,13 @@ void DatapackClientLoader::parseZoneExtra()
         const QString &file=entryList.at(index).absoluteFilePath();
         zoneCodeName.remove(removeXml);
         QFile itemsFile(file);
-        QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
             index++;
             continue;
         }
-        xmlContent=itemsFile.readAll();
+        const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
         QDomDocument domDocument;
         QString errorStr;
@@ -1087,7 +1082,7 @@ void DatapackClientLoader::parseZoneExtra()
             index++;
             continue;
         }
-        QDomElement root = domDocument.documentElement();
+        const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_zone)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
@@ -1148,12 +1143,12 @@ void DatapackClientLoader::parseZoneExtra()
 
 void DatapackClientLoader::parseTileset()
 {
-    QStringList fileList=CatchChallenger::FacilityLib::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
+    const QStringList &fileList=CatchChallenger::FacilityLib::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
     int index=0;
     while(index<fileList.size())
     {
         const QString &filePath=fileList.at(index);
-        if(filePath.endsWith(QStringLiteral(".tsx")))
+        if(filePath.endsWith(DatapackClientLoader::text_dottsx))
         {
             const QString &source=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+filePath).absoluteFilePath();
             QFile file(source);

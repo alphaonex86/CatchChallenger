@@ -182,7 +182,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     map_to_send_temp.border.right.y_offset=0;
 
     QList<QString> detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer;
-    QByteArray xmlContent,Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
+    QByteArray Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
     QList<QByteArray> monsterList;
     QMap<QString/*layer*/,const char *> mapLayerContentForMonsterCollision;
     bool ok;
@@ -199,7 +199,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             error=mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
             return false;
         }
-        xmlContent=mapFile.readAll();
+        const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -210,7 +210,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         }
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=Map_loader::text_map)
     {
         error=QStringLiteral("\"map\" root balise not found for the xml file");
@@ -306,14 +306,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
                     {
-                        quint32 object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
+                        const quint32 &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            quint32 object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
+                            const quint32 &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
@@ -321,10 +321,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                 DebugClass::debugConsole(QStringLiteral("Object out of the map: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                             else if(SubChild.hasAttribute(Map_loader::text_type))
                             {
-                                QString type=SubChild.attribute(Map_loader::text_type);
+                                const QString &type=SubChild.attribute(Map_loader::text_type);
 
                                 QHash<QString,QVariant> property_text;
-                                QDomElement prop=SubChild.firstChildElement(QLatin1String("properties"));
+                                const QDomElement &prop=SubChild.firstChildElement(Map_loader::text_properties);
                                 if(!prop.isNull())
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
@@ -511,14 +511,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
                     {
-                        quint32 object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
+                        const quint32 &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            quint32 object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
+                            const quint32 &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
@@ -526,10 +526,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                 DebugClass::debugConsole(QStringLiteral("Object out of the map: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
                             else if(SubChild.hasAttribute(Map_loader::text_type))
                             {
-                                QString type=SubChild.attribute(Map_loader::text_type);
+                                const QString &type=SubChild.attribute(Map_loader::text_type);
 
                                 QHash<QString,QVariant> property_text;
-                                QDomElement prop=SubChild.firstChildElement(Map_loader::text_properties);
+                                const QDomElement &prop=SubChild.firstChildElement(Map_loader::text_properties);
                                 if(!prop.isNull())
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
@@ -602,7 +602,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         child = child.nextSiblingElement(Map_loader::text_objectgroup);
     }
 
-    const quint32 rawSize=map_to_send_temp.width*map_to_send_temp.height*4;
+    const quint32 &rawSize=map_to_send_temp.width*map_to_send_temp.height*4;
 
     // layer
     child = root.firstChildElement(Map_loader::text_layer);
@@ -620,8 +620,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         }
         else
         {
-            QDomElement data = child.firstChildElement(Map_loader::text_data);
-            QString name=child.attribute(Map_loader::text_name);
+            const QDomElement &data = child.firstChildElement(Map_loader::text_data);
+            const QString &name=child.attribute(Map_loader::text_name);
             if(data.isNull())
             {
                 error=QStringLiteral("Is Element for layer is null: %1 and name: %2").arg(data.tagName()).arg(name);
@@ -1147,13 +1147,12 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
     else
     {
         QFile mapFile(fileName);
-        QByteArray xmlContent;
         if(!mapFile.open(QIODevice::ReadOnly))
         {
             qDebug() << mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
             return false;
         }
-        xmlContent=mapFile.readAll();
+        const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -1172,7 +1171,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
     }
 
     //found the cave name
-    QString caveName=QLatin1Literal("cave");
+    QString caveName=Map_loader::text_cave;
     {
         int index=0;
         while(index<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
@@ -1195,7 +1194,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
             if(!detectedMonsterCollisionMonsterType.at(index).isEmpty())
             {
                 quint32 tempLuckTotal=0;
-                QDomElement layer = this->map_to_send.xmlRoot.firstChildElement(detectedMonsterCollisionMonsterType.at(index));
+                const QDomElement &layer = this->map_to_send.xmlRoot.firstChildElement(detectedMonsterCollisionMonsterType.at(index));
                 if(!layer.isNull())
                 {
                     if(layer.isElement())
@@ -1379,7 +1378,7 @@ QString Map_loader::resolvRelativeMap(const QString &fileName,const QString &lin
 {
     if(link.isEmpty())
         return link;
-    QString currentPath=QFileInfo(fileName).absolutePath();
+    const QString &currentPath=QFileInfo(fileName).absolutePath();
     QFileInfo newmap(currentPath+QDir::separator()+link);
     QString newPath=newmap.absoluteFilePath();
     if(datapackPath.isEmpty() || newPath.startsWith(datapackPath))
@@ -1413,13 +1412,12 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
     else
     {
         QFile mapFile(conditionFile);
-        QByteArray xmlContent;
         if(!mapFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Into the file %1, unab le to open the condition file: ").arg(fileName)+mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
             return QDomElement();
         }
-        xmlContent=mapFile.readAll();
+        const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
         QString errorStr;
         int errorLine,errorColumn;
@@ -1430,7 +1428,7 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
         }
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[conditionFile]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=QLatin1String("conditions"))
     {
         qDebug() << QStringLiteral("\"conditions\" root balise not found for the xml file %1").arg(conditionFile);
@@ -1448,7 +1446,7 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
                 qDebug() << QStringLiteral("\"condition\" balise have not type attribute (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
             else
             {
-                quint32 id=item.attribute(Map_loader::text_id).toUInt(&ok);
+                const quint32 &id=item.attribute(Map_loader::text_id).toUInt(&ok);
                 if(!ok)
                     qDebug() << QStringLiteral("\"condition\" balise have id is not a number (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
                 else
@@ -1475,7 +1473,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
         else
         {
-            quint32 quest=conditionContent.attribute(Map_loader::text_quest).toUInt(&ok);
+            const quint32 &quest=conditionContent.attribute(Map_loader::text_quest).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(quest))
@@ -1493,7 +1491,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             qDebug() << QStringLiteral("\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
         else
         {
-            quint32 item=conditionContent.attribute(Map_loader::text_item).toUInt(&ok);
+            const quint32 &item=conditionContent.attribute(Map_loader::text_item).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else if(!CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
@@ -1511,7 +1509,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
         else
         {
-            quint32 fightBot=conditionContent.attribute(Map_loader::text_fightBot).toUInt(&ok);
+            const quint32 &fightBot=conditionContent.attribute(Map_loader::text_fightBot).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightBot))

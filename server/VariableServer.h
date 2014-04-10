@@ -57,7 +57,4 @@
 /// check more, then use more cpu, it's to develop and detect the internal bug
 #define CATCHCHALLENGER_SERVER_EXTRA_CHECK
 
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)     __builtin_expect((x),0)
-
 #endif // VARIABLESERVER_H

@@ -595,7 +595,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
             qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
             return false;
         }
-        QByteArray xmlContent=mapFile.readAll();
+        const QByteArray &xmlContent=mapFile.readAll();
         mapFile.close();
         if(stopIt)
                 return false;
@@ -609,7 +609,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
         }
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=MapVisualiserThread::text_map)
     {
         qDebug() << QStringLiteral("\"map\" root balise not found for the xml file");
@@ -641,8 +641,8 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(bot.tagName().arg(bot.attribute("type")).arg(bot.lineNumber())));
                     else
                     {
-                        quint32 x=bot.attribute(MapVisualiserThread::text_x).toUInt(&ok)/CLIENT_BASE_TILE_SIZE;
-                        quint32 y=(bot.attribute(MapVisualiserThread::text_y).toUInt(&ok2)/CLIENT_BASE_TILE_SIZE)-1;
+                        const quint32 &x=bot.attribute(MapVisualiserThread::text_x).toUInt(&ok)/CLIENT_BASE_TILE_SIZE;
+                        const quint32 &y=(bot.attribute(MapVisualiserThread::text_y).toUInt(&ok2)/CLIENT_BASE_TILE_SIZE)-1;
                         if(ok && ok2 && (bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_bot || bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_botfight))
                         {
                             QDomElement properties = bot.firstChildElement(MapVisualiserThread::text_properties);
@@ -668,10 +668,10 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                     }
                                     if(property_parsed.contains(MapVisualiserThread::text_file) && property_parsed.contains(MapVisualiserThread::text_id))
                                     {
-                                        quint32 botId=property_parsed.value(MapVisualiserThread::text_id).toUInt(&ok);
+                                        const quint32 &botId=property_parsed.value(MapVisualiserThread::text_id).toUInt(&ok);
                                         if(ok)
                                         {
-                                            QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+MapVisualiserThread::text_slash+property_parsed.value(MapVisualiserThread::text_file)).absoluteFilePath();
+                                            QString botFile(QFileInfo(QFileInfo(fileName).absolutePath()+MapVisualiserThread::text_slash+property_parsed.value(MapVisualiserThread::text_file)).absoluteFilePath());
                                             if(!botFile.endsWith(MapVisualiserThread::text_dotxml))
                                                 botFile+=MapVisualiserThread::text_dotxml;
                                             if(bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_bot)
@@ -807,7 +807,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
         qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
         return;
     }
-    QByteArray xmlContent=mapFile.readAll();
+    const QByteArray &xmlContent=mapFile.readAll();
     mapFile.close();
     QDomDocument domDocument;
     QString errorStr;
@@ -818,7 +818,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
         return;
     }
     bool ok;
-    QDomElement root = domDocument.documentElement();
+    const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=MapVisualiserThread::text_bots)
     {
         qDebug() << QStringLiteral("\"bots\" root balise not found for the xml file");
@@ -834,7 +834,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
-            quint32 botId=child.attribute(MapVisualiserThread::text_id).toUInt(&ok);
+            const quint32 &botId=child.attribute(MapVisualiserThread::text_id).toUInt(&ok);
             if(ok)
             {
                 if(botFiles.value(fileName).contains(botId))

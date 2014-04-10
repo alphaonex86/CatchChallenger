@@ -21,6 +21,7 @@ public:
 public slots:
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
     void sendPacket(const quint8 &mainIdent,const QByteArray &data);
+    void sendRawSmallPacket(const QByteArray &data);
 
     void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data);
     //send reply

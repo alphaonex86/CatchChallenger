@@ -1,5 +1,6 @@
 #include "ClientBroadCast.h"
 #include "GlobalServerData.h"
+#include "../../general/base/ProtocolParsing.h"
 
 using namespace CatchChallenger;
 
@@ -51,14 +52,24 @@ void ClientBroadCast::setVariable(Player_internal_informations *player_informati
 //without verification of rights
 void ClientBroadCast::sendSystemMessage(const QString &text,const bool &important)
 {
-    int size=clientBroadCastList.size();
+    QByteArray finalData;
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)important;
+        out << text;
+        finalData=ProtocolParsingOutput::computeFullOutcommingData(false,0xC2,0x0005,outputData);
+    }
+
+    const int &size=clientBroadCastList.size();
     if(important)
     {
         int index=0;
         while(index<size)
         {
             if(clientBroadCastList.at(index)!=this)
-                clientBroadCastList.at(index)->receiveSystemText(text,true);
+                clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
             index++;
         }
     }
@@ -68,7 +79,7 @@ void ClientBroadCast::sendSystemMessage(const QString &text,const bool &importan
         while(index<size)
         {
             if(clientBroadCastList.at(index)!=this)
-                clientBroadCastList.at(index)->receiveSystemText(text);
+                clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
             index++;
         }
     }
@@ -129,7 +140,10 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
     QByteArray outputData2;
     QDataStream out2(&outputData2, QIODevice::WriteOnly);
     out2.setVersion(QDataStream::Qt_4_4);
-    out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
+    if(GlobalServerData::serverSettings.dontSendPlayerType)
+        out2 << (quint8)Player_type_normal;
+    else
+        out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
     emit sendFullPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
 }
 
@@ -158,48 +172,68 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
                 emit message(QStringLiteral("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(clan).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(clan);
-            int size=playerWithSameClan.size();
+
+            QByteArray finalData;
+            {
+                QByteArray outputData;
+                QDataStream out(&outputData, QIODevice::WriteOnly);
+                out.setVersion(QDataStream::Qt_4_4);
+                out << (quint8)chatType;
+                out << text;
+
+                QByteArray outputData2;
+                QDataStream out2(&outputData2, QIODevice::WriteOnly);
+                out2.setVersion(QDataStream::Qt_4_4);
+                if(GlobalServerData::serverSettings.dontSendPlayerType)
+                    out2 << (quint8)Player_type_normal;
+                else
+                    out2 << (quint8)this->player_informations->public_and_private_informations.public_informations.type;
+                finalData=ProtocolParsingOutput::computeFullOutcommingData(false,0xC2,0x0005,outputData+this->player_informations->rawPseudo+outputData2);
+            }
+
+            const int &size=playerWithSameClan.size();
             int index=0;
             while(index<size)
             {
                 if(playerWithSameClan.at(index)!=this)
-                    playerWithSameClan.at(index)->receiveChatText(chatType,text,player_informations);
+                    playerWithSameClan.at(index)->sendRawSmallPacket(finalData);
                 index++;
             }
         }
         return;
     }
 /* Now do by command
- *	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)
-    {
-        if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
-        {
-            if(!GlobalServerData::serverSettings.anonymous)
-                emit message(QStringLiteral("[chat] %1: To the system chat: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
-            BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
-            QSetIterator<ClientBroadCast *> i(clientBroadCastList);
-            while (i.hasNext())
-            {
-                item=i.next();
-                if(item!=this)
-                    item->receiveSystemText(text);
-            }
-            return;
-        }
-        else
-            emit error("Have not the right to send system message");
-    }*/
+ *	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)*/
     else
     {
         if(!GlobalServerData::serverSettings.anonymous)
             emit message(QStringLiteral("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
-        int size=clientBroadCastList.size();
+
+        QByteArray finalData;
+        {
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)chatType;
+            out << text;
+
+            QByteArray outputData2;
+            QDataStream out2(&outputData2, QIODevice::WriteOnly);
+            out2.setVersion(QDataStream::Qt_4_4);
+            if(GlobalServerData::serverSettings.dontSendPlayerType)
+                out2 << (quint8)Player_type_normal;
+            else
+                out2 << (quint8)this->player_informations->public_and_private_informations.public_informations.type;
+            finalData=ProtocolParsingOutput::computeFullOutcommingData(false,0xC2,0x0005,outputData+this->player_informations->rawPseudo+outputData2);
+        }
+
+        const int &size=clientBroadCastList.size();
         int index=0;
         while(index<size)
         {
             if(clientBroadCastList.at(index)!=this)
-                clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations);
+                clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
             index++;
         }
         return;
@@ -217,21 +251,14 @@ void ClientBroadCast::send_player_informations()
     clientBroadCastList << this;
 }
 
-void ClientBroadCast::receive_instant_player_number(const quint16 &connected_players)
+void ClientBroadCast::receive_instant_player_number(const quint16 &connected_players,const QByteArray &outputData)
 {
     if(!player_informations->character_loaded)
         return;
     if(this->connected_players==connected_players)
         return;
     this->connected_players=connected_players;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    if(GlobalServerData::serverSettings.max_players<=255)
-        out << (qint8)connected_players;
-    else
-        out << (qint16)connected_players;
-    emit sendPacket(0xC3,outputData);
+    emit sendRawSmallPacket(outputData);
 }
 
 void ClientBroadCast::kick()
@@ -309,7 +336,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             QStringList playerStringList;
             QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo=playerByPseudo.constBegin();
             QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo_end=playerByPseudo.constEnd();
-            while (i_playerByPseudo != i_playerByPseudo_end)
+            while(i_playerByPseudo != i_playerByPseudo_end)
             {
                 playerStringList << ClientBroadCast::text_startbold+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+ClientBroadCast::text_stopbold;
                 ++i_playerByPseudo;

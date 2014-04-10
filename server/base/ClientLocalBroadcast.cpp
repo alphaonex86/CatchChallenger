@@ -28,31 +28,32 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
     emit message(QStringLiteral("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
 
-    int size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
+    QByteArray finalData;
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)Chat_type_local;
+        out << text;
+
+        QByteArray outputData2;
+        QDataStream out2(&outputData2, QIODevice::WriteOnly);
+        out2.setVersion(QDataStream::Qt_4_4);
+        if(GlobalServerData::serverSettings.dontSendPlayerType)
+            out2 << (quint8)Player_type_normal;
+        else
+            out2 << (quint8)this->player_informations->public_and_private_informations.public_informations.type;
+        finalData=ProtocolParsingOutput::computeFullOutcommingData(false,0xC2,0x0005,outputData+this->player_informations->rawPseudo+outputData2);
+    }
+
+    const int &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
     int index=0;
     while(index<size)
     {
         if(static_cast<MapServer *>(map)->clientsForBroadcast.at(index)!=this)
-            static_cast<MapServer *>(map)->clientsForBroadcast.at(index)->receiveChatText(text,player_informations);
+            static_cast<MapServer *>(map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData);
         index++;
     }
-}
-
-void ClientLocalBroadcast::receiveChatText(const QString &text,const Player_internal_informations *sender_informations)
-{
-    /* Multiple message when multiple player connected
-    emit message(QLatin1String("receiveChatText(), text: %1, sender_character: %2, to player: %3").arg(text).arg(sender_character).arg(player_informations.id)); */
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << (quint8)Chat_type_local;
-    out << text;
-
-    QByteArray outputData2;
-    QDataStream out2(&outputData2, QIODevice::WriteOnly);
-    out2.setVersion(QDataStream::Qt_4_4);
-    out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
-    emit sendFullPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
 }
 
 bool ClientLocalBroadcast::singleMove(const Direction &direction)

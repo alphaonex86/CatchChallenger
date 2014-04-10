@@ -18,13 +18,12 @@ void ClientHeavyLoad::loadRecipes()
     }
     #endif
     bool ok;
-    quint32 recipeId;
     QSqlQuery recipesQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!recipesQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id.arg(player_informations->character_id)))
         emit message(recipesQuery.lastQuery()+QLatin1String(": ")+recipesQuery.lastError().text());
     while(recipesQuery.next())
     {
-        recipeId=recipesQuery.value(0).toUInt(&ok);
+        const quint32 &recipeId=recipesQuery.value(0).toUInt(&ok);
         if(ok)
         {
             if(CommonDatapack::commonDatapack.crafingRecipes.contains(recipeId))
@@ -59,13 +58,13 @@ void ClientHeavyLoad::loadItems()
     //parse the result
     while(itemQuery.next())
     {
-        quint32 id=itemQuery.value(0).toUInt(&ok);
+        const quint32 &id=itemQuery.value(0).toUInt(&ok);
         if(!ok)
         {
             emit message(QLatin1String("item id is not a number, skip"));
             continue;
         }
-        quint32 quantity=itemQuery.value(1).toUInt(&ok);
+        const quint32 &quantity=itemQuery.value(1).toUInt(&ok);
         if(!ok)
         {
             emit message(QLatin1String("quantity is not a number, skip"));

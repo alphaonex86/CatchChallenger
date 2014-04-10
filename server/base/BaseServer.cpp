@@ -45,9 +45,10 @@ QString BaseServer::text_name=QLatin1String("name");
 QString BaseServer::text_step=QLatin1String("step");
 QString BaseServer::text_arrow=QLatin1String("->");
 
-BaseServer::BaseServer()
+BaseServer::BaseServer() :
+    stat(Down),
+    dataLoaded(false)
 {
-    dataLoaded=false;
     ProtocolParsing::initialiseTheVariable();
 
     qRegisterMetaType<Chat_type>("Chat_type");
@@ -148,8 +149,6 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.bitcoin.fee                                = 1.0;
     GlobalServerData::serverSettings.bitcoin.port                               = 46349;
 
-    stat=Down;
-
     connect(&QFakeServer::server,&QFakeServer::newConnection,this,&BaseServer::newConnection,       Qt::QueuedConnection);
     connect(this,&BaseServer::need_be_started,              this,&BaseServer::start_internal_server,Qt::QueuedConnection);
     connect(this,&BaseServer::try_stop_server,              this,&BaseServer::stop_internal_server, Qt::QueuedConnection);
@@ -211,9 +210,14 @@ void BaseServer::preload_the_data()
     dataLoaded=true;
     GlobalServerData::serverPrivateVariables.stopIt=false;
 
+    {
+        QTime time;
+        time.restart();
+        CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
+        qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
+    }
     QTime time;
     time.restart();
-    CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
     preload_the_datapack();
     preload_the_skin();
     preload_shop();
@@ -234,13 +238,13 @@ void BaseServer::preload_the_data()
         load_account_max_id();
     if(CommonSettings::commonSettings.max_character)
         load_character_max_id();
-    qDebug() << QStringLiteral("Loaded the datapack into %1ms").arg(time.elapsed());
+    qDebug() << QStringLiteral("Loaded the server datapack into %1ms").arg(time.elapsed());
 }
 
 void BaseServer::preload_zone()
 {
     //open and quick check the file
-    QFileInfoList entryList=QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);
+    QFileInfoList entryList(QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
     int index=0;
     const int &listsize=entryList.size();
     while(index<listsize)
@@ -256,7 +260,7 @@ void BaseServer::preload_zone()
             index++;
             continue;
         }
-        QString zoneCodeName=entryList.at(index).fileName();
+        QString zoneCodeName(entryList.at(index).fileName());
         zoneCodeName.remove(BaseServer::text_dotxml);
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath();
@@ -290,7 +294,7 @@ void BaseServer::preload_zone()
             index++;
             continue;
         }
-        QDomElement root = domDocument.documentElement();
+        QDomElement root(domDocument.documentElement());
         if(root.tagName()!=BaseServer::text_zone)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
@@ -300,7 +304,7 @@ void BaseServer::preload_zone()
 
         //load capture
         QList<quint32> fightIdList;
-        QDomElement capture = root.firstChildElement(BaseServer::text_capture);
+        QDomElement capture(root.firstChildElement(BaseServer::text_capture));
         if(!capture.isNull())
         {
             if(capture.isElement() && capture.hasAttribute(BaseServer::text_fightId))
@@ -345,7 +349,7 @@ void BaseServer::preload_zone()
         if(cityStatusQuery.next())
         {
             bool ok;
-            quint32 clanId=cityStatusQuery.value(0).toUInt(&ok);
+            const quint32 &clanId=cityStatusQuery.value(0).toUInt(&ok);
             if(ok)
             {
                 GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
@@ -393,19 +397,19 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            QStringList resourcesStringList=industryStatusQuery.value(1).toString().split(BaseServer::text_dotcomma);
+            const QStringList &resourcesStringList=industryStatusQuery.value(1).toString().split(BaseServer::text_dotcomma);
             int index=0;
             const int &listsize=resourcesStringList.size();
             while(index<listsize)
             {
-                QStringList itemStringList=resourcesStringList.at(index).split(BaseServer::text_arrow);
+                const QStringList &itemStringList=resourcesStringList.at(index).split(BaseServer::text_arrow);
                 if(itemStringList.size()!=2)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: wrong entry count"));
                     ok=false;
                     break;
                 }
-                quint32 item=itemStringList.first().toUInt(&ok);
+                const quint32 &item=itemStringList.first().toUInt(&ok);
                 if(!ok)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: item is not a number"));
@@ -446,19 +450,19 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            QStringList productsStringList=industryStatusQuery.value(2).toString().split(BaseServer::text_dotcomma);
+            const QStringList &productsStringList=industryStatusQuery.value(2).toString().split(BaseServer::text_dotcomma);
             int index=0;
             const int &listsize=productsStringList.size();
             while(index<listsize)
             {
-                QStringList itemStringList=productsStringList.at(index).split(BaseServer::text_arrow);
+                const QStringList &itemStringList=productsStringList.at(index).split(BaseServer::text_arrow);
                 if(itemStringList.size()!=2)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: wrong entry count"));
                     ok=false;
                     break;
                 }
-                quint32 item=itemStringList.first().toUInt(&ok);
+                const quint32 &item=itemStringList.first().toUInt(&ok);
                 if(!ok)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: item is not a number"));
@@ -1878,6 +1882,10 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverPrivateVariables.server_message.removeLast();
     } while(removeTheLastList);
 
+    if(CommonSettings::commonSettings.min_character<1)
+        CommonSettings::commonSettings.min_character=1;
+    if(CommonSettings::commonSettings.max_character<1)
+        CommonSettings::commonSettings.max_character=1;
     if(CommonSettings::commonSettings.max_character<CommonSettings::commonSettings.min_character)
         CommonSettings::commonSettings.max_character=CommonSettings::commonSettings.min_character;
     if(CommonSettings::commonSettings.character_delete_time<=0)
