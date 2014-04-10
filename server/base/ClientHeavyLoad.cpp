@@ -157,7 +157,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         out << (quint32)0x00000000;
     else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
     {
-        qint64 time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+        const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
         out << (quint32)time/1000;
     }
     else
@@ -183,13 +183,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     out << (quint8)CommonSettings::commonSettings.factoryPriceChange;
 
     {
-        quint8 max_character=CommonSettings::commonSettings.max_character;
-        if(max_character==0)
-            max_character=255;
         QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
-        if(!characterQuery.exec(GlobalServerData::serverPrivateVariables.db_query_characters.arg(player_informations->account_id).arg(max_character)))
+        if(!characterQuery.exec(GlobalServerData::serverPrivateVariables.db_query_characters.arg(player_informations->account_id).arg(CommonSettings::commonSettings.max_character)))
             emit message(characterQuery.lastQuery()+": "+characterQuery.lastError().text());
-        const quint64 current_time=QDateTime::currentDateTime().toTime_t();
+        const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
         QList<CharacterEntry> characterEntryList;
         bool ok;
         while(characterQuery.next())
@@ -912,13 +909,13 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         unvalidated_rescue_map+=ClientHeavyLoad::text_dottmx;
     if(GlobalServerData::serverPrivateVariables.map_list.contains(map))
     {
-        quint8 x=characterQuery.value(3).toUInt(&ok);
+        const quint8 &x=characterQuery.value(3).toUInt(&ok);
         if(!ok)
         {
             loginIsWrong(query_id,QLatin1String("Wrong account data"),QLatin1String("x coord is not a number"));
             return;
         }
-        quint8 y=characterQuery.value(4).toUInt(&ok);
+        const quint8 &y=characterQuery.value(4).toUInt(&ok);
         if(!ok)
         {
             loginIsWrong(query_id,QLatin1String("Wrong account data"),QLatin1String("y coord is not a number"));
@@ -966,14 +963,14 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
         return;
     }
     bool ok;
-    quint8 rescue_new_x=rescue_x.toUInt(&ok);
+    const quint8 &rescue_new_x=rescue_x.toUInt(&ok);
     if(!ok)
     {
         emit message(QStringLiteral("rescue x coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    quint8 rescue_new_y=rescue_y.toUInt(&ok);
+    const quint8 &rescue_new_y=rescue_y.toUInt(&ok);
     if(!ok)
     {
         emit message(QStringLiteral("rescue y coord is not a number"));
@@ -992,7 +989,7 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    QString orientationString=rescue_orientation.toString();
+    const QString &orientationString=rescue_orientation.toString();
     Orientation rescue_new_orientation;
     if(orientationString==ClientHeavyLoad::text_top)
         rescue_new_orientation=Orientation_top;
@@ -1013,14 +1010,14 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    quint8 unvalidated_rescue_new_x=unvalidated_rescue_x.toUInt(&ok);
+    const quint8 &unvalidated_rescue_new_x=unvalidated_rescue_x.toUInt(&ok);
     if(!ok)
     {
         emit message(QStringLiteral("unvalidated rescue x coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    quint8 unvalidated_rescue_new_y=unvalidated_rescue_y.toUInt(&ok);
+    const quint8 &unvalidated_rescue_new_y=unvalidated_rescue_y.toUInt(&ok);
     if(!ok)
     {
         emit message(QStringLiteral("unvalidated rescue y coord is not a number"));
@@ -1039,7 +1036,7 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    QString unvalidated_orientationString=unvalidated_rescue_orientation.toString();
+    const QString &unvalidated_orientationString=unvalidated_rescue_orientation.toString();
     Orientation unvalidated_rescue_new_orientation;
     if(unvalidated_orientationString==ClientHeavyLoad::text_top)
         unvalidated_rescue_new_orientation=Orientation_top;
@@ -1325,12 +1322,16 @@ QHash<QString,quint32> ClientHeavyLoad::datapack_file_list()
 {
     QHash<QString,quint32> filesList;
 
-    QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverSettings.datapack_basePath);
+    const QStringList &returnList=FacilityLib::listFolder(GlobalServerData::serverSettings.datapack_basePath);
     int index=0;
-    int size=returnList.size();
+    const int &size=returnList.size();
     while(index<size)
     {
+        #ifdef Q_OS_WIN32
         QString fileName=returnList.at(index);
+        #else
+        const QString &fileName=returnList.at(index);
+        #endif
         if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
             if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
@@ -1340,7 +1341,9 @@ QHash<QString,quint32> ClientHeavyLoad::datapack_file_list()
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {
+                        #ifdef Q_OS_WIN32
                         fileName.replace(ClientHeavyLoad::text_antislash,ClientHeavyLoad::text_slash);//remplace if is under windows server
+                        #endif
                         if(GlobalServerData::serverSettings.datapackCacheMtime)
                             filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
                         else
@@ -1370,10 +1373,10 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     QHash<QString,quint32> filesListInfo;
     QStringList fileToSend;
 
-    int loop_size=files.size();
+    const int &loop_size=files.size();
     //send the size to download on the client
     {
-        QHash<QString,quint32> filesListForSize=filesList;
+        QHash<QString,quint32> filesListForSize(filesList);
         int index=0;
         quint32 datapckFileNumber=0;
         quint32 datapckFileSize=0;
@@ -1452,8 +1455,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     }
     else
     {
-        QByteArray outputData;
-        outputData=FacilityLib::toUTF8(GlobalServerData::serverSettings.httpDatapackMirror);
+        QByteArray outputData(FacilityLib::toUTF8(GlobalServerData::serverSettings.httpDatapackMirror));
         if(outputData.size()>255 || outputData.isEmpty())
         {
             emit error(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
@@ -1715,14 +1717,14 @@ void ClientHeavyLoad::loadReputation()
     //parse the result
     while(reputationQuery.next())
     {
-        QString type=reputationQuery.value(0).toString();
+        const QString &type=reputationQuery.value(0).toString();
         qint32 point=reputationQuery.value(1).toInt(&ok);
         if(!ok)
         {
             emit message(QStringLiteral("point is not a number, skip: %1").arg(type));
             continue;
         }
-        qint32 level=reputationQuery.value(2).toInt(&ok);
+        const qint32 &level=reputationQuery.value(2).toInt(&ok);
         if(!ok)
         {
             emit message(QStringLiteral("level is not a number, skip: %1").arg(type));
@@ -1803,7 +1805,7 @@ void ClientHeavyLoad::loadQuests()
     while(questsQuery.next())
     {
         PlayerQuest playerQuest;
-        quint32 id=questsQuery.value(0).toUInt(&ok);
+        const quint32 &id=questsQuery.value(0).toUInt(&ok);
         playerQuest.finish_one_time=questsQuery.value(1).toBool();
         playerQuest.step=questsQuery.value(2).toUInt(&ok2);
         if(!ok || !ok2)

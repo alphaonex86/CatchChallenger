@@ -1,10 +1,10 @@
 #include "BroadCastWithoutSender.h"
 #include "ClientBroadCast.h"
 #include "GlobalServerData.h"
+#include "../../general/base/ProtocolParsing.h"
 
 using namespace CatchChallenger;
 
-/// \todo call directly from here: receive_instant_player_number(qint32)
 BroadCastWithoutSender BroadCastWithoutSender::broadCastWithoutSender;
 
 BroadCastWithoutSender::BroadCastWithoutSender()
@@ -35,11 +35,26 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
 {
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
+        if(ClientBroadCast::clientBroadCastList.isEmpty())
+            return;
+
+        QByteArray finalData;
+        {
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            if(GlobalServerData::serverSettings.max_players<=255)
+                out << (qint8)connected_players;
+            else
+                out << (qint16)connected_players;
+            finalData=ProtocolParsingOutput::computeOutcommingData(false,0xC3,outputData);
+        }
+
         quint32 index=0;
         const quint32 &list_size=ClientBroadCast::clientBroadCastList.size();
         while(index<list_size)
         {
-            ClientBroadCast::clientBroadCastList.at(index)->receive_instant_player_number(connected_players);
+            ClientBroadCast::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,finalData);
             index++;
         }
     }

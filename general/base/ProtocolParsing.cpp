@@ -1050,77 +1050,31 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
     reply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray data)
+bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber, const QByteArray &data)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!queryReceived.contains(queryNumber))
-    {
-        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
+    const QByteArray &newData=computeReplyData(queryNumber,data);
+    if(newData.isEmpty())
         return false;
-    }
-    else
-        queryReceived.remove(queryNumber);
-    #endif
-
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    if(isClient)
-        out << replyCodeClientToServer;
-    else
-        out << replyCodeServerToClient;
-    out << queryNumber;
-
-    if(!replySize.contains(queryNumber))
-    {
-        if(replyCompression.contains(queryNumber))
-        {
-            #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
-            #endif
-            switch(compressionType)
-            {
-                case CompressionType_Xz:
-                    data=lzmaCompress(data);
-                break;
-                case CompressionType_Zlib:
-                default:
-                    data=qCompress(data,9);
-                break;
-                case CompressionType_None:
-                break;
-            }
-        }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(data.size()==0)
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
-            return false;
-        }
-        #endif
-        block+=encodeSize(data.size());
-    }
-    else
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(replyCompression.contains(queryNumber))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
-        }
-        if(data.size()!=replySize.value(queryNumber))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
-            return false;
-        }
-        #endif
-        replySize.remove(queryNumber);
-    }
-
-    return internalPackOutcommingData(block+data);
+    return internalPackOutcommingData(newData);
 }
 
 quint64 ProtocolParsingOutput::getTXSize() const
 {
     return TXSize;
+}
+
+QByteArray ProtocolParsingOutput::computeCompression(const QByteArray &data)
+{
+    switch(compressionType)
+    {
+        case CompressionType_Xz:
+            return lzmaCompress(data);
+        break;
+        case CompressionType_Zlib:
+        default:
+            return qCompress(data,9);
+        break;
+    }
 }
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
@@ -1313,546 +1267,38 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
     }
 }
 
-bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data)
+bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
-    out << subCodeType;
-
-    if(isClient)
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        if(mainCode_IsQueryClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
-        {
-            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-        {
-            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
-            if(data.size()!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-    else
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        if(mainCode_IsQueryServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
-        {
-            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
-                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-        {
-            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
-                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
-            if(data.size()!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-
-    return internalPackOutcommingData(block+data);
+    const QByteArray &newData=computeFullOutcommingData(isClient,mainCodeType,subCodeType,data);
+    if(newData.isEmpty())
+        return false;
+    return internalPackOutcommingData(newData);
 }
 
 bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
-
-    if(isClient)
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
-            return false;
-        }
-        if(mainCode_IsQueryClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-    else
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
-            return false;
-        }
-        if(mainCode_IsQueryServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-
-    return internalPackOutcommingData(block+data);
+    const QByteArray &newData=computeOutcommingData(isClient,mainCodeType,data);
+    if(newData.isEmpty())
+        return false;
+    return internalPackOutcommingData(newData);
 }
 
 bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
-    out << queryNumber;
-
-    if(isClient)
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return false;
-        }
-        if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-    else
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return false;
-        }
-        if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-
+    const QByteArray &newData=computeOutcommingQuery(isClient,mainCodeType,queryNumber,data);
+    if(newData.isEmpty())
+        return false;
     emit newOutputQuery(mainCodeType,queryNumber);
-    return internalPackOutcommingData(block+data);
+    return internalPackOutcommingData(newData);
 }
 
-bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data)
+bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
-    out << subCodeType;
-    out << queryNumber;
-
-    if(isClient)
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
-        {
-            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-        {
-            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-            if(data.size()!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-    else
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
-        {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return false;
-        }
-        #endif
-        if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
-        {
-            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
-                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-        {
-            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
-                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                    #endif
-                    switch(compressionType)
-                    {
-                        case CompressionType_Xz:
-                            data=lzmaCompress(data);
-                        break;
-                        case CompressionType_Zlib:
-                        default:
-                            data=qCompress(data,9);
-                        break;
-                        case CompressionType_None:
-                        break;
-                    }
-                }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-            block+=encodeSize(data.size());
-        }
-        else
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
-                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-            if(data.size()!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
-            {
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return false;
-            }
-            #endif
-        }
-    }
-
+    const QByteArray &newData=computeFullOutcommingQuery(isClient,mainCodeType,subCodeType,queryNumber,data);
+    if(newData.isEmpty())
+        return false;
     emit newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
-    return internalPackOutcommingData(block+data);
+    return internalPackOutcommingData(newData);
 }
 
 bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
@@ -1863,22 +1309,64 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
     emit message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    QByteArray dataToSend;
-    while(!data.isEmpty())
+    if(data.size()<=CATCHCHALLENGER_MAX_PACKET_SIZE)
     {
-        if(data.size()<=CATCHCHALLENGER_MAX_PACKET_SIZE)
-            dataToSend=data;
-        else
-            dataToSend=data.mid(0,CATCHCHALLENGER_MAX_PACKET_SIZE);
-        TXSize+=dataToSend.size();
-        byteWriten = socket->write(dataToSend);
-        if(dataToSend.size()!=byteWriten)
+        TXSize+=data.size();
+        byteWriten = socket->write(data);
+        if(Q_UNLIKELY(data.size()!=byteWriten))
         {
             DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
             emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
             return false;
         }
-        data.remove(0,dataToSend.size());
+        return true;
+    }
+    else
+    {
+        QByteArray dataToSend;
+        while(Q_LIKELY(!data.isEmpty()))
+        {
+
+            dataToSend=data.mid(0,CATCHCHALLENGER_MAX_PACKET_SIZE);
+            TXSize+=dataToSend.size();
+            byteWriten = socket->write(dataToSend);
+            if(Q_UNLIKELY(dataToSend.size()!=byteWriten))
+            {
+                DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                return false;
+            }
+            data.remove(0,dataToSend.size());
+        }
+        return true;
+    }
+}
+
+//no control to be more fast
+bool ProtocolParsingOutput::internalSendRawSmallPacket(const QByteArray &data)
+{
+    #ifdef PROTOCOLPARSINGDEBUG
+    DebugClass::debugConsole("internalPackOutcommingData(): start");
+    #endif
+    #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
+    emit message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
+    #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(data.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+    {
+        DebugClass::debugConsole(QStringLiteral("ProtocolParsingOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
+        emit error(QStringLiteral("ProtocolParsingOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
+        return false;
+    }
+    #endif
+
+    TXSize+=data.size();
+    byteWriten = socket->write(data);
+    if(Q_UNLIKELY(data.size()!=byteWriten))
+    {
+        DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        return false;
     }
     return true;
 }
@@ -1904,4 +1392,705 @@ void ProtocolParsingOutput::reset()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queryReceived.clear();
     #endif
+}
+
+QByteArray ProtocolParsingOutput::computeOutcommingData(const bool &isClient,const quint8 &mainCodeType,const QByteArray &data)
+{
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out << mainCodeType;
+
+    if(isClient)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            return QByteArray();
+        }
+        if(mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            return QByteArray();
+        }
+        if(mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+}
+
+QByteArray ProtocolParsingOutput::computeOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+{
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out << mainCodeType;
+    out << queryNumber;
+
+    if(isClient)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return QByteArray();
+        }
+        if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return QByteArray();
+        }
+        if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+}
+
+QByteArray ProtocolParsingOutput::computeFullOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+{
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out << mainCodeType;
+    out << subCodeType;
+    out << queryNumber;
+
+    if(isClient)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+        {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(data.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+        {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(data.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            if(data.size()!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
+        {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(data.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+        {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(data.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            if(data.size()!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+}
+
+QByteArray ProtocolParsingOutput::computeFullOutcommingData(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+{
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out << mainCodeType;
+    out << subCodeType;
+
+    if(isClient)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        if(mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+        {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+        {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+            if(data.size()!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        if(mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return QByteArray();
+        }
+        #endif
+        if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
+        {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+        {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                        case CompressionType_Zlib:
+                        default:
+                        {
+                            QByteArray compressedData(computeCompression(data));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(compressedData.size()==0)
+                            {
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                                return QByteArray();
+                            }
+                            #endif
+                            block+=encodeSize(compressedData.size());
+                            return block+compressedData;
+                        }
+                        break;
+                        case CompressionType_None:
+                        break;
+                    }
+                }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            block+=encodeSize(data.size());
+            return block+data;
+        }
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+            if(data.size()!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return QByteArray();
+            }
+            #endif
+            return block+data;
+        }
+    }
+}
+
+QByteArray ProtocolParsingOutput::computeReplyData(const quint8 &queryNumber, const QByteArray &data)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!queryReceived.contains(queryNumber))
+    {
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
+        return QByteArray();
+    }
+    else
+        queryReceived.remove(queryNumber);
+    #endif
+
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    if(isClient)
+        out << replyCodeClientToServer;
+    else
+        out << replyCodeServerToClient;
+    out << queryNumber;
+
+    if(!replySize.contains(queryNumber))
+    {
+        if(replyCompression.contains(queryNumber))
+        {
+            #ifdef PROTOCOLPARSINGDEBUG
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
+            #endif
+            switch(compressionType)
+            {
+                case CompressionType_Xz:
+                case CompressionType_Zlib:
+                default:
+                {
+                    QByteArray compressedData(computeCompression(data));
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(data.size()==0)
+                    {
+                        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+                        return QByteArray();
+                    }
+                    #endif
+                    block+=encodeSize(compressedData.size());
+                    return block+compressedData;
+                }
+                break;
+                case CompressionType_None:
+                break;
+            }
+        }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(data.size()==0)
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+            return QByteArray();
+        }
+        #endif
+        block+=encodeSize(data.size());
+        return block+data;
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(replyCompression.contains(queryNumber))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+        }
+        if(data.size()!=replySize.value(queryNumber))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
+            return QByteArray();
+        }
+        #endif
+        replySize.remove(queryNumber);
+        return block+data;
+    }
 }

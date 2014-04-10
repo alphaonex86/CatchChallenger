@@ -21,11 +21,10 @@ using namespace CatchChallenger;
 QSet<QString> Api_protocol::extensionAllowed;
 
 Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
-    ProtocolParsingInput(socket,PacketModeTransmission_Client)
+    ProtocolParsingInput(socket,PacketModeTransmission_Client),
+    tolerantMode(tolerantMode),
+    output(new ProtocolParsingOutput(socket,PacketModeTransmission_Client))
 {
-    output=new ProtocolParsingOutput(socket,PacketModeTransmission_Client);
-    this->tolerantMode=tolerantMode;
-
     if(extensionAllowed.isEmpty())
     {
         QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";");
@@ -43,14 +42,10 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
 Api_protocol::~Api_protocol()
 {
-    delete output;
-    output=NULL;
 }
 
 void Api_protocol::socketDestroyed()
 {
-    delete output;
-    output=NULL;
     socket=NULL;
 }
 

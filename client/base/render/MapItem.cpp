@@ -32,7 +32,7 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
     QGraphicsItem * graphicsItem=NULL;
     QStringList mapNameList;
     // Create a child item for each layer
-    int loopSize=layers.size();
+    const int &loopSize=layers.size();
     int index2=0;
     while(index2<loopSize)
     {

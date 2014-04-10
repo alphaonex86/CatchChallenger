@@ -7,15 +7,17 @@
 
 using namespace CatchChallenger;
 
-LocalClientHandlerFight::LocalClientHandlerFight()
+LocalClientHandlerFight::LocalClientHandlerFight() :
+    otherPlayerBattle(NULL),
+    battleIsValidated(false),
+    mCurrentSkillId(0),
+    mHaveCurrentSkill(false),
+    mMonsterChange(false),
+    player_informations(NULL),
+    botFightCash(0),
+    botFightId(0),
+    isInCityCapture(false)
 {
-    otherPlayerBattle=NULL;
-    battleIsValidated=false;
-    player_informations=NULL;
-    botFightCash=0;
-    mHaveCurrentSkill=false;
-    mMonsterChange=false;
-    isInCityCapture=false;
 }
 
 LocalClientHandlerFight::~LocalClientHandlerFight()
@@ -428,7 +430,7 @@ PublicPlayerMonster *LocalClientHandlerFight::getOtherMonster() const
 
 quint8 LocalClientHandlerFight::getOneSeed(const quint8 &max)
 {
-    quint8 seed=CommonFightEngine::getOneSeed(max);
+    const quint8 &seed=CommonFightEngine::getOneSeed(max);
     getRandomNumberIfNeeded();
     return seed;
 }
@@ -782,8 +784,8 @@ bool LocalClientHandlerFight::currentMonsterAttackFirst(const PlayerMonster * cu
 {
     if(isInBattle())
     {
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         bool currentMonsterStatIsFirstToAttack=false;
         if(currentMonsterStat.speed>otherMonsterStat.speed)
             currentMonsterStatIsFirstToAttack=true;
@@ -885,7 +887,7 @@ void LocalClientHandlerFight::sendBattleMonsterChange()
 //return true if change level, multiplicator do at datapack loading
 bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
 {
-    bool haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
+    const bool &haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
     {
         if(haveChangeOfLevel)
@@ -936,7 +938,7 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
 
 bool LocalClientHandlerFight::finishTheTurn(const bool &isBot)
 {
-    bool win=!currentMonsterIsKO() && otherMonsterIsKO();
+    const bool &win=!currentMonsterIsKO() && otherMonsterIsKO();
     if(currentMonsterIsKO() || otherMonsterIsKO())
     {
         dropKOCurrentMonster();
@@ -987,7 +989,7 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
     emit message(QStringLiteral("use the skill: %1").arg(skill));
     if(!isInBattle())//wild or bot
     {
-        bool isBot=!botFightMonsters.isEmpty();
+        const bool &isBot=!botFightMonsters.isEmpty();
         CommonFightEngine::useSkill(skill);
         return finishTheTurn(isBot);
     }
@@ -1034,8 +1036,8 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
         }
         else
         {
-            bool youWin=haveAnotherMonsterOnThePlayerToFight();
-            bool theOtherWin=otherPlayerBattle->haveAnotherMonsterOnThePlayerToFight();
+            const bool &youWin=haveAnotherMonsterOnThePlayerToFight();
+            const bool &theOtherWin=otherPlayerBattle->haveAnotherMonsterOnThePlayerToFight();
             dropKOCurrentMonster();
             dropKOOtherMonster();
             LocalClientHandlerFight *tempOtherPlayerBattle=otherPlayerBattle;
@@ -1061,7 +1063,7 @@ void LocalClientHandlerFight::emitBattleWin()
 
 bool LocalClientHandlerFight::dropKOOtherMonster()
 {
-    bool commonReturn=CommonFightEngine::dropKOOtherMonster();
+    const bool &commonReturn=CommonFightEngine::dropKOOtherMonster();
 
     bool battleReturn=false;
     if(isInBattle())
@@ -1383,7 +1385,7 @@ void LocalClientHandlerFight::saveMonsterPosition(const quint32 &monsterId,const
 
 bool LocalClientHandlerFight::changeOfMonsterInFight(const quint32 &monsterId)
 {
-    bool doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
+    const bool &doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
 
     //save for sync at end of the battle
     PlayerMonster * monster=getCurrentMonster();
@@ -1431,7 +1433,7 @@ Skill::AttackReturn LocalClientHandlerFight::generateOtherAttack()
         emit error("The other player have not skill at generateOtherAttack()");
         return attackReturnTemp;
     }
-    quint32 skill=otherPlayerBattle->getCurrentSkill();
+    const quint32 &skill=otherPlayerBattle->getCurrentSkill();
     quint8 skillLevel=getSkillLevel(skill);
     if(skillLevel==0)
     {
@@ -1470,7 +1472,7 @@ quint8 LocalClientHandlerFight::decreaseSkillEndurance(const quint32 &skill)
         emit error("Unable to locate the current monster");
         return 0;
     }
-    quint8 newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
+    const quint8 &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
     {
         switch(GlobalServerData::serverSettings.database.type)
@@ -1505,8 +1507,8 @@ void LocalClientHandlerFight::confirmEvolutionTo(PlayerMonster * playerMonster,c
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     PlayerMonster * currentMonster=getCurrentMonster();
     PublicPlayerMonster * otherMonster=getOtherMonster();
-    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
-    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
+    const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+    const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
     if(currentMonster!=NULL)
         if(currentMonster->hp>currentMonsterStat.hp)
         {
@@ -1577,8 +1579,8 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
@@ -1598,8 +1600,8 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
+        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
@@ -1659,7 +1661,7 @@ bool LocalClientHandlerFight::removeBuffOnMonster(PlayerMonster * currentMonster
 
 bool LocalClientHandlerFight::removeAllBuffOnMonster(PlayerMonster * currentMonster)
 {
-    const bool returnVal=CommonFightEngine::removeAllBuffOnMonster(currentMonster);
+    const bool &returnVal=CommonFightEngine::removeAllBuffOnMonster(currentMonster);
     if(returnVal)
     {
         switch(GlobalServerData::serverSettings.database.type)

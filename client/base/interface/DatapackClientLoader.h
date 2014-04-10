@@ -179,6 +179,7 @@ protected:
     static QString text_start;
     static QString text_win;
     static QString text_dotxml;
+    static QString text_dottsx;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

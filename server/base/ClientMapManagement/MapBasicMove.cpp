@@ -98,7 +98,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
     /** \warning Don't put emit here, because call by LocalClientHandler, visiblity algo, LocalBroadcast */
 
     quint8 moveThePlayer_index_move=0;
-    if(unlikely(last_direction==direction))
+    if(Q_UNLIKELY(last_direction==direction))
     {
         emit error(QStringLiteral("Previous action is same direction: %1").arg(last_direction));
         return false;

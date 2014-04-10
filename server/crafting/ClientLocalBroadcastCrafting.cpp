@@ -95,7 +95,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
         return;
     }
     //check if is free
-    quint16 size=static_cast<MapServer *>(map)->plants.size();
+    const quint16 &size=static_cast<MapServer *>(map)->plants.size();
     quint16 index=0;
     while(index<size)
     {
@@ -135,20 +135,22 @@ void ClientLocalBroadcast::seedValidated()
         return;
     }*/
     //check if is free
-    quint16 size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.size();
-    quint16 index=0;
-    while(index<size)
     {
-        if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
+        const quint16 &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.size();
+        quint16 index=0;
+        while(index<size)
         {
-            emit addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
-            QByteArray data;
-            data[0]=0x02;
-            emit postReply(plant_list_in_waiting.first().query_id,data);
-            plant_list_in_waiting.removeFirst();
-            return;
+            if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
+            {
+                emit addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
+                QByteArray data;
+                data[0]=0x02;
+                emit postReply(plant_list_in_waiting.first().query_id,data);
+                plant_list_in_waiting.removeFirst();
+                return;
+            }
+            index++;
         }
-        index++;
     }
     //is ok
     QByteArray data;
@@ -190,67 +192,51 @@ void ClientLocalBroadcast::seedValidated()
 
     //send to all player
 
-    index=0;
-    size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
-    while(index<size)
     {
-        static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->receiveSeed(plantOnMap,current_time);
-        index++;
+        QByteArray finalData;
+        {
+            //Insert plant on map
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint16)1;
+            if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+                out << (quint8)map->id;
+            else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+                out << (quint16)map->id;
+            else
+                out << (quint32)map->id;
+            out << plantOnMap.x;
+            out << plantOnMap.y;
+            out << plantOnMap.plant;
+            if(current_time>=plantOnMap.mature_at)
+                out << (quint16)0;
+            else if((plantOnMap.mature_at-current_time)>65535)
+            {
+                emit message(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
+                out << (quint16)(65535);
+            }
+            else
+                out << (quint16)(plantOnMap.mature_at-current_time);
+            finalData=ProtocolParsingOutput::computeOutcommingData(false,0xD1,outputData);
+        }
+
+        quint16 index=0;
+        const quint16 &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
+        while(index<size)
+        {
+            static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData);
+            index++;
+        }
     }
 
     plant_list_in_waiting.removeFirst();
 }
 
-void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time)
-{
-    //Insert plant on map
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << (quint16)1;
-    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-        out << (quint8)map->id;
-    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-        out << (quint16)map->id;
-    else
-        out << (quint32)map->id;
-    out << plantOnMap.x;
-    out << plantOnMap.y;
-    out << plantOnMap.plant;
-    if(current_time>=plantOnMap.mature_at)
-        out << (quint16)0;
-    else if((plantOnMap.mature_at-current_time)>65535)
-    {
-        emit message(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
-        out << (quint16)(65535);
-    }
-    else
-        out << (quint16)(plantOnMap.mature_at-current_time);
-    emit sendPacket(0xD1,outputData);
-}
-
-void ClientLocalBroadcast::removeSeed(const MapServerCrafting::PlantOnMap &plantOnMap)
-{
-    //Remove plant on map
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << (quint16)1;
-    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-        out << (quint8)map->id;
-    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-        out << (quint16)map->id;
-    else
-        out << (quint32)map->id;
-    out << plantOnMap.x;
-    out << plantOnMap.y;
-    emit sendPacket(0xD2,outputData);
-}
-
 void ClientLocalBroadcast::sendNearPlant()
 {
     //Insert plant on map
-    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    const quint16 &plant_list_size=static_cast<MapServer *>(map)->plants.size();
     if(plant_list_size==0)
         return;
     QByteArray outputData;
@@ -299,7 +285,7 @@ void ClientLocalBroadcast::removeNearPlant()
     emit message("removeNearPlant()");
     #endif
     //send the remove plant
-    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    const quint16 &plant_list_size=static_cast<MapServer *>(map)->plants.size();
     if(plant_list_size==0)
         return;
     QByteArray outputData;
@@ -408,8 +394,8 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
         return;
     }
     //check if is free
-    quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    quint16 size=static_cast<MapServer *>(map)->plants.size();
+    const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    const quint16 &size=static_cast<MapServer *>(map)->plants.size();
     quint16 index=0;
     while(index<size)
     {
@@ -450,13 +436,33 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                     break;
                 }
 
-                //remove plan from all player display
-                int sub_index=0;
-                size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
-                while(sub_index<size)
+                QByteArray finalData;
                 {
-                    static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->removeSeed(plant);
-                    sub_index++;
+                    //Remove plant on map
+                    QByteArray outputData;
+                    QDataStream out(&outputData, QIODevice::WriteOnly);
+                    out.setVersion(QDataStream::Qt_4_4);
+                    out << (quint16)1;
+                    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+                        out << (quint8)map->id;
+                    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+                        out << (quint16)map->id;
+                    else
+                        out << (quint32)map->id;
+                    out << plant.x;
+                    out << plant.y;
+                    finalData=ProtocolParsingOutput::computeOutcommingData(false,0xD2,outputData);
+                }
+
+                {
+                    //remove plan from all player display
+                    int sub_index=0;
+                    const quint16 &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
+                    while(sub_index<size)
+                    {
+                        static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->sendRawSmallPacket(finalData);
+                        sub_index++;
+                    }
                 }
 
                 //add into the inventory
