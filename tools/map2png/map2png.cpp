@@ -36,7 +36,6 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QFileDialog>
-#include <QMessageBox>
 
 #include "../../general/base/MoveOnTheMap.h"
 
@@ -529,7 +528,7 @@ void Map2Png::viewMap(const bool &renderAll,const QString &fileName,const QStrin
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
     {
-        QMessageBox::critical(this,QStringLiteral("Error"),mLastError);
+        qDebug() << mLastError;
         return;
     }
     loadCurrentMap(current_map_fileName,0,0);
