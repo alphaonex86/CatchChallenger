@@ -537,7 +537,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             {
                                                 Map_animation tempAnimationDescriptor;
                                                 tempAnimationDescriptor.count=0;
-                                                tempAnimationDescriptor.frames=frames;
+                                                tempAnimationDescriptor.frameCountTotal=frames;
                                                 tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
                                             }
                                             /// \todo control the animation is not out of rame

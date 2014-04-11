@@ -30,8 +30,8 @@ class MapVisualiserThread : public QThread
 public:
     struct Map_animation
     {
-        quint8 frames;
         quint8 count;
+        quint8 frameCountTotal;
         QList<Tiled::MapObject *> animatedObject;
     };
     struct Map_full

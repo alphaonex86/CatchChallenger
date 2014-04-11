@@ -74,7 +74,8 @@ protected:
 
     MapVisualiserThread mapVisualiserThread;
     QStringList asyncMap;
-    QHash<quint8,QTimer *> animationTimer;
+    QHash<quint8/*intervale*/,QTimer *> animationTimer;
+    QHash<quint8/*intervale*/,QHash<quint8/*frame total*/,quint8/*actual frame*/> > animationFrame;
 
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
 protected slots:
