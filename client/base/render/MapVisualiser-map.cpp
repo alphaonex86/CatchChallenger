@@ -183,9 +183,31 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 QTimer *newTimer=new QTimer();
                 newTimer->setInterval(i.key());
                 animationTimer[i.key()]=newTimer;
+                animationFrame[i.key()];//creation
                 connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer);
                 /// \todo syncro all the timer start, with frame offset to align with the other timer
                 newTimer->start();
+            }
+            if(!animationFrame.value(i.key()).contains(i.value().count))
+                animationFrame[i.key()][i.value().count]=0;
+            else
+            {
+                const quint8 &count=animationFrame.value(i.key()).value(i.value().count);
+                tempMapObject->animatedObject[i.key()].count=count;
+                if(i.value().count!=0)
+                {
+                    int index=0;
+                    while(index<i.value().animatedObject.size())
+                    {
+                        Tiled::MapObject * mapObject=i.value().animatedObject.at(index);
+                        Tiled::Cell cell=mapObject->cell();
+                        Tiled::Tile *tile=mapObject->cell().tile;
+                        Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+count);
+                        cell.tile=newTile;
+                        mapObject->setCell(cell);
+                        index++;
+                    }
+                }
             }
             ++i;
         }
@@ -340,6 +362,18 @@ void MapVisualiser::applyTheAnimationTimer()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
     const quint16 &interval=timer->interval();
+    if(animationFrame.contains(interval))
+    {
+        QHash<quint8/*frame total*/,quint8/*actual frame*/> countList=animationFrame.value(interval);
+        QHashIterator<quint8/*frame total*/,quint8/*actual frame*/> i(countList);
+        while (i.hasNext()) {
+            i.next();
+            countList[i.key()]++;
+            if(countList.value(i.key())>=i.key())
+                countList[i.key()]=0;
+        }
+        animationFrame[interval]=countList;
+    }
     bool isUsed=false;
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
@@ -348,17 +382,17 @@ void MapVisualiser::applyTheAnimationTimer()
         {
             if(tempMap->animatedObject.contains(interval))
             {
-                if(tempMap->animatedObject.value(interval).frames>1)
+                if(tempMap->animatedObject.value(interval).frameCountTotal>1)
                 {
                     isUsed=true;
                     tempMap->animatedObject[interval].count++;
                     qint8 frameOffset=1;
-                    if(tempMap->animatedObject.value(interval).count>=tempMap->animatedObject.value(interval).frames)
+                    if(tempMap->animatedObject.value(interval).count>=tempMap->animatedObject.value(interval).frameCountTotal)
                     {
-                        frameOffset+=-tempMap->animatedObject.value(interval).frames;
+                        frameOffset-=tempMap->animatedObject.value(interval).frameCountTotal;
                         tempMap->animatedObject[interval].count=0;
                     }
-                    QList<Tiled::MapObject *> animatedObject=tempMap->animatedObject.value(interval).animatedObject;
+                    const QList<Tiled::MapObject *> &animatedObject=tempMap->animatedObject.value(interval).animatedObject;
                     int index=0;
                     while(index<animatedObject.size())
                     {
