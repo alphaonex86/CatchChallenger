@@ -246,7 +246,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.value(flag)->setZValue(y);
         }*/
-        if(parsedMap->logicalMap.botsFight.contains(QPair<quint8,quint8>(x,y)))
+        /* asked by tgjklmda if(parsedMap->logicalMap.botsFight.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             botDisplay->flags << flag;
@@ -257,7 +257,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.value(flag)->setZValue(y);
-        }
+        }*/
     }
 
     if(parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).step.contains(1))
