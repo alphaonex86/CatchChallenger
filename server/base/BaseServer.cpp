@@ -2142,10 +2142,10 @@ ClientMapManagement * BaseServer::getClientMapManagement()
     {
         default:
         case MapVisibilityAlgorithmSelection_Simple:
-            return new MapVisibilityAlgorithm_Simple();
+            return new MapVisibilityAlgorithm_Simple_StoreOnReceiver();
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
-            return new MapVisibilityAlgorithm_WithBorder();
+            return new MapVisibilityAlgorithm_WithBorder_StoreOnReceiver();
         break;
         case MapVisibilityAlgorithmSelection_None:
             return new MapVisibilityAlgorithm_None();

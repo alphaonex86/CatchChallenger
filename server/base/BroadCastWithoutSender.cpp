@@ -50,8 +50,8 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
             finalData=ProtocolParsingOutput::computeOutcommingData(false,0xC3,outputData);
         }
 
-        quint32 index=0;
-        const quint32 &list_size=ClientBroadCast::clientBroadCastList.size();
+        int index=0;
+        const int &list_size=ClientBroadCast::clientBroadCastList.size();
         while(index<list_size)
         {
             ClientBroadCast::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,finalData);

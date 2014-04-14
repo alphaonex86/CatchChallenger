@@ -17,7 +17,8 @@
 #include "BroadCastWithoutSender.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../VariableServer.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_Simple.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
 
 #ifndef CATCHCHALLENGER_CLIENT_H
