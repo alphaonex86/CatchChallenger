@@ -383,6 +383,7 @@ void MainWindow::load_settings()
             reshow=tempValue;
             settings->setValue(QLatin1Literal("Reshow"),reshow);
         }
+        ui->MapVisibilityAlgorithmSimpleStoreOnSender->setChecked(settings->value(QLatin1Literal("StoreOnSender")).toBool());
         settings->endGroup();
         ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
         ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
@@ -421,6 +422,7 @@ void MainWindow::load_settings()
             reshowWithBorder=reshow;
             settings->setValue(QLatin1Literal("ReshowWithBorder"),reshow);
         }
+        ui->MapVisibilityAlgorithmWithBorderStoreOnSender->setChecked(settings->value(QLatin1Literal("StoreOnSender")).toBool());
         settings->endGroup();
         ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(tempValueWithBorder);
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setValue(reshowWithBorder);
@@ -721,12 +723,14 @@ void MainWindow::send_settings()
         break;
     }
 
-    formatedServerSettings.mapVisibility.simple.max				= ui->MapVisibilityAlgorithmSimpleMax->value();
-    formatedServerSettings.mapVisibility.simple.reshow			= ui->MapVisibilityAlgorithmSimpleReshow->value();
+    formatedServerSettings.mapVisibility.simple.max                 = ui->MapVisibilityAlgorithmSimpleMax->value();
+    formatedServerSettings.mapVisibility.simple.reshow              = ui->MapVisibilityAlgorithmSimpleReshow->value();
+    formatedServerSettings.mapVisibility.simple.storeOnSender       = ui->MapVisibilityAlgorithmSimpleStoreOnSender->isChecked();
     formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value();
     formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value();
     formatedServerSettings.mapVisibility.withBorder.max				= ui->MapVisibilityAlgorithmWithBorderMax->value();
     formatedServerSettings.mapVisibility.withBorder.reshow			= ui->MapVisibilityAlgorithmWithBorderReshow->value();
+    formatedServerSettings.mapVisibility.withBorder.storeOnSender	= ui->MapVisibilityAlgorithmWithBorderStoreOnSender->isChecked();
 
     switch(ui->comboBox_city_capture_frequency->currentIndex())
     {
@@ -1313,4 +1317,18 @@ void CatchChallenger::MainWindow::on_datapack_cache_mtime_stateChanged(int arg1)
 {
     Q_UNUSED(arg1);
     settings->setValue(QLatin1Literal("datapackCacheMtime"),ui->datapack_cache_mtime->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleStoreOnSender_toggled(bool checked)
+{
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
+    settings->setValue(QLatin1Literal("StoreOnSender"),checked);
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderStoreOnSender_toggled(bool checked)
+{
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
+    settings->setValue(QLatin1Literal("StoreOnSender"),checked);
+    settings->endGroup();
 }

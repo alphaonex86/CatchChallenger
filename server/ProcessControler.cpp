@@ -134,16 +134,24 @@ void ProcessControler::send_settings()
         break;
     }
     settings->endGroup();
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
-    formatedServerSettings.mapVisibility.simple.max				= settings->value(QLatin1Literal("Max")).toUInt();
-    formatedServerSettings.mapVisibility.simple.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
-    settings->endGroup();
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-    formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= settings->value(QLatin1Literal("MaxWithBorder")).toUInt();
-    formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= settings->value(QLatin1Literal("ReshowWithBorder")).toUInt();
-    formatedServerSettings.mapVisibility.withBorder.max				= settings->value(QLatin1Literal("Max")).toUInt();
-    formatedServerSettings.mapVisibility.withBorder.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
-    settings->endGroup();
+    if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_Simple)
+    {
+        settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
+        formatedServerSettings.mapVisibility.simple.max				= settings->value(QLatin1Literal("Max")).toUInt();
+        formatedServerSettings.mapVisibility.simple.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
+        formatedServerSettings.mapVisibility.simple.storeOnSender	= settings->value(QLatin1Literal("StoreOnSender")).toBool();
+        settings->endGroup();
+    }
+    else if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_WithBorder)
+    {
+        settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
+        formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= settings->value(QLatin1Literal("MaxWithBorder")).toUInt();
+        formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= settings->value(QLatin1Literal("ReshowWithBorder")).toUInt();
+        formatedServerSettings.mapVisibility.withBorder.max				= settings->value(QLatin1Literal("Max")).toUInt();
+        formatedServerSettings.mapVisibility.withBorder.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
+        formatedServerSettings.mapVisibility.withBorder.storeOnSender	= settings->value(QLatin1Literal("StoreOnSender")).toBool();
+        settings->endGroup();
+    }
 
     settings->beginGroup(QLatin1Literal("city"));
     if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("week"))
@@ -169,7 +177,7 @@ void ProcessControler::send_settings()
         formatedServerSettings.city.capture.day=City::Capture::Monday;
     formatedServerSettings.city.capture.hour=0;
     formatedServerSettings.city.capture.minute=0;
-    QStringList capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
+    const QStringList &capture_time_string_list=settings->value(QLatin1Literal("capture_time")).toString().split(QLatin1Literal(":"));
     if(capture_time_string_list.size()==2)
     {
         bool ok;
@@ -200,22 +208,25 @@ void ProcessControler::send_settings()
             #endif
         }
         formatedServerSettings.bitcoin.enabled=(settings->value(QLatin1Literal("enabled")).toString()==QLatin1Literal("true"));
-        formatedServerSettings.bitcoin.fee=settings->value(QLatin1Literal("fee")).toDouble(&ok);
-        if(!ok)
-            formatedServerSettings.bitcoin.fee=1.0;
-        formatedServerSettings.bitcoin.port=settings->value(QLatin1Literal("port")).toUInt(&ok);
-        if(!ok)
-            formatedServerSettings.bitcoin.port=46349;
-        formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
-        if(settings->contains(QLatin1Literal("workingPath")) && !settings->value(QLatin1Literal("workingPath")).toString().isEmpty())
-            formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
-        else
+        if(formatedServerSettings.bitcoin.enabled)
         {
-            #ifdef Q_OS_WIN32
-            formatedServerSettings.bitcoin.workingPath                        = QLatin1Literal("%application_path%/bitcoin-storage/");
-            #else
-            formatedServerSettings.bitcoin.workingPath                        = QDir::homePath()+QLatin1Literal("/.config/CatchChallenger/server/bitoin/");
-            #endif
+            formatedServerSettings.bitcoin.fee=settings->value(QLatin1Literal("fee")).toDouble(&ok);
+            if(!ok)
+                formatedServerSettings.bitcoin.fee=1.0;
+            formatedServerSettings.bitcoin.port=settings->value(QLatin1Literal("port")).toUInt(&ok);
+            if(!ok)
+                formatedServerSettings.bitcoin.port=46349;
+            formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
+            if(settings->contains(QLatin1Literal("workingPath")) && !settings->value(QLatin1Literal("workingPath")).toString().isEmpty())
+                formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
+            else
+            {
+                #ifdef Q_OS_WIN32
+                formatedServerSettings.bitcoin.workingPath                        = QLatin1Literal("%application_path%/bitcoin-storage/");
+                #else
+                formatedServerSettings.bitcoin.workingPath                        = QDir::homePath()+QLatin1Literal("/.config/CatchChallenger/server/bitoin/");
+                #endif
+            }
         }
         settings->endGroup();
     }

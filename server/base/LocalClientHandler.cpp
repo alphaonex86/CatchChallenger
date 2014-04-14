@@ -503,15 +503,15 @@ bool LocalClientHandler::singleMove(const Direction &direction)
         map=teleporter.map;
     }
 
-    this->map=static_cast<Map_server_MapVisibility_simple*>(map);
+    this->map=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map);
     this->x=x;
     this->y=y;
-    if(static_cast<Map_server_MapVisibility_simple*>(map)->rescue.contains(QPair<quint8,quint8>(x,y)))
+    if(static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map)->rescue.contains(QPair<quint8,quint8>(x,y)))
     {
         player_informations->unvalidated_rescue.map=map;
         player_informations->unvalidated_rescue.x=x;
         player_informations->unvalidated_rescue.y=y;
-        player_informations->unvalidated_rescue.orientation=static_cast<Map_server_MapVisibility_simple*>(map)->rescue.value(QPair<quint8,quint8>(x,y));
+        player_informations->unvalidated_rescue.orientation=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map)->rescue.value(QPair<quint8,quint8>(x,y));
     }
     if(localClientHandlerFight.botFightCollision(map,x,y))
         return true;

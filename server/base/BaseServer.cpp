@@ -58,7 +58,7 @@ BaseServer::BaseServer() :
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
-    qRegisterMetaType<Map_server_MapVisibility_simple*>("Map_server_MapVisibility_simple*");
+    qRegisterMetaType<Map_server_MapVisibility_Simple_StoreOnReceiver*>("Map_server_MapVisibility_simple*");
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
     qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");
@@ -129,10 +129,12 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithmSelection_Simple;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
+    GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender         = true;
     GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder     = 20;
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder  = 10;
     GlobalServerData::serverSettings.mapVisibility.withBorder.max               = 30;
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshow            = 20;
+    GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender     = true;
     GlobalServerData::serverSettings.city.capture.frenquency                    = City::Capture::Frequency_week;
     GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
@@ -914,16 +916,23 @@ void BaseServer::preload_the_map()
                 switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithmSelection_Simple:
-                        GlobalServerData::serverPrivateVariables.map_list[fileName]=new Map_server_MapVisibility_simple;
+                        if(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
+                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_Simple_StoreOnSender;
+                        else
+                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_Simple_StoreOnReceiver;
                     break;
                     case MapVisibilityAlgorithmSelection_WithBorder:
-                        GlobalServerData::serverPrivateVariables.map_list[fileName]=new Map_server_MapVisibility_withBorder;
+                        if(GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender)
+                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_WithBorder_StoreOnSender;
+                        else
+                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_WithBorder_StoreOnReceiver;
                     break;
                     case MapVisibilityAlgorithmSelection_None:
                     default:
-                        GlobalServerData::serverPrivateVariables.map_list[fileName]=new MapServer;
+                        GlobalServerData::serverPrivateVariables.flat_map_list << new MapServer;
                     break;
                 }
+                GlobalServerData::serverPrivateVariables.map_list[fileName]=GlobalServerData::serverPrivateVariables.flat_map_list.last();
 
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->width			= map_temp.map_to_send.width;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
@@ -1256,25 +1265,9 @@ void BaseServer::preload_the_players()
 
 void BaseServer::preload_the_visibility_algorithm()
 {
-    QHash<QString,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
-    QHash<QString,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithmSelection_Simple:
-        if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
-        {
-            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
-            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
-        }
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new QTimer();
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
-        connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,&MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender,&MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer,Qt::QueuedConnection);
-        while (i != i_end)
-        {
-            static_cast<Map_server_MapVisibility_simple *>(i.value())->show=true;
-            i++;
-        }
-        break;
         case MapVisibilityAlgorithmSelection_WithBorder:
         if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
         {
@@ -1284,16 +1277,49 @@ void BaseServer::preload_the_visibility_algorithm()
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new QTimer();
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
         connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,&MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender,&MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer,Qt::QueuedConnection);
-        while (i != i_end)
-        {
-            static_cast<Map_server_MapVisibility_withBorder *>(i.value())->show=true;
-            static_cast<Map_server_MapVisibility_withBorder *>(i.value())->showWithBorder=true;
-            static_cast<Map_server_MapVisibility_withBorder *>(i.value())->clientsOnBorder=0;
-            i++;
-        }
         break;
         case MapVisibilityAlgorithmSelection_None:
+        default:
         break;
+    }
+
+    QHash<QString,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
+    QHash<QString,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    {
+        case MapVisibilityAlgorithmSelection_Simple:
+        if(!GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
+            while (i != i_end)
+            {
+                static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver *>(i.value())->show=true;
+                i++;
+            }
+        break;
+        case MapVisibilityAlgorithmSelection_WithBorder:
+        if(!GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender)
+            while (i != i_end)
+            {
+                static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver *>(i.value())->show=true;
+                static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver *>(i.value())->showWithBorder=true;
+                static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver *>(i.value())->clientsOnBorder=0;
+                i++;
+            }
+        break;
+        case MapVisibilityAlgorithmSelection_None:
+        default:
+        break;
+    }
+
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    {
+        case MapVisibilityAlgorithmSelection_Simple:
+            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple, storeOnSender: %1").arg(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender));
+        break;
+        case MapVisibilityAlgorithmSelection_WithBorder:
+            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple, storeOnSender: %1").arg(GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender));
+        break;
+        case MapVisibilityAlgorithmSelection_None:
+            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_None"));
         default:
         break;
     }
@@ -1797,6 +1823,7 @@ void BaseServer::unload_the_map()
         i++;
     }
     GlobalServerData::serverPrivateVariables.map_list.clear();
+    GlobalServerData::serverPrivateVariables.flat_map_list.clear();
     botIdLoaded.clear();
 }
 
@@ -1927,7 +1954,10 @@ void BaseServer::loadAndFixSettings()
             sizeof(quint8)+map_list_size+/*player_list_size same with move, delete, ...*/
             //of the player
             /*player_list_size same with move, delete, ...*/+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+0/*pseudo size put directy*/+sizeof(quint8);
-
+    GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.max_players;
+    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_None)
+        GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=0;
+    else if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)
             GlobalServerData::serverSettings.mapVisibility.simple.max=5;
@@ -1940,7 +1970,11 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max)
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.mapVisibility.simple.max;
+
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.simple.max)
+            GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.simple.max;
     }
+    else if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder)
     {
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3)
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=3;
@@ -1968,6 +2002,9 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.reshow;
+
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
+            GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
     }
 
     if(GlobalServerData::serverSettings.database.secondToPositionSync==0)
@@ -2142,10 +2179,16 @@ ClientMapManagement * BaseServer::getClientMapManagement()
     {
         default:
         case MapVisibilityAlgorithmSelection_Simple:
-            return new MapVisibilityAlgorithm_Simple_StoreOnReceiver();
+            if(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
+                return new MapVisibilityAlgorithm_Simple_StoreOnSender();
+            else
+                return new MapVisibilityAlgorithm_Simple_StoreOnReceiver();
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
-            return new MapVisibilityAlgorithm_WithBorder_StoreOnReceiver();
+            if(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
+                return new MapVisibilityAlgorithm_WithBorder_StoreOnSender();
+            else
+                return new MapVisibilityAlgorithm_WithBorder_StoreOnReceiver();
         break;
         case MapVisibilityAlgorithmSelection_None:
             return new MapVisibilityAlgorithm_None();

@@ -501,6 +501,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("Max"),50);
     if(!settings->contains(QLatin1Literal("Reshow")))
         settings->setValue(QLatin1Literal("Reshow"),30);
+    if(!settings->contains(QLatin1Literal("StoreOnSender")))
+        settings->setValue(QLatin1Literal("StoreOnSender"),true);
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
@@ -512,6 +514,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("Max"),50);
     if(!settings->contains(QLatin1Literal("Reshow")))
         settings->setValue(QLatin1Literal("Reshow"),30);
+    if(!settings->contains(QLatin1Literal("StoreOnSender")))
+        settings->setValue(QLatin1Literal("StoreOnSender"),true);
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("rates"));
