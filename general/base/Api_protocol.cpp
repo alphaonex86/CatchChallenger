@@ -108,7 +108,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
 
                 quint16 playerSizeList;
-                if(max_player<=255)
+                if(maxVisiblePlayerAtSameTime<=255)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -133,7 +133,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 {
                     //player id
                     Player_public_informations public_informations;
-                    if(max_player<=255)
+                    if(maxVisiblePlayerAtSameTime<=255)
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -263,7 +263,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             //move the player
             quint8 directionInt,moveListSize;
             quint16 playerSizeList;
-            if(max_player<=255)
+            if(maxVisiblePlayerAtSameTime<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -372,7 +372,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         {
             //remove player
             quint16 playerSizeList;
-            if(max_player<=255)
+            if(maxVisiblePlayerAtSameTime<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -457,7 +457,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         case 0xC5:
         {
             quint16 playerSizeList;
-            if(max_player<=255)
+            if(maxVisiblePlayerAtSameTime<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -482,7 +482,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             {
                 //player id
                 quint16 simplifiedId;
-                if(max_player<=255)
+                if(maxVisiblePlayerAtSameTime<=255)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -579,7 +579,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     in >> mapId;
                 }
                 quint16 playerSizeList;
-                if(max_player<=255)
+                if(maxVisiblePlayerAtSameTime<=255)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -604,7 +604,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 {
                     //player id
                     quint16 simplifiedId;
-                    if(max_player<=255)
+                    if(maxVisiblePlayerAtSameTime<=255)
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -2189,7 +2189,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("remaining data: parseMessage(%1,%2,%3 %4)")
+        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("remaining data: parseFullMessage(%1,%2,%3 %4)")
                       .arg(mainCodeType)
                       .arg(subCodeType)
                       .arg(QString(data.mid(0,in.device()->pos()).toHex()))
@@ -2419,7 +2419,7 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subC
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("remaining data: parseMessage(%1,%2,%3 %4)")
+        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("remaining data: parseFullQuery(%1,%2,%3 %4)")
                       .arg(mainCodeType)
                       .arg(subCodeType)
                       .arg(QString(data.mid(0,in.device()->pos()).toHex()))
@@ -2570,6 +2570,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         }
                         emit cityCapture(captureRemainingTime,captureFrequencyType);
 
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> maxVisiblePlayerAtSameTime;
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
@@ -4213,7 +4219,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: parseReplyData(%1,%2,%3), line: %4, data: %5 %6")
+        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: parseFullReplyData(%1,%2,%3), line: %4, data: %5 %6")
                    .arg(mainCodeType).arg(subCodeType).arg(queryNumber)
                    .arg(__LINE__)
                    .arg(QString(data.mid(0,in.device()->pos()).toHex()))

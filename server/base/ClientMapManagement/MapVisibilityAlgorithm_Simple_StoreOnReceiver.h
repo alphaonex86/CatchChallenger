@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_H
-#define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_H
+#ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_STOREONRECEIVER_H
+#define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_STOREONRECEIVER_H
 
 #include "ClientMapManagement.h"
 #include "../MapServer.h"
@@ -11,11 +11,11 @@ class MapVisibilityAlgorithm_Simple_StoreOnReceiver : public ClientMapManagement
     Q_OBJECT
 public:
     explicit MapVisibilityAlgorithm_Simple_StoreOnReceiver();
-    virtual ~MapVisibilityAlgorithm_Simple_StoreOnReceiver();
+    ~MapVisibilityAlgorithm_Simple_StoreOnReceiver();
     void reinsertAllClient();
     //drop all clients
-    virtual void dropAllClients();
-    virtual void purgeBuffer();
+    void dropAllClients();
+    void purgeBuffer();
 protected:
     //add clients linked
     void insertClient();
@@ -44,8 +44,8 @@ private:
     void reinsertAnotherClient(MapVisibilityAlgorithm_Simple_StoreOnReceiver *the_another_player);
     void reinsertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple_StoreOnReceiver *the_another_player);
     //map load/unload and change
-    virtual void			loadOnTheMap();
-    virtual void			unloadFromTheMap();
+    void			loadOnTheMap();
+    void			unloadFromTheMap();
 
     //map move
     bool singleMove(const Direction &direction);
@@ -82,11 +82,11 @@ private:
     QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple_StoreOnReceiver *>			to_send_reinsert;
 public slots:
     //map slots, transmited by the current ClientNetworkRead
-    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
-    virtual void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 private slots:
-    virtual void extraStop();
+    void extraStop();
 };
 }
 

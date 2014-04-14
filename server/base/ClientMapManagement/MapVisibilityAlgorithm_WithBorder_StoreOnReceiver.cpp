@@ -42,7 +42,7 @@ MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::~MapVisibilityAlgorithm_WithB
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::insertClient()
 {
-    Map_server_MapVisibility_withBorder *temp_map=static_cast<Map_server_MapVisibility_withBorder*>(map);
+    Map_server_MapVisibility_WithBorder_StoreOnReceiver *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map);
     //local map
     if(Q_LIKELY(temp_map->show))
     {
@@ -117,7 +117,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::insertClient()
         const int &border_map_loop_size=map->border_map.size();
         while(border_map_index<border_map_loop_size)
         {
-            Map_server_MapVisibility_withBorder *temp_border_map=static_cast<Map_server_MapVisibility_withBorder*>(map->border_map.at(border_map_index));
+            Map_server_MapVisibility_WithBorder_StoreOnReceiver *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map->border_map.at(border_map_index));
             loop_size=temp_border_map->clients.size();
             //insert border player on current player
             if(temp_map->showWithBorder)
@@ -169,7 +169,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::insertClient()
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::moveClient(const quint8 &movedUnit,const Direction &direction)
 {
-    Map_server_MapVisibility_withBorder *temp_map=static_cast<Map_server_MapVisibility_withBorder*>(map);
+    Map_server_MapVisibility_WithBorder_StoreOnReceiver *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map);
     loop_size=temp_map->clients.size();
     if(Q_UNLIKELY(mapHaveChanged))
     {
@@ -214,7 +214,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::moveClient(const quint8 
     int border_map_loop_size=map->border_map.size();
     while(border_map_index<border_map_loop_size)
     {
-        Map_server_MapVisibility_withBorder *temp_border_map=static_cast<Map_server_MapVisibility_withBorder*>(map->border_map.at(border_map_index));
+        Map_server_MapVisibility_WithBorder_StoreOnReceiver *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map->border_map.at(border_map_index));
         loop_size=temp_border_map->clients.size();
         if(temp_border_map->showWithBorder)
         {
@@ -253,7 +253,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::dropAllBorderClients()
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::reinsertClientForOthersOnSameMap()
 {
-    Map_server_MapVisibility_withBorder* map_temp=static_cast<Map_server_MapVisibility_withBorder*>(map);
+    Map_server_MapVisibility_WithBorder_StoreOnReceiver* map_temp=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map);
     if(Q_UNLIKELY(map_temp->show==false))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -279,7 +279,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::reinsertClientForOthersO
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::removeClient()
 {
-    Map_server_MapVisibility_withBorder *temp_map=static_cast<Map_server_MapVisibility_withBorder*>(map);
+    Map_server_MapVisibility_WithBorder_StoreOnReceiver *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map);
     loop_size=temp_map->clients.size();
     if(Q_UNLIKELY(temp_map->show==false))
     {
@@ -363,7 +363,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::removeClient()
         const int &border_map_loop_size=map->border_map.size();
         while(border_map_index<border_map_loop_size)
         {
-            Map_server_MapVisibility_withBorder *temp_border_map=static_cast<Map_server_MapVisibility_withBorder*>(map->border_map.at(border_map_index));
+            Map_server_MapVisibility_WithBorder_StoreOnReceiver *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map->border_map.at(border_map_index));
             loop_size=temp_border_map->clients.size();
             //remove border client on this
             if(Q_LIKELY(temp_map->showWithBorder==true))
@@ -419,7 +419,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::reinsertAllClient()
     index=0;
     while(index<loop_size)
     {
-        current_client=static_cast<Map_server_MapVisibility_withBorder*>(map)->clients.at(index);
+        current_client=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map)->clients.at(index);
         if(Q_LIKELY(current_client!=this))
         {
             current_client->insertAnotherClient(thisSimplifiedId,this);
@@ -444,7 +444,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::reinsertCurrentPlayerOnl
     int border_map_loop_size=map->border_map.size();
     while(border_map_index<border_map_loop_size)
     {
-        Map_server_MapVisibility_withBorder *temp_border_map=static_cast<Map_server_MapVisibility_withBorder*>(map->border_map.at(border_map_index));
+        Map_server_MapVisibility_WithBorder_StoreOnReceiver *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map->border_map.at(border_map_index));
         loop_size=temp_border_map->clients.size();
         index=0;
         while(index<loop_size)
@@ -657,7 +657,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_insert()
         i_insert_end = send_insert_by_map.constEnd();
         while (i_insert != i_insert_end)
         {
-            Map_server_MapVisibility_withBorder* map=static_cast<Map_server_MapVisibility_withBorder*>(i_insert.key());
+            Map_server_MapVisibility_WithBorder_StoreOnReceiver* map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(i_insert.key());
             const QList<MapVisibilityAlgorithm_WithBorder_StoreOnReceiver *> &clients_list=i_insert.value();
             const int &list_size=clients_list.size();
 
@@ -667,7 +667,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_insert()
                 out << (quint16)map->id;
             else
                 out << (quint32)map->id;
-            if(GlobalServerData::serverSettings.max_players<=255)
+            if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                 out << (quint8)list_size;
             else
                 out << (quint16)list_size;
@@ -690,7 +690,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_insert()
                     .arg(client->player_informations->public_and_private_informations.public_informations.skinId)
                      );
                 #endif
-                if(GlobalServerData::serverSettings.max_players<=255)
+                if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                     out << (quint8)client->player_informations->public_and_private_informations.public_informations.simplifiedId;
                 else
                     out << (quint16)client->player_informations->public_and_private_informations.public_informations.simplifiedId;
@@ -737,7 +737,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_move()
     purgeBuffer_indexMovement=0;
     i_move = to_send_move.constBegin();
     i_move_end = to_send_move.constEnd();
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         out << (quint8)to_send_move.size();
     else
         out << (quint16)to_send_move.size();
@@ -750,7 +750,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_move()
             .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverSettings.max_players<=255)
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             out << (quint8)i_move.key();
         else
             out << (quint16)i_move.key();
@@ -786,7 +786,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_remove()
     //////////////////////////// remove //////////////////////////
     i_remove = to_send_remove.constBegin();
     i_remove_end = to_send_remove.constEnd();
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         out << (quint8)to_send_remove.size();
     else
         out << (quint16)to_send_remove.size();
@@ -799,7 +799,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_remove()
             .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverSettings.max_players<=255)
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             out << (quint8)*i_remove;
         else
             out << (quint16)*i_remove;
@@ -823,7 +823,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_reinsert()
     out.setVersion(QDataStream::Qt_4_4);
 
     //////////////////////////// re-insert //////////////////////////
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         out << (quint8)to_send_reinsert.size();
     else
         out << (quint16)to_send_reinsert.size();
@@ -842,7 +842,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::send_reinsert()
             .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverSettings.max_players<=255)
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             out << (quint8)i_insert.key();
         else
             out << (quint16)i_insert.key();
@@ -872,7 +872,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::singleMove(const Directi
         mapHaveChanged=true;
         map=old_map;
         unloadFromTheMap();
-        map=static_cast<Map_server_MapVisibility_withBorder*>(new_map);
+        map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(new_map);
         loadOnTheMap();
     }
     return true;
@@ -882,25 +882,25 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::loadOnTheMap()
 {
     insertClient();
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(static_cast<Map_server_MapVisibility_withBorder*>(map)->clients.contains(this))
+    if(static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map)->clients.contains(this))
     {
         emit message("loadOnTheMap() try dual insert into the player list");
         return;
     }
     #endif
-    static_cast<Map_server_MapVisibility_withBorder*>(map)->clients << this;
+    static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map)->clients << this;
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::unloadFromTheMap()
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(!static_cast<Map_server_MapVisibility_withBorder*>(map)->clients.contains(this))
+    if(!static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map)->clients.contains(this))
     {
         emit message("unloadFromTheMap() try remove of the player list, but not found");
         return;
     }
     #endif
-    static_cast<Map_server_MapVisibility_withBorder*>(map)->clients.removeOne(this);
+    static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map)->clients.removeOne(this);
     mapVisiblity_unloadFromTheMap();
 }
 
@@ -1023,7 +1023,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnReceiver::teleportValidatedTo(Comm
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QStringLiteral("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
         #endif
-        this->map=static_cast<Map_server_MapVisibility_withBorder*>(map);
+        this->map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver*>(map);
         loadOnTheMap();
     }
     else

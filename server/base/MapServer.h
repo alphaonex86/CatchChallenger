@@ -11,6 +11,8 @@
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
 class MapVisibilityAlgorithm_WithBorder_StoreOnReceiver;
+class MapVisibilityAlgorithm_Simple_StoreOnSender;
+class MapVisibilityAlgorithm_WithBorder_StoreOnSender;
 class ClientLocalBroadcast;
 
 class MapServer : public CommonMap, public MapServerCrafting
@@ -20,15 +22,14 @@ public:
     QHash<QPair<quint8,quint8>,Orientation> rescue;
 };
 
-class Map_server_MapVisibility_simple : public MapServer
+class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer
 {
 public:
     QList<MapVisibilityAlgorithm_Simple_StoreOnReceiver *> clients;//manipulated by thread of ClientMapManagement()
 
     bool show;
 };
-
-class Map_server_MapVisibility_withBorder : public MapServer
+class Map_server_MapVisibility_WithBorder_StoreOnReceiver : public MapServer
 {
 public:
     QList<MapVisibilityAlgorithm_WithBorder_StoreOnReceiver *> clients;//manipulated by thread of ClientMapManagement()
@@ -37,7 +38,6 @@ public:
     bool showWithBorder;
     bool show;
 };
-
 }
 
 #endif

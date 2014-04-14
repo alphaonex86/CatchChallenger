@@ -27,24 +27,24 @@ class ClientLocalBroadcast : public MapBasicMove
     Q_OBJECT
 public:
     explicit ClientLocalBroadcast();
-    virtual ~ClientLocalBroadcast();
+    ~ClientLocalBroadcast();
 public slots:
     //chat
     void sendLocalChatText(const QString &text);
     //map move
     bool singleMove(const Direction &direction);
-    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     //seed
     void seedValidated();
-    virtual void plantSeed(const quint8 &query_id,const quint8 &plant_id);
-    virtual void collectPlant(const quint8 &query_id);
+    void plantSeed(const quint8 &query_id,const quint8 &plant_id);
+    void collectPlant(const quint8 &query_id);
 protected:
-    virtual void extraStop();
-    virtual void insertClient(CommonMap *map);
-    virtual void removeClient(CommonMap *map,const bool &withDestroy=false);
-    virtual void sendNearPlant();
-    virtual void removeNearPlant();
+    void extraStop();
+    void insertClient(CommonMap *map);
+    void removeClient(CommonMap *map,const bool &withDestroy=false);
+    void sendNearPlant();
+    void removeNearPlant();
 
     struct PlantInWaiting
     {
