@@ -23,8 +23,8 @@ SOURCES += \
     $$PWD/base/ClientMapManagement/ClientMapManagement.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder.cpp \
+    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.cpp \
+    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.cpp \
     $$PWD/base/ClientMapManagement/MapBasicMove.cpp \
     $$PWD/crafting/BaseServerCrafting.cpp \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \
@@ -57,8 +57,8 @@ HEADERS += \
     $$PWD/base/ClientMapManagement/ClientMapManagement.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder.h \
+    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.h \
+    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.h \
     $$PWD/base/ClientMapManagement/MapBasicMove.h \
     $$PWD/crafting/BaseServerCrafting.h \
     $$PWD/crafting/MapServerCrafting.h \

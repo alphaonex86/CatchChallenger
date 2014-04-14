@@ -1,6 +1,6 @@
 #include "MapVisibilityAlgorithm_WithoutSender.h"
-#include "MapVisibilityAlgorithm_Simple.h"
-#include "MapVisibilityAlgorithm_WithBorder.h"
+#include "MapVisibilityAlgorithm_Simple_StoreOnReceiver.h"
+#include "MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.h"
 #include "../GlobalServerData.h"
 
 using namespace CatchChallenger;
@@ -21,22 +21,22 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     {
         case MapVisibilityAlgorithmSelection_Simple:
         {
-            quint32 index=0;
-            const quint32 &list_size=allClient.size();
+            int index=0;
+            const int &list_size=allClient.size();
             while(index<list_size)
             {
-                static_cast<MapVisibilityAlgorithm_Simple*>(allClient.at(index))->purgeBuffer();
+                static_cast<MapVisibilityAlgorithm_Simple_StoreOnReceiver*>(allClient.at(index))->purgeBuffer();
                 index++;
             }
         }
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
         {
-            quint32 index=0;
-            const quint32 &list_size=allClient.size();
+            int index=0;
+            const int &list_size=allClient.size();
             while(index<list_size)
             {
-                static_cast<MapVisibilityAlgorithm_WithBorder*>(allClient.at(index))->purgeBuffer();
+                static_cast<MapVisibilityAlgorithm_WithBorder_StoreOnReceiver*>(allClient.at(index))->purgeBuffer();
                 index++;
             }
         }

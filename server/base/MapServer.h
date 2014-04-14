@@ -9,8 +9,8 @@
 #include <QMultiHash>
 
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_Simple;
-class MapVisibilityAlgorithm_WithBorder;
+class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
+class MapVisibilityAlgorithm_WithBorder_StoreOnReceiver;
 class ClientLocalBroadcast;
 
 class MapServer : public CommonMap, public MapServerCrafting
@@ -23,7 +23,7 @@ public:
 class Map_server_MapVisibility_simple : public MapServer
 {
 public:
-    QList<MapVisibilityAlgorithm_Simple *> clients;//manipulated by thread of ClientMapManagement()
+    QList<MapVisibilityAlgorithm_Simple_StoreOnReceiver *> clients;//manipulated by thread of ClientMapManagement()
 
     bool show;
 };
@@ -31,7 +31,7 @@ public:
 class Map_server_MapVisibility_withBorder : public MapServer
 {
 public:
-    QList<MapVisibilityAlgorithm_WithBorder *> clients;//manipulated by thread of ClientMapManagement()
+    QList<MapVisibilityAlgorithm_WithBorder_StoreOnReceiver *> clients;//manipulated by thread of ClientMapManagement()
     quint16 clientsOnBorder;
 
     bool showWithBorder;
