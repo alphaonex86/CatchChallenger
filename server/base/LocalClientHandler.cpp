@@ -328,7 +328,7 @@ void LocalClientHandler::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const
         out << (quint16)map->id;
     else
         out << (quint32)map->id;
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
     {
         out << (quint8)0x01;
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
