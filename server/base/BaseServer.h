@@ -26,6 +26,10 @@
 #include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
+#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
+#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 
 #ifndef CATCHCHALLENGER_BASESERVER_H
 #define CATCHCHALLENGER_BASESERVER_H

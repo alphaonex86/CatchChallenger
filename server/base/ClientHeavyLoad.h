@@ -65,8 +65,8 @@ public:
     static QString text_wear;
     static QString text_market;
 public slots:
-    virtual void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
-    virtual void deleteCharacterNow(const quint32 &characterId);
+    void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
+    void deleteCharacterNow(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
     QHash<QString,quint32> datapack_file_list();

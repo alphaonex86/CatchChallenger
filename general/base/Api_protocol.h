@@ -80,6 +80,7 @@ protected:
 
     //stored local player info
     quint16 max_player;
+    quint16 maxVisiblePlayerAtSameTime;
     quint32 number_of_map;
 
     //to send trame

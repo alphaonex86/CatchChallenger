@@ -124,6 +124,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
     #endif
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
+        //ignore to improve the performance serveur because can reinsert all player of map using the overall client list
         if(!current_map.isEmpty())
         {
             qDebug() << "Current player already loaded on the map";

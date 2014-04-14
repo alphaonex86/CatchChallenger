@@ -30,8 +30,8 @@ class LocalClientHandler : public MapBasicMove
     Q_OBJECT
 public:
     explicit LocalClientHandler();
-    virtual ~LocalClientHandler();
-    virtual void setVariable(Player_internal_informations *player_informations);
+    ~LocalClientHandler();
+    void setVariable(Player_internal_informations *player_informations);
     bool getInTrade();
     void registerTradeRequest(LocalClientHandler * otherPlayerTrade);
     void registerBattleRequest(LocalClientHandler * otherPlayerTrade);
@@ -162,7 +162,7 @@ public slots:
     void useObjectOnMonster(const quint32 &object,const quint32 &monster);
     //teleportation
     void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     //shop
     void getShopList(const quint32 &query_id,const quint32 &shopId);
     void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
@@ -231,7 +231,7 @@ public slots:
     void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
 private slots:
-    virtual void extraStop();
+    void extraStop();
     static QString directionToStringToSave(const Direction &direction);
     static QString orientationToStringToSave(const Orientation &orientation);
     //quest

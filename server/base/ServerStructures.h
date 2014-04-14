@@ -31,7 +31,7 @@ class ClientBroadCast;
 class ClientMapManagement;
 class FakeBot;
 class PlayerUpdater;
-class Map_server_MapVisibility_simple;
+class Map_server_MapVisibility_Simple_StoreOnReceiver;
 
 struct Map_player_info
 {
@@ -174,6 +174,7 @@ struct ServerSettings
         {
             quint16 max;
             quint16 reshow;
+            bool storeOnSender;
         };
         MapVisibility_Simple simple;
         struct MapVisibility_WithBorder
@@ -182,6 +183,7 @@ struct ServerSettings
             quint16 reshowWithBorder;
             quint16 max;
             quint16 reshow;
+            bool storeOnSender;
         };
         MapVisibility_WithBorder withBorder;
     };
@@ -296,6 +298,7 @@ struct ServerPrivateVariables
 
     //map
     QHash<QString,CommonMap *> map_list;
+    QList<CommonMap *> flat_map_list;
     QHash<quint32,QString> id_map_to_map;
     QTimer *timer_to_send_insert_move_remove;
     QTimer positionSync;
@@ -306,6 +309,7 @@ struct ServerPrivateVariables
     PlayerUpdater player_updater;
     QSet<quint32> connected_players_id_list;
     QStringList server_message;
+    quint16 maxVisiblePlayerAtSameTime;
 
     quint32 number_of_bots_logged;
     int botSpawnIndex;
