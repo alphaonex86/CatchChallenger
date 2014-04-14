@@ -163,6 +163,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     else
         out << (quint32)0x00000000;
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
+    out << (quint16)GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime;
 
     //common settings
     out << (quint8)CommonSettings::commonSettings.forceClientToSendAtMapChange;

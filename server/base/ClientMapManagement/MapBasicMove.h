@@ -25,8 +25,8 @@ public:
 
     Direction getLastDirection() const;
     CommonMap* getMap() const;
-    inline COORD_TYPE getX() const;
-    inline COORD_TYPE getY() const;
+    COORD_TYPE getX() const;
+    COORD_TYPE getY() const;
 
     //internal var
     Player_internal_informations *player_informations;

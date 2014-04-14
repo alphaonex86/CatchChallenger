@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -729,7 +729,7 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
+           <item row="3" column="0">
             <spacer name="verticalSpacer_9">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -741,6 +741,16 @@
               </size>
              </property>
             </spacer>
+           </item>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="MapVisibilityAlgorithmSimpleStoreOnSender">
+             <property name="toolTip">
+              <string>Store the insert/move/remove on the sender</string>
+             </property>
+             <property name="text">
+              <string>Store on sender</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -764,46 +774,6 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QSpinBox" name="MapVisibilityAlgorithmWithBorderMaxWithBorder">
-             <property name="minimum">
-              <number>3</number>
-             </property>
-             <property name="maximum">
-              <number>9999</number>
-             </property>
-             <property name="value">
-              <number>20</number>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QLabel" name="label_36">
-             <property name="text">
-              <string>Number of player to re-show with border:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QSpinBox" name="MapVisibilityAlgorithmWithBorderReshowWithBorder">
-             <property name="minimum">
-              <number>2</number>
-             </property>
-             <property name="maximum">
-              <number>999</number>
-             </property>
-             <property name="value">
-              <number>10</number>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_38">
-             <property name="text">
-              <string>Max visible player: </string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="2">
             <widget class="QSpinBox" name="MapVisibilityAlgorithmWithBorderMax">
              <property name="minimum">
@@ -817,10 +787,23 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_37">
+           <item row="0" column="2">
+            <widget class="QSpinBox" name="MapVisibilityAlgorithmWithBorderMaxWithBorder">
+             <property name="minimum">
+              <number>3</number>
+             </property>
+             <property name="maximum">
+              <number>9999</number>
+             </property>
+             <property name="value">
+              <number>20</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_38">
              <property name="text">
-              <string>Number of player to re-show:</string>
+              <string>Max visible player: </string>
              </property>
             </widget>
            </item>
@@ -837,7 +820,7 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
+           <item row="5" column="1">
             <spacer name="verticalSpacer_10">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -849,6 +832,43 @@
               </size>
              </property>
             </spacer>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QLabel" name="label_36">
+             <property name="text">
+              <string>Number of player to re-show with border:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_37">
+             <property name="text">
+              <string>Number of player to re-show:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QSpinBox" name="MapVisibilityAlgorithmWithBorderReshowWithBorder">
+             <property name="minimum">
+              <number>2</number>
+             </property>
+             <property name="maximum">
+              <number>999</number>
+             </property>
+             <property name="value">
+              <number>10</number>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="MapVisibilityAlgorithmWithBorderStoreOnSender">
+             <property name="toolTip">
+              <string>Store the insert/move/remove on the sender</string>
+             </property>
+             <property name="text">
+              <string>Store on sender</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>

@@ -43,7 +43,7 @@ MapVisibilityAlgorithm_Simple_StoreOnReceiver::~MapVisibilityAlgorithm_Simple_St
 
 void MapVisibilityAlgorithm_Simple_StoreOnReceiver::insertClient()
 {
-    Map_server_MapVisibility_simple *temp_map=static_cast<Map_server_MapVisibility_simple*>(map);
+    Map_server_MapVisibility_Simple_StoreOnReceiver *temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map);
     if(Q_LIKELY(temp_map->show))
     {
         loop_size=temp_map->clients.size();
@@ -91,7 +91,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::insertClient()
 
 void MapVisibilityAlgorithm_Simple_StoreOnReceiver::moveClient(const quint8 &movedUnit,const Direction &direction)
 {
-    Map_server_MapVisibility_simple *temp_map=static_cast<Map_server_MapVisibility_simple*>(map);
+    Map_server_MapVisibility_Simple_StoreOnReceiver *temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map);
     if(Q_UNLIKELY(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
@@ -145,7 +145,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::dropAllClients()
 
 void MapVisibilityAlgorithm_Simple_StoreOnReceiver::reinsertClientForOthersOnSameMap()
 {
-    Map_server_MapVisibility_simple* map_temp=static_cast<Map_server_MapVisibility_simple*>(map);
+    Map_server_MapVisibility_Simple_StoreOnReceiver* map_temp=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map);
     if(Q_UNLIKELY(map_temp->show==false))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -171,7 +171,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::reinsertClientForOthersOnSam
 
 void MapVisibilityAlgorithm_Simple_StoreOnReceiver::removeClient()
 {
-    Map_server_MapVisibility_simple *temp_map=static_cast<Map_server_MapVisibility_simple*>(map);
+    Map_server_MapVisibility_Simple_StoreOnReceiver *temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map);
     loop_size=temp_map->clients.size();
     if(Q_UNLIKELY(temp_map->show==false))
     {
@@ -207,9 +207,9 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::removeClient()
         {
             current_client=temp_map->clients.at(index);
             current_client->removeAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId);
-            this->removeAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId);
             index++;
         }
+        ClientMapManagement::dropAllClients();
     }
 }
 
@@ -227,7 +227,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::reinsertAllClient()
     index=0;
     while(index<loop_size)
     {
-        current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
+        current_client=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map)->clients.at(index);
         if(Q_LIKELY(current_client!=this))
         {
             current_client->insertAnotherClient(thisSimplifiedId,this);
@@ -433,7 +433,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_insert()
         out << (quint16)map->id;
     else
         out << (quint32)map->id;
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         out << (quint8)to_send_insert.size();
     else
         out << (quint16)to_send_insert.size();
@@ -456,7 +456,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_insert()
             .arg(i_insert.value()->player_informations->public_and_private_informations.public_informations.skinId)
              );
         #endif
-        if(GlobalServerData::serverSettings.max_players<=255)
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             out << (quint8)i_insert.key();
         else
             out << (quint16)i_insert.key();
@@ -501,7 +501,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_move()
     purgeBuffer_indexMovement=0;
     i_move = to_send_move.constBegin();
     i_move_end = to_send_move.constEnd();
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         out << (quint8)to_send_move.size();
     else
         out << (quint16)to_send_move.size();
@@ -514,7 +514,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_move()
             .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverSettings.max_players<=255)
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             out << (quint8)i_move.key();
         else
             out << (quint16)i_move.key();
@@ -550,7 +550,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_remove()
     //////////////////////////// remove //////////////////////////
     i_remove = to_send_remove.constBegin();
     i_remove_end = to_send_remove.constEnd();
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         out << (quint8)to_send_remove.size();
     else
         out << (quint16)to_send_remove.size();
@@ -563,7 +563,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_remove()
             .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverSettings.max_players<=255)
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             out << (quint8)*i_remove;
         else
             out << (quint16)*i_remove;
@@ -587,7 +587,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_reinsert()
     out.setVersion(QDataStream::Qt_4_4);
 
     //////////////////////////// re-insert //////////////////////////
-    if(GlobalServerData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         out << (quint8)to_send_reinsert.size();
     else
         out << (quint16)to_send_reinsert.size();
@@ -606,7 +606,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::send_reinsert()
             .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverSettings.max_players<=255)
+        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
             out << (quint8)i_insert.key();
         else
             out << (quint16)i_insert.key();
@@ -635,7 +635,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnReceiver::singleMove(const Direction &
         mapHaveChanged=true;
         map=old_map;
         unloadFromTheMap();
-        map=static_cast<Map_server_MapVisibility_simple*>(new_map);
+        map=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(new_map);
         loadOnTheMap();
     }
     return true;
@@ -645,25 +645,25 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::loadOnTheMap()
 {
     insertClient();
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(static_cast<Map_server_MapVisibility_simple*>(map)->clients.contains(this))
+    if(static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map)->clients.contains(this))
     {
         emit message("loadOnTheMap() try dual insert into the player list");
         return;
     }
     #endif
-    static_cast<Map_server_MapVisibility_simple*>(map)->clients << this;
+    static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map)->clients << this;
 }
 
 void MapVisibilityAlgorithm_Simple_StoreOnReceiver::unloadFromTheMap()
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(!static_cast<Map_server_MapVisibility_simple*>(map)->clients.contains(this))
+    if(!static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map)->clients.contains(this))
     {
         emit message("unloadFromTheMap() try remove of the player list, but not found");
         return;
     }
     #endif
-    static_cast<Map_server_MapVisibility_simple*>(map)->clients.removeOne(this);
+    static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map)->clients.removeOne(this);
     mapVisiblity_unloadFromTheMap();
 }
 
@@ -787,7 +787,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnReceiver::teleportValidatedTo(CommonMa
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QStringLiteral("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
         #endif
-        this->map=static_cast<Map_server_MapVisibility_simple*>(map);
+        this->map=static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver*>(map);
         loadOnTheMap();
     }
     else
