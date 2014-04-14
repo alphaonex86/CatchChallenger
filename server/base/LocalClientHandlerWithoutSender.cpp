@@ -18,8 +18,8 @@ void LocalClientHandlerWithoutSender::doAllAction()
 {
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
     {
-        quint32 index=0;
-        const quint32 &list_size=allClient.size();
+        int index=0;
+        const int &list_size=allClient.size();
         while(index<list_size)
         {
             static_cast<LocalClientHandler*>(allClient.at(index))->savePosition();
