@@ -250,7 +250,7 @@ ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTr
     need_query_number(false),
     have_query_number(false)
 {
-    if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData))
+    if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
         DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
