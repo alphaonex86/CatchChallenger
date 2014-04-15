@@ -17,6 +17,7 @@ protected:
     static QString text_list;
     static QString text_id;
     static QString text_monster;
+    static QString text_monsters;
     static QString text_drops;
     static QString text_drop;
     static QString text_item;
