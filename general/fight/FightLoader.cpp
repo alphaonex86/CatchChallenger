@@ -277,7 +277,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=FightLoader::text_monsters)
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+            //DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
             file_index++;
             continue;
         }
@@ -560,6 +560,20 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                                             ok=false;
                                                         }
                                                     }
+                                                    if(attack.hasAttribute(FightLoader::text_level))
+                                                    {
+                                                        if(ok)
+                                                        {
+                                                            attackVar.learnAtLevel=attack.attribute(FightLoader::text_level).toUShort(&ok);
+                                                            if(!ok)
+                                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
+                                                        ok=false;
+                                                    }
                                                     if(ok)
                                                     {
                                                         int index;
@@ -569,7 +583,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                                             index=0;
                                                             while(index<monster.learn.size())
                                                             {
-                                                                if((monster.learn.at(index).learnSkillLevel-1)==attackVar.learnSkillLevel)
+                                                                if(monster.learn.at(index).learnSkillLevel==(attackVar.learnSkillLevel-1) && monster.learn.at(index).learnSkill==attackVar.learnSkill)
                                                                     break;
                                                                 index++;
                                                             }
@@ -579,40 +593,32 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                                                 ok=false;
                                                             }
                                                         }
-                                                        if(attack.hasAttribute(FightLoader::text_level))
+
+                                                        //check if can learn
+                                                        if(ok)
                                                         {
-                                                            if(ok)
+                                                            index=0;
+                                                            while(index<monster.learn.size())
                                                             {
-                                                                attackVar.learnAtLevel=attack.attribute(FightLoader::text_level).toUShort(&ok);
-                                                                if(!ok)
-                                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
-                                                            }
-                                                            //check if can learn
-                                                            if(ok)
-                                                            {
-                                                                index=0;
-                                                                while(index<monster.learn.size())
+                                                                if(attackVar.learnSkillLevel>1 && (monster.learn.at(index).learnSkillLevel-1)==attackVar.learnSkillLevel)
+                                                                    ok=true;
+                                                                if(monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel && monster.learn.at(index).learnSkill==attackVar.learnSkill)
                                                                 {
-                                                                    if(attackVar.learnSkillLevel>1 && (monster.learn.at(index).learnSkillLevel-1)==attackVar.learnSkillLevel)
-                                                                        ok=true;
-                                                                    if(monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel && monster.learn.at(index).learnSkill==attackVar.learnSkill)
-                                                                    {
-                                                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, attack already do for this level for skill %4 at level %5 for monster %6: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel).arg(id));
-                                                                        ok=false;
-                                                                        break;
-                                                                    }
-                                                                    if(monster.learn.at(index).learnSkill==attackVar.learnSkill && monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel)
-                                                                    {
-                                                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, this attack level is already found %4, level: %5 for attack: %6: child.tagName(): %2 (at line: %3)")
-                                                                                                 .arg(file).arg(attack.tagName()).arg(attack.lineNumber())
-                                                                                                 .arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel)
-                                                                                                 .arg(index)
-                                                                                                 );
-                                                                        ok=false;
-                                                                        break;
-                                                                    }
-                                                                    index++;
+                                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, attack already do for this level for skill %4 at level %5 for monster %6: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()).arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel).arg(id));
+                                                                    ok=false;
+                                                                    break;
                                                                 }
+                                                                if(monster.learn.at(index).learnSkill==attackVar.learnSkill && monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel)
+                                                                {
+                                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, this attack level is already found %4, level: %5 for attack: %6: child.tagName(): %2 (at line: %3)")
+                                                                                             .arg(file).arg(attack.tagName()).arg(attack.lineNumber())
+                                                                                             .arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel)
+                                                                                             .arg(index)
+                                                                                             );
+                                                                    ok=false;
+                                                                    break;
+                                                                }
+                                                                index++;
                                                             }
                                                             if(ok)
                                                                 monster.learn<<attackVar;

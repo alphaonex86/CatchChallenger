@@ -131,7 +131,7 @@ protected:
     virtual QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
 
     virtual bool initialize_the_database();
-    virtual void loadBotFile(const QString &fileName);
+    virtual void loadBotFile(const QString &mapfile, const QString &fileName);
     //FakeServer server;//wrong, create another object, here need use the global static object
 
     //to keep client list, QSet because it will have lot of more disconnecion than server closing

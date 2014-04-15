@@ -19,6 +19,7 @@ using namespace CatchChallenger;
 QString BaseServerFight::text_list=QLatin1Literal("list");
 QString BaseServerFight::text_id=QLatin1Literal("id");
 QString BaseServerFight::text_monster=QLatin1Literal("monster");
+QString BaseServerFight::text_monsters=QLatin1Literal("monsters");
 QString BaseServerFight::text_drops=QLatin1Literal("drops");
 QString BaseServerFight::text_drop=QLatin1Literal("drop");
 QString BaseServerFight::text_item=QLatin1Literal("item");
@@ -155,9 +156,9 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=BaseServerFight::text_list)
+    if(root.tagName()!=BaseServerFight::text_monsters)
     {
-        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(file));
+        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"monsters\" root balise not found for the xml file").arg(file));
         return monsterDrops;
     }
 
@@ -170,7 +171,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
         {
             if(item.hasAttribute(BaseServerFight::text_id))
             {
-                quint32 id=item.attribute(BaseServerFight::text_id).toUInt(&ok);
+                const quint32 &id=item.attribute(BaseServerFight::text_id).toUInt(&ok);
                 if(!ok)
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else if(!monsters.contains(id))

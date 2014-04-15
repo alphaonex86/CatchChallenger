@@ -1347,7 +1347,9 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
         {
             bots_number++;
             Map_to_send::Bot_Semi bot_Semi=semi_loaded_map.value(index).old_map.bots.at(sub_index);
-            loadBotFile(bot_Semi.file);
+            if(!bot_Semi.file.endsWith(BaseServer::text_dotxml))
+                bot_Semi.file+=BaseServer::text_dotxml;
+            loadBotFile(semi_loaded_map.value(index).map->map_file,bot_Semi.file);
             if(botFiles.contains(bot_Semi.file))
                 if(botFiles.value(bot_Semi.file).contains(bot_Semi.id))
                 {
@@ -1670,7 +1672,7 @@ bool BaseServer::initialize_the_database()
     return true;
 }
 
-void BaseServer::loadBotFile(const QString &file)
+void BaseServer::loadBotFile(const QString &mapfile,const QString &file)
 {
     if(botFiles.contains(file))
         return;
@@ -1680,26 +1682,26 @@ void BaseServer::loadBotFile(const QString &file)
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
-        QFile mapFile(file);
-        if(!mapFile.open(QIODevice::ReadOnly))
+        QFile botFile(file);
+        if(!botFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+            qDebug() << mapfile << botFile.fileName()+": "+botFile.errorString();
             return;
         }
-        QByteArray xmlContent=mapFile.readAll();
-        mapFile.close();
+        QByteArray xmlContent=botFile.readAll();
+        botFile.close();
         QString errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(botFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return;
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     bool ok;
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="bots")
+    if(root.tagName()!=BaseServer::text_bots)
     {
         qDebug() << QStringLiteral("\"bots\" root balise not found for the xml file");
         return;
@@ -1971,8 +1973,8 @@ void BaseServer::loadAndFixSettings()
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max)
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.mapVisibility.simple.max;
 
-        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.simple.max)
-            GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.simple.max;
+        /*do the coding part...if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.simple.max)
+            GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.simple.max;*/
     }
     else if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder)
     {
@@ -2002,9 +2004,6 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.reshow;
-
-        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
-            GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
     }
 
     if(GlobalServerData::serverSettings.database.secondToPositionSync==0)
