@@ -561,6 +561,7 @@ private:
     MoveType moveType;
     bool fightTimerFinish;
     int displayAttackProgression;
+    quint8 lastStepUsed;
     enum DoNextActionStep
     {
         DoNextActionStep_Start,

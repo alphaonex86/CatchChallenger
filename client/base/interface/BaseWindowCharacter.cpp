@@ -33,6 +33,8 @@ void BaseWindow::newProfileFinished()
     int profileIndex=0;
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         profileIndex=newProfile->getProfileIndex();
+    if(profileIndex>=CatchChallenger::CommonDatapack::commonDatapack.profileList.size())
+        return;
     Profile profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
     newProfile->deleteLater();
     newProfile=NULL;

@@ -185,7 +185,6 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 animationTimer[i.key()]=newTimer;
                 animationFrame[i.key()];//creation
                 connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer);
-                /// \todo syncro all the timer start, with frame offset to align with the other timer
                 newTimer->start();
             }
             if(!animationFrame.value(i.key()).contains(i.value().count))
@@ -197,12 +196,16 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 if(i.value().count!=0)
                 {
                     int index=0;
-                    while(index<i.value().animatedObject.size())
+                    while(index<i.value().animatedObjectList.size())
                     {
-                        Tiled::MapObject * mapObject=i.value().animatedObject.at(index);
+                        Tiled::MapObject * mapObject=i.value().animatedObjectList.at(index).animatedObject;
                         Tiled::Cell cell=mapObject->cell();
                         Tiled::Tile *tile=mapObject->cell().tile;
-                        Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+count);
+                        Tiled::Tile *newTile;
+                        if((count+i.value().animatedObjectList.at(index).randomOffset)>=i.value().frameCountTotal)
+                            newTile=tile->tileset()->tileAt(tile->id()+count-i.value().frameCountTotal);
+                        else
+                            newTile=tile->tileset()->tileAt(tile->id()+count);
                         cell.tile=newTile;
                         mapObject->setCell(cell);
                         index++;
@@ -386,17 +389,14 @@ void MapVisualiser::applyTheAnimationTimer()
                 {
                     isUsed=true;
                     tempMap->animatedObject[interval].count++;
-                    qint8 frameOffset=1;
-                    if(tempMap->animatedObject.value(interval).count>=tempMap->animatedObject.value(interval).frameCountTotal)
-                    {
-                        frameOffset-=tempMap->animatedObject.value(interval).frameCountTotal;
-                        tempMap->animatedObject[interval].count=0;
-                    }
-                    const QList<Tiled::MapObject *> &animatedObject=tempMap->animatedObject.value(interval).animatedObject;
+                    const QList<MapVisualiserThread::Map_animation_object> &animatedObject=tempMap->animatedObject.value(interval).animatedObjectList;
                     int index=0;
                     while(index<animatedObject.size())
                     {
-                        Tiled::MapObject * mapObject=animatedObject.at(index);
+                        qint8 frameOffset=1;
+                        if((tempMap->animatedObject.value(interval).count+animatedObject.at(index).randomOffset)==tempMap->animatedObject.value(interval).frameCountTotal)
+                            frameOffset-=tempMap->animatedObject.value(interval).frameCountTotal;
+                        Tiled::MapObject * mapObject=animatedObject.at(index).animatedObject;
                         Tiled::Cell cell=mapObject->cell();
                         Tiled::Tile *tile=mapObject->cell().tile;
                         Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+frameOffset);
@@ -404,6 +404,8 @@ void MapVisualiser::applyTheAnimationTimer()
                         mapObject->setCell(cell);
                         index++;
                     }
+                    if(tempMap->animatedObject.value(interval).count>=tempMap->animatedObject.value(interval).frameCountTotal)
+                        tempMap->animatedObject[interval].count=0;
                 }
             }
         }
