@@ -103,6 +103,7 @@ protected:
     static QString text_layer;
     static QString text_tile;
     static QString text_background;
+    static QString text_slash;
 };
 }
 
