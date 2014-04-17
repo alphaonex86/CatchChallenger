@@ -28,6 +28,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     if(isParsed)
         return;
     this->datapackPath=datapackPath;
+    parseReputation();
     parseBuff();
     parseTypes();
     parseItems();
@@ -37,7 +38,6 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseMonsters();
     parseMonstersEvolutionItems();
     parseMonstersItemToLearn();
-    parseReputation();
     parseQuests();
     parseBotFights();
     parseIndustries();
