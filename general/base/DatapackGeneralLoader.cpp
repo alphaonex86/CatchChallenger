@@ -2,6 +2,7 @@
 #include "DebugClass.h"
 #include "GeneralVariable.h"
 #include "CommonDatapack.h"
+#include "FacilityLib.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -36,7 +37,7 @@ QString DatapackGeneralLoader::text_item=QLatin1String("item");
 QString DatapackGeneralLoader::text_quantity=QLatin1String("quantity");
 QString DatapackGeneralLoader::text_monster=QLatin1String("monster");
 QString DatapackGeneralLoader::text_rate=QLatin1String("rate");
-QString DatapackGeneralLoader::text_percent=QLatin1String("percent");
+QString DatapackGeneralLoader::text_percent=QLatin1String("%");
 QString DatapackGeneralLoader::text_fight=QLatin1String("fight");
 QString DatapackGeneralLoader::text_plants=QLatin1String("plants");
 QString DatapackGeneralLoader::text_plant=QLatin1String("plant");
@@ -90,6 +91,7 @@ QString DatapackGeneralLoader::text_actionOn=QLatin1String("actionOn");
 QString DatapackGeneralLoader::text_layer=QLatin1String("layer");
 QString DatapackGeneralLoader::text_tile=QLatin1String("tile");
 QString DatapackGeneralLoader::text_background=QLatin1String("background");
+QString DatapackGeneralLoader::text_slash=QLatin1String("/");
 
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
@@ -1635,18 +1637,23 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
 {
     ItemFull items;
     QDir dir(folder);
-    const QFileInfoList &fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    const QStringList &fileList=FacilityLib::listFolder(dir.absolutePath()+DatapackGeneralLoader::text_slash);
     int file_index=0;
     while(file_index<fileList.size())
     {
-        if(!fileList.at(file_index).isFile())
+        if(!fileList.at(file_index).endsWith(DatapackGeneralLoader::text_dotxml))
+        {
+            file_index++;
+            continue;
+        }
+        const QString &file=folder+fileList.at(file_index);
+        if(!QFileInfo(file).isFile())
         {
             file_index++;
             continue;
         }
         QDomDocument domDocument;
         //open and quick check the file
-        const QString &file=fileList.at(file_index).absoluteFilePath();
         if(!file.endsWith(DatapackGeneralLoader::text_dotxml))
         {
             file_index++;
@@ -1764,7 +1771,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                     {
                                         if(repelItem.hasAttribute(DatapackGeneralLoader::text_step))
                                         {
-                                            quint32 step=repelItem.attribute(DatapackGeneralLoader::text_step).toUInt(&ok);
+                                            const quint32 &step=repelItem.attribute(DatapackGeneralLoader::text_step).toUInt(&ok);
                                             if(ok)
                                             {
                                                 if(step>0)
@@ -1779,7 +1786,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                                 qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
                                         }
                                         else
-                                            qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, repel have not the attribute step: child.tagName(): %2 (at line: %3)").arg(file).arg(repelItem.tagName()).arg(repelItem.lineNumber());
                                     }
                                 }
                             }
@@ -1803,25 +1810,28 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                                 }
                                                 else
                                                 {
-                                                    qint32 add=hpItem.attribute(DatapackGeneralLoader::text_add).toUInt(&ok);
-                                                    if(ok)
+                                                    if(!hpItem.attribute(DatapackGeneralLoader::text_add).contains(DatapackGeneralLoader::text_percent))//todo this part
                                                     {
-                                                        if(add>0)
+                                                        const qint32 &add=hpItem.attribute(DatapackGeneralLoader::text_add).toUInt(&ok);
+                                                        if(ok)
                                                         {
-                                                            MonsterItemEffect monsterItemEffect;
-                                                            monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                            monsterItemEffect.value=add;
-                                                            items.monsterItemEffect.insert(id,monsterItemEffect);
+                                                            if(add>0)
+                                                            {
+                                                                MonsterItemEffect monsterItemEffect;
+                                                                monsterItemEffect.type=MonsterItemEffectType_AddHp;
+                                                                monsterItemEffect.value=add;
+                                                                items.monsterItemEffect.insert(id,monsterItemEffect);
+                                                            }
+                                                            else
+                                                                qDebug() << QStringLiteral("Unable to open the file: %1, add is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
                                                         }
                                                         else
-                                                            qDebug() << QStringLiteral("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                                            qDebug() << QStringLiteral("Unable to open the file: %1, add is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
                                                     }
-                                                    else
-                                                        qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
                                                 }
                                             }
                                             else
-                                                qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, hp have not the attribute add: child.tagName(): %2 (at line: %3)").arg(file).arg(hpItem.tagName()).arg(hpItem.lineNumber());
                                         }
                                         hpItem = hpItem.nextSiblingElement(DatapackGeneralLoader::text_hp);
                                     }
@@ -1865,8 +1875,9 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                                         qDebug() << QStringLiteral("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
                                                 }
                                             }
-                                            else
-                                                qDebug() << QStringLiteral("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                            /// \todo
+                                             /* else
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, buff have not the attribute know attribute like remove: child.tagName(): %2 (at line: %3)").arg(file).arg(buffItem.tagName()).arg(buffItem.lineNumber());*/
                                         }
                                         buffItem = buffItem.nextSiblingElement(DatapackGeneralLoader::text_buff);
                                     }

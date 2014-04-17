@@ -48,7 +48,7 @@ QStringList FacilityLib::listFolder(const QString& folder,const QString& suffix)
 QString FacilityLib::randomPassword(const QString& string,const quint8& length)
 {
     if(string.size()<2)
-        return QStringLiteral("");
+        return QString();
     QString randomPassword;
     int index=0;
     while(index<length)
@@ -61,6 +61,9 @@ QString FacilityLib::randomPassword(const QString& string,const quint8& length)
 
 QStringList FacilityLib::skinIdList(const QString& skinPath)
 {
+    const QString &slashbackpng=QStringLiteral("/back.png");
+    const QString &slashfrontpng=QStringLiteral("/front.png");
+    const QString &slashtrainerpng=QStringLiteral("/trainer.png");
     QStringList skinFolderList;
     QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
@@ -68,7 +71,7 @@ QStringList FacilityLib::skinIdList(const QString& skinPath)
     {
         QFileInfo fileInfo=entryList.at(index);
         if(fileInfo.isDir())
-            if(QFile(fileInfo.absoluteFilePath()+QStringLiteral("/back.png")).exists() && QFile(fileInfo.absoluteFilePath()+QStringLiteral("/front.png")).exists() && QFile(fileInfo.absoluteFilePath()+QStringLiteral("/trainer.png")).exists())
+            if(QFile(fileInfo.absoluteFilePath()+slashbackpng).exists() && QFile(fileInfo.absoluteFilePath()+slashfrontpng).exists() && QFile(fileInfo.absoluteFilePath()+slashtrainerpng).exists())
                 skinFolderList << fileInfo.fileName();
     }
     skinFolderList.sort();

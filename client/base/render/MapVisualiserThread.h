@@ -28,11 +28,16 @@ class MapVisualiserThread : public QThread
 {
     Q_OBJECT
 public:
+    struct Map_animation_object
+    {
+        quint8 randomOffset;
+        Tiled::MapObject * animatedObject;
+    };
     struct Map_animation
     {
         quint8 count;
         quint8 frameCountTotal;
-        QList<Tiled::MapObject *> animatedObject;
+        QList<Map_animation_object> animatedObjectList;
     };
     struct Map_full
     {
@@ -97,6 +102,7 @@ public:
     static QString text_market;
     static QString text_zone;
     static QString text_fightid;
+    static QString text_randomoffset;
 signals:
     void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);
 public slots:

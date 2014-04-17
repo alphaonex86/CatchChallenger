@@ -47,6 +47,7 @@ QString MapVisualiserThread::text_zonecapture=QLatin1Literal("zonecapture");
 QString MapVisualiserThread::text_fight=QLatin1Literal("fight");
 QString MapVisualiserThread::text_zone=QLatin1Literal("zone");
 QString MapVisualiserThread::text_fightid=QLatin1Literal("fightid");
+QString MapVisualiserThread::text_randomoffset=QLatin1Literal("random-offset");
 
 MapVisualiserThread::MapVisualiserThread()
 {
@@ -501,7 +502,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                             if(!animation.isEmpty())
                             {
                                 const QStringList &animationList=animation.split(MapVisualiserThread::text_dotcomma);
-                                if(animationList.size()==2)
+                                if(animationList.size()>=2)
                                 {
                                     if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
                                     {
@@ -531,8 +532,6 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             objectGroup->addObject(object);
                                             object->setPosition(QPointF(x,y+1));
                                             Tiled::Cell cell=object->cell();
-                                            cell.tile=tile;
-                                            object->setCell(cell);
                                             if(!tempMapObject->animatedObject.contains(ms))
                                             {
                                                 Map_animation tempAnimationDescriptor;
@@ -540,8 +539,15 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                                 tempAnimationDescriptor.frameCountTotal=frames;
                                                 tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
                                             }
+                                            Map_animation_object map_animation_object;
+                                            map_animation_object.randomOffset=0;
+                                            if(animationList.size()>=3 && animationList.at(2)==MapVisualiserThread::text_randomoffset)
+                                                map_animation_object.randomOffset=rand()%frames;
+                                            cell.tile=tile->tileset()->tileAt(tile->id()+map_animation_object.randomOffset);
+                                            object->setCell(cell);
+                                            map_animation_object.animatedObject=object;
                                             /// \todo control the animation is not out of rame
-                                            tempMapObject->animatedObject[ms].animatedObject << object;
+                                            tempMapObject->animatedObject[ms].animatedObjectList << map_animation_object;
                                         }
                                         else
                                             qDebug() << "ms is 0 or frame is <=1";

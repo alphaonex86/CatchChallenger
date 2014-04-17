@@ -393,17 +393,22 @@ void DatapackClientLoader::parseReputationExtra()
 void DatapackClientLoader::parseItemsExtra()
 {
     QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
-    const QFileInfoList &fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    const QStringList &fileList=CatchChallenger::FacilityLib::listFolder(dir.absolutePath()+DatapackClientLoader::text_slash);
     int file_index=0;
     while(file_index<fileList.size())
     {
-        if(!fileList.at(file_index).isFile())
+        if(!fileList.at(file_index).endsWith(DatapackClientLoader::text_dotxml))
+        {
+            file_index++;
+            continue;
+        }
+        const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+fileList.at(file_index);
+        if(!QFileInfo(file).isFile())
         {
             file_index++;
             continue;
         }
         QDomDocument domDocument;
-        const QString &file=fileList.at(file_index).absoluteFilePath();
         if(!file.endsWith(DatapackClientLoader::text_dotxml))
         {
             file_index++;

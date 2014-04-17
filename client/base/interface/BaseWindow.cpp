@@ -60,6 +60,7 @@ BaseWindow::BaseWindow() :
     escape=false;
     movie=NULL;
     newProfile=NULL;
+    lastStepUsed=0;
     craftingAnimationObject=NULL;
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     ui->label_ultimate->setVisible(false);
@@ -1978,6 +1979,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
 //bot
 void BaseWindow::goToBotStep(const quint8 &step)
 {
+    lastStepUsed=step;
     isInQuest=false;
     if(!actualBot.step.contains(step))
     {
@@ -2635,6 +2637,12 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             index++;
             continue;
         }
+        else if(link=="next" && lastStepUsed>=1)
+        {
+            goToBotStep(lastStepUsed+1);
+            index++;
+            continue;
+        }
         quint8 step=link.toUShort(&ok);
         if(!ok)
         {
@@ -2948,6 +2956,7 @@ void BaseWindow::on_selectMonster_clicked()
 void BaseWindow::on_close_IG_dialog_clicked()
 {
     isInQuest=false;
+    lastStepUsed=0;
 }
 
 void BaseWindow::on_pushButtonFightBag_clicked()
