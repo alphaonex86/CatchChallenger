@@ -106,7 +106,6 @@ struct ServerSettings
     bool dontSendPlayerType;
     QString httpDatapackMirror;
     qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
-    bool datapackCacheMtime;
 
     struct LinuxSettings
     {

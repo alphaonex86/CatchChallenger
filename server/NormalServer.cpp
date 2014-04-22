@@ -481,8 +481,6 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("httpDatapackMirror"),QString());
     if(!settings->contains(QLatin1Literal("datapackCache")))
         settings->setValue(QLatin1Literal("datapackCache"),-1);
-    if(!settings->contains(QLatin1Literal("datapackCacheMtime")))
-        settings->setValue(QLatin1Literal("datapackCacheMtime"),false);
 
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));

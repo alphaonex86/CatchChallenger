@@ -125,7 +125,6 @@ private slots:
     void on_datapack_cache_timeout_editingFinished();
     void on_linux_socket_cork_toggled(bool checked);
     void datapack_cache_save();
-    void on_datapack_cache_mtime_stateChanged(int arg1);
     void on_MapVisibilityAlgorithmSimpleStoreOnSender_toggled(bool checked);
     void on_MapVisibilityAlgorithmWithBorderStoreOnSender_toggled(bool checked);
 signals:
