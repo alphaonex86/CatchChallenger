@@ -889,9 +889,9 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         QByteArray dataFile=data.mid(in.device()->pos(),size);
                         in.device()->seek(in.device()->pos()+size);
                         if(subCodeType==0x0003)
-                            DebugClass::debugConsole(QStringLiteral("Raw file to create: %1").arg(fileName));
+                            DebugClass::debugConsole(QStringLiteral("Raw file to create: %1 with time: %2").arg(fileName).arg(QDateTime::fromMSecsSinceEpoch(mtime*1000).toString()));
                         else
-                            DebugClass::debugConsole(QStringLiteral("Compressed file to create: %1").arg(fileName));
+                            DebugClass::debugConsole(QStringLiteral("Compressed file to create: %1 with time: %2").arg(fileName).arg(QDateTime::fromMSecsSinceEpoch(mtime*1000).toString()));
                         emit newFile(fileName,dataFile,mtime);
                         index++;
                     }

@@ -1345,10 +1345,7 @@ QHash<QString,quint32> ClientHeavyLoad::datapack_file_list()
                         #ifdef Q_OS_WIN32
                         fileName.replace(ClientHeavyLoad::text_antislash,ClientHeavyLoad::text_slash);//remplace if is under windows server
                         #endif
-                        if(GlobalServerData::serverSettings.datapackCacheMtime)
-                            filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
-                        else
-                            filesList[fileName]=0;
+                        filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
                         file.close();
                     }
                 }
@@ -1371,8 +1368,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
     QHash<QString,quint32> filesList=datapack_file_list_cached();
-    QHash<QString,quint32> filesListInfo;
-    QStringList fileToSend;
+    QList<FileToSend> fileToSendList;
 
     const int &loop_size=files.size();
     //send the size to download on the client
@@ -1398,11 +1394,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             if(filesListForSize.contains(fileName))
             {
                 quint32 file_mtime;
-                if(GlobalServerData::serverSettings.datapackCacheMtime)
-                    file_mtime=filesListForSize.value(fileName);
-                else
-                    file_mtime=QFileInfo(GlobalServerData::serverSettings.datapack_basePath+fileName).lastModified().toTime_t();
-                filesListInfo[fileName]=file_mtime;
+                file_mtime=filesListForSize.value(fileName);
                 if(file_mtime==mtime)
                     addDatapackListReply(false);//found
                 else
@@ -1410,7 +1402,10 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
                     addDatapackListReply(false);//found but updated
                     datapckFileNumber++;
                     datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
-                    fileToSend << fileName;
+                    FileToSend fileToSend;
+                    fileToSend.file=fileName;
+                    fileToSend.mtime=mtime;
+                    fileToSendList << fileToSend;
                 }
                 filesListForSize.remove(fileName);
             }
@@ -1423,7 +1418,10 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             i.next();
             datapckFileNumber++;
             datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+i.key()).size();
-            fileToSend << i.key();
+            FileToSend fileToSend;
+            fileToSend.file=i.key();
+            fileToSend.mtime=i.value();
+            fileToSendList << fileToSend;
         }
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1432,7 +1430,6 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         out << (quint32)datapckFileSize;
         emit sendFullPacket(0xC2,0x000C,outputData);
     }
-    fileToSend.sort();
     if(GlobalServerData::serverSettings.httpDatapackMirror.isEmpty())
     {
         //validate, remove or update the file actualy on the client
@@ -1444,9 +1441,9 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         //send not in the list
         {
             int index=0;
-            while(index<fileToSend.size())
+            while(index<fileToSendList.size())
             {
-                sendFile(fileToSend.at(index),filesListInfo.value(fileToSend.at(index)));
+                sendFile(fileToSendList.at(index).file,fileToSendList.at(index).mtime);
                 index++;
             }
         }
@@ -1462,42 +1459,29 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             emit error(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
             return;
         }
-
-        QList<QString> fileHttpListName;
-        QList<quint64> fileHttpListDate;
         //validate, remove or update the file actualy on the client
         if(tempDatapackListReplyTestCount!=files.size())
         {
             emit error("Bit count return not match");
             return;
         }
-        //send not in the list
-        {
-            int index=0;
-            while(index<fileToSend.size())
-            {
-                fileHttpListName << fileToSend.at(index);
-                fileHttpListDate << filesListInfo.value(fileToSend.at(index));
-                index++;
-            }
-        }
-        if(!fileHttpListName.isEmpty())
+        if(!fileToSendList.isEmpty())
         {
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);
             out.device()->seek(out.device()->size());
-            out << (quint32)fileHttpListName.size();
+            out << (quint32)fileToSendList.size();
             quint32 index=0;
-            const quint32 &fileHttpListNameSize=fileHttpListName.size();
+            const quint32 &fileHttpListNameSize=fileToSendList.size();
             while(index<fileHttpListNameSize)
             {
-                const QByteArray &rawFileName=FacilityLib::toUTF8(fileHttpListName.at(index));
+                const QByteArray &rawFileName=FacilityLib::toUTF8(fileToSendList.at(index).file);
                 if(rawFileName.size()>255 || rawFileName.isEmpty())
                 {
                     emit error(QLatin1Literal("file path too big or not compatible with utf8"));
                     return;
                 }
-                const quint64 &fileInfoModTime=fileHttpListDate.at(index);
+                const quint64 &fileInfoModTime=fileToSendList.at(index).mtime;
                 outputData+=rawFileName;
                 out.device()->seek(out.device()->size());
                 out << (quint64)fileInfoModTime;

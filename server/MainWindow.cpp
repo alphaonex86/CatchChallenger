@@ -335,8 +335,6 @@ void MainWindow::load_settings()
             ui->datapack_cache_timeout_checkbox->setEnabled(ui->datapack_cache->isChecked());
             ui->datapack_cache_timeout->setEnabled(ui->datapack_cache->isChecked() && ui->datapack_cache_timeout_checkbox->isChecked());
         }
-        ui->datapack_cache_mtime->setEnabled(ui->datapack_cache->isChecked());
-        ui->datapack_cache_mtime->setChecked(settings->value(QLatin1Literal("datapackCacheMtime")).toBool());
     }
     {
         #ifdef Q_OS_LINUX
@@ -637,7 +635,6 @@ void MainWindow::send_settings()
         formatedServerSettings.datapackCache			= 0;
     else
         formatedServerSettings.datapackCache			= ui->datapack_cache_timeout->value();
-    formatedServerSettings.datapackCacheMtime           = ui->datapack_cache_mtime->isChecked();
     #ifdef Q_OS_LINUX
     formatedServerSettings.linuxSettings.tcpCork    	= ui->linux_socket_cork->isChecked();
     #endif
@@ -1311,12 +1308,6 @@ void MainWindow::on_linux_socket_cork_toggled(bool checked)
     settings->setValue(QLatin1Literal("tcpCork"),checked);
     settings->endGroup();
     #endif
-}
-
-void CatchChallenger::MainWindow::on_datapack_cache_mtime_stateChanged(int arg1)
-{
-    Q_UNUSED(arg1);
-    settings->setValue(QLatin1Literal("datapackCacheMtime"),ui->datapack_cache_mtime->isChecked());
 }
 
 void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleStoreOnSender_toggled(bool checked)

@@ -64,6 +64,11 @@ public:
     static QString text_warehouse;
     static QString text_wear;
     static QString text_market;
+    struct FileToSend
+    {
+        QString file;
+        quint32 mtime;
+    };
 public slots:
     void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
     void deleteCharacterNow(const quint32 &characterId);
