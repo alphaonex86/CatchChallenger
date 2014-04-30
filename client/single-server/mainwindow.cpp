@@ -4,6 +4,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/InternetUpdater.h"
+#include "../../general/base/CommonSettings.h"
 #include <QNetworkProxy>
 #include <QStandardPaths>
 
@@ -114,11 +115,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&MainWindow::message);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&MainWindow::have_current_player_info);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::logged,this,&MainWindow::logged);
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
     connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&MainWindow::stateChanged,Qt::QueuedConnection);
+    connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
+    updateTheOkButtonTimer.setSingleShot(false);
+    updateTheOkButtonTimer.start(1000);
     numberForFlood=0;
     haveShowDisconnectionReason=false;
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
@@ -145,11 +150,12 @@ void MainWindow::resetAll()
     CatchChallenger::Api_client_real::client->resetAll();
     CatchChallenger::BaseWindow::baseWindow->resetAll();
     ui->stackedWidget->setCurrentWidget(ui->page_login);
+    updateTheOkButton();
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
     chat_list_text.clear();
-    lastMessageSend="";
+    lastMessageSend.clear();
     if(ui->lineEditLogin->text().isEmpty())
         ui->lineEditLogin->setFocus();
     else if(ui->lineEditPass->text().isEmpty())
@@ -178,6 +184,7 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
 void MainWindow::disconnected(QString reason)
 {
     QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
+    lastServerIsKick[server_dns_or_ip]=true;
     haveShowDisconnectionReason=true;
     resetAll();
 }
@@ -209,6 +216,8 @@ void MainWindow::on_lineEditPass_returnPressed()
 
 void MainWindow::on_pushButtonTryLogin_clicked()
 {
+    if(!ui->pushButtonTryLogin->isEnabled())
+        return;
     if(ui->lineEditPass->text().size()<6)
     {
         QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
@@ -219,6 +228,8 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Your login need to be at minimum of 3 characters"));
         return;
     }
+    lastServerConnect[server_dns_or_ip]=QDateTime::currentDateTime();
+    lastServerIsKick[server_dns_or_ip]=false;
     QStringList loginList=settings.value("login").toStringList();
     if(serverLoginList.contains(ui->lineEditLogin->text()))
         loginList.removeOne(ui->lineEditLogin->text());
@@ -414,4 +425,42 @@ void MainWindow::on_lineEditLogin_textChanged(const QString &arg1)
         ui->lineEditPass->setText(serverLoginList.value(arg1));
     else
         ui->lineEditPass->setText(QString());
+}
+
+void MainWindow::logged()
+{
+    lastServerWaitBeforeConnectAfterKick[server_dns_or_ip]=CommonSettings::commonSettings.waitBeforeConnectAfterKick;
+}
+
+void MainWindow::updateTheOkButton()
+{
+    if(!lastServerWaitBeforeConnectAfterKick.contains(server_dns_or_ip))
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    if(!lastServerConnect.contains(server_dns_or_ip))
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    quint32 timeToWait=5;
+    if(lastServerIsKick.value(server_dns_or_ip))
+        if(lastServerWaitBeforeConnectAfterKick.value(server_dns_or_ip)>timeToWait)
+            timeToWait=lastServerWaitBeforeConnectAfterKick.value(server_dns_or_ip);
+    quint32 secondLstSinceConnexion=lastServerConnect.value(server_dns_or_ip).toTime_t()-QDateTime::currentDateTime().toTime_t();
+    if(secondLstSinceConnexion>=timeToWait)
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    else
+    {
+        ui->pushButtonTryLogin->setEnabled(false);
+        ui->pushButtonTryLogin->setText(tr("Ok (%1)").arg(timeToWait-secondLstSinceConnexion));
+        return;
+    }
 }

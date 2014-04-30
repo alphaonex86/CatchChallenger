@@ -15,6 +15,7 @@ protected:
     virtual void remove_plant_on_map(const QString &map,const quint8 &x,const quint8 &y);
 
 protected:
+    static QString text_dottmx;
     static QString text_shops;
     static QString text_shop;
     static QString text_id;

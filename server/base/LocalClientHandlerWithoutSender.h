@@ -14,6 +14,7 @@ public:
     QList<void*> allClient;
 public slots:
     void doAllAction();
+    void doDDOSAction();
 };
 }
 

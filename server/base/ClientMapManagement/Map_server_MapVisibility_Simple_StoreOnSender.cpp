@@ -209,18 +209,17 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     //send move
     if(move_count>0)
     {
-        int real_move_count;
-        int index_subindex;
-        int index_move;
-
-        int index=0;
-        while(index<clientsToSendDataSizeOldClients)
+        if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
         {
+            int real_move_count;
+            int index_subindex;
+            int index_move;
+
             real_move_count=0;
             index_subindex=0;
             while (index_subindex<clientsToSendDataSizeOldClients)
             {
-                if(index!=index_subindex && !clientsToSendDataOldClients[index_subindex]->to_send_move.isEmpty() && !clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                if(!clientsToSendDataOldClients[index_subindex]->to_send_move.isEmpty() && !clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
                     real_move_count++;
                 index_subindex++;
             }
@@ -238,7 +237,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex=0;
                 while (index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    if(index!=index_subindex && !clientsToSendDataOldClients[index_subindex]->to_send_move.isEmpty() && !clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                    if(!clientsToSendDataOldClients[index_subindex]->to_send_move.isEmpty() && !clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
                     {
                         const MapVisibilityAlgorithm_Simple_StoreOnSender &client=*clientsToSendDataOldClients[index_subindex];
                         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
@@ -256,9 +255,67 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     index_subindex++;
                 }
-                clientsToSendDataOldClients[index]->sendPacket(0xC7,purgeBuffer_outputData);
+                int index=0;
+                while(index<clientsToSendDataSizeOldClients)
+                {
+                    clientsToSendDataOldClients[index]->sendPacket(0xC7,purgeBuffer_outputData);
+                    index++;
+                }
             }
-            index++;
+        }
+        else
+        {
+            int real_move_count;
+            int index_subindex;
+            int index_move;
+
+            int index=0;
+            while(index<clientsToSendDataSizeOldClients)
+            {
+                real_move_count=0;
+                index_subindex=0;
+                while (index_subindex<clientsToSendDataSizeOldClients)
+                {
+                    if(index!=index_subindex && !clientsToSendDataOldClients[index_subindex]->to_send_move.isEmpty() && !clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                        real_move_count++;
+                    index_subindex++;
+                }
+                if(real_move_count>0)
+                {
+                    QByteArray purgeBuffer_outputData;
+                    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
+                    out.setVersion(QDataStream::Qt_4_4);
+
+                    //////////////////////////// insert //////////////////////////
+                    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                        out << (quint8)real_move_count;
+                    else
+                        out << (quint16)real_move_count;
+                    index_subindex=0;
+                    while (index_subindex<clientsToSendDataSizeOldClients)
+                    {
+                        if(index!=index_subindex && !clientsToSendDataOldClients[index_subindex]->to_send_move.isEmpty() && !clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                        {
+                            const MapVisibilityAlgorithm_Simple_StoreOnSender &client=*clientsToSendDataOldClients[index_subindex];
+                            if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                                out << (quint8)client.player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            else
+                                out << (quint16)client.player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << (quint8)client.to_send_move.size();
+                            index_move=0;
+                            while(index_move<client.to_send_move.size())
+                            {
+                                out << client.to_send_move.at(index_move).movedUnit;
+                                out << (quint8)client.to_send_move.at(index_move).direction;
+                                index_move++;
+                            }
+                        }
+                        index_subindex++;
+                    }
+                    clientsToSendDataOldClients[index]->sendPacket(0xC7,purgeBuffer_outputData);
+                }
+                index++;
+            }
         }
     }
     //send insert
@@ -319,17 +376,16 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     //send reinsert
     if(reinsert_count>0)
     {
-        int real_reinsert_count;
-        int index_subindex;
-
-        int index=0;
-        while(index<clientsToSendDataSizeOldClients)
+        if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
         {
+            int real_reinsert_count;
+            int index_subindex;
+
             real_reinsert_count=0;
             index_subindex=0;
             while (index_subindex<clientsToSendDataSizeOldClients)
             {
-                if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                if(clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
                     real_reinsert_count++;
                 index_subindex++;
             }
@@ -347,7 +403,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex=0;
                 while (index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                    if(clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
                     {
                         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                             out << (quint8)clientsToSendDataOldClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
@@ -359,9 +415,60 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     index_subindex++;
                 }
-                clientsToSendDataOldClients[index]->sendPacket(0xC5,purgeBuffer_outputData);
+                int index=0;
+                while(index<clientsToSendDataSizeOldClients)
+                {
+                    clientsToSendDataOldClients[index]->sendPacket(0xC5,purgeBuffer_outputData);
+                    index++;
+                }
             }
-            index++;
+        }
+        else
+        {
+            int real_reinsert_count;
+            int index_subindex;
+
+            int index=0;
+            while(index<clientsToSendDataSizeOldClients)
+            {
+                real_reinsert_count=0;
+                index_subindex=0;
+                while (index_subindex<clientsToSendDataSizeOldClients)
+                {
+                    if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                        real_reinsert_count++;
+                    index_subindex++;
+                }
+                if(real_reinsert_count>0)
+                {
+                    QByteArray purgeBuffer_outputData;
+                    QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
+                    out.setVersion(QDataStream::Qt_4_4);
+
+                    //////////////////////////// insert //////////////////////////
+                    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                        out << (quint8)real_reinsert_count;
+                    else
+                        out << (quint16)real_reinsert_count;
+                    index_subindex=0;
+                    while (index_subindex<clientsToSendDataSizeOldClients)
+                    {
+                        if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
+                        {
+                            if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                                out << (quint8)clientsToSendDataOldClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            else
+                                out << (quint16)clientsToSendDataOldClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << clientsToSendDataOldClients[index_subindex]->getX();
+                            out << clientsToSendDataOldClients[index_subindex]->getY();
+                            out << (quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                        }
+                        index_subindex++;
+                    }
+                    clientsToSendDataOldClients[index]->sendPacket(0xC5,purgeBuffer_outputData);
+                }
+                index++;
+            }
         }
     }
     //purge

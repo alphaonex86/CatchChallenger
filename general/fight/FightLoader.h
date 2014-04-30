@@ -18,7 +18,7 @@ public:
     static QHash<quint32/*item*/, QSet<quint32/*monster*/> > loadMonsterItemToLearn(const QHash<quint32,Monster> &monsters, const QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > &evolutionItem);
     static QHash<quint32,Skill> loadMonsterSkill(const QString &folder, const QHash<quint32,Buff> &monsterBuffs, const QList<Type> &types);
     static QHash<quint32,Buff> loadMonsterBuff(const QString &folder);
-    static QHash<quint32,BotFight> loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills);
+    static QHash<quint32,BotFight> loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills, const QHash<quint32, Item> &items);
     static QList<PlayerMonster::PlayerSkill> loadDefaultAttack(const quint32 &monsterId, const quint8 &level, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills);
     static QString text_type;
     static QString text_name;

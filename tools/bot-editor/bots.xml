@@ -41,21 +41,21 @@ skin is invisible
         </step>
     </bot>
     <bot id="5">
-        <step id="1" fightid="1" type="fight"/>
+        <step id="1" type="fight" fightid="1"/>
     </bot>
     <bot id="100">
         <step id="1" type="heal"/>
     </bot>
     <bot id="101">
-        <step id="1" shop="1" type="sell"/>
+        <step id="1" type="sell" shop="1"/>
     </bot>
     <bot id="201">
-        <step id="1" fightid="1" type="fight"/>
+        <step id="1" type="fight" fightid="1"/>
     </bot>
     <bot id="202">
-        <step id="1" fightid="2" type="fight"/>
+        <step id="1" type="fight" fightid="2"/>
     </bot>
     <bot id="203">
-        <step id="1" fightid="3" type="fight"/>
+        <step id="1" type="fight" fightid="3"/>
     </bot>
 </bots>

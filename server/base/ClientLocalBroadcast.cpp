@@ -21,6 +21,9 @@ void ClientLocalBroadcast::extraStop()
 
 void ClientLocalBroadcast::sendLocalChatText(const QString &text)
 {
+    if((static_cast<MapServer *>(map)->localChatDropTotalCache+static_cast<MapServer *>(map)->localChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
+        return;
+    static_cast<MapServer *>(map)->localChatDropNewValue++;
     if(map==NULL)
         return;
     if(this->player_informations==NULL)

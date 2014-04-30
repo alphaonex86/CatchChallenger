@@ -71,6 +71,7 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
 {
     CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
+    CommonSettings::commonSettings.waitBeforeConnectAfterKick=0;
     CommonSettings::commonSettings.max_character=1;
     CommonSettings::commonSettings.min_character=1;
 

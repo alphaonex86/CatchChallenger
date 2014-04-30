@@ -103,6 +103,7 @@ protected:
         Map_to_send old_map;
     };
     virtual void preload_the_data();
+    virtual void preload_the_ddos();
     virtual void preload_zone();
     virtual void preload_industries();
     virtual void preload_market_monsters();

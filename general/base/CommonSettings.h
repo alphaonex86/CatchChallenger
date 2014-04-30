@@ -13,6 +13,7 @@ public:
     quint8 forcedSpeed;
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
+    int waitBeforeConnectAfterKick;
 
     //rates
     float rates_xp;

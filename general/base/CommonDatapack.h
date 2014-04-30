@@ -41,6 +41,7 @@ public:
     QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
     QList<MonstersCollision> monstersCollision;
     LayersOptions layersOptions;
+    QList<Event> events;
 private:
     QMutex inProgress;
     bool isParsed;
@@ -54,6 +55,7 @@ private slots:
     void parseCraftingRecipes();
     void parseBuff();
     void parseSkills();
+    void parseEvents();
     void parseMonsters();
     void parseMonstersEvolutionItems();
     void parseMonstersItemToLearn();

@@ -221,6 +221,24 @@ qint64 ConnectedSocket::bytesAvailable() const
     return -1;
 }
 
+QIODevice::OpenMode ConnectedSocket::openMode() const
+{
+    if(fakeSocket!=NULL)
+        return fakeSocket->openMode();
+    if(sslSocket!=NULL)
+        return sslSocket->openMode();
+    return QIODevice::NotOpen;
+}
+
+QString ConnectedSocket::errorString() const
+{
+    if(fakeSocket!=NULL)
+        return fakeSocket->errorString();
+    if(sslSocket!=NULL)
+        return sslSocket->errorString();
+    return QString();
+}
+
 void ConnectedSocket::close()
 {
     abort();

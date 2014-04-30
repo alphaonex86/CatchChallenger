@@ -127,6 +127,7 @@ private slots:
     void datapack_cache_save();
     void on_MapVisibilityAlgorithmSimpleStoreOnSender_toggled(bool checked);
     void on_MapVisibilityAlgorithmWithBorderStoreOnSender_toggled(bool checked);
+    void on_MapVisibilityAlgorithmSimpleReemit_toggled(bool checked);
 signals:
     void record_latency();
 };

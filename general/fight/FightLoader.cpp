@@ -925,7 +925,7 @@ QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint32 &
     return skills;
 }
 
-QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills)
+QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills, const QHash<quint32, Item> &items)
 {
     QHash<quint32,BotFight> botFightList;
     QDir dir(folder);
@@ -1089,9 +1089,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                 {
                                     if(gain.isElement())
                                     {
-                                        if(!gain.hasAttribute(FightLoader::text_cash))
-                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("unknown fight gain: bot.tagName(): %1 (at line: %2)").arg(gain.tagName()).arg(gain.lineNumber()));
-                                        else
+                                        if(gain.hasAttribute(FightLoader::text_cash))
                                         {
                                             const quint32 &cash=gain.attribute(FightLoader::text_cash).toUInt(&ok)*CommonSettings::commonSettings.rates_gold;
                                             if(ok)
@@ -1099,6 +1097,34 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                             else
                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, unknow cash text: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                         }
+                                        else if(gain.hasAttribute(FightLoader::text_item))
+                                        {
+                                            BotFight::Item itemVar;
+                                            itemVar.quantity=1;
+                                            itemVar.id=gain.attribute(FightLoader::text_item).toUInt(&ok);
+                                            if(ok)
+                                            {
+                                                if(items.contains(itemVar.id))
+                                                {
+                                                    if(gain.hasAttribute(FightLoader::text_quantity))
+                                                    {
+                                                        itemVar.quantity=gain.attribute(FightLoader::text_quantity).toUInt(&ok);
+                                                        if(!ok || itemVar.quantity<1)
+                                                        {
+                                                            itemVar.quantity=1;
+                                                            DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity value is wrong: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                        }
+                                                    }
+                                                    botFight.items << itemVar;
+                                                }
+                                                else
+                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                            else
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, unknow item id text: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        }
+                                        else
+                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("unknown fight gain: bot.tagName(): %1 tag %2 (at line: %3)").arg(file).arg(gain.tagName()).arg(gain.lineNumber()));
                                     }
                                     else
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(gain.tagName().arg(gain.attribute(FightLoader::text_type)).arg(gain.lineNumber())));

@@ -69,9 +69,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
     //connect(CatchChallenger::BaseWindow::baseWindow,                &CatchChallenger::BaseWindow::needQuit,             this,&MainWindow::needQuit);
+    connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
+    updateTheOkButtonTimer.setSingleShot(false);
+    updateTheOkButtonTimer.start(1000);
     numberForFlood=0;
     haveShowDisconnectionReason=false;
 
@@ -88,11 +91,6 @@ MainWindow::~MainWindow()
         CatchChallenger::BaseWindow::baseWindow->deleteLater();
         CatchChallenger::BaseWindow::baseWindow=NULL;
     }
-    /*if(CatchChallenger::Api_client_real::client!=NULL)
-    {
-        CatchChallenger::Api_client_real::client->tryDisconnect();
-        CatchChallenger::Api_client_real::client->deleteLater();
-    }*/
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
         delete CatchChallenger::BaseWindow::baseWindow;
     /*if(socket!=NULL)
@@ -420,6 +418,14 @@ bool ConnexionInfo::operator<(const ConnexionInfo &connexionInfo) const
 
 void MainWindow::displayServerList()
 {
+    QString unique_code;
+    if(serverConnexion.contains(selectedServer))
+    {
+        if(serverConnexion.value(selectedServer)->unique_code.isEmpty())
+            unique_code=QString("%1:%2").arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port);
+        else
+            unique_code=serverConnexion.value(selectedServer)->unique_code;
+    }
     selectedServer=NULL;
     int index=0;
     while(server.size()>0)
@@ -447,7 +453,16 @@ void MainWindow::displayServerList()
             lastConnexion=tr("Last connexion: %1").arg(QDateTime::fromMSecsSinceEpoch((quint64)connexionInfo.lastConnexion*1000).toString());
         QString custom;
         if(connexionInfo.unique_code.isEmpty())
+        {
             custom=QStringLiteral(" (%1)").arg(tr("Custom"));
+            if(unique_code==QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port))
+                selectedServer=newEntry;
+        }
+        else
+        {
+            if(unique_code==connexionInfo.unique_code)
+                selectedServer=newEntry;
+        }
         if(connexionInfo.name.isEmpty())
         {
             name=QStringLiteral("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
@@ -553,6 +568,7 @@ void MainWindow::on_server_select_clicked()
         return;
     }
     ui->stackedWidget->setCurrentWidget(ui->login);
+    updateTheOkButton();
     if(customServerConnexion.contains(selectedServer))
         settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
     else
@@ -677,7 +693,11 @@ void MainWindow::serverListEntryEnvoluedDoubleClicked()
 void MainWindow::resetAll()
 {
     if(CatchChallenger::Api_client_real::client!=NULL)
+    {
         CatchChallenger::Api_client_real::client->resetAll();
+        CatchChallenger::Api_client_real::client->deleteLater();
+        CatchChallenger::Api_client_real::client=NULL;
+    }
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
         CatchChallenger::BaseWindow::baseWindow->resetAll();
     setWindowTitle(QStringLiteral("CatchChallenger Ultimate"));
@@ -710,7 +730,7 @@ void MainWindow::resetAll()
     chat_list_player_type.clear();
     chat_list_type.clear();
     chat_list_text.clear();
-    lastMessageSend="";
+    lastMessageSend.clear();
     if(ui->lineEditLogin->text().isEmpty())
         ui->lineEditLogin->setFocus();
     else if(ui->lineEditPass->text().isEmpty())
@@ -738,6 +758,8 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
 void MainWindow::disconnected(QString reason)
 {
     QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
+    /*if(serverConnexion.contains(selectedServer))
+        lastServerIsKick[serverConnexion.value(selectedServer)->host]=true;*/
     haveShowDisconnectionReason=true;
     resetAll();
 }
@@ -769,6 +791,8 @@ void MainWindow::on_lineEditPass_returnPressed()
 
 void MainWindow::on_pushButtonTryLogin_clicked()
 {
+    if(!ui->pushButtonTryLogin->isEnabled())
+        return;
     if(ui->lineEditPass->text().size()<6)
     {
         QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
@@ -780,10 +804,12 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         return;
     }
     serverMode=ServerMode_Remote;
+    lastServerConnect[serverConnexion.value(selectedServer)->host]=QDateTime::currentDateTime();
+    lastServerIsKick[serverConnexion.value(selectedServer)->host]=false;
     if(customServerConnexion.contains(selectedServer))
-        settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+        settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
     else
-        settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
+        settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion.value(selectedServer)->unique_code));
 
     QStringList loginList=settings.value("login").toStringList();
     if(serverLoginList.contains(ui->lineEditLogin->text()))
@@ -813,21 +839,22 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     realSocket=new QSslSocket();
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
-    if(!serverConnexion[selectedServer]->proxyHost.isEmpty())
+    if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
     {
         QNetworkProxy proxy=realSocket->proxy();
         proxy.setType(QNetworkProxy::Socks5Proxy);
-        proxy.setHostName(serverConnexion[selectedServer]->proxyHost);
-        proxy.setPort(serverConnexion[selectedServer]->proxyPort);
+        proxy.setHostName(serverConnexion.value(selectedServer)->proxyHost);
+        proxy.setPort(serverConnexion.value(selectedServer)->proxyPort);
         realSocket->setProxy(proxy);
     }
     connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection);
-    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection);
+    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     connect(socket,                                                 static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
@@ -840,10 +867,10 @@ void MainWindow::on_pushButtonTryLogin_clicked()
             return;
         }
     CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
-    static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(serverConnexion[selectedServer]->host,serverConnexion[selectedServer]->port);
+    static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(serverConnexion.value(selectedServer)->host,serverConnexion.value(selectedServer)->port);
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
-    serverConnexion[selectedServer]->connexionCounter++;
-    serverConnexion[selectedServer]->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+    serverConnexion.value(selectedServer)->connexionCounter++;
+    serverConnexion.value(selectedServer)->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
     saveConnexionInfoList();
     displayServerList();
 }
@@ -853,13 +880,13 @@ QString MainWindow::serverToDatapachPath(ListEntryEnvolued * selectedServer) con
     QDir datapack;
     if(customServerConnexion.contains(selectedServer))
     {
-        if(!serverConnexion[selectedServer]->name.isEmpty())
-             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion[selectedServer]->name));
+        if(!serverConnexion.value(selectedServer)->name.isEmpty())
+             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->name));
         else
-             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
     }
     else
-        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion[selectedServer]->unique_code));
+        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
     return datapack.absolutePath();
 }
 
@@ -1393,6 +1420,7 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 {
     CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
+    CommonSettings::commonSettings.waitBeforeConnectAfterKick=0;
     CommonSettings::commonSettings.max_character=1;
     CommonSettings::commonSettings.min_character=1;
 
@@ -1460,4 +1488,55 @@ void MainWindow::on_lineEditLogin_textChanged(const QString &arg1)
         ui->lineEditPass->setText(serverLoginList.value(arg1));
     else
         ui->lineEditPass->setText(QString());
+}
+
+void MainWindow::logged()
+{
+    /*if(serverConnexion.contains(selectedServer))
+        lastServerWaitBeforeConnectAfterKick[serverConnexion.value(selectedServer)->host]=CommonSettings::commonSettings.waitBeforeConnectAfterKick;*/
+}
+
+void MainWindow::updateTheOkButton()
+{
+    if(selectedServer==NULL)
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    if(!serverConnexion.contains(selectedServer))
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    if(!lastServerWaitBeforeConnectAfterKick.contains(serverConnexion.value(selectedServer)->host))
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    if(!lastServerConnect.contains(serverConnexion.value(selectedServer)->host))
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    quint32 timeToWait=5;
+    if(lastServerIsKick.value(serverConnexion.value(selectedServer)->host))
+        if(lastServerWaitBeforeConnectAfterKick.value(serverConnexion.value(selectedServer)->host)>timeToWait)
+            timeToWait=lastServerWaitBeforeConnectAfterKick.value(serverConnexion.value(selectedServer)->host);
+    quint32 secondLastSinceConnexion=QDateTime::currentDateTime().toTime_t()-lastServerConnect.value(serverConnexion.value(selectedServer)->host).toTime_t();
+    if(secondLastSinceConnexion>=timeToWait)
+    {
+        ui->pushButtonTryLogin->setEnabled(true);
+        ui->pushButtonTryLogin->setText(tr("Ok"));
+        return;
+    }
+    else
+    {
+        ui->pushButtonTryLogin->setEnabled(false);
+        ui->pushButtonTryLogin->setText(tr("Ok (%1)").arg(timeToWait-secondLastSinceConnexion));
+        return;
+    }
 }

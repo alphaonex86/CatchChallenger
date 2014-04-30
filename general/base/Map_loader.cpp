@@ -77,6 +77,7 @@ QString Map_loader::text_item=QLatin1Literal("item");
 QString Map_loader::text_fightBot=QLatin1Literal("fightBot");
 QString Map_loader::text_clan=QLatin1Literal("clan");
 QString Map_loader::text_dottmx=QLatin1Literal(".tmx");
+QString Map_loader::text_dotxml=QLatin1Literal(".xml");
 QString Map_loader::text_slash=QLatin1Literal("/");
 QString Map_loader::text_percent=QLatin1Literal("%");
 QString Map_loader::text_data=QLatin1Literal("data");
@@ -355,43 +356,87 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     {
                                         if(type==Map_loader::text_borderleft)//border left
                                         {
-                                            map_to_send_temp.border.left.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send_temp.border.left.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.left.fileName.isEmpty())
-                                                map_to_send_temp.border.left.fileName+=Map_loader::text_dottmx;
-                                            map_to_send_temp.border.left.y_offset=object_y;
-                                            #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                            DebugClass::debugConsole(QStringLiteral("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
-                                            #endif
+                                            const QString &borderMap=property_text.value(Map_loader::text_map).toString();
+                                            if(!borderMap.isEmpty())
+                                            {
+                                                if(map_to_send_temp.border.left.fileName.isEmpty())
+                                                {
+                                                    map_to_send_temp.border.left.fileName=borderMap;
+                                                    if(!map_to_send_temp.border.left.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.left.fileName.isEmpty())
+                                                        map_to_send_temp.border.left.fileName+=Map_loader::text_dottmx;
+                                                    map_to_send_temp.border.left.y_offset=object_y;
+                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
+                                                    DebugClass::debugConsole(QStringLiteral("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
+                                                    #endif
+                                                }
+                                                else
+                                                    DebugClass::debugConsole(QStringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                            }
+                                            else
+                                                DebugClass::debugConsole(QStringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
                                         }
                                         else if(type==Map_loader::text_borderright)//border right
                                         {
-                                            map_to_send_temp.border.right.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send_temp.border.right.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.right.fileName.isEmpty())
-                                                map_to_send_temp.border.right.fileName+=QLatin1String(".tmx");
-                                            map_to_send_temp.border.right.y_offset=object_y;
-                                            #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                            DebugClass::debugConsole(QStringLiteral("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
-                                            #endif
+                                            const QString &borderMap=property_text.value(Map_loader::text_map).toString();
+                                            if(!borderMap.isEmpty())
+                                            {
+                                                if(map_to_send_temp.border.right.fileName.isEmpty())
+                                                {
+                                                    map_to_send_temp.border.right.fileName=borderMap;
+                                                    if(!map_to_send_temp.border.right.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.right.fileName.isEmpty())
+                                                        map_to_send_temp.border.right.fileName+=QLatin1String(".tmx");
+                                                    map_to_send_temp.border.right.y_offset=object_y;
+                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
+                                                    DebugClass::debugConsole(QStringLiteral("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
+                                                    #endif
+                                                }
+                                                else
+                                                    DebugClass::debugConsole(QStringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                            }
+                                            else
+                                                DebugClass::debugConsole(QStringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
                                         }
                                         else if(type==Map_loader::text_bordertop)//border top
                                         {
-                                            map_to_send_temp.border.top.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send_temp.border.top.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.top.fileName.isEmpty())
-                                                map_to_send_temp.border.top.fileName+=Map_loader::text_dottmx;
-                                            map_to_send_temp.border.top.x_offset=object_x;
-                                            #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                            DebugClass::debugConsole(QStringLiteral("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
-                                            #endif
+                                            const QString &borderMap=property_text.value(Map_loader::text_map).toString();
+                                            if(!borderMap.isEmpty())
+                                            {
+                                                if(map_to_send_temp.border.top.fileName.isEmpty())
+                                                {
+                                                    map_to_send_temp.border.top.fileName=borderMap;
+                                                    if(!map_to_send_temp.border.top.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.top.fileName.isEmpty())
+                                                        map_to_send_temp.border.top.fileName+=Map_loader::text_dottmx;
+                                                    map_to_send_temp.border.top.x_offset=object_x;
+                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
+                                                    DebugClass::debugConsole(QStringLiteral("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
+                                                    #endif
+                                                }
+                                                else
+                                                    DebugClass::debugConsole(QStringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                            }
+                                            else
+                                                DebugClass::debugConsole(QStringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
                                         }
                                         else if(type==Map_loader::text_borderbottom)//border bottom
                                         {
-                                            map_to_send_temp.border.bottom.fileName=property_text.value(Map_loader::text_map).toString();
-                                            if(!map_to_send_temp.border.bottom.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.bottom.fileName.isEmpty())
-                                                map_to_send_temp.border.bottom.fileName+=Map_loader::text_dottmx;
-                                            map_to_send_temp.border.bottom.x_offset=object_x;
-                                            #ifdef DEBUG_MESSAGE_MAP_BORDER
-                                            DebugClass::debugConsole(QStringLiteral("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
-                                            #endif
+                                            const QString &borderMap=property_text.value(Map_loader::text_map).toString();
+                                            if(!borderMap.isEmpty())
+                                            {
+                                                if(map_to_send_temp.border.bottom.fileName.isEmpty())
+                                                {
+                                                    map_to_send_temp.border.bottom.fileName=borderMap;
+                                                    if(!map_to_send_temp.border.bottom.fileName.endsWith(Map_loader::text_dottmx) && !map_to_send_temp.border.bottom.fileName.isEmpty())
+                                                        map_to_send_temp.border.bottom.fileName+=Map_loader::text_dottmx;
+                                                    map_to_send_temp.border.bottom.x_offset=object_x;
+                                                    #ifdef DEBUG_MESSAGE_MAP_BORDER
+                                                    DebugClass::debugConsole(QStringLiteral("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
+                                                    #endif
+                                                }
+                                                else
+                                                    DebugClass::debugConsole(QStringLiteral("The border %1 %2 is already set (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
+                                            }
+                                            else
+                                                DebugClass::debugConsole(QStringLiteral("The border %1 %2 can't be empty (at line: %3), file: %4").arg(SubChild.tagName()).arg(type).arg(SubChild.lineNumber()).arg(fileName));
                                         }
                                         else
                                             DebugClass::debugConsole(QStringLiteral("Not at middle of border: child.tagName(): %1, object_x: %2, object_y: %3")
@@ -430,7 +475,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                                         DebugClass::debugConsole(QStringLiteral("condition id is not a number, id: %1 (%2 at line: %3)").arg(property_text.value(QLatin1String("condition-id")).toString()).arg(fileName).arg(SubChild.lineNumber()));
                                                     else
                                                     {
-                                                        const QString &conditionFile=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.value(Map_loader::text_condition_file).toString()).absoluteFilePath();
+                                                        QString conditionFile=QFileInfo(QFileInfo(fileName).absolutePath()+Map_loader::text_slash+property_text.value(Map_loader::text_condition_file).toString()).absoluteFilePath();
+                                                        if(!conditionFile.endsWith(Map_loader::text_dotxml))
+                                                            conditionFile+=Map_loader::text_dotxml;
                                                         new_tp.conditionUnparsed=getXmlCondition(fileName,conditionFile,conditionId);
                                                         new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);
                                                     }
@@ -1414,7 +1461,7 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
         QFile mapFile(conditionFile);
         if(!mapFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << QStringLiteral("Into the file %1, unab le to open the condition file: ").arg(fileName)+mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
+            qDebug() << QStringLiteral("Into the file %1, unable to open the condition file: ").arg(fileName)+mapFile.fileName()+QLatin1String(": ")+mapFile.errorString();
             return QDomElement();
         }
         const QByteArray &xmlContent=mapFile.readAll();

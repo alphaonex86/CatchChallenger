@@ -2581,6 +2581,39 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
                             return;
                         }
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.waitBeforeConnectAfterKick;
+                        {
+                            quint8 tempListSize;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> tempListSize;
+                            quint8 event,value;
+                            int index=0;
+                            while(index<tempListSize)
+                            {
+
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> event;
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> value;
+                            }
+                        }
                         {
                             quint8 tempForceClientToSendAtBorder;
                             in >> tempForceClientToSendAtBorder;
@@ -5122,8 +5155,8 @@ QString Api_protocol::datapackPath() const
 
 void Api_protocol::setDatapackPath(const QString &datapack_path)
 {
-    if(datapack_path.endsWith("/"))
+    if(datapack_path.endsWith(QLatin1Literal("/")))
         mDatapack=datapack_path;
     else
-        mDatapack=datapack_path+QStringLiteral("/");
+        mDatapack=datapack_path+QLatin1Literal("/");
 }

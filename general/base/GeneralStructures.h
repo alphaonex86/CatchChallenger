@@ -204,6 +204,12 @@ struct Industry
     QList<Product> products;
 };
 
+struct Event
+{
+    QString name;
+    QList<QString> values;
+};
+
 enum ObjectUsage
 {
     ObjectUsage_correctlyUsed=0x01,//is correctly used
@@ -761,6 +767,12 @@ struct BotFight
     };
     QList<BotFightMonster> monsters;
     quint32 cash;
+    struct Item
+    {
+        quint32 id;
+        quint32 quantity;
+    };
+    QList<Item> items;
 };
 
 struct MarketObject

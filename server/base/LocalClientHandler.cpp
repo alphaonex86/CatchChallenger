@@ -2438,61 +2438,20 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         return;
     }
     PlayerReputation playerReputation;
-    playerReputation.point=0;
-    playerReputation.level=0;
     if(player_informations->public_and_private_informations.reputation.contains(type))
         playerReputation=player_informations->public_and_private_informations.reputation.value(type);
+    else
+    {
+        playerReputation.point=0;
+        playerReputation.level=0;
+    }
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
-    playerReputation.point+=point;
-    do
-    {
-        if(playerReputation.level<0 && playerReputation.point>0)
-        {
-            playerReputation.level++;
-            playerReputation.point+=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
-            continue;
-        }
-        if(playerReputation.level>0 && playerReputation.point<0)
-        {
-            playerReputation.level--;
-            playerReputation.point+=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
-            continue;
-        }
-        if(playerReputation.level<=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level))
-        {
-            if((-playerReputation.level)<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
-            {
-                playerReputation.point-=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
-                playerReputation.level--;
-            }
-            else
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-                emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
-                #endif
-                playerReputation.point=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
-            }
-            continue;
-        }
-        if(playerReputation.level>=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(playerReputation.level))
-        {
-            if(playerReputation.level<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
-            {
-                playerReputation.point-=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
-                playerReputation.level++;
-            }
-            else
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-                emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
-                #endif
-                playerReputation.point=CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
-            }
-            continue;
-        }
-    } while(false);
+    PlayerReputation oldPlayerReputation=playerReputation;
+    playerReputation=FacilityLib::appendReputationPoint(playerReputation,point,type);
+    if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
+        return;
     if(!player_informations->public_and_private_informations.reputation.contains(type))
     {
         switch(GlobalServerData::serverSettings.database.type)

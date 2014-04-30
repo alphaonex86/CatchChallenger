@@ -386,6 +386,7 @@ void MainWindow::load_settings()
         ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
         ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
         ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(ui->MapVisibilityAlgorithmSimpleMax->value());
+        ui->MapVisibilityAlgorithmSimpleReemit->setChecked(settings->value(QLatin1Literal("Reemit")).toBool());
     }
     {
         quint32 tempValueWithBorder=0;
@@ -474,6 +475,18 @@ void MainWindow::load_settings()
 
     if(!settings->contains(QLatin1Literal("db_fight_sync")))
         settings->setValue(QLatin1Literal("db_fight_sync"),"FightSync_AtTheEndOfBattle");
+    settings->endGroup();
+
+    settings->beginGroup(QLatin1Literal("DDOS"));
+    ui->DDOSwaitBeforeConnectAfterKick->setValue(settings->value(QLatin1Literal("waitBeforeConnectAfterKick")).toUInt());
+    ui->DDOScomputeAverageValueNumberOfValue->setValue(settings->value(QLatin1Literal("computeAverageValueNumberOfValue")).toUInt());
+    ui->DDOScomputeAverageValueTimeInterval->setValue(settings->value(QLatin1Literal("computeAverageValueTimeInterval")).toUInt());
+    ui->DDOSkickLimitMove->setValue(settings->value(QLatin1Literal("kickLimitMove")).toUInt());
+    ui->DDOSkickLimitChat->setValue(settings->value(QLatin1Literal("kickLimitChat")).toUInt());
+    ui->DDOSkickLimitOther->setValue(settings->value(QLatin1Literal("kickLimitOther")).toUInt());
+    ui->DDOSdropGlobalChatMessageGeneral->setValue(settings->value(QLatin1Literal("dropGlobalChatMessageGeneral")).toUInt());
+    ui->DDOSdropGlobalChatMessageLocalClan->setValue(settings->value(QLatin1Literal("dropGlobalChatMessageLocalClan")).toUInt());
+    ui->DDOSdropGlobalChatMessagePrivate->setValue(settings->value(QLatin1Literal("dropGlobalChatMessagePrivate")).toUInt());
     settings->endGroup();
 
     if(db_type==QLatin1Literal("mysql"))
@@ -639,6 +652,16 @@ void MainWindow::send_settings()
     formatedServerSettings.linuxSettings.tcpCork    	= ui->linux_socket_cork->isChecked();
     #endif
 
+    //ddos
+    CommonSettings::commonSettings.waitBeforeConnectAfterKick=ui->DDOSwaitBeforeConnectAfterKick->value();
+    formatedServerSettings.ddos.computeAverageValueNumberOfValue=ui->DDOScomputeAverageValueNumberOfValue->value();
+    formatedServerSettings.ddos.computeAverageValueTimeInterval=ui->DDOScomputeAverageValueTimeInterval->value();
+    formatedServerSettings.ddos.kickLimitMove=ui->DDOSkickLimitMove->value();
+    formatedServerSettings.ddos.kickLimitChat=ui->DDOSkickLimitChat->value();
+    formatedServerSettings.ddos.kickLimitOther=ui->DDOSkickLimitOther->value();
+    formatedServerSettings.ddos.dropGlobalChatMessageGeneral=ui->DDOSdropGlobalChatMessageGeneral->value();
+    formatedServerSettings.ddos.dropGlobalChatMessageLocalClan=ui->DDOSdropGlobalChatMessageLocalClan->value();
+    formatedServerSettings.ddos.dropGlobalChatMessagePrivate=ui->DDOSdropGlobalChatMessagePrivate->value();
 
     //fight
     formatedServerSettings.pvp			= ui->pvp->isChecked();
@@ -723,6 +746,7 @@ void MainWindow::send_settings()
     formatedServerSettings.mapVisibility.simple.max                 = ui->MapVisibilityAlgorithmSimpleMax->value();
     formatedServerSettings.mapVisibility.simple.reshow              = ui->MapVisibilityAlgorithmSimpleReshow->value();
     formatedServerSettings.mapVisibility.simple.storeOnSender       = ui->MapVisibilityAlgorithmSimpleStoreOnSender->isChecked();
+    formatedServerSettings.mapVisibility.simple.reemit              = ui->MapVisibilityAlgorithmSimpleReemit->isChecked();
     formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value();
     formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value();
     formatedServerSettings.mapVisibility.withBorder.max				= ui->MapVisibilityAlgorithmWithBorderMax->value();
@@ -1321,5 +1345,12 @@ void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderStoreOnSend
 {
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
     settings->setValue(QLatin1Literal("StoreOnSender"),checked);
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleReemit_toggled(bool checked)
+{
+    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
+    settings->setValue(QLatin1Literal("Reemit"),checked);
     settings->endGroup();
 }

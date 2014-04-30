@@ -1309,37 +1309,49 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
     emit message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    if(data.size()<=CATCHCHALLENGER_MAX_PACKET_SIZE)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(socket->openMode()|QIODevice::WriteOnly)
     {
-        TXSize+=data.size();
-        byteWriten = socket->write(data);
-        if(Q_UNLIKELY(data.size()!=byteWriten))
+    #endif
+        if(data.size()<=CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
-            DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-            emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-            return false;
-        }
-        return true;
-    }
-    else
-    {
-        QByteArray dataToSend;
-        while(Q_LIKELY(!data.isEmpty()))
-        {
-
-            dataToSend=data.mid(0,CATCHCHALLENGER_MAX_PACKET_SIZE);
-            TXSize+=dataToSend.size();
-            byteWriten = socket->write(dataToSend);
-            if(Q_UNLIKELY(dataToSend.size()!=byteWriten))
+            TXSize+=data.size();
+            byteWriten = socket->write(data);
+            if(Q_UNLIKELY(data.size()!=byteWriten))
             {
                 DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
                 emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
                 return false;
             }
-            data.remove(0,dataToSend.size());
+            return true;
         }
-        return true;
+        else
+        {
+            QByteArray dataToSend;
+            while(Q_LIKELY(!data.isEmpty()))
+            {
+                dataToSend=data.mid(0,CATCHCHALLENGER_MAX_PACKET_SIZE);
+                TXSize+=dataToSend.size();
+                byteWriten = socket->write(dataToSend);
+                if(Q_UNLIKELY(dataToSend.size()!=byteWriten))
+                {
+                    DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                    emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                    return false;
+                }
+                data.remove(0,dataToSend.size());
+            }
+            return true;
+        }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     }
+    else
+    {
+        DebugClass::debugConsole(QStringLiteral("Socket open in read only!"));
+        emit error(QStringLiteral("Socket open in read only!"));
+        return false;
+    }
+    #endif
 }
 
 //no control to be more fast
