@@ -174,6 +174,7 @@ struct ServerSettings
             quint16 max;
             quint16 reshow;
             bool storeOnSender;
+            bool reemit;
         };
         MapVisibility_Simple simple;
         struct MapVisibility_WithBorder
@@ -187,6 +188,20 @@ struct ServerSettings
         MapVisibility_WithBorder withBorder;
     };
     MapVisibility mapVisibility;
+
+    //visibility algorithm
+    struct DDOS
+    {
+        int computeAverageValueNumberOfValue;
+        quint8 computeAverageValueTimeInterval;
+        quint8 kickLimitMove;
+        quint8 kickLimitChat;
+        quint8 kickLimitOther;
+        int dropGlobalChatMessageGeneral;
+        int dropGlobalChatMessageLocalClan;
+        int dropGlobalChatMessagePrivate;
+    };
+    DDOS ddos;
 
     //city
     City city;
@@ -301,6 +316,7 @@ struct ServerPrivateVariables
     QHash<quint32,QString> id_map_to_map;
     QTimer *timer_to_send_insert_move_remove;
     QTimer positionSync;
+    QTimer ddosTimer;
     qint8 sizeofInsertRequest;
 
     //connection

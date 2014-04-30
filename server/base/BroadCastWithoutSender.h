@@ -24,6 +24,7 @@ public slots:
     void emit_player_is_disconnected(const QString &oldPlayer);
     void emit_new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
     void receive_instant_player_number(const qint16 &connected_players);
+    void doDDOSAction();
 };
 }
 

@@ -1039,6 +1039,10 @@ void MapControllerMP::reinject_signals_on_valid_map()
 
 bool MapControllerMP::asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject)
 {
+    if(!mHaveTheDatapack)
+        return false;
+    if(!player_informations_is_set)
+        return false;
     const bool &result=MapVisualiserPlayer::asyncMapLoaded(fileName,tempMapObject);
     reinject_signals_on_valid_map();
     return result;

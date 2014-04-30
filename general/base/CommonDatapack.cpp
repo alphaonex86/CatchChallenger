@@ -35,6 +35,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parsePlants();
     parseCraftingRecipes();
     parseSkills();
+    parseEvents();
     parseMonsters();
     parseMonstersEvolutionItems();
     parseMonstersItemToLearn();
@@ -107,6 +108,12 @@ void CommonDatapack::parseSkills()
     qDebug() << QStringLiteral("%1 monster skill(s) loaded").arg(monsterSkills.size());
 }
 
+void CommonDatapack::parseEvents()
+{
+    events=DatapackGeneralLoader::loadEvents(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("event.xml"));
+    qDebug() << QStringLiteral("%1 event(s) loaded").arg(events.size());
+}
+
 void CommonDatapack::parseMonsters()
 {
     monsters=FightLoader::loadMonster(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS),monsterSkills,types,items.item);
@@ -127,7 +134,7 @@ void CommonDatapack::parseMonstersItemToLearn()
 
 void CommonDatapack::parseBotFights()
 {
-    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT), monsters, monsterSkills);
+    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT), monsters, monsterSkills,items.item);
     qDebug() << QStringLiteral("%1 bot fight(s) loaded").arg(botFights.size());
 }
 
@@ -159,6 +166,7 @@ void CommonDatapack::unload()
     crafingRecipes.clear();
     reputation.clear();
     quests.clear();
+    events.clear();
     monsters.clear();
     monsterSkills.clear();
     monsterBuffs.clear();

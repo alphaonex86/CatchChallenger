@@ -1623,6 +1623,7 @@ void BaseWindow::appendReputationRewards(const QList<ReputationRewards> &reputat
         appendReputationPoint(reputationRewards.type,reputationRewards.point);
         index++;
     }
+    show_reputation();
 }
 
 bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const
@@ -1702,6 +1703,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
             appendReputationPoint(quest.rewards.reputation.value(index).type,quest.rewards.reputation.value(index).point);
             index++;
         }
+        show_reputation();
         index=0;
         while(index<quest.rewards.allow.size())
         {
@@ -1723,61 +1725,20 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
         return;
     }
     PlayerReputation playerReputation;
-    playerReputation.point=0;
-    playerReputation.level=0;
     if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(type))
         playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(type);
+    else
+    {
+        playerReputation.point=0;
+        playerReputation.level=0;
+    }
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
-    playerReputation.point+=point;
-    do
-    {
-        if(playerReputation.level<0 && playerReputation.point>0)
-        {
-            playerReputation.level++;
-            playerReputation.point+=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
-            continue;
-        }
-        if(playerReputation.level>0 && playerReputation.point<0)
-        {
-            playerReputation.level--;
-            playerReputation.point+=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
-            continue;
-        }
-        if(playerReputation.level<=0 && playerReputation.point<CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level))
-        {
-            if((-playerReputation.level)<CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
-            {
-                playerReputation.point-=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
-                playerReputation.level--;
-            }
-            else
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-                emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
-                #endif
-                playerReputation.point=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-playerReputation.level);
-            }
-            continue;
-        }
-        if(playerReputation.level>=0 && playerReputation.point<CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(playerReputation.level))
-        {
-            if(playerReputation.level<CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
-            {
-                playerReputation.point-=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
-                playerReputation.level++;
-            }
-            else
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-                emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
-                #endif
-                playerReputation.point=CatchChallenger::CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(playerReputation.level);
-            }
-            continue;
-        }
-    } while(false);
+    PlayerReputation oldPlayerReputation=playerReputation;
+    playerReputation=FacilityLib::appendReputationPoint(playerReputation,point,type);
+    if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
+        return;
     CatchChallenger::Api_client_real::client->player_informations.reputation[type]=playerReputation;
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QStringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));

@@ -36,6 +36,7 @@ public:
     static IndustryStatus factoryCheckProductionStart(const IndustryStatus &industryStatus,const Industry &industry);
     static bool factoryProductionStarted(const IndustryStatus &industryStatus,const Industry &industry);
     static QString timeToString(const quint32 &time);
+    static PlayerReputation appendReputationPoint(PlayerReputation playerReputation, const qint32 &point, const QString &type);
 private:
     static QByteArray UTF8EmptyData;
     static QString text_slash;

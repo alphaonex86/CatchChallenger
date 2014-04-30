@@ -66,12 +66,16 @@ private:
     static bool oneInstanceRunning;
     QSslCertificate *sslCertificate;
     QSslKey *sslKey;
+    QHash<QHostAddress,QDateTime> kickedHosts;
+    QTimer purgeKickedHostTimer;
 
     static QString text_restart;
     static QString text_stop;
 private slots:
     //new connection
     void newConnection();
+    void kicked(const QHostAddress &host);
+    void purgeKickedHost();
     //remove all finished client
     void removeOneClient();
     //void removeOneBot();

@@ -38,6 +38,7 @@ public slots:
     void teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     void sendTradeRequest(const QByteArray &data);
     void sendBattleRequest(const QByteArray &data);
+    void doDDOSCompute();
 private:
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
     //have message without reply
@@ -173,6 +174,16 @@ private:
     static QString text_restart;
     static QString text_unknown_send_command_slash;
     static QString text_commands_seem_not_right;
+
+    QList<int> movePacketKick;
+    int movePacketKickTotalCache;
+    int movePacketKickNewValue;
+    QList<int> chatPacketKick;
+    int chatPacketKickTotalCache;
+    int chatPacketKickNewValue;
+    QList<int> otherPacketKick;
+    int otherPacketKickTotalCache;
+    int otherPacketKickNewValue;
 };
 }
 

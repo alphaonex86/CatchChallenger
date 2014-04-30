@@ -41,6 +41,7 @@ NormalServer::NormalServer() :
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_player_is_connected,this,&NormalServer::new_player_is_connected,Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::player_is_disconnected,this,&NormalServer::player_is_disconnected,Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_chat_message,this,&NormalServer::new_chat_message,Qt::QueuedConnection);
+    connect(&purgeKickedHostTimer,&QTimer::timeout,this,&NormalServer::purgeKickedHost,Qt::QueuedConnection);
 }
 
 /** call only when the server is down
@@ -347,8 +348,8 @@ void NormalServer::serverCommand(const QString &command, const QString &extraTex
 QString NormalServer::listenIpAndPort(QString server_ip,quint16 server_port)
 {
     if(server_ip.isEmpty())
-        server_ip="*";
-    return server_ip+":"+QString::number(server_port);
+        server_ip=QLatin1Literal("*");
+    return server_ip+QLatin1Literal(":")+QString::number(server_port);
 }
 
 void NormalServer::newConnection()
@@ -368,29 +369,68 @@ void NormalServer::newConnection()
         while(server->hasPendingConnections())
         {
             QSslSocket *socket = static_cast<QSslSocket *>(server->nextPendingConnection());
-            connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
-            if(socket!=NULL)
-            {
-                #ifdef Q_OS_LINUX
-                if(GlobalServerData::serverSettings.linuxSettings.tcpCork)
+            const QHostAddress &peerAddress=socket->peerAddress();
+            bool kicked=kickedHosts.contains(peerAddress);
+            if(kicked)
+                if((QDateTime::currentDateTime().toTime_t()-kickedHosts.value(peerAddress).toTime_t())>=(quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick)
                 {
-                    qintptr socketDescriptor=socket->socketDescriptor();
-                    if(socketDescriptor!=-1)
-                    {
-                        int state = 1;
-                        if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                            DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
-                    }
-                    else
-                        DebugClass::debugConsole(QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+                    kickedHosts.remove(peerAddress);
+                    kicked=false;
                 }
-                #endif
-                //DebugClass::debugConsole(QStringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
-                connect_the_last_client(new Client(new ConnectedSocket(socket),getClientMapManagement()));
+            if(!kicked)
+            {
+                connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
+                if(socket!=NULL)
+                {
+                    #ifdef Q_OS_LINUX
+                    if(GlobalServerData::serverSettings.linuxSettings.tcpCork)
+                    {
+                        qintptr socketDescriptor=socket->socketDescriptor();
+                        if(socketDescriptor!=-1)
+                        {
+                            int state = 1;
+                            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                                DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
+                        }
+                        else
+                            DebugClass::debugConsole(QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+                    }
+                    #endif
+                    //DebugClass::debugConsole(QStringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
+                    Client *client=new Client(new ConnectedSocket(socket),getClientMapManagement());
+                    connect_the_last_client(client);
+                    connect(client,&Client::kicked,this,&NormalServer::kicked,Qt::QueuedConnection);
+                }
+                else
+                    DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
             }
             else
-                DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
+                socket->disconnectFromHost();
         }
+}
+
+void NormalServer::kicked(const QHostAddress &host)
+{
+    if(CommonSettings::commonSettings.waitBeforeConnectAfterKick>0)
+        kickedHosts[host]=QDateTime::currentDateTime();
+}
+
+void NormalServer::purgeKickedHost()
+{
+    QList<QHostAddress> hostsToRemove;
+    const QDateTime &currentDateTime=QDateTime::currentDateTime();
+    QHashIterator<QHostAddress,QDateTime> i(kickedHosts);
+    while (i.hasNext()) {
+        i.next();
+        if((currentDateTime.toTime_t()-i.value().toTime_t())>=(quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick)
+            hostsToRemove << i.key();
+    }
+    int index=0;
+    while(index<hostsToRemove.size())
+    {
+        kickedHosts.remove(hostsToRemove.at(index));
+        index++;
+    }
 }
 
 void NormalServer::sslErrors(const QList<QSslError> &errors)
@@ -494,6 +534,27 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("MapVisibilityAlgorithm"),0);
     settings->endGroup();
 
+    settings->beginGroup(QLatin1Literal("DDOS"));
+    if(!settings->contains(QLatin1Literal("waitBeforeConnectAfterKick")))
+        settings->setValue(QLatin1Literal("waitBeforeConnectAfterKick"),30);
+    if(!settings->contains(QLatin1Literal("computeAverageValueNumberOfValue")))
+        settings->setValue(QLatin1Literal("computeAverageValueNumberOfValue"),3);
+    if(!settings->contains(QLatin1Literal("computeAverageValueTimeInterval")))
+        settings->setValue(QLatin1Literal("computeAverageValueTimeInterval"),5);
+    if(!settings->contains(QLatin1Literal("kickLimitMove")))
+        settings->setValue(QLatin1Literal("kickLimitMove"),60);
+    if(!settings->contains(QLatin1Literal("kickLimitChat")))
+        settings->setValue(QLatin1Literal("kickLimitChat"),5);
+    if(!settings->contains(QLatin1Literal("kickLimitOther")))
+        settings->setValue(QLatin1Literal("kickLimitOther"),30);
+    if(!settings->contains(QLatin1Literal("dropGlobalChatMessageGeneral")))
+        settings->setValue(QLatin1Literal("dropGlobalChatMessageGeneral"),20);
+    if(!settings->contains(QLatin1Literal("dropGlobalChatMessageLocalClan")))
+        settings->setValue(QLatin1Literal("dropGlobalChatMessageLocalClan"),20);
+    if(!settings->contains(QLatin1Literal("dropGlobalChatMessagePrivate")))
+        settings->setValue(QLatin1Literal("dropGlobalChatMessagePrivate"),20);
+    settings->endGroup();
+
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
     if(!settings->contains(QLatin1Literal("Max")))
         settings->setValue(QLatin1Literal("Max"),50);
@@ -501,6 +562,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("Reshow"),30);
     if(!settings->contains(QLatin1Literal("StoreOnSender")))
         settings->setValue(QLatin1Literal("StoreOnSender"),true);
+    if(!settings->contains(QLatin1Literal("Reemit")))
+        settings->setValue(QLatin1Literal("Reemit"),false);
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));

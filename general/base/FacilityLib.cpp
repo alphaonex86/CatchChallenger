@@ -442,3 +442,85 @@ QString FacilityLib::timeToString(const quint32 &time)
     else
         return QObject::tr("%n minute(s) and %1","",time/60).arg(QObject::tr("%n second(s)","",time%60));
 }
+
+//reputation
+PlayerReputation FacilityLib::appendReputationPoint(PlayerReputation playerReputation,const qint32 &point,const QString &type)
+{
+    if(point==0)
+        return playerReputation;
+    playerReputation.point+=point;
+    do
+    {
+        const Reputation &reputation=CommonDatapack::commonDatapack.reputation.value(type);
+        //at the limit
+        if(reputation.reputation_negative.isEmpty())
+        {
+            if(playerReputation.point<0)
+            {
+                playerReputation.point=0;
+                playerReputation.level=0;
+                break;
+            }
+        }
+        else
+        {
+            if(playerReputation.level<=(-reputation.reputation_negative.size()))
+            {
+                playerReputation.point=0;
+                playerReputation.level=(-reputation.reputation_negative.size());
+                break;
+            }
+        }
+        if(reputation.reputation_positive.isEmpty())
+        {
+            if(playerReputation.point>0)
+            {
+                playerReputation.point=0;
+                playerReputation.level=0;
+                break;
+            }
+        }
+        else
+        {
+            if(playerReputation.level<=(reputation.reputation_negative.size()-1))
+            {
+                playerReputation.point=0;
+                playerReputation.level=(reputation.reputation_negative.size()-1);
+                break;
+            }
+        }
+        //lost point in level
+        if(playerReputation.level<0 && playerReputation.point>0)
+        {
+            playerReputation.level++;
+            playerReputation.point+=reputation.reputation_negative.at(-playerReputation.level);
+            continue;
+        }
+        if(playerReputation.level>0 && playerReputation.point<0)
+        {
+            playerReputation.level--;
+            playerReputation.point+=reputation.reputation_negative.at(playerReputation.level);
+            continue;
+        }
+        //gain point in level
+        if(playerReputation.level<=0 && playerReputation.point<0 && !reputation.reputation_negative.isEmpty())
+        {
+            if(playerReputation.point<reputation.reputation_negative.at(-playerReputation.level))
+            {
+                playerReputation.point-=reputation.reputation_negative.at(-playerReputation.level);
+                playerReputation.level--;
+                continue;
+            }
+        }
+        if(playerReputation.level>=0 && playerReputation.point>0 && !reputation.reputation_positive.isEmpty())
+        {
+            if(playerReputation.point<reputation.reputation_positive.at(playerReputation.level))
+            {
+                playerReputation.point-=reputation.reputation_positive.at(playerReputation.level);
+                playerReputation.level++;
+                continue;
+            }
+        }
+    } while(false);
+    return playerReputation;
+}

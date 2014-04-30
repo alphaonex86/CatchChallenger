@@ -24,9 +24,11 @@ public:
     static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint32, Item> &items,const QHash<quint32,Monster> &monsters,const QHash<QString, Reputation> &reputations);
     static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items);
     static LayersOptions loadLayersOptions(const QString &file);
+    static QList<Event> loadEvents(const QString &file);
 protected:
     static QString text_list;
     static QString text_dotxml;
+    static QString text_dottmx;
     static QString text_reputation;
     static QString text_type;
     static QString text_level;
@@ -104,6 +106,9 @@ protected:
     static QString text_tile;
     static QString text_background;
     static QString text_slash;
+    static QString text_layers;
+    static QString text_events;
+    static QString text_event;
 };
 }
 

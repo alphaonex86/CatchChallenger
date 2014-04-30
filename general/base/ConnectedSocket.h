@@ -34,6 +34,8 @@ public:
     bool	waitForConnected(int msecs = 30000);
     bool	waitForDisconnected(int msecs = 30000);
     qint64	bytesAvailable() const;
+    OpenMode openMode() const;
+    QString errorString() const;
     void	close();
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;

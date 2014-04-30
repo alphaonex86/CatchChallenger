@@ -166,6 +166,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     out << (quint16)GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime;
 
     //common settings
+    out << (quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick;
+    out << (quint8)00;//events not yet done
     out << (quint8)CommonSettings::commonSettings.forceClientToSendAtMapChange;
     out << (quint8)CommonSettings::commonSettings.forcedSpeed;
     out << (quint8)CommonSettings::commonSettings.dontSendPseudo;
@@ -1379,8 +1381,8 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         quint32 datapckFileSize=0;
         while(index<loop_size)
         {
-            QString fileName=files.at(index);
-            quint32 mtime=timestamps.at(index);
+            const QString &fileName=files.at(index);
+            const quint32 &remote_mtime=timestamps.at(index);
             if(fileName.contains(ClientHeavyLoad::text_dotslash) || fileName.contains(ClientHeavyLoad::text_antislash) || fileName.contains(ClientHeavyLoad::text_double_slash))
             {
                 emit error(QStringLiteral("file name contains illegale char: %1").arg(fileName));
@@ -1393,9 +1395,9 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             }
             if(filesListForSize.contains(fileName))
             {
-                quint32 file_mtime;
-                file_mtime=filesListForSize.value(fileName);
-                if(file_mtime==mtime)
+                quint32 server_file_mtime;
+                server_file_mtime=filesListForSize.value(fileName);
+                if(server_file_mtime==remote_mtime)
                     addDatapackListReply(false);//found
                 else
                 {
@@ -1404,7 +1406,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
                     datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
                     FileToSend fileToSend;
                     fileToSend.file=fileName;
-                    fileToSend.mtime=mtime;
+                    fileToSend.mtime=server_file_mtime;
                     fileToSendList << fileToSend;
                 }
                 filesListForSize.remove(fileName);

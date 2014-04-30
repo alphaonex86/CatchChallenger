@@ -28,6 +28,8 @@ class ClientLocalBroadcast : public MapBasicMove
 public:
     explicit ClientLocalBroadcast();
     ~ClientLocalBroadcast();
+
+    static QString text_dottmx;
 public slots:
     //chat
     void sendLocalChatText(const QString &text);

@@ -5,6 +5,7 @@
 #include "../../general/base/DatapackGeneralLoader.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h"
 #include "LocalClientHandlerWithoutSender.h"
+#include "ClientNetworkReadWithoutSender.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -121,6 +122,7 @@ BaseServer::BaseServer() :
     CommonSettings::commonSettings.rates_xp_pow           = 1.0;
     CommonSettings::commonSettings.factoryPriceChange     = 20;
     CommonSettings::commonSettings.character_delete_time  = 604800; // 7 day
+    CommonSettings::commonSettings.waitBeforeConnectAfterKick=30;
     GlobalServerData::serverSettings.database.type                              = ServerSettings::Database::DatabaseType_Mysql;
     GlobalServerData::serverSettings.database.fightSync                         = ServerSettings::Database::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.database.positionTeleportSync              = true;
@@ -129,11 +131,20 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
     GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender         = true;
+    GlobalServerData::serverSettings.mapVisibility.simple.reemit                = true;
     GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder     = 20;
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder  = 10;
     GlobalServerData::serverSettings.mapVisibility.withBorder.max               = 30;
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshow            = 20;
     GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender     = true;
+    GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue      = 3;
+    GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval       = 5;
+    GlobalServerData::serverSettings.ddos.kickLimitMove                         = 60;
+    GlobalServerData::serverSettings.ddos.kickLimitChat                         = 5;
+    GlobalServerData::serverSettings.ddos.kickLimitOther                        = 30;
+    GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral          = 20;
+    GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan        = 20;
+    GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate          = 20;
     GlobalServerData::serverSettings.city.capture.frenquency                    = City::Capture::Frequency_week;
     GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
@@ -219,6 +230,7 @@ void BaseServer::preload_the_data()
     }
     QTime time;
     time.restart();
+    preload_the_ddos();
     preload_the_datapack();
     preload_the_skin();
     preload_shop();
@@ -240,6 +252,27 @@ void BaseServer::preload_the_data()
     if(CommonSettings::commonSettings.max_character)
         load_character_max_id();
     qDebug() << QStringLiteral("Loaded the server datapack into %1ms").arg(time.elapsed());
+}
+
+void BaseServer::preload_the_ddos()
+{
+    ClientBroadCast::generalChatDrop.clear();
+    ClientBroadCast::clanChatDrop.clear();
+    ClientBroadCast::privateChatDrop.clear();
+    int index=0;
+    while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    {
+        ClientBroadCast::generalChatDrop << 0;
+        ClientBroadCast::clanChatDrop << 0;
+        ClientBroadCast::privateChatDrop << 0;
+        index++;
+    }
+    ClientBroadCast::generalChatDropTotalCache=0;
+    ClientBroadCast::generalChatDropNewValue=0;
+    ClientBroadCast::clanChatDropTotalCache=0;
+    ClientBroadCast::clanChatDropNewValue=0;
+    ClientBroadCast::privateChatDropTotalCache=0;
+    ClientBroadCast::privateChatDropNewValue=0;
 }
 
 void BaseServer::preload_zone()
@@ -1910,6 +1943,11 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverPrivateVariables.server_message.removeLast();
     } while(removeTheLastList);
 
+    if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)
+        GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=9;
+    if(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1)
+        GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval=1;
+
     if(CommonSettings::commonSettings.min_character<1)
         CommonSettings::commonSettings.min_character=1;
     if(CommonSettings::commonSettings.max_character<1)
@@ -2012,6 +2050,10 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000);
         connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,&LocalClientHandlerWithoutSender::localClientHandlerWithoutSender,&LocalClientHandlerWithoutSender::doAllAction,Qt::QueuedConnection);
     }
+    GlobalServerData::serverPrivateVariables.ddosTimer.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000);
+    connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&LocalClientHandlerWithoutSender::localClientHandlerWithoutSender, &LocalClientHandlerWithoutSender::doDDOSAction,Qt::QueuedConnection);
+    connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&BroadCastWithoutSender::broadCastWithoutSender,                   &BroadCastWithoutSender::doDDOSAction,Qt::QueuedConnection);
+    connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender,   &ClientNetworkReadWithoutSender::doDDOSAction,Qt::QueuedConnection);
 
     switch(GlobalServerData::serverSettings.database.type)
     {

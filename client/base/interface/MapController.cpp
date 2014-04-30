@@ -25,6 +25,9 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
 {
     connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection);
     botFlags=NULL;
+    /*QBrush brush;
+    brush.setColor(QColor(45,85,111,150));
+    mScene->addRect(0,0,800,600,QPen(),brush);*/
 }
 
 MapController::~MapController()

@@ -57,6 +57,16 @@ public:
     static QString text_commaspace;
     static QString text_unabletofoundtheconnectedplayertokick;
     static QString text_unabletofoundthisrightslevel;
+
+    static QList<int> generalChatDrop;
+    static int generalChatDropTotalCache;
+    static int generalChatDropNewValue;
+    static QList<int> clanChatDrop;
+    static int clanChatDropTotalCache;
+    static int clanChatDropNewValue;
+    static QList<int> privateChatDrop;
+    static int privateChatDropTotalCache;
+    static int privateChatDropNewValue;
 public slots:
     //global slot
     void sendPM(const QString &text,const QString &pseudo);

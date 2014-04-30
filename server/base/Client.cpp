@@ -170,7 +170,7 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
     connect(&clientNetworkRead,     &ClientNetworkRead::destroyObject,          &localClientHandler,	&LocalClientHandler::destroyObject,         coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::useObject,              &localClientHandler,	&LocalClientHandler::useObject,             coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::wareHouseStore,         &localClientHandler,	&LocalClientHandler::wareHouseStore,        coTypeAsync);
-    connect(&clientBroadCast,       &ClientBroadCast::kicked,                   this,                   &Client::kicked,                            coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::kicked,                   this,                   &Client::kick,                            coTypeAsync);
 
     //shops
     connect(&clientNetworkRead,     &ClientNetworkRead::getShopList,            &localClientHandler,	&LocalClientHandler::getShopList,           coTypeAsync);
@@ -333,7 +333,7 @@ void Client::errorOutput(const QString &errorString)
     disconnectClient();
 }
 
-void Client::kicked()
+void Client::kick()
 {
     normalOutput("kicked()");
     disconnectClient();
