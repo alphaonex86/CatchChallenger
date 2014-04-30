@@ -104,7 +104,8 @@ private slots:
     void newUpdate(const QString &version);
     void rssEntryList(const QList<RssNews::RssEntry> &entryList);
     void on_lineEditLogin_textChanged(const QString &arg1);
-
+    void logged();
+    void updateTheOkButton();
 private:
     enum ServerMode
     {
@@ -146,6 +147,10 @@ private:
     CatchChallenger::InternalServer * internalServer;
     QSet<QString> customServerName;
     QHash<QString,QString> serverLoginList;
+    QHash<QString,QDateTime> lastServerConnect;
+    QHash<QString,quint32> lastServerWaitBeforeConnectAfterKick;
+    QHash<QString,bool> lastServerIsKick;
+    QTimer updateTheOkButtonTimer;
 };
 
 #endif // MAINWINDOW_H

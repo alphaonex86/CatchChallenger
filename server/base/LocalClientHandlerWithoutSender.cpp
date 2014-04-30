@@ -27,3 +27,13 @@ void LocalClientHandlerWithoutSender::doAllAction()
         }
     }
 }
+
+void LocalClientHandlerWithoutSender::doDDOSAction()
+{
+    int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.flat_map_list.size())
+    {
+        static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list.at(index))->doDDOSCompute();
+        index++;
+    }
+}

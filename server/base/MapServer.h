@@ -1,8 +1,9 @@
-#ifndef CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVER_H
-#define CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVER_H
+#ifndef CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVERMAP_H
+#define CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVERMAP_H
 
 #include "../../general/base/CommonMap.h"
 #include "../crafting/MapServerCrafting.h"
+#include "../VariableServer.h"
 
 #include <QSet>
 #include <QList>
@@ -18,8 +19,13 @@ class ClientLocalBroadcast;
 class MapServer : public CommonMap, public MapServerCrafting
 {
 public:
+    MapServer();
+    void doDDOSCompute();
     QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
     QHash<QPair<quint8,quint8>,Orientation> rescue;
+    QList<int> localChatDrop;
+    int localChatDropTotalCache;
+    int localChatDropNewValue;
 };
 
 class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer

@@ -15,6 +15,7 @@ using namespace CatchChallenger;
 
 QString DatapackGeneralLoader::text_list=QLatin1String("list");
 QString DatapackGeneralLoader::text_dotxml=QLatin1String(".xml");
+QString DatapackGeneralLoader::text_dottmx=QLatin1String(".tmx");
 QString DatapackGeneralLoader::text_reputation=QLatin1String("reputation");
 QString DatapackGeneralLoader::text_type=QLatin1String("type");
 QString DatapackGeneralLoader::text_level=QLatin1String("level");
@@ -92,6 +93,9 @@ QString DatapackGeneralLoader::text_layer=QLatin1String("layer");
 QString DatapackGeneralLoader::text_tile=QLatin1String("tile");
 QString DatapackGeneralLoader::text_background=QLatin1String("background");
 QString DatapackGeneralLoader::text_slash=QLatin1String("/");
+QString DatapackGeneralLoader::text_layers=QLatin1String("layers");
+QString DatapackGeneralLoader::text_events=QLatin1String("events");
+QString DatapackGeneralLoader::text_event=QLatin1String("event");
 
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
@@ -1978,6 +1982,8 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
             {
                 profile.map=map.attribute(DatapackGeneralLoader::text_file);
+                if(!profile.map.endsWith(DatapackGeneralLoader::text_dottmx))
+                    profile.map+=DatapackGeneralLoader::text_dottmx;
                 if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+profile.map))
                 {
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
@@ -2221,7 +2227,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    if(root.tagName()!=DatapackGeneralLoader::text_layers)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
@@ -2364,7 +2370,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    if(root.tagName()!=DatapackGeneralLoader::text_layers)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
@@ -2388,5 +2394,69 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
         }
     }
 
+    return returnVar;
+}
+
+QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
+{
+    QList<Event> returnVar;
+
+    QDomDocument domDocument;
+    //open and quick check the file
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    else
+    {
+        QFile xmlFile(file);
+        if(!xmlFile.open(QIODevice::ReadOnly))
+        {
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            return returnVar;
+        }
+        const QByteArray &xmlContent=xmlFile.readAll();
+        xmlFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            return returnVar;
+        }
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!=DatapackGeneralLoader::text_events)
+    {
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        return returnVar;
+    }
+
+    //load the content
+    QDomElement eventItem = root.firstChildElement(DatapackGeneralLoader::text_event);
+    while(!eventItem.isNull())
+    {
+        if(eventItem.isElement())
+        {
+            if(!eventItem.hasAttribute(DatapackGeneralLoader::text_id))
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute id, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+            else if(eventItem.attribute(DatapackGeneralLoader::text_id).isEmpty())
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have id empty, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+            else
+            {
+                Event event;
+                event.name=eventItem.attribute(DatapackGeneralLoader::text_id);
+                QDomElement valueItem = eventItem.firstChildElement(DatapackGeneralLoader::text_value);
+                while(!valueItem.isNull())
+                {
+                    if(valueItem.isElement())
+                        event.values << eventItem.text();
+                    valueItem = valueItem.nextSiblingElement(DatapackGeneralLoader::text_value);
+                }
+                if(!event.values.isEmpty())
+                    returnVar << event;
+            }
+        }
+        eventItem = eventItem.nextSiblingElement(DatapackGeneralLoader::text_event);
+    }
     return returnVar;
 }

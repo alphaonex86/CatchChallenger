@@ -90,6 +90,7 @@ private:
     static QString text_fightBot;
     static QString text_clan;
     static QString text_dottmx;
+    static QString text_dotxml;
     static QString text_slash;
     static QString text_percent;
     static QString text_data;

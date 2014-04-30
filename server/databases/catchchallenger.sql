@@ -229,7 +229,7 @@ CREATE TABLE IF NOT EXISTS `monster_skill` (
 --
 
 CREATE TABLE IF NOT EXISTS `plant` (
-  `map` varchar(32) NOT NULL,
+  `map` varchar(64) NOT NULL,
   `x` tinyint(3) unsigned NOT NULL,
   `y` tinyint(3) unsigned NOT NULL,
   `plant` tinyint(3) unsigned NOT NULL,

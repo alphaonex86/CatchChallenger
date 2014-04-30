@@ -447,6 +447,7 @@ void DatapackClientLoader::parseItemsExtra()
             continue;
         }
 
+        const QString &folder=QFileInfo(file).absolutePath()+DatapackClientLoader::text_slash;
         //load the content
         bool ok;
         QDomElement item = root.firstChildElement(DatapackClientLoader::text_item);
@@ -464,7 +465,7 @@ void DatapackClientLoader::parseItemsExtra()
                             //load the image
                             if(item.hasAttribute(DatapackClientLoader::text_image))
                             {
-                                QPixmap image(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute("image"));
+                                QPixmap image(folder+item.attribute("image"));
                                 if(image.isNull())
                                 {
                                     qDebug() << QStringLiteral("Unable to open the items image: %1: child.tagName(): %2 (at line: %3)").arg(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(QStringLiteral("image"))).arg(item.tagName()).arg(item.lineNumber());

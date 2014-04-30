@@ -3,6 +3,7 @@
 #include <QHostAddress>
 #include <QByteArray>
 #include <QTimer>
+#include <QHash>
 
 #include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
@@ -46,14 +47,12 @@ private:
     LocalClientHandler localClientHandler;
     ClientLocalBroadcast clientLocalBroadcast;
     ClientMapManagement *clientMapManagement;
-
-
 private slots:
     //socket related
     void connectionError(QAbstractSocket::SocketError);
     //normal management related
     void errorOutput(const QString &errorString);
-    void kicked();
+    void kick();
     void normalOutput(const QString &message);
     //internal management related
     void send_player_informations();
@@ -69,6 +68,7 @@ signals:
     void fake_send_data(const QByteArray &data) const;
     void fake_send_received_data(const QByteArray &data) const;
     void try_ask_stop() const;
+    void kicked(const QHostAddress &host);
 public slots:
     void disconnectClient();
     /// \warning it need be complete protocol trame

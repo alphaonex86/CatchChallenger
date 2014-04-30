@@ -16,8 +16,10 @@ SOURCES += \
     $$PWD/base/ClientHeavyLoad.cpp \
     $$PWD/base/ClientNetworkWrite.cpp \
     $$PWD/base/ClientNetworkRead.cpp \
+    $$PWD/base/ClientNetworkReadWithoutSender.cpp \
     $$PWD/base/ClientBroadCast.cpp \
     $$PWD/base/PlayerUpdater.cpp \
+    $$PWD/base/MapServer.cpp \
     $$PWD/base/BroadCastWithoutSender.cpp \
     $$PWD/base/Bot/FakeBot.cpp \
     $$PWD/base/ClientMapManagement/ClientMapManagement.cpp \
@@ -53,6 +55,7 @@ HEADERS += \
     $$PWD/base/ClientHeavyLoad.h \
     $$PWD/base/ClientNetworkWrite.h \
     $$PWD/base/ClientNetworkRead.h \
+    $$PWD/base/ClientNetworkReadWithoutSender.h \
     $$PWD/base/ClientBroadCast.h \
     $$PWD/base/BroadCastWithoutSender.h \
     $$PWD/base/PlayerUpdater.h \
