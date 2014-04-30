@@ -25,9 +25,18 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
 {
     connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection);
     botFlags=NULL;
-    /*QBrush brush;
-    brush.setColor(QColor(45,85,111,150));
-    mScene->addRect(0,0,800,600,QPen(),brush);*/
+
+    imageOverAdded=false;
+    updateColorIntervale=0;
+    actualColor=Qt::transparent;
+    tempColor=Qt::transparent;
+    newColor=Qt::transparent;
+    imageOver=new QGraphicsPixmapItem();
+    imageOver->setZValue(1000);
+    imageOver->setPos(-800,-600);
+    updateColorTimer.setSingleShot(true);
+    updateColorTimer.setInterval(50);
+    connect(&updateColorTimer,&QTimer::timeout,this,&MapController::updateColor);
 }
 
 MapController::~MapController()
@@ -50,6 +59,7 @@ void MapController::connectAllSignals()
 
 void MapController::resetAll()
 {
+    setColor(Qt::transparent);
     delayedPlantInsert.clear();
     MapControllerMP::resetAll();
 }
@@ -299,4 +309,190 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             }
         }
     }
+}
+
+void MapController::setColor(const QColor &color, const quint32 &timeInMS)
+{
+    /*QBrush brush;
+    brush.setColor(QColor(45,85,111,150));
+    QGraphicsRectItem *rect=mScene->addRect(0,0,8000,6000,QPen(),brush);
+    rect->setZValue(1000);
+    mScene->addItem(rect);*/
+    updateColorTimer.stop();
+    if(imageOverAdded)
+    {
+        imageOverAdded=false;
+        mScene->removeItem(imageOver);
+    }
+    if(timeInMS<50)
+    {
+        updateColorIntervale=0;
+        actualColor=color;
+        tempColor=color;
+        newColor=color;
+        QPixmap pixmap(800*2,600*2);
+        pixmap.fill(color);
+        imageOver->setPixmap(pixmap);
+        if(newColor.alpha()!=0)
+            if(!imageOverAdded)
+            {
+                imageOverAdded=true;
+                mScene->addItem(imageOver);
+            }
+    }
+    else
+    {
+        newColor=color;
+        updateColorIntervale=timeInMS/50;
+        if(newColor.alpha()!=0 || tempColor.alpha()!=0)
+            if(!imageOverAdded)
+            {
+                imageOverAdded=true;
+                mScene->addItem(imageOver);
+            }
+        if(tempColor.alpha()==0)
+            tempColor=QColor(color.red(),color.green(),color.blue(),0);
+        actualColor=tempColor;
+        updateColor();
+    }
+}
+
+void MapController::updateColor()
+{
+    int rdiff;
+    {
+        rdiff=newColor.red()-actualColor.red();
+        if(rdiff==0)
+        {}
+        else if(rdiff/(updateColorIntervale)!=0)
+        {
+            rdiff/=updateColorIntervale;
+            if(rdiff>0)
+            {
+                if(rdiff>(newColor.red()-tempColor.red()))
+                    rdiff=(newColor.red()-tempColor.red());
+            }
+            else
+            {
+                if(rdiff<(newColor.red()-tempColor.red()))
+                    rdiff=(newColor.red()-tempColor.red());
+            }
+        }
+        else
+        {
+            if(newColor.red()!=tempColor.red())
+            {
+                if(newColor.red()>tempColor.red())
+                    rdiff=1;
+                else
+                    rdiff=-1;
+            }
+        }
+    }
+    int gdiff;
+    {
+        gdiff=newColor.green()-actualColor.green();
+        if(gdiff==0)
+        {}
+        else if(gdiff/(updateColorIntervale)!=0)
+        {
+            gdiff/=updateColorIntervale;
+            if(gdiff>0)
+            {
+                if(gdiff>(newColor.green()-tempColor.green()))
+                    gdiff=(newColor.green()-tempColor.green());
+            }
+            else
+            {
+                if(gdiff<(newColor.green()-tempColor.green()))
+                    gdiff=(newColor.green()-tempColor.green());
+            }
+        }
+        else
+        {
+            if(newColor.green()!=tempColor.green())
+            {
+                if(newColor.green()>tempColor.green())
+                    gdiff=1;
+                else
+                    gdiff=-1;
+            }
+        }
+    }
+    int bdiff;
+    {
+        bdiff=newColor.blue()-actualColor.blue();
+        if(bdiff==0)
+        {}
+        else if(bdiff/(updateColorIntervale)!=0)
+        {
+            bdiff/=updateColorIntervale;
+            if(bdiff>0)
+            {
+                if(bdiff>(newColor.blue()-tempColor.blue()))
+                    bdiff=(newColor.blue()-tempColor.blue());
+            }
+            else
+            {
+                if(bdiff<(newColor.blue()-tempColor.blue()))
+                    bdiff=(newColor.blue()-tempColor.blue());
+            }
+        }
+        else
+        {
+            if(newColor.blue()!=tempColor.blue())
+            {
+                if(newColor.blue()>tempColor.blue())
+                    bdiff=1;
+                else
+                    bdiff=-1;
+            }
+        }
+    }
+    int adiff;
+    {
+        adiff=newColor.alpha()-actualColor.alpha();
+        if(adiff==0)
+        {}
+        else if(adiff/(updateColorIntervale)!=0)
+        {
+            adiff/=updateColorIntervale;
+            if(adiff>0)
+            {
+                if(adiff>(newColor.alpha()-tempColor.alpha()))
+                    adiff=(newColor.alpha()-tempColor.alpha());
+            }
+            else
+            {
+                if(adiff<(newColor.alpha()-tempColor.alpha()))
+                    adiff=(newColor.alpha()-tempColor.alpha());
+            }
+        }
+        else
+        {
+            if(newColor.alpha()!=tempColor.alpha())
+            {
+                if(newColor.alpha()>tempColor.alpha())
+                    adiff=1;
+                else
+                    adiff=-1;
+            }
+        }
+    }
+    tempColor=QColor(tempColor.red()+rdiff,tempColor.green()+gdiff,tempColor.blue()+bdiff,tempColor.alpha()+adiff);
+    QPixmap pixmap(800*2,600*2);
+    pixmap.fill(tempColor);
+    imageOver->setPixmap(pixmap);
+    if(tempColor==newColor)
+    {
+        actualColor=newColor;
+        if(newColor.alpha()==0)
+            if(imageOverAdded)
+            {
+                imageOverAdded=false;
+                mScene->removeItem(imageOver);
+            }
+    }
+    else
+        updateColorTimer.start();
 }

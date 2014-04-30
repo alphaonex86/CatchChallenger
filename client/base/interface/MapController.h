@@ -9,6 +9,8 @@
 #include <QStringList>
 #include <QHash>
 #include <QTimer>
+#include <QGraphicsPixmapItem>
+#include <QColor>
 
 class MapController : public MapControllerMP
 {
@@ -22,6 +24,7 @@ public:
     QString mapIdToString(const quint32 &mapId) const;
     void remove_plant_full(const QString &map,const quint8 &x,const quint8 &y);
     void insert_plant_full(const QString &map,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
+    void setColor(const QColor &color, const quint32 &timeInMS=0);
 private:
     //the delayed action
     struct DelayedPlantInsert
@@ -40,6 +43,11 @@ private:
         quint16 seconds_to_mature;
     };
     Tiled::Tileset *botFlags;
+    QGraphicsPixmapItem *imageOver;
+    bool imageOverAdded;
+    QColor actualColor,tempColor,newColor;
+    QTimer updateColorTimer;
+    int updateColorIntervale;
 protected slots:
     //plant
     void getPlantTimerEvent();
@@ -51,6 +59,7 @@ protected slots:
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     void tryLoadPlantOnMapDisplayed(const QString &fileName);
     void updateGrowing();
+    void updateColor();
 public slots:
     virtual void datapackParsed();
     virtual void reinject_signals();

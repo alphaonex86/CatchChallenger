@@ -440,7 +440,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                 {
-                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2, in.device()->pos(): %3, in.device()->size(): %4, in.device()->isOpen(): %5").arg(mainCodeType).arg(__LINE__).arg(in.device()->pos()).arg(in.device()->size()).arg(in.device()->isOpen()));
                     return;
                 }
                 quint16 current_player_connected_16Bits;
@@ -2588,33 +2588,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         }
                         in >> CommonSettings::commonSettings.waitBeforeConnectAfterKick;
                         {
-                            quint8 tempListSize;
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                            {
-                                parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
-                                return;
-                            }
-                            in >> tempListSize;
-                            quint8 event,value;
-                            int index=0;
-                            while(index<tempListSize)
-                            {
-
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                                {
-                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
-                                    return;
-                                }
-                                in >> event;
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                                {
-                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
-                                    return;
-                                }
-                                in >> value;
-                            }
-                        }
-                        {
                             quint8 tempForceClientToSendAtBorder;
                             in >> tempForceClientToSendAtBorder;
                             if(tempForceClientToSendAtBorder!=0 && tempForceClientToSendAtBorder!=1)
@@ -2881,6 +2854,36 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             player_informations.clan_leader=true;
                         else
                             player_informations.clan_leader=false;
+                        {
+                            QList<QPair<quint8,quint8> > events;
+                            quint8 tempListSize;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> tempListSize;
+                            quint8 event,value;
+                            int index=0;
+                            while(index<tempListSize)
+                            {
+
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> event;
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> value;
+                                events << QPair<quint8,quint8>(event,value);
+                            }
+                            emit setEvents(events);
+                        }
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash, line: %1").arg(__LINE__));

@@ -98,6 +98,9 @@ void BaseWindow::resetAll()
     targetMonsterEvolution=NULL;
     idMonsterEvolution=0;
     evolutionControl=NULL;
+    lastPlaceDisplayed.clear();
+    events.clear();
+    visualCategory.clear();
     while(!ambiance.isEmpty())
     {
         ambiance.first()->stop();
@@ -354,6 +357,36 @@ void BaseWindow::datapackParsed()
     //updatePlayerImage();
 }
 
+void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > events)
+{
+    this->events.clear();
+    int index=0;
+    while(index<events.size())
+    {
+        const QPair<quint8,quint8> event=events.at(index);
+        while(this->events.size()<=event.first)
+            this->events << 0;
+        this->events[event.first]=event.second;
+        index++;
+    }
+    load_event();
+}
+
+void BaseWindow::load_event()
+{
+    if(isLogged && datapackIsParsed && havePlayerInformations)
+    {
+        while(events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+            events << 0;
+    }
+    if(events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
+    {
+        while(events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
+            events.removeLast();
+        qDebug() << "BaseWindow::load_event() event list biger than it should";
+    }
+}
+
 void BaseWindow::updateConnectingStatus()
 {
     if(isLogged && datapackIsParsed && !havePlayerInformations)
@@ -402,6 +435,7 @@ void BaseWindow::updateConnectingStatus()
             return;
         load_monsters();
         show_reputation();
+        load_event();
         this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Welcome <b><i>%1</i></b> on <i>CatchChallenger</i>").arg(CatchChallenger::Api_client_real::client->getPseudo()));
