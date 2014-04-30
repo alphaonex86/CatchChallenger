@@ -1044,6 +1044,11 @@ QString MapVisualiserPlayer::currentMap() const
     return current_map;
 }
 
+MapVisualiserThread::Map_full * MapVisualiserPlayer::currentMapFull() const
+{
+    return all_map.value(current_map);
+}
+
 QString MapVisualiserPlayer::currentMapType() const
 {
     if(!all_map.contains(current_map))

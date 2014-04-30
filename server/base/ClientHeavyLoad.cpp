@@ -167,7 +167,6 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
 
     //common settings
     out << (quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick;
-    out << (quint8)00;//events not yet done
     out << (quint8)CommonSettings::commonSettings.forceClientToSendAtMapChange;
     out << (quint8)CommonSettings::commonSettings.forcedSpeed;
     out << (quint8)CommonSettings::commonSettings.dontSendPseudo;
@@ -1131,6 +1130,27 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         out << (quint8)0x01;
     else
         out << (quint8)0x00;
+    //send the event
+    {
+        QList<QPair<quint8,quint8> > events;
+        int index=0;
+        while(index<GlobalServerData::serverPrivateVariables.events.size())
+        {
+            const quint8 &value=GlobalServerData::serverPrivateVariables.events.at(index);
+            if(value!=0)
+                events << QPair<quint8,quint8>(index,value);
+            index++;
+        }
+        index=0;
+        out << (quint8)events.size();
+        while(index<events.size())
+        {
+            const QPair<quint8,quint8> &event=events.at(index);
+            out << (quint8)event.first;
+            out << (quint8)event.second;
+            index++;
+        }
+    }
     out << (quint64)player_informations->public_and_private_informations.cash;
     out << (quint64)player_informations->public_and_private_informations.warehouse_cash;
     out << (double)player_informations->public_and_private_informations.bitcoin;
