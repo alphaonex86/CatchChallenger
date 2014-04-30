@@ -228,7 +228,9 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
     }
     else
     {
-        //this case do into initialiseTheVariable()
+        //NO: this case do into initialiseTheVariable()
+        //YES: reinitialise because the initialise already done, but this object can be reused
+        ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=2;
     }
 }
 

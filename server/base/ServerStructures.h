@@ -329,6 +329,7 @@ struct ServerPrivateVariables
     quint32 number_of_bots_logged;
     int botSpawnIndex;
     QHash<quint32,IndustryStatus> industriesStatus;
+    QList<quint8> events;
 
     //bitcoin
     struct Bitcoin

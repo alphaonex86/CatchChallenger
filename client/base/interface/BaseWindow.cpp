@@ -43,6 +43,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
     qRegisterMetaType<QHash<quint32,quint32> >("CatchChallenger::Plant_collect");
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
+    qRegisterMetaType<QList<QPair<quint8,quint8> > >("QList<QPair<quint8,quint8> >");
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
     qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
@@ -215,6 +216,7 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInformations,   this,&BaseWindow::clanInformations, Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInvite,         this,&BaseWindow::clanInvite,       Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::cityCapture,        this,&BaseWindow::cityCapture,      Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::setEvents,          this,&BaseWindow::setEvents,        Qt::QueuedConnection);
 
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourAreNotLeader,                this,&BaseWindow::captureCityYourAreNotLeader,              Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourLeaderHaveStartInOtherCity,  this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection);
@@ -1169,6 +1171,13 @@ void BaseWindow::showTip(const QString &tip)
     tip_timeout.start();
 }
 
+void BaseWindow::showPlace(const QString &place)
+{
+    ui->gain->setVisible(true);
+    ui->gain->setText(place);
+    gain_timeout.start();
+}
+
 void BaseWindow::showGain(const QString &gain)
 {
     ui->gain->setVisible(true);
@@ -1444,35 +1453,94 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
 void BaseWindow::currentMapLoaded()
 {
     qDebug() << "BaseWindow::currentMapLoaded(): map: " << MapController::mapController->currentMap() << " with type: " << MapController::mapController->currentMapType();
-    QString type=MapController::mapController->currentMapType();
-    QString backgroundsound=MapController::mapController->currentBackgroundsound();
-    if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type) && backgroundsound.isEmpty())
+    //name
     {
-        while(!ambiance.isEmpty())
+        MapVisualiserThread::Map_full *mapFull=MapController::mapController->currentMapFull();
+        QString visualName;
+        if(!mapFull->zone.isEmpty())
+            if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
+                visualName=DatapackClientLoader::datapackLoader.zonesExtra.value(mapFull->zone).name;
+        if(visualName.isEmpty())
+            visualName=mapFull->name;
+        if(!visualName.isEmpty() && lastPlaceDisplayed!=visualName)
         {
-            ambiance.first()->stop();
-            delete ambiance.first();
-            ambiance.removeFirst();
+            lastPlaceDisplayed=visualName;
+            showPlace(tr("You arrive at <b><i>%1</i></b>").arg(visualName));
         }
-        return;
     }
-    QString file;
-    if(DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
-        file=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
-    else
-        file=backgroundsound;
-    while(!ambiance.isEmpty())
+    const QString &type=MapController::mapController->currentMapType();
+    //sound
     {
-        if(ambiance.first()->getFilePath()==file)
-            return;
-        ambiance.first()->stop();
-        delete ambiance.first();
-        ambiance.removeFirst();
+        bool noSound=false;
+        const QString &backgroundsound=MapController::mapController->currentBackgroundsound();
+        if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type) && backgroundsound.isEmpty())
+        {
+            while(!ambiance.isEmpty())
+            {
+                ambiance.first()->stop();
+                delete ambiance.first();
+                ambiance.removeFirst();
+            }
+            noSound=true;
+        }
+        if(!noSound)
+        {
+            QString file;
+            if(DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
+                file=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
+            else
+                file=backgroundsound;
+            while(!ambiance.isEmpty())
+            {
+                if(ambiance.first()->getFilePath()==file)
+                {
+                    noSound=true;
+                    break;
+                }
+                ambiance.first()->stop();
+                delete ambiance.first();
+                ambiance.removeFirst();
+            }
+            if(!noSound)
+            {
+                ambiance << new QOggSimplePlayer(file,&audioReadThread);
+                ambiance.last()->start();
+                ambiance.last()->setLoop(true);
+                ambiance.last()->setVolume((qreal)Options::options.getAudioVolume()/(qreal)100);
+            }
+        }
     }
-    ambiance << new QOggSimplePlayer(file,&audioReadThread);
-    ambiance.last()->start();
-    ambiance.last()->setLoop(true);
-    ambiance.last()->setVolume((qreal)Options::options.getAudioVolume()/(qreal)100);
+    //color
+    {
+        if(visualCategory!=type)
+        {
+            visualCategory=type;
+            if(DatapackClientLoader::datapackLoader.visualCategories.contains(type))
+            {
+                const QList<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=DatapackClientLoader::datapackLoader.visualCategories.value(type).conditions;
+                int index=0;
+                while(index<conditions.size())
+                {
+                    const DatapackClientLoader::VisualCategory::VisualCategoryCondition &condition=conditions.at(index);
+                    if(condition.event<events.size())
+                    {
+                        if(events.at(condition.event)==condition.eventValue)
+                        {
+                            MapController::mapController->setColor(condition.color);
+                            break;
+                        }
+                    }
+                    else
+                        qDebug() << QStringLiteral("event for condition out of range: %1 for %2 event(s)").arg(condition.event).arg(events.size());
+                    index++;
+                }
+                if(index==conditions.size())
+                    MapController::mapController->setColor(DatapackClientLoader::datapackLoader.visualCategories.value(type).defaultColor);
+            }
+            else
+                MapController::mapController->setColor(Qt::transparent);
+        }
+    }
 }
 
 //network
@@ -1959,6 +2027,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
                     QString textToShow=text.text();
                     textToShow=parseHtmlToDisplay(textToShow);
                     ui->IG_dialog_text->setText(textToShow);
+                    ui->IG_dialog_name->setText(actualBot.name);
                     ui->IG_dialog->setVisible(true);
                     return;
                 }
@@ -1972,6 +2041,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 QString textToShow=text.text();
                 textToShow=parseHtmlToDisplay(textToShow);
                 ui->IG_dialog_text->setText(textToShow);
+                ui->IG_dialog_name->setText(actualBot.name);
                 ui->IG_dialog->setVisible(true);
                 return;
             }
@@ -2081,6 +2151,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             textToShow+=QStringLiteral("</ul>");
         }
         ui->IG_dialog_text->setText(textToShow);
+        ui->IG_dialog_name->setText(actualBot.name);
         ui->IG_dialog->setVisible(true);
         return;
     }
@@ -2097,6 +2168,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         else
             textToShow=QStringLiteral("<center>%1</center>").arg(tr("You are already into a clan. Use the clan dongle into the player information."));
         ui->IG_dialog_text->setText(textToShow);
+        ui->IG_dialog_name->setText(actualBot.name);
         ui->IG_dialog->setVisible(true);
         return;
     }
@@ -2804,6 +2876,7 @@ void BaseWindow::showQuestText(const quint32 &textId)
 
     QString textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText.value(questId).text.value(textId));
     ui->IG_dialog_text->setText(textToShow);
+    ui->IG_dialog_name->setText(actualBot.name);
     ui->IG_dialog->setVisible(true);
 }
 

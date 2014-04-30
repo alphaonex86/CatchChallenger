@@ -254,11 +254,20 @@ void BaseServer::preload_the_data()
     qDebug() << QStringLiteral("Loaded the server datapack into %1ms").arg(time.elapsed());
 }
 
+void BaseServer::preload_the_events()
+{
+    GlobalServerData::serverPrivateVariables.events.clear();
+    int index=0;
+    while(index<CommonDatapack::commonDatapack.events.size())
+    {
+        GlobalServerData::serverPrivateVariables.events << 1;
+        index++;
+    }
+}
+
 void BaseServer::preload_the_ddos()
 {
-    ClientBroadCast::generalChatDrop.clear();
-    ClientBroadCast::clanChatDrop.clear();
-    ClientBroadCast::privateChatDrop.clear();
+    unload_ddos();
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
@@ -1873,6 +1882,18 @@ void BaseServer::unload_the_visibility_algorithm()
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
     }
+}
+
+void BaseServer::unload_ddos()
+{
+    ClientBroadCast::generalChatDrop.clear();
+    ClientBroadCast::clanChatDrop.clear();
+    ClientBroadCast::privateChatDrop.clear();
+}
+
+void BaseServer::unload_events()
+{
+    GlobalServerData::serverPrivateVariables.events.clear();
 }
 
 void BaseServer::unload_the_datapack()
