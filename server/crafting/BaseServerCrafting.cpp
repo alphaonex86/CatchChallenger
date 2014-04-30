@@ -18,6 +18,7 @@
 
 using namespace CatchChallenger;
 
+QString BaseServerCrafting::text_dottmx=QLatin1Literal(".tmx");
 QString BaseServerCrafting::text_shops=QLatin1Literal("shops");
 QString BaseServerCrafting::text_shop=QLatin1Literal("shop");
 QString BaseServerCrafting::text_id=QLatin1Literal("id");
@@ -46,6 +47,8 @@ void BaseServerCrafting::preload_the_plant_on_map()
     {
         bool ok;
         QString map=plantOnMapQuery.value(0).toString();
+        if(!map.endsWith(BaseServerCrafting::text_dottmx))
+            map+=BaseServerCrafting::text_dottmx;
         if(!GlobalServerData::serverPrivateVariables.map_list.contains(map))
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists: %1").arg(map));
@@ -56,7 +59,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(map));
             continue;
         }
-        quint8 x=plantOnMapQuery.value(1).toUInt(&ok);
+        const quint8 &x=plantOnMapQuery.value(1).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x is not a number"));
@@ -67,7 +70,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->width).arg(map).arg(x));
             continue;
         }
-        quint8 y=plantOnMapQuery.value(2).toUInt(&ok);
+        const quint8 &y=plantOnMapQuery.value(2).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y is not a number"));
@@ -78,7 +81,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->height).arg(map).arg(y));
             continue;
         }
-        quint8 plant=plantOnMapQuery.value(3).toUInt(&ok);
+        const quint8 &plant=plantOnMapQuery.value(3).toUInt(&ok);
         if(!ok)
             continue;
         if(!CommonDatapack::commonDatapack.plants.contains(plant))
@@ -87,7 +90,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             remove_plant_on_map(map,x,y);
             continue;
         }
-        quint32 character=plantOnMapQuery.value(4).toUInt(&ok);
+        const quint32 &character=plantOnMapQuery.value(4).toUInt(&ok);
         if(!ok)
             continue;
         if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list.value(map),x,y))
@@ -95,7 +98,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(map).arg(x).arg(y));
             continue;
         }
-        quint64 plant_timestamps=plantOnMapQuery.value(5).toULongLong(&ok);
+        const quint64 &plant_timestamps=plantOnMapQuery.value(5).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant timestamps is not a number: %1 (%2,%3)").arg(map).arg(x).arg(y));

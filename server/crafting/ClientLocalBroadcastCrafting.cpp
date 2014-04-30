@@ -8,6 +8,8 @@
 
 using namespace CatchChallenger;
 
+QString ClientLocalBroadcast::text_dottmx;
+
 void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -165,12 +167,14 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds;
     plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
+    QString map_file=plant_list_in_waiting.first().map->map_file;
+    map_file.remove(text_dottmx);
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
             emit dbQuery(QStringLiteral("INSERT INTO `plant`(`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES('%1',%2,%3,%4,%5,%6);")
-                         .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
+                         .arg(SqlFunction::quoteSqlVariable(map_file))
                          .arg(plantOnMap.x)
                          .arg(plantOnMap.y)
                          .arg(plantOnMap.plant)
@@ -180,7 +184,7 @@ void ClientLocalBroadcast::seedValidated()
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             emit dbQuery(QStringLiteral("INSERT INTO plant(map,x,y,plant,character,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
-                     .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
+                     .arg(SqlFunction::quoteSqlVariable(map_file))
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)
@@ -416,20 +420,22 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                     player_informations->public_and_private_informations.public_informations.type==Player_type_dev
                     )
             {
+                QString map_file=map->map_file;
+                map_file.remove(ClientLocalBroadcast::text_dottmx);
                 //remove plant from db
                 switch(GlobalServerData::serverSettings.database.type)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QStringLiteral("DELETE FROM `plant` WHERE `map`=\'%1\' AND `x`=%2 AND `y`=%3")
-                                     .arg(SqlFunction::quoteSqlVariable(map->map_file))
+                                     .arg(SqlFunction::quoteSqlVariable(map_file))
                                      .arg(x)
                                      .arg(y)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QStringLiteral("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
-                                 .arg(SqlFunction::quoteSqlVariable(map->map_file))
+                                 .arg(SqlFunction::quoteSqlVariable(map_file))
                                  .arg(x)
                                  .arg(y)
                                  );

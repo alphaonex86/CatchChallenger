@@ -1,6 +1,7 @@
 #include "ClientNetworkRead.h"
 #include "GlobalServerData.h"
 #include "MapServer.h"
+#include "ClientNetworkReadWithoutSender.h"
 
 using namespace CatchChallenger;
 
@@ -36,14 +37,76 @@ ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_inform
     is_logging_in_progess(false),
     stopIt(false),
     socket(socket),
-    player_informations(player_informations)
+    player_informations(player_informations),
+    movePacketKickTotalCache(0),
+    movePacketKickNewValue(0),
+    chatPacketKickTotalCache(0),
+    chatPacketKickNewValue(0),
+    otherPacketKickTotalCache(0),
+    otherPacketKickNewValue(0)
 {
-    queryNumberList.reserve(256);
-    int index=0;
-    while(index<256)
     {
-        queryNumberList << index;
-        index++;
+        //int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        int index=0;
+        while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+        {
+            movePacketKick << 0;
+            chatPacketKick << 0;
+            otherPacketKick << 0;
+            index++;
+        }
+    }
+    queryNumberList.reserve(256);
+    {
+        int index=0;
+        while(index<256)
+        {
+            queryNumberList << index;
+            index++;
+        }
+    }
+}
+
+void ClientNetworkRead::doDDOSCompute()
+{
+    {
+        movePacketKickTotalCache=0;
+        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        {
+            movePacketKick[index]=movePacketKick[index+1];
+            movePacketKickTotalCache+=movePacketKick[index];
+            index++;
+        }
+        movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=movePacketKickNewValue;
+        movePacketKickTotalCache+=movePacketKickNewValue;
+        movePacketKickNewValue=0;
+    }
+    {
+        chatPacketKickTotalCache=0;
+        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        {
+            chatPacketKick[index]=chatPacketKick[index+1];
+            chatPacketKickTotalCache+=chatPacketKick[index];
+            index++;
+        }
+        chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=chatPacketKickNewValue;
+        chatPacketKickTotalCache+=chatPacketKickNewValue;
+        chatPacketKickNewValue=0;
+    }
+    {
+        otherPacketKickTotalCache=0;
+        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        {
+            otherPacketKick[index]=otherPacketKick[index+1];
+            otherPacketKickTotalCache+=otherPacketKick[index];
+            index++;
+        }
+        otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=otherPacketKickNewValue;
+        otherPacketKickTotalCache+=otherPacketKickNewValue;
+        otherPacketKickNewValue=0;
     }
 }
 
@@ -54,6 +117,7 @@ void ClientNetworkRead::stopRead()
 
 void ClientNetworkRead::askIfIsReadyToStop()
 {
+    ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.clientList.removeOne(this);
     stopIt=true;
     emit isReadyToStop();
 }
@@ -116,6 +180,12 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QStringLiteral("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
+    {
+        emit error("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
     QByteArray outputData;
@@ -160,6 +230,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                         }
                         emit postReply(queryNumber,outputData);
                         have_send_protocol=true;
+                        ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.clientList << this;
                         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                         emit message(QStringLiteral("Protocol sended and replied"));
                         #endif
@@ -241,6 +312,12 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
     {
         case 0x40:
         {
+            if((movePacketKickTotalCache+movePacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitMove)
+            {
+                emit error("Too many move in sort time, check DDOS limit");
+                return;
+            }
+            movePacketKickNewValue++;
             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
             {
                 parseError("Wrong size in move packet");
@@ -258,6 +335,12 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
         break;
         case 0x61:
         {
+            if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
+            {
+                emit error("Too many packet in sort time, check DDOS limit");
+                return;
+            }
+            otherPacketKickNewValue++;
             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
             {
                 parseError("Wrong size in move packet");
@@ -297,6 +380,15 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
         //parseError(QStringLiteral("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
     }
+    if(mainCodeType!=0x42 && subCodeType!=0x0003)
+    {
+        if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
+        {
+            emit error("Too many packet in sort time, check DDOS limit");
+            return;
+        }
+        otherPacketKickNewValue++;
+    }
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QStringLiteral("parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
@@ -314,6 +406,12 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
             //Chat
             case 0x0003:
             {
+                if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
+                {
+                    emit error("Too many chat in sort time, check DDOS limit");
+                    return;
+                }
+                chatPacketKickNewValue++;
                 if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
                 {
                     parseError("wrong remaining size for chat");
@@ -483,7 +581,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
             {
                 if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
                 {
-                    parseError("wrong remaining size for chat");
+                    parseError("wrong remaining size for clan invite");
                     return;
                 }
                 quint8 returnCode;
@@ -949,6 +1047,12 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
         parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
         return;
     }
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
+    {
+        emit error("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));

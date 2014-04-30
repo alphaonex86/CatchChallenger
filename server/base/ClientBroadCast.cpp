@@ -34,6 +34,16 @@ QString ClientBroadCast::text_commaspace=QLatin1Literal(", ");
 QString ClientBroadCast::text_unabletofoundtheconnectedplayertokick=QLatin1Literal("unable to found the connected player to kick");
 QString ClientBroadCast::text_unabletofoundthisrightslevel=QLatin1Literal("unable to found this rights level: ");
 
+QList<int> ClientBroadCast::generalChatDrop;
+int ClientBroadCast::generalChatDropTotalCache=0;
+int ClientBroadCast::generalChatDropNewValue=0;
+QList<int> ClientBroadCast::clanChatDrop;
+int ClientBroadCast::clanChatDropTotalCache=0;
+int ClientBroadCast::clanChatDropNewValue=0;
+QList<int> ClientBroadCast::privateChatDrop;
+int ClientBroadCast::privateChatDropTotalCache=0;
+int ClientBroadCast::privateChatDropNewValue=0;
+
 ClientBroadCast::ClientBroadCast():
     connected_players(0),
     clan(0)
@@ -100,6 +110,9 @@ void ClientBroadCast::clanChange(const quint32 &clanId)
 
 void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 {
+    if((privateChatDropTotalCache+privateChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate)
+        return;
+    privateChatDropNewValue++;
     if(this->player_informations->public_and_private_informations.public_informations.pseudo==pseudo)
     {
         emit error(QLatin1String("Can't send them self the PM"));
@@ -164,6 +177,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 {
     if(chatType==Chat_type_clan)
     {
+        if((clanChatDropTotalCache+clanChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
+            return;
         if(clan==0)
             emit error(QLatin1String("Unable to chat with clan, you have not clan"));
         else
@@ -206,6 +221,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
  *	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)*/
     else
     {
+        if((generalChatDropTotalCache+generalChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
+            return;
         if(!GlobalServerData::serverSettings.anonymous)
             emit message(QStringLiteral("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
