@@ -19,6 +19,7 @@ public:
     void keyReleaseEvent(QKeyEvent *event);
     QString lastLocation() const;
     QString currentMap() const;
+    MapVisualiserThread::Map_full * currentMapFull() const;
     QString currentMapType() const;
     QString currentZone() const;
     QString currentBackgroundsound() const;

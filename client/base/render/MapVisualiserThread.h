@@ -51,6 +51,9 @@ public:
         int relative_x_pixel,relative_y_pixel;
         bool displayed;
         QHash<QPair<quint8,quint8>,MapDoor*> doors;
+        QString visualType;
+        QString name;
+        QString zone;
     };
     explicit MapVisualiserThread();
     ~MapVisualiserThread();
@@ -92,6 +95,7 @@ public:
     static QString text_id;
     static QString text_slash;
     static QString text_dotxml;
+    static QString text_dottmx;
     static QString text_step;
     static QString text_properties;
     static QString text_shop;
@@ -110,6 +114,7 @@ public slots:
     Map_full * loadOtherMap(const QString &fileName);
     //drop and remplace by Map_loader info
     bool loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap);
+    bool loadOtherMapMetaData(MapVisualiserThread::Map_full *parsedMap);
     void loadBotFile(const QString &fileName);
 public slots:
     virtual void resetAll();

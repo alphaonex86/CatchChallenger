@@ -119,6 +119,7 @@ signals:
     //character
     void newCharacterId(const quint32 &characterId) const;
     void haveCharacter() const;
+    void setEvents(const QList<QPair<quint8,quint8> > events);
 
     //map move
     void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;

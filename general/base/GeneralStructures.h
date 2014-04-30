@@ -755,6 +755,7 @@ struct Bot
     QHash<QString,QString> properties;
     quint32 botId;//id need be unique for the quests, then 32Bits
     QString skin;
+    QString name;
 };
 
 struct BotFight

@@ -103,6 +103,7 @@ protected:
         Map_to_send old_map;
     };
     virtual void preload_the_data();
+    virtual void preload_the_events();
     virtual void preload_the_ddos();
     virtual void preload_zone();
     virtual void preload_industries();
@@ -127,6 +128,8 @@ protected:
     virtual void unload_the_datapack();
     virtual void unload_the_players();
     virtual void unload_the_visibility_algorithm();
+    virtual void unload_ddos();
+    virtual void unload_events();
 
     virtual QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
     virtual QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);

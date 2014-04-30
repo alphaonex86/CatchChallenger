@@ -8,6 +8,7 @@
 #include <QStringList>
 #include <QMultiHash>
 #include <QIcon>
+#include <QColor>
 
 #include "../../general/base/GeneralStructures.h"
 
@@ -83,6 +84,17 @@ public:
         QString name;
         QString description;
     };
+    struct VisualCategory
+    {
+        QColor defaultColor;
+        struct VisualCategoryCondition
+        {
+            quint8 event;
+            quint8 eventValue;
+            QColor color;
+        };
+        QList<VisualCategoryCondition> conditions;
+    };
     struct TypeText
     {
         QString name;
@@ -103,6 +115,7 @@ public:
     QHash<QString,ZoneExtra> zonesExtra;
     QHash<QString,QString> audioAmbiance;
     QHash<quint32,ProfileText> profileTextList;
+    QHash<QString,VisualCategory> visualCategories;
     QString language;
     QStringList maps,skins;
     QPixmap defaultInventoryImage();
@@ -124,6 +137,7 @@ private slots:
     void parsePlantsExtra();
     void parseItemsExtra();
     void parseMaps();
+    void parseVisualCategory();
     void parseTypesExtra();
     void parseMonstersExtra();
     void parseBuffExtra();
@@ -180,6 +194,12 @@ protected:
     static QString text_win;
     static QString text_dotxml;
     static QString text_dottsx;
+    static QString text_visual;
+    static QString text_category;
+    static QString text_alpha;
+    static QString text_color;
+    static QString text_event;
+    static QString text_value;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

@@ -130,6 +130,7 @@ private slots:
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
+    void setEvents(const QList<QPair<quint8,quint8> > events);
 
     //player UI
     void on_pushButton_interface_bag_clicked();
@@ -139,6 +140,7 @@ private slots:
     void tipTimeout();
     void gainTimeout();
     void showTip(const QString &tip);
+    void showPlace(const QString &place);
     void showGain(const QString &gain);
     void addQuery(const QueryType &queryType);
     void removeQuery(const QueryType &queryType);
@@ -163,6 +165,7 @@ private slots:
     void load_plant_inventory();
     void load_crafting_inventory();
     void load_monsters();
+    void load_event();
     bool check_monsters();
     bool check_senddata();//with the datapack content
     void show_reputation();
@@ -474,6 +477,9 @@ private:
     quint32 mLastGivenXP;
     quint32 currentMonsterLevel;
     QSet<QString> supportedImageFormats;
+    QString lastPlaceDisplayed;
+    QList<quint32> events;
+    QString visualCategory;
 
     //plant seed in waiting
     struct SeedInWaiting

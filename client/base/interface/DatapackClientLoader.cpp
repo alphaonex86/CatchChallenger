@@ -61,6 +61,12 @@ QString DatapackClientLoader::text_start=QLatin1Literal("start");
 QString DatapackClientLoader::text_win=QLatin1Literal("win");
 QString DatapackClientLoader::text_dotxml=QLatin1Literal(".xml");
 QString DatapackClientLoader::text_dottsx=QLatin1Literal(".tsx");
+QString DatapackClientLoader::text_visual=QLatin1Literal("visual");
+QString DatapackClientLoader::text_category=QLatin1Literal("category");
+QString DatapackClientLoader::text_alpha=QLatin1Literal("alpha");
+QString DatapackClientLoader::text_color=QLatin1Literal("color");
+QString DatapackClientLoader::text_event=QLatin1Literal("event");
+QString DatapackClientLoader::text_value=QLatin1Literal("value");
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -105,6 +111,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknow-object.png"));
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    parseVisualCategory();
     parseTypesExtra();
     parseItemsExtra();
     parseMaps();
@@ -128,6 +135,156 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 QString DatapackClientLoader::getDatapackPath()
 {
     return datapackPath;
+}
+
+void DatapackClientLoader::parseVisualCategory()
+{
+    QDomDocument domDocument;
+    //open and quick check the file
+    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("visualcategory.xml");
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    else
+    {
+        QFile itemsFile(file);
+        if(!itemsFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << (QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString()));
+            return;
+        }
+        const QByteArray &xmlContent=itemsFile.readAll();
+        itemsFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << (QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            return;
+        }
+        qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+    }
+    const QDomElement &root = domDocument.documentElement();
+    if(root.tagName()!=DatapackClientLoader::text_visual)
+    {
+        qDebug() << (QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file));
+        return;
+    }
+
+    //load the content
+    QDomElement item = root.firstChildElement(DatapackClientLoader::text_category);
+    while(!item.isNull())
+    {
+        if(item.isElement())
+        {
+            if(item.hasAttribute(DatapackClientLoader::text_id))
+            {
+                if(!item.attribute(DatapackClientLoader::text_id).isEmpty())
+                {
+                    if(!DatapackClientLoader::datapackLoader.visualCategories.contains(item.attribute(DatapackClientLoader::text_id)))
+                    {
+                        bool ok;
+                        DatapackClientLoader::datapackLoader.visualCategories[item.attribute(DatapackClientLoader::text_id)].defaultColor=Qt::transparent;
+                        int alpha=255;
+                        if(item.hasAttribute(DatapackClientLoader::text_alpha))
+                        {
+                            alpha=item.attribute(DatapackClientLoader::text_alpha).toUInt(&ok);
+                            if(!ok || alpha>255)
+                            {
+                                alpha=255;
+                                qDebug() << (QStringLiteral("Unable to open the file: %1, alpha is not number or greater than 255: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            }
+                        }
+                        if(item.hasAttribute(DatapackClientLoader::text_color))
+                        {
+                            QColor color;
+                            color.setNamedColor(item.attribute(DatapackClientLoader::text_color));
+                            if(color.isValid())
+                            {
+                                color.setAlpha(alpha);
+                                DatapackClientLoader::datapackLoader.visualCategories[item.attribute(DatapackClientLoader::text_id)].defaultColor=color;
+                            }
+                            else
+                                qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        }
+                        QDomElement event = item.firstChildElement(DatapackClientLoader::text_event);
+                        while(!event.isNull())
+                        {
+                            if(event.isElement())
+                            {
+                                if(event.hasAttribute(DatapackClientLoader::text_id) && event.hasAttribute(DatapackClientLoader::text_value))
+                                {
+                                    int index=0;
+                                    while(index<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+                                    {
+                                        if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).name==event.attribute(DatapackClientLoader::text_id))
+                                        {
+                                            int sub_index=0;
+                                            while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.size())
+                                            {
+                                                if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.at(sub_index)==event.attribute(DatapackClientLoader::text_value))
+                                                {
+                                                    VisualCategory::VisualCategoryCondition visualCategoryCondition;
+                                                    visualCategoryCondition.event=index;
+                                                    visualCategoryCondition.eventValue=sub_index;
+                                                    visualCategoryCondition.color=DatapackClientLoader::datapackLoader.visualCategories.value(event.attribute(DatapackClientLoader::text_id)).defaultColor;
+                                                    int alpha=255;
+                                                    if(event.hasAttribute(DatapackClientLoader::text_alpha))
+                                                    {
+                                                        alpha=event.attribute(DatapackClientLoader::text_alpha).toUInt(&ok);
+                                                        if(!ok || alpha>255)
+                                                        {
+                                                            alpha=255;
+                                                            qDebug() << (QStringLiteral("Unable to open the file: %1, alpha is not number or greater than 255: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
+                                                        }
+                                                        else
+                                                            visualCategoryCondition.color.setAlpha(alpha);
+                                                    }
+                                                    if(event.hasAttribute(DatapackClientLoader::text_color))
+                                                    {
+                                                        QColor color;
+                                                        color.setNamedColor(event.attribute(DatapackClientLoader::text_color));
+                                                        if(color.isValid())
+                                                            visualCategoryCondition.color.setRgb(color.red(),color.green(),color.blue());
+                                                        else
+                                                            qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
+                                                    }
+                                                    if(visualCategoryCondition.color!=DatapackClientLoader::datapackLoader.visualCategories.value(event.attribute(DatapackClientLoader::text_id)).defaultColor)
+                                                        DatapackClientLoader::datapackLoader.visualCategories[event.attribute(DatapackClientLoader::text_id)].conditions << visualCategoryCondition;
+                                                    else
+                                                        qDebug() << (QStringLiteral("Unable to open the file: %1, color same than the default color: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
+                                                    break;
+                                                }
+                                                sub_index++;
+                                            }
+                                            if(sub_index==CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.size())
+                                                qDebug() << (QStringLiteral("Unable to open the file: %1, event value not found: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
+                                            break;
+                                        }
+                                        index++;
+                                    }
+                                    if(index==CatchChallenger::CommonDatapack::commonDatapack.events.size())
+                                        qDebug() << (QStringLiteral("Unable to open the file: %1, event not found: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
+                                }
+                                else
+                                    qDebug() << (QStringLiteral("Unable to open the file: %1, attribute id is already found: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
+                            }
+                            event = event.nextSiblingElement(DatapackClientLoader::text_event);
+                        }
+                    }
+                    else
+                        qDebug() << (QStringLiteral("Unable to open the file: %1, attribute id is already found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                else
+                    qDebug() << (QStringLiteral("Unable to open the file: %1, attribute id can't be empty: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+            }
+            else
+                qDebug() << (QStringLiteral("Unable to open the file: %1, have not the attribute id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+        }
+        item = item.nextSiblingElement(DatapackClientLoader::text_category);
+    }
+
+    qDebug() << QStringLiteral("%1 visual cat loaded").arg(DatapackClientLoader::datapackLoader.visualCategories.size());
 }
 
 void DatapackClientLoader::parseReputationExtra()
@@ -374,7 +531,7 @@ void DatapackClientLoader::parseReputationExtra()
         }
         else
             qDebug() << (QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(QStringLiteral("reputation"));
+        item = item.nextSiblingElement(DatapackClientLoader::text_reputation);
     }
     QHash<QString, CatchChallenger::Reputation>::const_iterator i = CatchChallenger::CommonDatapack::commonDatapack.reputation.constBegin();
     while (i != CatchChallenger::CommonDatapack::commonDatapack.reputation.constEnd()) {

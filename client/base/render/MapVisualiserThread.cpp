@@ -37,6 +37,7 @@ QString MapVisualiserThread::text_file=QLatin1Literal("file");
 QString MapVisualiserThread::text_id=QLatin1Literal("id");
 QString MapVisualiserThread::text_slash=QLatin1Literal("/");
 QString MapVisualiserThread::text_dotxml=QLatin1Literal(".xml");
+QString MapVisualiserThread::text_dottmx=QLatin1Literal(".tmx");
 QString MapVisualiserThread::text_step=QLatin1Literal("step");
 QString MapVisualiserThread::text_properties=QLatin1Literal("properties");
 QString MapVisualiserThread::text_shop=QLatin1Literal("shop");
@@ -581,6 +582,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         delete tempMapObject;
         return NULL;
     }
+    loadOtherMapMetaData(tempMapObject);
 
     return tempMapObject;
 }
@@ -802,6 +804,87 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     return true;
 }
 
+bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *parsedMap)
+{
+    QDomDocument domDocument;
+    //open and quick check the file
+    QString fileName=parsedMap->logicalMap.map_file;
+    fileName.replace(MapVisualiserThread::text_dottmx,MapVisualiserThread::text_dotxml);
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    else
+    {
+        QFile mapFile(fileName);
+        if(!mapFile.exists())
+            return false;
+        if(!mapFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
+            return false;
+        }
+        const QByteArray &xmlContent=mapFile.readAll();
+        mapFile.close();
+        if(stopIt)
+                return false;
+        QDomDocument domDocument;
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            return false;
+        }
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
+    }
+    const QDomElement &root = domDocument.documentElement();
+    if(root.tagName()!=MapVisualiserThread::text_map)
+    {
+        qDebug() << QStringLiteral("\"map\" root balise not found for the xml file");
+        return false;
+    }
+    if(root.hasAttribute(MapVisualiserThread::text_type))
+        parsedMap->visualType=root.attribute(MapVisualiserThread::text_type);
+    if(root.hasAttribute(MapVisualiserThread::text_zone))
+        parsedMap->zone=root.attribute(MapVisualiserThread::text_zone);
+    //load the name
+    {
+        bool name_found=false;
+        QDomElement name = root.firstChildElement(MapVisualiserThread::text_name);
+        if(!language.isEmpty() && language!=MapVisualiserThread::text_en)
+            while(!name.isNull())
+            {
+                if(name.isElement())
+                {
+                    if(name.hasAttribute(MapVisualiserThread::text_lang) && name.attribute(MapVisualiserThread::text_lang)==language)
+                    {
+                        parsedMap->name=name.text();
+                        name_found=true;
+                        break;
+                    }
+                }
+                name = name.nextSiblingElement(MapVisualiserThread::text_name);
+            }
+        if(!name_found)
+        {
+            name = root.firstChildElement(MapVisualiserThread::text_name);
+            while(!name.isNull())
+            {
+                if(name.isElement())
+                {
+                    if(!name.hasAttribute(MapVisualiserThread::text_lang) || name.attribute(MapVisualiserThread::text_lang)==MapVisualiserThread::text_en)
+                    {
+                        parsedMap->name=name.text();
+                        name_found=true;
+                        break;
+                    }
+                }
+                name = name.nextSiblingElement(MapVisualiserThread::text_name);
+            }
+        }
+    }
+    return true;
+}
+
 void MapVisualiserThread::loadBotFile(const QString &fileName)
 {
     if(botFiles.contains(fileName))
@@ -863,6 +946,42 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
                                 botFiles[fileName][botId].step[stepId]=step;
                         }
                         step = step.nextSiblingElement(MapVisualiserThread::text_step);
+                    }
+                    //load the name
+                    {
+                        bool name_found=false;
+                        QDomElement name = child.firstChildElement(MapVisualiserThread::text_name);
+                        if(!language.isEmpty() && language!=MapVisualiserThread::text_en)
+                            while(!name.isNull())
+                            {
+                                if(name.isElement())
+                                {
+                                    if(name.hasAttribute(MapVisualiserThread::text_lang) && name.attribute(MapVisualiserThread::text_lang)==language)
+                                    {
+                                        botFiles[fileName][botId].name=name.text();
+                                        name_found=true;
+                                        break;
+                                    }
+                                }
+                                name = name.nextSiblingElement(MapVisualiserThread::text_name);
+                            }
+                        if(!name_found)
+                        {
+                            name = child.firstChildElement(MapVisualiserThread::text_name);
+                            while(!name.isNull())
+                            {
+                                if(name.isElement())
+                                {
+                                    if(!name.hasAttribute(MapVisualiserThread::text_lang) || name.attribute(MapVisualiserThread::text_lang)==MapVisualiserThread::text_en)
+                                    {
+                                        botFiles[fileName][botId].name=name.text();
+                                        name_found=true;
+                                        break;
+                                    }
+                                }
+                                name = name.nextSiblingElement(MapVisualiserThread::text_name);
+                            }
+                        }
                     }
                     if(!botFiles[fileName][botId].step.contains(1))
                         botFiles[fileName].remove(botId);
