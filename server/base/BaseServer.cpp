@@ -230,6 +230,7 @@ void BaseServer::preload_the_data()
     }
     QTime time;
     time.restart();
+    preload_the_events(),
     preload_the_ddos();
     preload_the_datapack();
     preload_the_skin();
@@ -260,14 +261,14 @@ void BaseServer::preload_the_events()
     int index=0;
     while(index<CommonDatapack::commonDatapack.events.size())
     {
-        GlobalServerData::serverPrivateVariables.events << 1;
+        GlobalServerData::serverPrivateVariables.events << 0;
         index++;
     }
 }
 
 void BaseServer::preload_the_ddos()
 {
-    unload_ddos();
+    unload_the_ddos();
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
@@ -1812,6 +1813,8 @@ void BaseServer::unload_the_data()
     unload_the_datapack();
     unload_the_players();
     unload_the_static_data();
+    unload_the_ddos();
+    unload_the_events();
 
     CommonDatapack::commonDatapack.unload();
 }
@@ -1884,14 +1887,14 @@ void BaseServer::unload_the_visibility_algorithm()
     }
 }
 
-void BaseServer::unload_ddos()
+void BaseServer::unload_the_ddos()
 {
     ClientBroadCast::generalChatDrop.clear();
     ClientBroadCast::clanChatDrop.clear();
     ClientBroadCast::privateChatDrop.clear();
 }
 
-void BaseServer::unload_events()
+void BaseServer::unload_the_events()
 {
     GlobalServerData::serverPrivateVariables.events.clear();
 }
