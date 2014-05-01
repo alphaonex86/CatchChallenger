@@ -2870,16 +2870,17 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
 
                                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                                 {
-                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the event id, line: %1").arg(__LINE__));
                                     return;
                                 }
                                 in >> event;
                                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                                 {
-                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                                    parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the event value, line: %1").arg(__LINE__));
                                     return;
                                 }
                                 in >> value;
+                                index++;
                                 events << QPair<quint8,quint8>(event,value);
                             }
                             emit setEvents(events);

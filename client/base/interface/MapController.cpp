@@ -330,7 +330,7 @@ void MapController::setColor(const QColor &color, const quint32 &timeInMS)
         actualColor=color;
         tempColor=color;
         newColor=color;
-        QPixmap pixmap(800*2,600*2);
+        QPixmap pixmap(800*2*10,600*2*10);
         pixmap.fill(color);
         imageOver->setPixmap(pixmap);
         if(newColor.alpha()!=0)
@@ -352,6 +352,8 @@ void MapController::setColor(const QColor &color, const quint32 &timeInMS)
             }
         if(tempColor.alpha()==0)
             tempColor=QColor(color.red(),color.green(),color.blue(),0);
+        if(newColor.alpha()==0)
+            newColor=QColor(tempColor.red(),tempColor.green(),tempColor.blue(),0);
         actualColor=tempColor;
         updateColor();
     }

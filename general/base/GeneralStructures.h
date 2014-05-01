@@ -207,7 +207,7 @@ struct Industry
 struct Event
 {
     QString name;
-    QList<QString> values;
+    QStringList values;
 };
 
 enum ObjectUsage

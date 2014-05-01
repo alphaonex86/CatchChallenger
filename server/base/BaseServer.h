@@ -128,8 +128,8 @@ protected:
     virtual void unload_the_datapack();
     virtual void unload_the_players();
     virtual void unload_the_visibility_algorithm();
-    virtual void unload_ddos();
-    virtual void unload_events();
+    virtual void unload_the_ddos();
+    virtual void unload_the_events();
 
     virtual QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
     virtual QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
