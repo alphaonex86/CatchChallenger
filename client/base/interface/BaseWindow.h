@@ -509,6 +509,7 @@ private:
     QStringList server_list;
     QAbstractSocket::SocketState socketState;
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
+    bool characterSelected;
 
     //market buy
     QList<QPair<quint32,quint32> > marketBuyObjectList;

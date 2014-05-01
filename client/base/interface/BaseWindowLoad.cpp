@@ -23,6 +23,7 @@ void BaseWindow::resetAll()
     Chat::chat->resetAll();
     MapController::mapController->resetAll();
     haveDatapack=false;
+    characterSelected=false;
     havePlayerInformations=false;
     DatapackClientLoader::datapackLoader.resetAll();
     haveInventory=false;
@@ -391,21 +392,28 @@ void BaseWindow::updateConnectingStatus()
 {
     if(isLogged && datapackIsParsed && !havePlayerInformations)
     {
-        ui->stackedWidget->setCurrentWidget(ui->page_character);
-        updateCharacterList();
-        if(characterEntryList.isEmpty() && CommonSettings::commonSettings.max_character>0)
+        if(ui->stackedWidget->currentWidget()!=ui->page_character)
         {
-            if(CommonSettings::commonSettings.min_character>0)
+            ui->stackedWidget->setCurrentWidget(ui->page_character);
+            updateCharacterList();
+            if(characterEntryList.isEmpty() && CommonSettings::commonSettings.max_character>0)
             {
-                ui->stackedWidget->setCurrentWidget(ui->page_init);
-                ui->label_connecting_status->setText(QString());
+                if(CommonSettings::commonSettings.min_character>0)
+                {
+                    ui->stackedWidget->setCurrentWidget(ui->page_init);
+                    ui->label_connecting_status->setText(QString());
+                }
+                on_character_add_clicked();
             }
-            on_character_add_clicked();
-        }
-        if(characterEntryList.size()==1 && CommonSettings::commonSettings.min_character>=characterEntryList.size() && CommonSettings::commonSettings.max_character<=characterEntryList.size())
-        {
-            ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
-            on_character_select_clicked();
+            if(characterEntryList.size()==1 && CommonSettings::commonSettings.min_character>=characterEntryList.size() && CommonSettings::commonSettings.max_character<=characterEntryList.size())
+            {
+                if(!characterSelected)
+                {
+                    characterSelected=true;
+                    ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
+                    on_character_select_clicked();
+                }
+            }
         }
         return;
     }

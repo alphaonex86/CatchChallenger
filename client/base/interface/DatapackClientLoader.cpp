@@ -227,7 +227,7 @@ void DatapackClientLoader::parseVisualCategory()
                                                     VisualCategory::VisualCategoryCondition visualCategoryCondition;
                                                     visualCategoryCondition.event=index;
                                                     visualCategoryCondition.eventValue=sub_index;
-                                                    visualCategoryCondition.color=DatapackClientLoader::datapackLoader.visualCategories.value(event.attribute(DatapackClientLoader::text_id)).defaultColor;
+                                                    visualCategoryCondition.color=DatapackClientLoader::datapackLoader.visualCategories.value(item.attribute(DatapackClientLoader::text_id)).defaultColor;
                                                     int alpha=255;
                                                     if(event.hasAttribute(DatapackClientLoader::text_alpha))
                                                     {
@@ -237,20 +237,18 @@ void DatapackClientLoader::parseVisualCategory()
                                                             alpha=255;
                                                             qDebug() << (QStringLiteral("Unable to open the file: %1, alpha is not number or greater than 255: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
                                                         }
-                                                        else
-                                                            visualCategoryCondition.color.setAlpha(alpha);
                                                     }
                                                     if(event.hasAttribute(DatapackClientLoader::text_color))
                                                     {
                                                         QColor color;
                                                         color.setNamedColor(event.attribute(DatapackClientLoader::text_color));
                                                         if(color.isValid())
-                                                            visualCategoryCondition.color.setRgb(color.red(),color.green(),color.blue());
+                                                            visualCategoryCondition.color=QColor(color.red(),color.green(),color.blue(),alpha);
                                                         else
                                                             qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
                                                     }
-                                                    if(visualCategoryCondition.color!=DatapackClientLoader::datapackLoader.visualCategories.value(event.attribute(DatapackClientLoader::text_id)).defaultColor)
-                                                        DatapackClientLoader::datapackLoader.visualCategories[event.attribute(DatapackClientLoader::text_id)].conditions << visualCategoryCondition;
+                                                    if(visualCategoryCondition.color!=DatapackClientLoader::datapackLoader.visualCategories.value(item.attribute(DatapackClientLoader::text_id)).defaultColor)
+                                                        DatapackClientLoader::datapackLoader.visualCategories[item.attribute(DatapackClientLoader::text_id)].conditions << visualCategoryCondition;
                                                     else
                                                         qDebug() << (QStringLiteral("Unable to open the file: %1, color same than the default color: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
                                                     break;
