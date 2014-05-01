@@ -2449,7 +2449,7 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
                 while(!valueItem.isNull())
                 {
                     if(valueItem.isElement())
-                        event.values << eventItem.text();
+                        event.values << valueItem.text();
                     valueItem = valueItem.nextSiblingElement(DatapackGeneralLoader::text_value);
                 }
                 if(!event.values.isEmpty())
