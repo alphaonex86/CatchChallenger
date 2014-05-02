@@ -21,6 +21,7 @@ QString ClientNetworkRead::text_playerlist=QLatin1String("playerlist");
 QString ClientNetworkRead::text_trade=QLatin1String("trade");
 QString ClientNetworkRead::text_battle=QLatin1String("battle");
 QString ClientNetworkRead::text_give=QLatin1String("give");
+QString ClientNetworkRead::text_setevent=QLatin1String("setevent");
 QString ClientNetworkRead::text_take=QLatin1String("take");
 QString ClientNetworkRead::text_tp=QLatin1String("tp");
 QString ClientNetworkRead::text_kick=QLatin1String("kick");
@@ -120,6 +121,17 @@ void ClientNetworkRead::askIfIsReadyToStop()
     ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.clientList.removeOne(this);
     stopIt=true;
     emit isReadyToStop();
+}
+
+void ClientNetworkRead::sendNewEvent(const QByteArray &data)
+{
+    if(queryNumberList.empty())
+    {
+        emit error(QStringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
+        return;
+    }
+    emit sendQuery(0x79,0x0002,queryNumberList.first(),data);
+    queryNumberList.removeFirst();
 }
 
 void ClientNetworkRead::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
@@ -523,6 +535,11 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                             if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
                             {
                                 if(command==ClientNetworkRead::text_give)
+                                {
+                                    emit sendHandlerCommand(command,text);
+                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                }
+                                else if(command==ClientNetworkRead::text_setevent)
                                 {
                                     emit sendHandlerCommand(command,text);
                                     emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
@@ -1656,6 +1673,10 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
                 emit message("emit teleportValidatedTo() from protocol");
                 emit teleportValidatedTo(lastTeleportation.first().map,lastTeleportation.first().x,lastTeleportation.first().y,lastTeleportation.first().orientation);
                 lastTeleportation.removeFirst();
+            break;
+            //Event change
+            case 0x0002:
+                emit removeFirstEventInQueue();
             break;
             default:
                 parseError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));

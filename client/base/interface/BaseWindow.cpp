@@ -217,6 +217,7 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInvite,         this,&BaseWindow::clanInvite,       Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::cityCapture,        this,&BaseWindow::cityCapture,      Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::setEvents,          this,&BaseWindow::setEvents,        Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newEvent,           this,&BaseWindow::newEvent,         Qt::QueuedConnection);
 
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourAreNotLeader,                this,&BaseWindow::captureCityYourAreNotLeader,              Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourLeaderHaveStartInOtherCity,  this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection);
@@ -1540,6 +1541,43 @@ void BaseWindow::currentMapLoaded()
             else
                 MapController::mapController->setColor(Qt::transparent);
         }
+    }
+}
+
+void BaseWindow::newEvent(const quint8 &event,const quint8 &event_value)
+{
+    if(this->events.at(event)==event_value)
+        return;
+    if(!MapController::mapController->currentMapIsLoaded())
+        return;
+    const QString &type=MapController::mapController->currentMapType();
+    this->events[event]=event_value;
+    //color
+    {
+        if(DatapackClientLoader::datapackLoader.visualCategories.contains(type))
+        {
+            const QList<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=DatapackClientLoader::datapackLoader.visualCategories.value(type).conditions;
+            int index=0;
+            while(index<conditions.size())
+            {
+                const DatapackClientLoader::VisualCategory::VisualCategoryCondition &condition=conditions.at(index);
+                if(condition.event<events.size())
+                {
+                    if(events.at(condition.event)==condition.eventValue)
+                    {
+                        MapController::mapController->setColor(condition.color,15000);
+                        break;
+                    }
+                }
+                else
+                    qDebug() << QStringLiteral("event for condition out of range: %1 for %2 event(s)").arg(condition.event).arg(events.size());
+                index++;
+            }
+            if(index==conditions.size())
+                MapController::mapController->setColor(DatapackClientLoader::datapackLoader.visualCategories.value(type).defaultColor,15000);
+        }
+        else
+            MapController::mapController->setColor(Qt::transparent,15000);
     }
 }
 

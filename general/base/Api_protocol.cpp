@@ -2284,6 +2284,21 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subC
                     emit teleportTo(mapId,x,y,direction);
                 }
                 break;
+                //Event change
+                case 0x0002:
+                {
+                    quint8 event,event_value;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> event;
+                    in >> event_value;
+                    emit newEvent(event,event_value);
+                    output->postReplyData(queryNumber,QByteArray());
+                }
+                break;
                 default:
                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                 return;
