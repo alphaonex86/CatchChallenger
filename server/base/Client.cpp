@@ -154,8 +154,10 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
     connect(&clientNetworkRead,     &ClientNetworkRead::moveThePlayer,			&localClientHandler,	&LocalClientHandler::moveThePlayer,         coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::moveThePlayer,			&clientLocalBroadcast,  &MapBasicMove::moveThePlayer,               coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::teleportValidatedTo,	&localClientHandler,	&LocalClientHandler::teleportValidatedTo,	coTypeAsync);
+    connect(&clientNetworkRead,     &ClientNetworkRead::removeFirstEventInQueue,&localClientHandler,	&LocalClientHandler::removeFirstEventInQueue,coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::teleportValidatedTo,	&clientLocalBroadcast,  &ClientLocalBroadcast::teleportValidatedTo, coTypeAsync);
     connect(&localClientHandler,	&LocalClientHandler::teleportTo,            &clientNetworkRead,     &ClientNetworkRead::teleportTo,             coTypeAsync);
+    connect(&localClientHandler,	&LocalClientHandler::sendNewEvent,          &clientNetworkRead,     &ClientNetworkRead::sendNewEvent,           coTypeAsync);
 
     //packet parsed (broadcast)
     connect(&localClientHandler,	&LocalClientHandler::receiveSystemText,     &clientBroadCast,       &ClientBroadCast::receiveSystemText,        coTypeAsync);
@@ -170,7 +172,7 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
     connect(&clientNetworkRead,     &ClientNetworkRead::destroyObject,          &localClientHandler,	&LocalClientHandler::destroyObject,         coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::useObject,              &localClientHandler,	&LocalClientHandler::useObject,             coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::wareHouseStore,         &localClientHandler,	&LocalClientHandler::wareHouseStore,        coTypeAsync);
-    connect(&clientBroadCast,       &ClientBroadCast::kicked,                   this,                   &Client::kick,                            coTypeAsync);
+    connect(&clientBroadCast,       &ClientBroadCast::kicked,                   this,                   &Client::kick,                              coTypeAsync);
 
     //shops
     connect(&clientNetworkRead,     &ClientNetworkRead::getShopList,            &localClientHandler,	&LocalClientHandler::getShopList,           coTypeAsync);

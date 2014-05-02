@@ -115,6 +115,7 @@ private:
     static QString text_left;
     static QString text_right;
     static QString text_give;
+    static QString text_setevent;
     static QString text_space;
     static QString text_0;
     static QString text_1;
@@ -156,6 +157,9 @@ public slots:
     bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const quint32 &monsterId);
     void sendHandlerCommand(const QString &command,const QString &extraText);
+    void setEvent(const quint8 &event, const quint8 &new_value);
+    void addEventInQueue(const quint8 &event, const quint8 &event_value, const QDateTime &currentDateTime);
+    void removeFirstEventInQueue();
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);
     void useObject(const quint8 &query_id,const quint32 &itemId);
@@ -250,6 +254,7 @@ signals:
     void sendTradeRequest(const QByteArray &data) const;
     void sendBattleRequest(const QByteArray &data) const;
     void clanChange(const quint32 &clanId) const;
+    void sendNewEvent(const QByteArray &data) const;
 
     void seedValidated() const;
     void teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;

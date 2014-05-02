@@ -131,6 +131,7 @@ private slots:
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void setEvents(const QList<QPair<quint8,quint8> > events);
+    void newEvent(const quint8 &event,const quint8 &event_value);
 
     //player UI
     void on_pushButton_interface_bag_clicked();
