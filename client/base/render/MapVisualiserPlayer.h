@@ -20,6 +20,7 @@ public:
     QString lastLocation() const;
     QString currentMap() const;
     MapVisualiserThread::Map_full * currentMapFull() const;
+    bool currentMapIsLoaded() const;
     QString currentMapType() const;
     QString currentZone() const;
     QString currentBackgroundsound() const;

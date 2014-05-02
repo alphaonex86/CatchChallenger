@@ -35,6 +35,7 @@ public slots:
     //normal slots
     void askIfIsReadyToStop();
 
+    void sendNewEvent(const QByteArray &data);
     void teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     void sendTradeRequest(const QByteArray &data);
     void sendBattleRequest(const QByteArray &data);
@@ -69,6 +70,8 @@ signals:
     //packet parsed (map management)
     void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction) const;
     void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
+    //reply
+    void removeFirstEventInQueue() const;
     //character
     void addCharacter(const quint8 &query_id, const quint8 &profileIndex,const QString &pseudo,const QString &skin) const;
     void removeCharacter(const quint8 &query_id, const quint32 &characterId) const;
@@ -165,6 +168,7 @@ private:
     static QString text_trade;
     static QString text_battle;
     static QString text_give;
+    static QString text_setevent;
     static QString text_take;
     static QString text_tp;
     static QString text_kick;

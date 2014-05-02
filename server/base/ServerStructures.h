@@ -85,6 +85,17 @@ struct Player_internal_informations
     Rescue unvalidated_rescue;
     QMultiHash<quint32,MonsterDrops> questsDrop;
     QDateTime connectedSince;
+    struct OldEvents
+    {
+        struct OldEventEntry
+        {
+            quint8 event;
+            quint8 eventValue;
+        };
+        QDateTime time;
+        QList<OldEventEntry> oldEventList;
+    };
+    OldEvents oldEvents;
 };
 
 struct ServerSettings

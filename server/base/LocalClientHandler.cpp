@@ -24,6 +24,7 @@ QString LocalClientHandler::text_bottom=QLatin1Literal("bottom");
 QString LocalClientHandler::text_left=QLatin1Literal("left");
 QString LocalClientHandler::text_right=QLatin1Literal("right");
 QString LocalClientHandler::text_give=QLatin1Literal("give");
+QString LocalClientHandler::text_setevent=QLatin1Literal("setevent");
 QString LocalClientHandler::text_space=QLatin1Literal(" ");
 QString LocalClientHandler::text_0=QLatin1Literal("0");
 QString LocalClientHandler::text_1=QLatin1Literal("1");
@@ -1200,6 +1201,54 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         emit message(QStringLiteral("%1 have give to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo.value(arguments.at(1))->addObjectAndSend(objectId,quantity);
     }
+    else if(command==LocalClientHandler::text_setevent)
+    {
+        const QStringList &arguments=extraText.split(LocalClientHandler::text_space,QString::SkipEmptyParts);
+        if(arguments.size()!=2)
+        {
+            emit receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /give setevent [event] [value]"));
+            return;
+        }
+        int index=0,sub_index;
+        while(index<CommonDatapack::commonDatapack.events.size())
+        {
+            const Event &event=CommonDatapack::commonDatapack.events.at(index);
+            if(event.name==arguments.at(0))
+            {
+                sub_index=0;
+                while(sub_index<event.values.size())
+                {
+                    if(event.values.at(sub_index)==arguments.at(1))
+                    {
+                        if(GlobalServerData::serverPrivateVariables.events.at(index)==sub_index)
+                        {
+                            emit receiveSystemText(QStringLiteral("The event have aready this value"));
+                            return;
+                        }
+                        else
+                        {
+                            setEvent(index,sub_index);
+                            GlobalServerData::serverPrivateVariables.events[index]=sub_index;
+                        }
+                        break;
+                    }
+                    sub_index++;
+                }
+                if(sub_index==event.values.size())
+                {
+                    emit receiveSystemText(QStringLiteral("The event value is not found"));
+                    return;
+                }
+                break;
+            }
+            index++;
+        }
+        if(index==CommonDatapack::commonDatapack.events.size())
+        {
+            emit receiveSystemText(QStringLiteral("The event is not found"));
+            return;
+        }
+    }
     else if(command==LocalClientHandler::text_take)
     {
         bool ok;
@@ -1384,6 +1433,52 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         #endif
         playerByPseudo.value(extraText)->localClientHandlerFight.registerBattleRequest(&localClientHandlerFight);
     }
+}
+
+void LocalClientHandler::setEvent(const quint8 &event, const quint8 &new_value)
+{
+    const quint8 &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
+    QDateTime currentDateTime=QDateTime::currentDateTime();
+    QList<LocalClientHandler *> playerList;
+    QHashIterator<QString,LocalClientHandler *> i(playerByPseudo);
+    while (i.hasNext()) {
+        i.next();
+        i.value()->addEventInQueue(event,event_value,currentDateTime);
+        playerList << i.value();
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << event;
+    out << new_value;
+    int index=0;
+    while(index<playerList.size())
+    {
+        playerList.at(index)->sendNewEvent(outputData);
+        index++;
+    }
+}
+
+void LocalClientHandler::addEventInQueue(const quint8 &event,const quint8 &event_value,const QDateTime &currentDateTime)
+{
+    if(player_informations->oldEvents.oldEventList.isEmpty())
+        player_informations->oldEvents.time=currentDateTime;
+    Player_internal_informations::OldEvents::OldEventEntry entry;
+    entry.event=event;
+    entry.eventValue=event_value;
+    player_informations->oldEvents.oldEventList << entry;
+}
+
+void LocalClientHandler::removeFirstEventInQueue()
+{
+    if(player_informations->oldEvents.oldEventList.isEmpty())
+    {
+        emit error(QLatin1Literal("Not event in queue to remove"));
+        return;
+    }
+    player_informations->oldEvents.oldEventList.removeFirst();
+    if(!player_informations->oldEvents.oldEventList.isEmpty())
+        player_informations->oldEvents.time=QDateTime::currentDateTime();
 }
 
 bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skill)
