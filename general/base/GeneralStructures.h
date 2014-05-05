@@ -425,7 +425,20 @@ struct MonstersCollisionValue
 {
     QList<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> walkOn;
     QList<quint32/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> actionOn;
-    QList<QList<MapMonster> > walkOnMonsters;
+    //it's the dynamic part
+    struct MonstersCollisionValueOnCondition
+    {
+        quint8 event;
+        quint8 event_value;
+        QList<MapMonster> monsters;
+    };
+    //static part pre-computed
+    struct MonstersCollisionContent
+    {
+        QList<MapMonster> defaultMonsters;
+        QList<MonstersCollisionValueOnCondition> conditions;
+    };
+    QList<MonstersCollisionContent> walkOnMonsters;
     QList<QList<MapMonster> > actionOnMonsters;
 };
 
@@ -840,8 +853,16 @@ struct MonstersCollision
     quint32 item;
     QString tile;
     QString layer;
-    QString monsterType;
+    QStringList monsterTypeList;
+    QStringList defautMonsterTypeList;
     QString background;
+    struct MonstersCollisionEvent
+    {
+        quint8 event;
+        quint8 event_value;
+        QStringList monsterTypeList;
+    };
+    QList<MonstersCollisionEvent> events;
 };
 
 struct Type

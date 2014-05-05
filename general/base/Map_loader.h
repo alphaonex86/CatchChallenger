@@ -22,9 +22,10 @@ public:
     QString errorString();
     bool tryLoadMap(const QString &fileName);
     bool loadMonsterMap(const QString &fileName,QList<QString> detectedMonsterCollisionMonsterType,QList<QString> detectedMonsterCollisionLayer);
-    static QString resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath=QStringLiteral(""));
+    static QString resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath=QString());
     static QDomElement getXmlCondition(const QString &fileName,const QString &conditionFile,const quint32 &conditionId);
     static MapCondition xmlConditionToMapCondition(const QString &conditionFile, const QDomElement &item);
+    QList<MapMonster> loadSpecificMonster(const QString &fileName,const QString &monsterType);
 private:
     QByteArray decompress(const QByteArray &data, int expectedSize);
     QString error;
@@ -94,6 +95,7 @@ private:
     static QString text_slash;
     static QString text_percent;
     static QString text_data;
+    static QString text_dotcomma;
 };
 }
 
