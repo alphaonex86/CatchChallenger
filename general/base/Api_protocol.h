@@ -120,7 +120,7 @@ signals:
     void newCharacterId(const quint32 &characterId) const;
     void haveCharacter() const;
     //events
-    void setEvents(const QList<QPair<quint8,quint8> > events) const;
+    void setEvents(const QList<QPair<quint8,quint8> > &events) const;
     void newEvent(const quint8 &event,const quint8 &event_value) const;
 
     //map move
