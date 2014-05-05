@@ -60,6 +60,7 @@ protected slots:
     void tryLoadPlantOnMapDisplayed(const QString &fileName);
     void updateGrowing();
     void updateColor();
+    void loadPlayerFromCurrentMap();
 public slots:
     virtual void datapackParsed();
     virtual void reinject_signals();

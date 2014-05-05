@@ -130,7 +130,7 @@ private slots:
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void setEvents(const QList<QPair<quint8,quint8> > events);
+    void setEvents(const QList<QPair<quint8, quint8> > &events);
     void newEvent(const quint8 &event,const quint8 &event_value);
 
     //player UI
@@ -479,7 +479,7 @@ private:
     quint32 currentMonsterLevel;
     QSet<QString> supportedImageFormats;
     QString lastPlaceDisplayed;
-    QList<quint32> events;
+    QList<quint8> events;
     QString visualCategory;
 
     //plant seed in waiting

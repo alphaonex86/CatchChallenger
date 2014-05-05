@@ -2200,8 +2200,26 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
     return returnVar;
 }
 
-QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items)
+QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items,const QList<Event> &events)
 {
+    QHash<QString,quint8> eventStringToId;
+    QHash<QString,QHash<QString,quint8> > eventValueStringToId;
+    {
+        int index=0;
+        int sub_index;
+        while(index<events.size())
+        {
+            const Event &event=events.at(index);
+            eventStringToId[event.name]=index;
+            sub_index=0;
+            while(sub_index<event.values.size())
+            {
+                eventValueStringToId[event.name][event.values.at(sub_index)]=sub_index;
+                sub_index++;
+            }
+            index++;
+        }
+    }
     QList<MonstersCollision> returnVar;
     QDomDocument domDocument;
     //open and quick check the file
@@ -2298,7 +2316,52 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                 if(ok)
                 {
                     if(monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
-                        monstersCollision.monsterType=monstersCollisionItem.attribute(DatapackGeneralLoader::text_monsterType);
+                    {
+                        monstersCollision.defautMonsterTypeList=monstersCollisionItem.attribute(DatapackGeneralLoader::text_monsterType).split(DatapackGeneralLoader::text_dotcomma,QString::SkipEmptyParts);
+                        monstersCollision.defautMonsterTypeList.removeDuplicates();
+                        monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
+                        //load the condition
+                        QDomElement eventItem = monstersCollisionItem.firstChildElement(DatapackGeneralLoader::text_event);
+                        while(!eventItem.isNull())
+                        {
+                            if(eventItem.isElement())
+                            {
+                                if(eventItem.hasAttribute(DatapackGeneralLoader::text_id) && eventItem.hasAttribute(DatapackGeneralLoader::text_value) && eventItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
+                                {
+                                    if(eventStringToId.contains(eventItem.attribute(DatapackGeneralLoader::text_id)))
+                                    {
+                                        if(eventValueStringToId.value(eventItem.attribute(DatapackGeneralLoader::text_id)).contains(eventItem.attribute(DatapackGeneralLoader::text_value)))
+                                        {
+                                            MonstersCollision::MonstersCollisionEvent event;
+                                            event.event=eventStringToId.value(eventItem.attribute(DatapackGeneralLoader::text_id));
+                                            event.event_value=eventValueStringToId.value(eventItem.attribute(DatapackGeneralLoader::text_id)).value(eventItem.attribute(DatapackGeneralLoader::text_value));
+                                            event.monsterTypeList=eventItem.attribute(DatapackGeneralLoader::text_monsterType).split(DatapackGeneralLoader::text_dotcomma,QString::SkipEmptyParts);
+                                            if(!event.monsterTypeList.isEmpty())
+                                            {
+                                                monstersCollision.events << event;
+                                                int index=0;
+                                                while(index<event.monsterTypeList.size())
+                                                {
+                                                    if(!monstersCollision.monsterTypeList.contains(event.monsterTypeList.at(index)))
+                                                        monstersCollision.monsterTypeList << event.monsterTypeList.at(index);
+                                                    index++;
+                                                }
+                                            }
+                                            else
+                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("monsterType is empty, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                                        }
+                                        else
+                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("event value not found, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                                    }
+                                    else
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("event not found, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("event have missing attribute, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                            }
+                            eventItem = eventItem.nextSiblingElement(DatapackGeneralLoader::text_event);
+                        }
+                    }
                 }
                 if(ok)
                 {
@@ -2320,7 +2383,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                         index++;
                     }
                 }
-                if(ok && !monstersCollision.monsterType.isEmpty())
+                if(ok && !monstersCollision.monsterTypeList.isEmpty())
                 {
                     if(monstersCollision.type==MonstersCollisionType_WalkOn && monstersCollision.layer.isEmpty() && monstersCollision.item==0)
                     {

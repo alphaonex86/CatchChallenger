@@ -6,6 +6,7 @@
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
 {
+    this->events=events;
     repel_step=0;
     items=NULL;
     quests=NULL;
@@ -55,6 +56,16 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
+    if(items==NULL)
+    {
+        qDebug() << "items is null, can't move";
+        return true;
+    }
+    if(events==NULL)
+    {
+        qDebug() << "events is null, can't move";
+        return true;
+    }
     CatchChallenger::PlayerMonster *fightMonster;
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
         fightMonster=NULL;
@@ -86,7 +97,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         {
             if(inMove)
             {
-                if(CatchChallenger::ClientFightEngine::fightEngine.generateWildFightIfCollision(&all_map.value(current_map)->logicalMap,x,y,*items))
+                if(CatchChallenger::ClientFightEngine::fightEngine.generateWildFightIfCollision(&all_map.value(current_map)->logicalMap,x,y,*items,*events))
                 {
                     inMove=false;
                     emit send_player_direction(direction);
@@ -206,7 +217,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || items->contains(monstersCollision.item))
             {
-                if(!monstersCollisionValue.walkOnMonsters.at(index).isEmpty())
+                if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.isEmpty())
                 {
                     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
                     {

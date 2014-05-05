@@ -445,6 +445,11 @@ bool LocalClientHandler::singleMove(const Direction &direction)
         emit error(QStringLiteral("Try move when is in capture city"));
         return false;
     }
+    if(!player_informations->oldEvents.oldEventList.isEmpty() && (QDateTime::currentDateTime().toTime_t()-player_informations->oldEvents.time.toTime_t())>30/*30s*/)
+    {
+        emit error(QStringLiteral("Try move but lost of event sync"));
+        return false;
+    }
     COORD_TYPE x=this->x,y=this->y;
     temp_direction=direction;
     CommonMap* map=this->map;
@@ -518,7 +523,18 @@ bool LocalClientHandler::singleMove(const Direction &direction)
         return true;
     if(player_informations->public_and_private_informations.repel_step<=0)
     {
-        if(localClientHandlerFight.generateWildFightIfCollision(map,x,y,player_informations->public_and_private_informations.items))
+        //merge the result event:
+        QList<quint8> mergedEvents(GlobalServerData::serverPrivateVariables.events);
+        if(!player_informations->oldEvents.oldEventList.isEmpty())
+        {
+            int index=0;
+            while(index<player_informations->oldEvents.oldEventList.size())
+            {
+                mergedEvents[player_informations->oldEvents.oldEventList.at(index).event]=player_informations->oldEvents.oldEventList.at(index).eventValue;
+                index++;
+            }
+        }
+        if(localClientHandlerFight.generateWildFightIfCollision(map,x,y,player_informations->public_and_private_informations.items,mergedEvents))
         {
             emit message(QStringLiteral("LocalClientHandler::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
             return true;

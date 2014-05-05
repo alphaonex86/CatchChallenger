@@ -19,6 +19,9 @@ QString MapController::text_slashtrainerpng=QLatin1Literal("/trainer.png");
 QString MapController::text_DATAPACK_BASE_PATH_SKINBOT=QLatin1Literal(DATAPACK_BASE_PATH_SKINBOT);
 QString MapController::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
 
+#define IMAGEOVERSIZEWITDH 800*2*2
+#define IMAGEOVERSIZEHEIGHT 600*2*2
+
 
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapControllerMP(centerOnPlayer,debugTags,useCache,OpenGL)
@@ -33,7 +36,10 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     newColor=Qt::transparent;
     imageOver=new QGraphicsPixmapItem();
     imageOver->setZValue(1000);
-    imageOver->setPos(-800,-600);
+    if(centerOnPlayer)
+        imageOver->setPos(-800,-600);
+    else
+        imageOver->setPos(0,0);
     updateColorTimer.setSingleShot(true);
     updateColorTimer.setInterval(50);
     connect(&updateColorTimer,&QTimer::timeout,this,&MapController::updateColor);
@@ -46,6 +52,15 @@ MapController::~MapController()
         delete botFlags;
         botFlags=NULL;
     }
+}
+
+void MapController::loadPlayerFromCurrentMap()
+{
+    MapVisualiserPlayer::loadPlayerFromCurrentMap();
+    //const QRectF &rect=mScene->sceneRect();
+    //qreal x=rect.x()-800,y=rect.y()-600;
+    //imageOver->setPos(QPointF(x,y));
+    //imageOver->setPos(QPointF(-800,-600));
 }
 
 void MapController::connectAllSignals()
@@ -330,7 +345,7 @@ void MapController::setColor(const QColor &color, const quint32 &timeInMS)
         actualColor=color;
         tempColor=color;
         newColor=color;
-        QPixmap pixmap(800*2*10,600*2*10);
+        QPixmap pixmap(IMAGEOVERSIZEWITDH,IMAGEOVERSIZEHEIGHT);
         pixmap.fill(color);
         imageOver->setPixmap(pixmap);
         if(newColor.alpha()!=0)
@@ -482,7 +497,7 @@ void MapController::updateColor()
         }
     }
     tempColor=QColor(tempColor.red()+rdiff,tempColor.green()+gdiff,tempColor.blue()+bdiff,tempColor.alpha()+adiff);
-    QPixmap pixmap(800*2,600*2);
+    QPixmap pixmap(IMAGEOVERSIZEWITDH,IMAGEOVERSIZEHEIGHT);
     pixmap.fill(tempColor);
     imageOver->setPixmap(pixmap);
     if(tempColor==newColor)
