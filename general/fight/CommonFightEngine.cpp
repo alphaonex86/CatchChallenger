@@ -2142,7 +2142,7 @@ void CommonFightEngine::startTheFight()
 }
 
 //return true if now have wild monter to fight
-bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const QHash<quint32,quint32> &items)
+bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const QHash<quint32,quint32> &items,const QList<quint8> &events)
 {
     bool ok;
     if(isInFight())
@@ -2170,7 +2170,7 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
         const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
         if(monstersCollision.item==0 || items.contains(monstersCollision.item))
         {
-            if(monstersCollisionValue.walkOnMonsters.at(index).isEmpty())
+            if(monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.isEmpty())
             {
                 /// no fight in this zone
                 return false;
@@ -2196,7 +2196,22 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
                     stepFight--;
                 if(stepFight==0)
                 {
-                    const PlayerMonster &monster=getRandomMonster(monstersCollisionValue.walkOnMonsters.at(index),&ok);
+                    const MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContent=monstersCollisionValue.walkOnMonsters.at(index);
+                    QList<MapMonster> monsterList;
+                    int index_condition=0;
+                    while(index_condition<monstersCollisionContent.conditions.size())
+                    {
+                        const MonstersCollisionValue::MonstersCollisionValueOnCondition &monstersCollisionValueOnCondition=monstersCollisionContent.conditions.at(index_condition);
+                        if(events.at(monstersCollisionValueOnCondition.event)==monstersCollisionValueOnCondition.event_value)
+                        {
+                            monsterList=monstersCollisionValueOnCondition.monsters;
+                            break;
+                        }
+                        index_condition++;
+                    }
+                    if(index_condition==monstersCollisionContent.conditions.size())
+                        monsterList=monstersCollisionContent.defaultMonsters;
+                    const PlayerMonster &monster=getRandomMonster(monsterList,&ok);
                     if(ok)
                     {
                         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT

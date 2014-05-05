@@ -32,6 +32,9 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     teleportedOnPush=false;
     x=0;
     y=0;
+    events=NULL;
+    items=NULL;
+    quests=NULL;
 
     keyAccepted << Qt::Key_Left << Qt::Key_Right << Qt::Key_Up << Qt::Key_Down << Qt::Key_Return;
 
@@ -494,8 +497,9 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests)
+void MapVisualiserPlayer::setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events)
 {
+    this->events=events;
     this->items=items;
     this->quests=quests;
 }
@@ -575,10 +579,7 @@ void MapVisualiserPlayer::finalPlayerStep()
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink.value(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
-    {
-        //playerMapObject->set
         centerOn(MapObjectItem::objectLink.value(playerMapObject));
-    }
     //stopGrassAnimation();
 
     if(haveStopTileAction())

@@ -358,13 +358,23 @@ void BaseWindow::datapackParsed()
     //updatePlayerImage();
 }
 
-void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > events)
+void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > &events)
 {
     this->events.clear();
     int index=0;
     while(index<events.size())
     {
         const QPair<quint8,quint8> event=events.at(index);
+        if(event.first>=CommonDatapack::commonDatapack.events.size())
+        {
+            emit error("BaseWindow::setEvents() event out of range");
+            break;
+        }
+        if(event.second>=CommonDatapack::commonDatapack.events.at(event.first).values.size())
+        {
+            emit error("BaseWindow::setEvents() event value out of range");
+            break;
+        }
         while(this->events.size()<=event.first)
             this->events << 0;
         this->events[event.first]=event.second;
@@ -384,7 +394,7 @@ void BaseWindow::load_event()
     {
         while(events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
             events.removeLast();
-        qDebug() << "BaseWindow::load_event() event list biger than it should";
+        emit error("BaseWindow::load_event() event list biger than it should");
     }
 }
 
@@ -434,7 +444,7 @@ void BaseWindow::updateConnectingStatus()
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
         warehouse_playerMonster=player_private_and_public_informations.warehouse_playerMonster;
         MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
-        MapController::mapController->setInformations(&items,&quests);
+        MapController::mapController->setInformations(&items,&quests,&events);
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();

@@ -419,7 +419,7 @@ void DatapackClientLoader::parseTypesExtra()
 
 void DatapackClientLoader::parseBuffExtra()
 {
-    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS));
+    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_BUFF));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
@@ -613,7 +613,7 @@ void DatapackClientLoader::parseBuffExtra()
 
 void DatapackClientLoader::parseSkillsExtra()
 {
-    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS));
+    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKILL));
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
