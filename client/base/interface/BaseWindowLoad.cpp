@@ -159,8 +159,8 @@ void BaseWindow::logged(const QList<CharacterEntry> &characterEntryList)
     this->characterEntryList=characterEntryList;
     isLogged=true;
     updateConnectingStatus();
-    ui->character_add->setEnabled(CommonSettings::commonSettings.max_character<characterEntryList.size());
-    ui->character_remove->setEnabled(CommonSettings::commonSettings.min_character>characterEntryList.size());
+    ui->character_add->setEnabled(characterEntryList.size()<CommonSettings::commonSettings.max_character);
+    ui->character_remove->setEnabled(characterEntryList.size()>CommonSettings::commonSettings.min_character);
     if(characterEntryList.isEmpty())
     {
         if(CommonSettings::commonSettings.max_character==0)
