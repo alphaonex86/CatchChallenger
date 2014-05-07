@@ -36,6 +36,8 @@ QString DatapackClientLoader::text_slashdefinitiondotxml=QLatin1Literal("/defini
 QString DatapackClientLoader::text_quest=QLatin1Literal("quest");
 QString DatapackClientLoader::text_rewards=QLatin1Literal("rewards");
 QString DatapackClientLoader::text_show=QLatin1Literal("show");
+QString DatapackClientLoader::text_autostep=QLatin1Literal("autostep");
+QString DatapackClientLoader::text_yes=QLatin1Literal("yes");
 QString DatapackClientLoader::text_true=QLatin1Literal("true");
 QString DatapackClientLoader::text_step=QLatin1Literal("step");
 QString DatapackClientLoader::text_bot=QLatin1Literal("bot");
@@ -820,6 +822,7 @@ void DatapackClientLoader::parseQuestsExtra()
     while(index<entryList.size())
     {
         bool showRewards=false;
+        bool autostep=false;
         if(!entryList.at(index).isDir())
         {
             index++;
@@ -919,6 +922,12 @@ void DatapackClientLoader::parseQuestsExtra()
                         showRewards=true;
             }
         }
+        //load autostep
+        {
+            if(root.hasAttribute(DatapackClientLoader::text_autostep))
+                if(root.attribute(DatapackClientLoader::text_autostep)==DatapackClientLoader::text_yes)
+                    autostep=true;
+        }
 
         QHash<quint32,QString> steps;
         {
@@ -1009,6 +1018,7 @@ void DatapackClientLoader::parseQuestsExtra()
             //add it, all seam ok
             questsExtra[id]=quest;
             questsExtra[id].showRewards=showRewards;
+            questsExtra[id].autostep=autostep;
         }
         questsPathToId[entryList.at(index).absoluteFilePath()]=id;
 

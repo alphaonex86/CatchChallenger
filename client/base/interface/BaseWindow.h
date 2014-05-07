@@ -303,7 +303,7 @@ private slots:
     void appendReputationRewards(const QList<ReputationRewards> &reputationList);
     void getTextEntryPoint();
     void showQuestText(const quint32 &textId);
-    void nextQuestStep();
+    bool tryValidateQuestStep(bool silent=false);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
     bool botHaveQuest(const quint32 &botId);
