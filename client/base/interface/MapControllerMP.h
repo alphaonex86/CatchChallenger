@@ -52,6 +52,8 @@ private:
         QString current_map;
         QSet<QString> mapUsed;
         CatchChallenger::Player_public_informations informations;
+        Tiled::MapObject * labelMapObject;
+        Tiled::Tileset * labelTileset;
 
         //presumed map
         MapVisualiserThread::Map_full *presumed_map;
@@ -125,6 +127,10 @@ private:
     QList<DelayedTeleportTo> delayedTeleportTo;
     float scaleSize;
     bool isTeleported;
+    static QFont playerpseudofont;
+    static QPixmap *imgForPseudoAdmin;
+    static QPixmap *imgForPseudoDev;
+    static QPixmap *imgForPseudoPremium;
 protected:
     //current player
     CatchChallenger::Player_private_and_public_informations player_informations;
