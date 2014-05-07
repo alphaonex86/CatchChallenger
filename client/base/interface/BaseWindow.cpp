@@ -2407,6 +2407,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("Bot fight not found"));
             return;
         }
+        if(MapController::mapController->haveBeatBot(fightId))
+        {
+            if(actualBot.step.contains(step+1))
+                goToBotStep(step+1);
+            else
+                showTip(tr("Already beaten!"));
+            return;
+        }
         CatchChallenger::Api_client_real::client->requestFight(fightId);
         botFight(fightId);
         return;

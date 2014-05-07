@@ -6,8 +6,14 @@
 #include "../Api_client_real.h"
 
 #include <QMessageBox>
-#include <QMessageBox>
+#include <QLabel>
+#include <QPixmap>
 #include <qmath.h>
+
+QFont MapControllerMP::playerpseudofont;
+QPixmap * MapControllerMP::imgForPseudoAdmin=NULL;
+QPixmap * MapControllerMP::imgForPseudoDev=NULL;
+QPixmap * MapControllerMP::imgForPseudoPremium=NULL;
 
 MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayerWithFight(centerOnPlayer,debugTags,useCache,OpenGL)
@@ -18,6 +24,8 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<QList<QPair<quint8,CatchChallenger::Direction> > >("QList<QPair<quint8,CatchChallenger::Direction> >");
 
+    playerpseudofont=QFont("Arial");
+    playerpseudofont.setPixelSize(14);
     player_informations_is_set=false;
 
     resetAll();
@@ -251,6 +259,85 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             qDebug() << QStringLiteral("The skin id: ")+QString::number(player.skinId)+QStringLiteral(", into a list of: ")+QString::number(skinFolderList.size())+QStringLiteral(" item(s) info MapControllerMP::insert_player()");
             return;
         }
+        {
+            QPixmap pix;
+            if(!player.pseudo.isEmpty())
+            {
+                QRectF destRect;
+                {
+                    QPixmap pix(50,10);
+                    QPainter painter(&pix);
+                    painter.setFont(playerpseudofont);
+                    QRectF sourceRec(0.0,0.0,50.0,10.0);
+                    destRect=painter.boundingRect(sourceRec,Qt::TextSingleLine,player.pseudo);
+                }
+                int more=0;
+                if(player.type!=CatchChallenger::Player_type_normal)
+                    more=40;
+                pix=QPixmap(destRect.width()+more,destRect.height());
+                //draw the text & image
+                {
+                    pix.fill(Qt::transparent);
+                    QPainter painter(&pix);
+                    painter.setFont(playerpseudofont);
+                    painter.drawText(QRectF(0.0,0.0,destRect.width(),destRect.height()),Qt::TextSingleLine,player.pseudo);
+                    if(player.type==CatchChallenger::Player_type_gm)
+                    {
+                        if(imgForPseudoAdmin==NULL)
+                            imgForPseudoAdmin=new QPixmap(":/images/chat/admin.png");
+                        painter.drawPixmap(destRect.width(),(destRect.height()-14)/2,40,14,*imgForPseudoAdmin);
+                    }
+                    if(player.type==CatchChallenger::Player_type_dev)
+                    {
+                        if(imgForPseudoDev==NULL)
+                            imgForPseudoDev=new QPixmap(":/images/chat/developer.png");
+                        painter.drawPixmap(destRect.width(),(destRect.height()-14)/2,40,14,*imgForPseudoDev);
+                    }
+                    if(player.type==CatchChallenger::Player_type_premium)
+                    {
+                        if(imgForPseudoPremium==NULL)
+                            imgForPseudoPremium=new QPixmap(":/images/chat/premium.png");
+                        painter.drawPixmap(destRect.width(),(destRect.height()-14)/2,40,14,*imgForPseudoPremium);
+                    }
+                }
+            }
+            else
+            {
+                if(player.type==CatchChallenger::Player_type_gm)
+                {
+                    if(imgForPseudoAdmin==NULL)
+                        imgForPseudoAdmin=new QPixmap(":/images/chat/admin.png");
+                    pix=*imgForPseudoAdmin;
+                }
+                if(player.type==CatchChallenger::Player_type_dev)
+                {
+                    if(imgForPseudoDev==NULL)
+                        imgForPseudoDev=new QPixmap(":/images/chat/developer.png");
+                    pix=*imgForPseudoDev;
+                }
+                if(player.type==CatchChallenger::Player_type_premium)
+                {
+                    if(imgForPseudoPremium==NULL)
+                        imgForPseudoPremium=new QPixmap(":/images/chat/premium.png");
+                    pix=*imgForPseudoPremium;
+                }
+            }
+            if(!pix.isNull())
+            {
+                tempPlayer.labelMapObject = new Tiled::MapObject();
+                tempPlayer.labelTileset = new Tiled::Tileset(QString(),pix.width(),pix.height());
+                tempPlayer.labelTileset->addTile(pix);
+                Tiled::Cell cell=tempPlayer.labelMapObject->cell();
+                cell.tile=tempPlayer.labelTileset->tileAt(0);
+                tempPlayer.labelMapObject->setCell(cell);
+            }
+            else
+            {
+                tempPlayer.labelMapObject=NULL;
+                tempPlayer.labelTileset=NULL;
+            }
+        }
+
         tempPlayer.current_map=mapPath;
         tempPlayer.presumed_map=all_map.value(mapPath);
         tempPlayer.presumed_x=x;
@@ -336,13 +423,19 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
     if(currentGroup!=NULL)
     {
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+        {
             ObjectGroupItem::objectGroupLink.value(currentGroup)->removeObject(otherPlayer.playerMapObject);
+            if(otherPlayer.labelMapObject!=NULL)
+                ObjectGroupItem::objectGroupLink.value(currentGroup)->removeObject(otherPlayer.labelMapObject);
+        }
         if(currentGroup!=otherPlayer.presumed_map->objectGroup)
             qDebug() << QStringLiteral("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.x,otherPlayer.y+1));
+    if(otherPlayer.labelMapObject!=NULL)
+        otherPlayer.labelMapObject->setPosition(QPointF((float)otherPlayer.x-(float)otherPlayer.labelTileset->tileWidth()/2/16+0.5,otherPlayer.y+1-1.4));
 
     /*if(display)
     {
@@ -364,6 +457,8 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
     if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.presumed_map->objectGroup))
     {
         ObjectGroupItem::objectGroupLink.value(otherPlayer.presumed_map->objectGroup)->addObject(otherPlayer.playerMapObject);
+        if(otherPlayer.labelMapObject!=NULL)
+            ObjectGroupItem::objectGroupLink.value(otherPlayer.presumed_map->objectGroup)->addObject(otherPlayer.labelMapObject);
         if(!MapObjectItem::objectLink.contains(otherPlayer.playerMapObject))
             qDebug() << QStringLiteral("loadOtherPlayerFromMap(), MapObjectItem::objectLink don't have otherPlayer.playerMapObject");
         else
@@ -371,7 +466,11 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
             if(MapObjectItem::objectLink.value(otherPlayer.playerMapObject)==NULL)
                 qDebug() << QStringLiteral("loadOtherPlayerFromMap(), MapObjectItem::objectLink[otherPlayer.playerMapObject]==NULL");
             else
+            {
                 MapObjectItem::objectLink.value(otherPlayer.playerMapObject)->setZValue(otherPlayer.y);
+                if(otherPlayer.labelMapObject!=NULL)
+                    MapObjectItem::objectLink.value(otherPlayer.labelMapObject)->setZValue(otherPlayer.y);
+            }
         }
     }
     else
@@ -386,6 +485,14 @@ void MapControllerMP::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
         ObjectGroupItem::objectGroupLink.value(otherPlayer.playerMapObject->objectGroup())->removeObject(otherPlayer.playerMapObject);
     else
         qDebug() << QStringLiteral("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.playerMapObject->objectGroup()");
+    if(otherPlayer.labelMapObject!=NULL)
+    {
+        //unload the player sprite
+        if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.labelMapObject->objectGroup()))
+            ObjectGroupItem::objectGroupLink.value(otherPlayer.labelMapObject->objectGroup())->removeObject(otherPlayer.labelMapObject);
+        else
+            qDebug() << QStringLiteral("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.labelMapObject->objectGroup()");
+    }
 
     QSetIterator<QString> i(otherPlayer.mapUsed);
     while (i.hasNext())
@@ -530,7 +637,12 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     otherPlayerList[id].presumed_direction=otherPlayerList.value(id).direction;
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    otherPlayerList[id].playerMapObject->setPosition(QPoint(otherPlayerList.value(id).presumed_x,otherPlayerList.value(id).presumed_y+1));
+    otherPlayerList.value(id).playerMapObject->setPosition(QPoint(otherPlayerList.value(id).presumed_x,otherPlayerList.value(id).presumed_y+1));
+    if(otherPlayerList.value(id).labelMapObject!=NULL)
+    {
+        otherPlayerList.value(id).labelMapObject->setPosition(QPointF((float)otherPlayerList.value(id).presumed_x-(float)otherPlayerList.value(id).labelTileset->tileWidth()/2/16+0.5,otherPlayerList.value(id).presumed_y+1-1.4));
+        MapObjectItem::objectLink.value(otherPlayerList.value(id).labelMapObject)->setZValue(otherPlayerList.value(id).presumed_y);
+    }
     MapObjectItem::objectLink.value(otherPlayerList.value(id).playerMapObject)->setZValue(otherPlayerList.value(id).presumed_y);
 
     //start moving into the right direction
@@ -643,15 +755,25 @@ void MapControllerMP::remove_player(const quint16 &id)
     if(currentGroup!=NULL)
     {
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+        {
             ObjectGroupItem::objectGroupLink.value(currentGroup)->removeObject(otherPlayerList.value(id).playerMapObject);
+            if(otherPlayerList.value(id).labelMapObject!=NULL)
+                ObjectGroupItem::objectGroupLink.value(currentGroup)->removeObject(otherPlayerList.value(id).labelMapObject);
+        }
         if(currentGroup!=otherPlayerList.value(id).presumed_map->objectGroup)
             qDebug() << QStringLiteral("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
         currentGroup->removeObject(otherPlayerList.value(id).playerMapObject);
+        if(otherPlayerList.value(id).labelMapObject!=NULL)
+            currentGroup->removeObject(otherPlayerList.value(id).labelMapObject);
     }
 
     delete otherPlayerList.value(id).playerMapObject;
     delete otherPlayerList.value(id).playerTileset;
     delete otherPlayerList.value(id).oneStepMore;
+    if(otherPlayerList.value(id).labelMapObject!=NULL)
+        delete otherPlayerList.value(id).labelMapObject;
+    if(otherPlayerList.value(id).labelTileset!=NULL)
+        delete otherPlayerList.value(id).labelTileset;
 
     otherPlayerList.remove(id);
 }
@@ -689,7 +811,7 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
     #endif
 
     CatchChallenger::Player_public_informations informations=otherPlayerList.value(id).informations;
-    /// \warning search by loop because otherPlayerList[id].current_map is the full path, DatapackClientLoader::datapackLoader.maps relative path
+    /// \warning search by loop because otherPlayerList.value(id).current_map is the full path, DatapackClientLoader::datapackLoader.maps relative path
     if(!all_map.contains(otherPlayerList.value(id).current_map))
     {
         qDebug() << "internal problem, revert map (" << otherPlayerList.value(id).current_map << ") index is wrong (" << DatapackClientLoader::datapackLoader.maps.join(";") << ")";
@@ -1075,6 +1197,8 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             case 3:
             case 4:
             otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->x()-0.20);
+            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
+                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->x()-0.20);
             break;
         }
         break;
@@ -1087,6 +1211,8 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             case 3:
             case 4:
             otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->x()+0.20);
+            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
+                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->x()+0.20);
             break;
         }
         break;
@@ -1099,6 +1225,8 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             case 3:
             case 4:
             otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->y()-0.20);
+            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
+                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->y()-0.20);
             break;
         }
         break;
@@ -1111,6 +1239,8 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             case 3:
             case 4:
             otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->y()+0.20);
+            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
+                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->y()+0.20);
             break;
         }
         break;
@@ -1195,6 +1325,8 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setPosition(QPoint(x,y+1));
+        if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
+            otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setPosition(QPointF((float)x-(float)otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelTileset->tileWidth()/2/16+0.5,y+1-1.4));
         MapObjectItem::objectLink.value(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject)->setZValue(y);
 
         //check if one arrow key is pressed to continue to move into this direction
