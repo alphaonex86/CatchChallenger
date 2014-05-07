@@ -2171,17 +2171,34 @@ void BaseWindow::goToBotStep(const quint8 &step)
     else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("quests"))
     {
         QString textToShow;
-        QList<QPair<quint32,QString> > quests=BaseWindow::getQuestList(actualBot.botId);
+        const QList<QPair<quint32,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
+        if(step==1)
+        {
+            if(quests.size()==1)
+            {
+                const QPair<quint32,QString> &quest=quests.at(0);
+                if(DatapackClientLoader::datapackLoader.questsExtra.value(quest.first).autostep)
+                {
+                    on_IG_dialog_text_linkActivated(QString("quest_%1").arg(quest.first));
+                    return;
+                }
+            }
+        }
         if(quests.isEmpty())
-            textToShow+=tr("No quests at the moment or you don't meat the requirements");
+        {
+            if(actualBot.step.contains(step+1))
+                on_IG_dialog_text_linkActivated("next");
+            else
+                textToShow+=tr("No quests at the moment or you don't meat the requirements");
+        }
         else
         {
             textToShow+=QStringLiteral("<ul>");
             int index=0;
             while(index<quests.size())
             {
-                QPair<quint32,QString> quest=quests.at(index);
-                textToShow+=QStringLiteral("<a href=\"quest_%1\">%2</a>").arg(quest.first).arg(quest.second);
+                const QPair<quint32,QString> &quest=quests.at(index);
+                textToShow+=QStringLiteral("<li><a href=\"quest_%1\">%2</a></li>").arg(quest.first).arg(quest.second);
                 index++;
             }
             if(quests.isEmpty())
@@ -2684,6 +2701,22 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             }
             isInQuest=true;
             this->questId=questId;
+            if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
+                if(DatapackClientLoader::datapackLoader.questsExtra.value(questId).autostep)
+                {
+                    int index=0;
+                    bool ok;
+                    do
+                    {
+                        ok=tryValidateQuestStep();
+                        index++;
+                    } while(ok && index<99);
+                    if(index==99)
+                    {
+                        emit error(QString("Infinity loop into autostep for quest: %1").arg(questId));
+                        return;
+                    }
+                }
             getTextEntryPoint();
             index++;
             continue;
@@ -2704,7 +2737,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             return;
         else if(link=="next_quest_step" && isInQuest)
         {
-            nextQuestStep();
+            tryValidateQuestStep();
             index++;
             continue;
         }
@@ -2732,54 +2765,72 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
     }
 }
 
-void BaseWindow::nextQuestStep()
+bool BaseWindow::tryValidateQuestStep(bool silent)
 {
     if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(questId))
     {
-        showTip(tr("Quest not found"));
-        return;
+        if(!silent)
+            showTip(tr("Quest not found"));
+        return false;
     }
 
     if(!quests.contains(questId))
     {
-        if(haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
+        if(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
             startQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
             updateDisplayedQuests();
+            return true;
         }
         else
-            showTip(tr("You don't have the requirement to start this quest"));
-        return;
+        {
+            if(!silent)
+                showTip(tr("You don't have the requirement to start this quest"));
+            return false;
+        }
     }
     else if(quests.value(questId).step==0)
     {
-        if(haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
+        if(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
             startQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
             updateDisplayedQuests();
+            return true;
         }
         else
-            showTip(tr("You don't have the requirement to start this quest"));
-        return;
+        {
+            if(!silent)
+                showTip(tr("You don't have the requirement to start this quest"));
+            return false;
+        }
     }
     if(!haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
     {
-        showTip(tr("You don't have the requirement to continue this quest"));
-        return;
+        if(!silent)
+            showTip(tr("You don't have the requirement to continue this quest"));
+        return false;
     }
     if(quests.value(questId).step>=(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.size()))
     {
-        showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
+        if(!silent)
+            showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
         CatchChallenger::Api_client_real::client->finishQuest(questId);
         nextStepQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
         updateDisplayedQuests();
-        return;
+        return true;
+    }
+    if(!CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.at(quests.value(questId).step).bots.contains(actualBot.botId))
+    {
+        if(!silent)
+            showTip(tr("You need talk to another bot"));
+        return false;
     }
     CatchChallenger::Api_client_real::client->nextQuestStep(questId);
     nextStepQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
     updateDisplayedQuests();
+    return true;
 }
 
 void BaseWindow::getTextEntryPoint()
@@ -2791,7 +2842,7 @@ void BaseWindow::getTextEntryPoint()
     }
     QScriptEngine engine;
 
-    QString client_logic=CatchChallenger::Api_client_real::client->datapackPath()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
+    const QString &client_logic=CatchChallenger::Api_client_real::client->datapackPath()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
         showTip(tr("Client file missing"));
