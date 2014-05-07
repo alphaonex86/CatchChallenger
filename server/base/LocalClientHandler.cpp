@@ -2743,6 +2743,11 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
         emit error("Try requestFight when is in capture city");
         return;
     }
+    if(player_informations->public_and_private_informations.bot_already_beaten.contains(fightId))
+    {
+        emit error("You can't rebeat this fighter");
+        return;
+    }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QStringLiteral("request fight at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
     #endif
