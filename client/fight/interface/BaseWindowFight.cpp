@@ -495,7 +495,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
             }
             else
             {
-                ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+                ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
                 ui->labelFightPlateformTop->setPixmap(QPixmap(":/images/interface/fight/plateform-front.png"));
                 ui->labelFightPlateformBottom->setPixmap(QPixmap(":/images/interface/fight/plateform-background.png"));
             }
@@ -503,7 +503,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
         }
         index++;
     }
-    ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}"));
+    ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
     ui->labelFightPlateformTop->setPixmap(QPixmap(":/images/interface/fight/plateform-front.png"));
     ui->labelFightPlateformBottom->setPixmap(QPixmap(":/images/interface/fight/plateform-background.png"));
 }
