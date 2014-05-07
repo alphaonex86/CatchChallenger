@@ -192,8 +192,10 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
             else
             {
                 const quint8 &count=animationFrame.value(i.key()).value(i.value().count);
-                tempMapObject->animatedObject[i.key()].count=count;
-                if(i.value().count!=0)
+                const int &oldcount=tempMapObject->animatedObject[i.key()].count;
+                const int &count_diff=count-oldcount;
+                tempMapObject->animatedObject[i.key()].count+=count_diff;
+                if(count_diff!=0)
                 {
                     int index=0;
                     while(index<i.value().animatedObjectList.size())
@@ -202,10 +204,33 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         Tiled::Cell cell=mapObject->cell();
                         Tiled::Tile *tile=mapObject->cell().tile;
                         Tiled::Tile *newTile;
-                        if((count+i.value().animatedObjectList.at(index).randomOffset)>=i.value().frameCountTotal)
-                            newTile=tile->tileset()->tileAt(tile->id()+count-i.value().frameCountTotal);
-                        else
-                            newTile=tile->tileset()->tileAt(tile->id()+count);
+                        int diff=0;
+                        const quint8 &randomOffset=i.value().animatedObjectList.at(index).randomOffset;
+                        const quint8 &frameCountTotal=i.value().frameCountTotal;
+                        if((oldcount+randomOffset)>=frameCountTotal)
+                            diff=+frameCountTotal;
+                        /*diff+=-oldcount;
+                        diff+=count;
+                        compressed into: */
+                        diff+=count_diff;
+                        if((count+randomOffset)>=frameCountTotal)
+                            diff+=-frameCountTotal;
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        const int &tileid=tile->id();
+                        const int &minId=i.value().animatedObjectList.at(index).minId;
+                        const int &maxId=i.value().animatedObjectList.at(index).maxId;
+                        if((tileid+diff)<minId)
+                        {
+                            qDebug() << "Frame out of range";
+                            return false;
+                        }
+                        if((tileid+diff)>maxId)
+                        {
+                            qDebug() << "Frame out of range";
+                            return false;
+                        }
+                        #endif
+                        newTile=tile->tileset()->tileAt(tile->id()+diff);
                         cell.tile=newTile;
                         mapObject->setCell(cell);
                         index++;
@@ -399,6 +424,21 @@ void MapVisualiser::applyTheAnimationTimer()
                         Tiled::MapObject * mapObject=animatedObject.at(index).animatedObject;
                         Tiled::Cell cell=mapObject->cell();
                         Tiled::Tile *tile=mapObject->cell().tile;
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        const int &tileid=tile->id();
+                        const int &minId=animatedObject.at(index).minId;
+                        const int &maxId=animatedObject.at(index).maxId;
+                        if((tileid+frameOffset)<minId)
+                        {
+                            qDebug() << "Frame out of range";
+                            return;
+                        }
+                        if((tileid+frameOffset)>maxId)
+                        {
+                            qDebug() << "Frame out of range";
+                            return;
+                        }
+                        #endif
                         Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+frameOffset);
                         cell.tile=newTile;
                         mapObject->setCell(cell);

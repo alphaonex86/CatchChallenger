@@ -544,6 +544,10 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             map_animation_object.randomOffset=0;
                                             if(animationList.size()>=3 && animationList.at(2)==MapVisualiserThread::text_randomoffset)
                                                 map_animation_object.randomOffset=rand()%frames;
+                                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                            map_animation_object.minId=tile->id();
+                                            map_animation_object.maxId=tile->id()+frames;
+                                            #endif
                                             cell.tile=tile->tileset()->tileAt(tile->id()+map_animation_object.randomOffset);
                                             object->setCell(cell);
                                             map_animation_object.animatedObject=object;
