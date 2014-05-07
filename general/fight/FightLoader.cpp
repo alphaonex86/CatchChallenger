@@ -1614,6 +1614,11 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &folder)
                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, durationNumberOfTurn is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                         general_durationNumberOfTurn=3;
                                     }
+                                    if(general_durationNumberOfTurn<=0)
+                                    {
+                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, durationNumberOfTurn is egal to 0: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        general_durationNumberOfTurn=3;
+                                    }
                                 }
                                 else
                                     general_durationNumberOfTurn=3;

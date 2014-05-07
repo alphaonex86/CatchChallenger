@@ -43,6 +43,7 @@ public:
         QString name;
         QStringList steps;
         bool showRewards;
+        bool autostep;
     };
     struct ZoneExtra
     {
@@ -169,6 +170,8 @@ protected:
     static QString text_quest;
     static QString text_rewards;
     static QString text_show;
+    static QString text_autostep;
+    static QString text_yes;
     static QString text_true;
     static QString text_step;
     static QString text_bot;
