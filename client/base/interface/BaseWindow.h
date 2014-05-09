@@ -19,7 +19,9 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../Api_client_real.h"
 #include "../../general/base/Api_protocol.h"
-#include "../audio/QOggSimplePlayer.h"
+#include "../audio/QSoundFile.h"
+#include "../audio/QSoundPlayer.h"
+#include "../audio/QSoundLoader.h"
 #include "MapController.h"
 #include "Chat.h"
 #include "NewProfile.h"
@@ -427,9 +429,11 @@ private slots:
     void on_listCraftingMaterials_itemActivated(QListWidgetItem *item);
     void on_forceZoom_toggled(bool checked);
     void on_zoom_valueChanged(int value);
+    void changeDeviceIndex(int device);
 protected slots:
     //datapack
     void datapackParsed();
+    void loadSoundSettings();
     //UI
     void updateConnectingStatus();
 private:
@@ -619,8 +623,14 @@ private:
     //battle
     BattleStep battleStep;
 
-    QList<QOggSimplePlayer*> ambiance;
-    QThread audioReadThread;
+    struct Ambiance
+    {
+        QSoundFile *soundFile;
+        QSoundJob *soundJob;
+        QString file;
+    };
+    QSoundPlayer playerinternal;
+    QList<Ambiance> ambianceList;
 
     static QString text_type;
     static QString text_lang;
