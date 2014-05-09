@@ -3,13 +3,13 @@ include(../tiled/tiled.pri)
 LIBS += -lvorbis -lvorbisfile
 QT       += script multimedia opengl widgets qml quick
 
+DEFINES += QSOUND_USE_VORBISFILE
+
 win32:CONFIG   += console
 
 SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/ObjectGroupItem.cpp \
-    $$PWD/audio/QOggAudioBuffer.cpp \
-    $$PWD/audio/QOggSimplePlayer.cpp \
     $$PWD/render/MapVisualiserPlayer.cpp \
     $$PWD/render/MapVisualiser.cpp \
     $$PWD/render/MapVisualiser-map.cpp \
@@ -53,11 +53,14 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/InternetUpdater.cpp \
     $$PWD/ExtraSocket.cpp \
     $$PWD/LocalListener.cpp \
+    $$PWD/audio/QSoundFile.cpp \
+    $$PWD/audio/QSoundLoader.cpp \
+    $$PWD/audio/QSoundMeter.cpp \
+    $$PWD/audio/QSoundPlayer.cpp \
+    $$PWD/audio/QSoundStream.cpp \
     $$PWD/interface/MapDoor.cpp
 
-HEADERS  += $$PWD/audio/QOggAudioBuffer.h \
-    $$PWD/audio/QOggSimplePlayer.h \
-    $$PWD/ClientStructures.h \
+HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/Api_client_real.h \
     $$PWD/render/TileLayerItem.h \
     $$PWD/render/ObjectGroupItem.h \
@@ -91,6 +94,11 @@ HEADERS  += $$PWD/audio/QOggAudioBuffer.h \
     $$PWD/ExtraSocket.h \
     $$PWD/LocalListener.h \
     $$PWD/DisplayStructures.h \
+    $$PWD/audio/QSoundFile.h \
+    $$PWD/audio/QSoundLoader.h \
+    $$PWD/audio/QSoundMeter.h \
+    $$PWD/audio/QSoundPlayer.h \
+    $$PWD/audio/QSoundStream.h \
     $$PWD/interface/MapDoor.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \

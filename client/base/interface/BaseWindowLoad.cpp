@@ -6,6 +6,7 @@
 #include "DatapackClientLoader.h"
 #include "Chat.h"
 #include "../../fight/interface/ClientFightEngine.h"
+#include "../Options.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -102,11 +103,12 @@ void BaseWindow::resetAll()
     lastPlaceDisplayed.clear();
     events.clear();
     visualCategory.clear();
-    while(!ambiance.isEmpty())
+    while(!ambianceList.isEmpty())
     {
-        ambiance.first()->stop();
-        delete ambiance.first();
-        ambiance.removeFirst();
+        ambianceList.first().soundJob->stop();
+        delete ambianceList.first().soundJob;
+        delete ambianceList.first().soundFile;
+        ambianceList.removeFirst();
     }
     industryStatus.products.clear();
     industryStatus.resources.clear();
@@ -353,9 +355,30 @@ void BaseWindow::datapackParsed()
     qDebug() << "BaseWindow::datapackParsed()";
     #endif
     datapackIsParsed=true;
+    loadSoundSettings();
     updateConnectingStatus();
     loadSettingsWithDatapack();
     //updatePlayerImage();
+}
+
+void BaseWindow::loadSoundSettings()
+{
+    const QStringList &outputDeviceNames=playerinternal.outputDeviceNames();
+    Options::options.setAudioDeviceList(outputDeviceNames);
+    ui->audiodevice->clear();
+    if(outputDeviceNames.isEmpty())
+        playerinternal.setOutputDeviceName(QString());
+    else
+    {
+        const int &indexDevice=Options::options.getIndexDevice();
+        ui->audiodevice->addItems(outputDeviceNames);
+        if(indexDevice!=-1)
+        {
+            ui->audiodevice->setCurrentIndex(indexDevice);
+            playerinternal.setOutputDeviceName(outputDeviceNames.at(indexDevice));
+        }
+        connect(ui->audiodevice,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&BaseWindow::changeDeviceIndex);
+    }
 }
 
 void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > &events)

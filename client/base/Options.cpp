@@ -100,6 +100,35 @@ void Options::setLanguage(const QString &language)//the main code
     emit newLanguage(language);
 }
 
+void Options::setDeviceIndex(const int &indexDevice)
+{
+    if(indexDevice<devices.size() && indexDevice>=0)
+    {
+        if(this->indexDevice==indexDevice)
+            return;
+        this->indexDevice=indexDevice;
+        settings->setValue("audioDevice",devices.at(indexDevice));
+        emit newAudioDevice(indexDevice);
+    }
+}
+
+void Options::setAudioDeviceList(const QStringList &devices)
+{
+    indexDevice=devices.indexOf(settings->value("audioDevice").toString());
+    if(indexDevice==-1)
+    {
+        if(!devices.isEmpty())
+            indexDevice=0;
+        settings->remove("audioDevice");
+    }
+    this->devices=devices;
+}
+
+int Options::getIndexDevice() const
+{
+    return indexDevice;
+}
+
 quint16 Options::getFPS() const
 {
     return fps;
