@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2237,7 +2237,7 @@ padding-bottom:3px;
               <string notr="true">background-image: url(:/images/light-white.png);</string>
              </property>
              <property name="title">
-              <string>Misc</string>
+              <string>Sound</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_11">
               <item>
@@ -2277,6 +2277,33 @@ padding-bottom:3px;
                    <enum>Qt::Horizontal</enum>
                   </property>
                  </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_59">
+                <item>
+                 <widget class="QLabel" name="label_20">
+                  <property name="text">
+                   <string>Device</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_56">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="audiodevice"/>
                 </item>
                </layout>
               </item>

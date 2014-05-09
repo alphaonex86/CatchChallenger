@@ -21,6 +21,7 @@
 #include <QScriptValue>
 #include <QScriptEngine>
 #include <QtQml>
+#include <QComboBox>
 
 //do buy queue
 //do sell queue
@@ -166,8 +167,6 @@ BaseWindow::BaseWindow() :
 
     /// \todo able to cancel quest
     ui->cancelQuest->hide();
-
-    audioReadThread.start(QThread::IdlePriority);
 }
 
 BaseWindow::~BaseWindow()
@@ -182,13 +181,12 @@ BaseWindow::~BaseWindow()
         delete newProfile;
         newProfile=NULL;
     }
-    while(!ambiance.isEmpty())
+    while(!ambianceList.isEmpty())
     {
-        delete ambiance.first();
-        ambiance.removeFirst();
+        delete ambianceList.first().soundJob;
+        delete ambianceList.first().soundFile;
+        ambianceList.removeFirst();
     }
-    audioReadThread.quit();
-    audioReadThread.wait();
     if(movie!=NULL)
         delete movie;
     delete ui;
@@ -1476,11 +1474,12 @@ void BaseWindow::currentMapLoaded()
         const QString &backgroundsound=MapController::mapController->currentBackgroundsound();
         if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type) && backgroundsound.isEmpty())
         {
-            while(!ambiance.isEmpty())
+            while(!ambianceList.isEmpty())
             {
-                ambiance.first()->stop();
-                delete ambiance.first();
-                ambiance.removeFirst();
+                ambianceList.first().soundJob->stop();
+                ambianceList.first().soundJob->deleteLater();
+                ambianceList.first().soundFile->deleteLater();
+                ambianceList.removeFirst();
             }
             noSound=true;
         }
@@ -1491,23 +1490,28 @@ void BaseWindow::currentMapLoaded()
                 file=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
             else
                 file=backgroundsound;
-            while(!ambiance.isEmpty())
+            while(!ambianceList.isEmpty())
             {
-                if(ambiance.first()->getFilePath()==file)
+                if(ambianceList.first().file==file)
                 {
                     noSound=true;
                     break;
                 }
-                ambiance.first()->stop();
-                delete ambiance.first();
-                ambiance.removeFirst();
+                ambianceList.first().soundJob->stop();
+                ambianceList.first().soundJob->deleteLater();
+                ambianceList.first().soundFile->deleteLater();
+                ambianceList.removeFirst();
             }
             if(!noSound)
             {
-                ambiance << new QOggSimplePlayer(file,&audioReadThread);
-                ambiance.last()->start();
-                ambiance.last()->setLoop(true);
-                ambiance.last()->setVolume((qreal)Options::options.getAudioVolume()/(qreal)100);
+                Ambiance ambiance;
+                ambiance.soundFile=new QSoundFile(file);
+                ambiance.soundFile->setRepeat(true);
+                ambiance.soundFile->open(QIODevice::ReadOnly);
+                ambiance.soundJob=new QSoundJob(ambiance.soundFile);
+                ambiance.soundJob->start();
+                ambiance.file=file;
+                ambianceList << ambiance;
             }
         }
     }
@@ -3164,4 +3168,16 @@ void BaseWindow::on_monsterList_itemSelectionChanged()
 void BaseWindow::teleportConditionNotRespected(const QString &text)
 {
     showTip(text);
+}
+
+void BaseWindow::changeDeviceIndex(int device)
+{
+    if(device==-1)
+        return;
+    const QStringList &outputDeviceNames=playerinternal.outputDeviceNames();
+    if(device<outputDeviceNames.size())
+    {
+        Options::options.setDeviceIndex(device);
+        playerinternal.setOutputDeviceName(outputDeviceNames.at(device));
+    }
 }

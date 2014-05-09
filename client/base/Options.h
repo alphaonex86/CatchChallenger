@@ -18,6 +18,7 @@ public:
     bool getForcedZoom() const;
     quint8 getAudioVolume() const;
     QString getLanguage() const;//the main code
+    int getIndexDevice() const;
 signals:
     void newFPS(const quint16 &fps);
     void newLimitedFPS(const bool &fpsLimited);
@@ -25,12 +26,16 @@ signals:
     void newZoomEnabled(const quint8 &zoom/*0 is no forced*/);
     void newAudioVolume(const quint8 &audioVolume);
     void newLanguage(const QString &language);//the main code
+    void newAudioDevice(const int &indexDevice);//the main code
 public slots:
     void setFPS(const quint16 &fps);
     void setLimitedFPS(const bool &limitedFPS);
     void setForcedZoom(const quint8 &zoom/*0 is no forced*/);
     void setAudioVolume(const quint8 &audioVolume);
     void setLanguage(const QString &language);//the main code
+    void setDeviceIndex(const int &indexDevice);
+
+    void setAudioDeviceList(const QStringList &devices);
 private:
     QSettings *settings;
     quint16 fps;
@@ -38,6 +43,8 @@ private:
     quint8 zoom;//0 is no forced
     quint8 audioVolume;
     QString language;
+    int indexDevice;
+    QStringList devices;
 };
 
 #endif // OPTIONS_H
