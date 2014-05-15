@@ -86,21 +86,18 @@ MainWindow::MainWindow(QWidget *parent) :
     vlcPlayer=NULL;
     if(Audio::audio.vlcInstance)
     {
-        /* Create a new Media */
+        // Create a new Media
         libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, (QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).toUtf8().constData());
-        if (!vlcMedia)
-            return;
-
-        /* Create a new libvlc player */
-        vlcPlayer = libvlc_media_player_new_from_media (vlcMedia);
-
-        /* Release the media */
-        libvlc_media_release(vlcMedia);
-
-        libvlc_media_add_option(vlcMedia, "input-repeat=-1");
-
-        /* And start playback */
-        libvlc_media_player_play(vlcPlayer);
+        if(vlcMedia)
+        {
+            // Create a new libvlc player
+            vlcPlayer = libvlc_media_player_new_from_media(vlcMedia);
+            // Release the media
+            libvlc_media_release(vlcMedia);
+            libvlc_media_add_option(vlcMedia, "input-repeat=-1");
+            // And start playback
+            libvlc_media_player_play(vlcPlayer);
+        }
     }
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
 }

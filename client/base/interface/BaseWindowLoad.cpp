@@ -107,7 +107,7 @@ void BaseWindow::resetAll()
     while(!ambianceList.isEmpty())
     {
         libvlc_media_player_stop(ambianceList.first().player);
-        delete ambianceList.first().player;
+        libvlc_media_player_release(ambianceList.first().player);
         ambianceList.removeFirst();
     }
     industryStatus.products.clear();
