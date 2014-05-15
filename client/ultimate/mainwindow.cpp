@@ -82,10 +82,33 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle(QStringLiteral("CatchChallenger Ultimate"));
     downloadFile();
+
+    vlcPlayer=NULL;
+    if(Audio::audio.vlcInstance)
+    {
+        /* Create a new Media */
+        libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, (QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).toUtf8().constData());
+        if (!vlcMedia)
+            return;
+
+        /* Create a new libvlc player */
+        vlcPlayer = libvlc_media_player_new_from_media (vlcMedia);
+
+        /* Release the media */
+        libvlc_media_release(vlcMedia);
+
+        libvlc_media_add_option(vlcMedia, "input-repeat=-1");
+
+        /* And start playback */
+        libvlc_media_player_play(vlcPlayer);
+    }
+    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
 }
 
 MainWindow::~MainWindow()
 {
+    if(vlcPlayer!=NULL)
+        libvlc_media_player_stop(vlcPlayer);
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
     {
         CatchChallenger::BaseWindow::baseWindow->deleteLater();
@@ -105,6 +128,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    if(vlcPlayer!=NULL)
+        libvlc_media_player_stop(vlcPlayer);
     event->ignore();
     hide();
     if(socket!=NULL || internalServer!=NULL)
@@ -692,6 +717,8 @@ void MainWindow::serverListEntryEnvoluedDoubleClicked()
 
 void MainWindow::resetAll()
 {
+    if(vlcPlayer!=NULL)
+        libvlc_media_player_play(vlcPlayer);
     if(CatchChallenger::Api_client_real::client!=NULL)
     {
         CatchChallenger::Api_client_real::client->resetAll();
@@ -1492,8 +1519,14 @@ void MainWindow::on_lineEditLogin_textChanged(const QString &arg1)
 
 void MainWindow::logged()
 {
-    /*if(serverConnexion.contains(selectedServer))
-        lastServerWaitBeforeConnectAfterKick[serverConnexion.value(selectedServer)->host]=CommonSettings::commonSettings.waitBeforeConnectAfterKick;*/
+    if(serverConnexion.contains(selectedServer))
+        lastServerWaitBeforeConnectAfterKick[serverConnexion.value(selectedServer)->host]=CommonSettings::commonSettings.waitBeforeConnectAfterKick;
+}
+
+void MainWindow::gameIsLoaded()
+{
+    if(vlcPlayer!=NULL)
+        libvlc_media_player_stop(vlcPlayer);
 }
 
 void MainWindow::updateTheOkButton()

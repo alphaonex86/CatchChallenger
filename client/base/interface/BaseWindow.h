@@ -13,15 +13,13 @@
 #include <QComboBox>
 #include <QMovie>
 #include <QQuickView>
+#include <vlc/vlc.h>
 
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../Api_client_real.h"
 #include "../../general/base/Api_protocol.h"
-#include "../audio/QSoundFile.h"
-#include "../audio/QSoundPlayer.h"
-#include "../audio/QSoundLoader.h"
 #include "MapController.h"
 #include "Chat.h"
 #include "NewProfile.h"
@@ -625,11 +623,9 @@ private:
 
     struct Ambiance
     {
-        QSoundFile *soundFile;
-        QSoundJob *soundJob;
+        libvlc_media_player_t *player;
         QString file;
     };
-    QSoundPlayer playerinternal;
     QList<Ambiance> ambianceList;
 
     static QString text_type;
@@ -647,6 +643,7 @@ signals:
     void collectMaturePlant();
     //inventory
     void destroyObject(quint32 object,quint32 quantity=1);
+    void gameIsLoaded();
 };
 }
 

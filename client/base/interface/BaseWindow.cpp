@@ -11,6 +11,7 @@
 #include "GetPrice.h"
 #include "../LanguagesSelect.h"
 #include "../Options.h"
+#include "../Audio.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -22,6 +23,7 @@
 #include <QScriptEngine>
 #include <QtQml>
 #include <QComboBox>
+#include <vlc/vlc.h>
 
 //do buy queue
 //do sell queue
@@ -167,6 +169,7 @@ BaseWindow::BaseWindow() :
 
     /// \todo able to cancel quest
     ui->cancelQuest->hide();
+    loadSoundSettings();
 }
 
 BaseWindow::~BaseWindow()
@@ -183,8 +186,8 @@ BaseWindow::~BaseWindow()
     }
     while(!ambianceList.isEmpty())
     {
-        delete ambianceList.first().soundJob;
-        delete ambianceList.first().soundFile;
+        libvlc_media_player_stop(ambianceList.first().player);
+        delete ambianceList.first().player;
         ambianceList.removeFirst();
     }
     if(movie!=NULL)
@@ -1476,9 +1479,8 @@ void BaseWindow::currentMapLoaded()
         {
             while(!ambianceList.isEmpty())
             {
-                ambianceList.first().soundJob->stop();
-                ambianceList.first().soundJob->deleteLater();
-                ambianceList.first().soundFile->deleteLater();
+                libvlc_media_player_stop(ambianceList.first().player);
+                delete ambianceList.first().player;
                 ambianceList.removeFirst();
             }
             noSound=true;
@@ -1497,21 +1499,34 @@ void BaseWindow::currentMapLoaded()
                     noSound=true;
                     break;
                 }
-                ambianceList.first().soundJob->stop();
-                ambianceList.first().soundJob->deleteLater();
-                ambianceList.first().soundFile->deleteLater();
+                libvlc_media_player_stop(ambianceList.first().player);
+                delete ambianceList.first().player;
                 ambianceList.removeFirst();
             }
             if(!noSound)
             {
-                Ambiance ambiance;
-                ambiance.soundFile=new QSoundFile(file);
-                ambiance.soundFile->setRepeat(true);
-                ambiance.soundFile->open(QIODevice::ReadOnly);
-                ambiance.soundJob=new QSoundJob(ambiance.soundFile);
-                ambiance.soundJob->start();
-                ambiance.file=file;
-                ambianceList << ambiance;
+                if(Audio::audio.vlcInstance)
+                {
+                    /* Create a new Media */
+                    libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, file.toUtf8().constData());
+                    if(vlcMedia)
+                    {
+                        Ambiance ambiance;
+                        /* Create a new libvlc player */
+                        ambiance.player = libvlc_media_player_new_from_media (vlcMedia);
+
+                        /* Release the media */
+                        libvlc_media_release(vlcMedia);
+
+                        libvlc_media_add_option(vlcMedia, "input-repeat=-1");
+
+                        /* And start playback */
+                        libvlc_media_player_play(ambiance.player);
+
+                        ambiance.file=file;
+                        ambianceList << ambiance;
+                    }
+                }
             }
         }
     }
@@ -3174,10 +3189,10 @@ void BaseWindow::changeDeviceIndex(int device)
 {
     if(device==-1)
         return;
-    const QStringList &outputDeviceNames=playerinternal.outputDeviceNames();
+    /*const QStringList &outputDeviceNames=soundEngine.outputDeviceNames();
     if(device<outputDeviceNames.size())
     {
         Options::options.setDeviceIndex(device);
-        playerinternal.setOutputDeviceName(outputDeviceNames.at(device));
-    }
+        soundEngine.setOutputDeviceName(outputDeviceNames.at(device));
+    }*/
 }

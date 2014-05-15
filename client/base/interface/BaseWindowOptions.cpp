@@ -49,7 +49,7 @@ void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 {
     Options::options.setAudioVolume(value);
     int index=0;
-    while(index<ambianceList.size())
+    //while(index<ambianceList.size())
     {
         //ambianceList.at(index)->setVolume((qreal)value/(qreal)100);
         index++;
