@@ -11,11 +11,13 @@
 #include <QNetworkReply>
 #include <QDateTime>
 #include <QSet>
+#include <vlc/vlc.h>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
 #include "../base/RssNews.h"
+#include "../base/Audio.h"
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
@@ -105,6 +107,7 @@ private slots:
     void rssEntryList(const QList<RssNews::RssEntry> &entryList);
     void on_lineEditLogin_textChanged(const QString &arg1);
     void logged();
+    void gameIsLoaded();
     void updateTheOkButton();
 private:
     enum ServerMode
@@ -151,6 +154,7 @@ private:
     QHash<QString,quint32> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
+    libvlc_media_player_t *vlcPlayer;
 };
 
 #endif // MAINWINDOW_H

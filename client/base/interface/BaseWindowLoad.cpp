@@ -13,6 +13,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QQmlContext>
+#include <vlc/vlc.h>
 
 using namespace CatchChallenger;
 
@@ -105,9 +106,8 @@ void BaseWindow::resetAll()
     visualCategory.clear();
     while(!ambianceList.isEmpty())
     {
-        ambianceList.first().soundJob->stop();
-        delete ambianceList.first().soundJob;
-        delete ambianceList.first().soundFile;
+        libvlc_media_player_stop(ambianceList.first().player);
+        delete ambianceList.first().player;
         ambianceList.removeFirst();
     }
     industryStatus.products.clear();
@@ -355,7 +355,6 @@ void BaseWindow::datapackParsed()
     qDebug() << "BaseWindow::datapackParsed()";
     #endif
     datapackIsParsed=true;
-    loadSoundSettings();
     updateConnectingStatus();
     loadSettingsWithDatapack();
     //updatePlayerImage();
@@ -363,11 +362,11 @@ void BaseWindow::datapackParsed()
 
 void BaseWindow::loadSoundSettings()
 {
-    const QStringList &outputDeviceNames=playerinternal.outputDeviceNames();
+    /*const QStringList &outputDeviceNames=soundEngine.outputDeviceNames();
     Options::options.setAudioDeviceList(outputDeviceNames);
     ui->audiodevice->clear();
     if(outputDeviceNames.isEmpty())
-        playerinternal.setOutputDeviceName(QString());
+        soundEngine.setOutputDeviceName(QString());
     else
     {
         const int &indexDevice=Options::options.getIndexDevice();
@@ -375,10 +374,10 @@ void BaseWindow::loadSoundSettings()
         if(indexDevice!=-1)
         {
             ui->audiodevice->setCurrentIndex(indexDevice);
-            playerinternal.setOutputDeviceName(outputDeviceNames.at(indexDevice));
+            soundEngine.setOutputDeviceName(outputDeviceNames.at(indexDevice));
         }
         connect(ui->audiodevice,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&BaseWindow::changeDeviceIndex);
-    }
+    }*/
 }
 
 void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > &events)
@@ -477,6 +476,7 @@ void BaseWindow::updateConnectingStatus()
         load_monsters();
         show_reputation();
         load_event();
+        emit gameIsLoaded();
         this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Welcome <b><i>%1</i></b> on <i>CatchChallenger</i>").arg(CatchChallenger::Api_client_real::client->getPseudo()));
