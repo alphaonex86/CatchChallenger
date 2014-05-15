@@ -187,7 +187,7 @@ BaseWindow::~BaseWindow()
     while(!ambianceList.isEmpty())
     {
         libvlc_media_player_stop(ambianceList.first().player);
-        delete ambianceList.first().player;
+        libvlc_media_player_release(ambianceList.first().player);
         ambianceList.removeFirst();
     }
     if(movie!=NULL)
@@ -1480,7 +1480,7 @@ void BaseWindow::currentMapLoaded()
             while(!ambianceList.isEmpty())
             {
                 libvlc_media_player_stop(ambianceList.first().player);
-                delete ambianceList.first().player;
+                libvlc_media_player_release(ambianceList.first().player);
                 ambianceList.removeFirst();
             }
             noSound=true;
@@ -1500,27 +1500,24 @@ void BaseWindow::currentMapLoaded()
                     break;
                 }
                 libvlc_media_player_stop(ambianceList.first().player);
-                delete ambianceList.first().player;
+                libvlc_media_player_release(ambianceList.first().player);
                 ambianceList.removeFirst();
             }
             if(!noSound)
             {
                 if(Audio::audio.vlcInstance)
                 {
-                    /* Create a new Media */
+                    // Create a new Media
                     libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, file.toUtf8().constData());
-                    if(vlcMedia)
+                    if(vlcMedia!=NULL)
                     {
                         Ambiance ambiance;
-                        /* Create a new libvlc player */
+                        // Create a new libvlc player
                         ambiance.player = libvlc_media_player_new_from_media (vlcMedia);
-
-                        /* Release the media */
+                        // Release the media
                         libvlc_media_release(vlcMedia);
-
                         libvlc_media_add_option(vlcMedia, "input-repeat=-1");
-
-                        /* And start playback */
+                        // And start playback
                         libvlc_media_player_play(ambiance.player);
 
                         ambiance.file=file;

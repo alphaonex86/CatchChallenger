@@ -1,3 +1,4 @@
+#include <vlc/vlc.h>
 #include <QWidget>
 #include <QMessageBox>
 #include <QAbstractSocket>
@@ -13,7 +14,6 @@
 #include <QComboBox>
 #include <QMovie>
 #include <QQuickView>
-#include <vlc/vlc.h>
 
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../general/base/ChatParsing.h"
