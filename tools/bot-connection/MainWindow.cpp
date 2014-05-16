@@ -422,8 +422,8 @@ void MainWindow::newSocketError(QAbstractSocket::SocketError error)
     connectedSocketToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=true;
     if(error==0)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("MainWindow::newError() Connection refused").arg(error));
-        ui->statusBar->showMessage(QStringLiteral("Connection refused").arg(error));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("MainWindow::newError() Connection refused"));
+        ui->statusBar->showMessage(QStringLiteral("Connection refused"));
     }
     else if(error==13)
     {
