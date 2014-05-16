@@ -12,6 +12,7 @@
 #include <QDateTime>
 #include <QSet>
 #include <vlc/vlc.h>
+#include <vlc/libvlc_structures.h>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -109,6 +110,7 @@ private slots:
     void logged();
     void gameIsLoaded();
     void updateTheOkButton();
+    static void vlcevent(const libvlc_event_t* event, void* ptr);
 private:
     enum ServerMode
     {
