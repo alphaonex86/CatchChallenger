@@ -12,6 +12,9 @@ Audio::Audio()
     /* Complain in case of broken installation */
     if (vlcInstance == NULL)
         qDebug() << "Qt libVLC player, Could not init libVLC";
+    const char * string=libvlc_errmsg();
+    if(string!=NULL)
+        qDebug() << string;
 }
 
 Audio::~Audio()
