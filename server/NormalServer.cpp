@@ -646,5 +646,7 @@ void NormalServer::checkSettingsFile(QSettings *settings)
     if(!settings->contains(QLatin1Literal("workingPath")))
         settings->setValue(QLatin1Literal("workingPath"),QLatin1Literal("0:0"));
     settings->endGroup();
+
+    settings->sync();
 }
 
