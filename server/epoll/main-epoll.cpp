@@ -1,32 +1,34 @@
-#include "ProcessControler.h"
-#include "base/ServerStructures.h"
+#include <sys/epoll.h>
+#include <errno.h>
+#include <iostream>
+#include <list>
+#include <sys/socket.h>
+#include <netdb.h>
+
+#include <QSettings>
+#include <QString>
+#include <QCoreApplication>
+
+#include "EpollClient.h"
+#include "EpollSocket.h"
+#include "EpollServer.h"
+#include "Epoll.h"
+#include "EpollTimer.h"
+#include "TimerDisplayEventBySeconds.h"
+#include "../base/ServerStructures.h"
+#include "NormalServer.h"
+
+#define MAXEVENTS 512
+#define MAXCLIENT 6000
 
 using namespace CatchChallenger;
 
-ProcessControler::ProcessControler()
-{
-    qRegisterMetaType<Chat_type>("Chat_type");
-    connect(&server,&CatchChallenger::NormalServer::is_started,this,&ProcessControler::server_is_started);
-    connect(&server,&CatchChallenger::NormalServer::need_be_stopped,this,&ProcessControler::server_need_be_stopped);
-    connect(&server,&CatchChallenger::NormalServer::need_be_restarted,this,&ProcessControler::server_need_be_restarted);
-    connect(&server,&CatchChallenger::NormalServer::error,this,&ProcessControler::error);
-    need_be_restarted=false;
-    need_be_closed=false;
+EpollServer *server=NULL;
+QSettings *settings=NULL;
 
-    settings=new QSettings(QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties"),QSettings::IniFormat);
-    NormalServer::checkSettingsFile(settings);
-    send_settings();
-    server.start_server();
-}
-
-ProcessControler::~ProcessControler()
+void send_settings()
 {
-    delete settings;
-}
-
-void ProcessControler::send_settings()
-{
-    CatchChallenger::ServerSettings formatedServerSettings=server.getSettings();
+    ServerSettings formatedServerSettings=server->getSettings();
 
     //common var
     CommonSettings::commonSettings.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
@@ -243,70 +245,180 @@ void ProcessControler::send_settings()
         settings->endGroup();
     }
 
-    server.setSettings(formatedServerSettings);
+    server->setSettings(formatedServerSettings);
 }
 
-void ProcessControler::server_is_started(bool is_started)
+int main(int argc, char *argv[])
 {
-    if(need_be_closed)
+    QCoreApplication a(argc, argv);
+    Q_UNUSED(a);
+
+    const QString &configFile=QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties");
+    settings=new QSettings(configFile,QSettings::IniFormat);
+    if(settings->status()!=QSettings::NoError)
     {
-        QCoreApplication::exit();
-        return;
+        qDebug() << "Error settings (1): " << settings->status();
+        return EXIT_FAILURE;
     }
-    if(!is_started)
+    CatchChallenger::NormalServer::checkSettingsFile(settings);
+
+    if(settings->status()!=QSettings::NoError)
     {
-        if(need_be_restarted)
+        qDebug() << "Error settings (2): " << settings->status();
+        return EXIT_FAILURE;
+    }
+
+    if(!Epoll::epoll.init())
+        return EPOLLERR;
+
+    server=new EpollServer();
+    send_settings();
+    if(!server->tryListen())
+        return EXIT_FAILURE;
+    /*TimerDisplayEventBySeconds timerDisplayEventBySeconds;
+    if(!timerDisplayEventBySeconds.init())
+        return EXIT_FAILURE;*/
+
+    char buf[512];
+    /* Buffer where events are returned */
+    epoll_event events[MAXEVENTS];
+
+    EpollClient* clients[MAXCLIENT];
+    int clientListSize=0;
+    /* The event loop */
+    int number_of_events, i;
+    while(1)
+    {
+        number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        for(i = 0; i < number_of_events; i++)
         {
-            need_be_restarted=false;
-            server.start_server();
+            //timerDisplayEventBySeconds.addCount();
+            switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
+            {
+                case BaseClassSwitch::Type::Server:
+                {
+                    if((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
+                    {
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        fprintf(stderr, "server epoll error\n");
+                        continue;
+                    }
+                    /* We have a notification on the listening socket, which
+                    means one or more incoming connections. */
+                    while(1)
+                    {
+                        if(clientListSize>=MAXCLIENT)
+                            break;
+                        sockaddr in_addr;
+                        socklen_t in_len = sizeof(in_addr);
+                        const int &infd = server->accept(&in_addr, &in_len);
+                        if(infd == -1)
+                        {
+                            if((errno == EAGAIN) ||
+                            (errno == EWOULDBLOCK))
+                            {
+                                /* We have processed all incoming
+                                connections. */
+                                break;
+                            }
+                            else
+                            {
+                                perror("accept");
+                                break;
+                            }
+                        }
+                        //just for informations
+                        {
+                            char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+                            const int &s = getnameinfo(&in_addr, in_len,
+                            hbuf, sizeof hbuf,
+                            sbuf, sizeof sbuf,
+                            NI_NUMERICHOST | NI_NUMERICSERV);
+                            if(s == 0)
+                                printf("Accepted connection on descriptor %d (host=%s, port=%s)\n", infd, hbuf, sbuf);
+                        }
+
+                        /* Make the incoming socket non-blocking and add it to the
+                        list of fds to monitor. */
+                        EpollClient *client=new EpollClient();
+                        client->infd=infd;
+                        clients[clientListSize]=client;
+                        clientListSize++;
+                        int s = EpollSocket::make_non_blocking(infd);
+                        if(s == -1)
+                            return EXIT_FAILURE;
+                        epoll_event event;
+                        event.data.ptr = client;
+                        event.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                        s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                        if(s == -1)
+                        {
+                            perror("epoll_ctl");
+                            return EXIT_FAILURE;
+                        }
+                    }
+                    continue;
+                }
+                break;
+                case BaseClassSwitch::Type::Client:
+                {
+                    EpollClient *client=static_cast<EpollClient *>(events[i].data.ptr);
+                    if ((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
+                    {
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        fprintf(stderr, "client epoll error\n");
+                        client->close();
+                        continue;
+                    }
+                    //ready to read
+                    if(events[i].events & EPOLLIN)
+                    {
+                        /* We have data on the fd waiting to be read. Read and
+                        display it. We must read whatever data is available
+                        completely, as we are running in edge-triggered mode
+                        and won't get a notification again for the same
+                        data. */
+                        while (1)
+                        {
+                            const ssize_t &count = client->read(buf, sizeof buf);
+                            if(count>0)
+                            {
+                                //broat cast to all the client
+                                int index=0;
+                                while(index<clientListSize)
+                                {
+                                    clients[index]->write(buf,count);
+                                    index++;
+                                }
+                            }
+                            else
+                                break;
+                        }
+                    }
+                    //ready to write
+                    if(events[i].events & EPOLLOUT)
+                    {
+                        client->flush();
+                    }
+                }
+                break;
+                case BaseClassSwitch::Type::Timer:
+                    static_cast<EpollTimer *>(events[i].data.ptr)->exec();
+                break;
+                default:
+                    fprintf(stderr, "unknown event\n");
+                break;
+            }
         }
     }
-}
-
-void ProcessControler::error(const QString &error)
-{
-    qDebug() << error;
-    QCoreApplication::quit();
-}
-
-void ProcessControler::server_need_be_stopped()
-{
-    server.stop_server();
-}
-
-void ProcessControler::server_need_be_restarted()
-{
-    need_be_restarted=true;
-    server.stop_server();
-}
-
-QString ProcessControler::sizeToString(double size)
-{
-    if(size<1024)
-        return QString::number(size)+tr("B");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("KB");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("MB");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("GB");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("TB");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("PB");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("EB");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("ZB");
-    if((size=size/1024)<1024)
-        return adaptString(size)+tr("YB");
-    return tr("Too big");
-}
-
-QString ProcessControler::adaptString(float size)
-{
-    if(size>=100)
-        return QString::number(size,'f',0);
-    else
-        return QString::number(size,'g',3);
+    server->close();
+    delete server;
+    delete settings;
+    return EXIT_SUCCESS;
 }
