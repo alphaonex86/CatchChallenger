@@ -310,16 +310,3 @@ QString ProcessControler::adaptString(float size)
     else
         return QString::number(size,'g',3);
 }
-
-
-void ProcessControler::benchmark_result(int latency,double TX_speed,double RX_speed,double TX_size,double RX_size,double second)
-{
-    DebugClass::debugConsole(QStringLiteral("The latency of the benchmark: %1\nTX_speed: %2/s, RX_speed %3/s\nTX_size: %4, RX_size: %5, in %6s\nThis latency is cumulated latency of different point. That's not show the database performance.")
-                 .arg(latency)
-                 .arg(sizeToString(TX_speed))
-                 .arg(sizeToString(RX_speed))
-                 .arg(sizeToString(TX_size))
-                 .arg(sizeToString(RX_size))
-                 .arg(second)
-                 );
-}
