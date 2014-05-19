@@ -8,7 +8,6 @@ using namespace CatchChallenger;
 #include <sys/stat.h>
 #endif
 
-#include <QApplication>
 #include <QRegularExpression>
 #include <QNetworkReply>
 
