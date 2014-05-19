@@ -8,7 +8,7 @@ TARGET = catchchallenger-server-gui
 win32:CONFIG   += console
 
 SOURCES += MainWindow.cpp \
-    main.cpp
+    main-gui.cpp
 HEADERS  += MainWindow.h
 
 FORMS    += MainWindow.ui
