@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
                             const ssize_t &count = client->read(buf, sizeof buf);
                             if(count>0)
                             {
-                                //broat cast to all the client
+                                //broadcast to all the client
                                 int index=0;
                                 while(index<clientListSize)
                                 {
