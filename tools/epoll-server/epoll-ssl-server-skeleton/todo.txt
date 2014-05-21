@@ -1,0 +1,5 @@
+Fix the 100% cpu
+Do mode to work without buffer
+Ask external control
+Check memleak
+Profile 
