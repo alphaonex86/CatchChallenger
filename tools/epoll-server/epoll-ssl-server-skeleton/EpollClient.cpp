@@ -1,11 +1,25 @@
 #include "EpollClient.h"
 
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
 
-EpollClient::EpollClient()
+EpollClient::EpollClient(const int &infd) :
+    #ifndef SERVERNOBUFFER
+    bufferSize(0),
+    #endif
+    infd(infd)
 {
-    bufferSize=0;
-    infd=-1;
+    #ifndef SERVERNOBUFFER
+    memset(buffer,0,4096);
+    #endif
+    //set cork for CatchChallener because don't have real time part
+    int state = 1;
+    if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+        perror("Unable to apply tcp cork");
 }
 
 EpollClient::~EpollClient()
@@ -16,7 +30,9 @@ EpollClient::~EpollClient()
 
 void EpollClient::close()
 {
+    #ifndef SERVERNOBUFFER
     bufferSize=0;
+    #endif
     if(infd!=-1)
     {
         /* Closing the descriptor will make epoll remove it
@@ -68,6 +84,7 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
         }
         else
         {
+            #ifndef SERVERNOBUFFER
             if(this->bufferSize<BUFFER_MAX_SIZE)
             {
                 if(size<0)
@@ -98,6 +115,7 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
                     }
                 }
             }
+            #endif
             return size;
         }
     }
@@ -107,6 +125,7 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
 
 void EpollClient::flush()
 {
+    #ifndef SERVERNOBUFFER
     if(bufferSize>0)
     {
         size_t count;
@@ -130,6 +149,7 @@ void EpollClient::flush()
             memmove(buffer,buffer+size,bufferSize);
         }
     }
+    #endif
 }
 
 BaseClassSwitch::Type EpollClient::getType() const

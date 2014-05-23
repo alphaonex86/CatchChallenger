@@ -4,6 +4,7 @@
 class BaseClassSwitch
 {
 public:
+    virtual ~BaseClassSwitch() {}
     enum Type
     {
         Server,
