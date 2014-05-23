@@ -1,5 +1,5 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef EPOLL_SERVER_H
+#define EPOLL_SERVER_H
 
 #include <sys/socket.h>
 
@@ -19,4 +19,4 @@ private:
     int sfd;
 };
 
-#endif // SERVER_H
+#endif // EPOLL_SERVER_H

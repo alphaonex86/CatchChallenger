@@ -1,14 +1,11 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2014-04-22T15:27:03
-#
-#-------------------------------------------------
-
 CONFIG += c++11
 
 QT       += core
 
 QT       -= gui
+
+#DEFINES += SERVERNOBUFFER
+DEFINES += SERVERNOSSL
 
 LIBS += -lssl -lcrypto
 

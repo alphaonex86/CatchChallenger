@@ -79,6 +79,12 @@ bool EpollServer::tryListen(char *port)
         perror("listen");
         return false;
     }
+    int one=0;
+    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
+        perror("Unable to apply SO_REUSEADDR");
+    one=0;
+    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
+        perror("Unable to apply SO_REUSEPORT");
 
     epoll_event event;
     event.data.ptr = this;

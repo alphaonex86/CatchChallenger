@@ -5,11 +5,18 @@
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
 
 char EpollSslClient::rawbuf[4096];
 
 EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
+    #ifndef SERVERNOBUFFER
     bufferSize(0),
+    #endif
     infd(infd),
     //decrypt pipe
     bioIn(BIO_new(BIO_s_mem())),
@@ -20,7 +27,10 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     bHandShakeOver(false)
 {
     bHandShakeOver=false;
+    #ifndef SERVERNOBUFFER
     bufferSize=0;
+    memset(buffer,0,4096);
+    #endif
 
     SSL_set_bio(ssl, bioIn, bioOut);
     //Graph: Start the handshake
@@ -42,6 +52,11 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
         default:
         break;
     }
+
+    //set cork for CatchChallener because don't have real time part
+    int state = 1;
+    if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+        perror("Unable to apply tcp cork");
 }
 
 EpollSslClient::~EpollSslClient()
@@ -49,10 +64,18 @@ EpollSslClient::~EpollSslClient()
     close();
 }
 
+#ifndef SERVERNOBUFFER
+void EpollSslClient::staticInit()
+{
+    memset(rawbuf,0,4096);
+}
+#endif
 
 void EpollSslClient::close()
 {
+    #ifndef SERVERNOBUFFER
     bufferSize=0;
+    #endif
     if(infd!=-1)
     {
         /* Closing the descriptor will make epoll remove it
@@ -200,6 +223,7 @@ ssize_t EpollSslClient::write(char *buffer,const size_t &bufferSize)
         }
         else
         {
+            #ifndef SERVERNOBUFFER
             if(this->bufferSize<BUFFER_MAX_SIZE)
             {
                 if(size<0)
@@ -230,18 +254,21 @@ ssize_t EpollSslClient::write(char *buffer,const size_t &bufferSize)
                     }
                 }
             }
-            doRealWrite();
+            #endif
+            if(!doRealWrite())
+                return -3;
             return size;
         }
     }
     else
     {
-        doRealWrite();
+        if(!doRealWrite())
+            return -3;
         return size;
     }
 }
 
-void EpollSslClient::doRealWrite()
+bool EpollSslClient::doRealWrite()
 {
     // BIO_ctrl_pending() returns the number of bytes buffered in a BIO.
     const size_t &pending = BIO_ctrl_pending(bioOut);
@@ -261,6 +288,12 @@ void EpollSslClient::doRealWrite()
             {
                 //bReplyOver = true;
                 std::cerr << "send() - SOCKET_ERROR" << std::endl;
+                return false;
+            }
+            if(nRet!=bytesToSend)
+            {
+                std::cerr << "send() buffer full" << std::endl;
+                return false;
             }
         }
         else if (!BIO_should_retry(bioOut))
@@ -286,8 +319,10 @@ void EpollSslClient::doRealWrite()
     }
     else
         std::cout << "BIO_ctrl_pending(bioOut) == 0" << std::endl;
+    return true;
 }
 
+#ifndef SERVERNOBUFFER
 void EpollSslClient::flush()
 {
     if(bufferSize>0)
@@ -314,6 +349,7 @@ void EpollSslClient::flush()
     }
     doRealWrite();
 }
+#endif
 
 BaseClassSwitch::Type EpollSslClient::getType() const
 {

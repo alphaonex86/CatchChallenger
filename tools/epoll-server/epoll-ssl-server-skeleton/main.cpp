@@ -12,9 +12,11 @@
 #include <openssl/ssl.h>
 #include <unistd.h>
 
-#include "EpollSslClient.h"
 #include "EpollSocket.h"
+#include "EpollSslClient.h"
 #include "EpollSslServer.h"
+#include "EpollClient.h"
+#include "EpollServer.h"
 #include "Epoll.h"
 #include "EpollTimer.h"
 #include "TimerDisplayEventBySeconds.h"
@@ -32,17 +34,28 @@ int main(int argc, char *argv[])
     if(!Epoll::epoll.init())
         abort();
 
+    #ifndef SERVERNOSSL
     EpollSslServer server;
+    #else
+    EpollServer server;
+    #endif
     if(!server.tryListen(argv[1]))
         abort();
     TimerDisplayEventBySeconds timerDisplayEventBySeconds;
     if(!timerDisplayEventBySeconds.init())
         abort();
 
+    #ifndef SERVERNOBUFFER
+    #ifndef SERVERNOSSL
+    EpollSslClient::staticInit();
+    #endif
+    #endif
     char buf[4096];
+    memset(buf,0,4096);
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
+    bool closed;
     int numberOfConnectedClient=0;
     /* The event loop */
     int number_of_events, i;
@@ -104,20 +117,24 @@ int main(int argc, char *argv[])
                                 printf("Accepted connection on descriptor %d (host=%s, port=%s)\n", infd, hbuf, sbuf);
                         }
 
-                        //set cork for CatchChallener because don't have real time part
-                        int state = 1;
-                        if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                            perror("Unable to apply tcp cork");
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
+                        #ifndef SERVERNOSSL
                         EpollSslClient *client=new EpollSslClient(infd,server.getCtx());
+                        #else
+                        EpollClient *client=new EpollClient(infd);
+                        #endif
                         numberOfConnectedClient++;
                         int s = EpollSocket::make_non_blocking(infd);
                         if(s == -1)
                             abort();
                         epoll_event event;
                         event.data.ptr = client;
+                        #ifndef SERVERNOBUFFER
                         event.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                        #else
+                        event.events = EPOLLIN | EPOLLET;
+                        #endif
                         s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                         if(s == -1)
                         {
@@ -130,8 +147,13 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Client:
                 {
+                    closed=true;
                     timerDisplayEventBySeconds.addCount();
+                    #ifndef SERVERNOSSL
                     EpollSslClient *client=static_cast<EpollSslClient *>(events[i].data.ptr);
+                    #else
+                    EpollClient *client=static_cast<EpollClient *>(events[i].data.ptr);
+                    #endif
                     if ((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -139,7 +161,7 @@ int main(int argc, char *argv[])
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         fprintf(stderr, "client epoll error\n");
-                        client->close();
+                        delete client;
                         continue;
                     }
                     //ready to read
@@ -150,26 +172,44 @@ int main(int argc, char *argv[])
                         completely, as we are running in edge-triggered mode
                         and won't get a notification again for the same
                         data. */
-                        while(1)
+                        const ssize_t &count = client->read(buf,sizeof(buf));
+                        //bug or close, or buffer full
+                        if(count<0)
                         {
-                            const ssize_t &count = client->read(buf,sizeof(buf));
-                            //bug or close
-                            if(count<0)
+                            delete client;
+                            numberOfConnectedClient--;
+                        }
+                        else
+                        {
+                            if(client->write(buf,count)!=count)
                             {
+                                //buffer full, we disconnect this client
                                 delete client;
                                 numberOfConnectedClient--;
-                                break;
                             }
-                            if(count==0)
-                                break;
-                            client->write(buf,count);
+                            else
+                                closed=false;
                         }
                     }
+                    #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
+                        if(!closed)
+                            client->flush();
+                    #else
+                    #ifndef SERVERNOSSL
+                    if(!closed)
                     {
-                        client->flush();
+                        if(client->doRealWrite())
+                        {
+                            //buffer full, we disconnect this client
+                            delete client;
+                            numberOfConnectedClient--;
+                            break;
+                        }
                     }
+                    #endif
+                    #endif
                 }
                 break;
                 case BaseClassSwitch::Type::Timer:

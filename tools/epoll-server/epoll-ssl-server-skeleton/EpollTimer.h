@@ -1,5 +1,5 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef EPOLL_TIMER_H
+#define EPOLL_TIMER_H
 
 #include "BaseClassSwitch.h"
 
@@ -14,4 +14,4 @@ private:
     int tfd;
 };
 
-#endif // TIMER_H
+#endif // EPOLL_TIMER_H
