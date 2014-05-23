@@ -1,5 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef EPOLL_SSL_CLIENT_H
+#define EPOLL_SSL_CLIENT_H
 
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -14,17 +14,24 @@ class EpollSslClient : public BaseClassSwitch
 public:
     EpollSslClient(const int &infd,SSL_CTX *ctx);
     ~EpollSslClient();
+    #ifndef SERVERNOBUFFER
+    static void staticInit();
+    #endif
     void close();
     ssize_t read(char *buffer,const size_t &bufferSize);
     ssize_t write(char *buffer,const size_t &bufferSize);
+    #ifndef SERVERNOBUFFER
     void flush();
-    void doRealWrite();
+    #endif
+    bool doRealWrite();
     Type getType() const;
 private:
     static char rawbuf[BUFFER_MAX_SIZE];
 private:
+    #ifndef SERVERNOBUFFER
     char buffer[BUFFER_MAX_SIZE];
     size_t bufferSize;
+    #endif
     int infd;
     //decrypt pipe
     BIO* bioIn;
@@ -35,4 +42,4 @@ private:
     bool bHandShakeOver;
 };
 
-#endif // CLIENT_H
+#endif // EPOLL_SSL_CLIENT_H

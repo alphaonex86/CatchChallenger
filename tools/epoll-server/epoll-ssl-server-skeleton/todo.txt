@@ -1,5 +1,4 @@
+Buffer encrypted read, buffer encrypted write
 Fix the 100% cpu
-Do mode to work without buffer
+Profile
 Ask external control
-Check memleak
-Profile 

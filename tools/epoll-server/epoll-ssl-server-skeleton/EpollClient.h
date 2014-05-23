@@ -1,5 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef EPOLL_CLIENT_H
+#define EPOLL_CLIENT_H
 
 #include <QByteArray>
 
@@ -10,16 +10,19 @@
 class EpollClient : public BaseClassSwitch
 {
 public:
-    EpollClient();
+    EpollClient(const int &infd);
     ~EpollClient();
     void close();
-    char buffer[BUFFER_MAX_SIZE];
-    size_t bufferSize;
-    int infd;
     ssize_t read(char *buffer,const size_t &bufferSize);
     ssize_t write(char *buffer,const size_t &bufferSize);
     void flush();
     Type getType() const;
+private:
+    #ifndef SERVERNOBUFFER
+    char buffer[BUFFER_MAX_SIZE];
+    size_t bufferSize;
+    #endif
+    int infd;
 };
 
-#endif // CLIENT_H
+#endif // EPOLL_CLIENT_H

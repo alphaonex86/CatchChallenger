@@ -1,5 +1,5 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef EPOLL_SSL_SERVER_H
+#define EPOLL_SSL_SERVER_H
 
 #include <sys/socket.h>
 #include <openssl/err.h>
@@ -28,4 +28,4 @@ private:
     void LoadCertificates(SSL_CTX* ctx, const char* CertFile, const char* KeyFile);
 };
 
-#endif // SERVER_H
+#endif // EPOLL_SSL_SERVER_H
