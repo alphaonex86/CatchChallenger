@@ -1,8 +1,7 @@
 #include "EpollSocket.h"
 
-#include <unistd.h>
+#include <iostream>
 #include <fcntl.h>
-#include <cstdio>
 
 int EpollSocket::make_non_blocking(int sfd)
 {
@@ -11,7 +10,7 @@ int EpollSocket::make_non_blocking(int sfd)
     flags = fcntl(sfd, F_GETFL, 0);
     if(flags == -1)
     {
-        perror ("fcntl");
+        std::cerr << "fcntl get flags error" << std::endl;
         return -1;
     }
 
@@ -19,7 +18,7 @@ int EpollSocket::make_non_blocking(int sfd)
     s = fcntl(sfd, F_SETFL, flags);
     if(s == -1)
     {
-        perror ("fcntl");
+        std::cerr << "fcntl set flags error" << std::endl;
         return -1;
     }
 

@@ -1,8 +1,7 @@
 #include "TimerDisplayEventBySeconds.h"
 #include "Epoll.h"
 
-#include <cstdio>
-#include <stdio.h>
+#include <iostream>
 
 TimerDisplayEventBySeconds::TimerDisplayEventBySeconds()
 {
@@ -16,7 +15,7 @@ void TimerDisplayEventBySeconds::exec()
         count=0;
         return;
     }
-    fprintf(stdout, "event by seconds: %d\n",(count-1));
+    std::cout << "event by seconds:" << (count-1) << std::endl;
     count=0;
     EpollTimer::exec();
 }

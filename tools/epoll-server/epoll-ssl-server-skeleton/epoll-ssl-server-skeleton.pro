@@ -1,11 +1,9 @@
 CONFIG += c++11
 
-QT       += core
-
-QT       -= gui
+QT       -= gui core
 
 #DEFINES += SERVERNOBUFFER
-DEFINES += SERVERNOSSL
+#DEFINES += SERVERNOSSL
 
 LIBS += -lssl -lcrypto
 
