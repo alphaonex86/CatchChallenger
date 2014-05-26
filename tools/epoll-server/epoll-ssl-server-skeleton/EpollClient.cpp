@@ -1,11 +1,10 @@
 #include "EpollClient.h"
 
+#include <iostream>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
+#include <cstring>
 
 EpollClient::EpollClient(const int &infd) :
     #ifndef SERVERNOBUFFER
@@ -19,7 +18,7 @@ EpollClient::EpollClient(const int &infd) :
     //set cork for CatchChallener because don't have real time part
     int state = 1;
     if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-        perror("Unable to apply tcp cork");
+        std::cerr << "Unable to apply tcp cork" << std::endl;
 }
 
 EpollClient::~EpollClient()
@@ -38,7 +37,7 @@ void EpollClient::close()
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
         ::close(infd);
-        printf("Closed connection on descriptor %d\n",infd);
+        std::cout << "Closed connection on descriptor " << infd << std::endl;
         infd=-1;
     }
 }
@@ -54,7 +53,7 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
         data. So go back to the main loop. */
         if(errno != EAGAIN)
         {
-            perror("read");
+            std::cerr << "Read socket error" << std::endl;
             close();
             return -1;
         }
@@ -78,7 +77,7 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
     {
         if(errno != EAGAIN)
         {
-            perror("write");
+            std::cerr << "Write socket error" << std::endl;
             close();
             return -1;
         }
@@ -139,7 +138,7 @@ void EpollClient::flush()
         {
             if(errno != EAGAIN)
             {
-                perror("write");
+                std::cerr << "Write socket buffer error" << std::endl;
                 close();
             }
         }

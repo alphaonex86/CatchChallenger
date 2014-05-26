@@ -1,13 +1,7 @@
 #include "EpollSslClient.h"
 
 #include <unistd.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/ssl.h>
 #include <iostream>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
 
@@ -15,7 +9,9 @@ char EpollSslClient::rawbuf[4096];
 
 EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     #ifndef SERVERNOBUFFER
-    bufferSize(0),
+    bufferSizeClearToOutput(0),
+    bufferSizeEncryptedToOutput(0),
+    bufferSizeEncryptedToInput(0),
     #endif
     infd(infd),
     //decrypt pipe
@@ -28,8 +24,9 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
 {
     bHandShakeOver=false;
     #ifndef SERVERNOBUFFER
-    bufferSize=0;
-    memset(buffer,0,4096);
+    memset(bufferClearToOutput,0,4096);
+    memset(bufferEncryptedToOutput,0,4096);
+    memset(bufferEncryptedToInput,0,4096);
     #endif
 
     SSL_set_bio(ssl, bioIn, bioOut);
@@ -38,16 +35,16 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     int32_t ssl_error = SSL_get_error(ssl, err);
     switch (ssl_error) {
         case SSL_ERROR_NONE:
-        printf("SSL_ERROR_NONE\n");
+        std::cout << "SSL_ERROR_NONE" << std::endl;
         break;
         case SSL_ERROR_WANT_READ:
-        printf("SSL_ERROR_WANT_READ\n");
+        std::cout << "SSL_ERROR_WANT_READ" << std::endl;
         break;
         case SSL_ERROR_WANT_WRITE:
-        printf("SSL_ERROR_WANT_WRITE\n");
+        std::cout << "SSL_ERROR_WANT_WRITE" << std::endl;
         break;
         case SSL_ERROR_ZERO_RETURN:
-        printf("SSL_ERROR_ZERO_RETURN\n");
+        std::cout << "SSL_ERROR_ZERO_RETURN" << std::endl;
         break;
         default:
         break;
@@ -56,7 +53,7 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     //set cork for CatchChallener because don't have real time part
     int state = 1;
     if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-        perror("Unable to apply tcp cork");
+        std::cerr << "Unable to apply tcp cork" << std::endl;
 }
 
 EpollSslClient::~EpollSslClient()
@@ -74,14 +71,14 @@ void EpollSslClient::staticInit()
 void EpollSslClient::close()
 {
     #ifndef SERVERNOBUFFER
-    bufferSize=0;
+    bufferSizeClearToOutput=0;
     #endif
     if(infd!=-1)
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
         ::close(infd);
-        printf("Closed connection on descriptor %d\n",infd);
+        std::cout << "Closed connection on descriptor" << infd << std::endl;
         infd=-1;
 
         //disconnect, free the ressources
@@ -98,14 +95,42 @@ ssize_t EpollSslClient::read(char *buffer,const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
-    const ssize_t &count=::read(infd, rawbuf, sizeof(rawbuf));
+    #ifndef SERVERNOBUFFER
+    //flush the previous read
+    if(bufferSizeEncryptedToInput>0)
+    {
+        const int &bufferUsed = BIO_write(bioIn, bufferEncryptedToInput, bufferSizeEncryptedToInput);
+        if(bufferUsed>0)
+        {
+            if(bufferUsed!=(int)bufferSizeEncryptedToInput)
+            {
+                memmove(bufferEncryptedToInput,bufferEncryptedToInput+(bufferSizeEncryptedToInput-bufferUsed),bufferUsed);
+                bufferSizeEncryptedToInput-=(bufferSizeEncryptedToInput-bufferUsed);
+                //buffer full
+                return -3;
+            }
+            else
+                bufferSizeEncryptedToInput=0;
+        }
+        else
+            return -3;
+    }
+    if(bufferSizeEncryptedToInput>=BUFFER_MAX_SIZE)
+        return -5;
+    int size_to_get=sizeof(rawbuf);
+    if(size_to_get>(BUFFER_MAX_SIZE-(int)bufferSizeEncryptedToInput))
+        size_to_get=(BUFFER_MAX_SIZE-bufferSizeEncryptedToInput);
+    #else
+    int size_to_get=sizeof(rawbuf);
+    #endif
+    const ssize_t &count=::read(infd, rawbuf, size_to_get);
     if(count == -1)
     {
         /* If errno == EAGAIN, that means we have read all
         data. So go back to the main loop. */
         if(errno != EAGAIN)
         {
-            perror("read");
+            std::cerr << "Read socket error" << std::endl;
             close();
             return -1;
         }
@@ -120,9 +145,18 @@ ssize_t EpollSslClient::read(char *buffer,const size_t &bufferSize)
 
     //write the encrypted data into decrypt pipe
     int bufferUsed = BIO_write(bioIn, rawbuf, count);
-    if(bufferUsed == -1 || bufferUsed == -2 || bufferUsed == 0)
+    if(bufferUsed!=count)
     {
-        // error
+        #ifndef SERVERNOBUFFER
+        memcpy(bufferEncryptedToInput+bufferSizeEncryptedToInput,rawbuf+bufferUsed,(count-bufferUsed));
+        #else
+        return -5;
+        #endif
+    }
+    else if(bufferUsed == -1 || bufferUsed == -2 || bufferUsed == 0)
+    {
+        //bug
+        return -4;
     }
     //read clear data from the decrypt pipe
     const int &bytesOut = SSL_read(ssl, static_cast<void*>(buffer), sizeof(bufferSize));
@@ -142,16 +176,16 @@ ssize_t EpollSslClient::read(char *buffer,const size_t &bufferSize)
             int32_t ssl_error = SSL_get_error(ssl, bytesOut);
             switch (ssl_error) {
                 case SSL_ERROR_NONE:
-                printf("SSL_ERROR_NONE\n");
+                std::cout << "SSL_ERROR_NONE" << std::endl;
                 break;
                 case SSL_ERROR_WANT_READ:
-                printf("SSL_ERROR_WANT_READ\n");
+                std::cout << "SSL_ERROR_WANT_READ" << std::endl;
                 break;
                 case SSL_ERROR_WANT_WRITE:
-                printf("SSL_ERROR_WANT_WRITE\n");
+                std::cout << "SSL_ERROR_WANT_WRITE" << std::endl;
                 break;
                 case SSL_ERROR_ZERO_RETURN:
-                printf("SSL_ERROR_ZERO_RETURN\n");
+                std::cout << "SSL_ERROR_ZERO_RETURN" << std::endl;
                 break;
                 default:
                 break;
@@ -194,16 +228,16 @@ ssize_t EpollSslClient::write(char *buffer,const size_t &bufferSize)
             int32_t ssl_error = SSL_get_error(ssl, size);
             switch (ssl_error) {
                 case SSL_ERROR_NONE:
-                printf("SSL_ERROR_NONE\n");
+                std::cout << "SSL_ERROR_NONE" << std::endl;
                 break;
                 case SSL_ERROR_WANT_READ:
-                printf("SSL_ERROR_WANT_READ\n");
+                std::cout << "SSL_ERROR_WANT_READ" << std::endl;
                 break;
                 case SSL_ERROR_WANT_WRITE:
-                printf("SSL_ERROR_WANT_WRITE\n");
+                std::cout << "SSL_ERROR_WANT_WRITE" << std::endl;
                 break;
                 case SSL_ERROR_ZERO_RETURN:
-                printf("SSL_ERROR_ZERO_RETURN\n");
+                std::cout << "SSL_ERROR_ZERO_RETURN" << std::endl;
                 break;
                 default:
                 break;
@@ -212,60 +246,53 @@ ssize_t EpollSslClient::write(char *buffer,const size_t &bufferSize)
         }
     }
 
-    //const ssize_t &size = ::write(infd, buffer, bufferSize);
     if(size != (int)bufferSize)
     {
         if(errno != EAGAIN)
         {
-            perror("write");
+            std::cerr << "Socket buffer write error" << std::endl;
             close();
             return -1;
         }
         else
         {
             #ifndef SERVERNOBUFFER
-            if(this->bufferSize<BUFFER_MAX_SIZE)
+            if(this->bufferSizeClearToOutput<BUFFER_MAX_SIZE)
             {
                 if(size<0)
                 {
-                    if((this->bufferSize+bufferSize)<BUFFER_MAX_SIZE)
+                    if((this->bufferSizeClearToOutput+bufferSize)<BUFFER_MAX_SIZE)
                     {
-                        memcpy(this->buffer+this->bufferSize,buffer,bufferSize);
-                        this->bufferSize+=bufferSize;
+                        memcpy(this->bufferClearToOutput+this->bufferSizeClearToOutput,buffer,bufferSize);
+                        this->bufferSizeClearToOutput+=bufferSize;
                     }
                     else
                     {
-                        memcpy(this->buffer+this->bufferSize,buffer,BUFFER_MAX_SIZE-this->bufferSize);
-                        this->bufferSize=BUFFER_MAX_SIZE;
+                        memcpy(this->bufferClearToOutput+this->bufferSizeClearToOutput,buffer,BUFFER_MAX_SIZE-this->bufferSizeClearToOutput);
+                        this->bufferSizeClearToOutput=BUFFER_MAX_SIZE;
                     }
                 }
                 else
                 {
                     const int &diff=bufferSize-size;
-                    if((this->bufferSize+diff)<BUFFER_MAX_SIZE)
+                    if((this->bufferSizeClearToOutput+diff)<BUFFER_MAX_SIZE)
                     {
-                        memcpy(this->buffer+this->bufferSize,buffer+size,diff);
-                        this->bufferSize+=bufferSize;
+                        memcpy(this->bufferClearToOutput+this->bufferSizeClearToOutput,buffer+size,diff);
+                        this->bufferSizeClearToOutput+=bufferSize;
                     }
                     else
                     {
-                        memcpy(this->buffer+this->bufferSize,buffer+size,BUFFER_MAX_SIZE-this->bufferSize);
-                        this->bufferSize=BUFFER_MAX_SIZE;
+                        memcpy(this->bufferClearToOutput+this->bufferSizeClearToOutput,buffer+size,BUFFER_MAX_SIZE-this->bufferSizeClearToOutput);
+                        this->bufferSizeClearToOutput=BUFFER_MAX_SIZE;
                     }
                 }
             }
             #endif
-            if(!doRealWrite())
-                return -3;
             return size;
         }
     }
     else
-    {
-        if(!doRealWrite())
-            return -3;
         return size;
-    }
 }
 
 bool EpollSslClient::doRealWrite()
@@ -292,8 +319,41 @@ bool EpollSslClient::doRealWrite()
             }
             if(nRet!=bytesToSend)
             {
+                #ifndef SERVERNOBUFFER
+                if(this->bufferSizeEncryptedToOutput<BUFFER_MAX_SIZE)
+                {
+                    if(nRet<0)
+                    {
+                        if((this->bufferSizeEncryptedToOutput+bytesToSend)<BUFFER_MAX_SIZE)
+                        {
+                            memcpy(this->bufferEncryptedToOutput+this->bufferSizeEncryptedToOutput,rawbuf,bytesToSend);
+                            this->bufferSizeEncryptedToOutput+=bytesToSend;
+                        }
+                        else
+                        {
+                            memcpy(this->bufferEncryptedToOutput+this->bufferSizeEncryptedToOutput,rawbuf,BUFFER_MAX_SIZE-this->bufferSizeEncryptedToOutput);
+                            this->bufferSizeEncryptedToOutput=BUFFER_MAX_SIZE;
+                        }
+                    }
+                    else
+                    {
+                        const int &diff=bytesToSend-nRet;
+                        if((this->bufferSizeEncryptedToOutput+diff)<BUFFER_MAX_SIZE)
+                        {
+                            memcpy(this->bufferEncryptedToOutput+this->bufferSizeEncryptedToOutput,rawbuf+nRet,diff);
+                            this->bufferSizeEncryptedToOutput+=bytesToSend;
+                        }
+                        else
+                        {
+                            memcpy(this->bufferEncryptedToOutput+this->bufferSizeEncryptedToOutput,rawbuf+nRet,BUFFER_MAX_SIZE-this->bufferSizeEncryptedToOutput);
+                            this->bufferSizeEncryptedToOutput=BUFFER_MAX_SIZE;
+                        }
+                    }
+                }
+                #else
                 std::cerr << "send() buffer full" << std::endl;
                 return false;
+                #endif
             }
         }
         else if (!BIO_should_retry(bioOut))
@@ -301,16 +361,16 @@ bool EpollSslClient::doRealWrite()
             const int32_t &ssl_error = SSL_get_error(ssl, bytesToSend);
             switch (ssl_error) {
                 case SSL_ERROR_NONE:
-                printf("SSL_ERROR_NONE\n");
+                std::cout << "SSL_ERROR_NONE" << std::endl;
                 break;
                 case SSL_ERROR_WANT_READ:
-                printf("SSL_ERROR_WANT_READ\n");
+                std::cout << "SSL_ERROR_WANT_READ" << std::endl;
                 break;
                 case SSL_ERROR_WANT_WRITE:
-                printf("SSL_ERROR_WANT_WRITE\n");
+                std::cout << "SSL_ERROR_WANT_WRITE" << std::endl;
                 break;
                 case SSL_ERROR_ZERO_RETURN:
-                printf("SSL_ERROR_ZERO_RETURN\n");
+                std::cout << "SSL_ERROR_ZERO_RETURN" << std::endl;
                 break;
                 default:
                 break;
@@ -325,29 +385,65 @@ bool EpollSslClient::doRealWrite()
 #ifndef SERVERNOBUFFER
 void EpollSslClient::flush()
 {
-    if(bufferSize>0)
+    if(bufferSizeClearToOutput>0)
     {
-        size_t count;
-        count=sizeof(rawbuf);
-        if(bufferSize<count)
-            count=bufferSize;
-        memcpy(rawbuf,buffer,count);
-        ssize_t size = SSL_write(ssl, rawbuf, count);//::write(infd, buf, count);
+        size_t count=sizeof(rawbuf);
+        if(bufferSizeClearToOutput<count)
+            count=bufferSizeClearToOutput;
+        memcpy(rawbuf,bufferClearToOutput,count);
+        const ssize_t &size = SSL_write(ssl, rawbuf, count);
         if(size<0)
         {
             if(errno != EAGAIN)
             {
-                perror("write");
+                std::cerr << "Ssl flush error" << std::endl;
                 close();
             }
         }
         else
         {
-            bufferSize-=size;
-            memmove(buffer,buffer+size,bufferSize);
+            if(size!=(int)count)
+            {
+                bufferSizeClearToOutput-=(count-size);
+                memmove(bufferClearToOutput,bufferClearToOutput+(count-size),bufferSizeClearToOutput);
+            }
+            else
+            {
+                bufferSizeClearToOutput-=size;
+                memmove(bufferClearToOutput,bufferClearToOutput+size,bufferSizeClearToOutput);
+            }
         }
     }
-    doRealWrite();
+    if(bufferSizeEncryptedToOutput>0)
+    {
+        size_t count=sizeof(rawbuf);
+        count=sizeof(rawbuf);
+        if(bufferSizeEncryptedToOutput<count)
+            count=bufferSizeEncryptedToOutput;
+        memcpy(rawbuf,bufferEncryptedToOutput,count);
+        const ssize_t &size = ::write(infd, rawbuf, count);
+        if(size<0)
+        {
+            if(errno != EAGAIN)
+            {
+                std::cerr << "Socket buffer flush error" << std::endl;
+                close();
+            }
+        }
+        else
+        {
+            if(size!=(int)count)
+            {
+                bufferSizeEncryptedToOutput-=(count-size);
+                memmove(bufferEncryptedToOutput,bufferEncryptedToOutput+(count-size),bufferSizeEncryptedToOutput);
+            }
+            else
+            {
+                bufferSizeEncryptedToOutput-=size;
+                memmove(bufferEncryptedToOutput,bufferEncryptedToOutput+size,bufferSizeEncryptedToOutput);
+            }
+        }
+    }
 }
 #endif
 
