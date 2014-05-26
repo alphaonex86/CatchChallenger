@@ -1,3 +1,5 @@
+#ifdef SERVERNOSSL
+
 #include "EpollServer.h"
 #include "EpollSocket.h"
 #include "Epoll.h"
@@ -115,3 +117,4 @@ BaseClassSwitch::Type EpollServer::getType() const
 {
     return BaseClassSwitch::Type::Server;
 }
+#endif
