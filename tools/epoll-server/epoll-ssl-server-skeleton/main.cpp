@@ -1,6 +1,7 @@
 #include <iostream>
 #include <netdb.h>
 #include <unistd.h>
+#include <cstring>
 
 #include "EpollSocket.h"
 #include "EpollSslClient.h"
@@ -31,9 +32,9 @@ int main(int argc, char *argv[])
     #endif
     if(!server.tryListen(argv[1]))
         abort();
-    TimerDisplayEventBySeconds timerDisplayEventBySeconds;
+    /*TimerDisplayEventBySeconds timerDisplayEventBySeconds;
     if(!timerDisplayEventBySeconds.init())
-        abort();
+        abort();*/
 
     #ifndef SERVERNOBUFFER
     #ifndef SERVERNOSSL
@@ -138,19 +139,19 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::Type::Client:
                 {
                     closed=true;
-                    timerDisplayEventBySeconds.addCount();
+                    //timerDisplayEventBySeconds.addCount();
                     #ifndef SERVERNOSSL
                     EpollSslClient *client=static_cast<EpollSslClient *>(events[i].data.ptr);
                     #else
                     EpollClient *client=static_cast<EpollClient *>(events[i].data.ptr);
                     #endif
-                    if ((events[i].events & EPOLLERR) ||
+                    if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
-                        std::cerr << "client epoll error" << std::endl;
+                        std::cerr << "client epoll error: " << events[i].events << std::endl;
                         delete client;
                         continue;
                     }
@@ -178,49 +179,14 @@ int main(int argc, char *argv[])
                                 numberOfConnectedClient--;
                             }
                             else
-                            {
-                                #ifndef SERVERNOBUFFER
-                                if(!client->doRealWrite())
-                                {
-                                    //buffer full, we disconnect this client
-                                    delete client;
-                                    numberOfConnectedClient--;
-                                }
-                                else
-                                    closed=false;
-                                #else
                                 closed=false;
-                                #endif
-                            }
                         }
                     }
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
                         if(!closed)
-                        {
                             client->flush();
-                            if(!client->doRealWrite())
-                            {
-                                //buffer full, we disconnect this client
-                                delete client;
-                                numberOfConnectedClient--;
-                                closed=true;
-                            }
-                        }
-                    #else
-                    #ifndef SERVERNOSSL
-                    if(!closed)
-                    {
-                        if(!client->doRealWrite())
-                        {
-                            //buffer full, we disconnect this client
-                            delete client;
-                            numberOfConnectedClient--;
-                            break;
-                        }
-                    }
-                    #endif
                     #endif
                 }
                 break;

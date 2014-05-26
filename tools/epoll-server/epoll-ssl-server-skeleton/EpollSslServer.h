@@ -1,6 +1,7 @@
 #ifndef EPOLL_SSL_SERVER_H
 #define EPOLL_SSL_SERVER_H
 
+#ifndef SERVERNOSSL
 #include <sys/socket.h>
 #include <openssl/ssl.h>
 
@@ -25,5 +26,6 @@ private:
     SSL_CTX* InitServerCTX();
     void LoadCertificates(SSL_CTX* ctx, const char* CertFile, const char* KeyFile);
 };
+#endif
 
 #endif // EPOLL_SSL_SERVER_H

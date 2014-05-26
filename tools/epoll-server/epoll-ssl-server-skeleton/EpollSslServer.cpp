@@ -1,3 +1,5 @@
+#ifndef SERVERNOSSL
+
 #include "EpollSslServer.h"
 #include "EpollSocket.h"
 #include "Epoll.h"
@@ -171,3 +173,5 @@ SSL_CTX * EpollSslServer::getCtx() const
 {
     return ctx;
 }
+
+#endif
