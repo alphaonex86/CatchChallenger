@@ -2,8 +2,6 @@
 #define EPOLL_SSL_SERVER_H
 
 #include <sys/socket.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/ssl.h>
 
 #include "BaseClassSwitch.h"

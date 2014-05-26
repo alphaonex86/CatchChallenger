@@ -1,15 +1,5 @@
-#include <sys/epoll.h>
-#include <errno.h>
 #include <iostream>
-#include <list>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <netdb.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/ssl.h>
 #include <unistd.h>
 
 #include "EpollSocket.h"
@@ -28,7 +18,7 @@ int main(int argc, char *argv[])
 {
     if(argc != 2)
     {
-        fprintf(stderr, "Usage: %s [port]\n", argv[0]);
+        std::cerr << "Usage:" << argv[0] << "[port]" << std::endl;
         exit(EXIT_FAILURE);
     }
     if(!Epoll::epoll.init())
@@ -74,7 +64,7 @@ int main(int argc, char *argv[])
                     {
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
-                        fprintf(stderr, "server epoll error\n");
+                        std::cerr << "server epoll error" << std::endl;
                         continue;
                     }
                     /* We have a notification on the listening socket, which
@@ -96,7 +86,7 @@ int main(int argc, char *argv[])
                             }
                             else
                             {
-                                perror("accept");
+                                std::cout << "connexion accepted" << std::endl;
                                 break;
                             }
                         }
@@ -114,7 +104,7 @@ int main(int argc, char *argv[])
                             sbuf, sizeof sbuf,
                             NI_NUMERICHOST | NI_NUMERICSERV);
                             if(s == 0)
-                                printf("Accepted connection on descriptor %d (host=%s, port=%s)\n", infd, hbuf, sbuf);
+                                std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
                         }
 
                         /* Make the incoming socket non-blocking and add it to the
@@ -138,7 +128,7 @@ int main(int argc, char *argv[])
                         s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                         if(s == -1)
                         {
-                            perror("epoll_ctl");
+                            std::cerr << "epoll_ctl on socket error" << std::endl;
                             abort();
                         }
                     }
@@ -160,7 +150,7 @@ int main(int argc, char *argv[])
                     {
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
-                        fprintf(stderr, "client epoll error\n");
+                        std::cerr << "client epoll error" << std::endl;
                         delete client;
                         continue;
                     }
@@ -188,19 +178,41 @@ int main(int argc, char *argv[])
                                 numberOfConnectedClient--;
                             }
                             else
+                            {
+                                #ifndef SERVERNOBUFFER
+                                if(!client->doRealWrite())
+                                {
+                                    //buffer full, we disconnect this client
+                                    delete client;
+                                    numberOfConnectedClient--;
+                                }
+                                else
+                                    closed=false;
+                                #else
                                 closed=false;
+                                #endif
+                            }
                         }
                     }
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
                         if(!closed)
+                        {
                             client->flush();
+                            if(!client->doRealWrite())
+                            {
+                                //buffer full, we disconnect this client
+                                delete client;
+                                numberOfConnectedClient--;
+                                closed=true;
+                            }
+                        }
                     #else
                     #ifndef SERVERNOSSL
                     if(!closed)
                     {
-                        if(client->doRealWrite())
+                        if(!client->doRealWrite())
                         {
                             //buffer full, we disconnect this client
                             delete client;
@@ -216,7 +228,7 @@ int main(int argc, char *argv[])
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                 break;
                 default:
-                    fprintf(stderr, "unknown event\n");
+                    std::cerr << "unknown event" << std::endl;
                 break;
             }
         }

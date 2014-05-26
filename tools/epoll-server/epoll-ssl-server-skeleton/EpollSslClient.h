@@ -1,8 +1,6 @@
 #ifndef EPOLL_SSL_CLIENT_H
 #define EPOLL_SSL_CLIENT_H
 
-#include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/ssl.h>
 
 #include "BaseClassSwitch.h"
@@ -18,8 +16,8 @@ public:
     static void staticInit();
     #endif
     void close();
-    ssize_t read(char *buffer,const size_t &bufferSize);
-    ssize_t write(char *buffer,const size_t &bufferSize);
+    ssize_t read(char *bufferClearToOutput,const size_t &bufferSizeClearToOutput);
+    ssize_t write(char *bufferClearToOutput,const size_t &bufferSizeClearToOutput);
     #ifndef SERVERNOBUFFER
     void flush();
     #endif
@@ -29,8 +27,12 @@ private:
     static char rawbuf[BUFFER_MAX_SIZE];
 private:
     #ifndef SERVERNOBUFFER
-    char buffer[BUFFER_MAX_SIZE];
-    size_t bufferSize;
+    char bufferClearToOutput[BUFFER_MAX_SIZE];
+    size_t bufferSizeClearToOutput;
+    char bufferEncryptedToOutput[BUFFER_MAX_SIZE];
+    size_t bufferSizeEncryptedToOutput;
+    char bufferEncryptedToInput[BUFFER_MAX_SIZE];
+    size_t bufferSizeEncryptedToInput;
     #endif
     int infd;
     //decrypt pipe
