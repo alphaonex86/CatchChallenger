@@ -1,6 +1,8 @@
 #ifndef EPOLL_SERVER_H
 #define EPOLL_SERVER_H
 
+#ifdef SERVERNOSSL
+
 #include <sys/socket.h>
 
 #include "BaseClassSwitch.h"
@@ -18,5 +20,7 @@ public:
 private:
     int sfd;
 };
+
+#endif
 
 #endif // EPOLL_SERVER_H

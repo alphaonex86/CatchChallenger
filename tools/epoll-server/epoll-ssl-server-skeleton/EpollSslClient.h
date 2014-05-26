@@ -1,6 +1,7 @@
 #ifndef EPOLL_SSL_CLIENT_H
 #define EPOLL_SSL_CLIENT_H
 
+#ifndef SERVERNOSSL
 #include <openssl/ssl.h>
 
 #include "BaseClassSwitch.h"
@@ -21,7 +22,6 @@ public:
     #ifndef SERVERNOBUFFER
     void flush();
     #endif
-    bool doRealWrite();
     Type getType() const;
 private:
     static char rawbuf[BUFFER_MAX_SIZE];
@@ -29,19 +29,13 @@ private:
     #ifndef SERVERNOBUFFER
     char bufferClearToOutput[BUFFER_MAX_SIZE];
     size_t bufferSizeClearToOutput;
-    char bufferEncryptedToOutput[BUFFER_MAX_SIZE];
-    size_t bufferSizeEncryptedToOutput;
-    char bufferEncryptedToInput[BUFFER_MAX_SIZE];
-    size_t bufferSizeEncryptedToInput;
     #endif
     int infd;
-    //decrypt pipe
-    BIO* bioIn;
-    //encrypt pipe
-    BIO* bioOut;
-    //ssl context
+    BIO* sbio;
     SSL* ssl;
     bool bHandShakeOver;
 };
+
+#endif
 
 #endif // EPOLL_SSL_CLIENT_H

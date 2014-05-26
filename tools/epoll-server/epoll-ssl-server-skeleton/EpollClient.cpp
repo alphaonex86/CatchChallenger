@@ -1,3 +1,5 @@
+#ifdef SERVERNOSSL
+
 #include "EpollClient.h"
 
 #include <iostream>
@@ -92,11 +94,13 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
                     {
                         memcpy(this->buffer+this->bufferSize,buffer,bufferSize);
                         this->bufferSize+=bufferSize;
+                        return bufferSize;
                     }
                     else
                     {
                         memcpy(this->buffer+this->bufferSize,buffer,BUFFER_MAX_SIZE-this->bufferSize);
                         this->bufferSize=BUFFER_MAX_SIZE;
+                        return BUFFER_MAX_SIZE-this->bufferSize;
                     }
                 }
                 else
@@ -106,16 +110,19 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
                     {
                         memcpy(this->buffer+this->bufferSize,buffer+size,diff);
                         this->bufferSize+=bufferSize;
+                        return bufferSize;
                     }
                     else
                     {
                         memcpy(this->buffer+this->bufferSize,buffer+size,BUFFER_MAX_SIZE-this->bufferSize);
                         this->bufferSize=BUFFER_MAX_SIZE;
+                        return BUFFER_MAX_SIZE-this->bufferSize;
                     }
                 }
             }
-            #endif
+            #else
             return size;
+            #endif
         }
     }
     else
@@ -127,9 +134,8 @@ void EpollClient::flush()
     #ifndef SERVERNOBUFFER
     if(bufferSize>0)
     {
-        size_t count;
         char buf[512];
-        count=512;
+        size_t count=512;
         if(bufferSize<count)
             count=bufferSize;
         memcpy(buf,buffer,count);
@@ -155,3 +161,4 @@ BaseClassSwitch::Type EpollClient::getType() const
 {
     return BaseClassSwitch::Type::Client;
 }
+#endif
