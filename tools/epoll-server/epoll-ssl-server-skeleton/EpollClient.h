@@ -1,9 +1,8 @@
 #ifndef EPOLL_CLIENT_H
 #define EPOLL_CLIENT_H
 
-#include <QByteArray>
-
 #include "BaseClassSwitch.h"
+#include <sys/types.h>
 
 #define BUFFER_MAX_SIZE 4096
 

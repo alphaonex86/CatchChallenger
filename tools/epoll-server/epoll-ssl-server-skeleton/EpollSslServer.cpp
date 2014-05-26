@@ -2,17 +2,10 @@
 #include "EpollSocket.h"
 #include "Epoll.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <iostream>
 #include <netdb.h>
-#include <cstdio>
-#include <stdio.h>
-#include <string.h>
-#include <sys/epoll.h>
 #include <unistd.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/ssl.h>
 
 EpollSslServer::EpollSslServer()
 {
@@ -64,7 +57,7 @@ void EpollSslServer::LoadCertificates(SSL_CTX* ctx, const char* CertFile, const 
     /* verify private key */
     if(!SSL_CTX_check_private_key(ctx))
     {
-        fprintf(stderr, "Private key does not match the public certificate\n");
+        std::cerr << "Private key does not match the public certificate" << std::endl;
         abort();
     }
 }
@@ -83,7 +76,7 @@ bool EpollSslServer::tryListen(char *port)
     s = getaddrinfo (NULL, port, &hints, &result);
     if (s != 0)
     {
-        fprintf (stderr, "getaddrinfo: %s\n", gai_strerror (s));
+        std::cerr << "getaddrinfo:" << gai_strerror(s) << std::endl;
         return false;
     }
 
@@ -106,7 +99,7 @@ bool EpollSslServer::tryListen(char *port)
     if(rp == NULL)
     {
         sfd=-1;
-        fprintf(stderr, "Could not bind\n");
+        std::cerr << "Could not bind" << std::endl;
         return false;
     }
 
@@ -116,7 +109,7 @@ bool EpollSslServer::tryListen(char *port)
     if(s == -1)
     {
         sfd=-1;
-        perror("can't put in non blocking");
+        std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
 
@@ -124,7 +117,7 @@ bool EpollSslServer::tryListen(char *port)
     if(s == -1)
     {
         sfd=-1;
-        perror("listen");
+        std::cerr << "Listen error" << std::endl;
         return false;
     }
 
@@ -135,7 +128,7 @@ bool EpollSslServer::tryListen(char *port)
     if(s == -1)
     {
         sfd=-1;
-        perror("epoll_ctl");
+        std::cerr << "epoll_ctl error" << std::endl;
         return false;
     }
 
