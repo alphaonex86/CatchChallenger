@@ -1,11 +1,26 @@
+#ifdef SERVERNOSSL
+
 #include "EpollClient.h"
 
+#include <iostream>
 #include <unistd.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include <cstring>
 
-EpollClient::EpollClient()
+EpollClient::EpollClient(const int &infd) :
+    #ifndef SERVERNOBUFFER
+    bufferSize(0),
+    #endif
+    infd(infd)
 {
-    bufferSize=0;
-    infd=-1;
+    #ifndef SERVERNOBUFFER
+    memset(buffer,0,4096);
+    #endif
+    //set cork for CatchChallener because don't have real time part
+    int state = 1;
+    if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+        std::cerr << "Unable to apply tcp cork" << std::endl;
 }
 
 EpollClient::~EpollClient()
@@ -16,13 +31,15 @@ EpollClient::~EpollClient()
 
 void EpollClient::close()
 {
+    #ifndef SERVERNOBUFFER
     bufferSize=0;
+    #endif
     if(infd!=-1)
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
         ::close(infd);
-        printf("Closed connection on descriptor %d\n",infd);
+        std::cout << "Closed connection on descriptor " << infd << std::endl;
         infd=-1;
     }
 }
@@ -38,7 +55,7 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
         data. So go back to the main loop. */
         if(errno != EAGAIN)
         {
-            perror("read");
+            std::cerr << "Read socket error" << std::endl;
             close();
             return -1;
         }
@@ -62,12 +79,13 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
     {
         if(errno != EAGAIN)
         {
-            perror("write");
+            std::cerr << "Write socket error" << std::endl;
             close();
             return -1;
         }
         else
         {
+            #ifndef SERVERNOBUFFER
             if(this->bufferSize<BUFFER_MAX_SIZE)
             {
                 if(size<0)
@@ -76,11 +94,13 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
                     {
                         memcpy(this->buffer+this->bufferSize,buffer,bufferSize);
                         this->bufferSize+=bufferSize;
+                        return bufferSize;
                     }
                     else
                     {
                         memcpy(this->buffer+this->bufferSize,buffer,BUFFER_MAX_SIZE-this->bufferSize);
                         this->bufferSize=BUFFER_MAX_SIZE;
+                        return BUFFER_MAX_SIZE-this->bufferSize;
                     }
                 }
                 else
@@ -90,15 +110,19 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
                     {
                         memcpy(this->buffer+this->bufferSize,buffer+size,diff);
                         this->bufferSize+=bufferSize;
+                        return bufferSize;
                     }
                     else
                     {
                         memcpy(this->buffer+this->bufferSize,buffer+size,BUFFER_MAX_SIZE-this->bufferSize);
                         this->bufferSize=BUFFER_MAX_SIZE;
+                        return BUFFER_MAX_SIZE-this->bufferSize;
                     }
                 }
             }
+            #else
             return size;
+            #endif
         }
     }
     else
@@ -107,11 +131,11 @@ ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
 
 void EpollClient::flush()
 {
+    #ifndef SERVERNOBUFFER
     if(bufferSize>0)
     {
-        size_t count;
         char buf[512];
-        count=512;
+        size_t count=512;
         if(bufferSize<count)
             count=bufferSize;
         memcpy(buf,buffer,count);
@@ -120,7 +144,7 @@ void EpollClient::flush()
         {
             if(errno != EAGAIN)
             {
-                perror("write");
+                std::cerr << "Write socket buffer error" << std::endl;
                 close();
             }
         }
@@ -130,9 +154,11 @@ void EpollClient::flush()
             memmove(buffer,buffer+size,bufferSize);
         }
     }
+    #endif
 }
 
-BaseClassSwitch::Type EpollClient::getType()
+BaseClassSwitch::Type EpollClient::getType() const
 {
     return BaseClassSwitch::Type::Client;
 }
+#endif

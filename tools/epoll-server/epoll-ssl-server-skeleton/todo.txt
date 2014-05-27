@@ -1,3 +1,0 @@
-SSL buffer is async, some time have not finish, and is flush only when re-read
-Profile
-Ask external control

@@ -1,29 +1,30 @@
-#include <sys/epoll.h>
-#include <errno.h>
 #include <iostream>
-#include <list>
-#include <sys/socket.h>
 #include <netdb.h>
+#include <unistd.h>
+#include <cstring>
 
-#include <QSettings>
-#include <QString>
-#include <QCoreApplication>
-
-#include "EpollClient.h"
-#include "EpollSocket.h"
-#include "EpollServer.h"
-#include "Epoll.h"
-#include "EpollTimer.h"
-#include "TimerDisplayEventBySeconds.h"
-#include "../base/ServerStructures.h"
+#include "epoll/EpollSocket.h"
+#include "epoll/EpollSslClient.h"
+#include "epoll/EpollSslServer.h"
+#include "epoll/EpollClient.h"
+#include "epoll/EpollServer.h"
+#include "epoll/Epoll.h"
+#include "epoll/EpollTimer.h"
+#include "epoll/TimerDisplayEventBySeconds.h"
+#include "base/ServerStructures.h"
 #include "NormalServer.h"
+#include "base/GlobalServerData.h"
+#include "base/Client.h"
 
 #define MAXEVENTS 512
-#define MAXCLIENT 6000
 
 using namespace CatchChallenger;
 
-EpollServer *server=NULL;
+#ifndef SERVERNOSSL
+EpollSslServer *server=NULL;
+#else
+Epollerver *server=NULL;
+#endif
 QSettings *settings=NULL;
 
 void send_settings()
@@ -267,24 +268,35 @@ int main(int argc, char *argv[])
         qDebug() << "Error settings (2): " << settings->status();
         return EXIT_FAILURE;
     }
-
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
+    #ifndef SERVERNOSSL
+    server=new EpollSslServer();
+    #else
     server=new EpollServer();
+    #endif
     send_settings();
     if(!server->tryListen())
-        return EXIT_FAILURE;
-    /*TimerDisplayEventBySeconds timerDisplayEventBySeconds;
-    if(!timerDisplayEventBySeconds.init())
-        return EXIT_FAILURE;*/
+        return EPOLLERR;
+    server->preload_the_data();
 
-    char buf[512];
+    TimerDisplayEventBySeconds timerDisplayEventBySeconds;
+    if(!timerDisplayEventBySeconds.init())
+        return EXIT_FAILURE;
+
+    #ifndef SERVERNOBUFFER
+    #ifndef SERVERNOSSL
+    EpollSslClient::staticInit();
+    #endif
+    #endif
+    char buf[4096];
+    memset(buf,0,4096);
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    EpollClient* clients[MAXCLIENT];
-    int clientListSize=0;
+    bool closed;
+    int numberOfConnectedClient=0;
     /* The event loop */
     int number_of_events, i;
     while(1)
@@ -292,7 +304,6 @@ int main(int argc, char *argv[])
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
         for(i = 0; i < number_of_events; i++)
         {
-            //timerDisplayEventBySeconds.addCount();
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
                 case BaseClassSwitch::Type::Server:
@@ -303,18 +314,17 @@ int main(int argc, char *argv[])
                     {
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
-                        fprintf(stderr, "server epoll error\n");
+                        std::cerr << "server epoll error" << std::endl;
                         continue;
                     }
                     /* We have a notification on the listening socket, which
                     means one or more incoming connections. */
                     while(1)
                     {
-                        if(clientListSize>=MAXCLIENT)
-                            break;
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
                         const int &infd = server->accept(&in_addr, &in_len);
+
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||
@@ -326,10 +336,16 @@ int main(int argc, char *argv[])
                             }
                             else
                             {
-                                perror("accept");
+                                std::cout << "connexion accepted" << std::endl;
                                 break;
                             }
                         }
+                        if(numberOfConnectedClient>=GlobalServerData::serverSettings.max_players)
+                        {
+                            ::close(infd);
+                            break;
+                        }
+
                         //just for informations
                         {
                             char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
@@ -338,26 +354,32 @@ int main(int argc, char *argv[])
                             sbuf, sizeof sbuf,
                             NI_NUMERICHOST | NI_NUMERICSERV);
                             if(s == 0)
-                                printf("Accepted connection on descriptor %d (host=%s, port=%s)\n", infd, hbuf, sbuf);
+                                std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
                         }
 
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
-                        EpollClient *client=new EpollClient();
-                        client->infd=infd;
-                        clients[clientListSize]=client;
-                        clientListSize++;
+                        #ifndef SERVERNOSSL
+                        Client *client=new Client(new EpollSslClient(infd,server->getCtx()),server->getClientMapManagement());
+                        #else
+                        Client *client=new Client(new EpollClient(infd,server->getCtx()),server->getClientMapManagement());
+                        #endif
+                        numberOfConnectedClient++;
                         int s = EpollSocket::make_non_blocking(infd);
                         if(s == -1)
-                            return EXIT_FAILURE;
+                            return EPOLLERR;
                         epoll_event event;
                         event.data.ptr = client;
+                        #ifndef SERVERNOBUFFER
                         event.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                        #else
+                        event.events = EPOLLIN | EPOLLET;
+                        #endif
                         s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                         if(s == -1)
                         {
-                            perror("epoll_ctl");
-                            return EXIT_FAILURE;
+                            std::cerr << "epoll_ctl on socket error" << std::endl;
+                            return EPOLLERR;
                         }
                     }
                     continue;
@@ -365,15 +387,21 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Client:
                 {
+                    closed=true;
+                    //timerDisplayEventBySeconds.addCount();
+                    #ifndef SERVERNOSSL
+                    EpollSslClient *client=static_cast<EpollSslClient *>(events[i].data.ptr);
+                    #else
                     EpollClient *client=static_cast<EpollClient *>(events[i].data.ptr);
-                    if ((events[i].events & EPOLLERR) ||
+                    #endif
+                    if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
-                        fprintf(stderr, "client epoll error\n");
-                        client->close();
+                        std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        delete client;
                         continue;
                     }
                     //ready to read
@@ -384,41 +412,44 @@ int main(int argc, char *argv[])
                         completely, as we are running in edge-triggered mode
                         and won't get a notification again for the same
                         data. */
-                        while (1)
+                        const ssize_t &count = client->read(buf,sizeof(buf));
+                        //bug or close, or buffer full
+                        if(count<0)
                         {
-                            const ssize_t &count = client->read(buf, sizeof buf);
-                            if(count>0)
+                            delete client;
+                            numberOfConnectedClient--;
+                        }
+                        else
+                        {
+                            if(client->write(buf,count)!=count)
                             {
-                                //broadcast to all the client
-                                int index=0;
-                                while(index<clientListSize)
-                                {
-                                    clients[index]->write(buf,count);
-                                    index++;
-                                }
+                                //buffer full, we disconnect this client
+                                delete client;
+                                numberOfConnectedClient--;
                             }
                             else
-                                break;
+                                closed=false;
                         }
                     }
+                    #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
-                    {
-                        client->flush();
-                    }
+                        if(!closed)
+                            client->flush();
+                    #endif
                 }
                 break;
                 case BaseClassSwitch::Type::Timer:
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                 break;
                 default:
-                    fprintf(stderr, "unknown event\n");
+                    std::cerr << "unknown event" << std::endl;
                 break;
             }
         }
     }
     server->close();
+    server->unload_the_data();
     delete server;
-    delete settings;
     return EXIT_SUCCESS;
 }

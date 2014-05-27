@@ -1,5 +1,5 @@
-#ifndef SOCKET_H
-#define SOCKET_H
+#ifndef EPOLL_SOCKET_H
+#define EPOLL_SOCKET_H
 
 class EpollSocket
 {
@@ -7,4 +7,4 @@ public:
     static int make_non_blocking(int sfd);
 };
 
-#endif // SOCKET_H
+#endif // EPOLL_SOCKET_H

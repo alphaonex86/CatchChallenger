@@ -5,7 +5,7 @@
     <name>BaseWindowUI</name>
     <message>
         <location filename="../../../interface/BaseWindow.ui" line="635"/>
-        <location filename="../../../interface/BaseWindow.ui" line="3445"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3472"/>
         <source>Bag</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16,7 +16,7 @@
     </message>
     <message>
         <location filename="../../../interface/BaseWindow.ui" line="707"/>
-        <location filename="../../../interface/BaseWindow.ui" line="3072"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3099"/>
         <source>Crafting</source>
         <translation type="unfinished"></translation>
     </message>
@@ -38,7 +38,7 @@
     <message>
         <location filename="../../../interface/BaseWindow.ui" line="993"/>
         <location filename="../../../interface/BaseWindow.ui" line="1469"/>
-        <location filename="../../../interface/BaseWindow.ui" line="2305"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2332"/>
         <source>Informations</source>
         <translation type="unfinished"></translation>
     </message>
@@ -79,7 +79,7 @@
     </message>
     <message>
         <location filename="../../../interface/BaseWindow.ui" line="1414"/>
-        <location filename="../../../interface/BaseWindow.ui" line="5257"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5284"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -135,7 +135,7 @@
     </message>
     <message>
         <location filename="../../../interface/BaseWindow.ui" line="1858"/>
-        <location filename="../../../interface/BaseWindow.ui" line="3196"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3223"/>
         <source>Select an object</source>
         <translation type="unfinished"></translation>
     </message>
@@ -146,7 +146,7 @@
     </message>
     <message>
         <location filename="../../../interface/BaseWindow.ui" line="2032"/>
-        <location filename="../../../interface/BaseWindow.ui" line="2738"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2765"/>
         <source>Use</source>
         <translation type="unfinished"></translation>
     </message>
@@ -186,112 +186,107 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="2240"/>
-        <source>Misc</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../../interface/BaseWindow.ui" line="2248"/>
         <source>Volume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="2313"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2340"/>
         <source>Input:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="2333"/>
-        <location filename="../../../interface/BaseWindow.ui" line="2364"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2360"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2391"/>
         <source>0KB/s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="2344"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2371"/>
         <source>Output:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="2791"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2818"/>
         <source>Plants</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="2934"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2961"/>
         <source>Material(s):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3004"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3031"/>
         <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3167"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3194"/>
         <source>Shop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3329"/>
-        <location filename="../../../interface/BaseWindow.ui" line="5419"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3356"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5446"/>
         <source>Buy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3398"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3425"/>
         <source>Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3409"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3436"/>
         <source>What do you do?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3431"/>
-        <location filename="../../../interface/BaseWindow.ui" line="3515"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3458"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3542"/>
         <source>Attack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3438"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3465"/>
         <source>Monster</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3452"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3479"/>
         <source>Escape</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3522"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3549"/>
         <source>Return</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3759"/>
-        <location filename="../../../interface/BaseWindow.ui" line="3910"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3786"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3937"/>
         <source>HP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="3947"/>
+        <location filename="../../../interface/BaseWindow.ui" line="3974"/>
         <source>Exp</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4089"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4116"/>
         <source>Move up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4096"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4123"/>
         <source>Move down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../interface/BaseWindow.ui" line="216"/>
-        <location filename="../../../interface/BaseWindow.ui" line="4135"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4162"/>
         <source>Select</source>
         <translation type="unfinished"></translation>
     </message>
@@ -321,91 +316,101 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4224"/>
-        <location filename="../../../interface/BaseWindow.ui" line="4368"/>
+        <location filename="../../../interface/BaseWindow.ui" line="2240"/>
+        <source>Sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../interface/BaseWindow.ui" line="2288"/>
+        <source>Device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../interface/BaseWindow.ui" line="4251"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4395"/>
         <source>Cash:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4269"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4296"/>
         <source>Add item</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4292"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4319"/>
         <source>Add monster</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4314"/>
-        <location filename="../../../interface/BaseWindow.ui" line="5128"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4341"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5155"/>
         <source>Validate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4571"/>
-        <location filename="../../../interface/BaseWindow.ui" line="4632"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4598"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4659"/>
         <source>Learn</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4587"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4614"/>
         <source>Select attack to learn</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4767"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4794"/>
         <source>Warehouse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4779"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4806"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#ff0000;&quot;&gt;Validate when you have finish&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="4804"/>
-        <location filename="../../../interface/BaseWindow.ui" line="4875"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4831"/>
+        <location filename="../../../interface/BaseWindow.ui" line="4902"/>
         <source>Cash: 0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="5230"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5257"/>
         <source>You are waiting to capture %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="5237"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5264"/>
         <source>Remaining time: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="5338"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5365"/>
         <source>Resources</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="5374"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5401"/>
         <source>Products</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="5461"/>
+        <location filename="../../../interface/BaseWindow.ui" line="5488"/>
         <source>Sell</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="6314"/>
+        <location filename="../../../interface/BaseWindow.ui" line="6341"/>
         <source>Withdraw cash</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="6356"/>
+        <location filename="../../../interface/BaseWindow.ui" line="6383"/>
         <source>Put object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.ui" line="6398"/>
+        <location filename="../../../interface/BaseWindow.ui" line="6425"/>
         <source>Put monster</source>
         <translation type="unfinished"></translation>
     </message>
@@ -413,16 +418,16 @@
 <context>
     <name>CatchChallenger::Api_client_real</name>
     <message>
-        <location filename="../../../Api_client_real.cpp" line="80"/>
-        <location filename="../../../Api_client_real.cpp" line="101"/>
-        <location filename="../../../Api_client_real.cpp" line="124"/>
+        <location filename="../../../Api_client_real.cpp" line="79"/>
+        <location filename="../../../Api_client_real.cpp" line="100"/>
+        <location filename="../../../Api_client_real.cpp" line="123"/>
         <source>Procotol wrong or corrupted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_client_real.cpp" line="268"/>
-        <location filename="../../../Api_client_real.cpp" line="276"/>
-        <location filename="../../../Api_client_real.cpp" line="282"/>
+        <location filename="../../../Api_client_real.cpp" line="267"/>
+        <location filename="../../../Api_client_real.cpp" line="275"/>
+        <location filename="../../../Api_client_real.cpp" line="281"/>
         <source>Unable to download the datapack</source>
         <translation type="unfinished"></translation>
     </message>
@@ -908,52 +913,52 @@
 <context>
     <name>CatchChallenger::BaseWindow</name>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="353"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="354"/>
         <source>The other player have not validation their selection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="361"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="362"/>
         <source>The other player have canceled your trade request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="378"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="379"/>
         <source>The other player have validated the selection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="385"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="386"/>
         <source>Your trade is successfull</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="529"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="535"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="562"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="618"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="637"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="663"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="697"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="726"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="741"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="771"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="811"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="862"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="900"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="530"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="536"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="563"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="619"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="638"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="664"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="698"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="727"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="742"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="772"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="812"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="863"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="901"/>
         <source>Select</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="621"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="622"/>
         <source>Using %1 on %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="733"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1395"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1403"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1425"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="734"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1396"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1404"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1426"/>
         <location filename="../../../interface/BaseWindowClan.cpp" line="34"/>
         <location filename="../../../interface/BaseWindowClan.cpp" line="57"/>
         <location filename="../../../../fight/interface/BaseWindowFight.cpp" line="642"/>
@@ -987,21 +992,21 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="755"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="756"/>
         <location filename="../../../../fight/interface/BaseWindowFight.cpp" line="645"/>
         <source>Go %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="760"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="761"/>
         <source>You change of monster</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="778"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="783"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="824"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="829"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="779"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="784"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="825"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="830"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="119"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="153"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="199"/>
@@ -1010,24 +1015,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="778"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="824"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="779"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="825"/>
         <source>You can&apos;t trade your last monster</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="783"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="829"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="784"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="830"/>
         <source>You don&apos;t have more monster valid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="843"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="844"/>
         <source>Level: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="955"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="956"/>
         <source>You have obtained: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -1085,271 +1090,276 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1049"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1050"/>
         <source>Error with the protocol</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1058"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1059"/>
         <source>Map error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1058"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1059"/>
         <source>The current map into the datapack is in error (not found, read failed, wrong format, corrupted, ...)
 Report the bug to the datapack maintainer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1063"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1064"/>
         <source>The repel effect is over</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1098"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1099"/>
         <location filename="../../../interface/BaseWindowShop.cpp" line="68"/>
         <source>Select an object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1111"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1112"/>
         <location filename="../../../interface/BaseWindowShop.cpp" line="78"/>
         <source>Unknown name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1112"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1113"/>
         <location filename="../../../interface/BaseWindowShop.cpp" line="79"/>
         <source>Unknown description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1215"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1216"/>
         <source>Planting seed...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1218"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1219"/>
         <source>Collecting plant...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1221"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1222"/>
         <source>Unknown action...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1247"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1248"/>
         <source>To recolt the plant press &lt;i&gt;Enter&lt;/i&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1249"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1343"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1250"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1344"/>
         <source>This plant is growing and can&apos;t be collected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1254"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1255"/>
         <source>To plant a seed press &lt;i&gt;Enter&lt;/i&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1296"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1297"/>
         <source>To interact with the bot press &lt;i&gt;&lt;b&gt;Enter&lt;/b&gt;&lt;/i&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1410"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2395"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1411"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2411"/>
         <source>Bot step missing data error, repport this error please</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1417"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2402"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1418"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2418"/>
         <source>Bot step wrong data type error, repport this error please</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1437"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1438"/>
         <source>You can&apos;t enter to the fight zone if you are not able to fight</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1445"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1446"/>
         <source>You can&apos;t enter to the fight zone, because have not random number</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2009"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2036"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2025"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2052"/>
         <source>%1 (in progress)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2013"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2029"/>
         <source>??? (in progress)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2053"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2069"/>
         <source>Error into the bot, repport this error please</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2088"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2104"/>
         <source>Bot text not found, repport this error please</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2095"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2131"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2111"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2147"/>
         <source>Shop called but missing informations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2121"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2137"/>
         <source>Waiting the shop content</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="920"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="921"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="943"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="944"/>
         <source>Cash: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2168"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2184"/>
         <source>You are healed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2192"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2205"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2208"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2221"/>
         <source>No quests at the moment or you don&apos;t meat the requirements</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2219"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2235"/>
         <source>Clan create</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2224"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2240"/>
         <source>You are already into a clan. Use the clan dongle into the player information.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2273"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2289"/>
         <source>In waiting of market list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2282"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2298"/>
         <source>Industry called but missing informations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2102"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2138"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2118"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2154"/>
         <source>Shop called but wrong id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="626"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="627"/>
         <source>Failed to use %1 on %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="858"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="859"/>
         <source>Sorry, but now the dirt is not free to plant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="874"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="875"/>
         <source>You don&apos;t have the requirements to plant the seed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1133"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1134"/>
         <source>Don&apos;t meet the requirements</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1441"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1442"/>
         <source>You can&apos;t enter to this zone without the correct item</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1449"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1450"/>
         <source>You can&apos;t enter to the zone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1469"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1470"/>
         <source>You arrive at &lt;b&gt;&lt;i&gt;%1&lt;/i&gt;&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2290"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2306"/>
         <source>Industry called but wrong id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2295"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2311"/>
         <source>The factory is not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2300"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2316"/>
         <source>Waiting of status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2322"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2338"/>
         <source>Missing attribute for the step</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2327"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2343"/>
         <source>You can&apos;t try capture if you are not in a clan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2334"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2350"/>
         <source>You are waiting to capture %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2339"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2355"/>
         <source>You are waiting to capture a zone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2407"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2423"/>
         <source>Bot fight not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2416"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2431"/>
+        <source>Already beaten!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../interface/BaseWindow.cpp" line="2440"/>
         <source>Bot step type error, repport this error please</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2458"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2482"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="315"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="355"/>
         <source>Quantity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2458"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2482"/>
         <source>Select a quantity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2492"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2516"/>
         <location filename="../../../interface/BaseWindowCharacter.cpp" line="148"/>
         <location filename="../../../interface/BaseWindowFactory.cpp" line="171"/>
         <location filename="../../../interface/BaseWindowFactory.cpp" line="175"/>
@@ -1360,88 +1370,88 @@ Report the bug to the datapack maintainer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2492"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2516"/>
         <source>You already know this recipe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2593"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2600"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2602"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2617"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2624"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2626"/>
         <source>Destroy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2593"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2617"/>
         <source>Quantity to destroy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2600"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2624"/>
         <source>Are you sure you want to destroy %1 %2?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2602"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2626"/>
         <source>Are you sure you want to destroy %1 unknow item (id: %2)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2698"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2773"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2722"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2797"/>
         <source>Quest not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2727"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2751"/>
         <source>Give the clan name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2727"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2751"/>
         <source>Clan name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2789"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2805"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2813"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2829"/>
         <source>You don&apos;t have the requirement to start this quest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2812"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2836"/>
         <source>You don&apos;t have the requirement to continue this quest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2818"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2842"/>
         <source>You have finish the quest &lt;b&gt;%1&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2827"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2851"/>
         <source>You need talk to another bot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2848"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2872"/>
         <source>Client file missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2956"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2980"/>
         <source>No quest text for this quest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2962"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="2986"/>
         <source>No quest text entry point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="2976"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="2984"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="215"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="3000"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="3008"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="217"/>
         <source>Cash: %1$</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1720,116 +1730,116 @@ Quantity: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="124"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="126"/>
         <source>Preparing the game data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="130"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="132"/>
         <source>Game data is ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="147"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="149"/>
         <source>Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="147"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="149"/>
         <source>Disconnected by the reason: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="153"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="155"/>
         <source>Unable to login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="153"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="155"/>
         <source>Unable to login: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="173"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="175"/>
         <source>Try login...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="187"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="189"/>
         <source>Try initialise the protocol...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="191"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="193"/>
         <source>Connecting to the server...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="432"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="454"/>
         <source>Loading of the player informations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="436"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="458"/>
         <source>Loading of the datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="438"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="460"/>
         <source>Loaded datapack file: %1%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="441"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="463"/>
         <source>Opening the datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="459"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="482"/>
         <source>Welcome &lt;b&gt;&lt;i&gt;%1&lt;/i&gt;&lt;/b&gt; on &lt;i&gt;CatchChallenger&lt;/i&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="462"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="485"/>
         <source>Waiting: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="701"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="707"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="714"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="720"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="724"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="730"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="737"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="743"/>
         <source>Select a quest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="759"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="782"/>
         <source>Step requirements: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="768"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="791"/>
         <source>Final rewards: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="813"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="836"/>
         <source>Less reputation for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="815"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="838"/>
         <source>More reputation for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="834"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="857"/>
         <source>Add permission to create clan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="935"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="962"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="958"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="985"/>
         <source>%1, level: %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2864,16 +2874,16 @@ SP cost: %3</source>
 <context>
     <name>MapControllerMP</name>
     <message>
-        <location filename="../../../interface/MapControllerMP.cpp" line="155"/>
-        <location filename="../../../interface/MapControllerMP.cpp" line="195"/>
-        <location filename="../../../interface/MapControllerMP.cpp" line="842"/>
+        <location filename="../../../interface/MapControllerMP.cpp" line="163"/>
+        <location filename="../../../interface/MapControllerMP.cpp" line="203"/>
+        <location filename="../../../interface/MapControllerMP.cpp" line="964"/>
         <source>Internal error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/MapControllerMP.cpp" line="155"/>
-        <location filename="../../../interface/MapControllerMP.cpp" line="195"/>
-        <location filename="../../../interface/MapControllerMP.cpp" line="842"/>
+        <location filename="../../../interface/MapControllerMP.cpp" line="163"/>
+        <location filename="../../../interface/MapControllerMP.cpp" line="203"/>
+        <location filename="../../../interface/MapControllerMP.cpp" line="964"/>
         <source>The direction send by the server is wrong</source>
         <translation type="unfinished"></translation>
     </message>
