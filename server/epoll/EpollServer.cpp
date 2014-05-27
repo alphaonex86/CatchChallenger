@@ -1,14 +1,12 @@
+#ifdef SERVERNOSSL
+
 #include "EpollServer.h"
 #include "EpollSocket.h"
 #include "Epoll.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <iostream>
 #include <netdb.h>
-#include <cstdio>
-#include <stdio.h>
 #include <string.h>
-#include <sys/epoll.h>
 #include <unistd.h>
 
 #include "../base/ServerStructures.h"
@@ -43,7 +41,7 @@ bool EpollServer::tryListen()
         s = getaddrinfo(NULL, QString::number(GlobalServerData::serverSettings.server_port).toUtf8().constData(), &hints, &result);
     if (s != 0)
     {
-        fprintf (stderr, "getaddrinfo: %s\n", gai_strerror (s));
+        std::cerr << "getaddrinfo:" << gai_strerror(s) << std::endl;
         return false;
     }
 
@@ -66,7 +64,7 @@ bool EpollServer::tryListen()
     if(rp == NULL)
     {
         sfd=-1;
-        fprintf(stderr, "Could not bind\n");
+        std::cerr << "Could not bind" << std::endl;
         return false;
     }
 
@@ -76,7 +74,7 @@ bool EpollServer::tryListen()
     if(s == -1)
     {
         sfd=-1;
-        perror("can't put in non blocking");
+        std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
 
@@ -84,9 +82,15 @@ bool EpollServer::tryListen()
     if(s == -1)
     {
         sfd=-1;
-        perror("listen");
+        std::cerr << "Unable to listen" << std::endl;
         return false;
     }
+    int one=0;
+    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
+        std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
+    one=0;
+    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
+        std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
 
     epoll_event event;
     event.data.ptr = this;
@@ -95,7 +99,7 @@ bool EpollServer::tryListen()
     if(s == -1)
     {
         sfd=-1;
-        perror("epoll_ctl");
+        std::cerr << "epoll_ctl error" << std::endl;
         return false;
     }
     return true;
@@ -117,7 +121,18 @@ int EpollServer::getSfd()
     return sfd;
 }
 
-BaseClassSwitch::Type EpollServer::getType()
+BaseClassSwitch::Type EpollServer::getType() const
 {
     return BaseClassSwitch::Type::Server;
 }
+
+void EpollServer::preload_the_data()
+{
+    BaseServer::preload_the_data();
+}
+
+CatchChallenger::ClientMapManagement * EpollServer::getClientMapManagement()
+{
+    return BaseServer::getClientMapManagement();
+}
+#endif

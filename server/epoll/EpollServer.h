@@ -1,5 +1,7 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef EPOLL_SERVER_H
+#define EPOLL_SERVER_H
+
+#ifdef SERVERNOSSL
 
 #include <sys/socket.h>
 
@@ -15,9 +17,13 @@ public:
     void close();
     int accept(sockaddr *in_addr,socklen_t *in_len);
     int getSfd();
-    Type getType();
+    Type getType() const;
+    void preload_the_data();
+    CatchChallenger::ClientMapManagement * getClientMapManagement();
 private:
     int sfd;
 };
 
-#endif // SERVER_H
+#endif
+
+#endif // EPOLL_SERVER_H
