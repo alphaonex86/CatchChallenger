@@ -4,13 +4,14 @@
 class BaseClassSwitch
 {
 public:
+    virtual ~BaseClassSwitch() {}
     enum Type
     {
         Server,
         Client,
         Timer
     };
-    virtual Type getType() = 0;
+    virtual Type getType() const = 0;
 };
 
 #endif // BASECLASSSWITCH_H
