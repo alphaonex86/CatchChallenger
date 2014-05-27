@@ -1,6 +1,6 @@
 #include "Epoll.h"
 
-#include <cstdio>
+#include <iostream>
 
 Epoll Epoll::epoll;
 
@@ -14,7 +14,7 @@ bool Epoll::init()
     efd = epoll_create1(0);
     if(efd == -1)
     {
-        perror("epoll_create");
+        std::cerr << "epoll_create" << std::endl;
         return false;
     }
     return true;

@@ -1,9 +1,8 @@
 #include "EpollTimer.h"
 #include "Epoll.h"
 
-#include <time.h>
+#include <iostream>
 #include <sys/timerfd.h>
-#include <stdio.h>
 #include <unistd.h>
 
 char buff_temp[sizeof(uint64_t)];
@@ -12,7 +11,7 @@ EpollTimer::EpollTimer()
 {
 }
 
-BaseClassSwitch::Type EpollTimer::getType()
+BaseClassSwitch::Type EpollTimer::getType() const
 {
     return BaseClassSwitch::Type::Timer;
 }
@@ -21,14 +20,14 @@ bool EpollTimer::init()
 {
     if((tfd=::timerfd_create(CLOCK_REALTIME,0)) < 0)
     {
-        perror("timerfd create error");
+        std::cerr << "Timer creation error" << std::endl;
         return false;
     }
 
     timespec now;
     if (clock_gettime(CLOCK_REALTIME, &now) == -1)
     {
-        perror("clock_gettime");
+        std::cerr << "clock_gettime error" << std::endl;
         return false;
     }
     itimerspec new_value;
@@ -41,7 +40,7 @@ bool EpollTimer::init()
     int result=::timerfd_settime(tfd, TFD_TIMER_ABSTIME, &new_value, NULL);
     if(result<0)
     {
-        perror("settime error");
+        std::cerr << "settime error" << std::endl;
         return false;
     }
     epoll_event event;
@@ -49,7 +48,7 @@ bool EpollTimer::init()
     event.events = EPOLLIN;
     if(Epoll::epoll.ctl(EPOLL_CTL_ADD,tfd,&event) < 0)
     {
-        perror("epoll_ctl error");
+        std::cerr << "epoll_ctl error" << std::endl;
         return false;
     }
     return true;
