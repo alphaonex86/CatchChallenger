@@ -21,6 +21,7 @@ public:
     SSL_CTX * getCtx() const;
     void preload_the_data();
     CatchChallenger::ClientMapManagement * getClientMapManagement();
+    void unload_the_data();
 private:
     int sfd;
     SSL_CTX *ctx;

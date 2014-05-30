@@ -18,6 +18,8 @@ public:
     ssize_t write(char *buffer,const size_t &bufferSize);
     void flush();
     Type getType() const;
+    bool isValid() const;
+    long int bytesAvailable() const;
 private:
     #ifndef SERVERNOBUFFER
     char buffer[BUFFER_MAX_SIZE];

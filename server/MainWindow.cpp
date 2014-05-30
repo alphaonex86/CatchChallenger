@@ -493,6 +493,8 @@ void MainWindow::load_settings()
         ui->db_type->setCurrentIndex(0);
     else if(db_type==QLatin1Literal("sqlite"))
         ui->db_type->setCurrentIndex(1);
+    else if(db_type==QLatin1Literal("postgresql"))
+        ui->db_type->setCurrentIndex(2);
     else
         ui->db_type->setCurrentIndex(0);
     ui->db_mysql_host->setText(db_mysql_host);
@@ -558,59 +560,6 @@ void MainWindow::load_settings()
         ui->comboBox_city_capture_frequency->setCurrentIndex(capture_frequency_int);
         ui->comboBox_city_capture_day->setCurrentIndex(capture_day_int);
         ui->timeEdit_city_capture_time->setTime(QTime(capture_time_hours,capture_time_minutes));
-    }
-
-    {
-        bool ok;
-        ServerSettings::Bitcoin bitcoin;
-        settings->beginGroup(QLatin1Literal("bitcoin"));
-        if(!settings->contains(QLatin1Literal("enabled")))
-            settings->setValue(QLatin1Literal("enabled"),false);
-        if(!settings->contains(QLatin1Literal("address")))
-            settings->setValue(QLatin1Literal("address"),QLatin1Literal("1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ"));
-        if(!settings->contains(QLatin1Literal("fee")))
-            settings->setValue(QLatin1Literal("fee"),1.0);
-        if(!settings->contains(QLatin1Literal("history")))
-            settings->setValue(QLatin1Literal("history"),30);
-        #ifdef Q_OS_WIN32
-        if(!settings->contains(QLatin1Literal("binaryPath")))
-            settings->setValue(QLatin1Literal("binaryPath"),QLatin1Literal("%application_path%/bitcoin/bitcoind.exe"));
-        if(!settings->contains(QLatin1Literal("workingPath")))
-            settings->setValue(QLatin1Literal("workingPath"),QLatin1Literal("%application_path%/bitcoin-storage/"));
-        #else
-        if(!settings->contains(QLatin1Literal("binaryPath")))
-            settings->setValue(QLatin1Literal("binaryPath"),QLatin1Literal("/usr/bin/bitcoind"));
-        if(!settings->contains(QLatin1Literal("workingPath")))
-            settings->setValue(QLatin1Literal("workingPath"),QDir::homePath()+QLatin1Literal("/.CatchChallenger/bitoin/"));
-        #endif
-        if(!settings->contains(QLatin1Literal("port")))
-            settings->setValue(QLatin1Literal("port"),46349);
-
-        bitcoin.enabled=settings->value(QLatin1Literal("enabled")).toBool();
-        bitcoin.address=settings->value(QLatin1Literal("address")).toString();
-        if(!bitcoin.address.contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
-            bitcoin.enabled=false;
-        bitcoin.fee=settings->value(QLatin1Literal("fee")).toDouble(&ok);
-        if(!ok)
-            bitcoin.fee=1.0;
-        if(bitcoin.fee<0 || bitcoin.fee>100)
-            bitcoin.fee=1.0;
-        bitcoin.binaryPath=settings->value(QLatin1Literal("binaryPath")).toString();
-        bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
-        int port=settings->value(QLatin1Literal("port")).toUInt(&ok);
-        if(!ok)
-            port=46349;
-        if(port<1 || port>65534)
-            port=46349;
-        bitcoin.port=port;
-        settings->endGroup();
-        ui->bitcoin_enabled->setChecked(bitcoin.enabled);
-        ui->bitcoin_address->setText(bitcoin.address);
-        ui->bitcoin_fee->setValue(bitcoin.fee);
-        ui->bitcoin_binarypath->setText(bitcoin.binaryPath);
-        ui->bitcoin_workingpath->setText(bitcoin.workingPath);
-        ui->bitcoin_port->setValue(bitcoin.port);
-        on_bitcoin_address_editingFinished();
     }
 
     send_settings();
@@ -703,6 +652,9 @@ void MainWindow::send_settings()
         case 1:
             formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_SQLite;
         break;
+        case 2:
+            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_PostgreSQL;
+        break;
     }
     switch(formatedServerSettings.database.type)
     {
@@ -715,6 +667,12 @@ void MainWindow::send_settings()
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             formatedServerSettings.database.sqlite.file				= ui->db_sqlite_file->text();
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
+            formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
+            formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
+            formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
         break;
     }
     formatedServerSettings.database.fightSync                       = (ServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();
@@ -791,13 +749,6 @@ void MainWindow::send_settings()
     QTime time=ui->timeEdit_city_capture_time->time();
     formatedServerSettings.city.capture.hour=time.hour();
     formatedServerSettings.city.capture.minute=time.minute();
-
-    formatedServerSettings.bitcoin.address=ui->bitcoin_address->text();
-    formatedServerSettings.bitcoin.binaryPath=ui->bitcoin_binarypath->text();
-    formatedServerSettings.bitcoin.enabled=ui->bitcoin_enabled->isChecked();
-    formatedServerSettings.bitcoin.fee=ui->bitcoin_fee->value();
-    formatedServerSettings.bitcoin.port=ui->bitcoin_port->value();
-    formatedServerSettings.bitcoin.workingPath=ui->bitcoin_workingpath->text();
 
     server.setSettings(formatedServerSettings);
 }
@@ -923,12 +874,15 @@ void MainWindow::on_db_type_currentIndexChanged(int index)
     settings->beginGroup(QLatin1Literal("db"));
     switch(index)
     {
-        case 1:
-            settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
-        break;
         case 0:
         default:
             settings->setValue(QLatin1Literal("type"),QLatin1Literal("mysql"));
+        break;
+        case 1:
+            settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
+        break;
+        case 2:
+            settings->setValue(QLatin1Literal("type"),QLatin1Literal("postgresql"));
         break;
     }
     settings->endGroup();
@@ -938,7 +892,7 @@ void MainWindow::on_db_type_currentIndexChanged(int index)
 void MainWindow::updateDbGroupbox()
 {
     int index=ui->db_type->currentIndex();
-    ui->groupBoxDbMysql->setEnabled(index==0);
+    ui->groupBoxDbMysql->setEnabled(index==0 || index==2);
     ui->groupBoxDbSQLite->setEnabled(index==1);
 }
 
@@ -1057,76 +1011,6 @@ void MainWindow::update_capture()
             ui->timeEdit_city_capture_time->setVisible(false);
         break;
     }
-}
-
-void MainWindow::on_bitcoin_enabled_toggled(bool checked)
-{
-    Q_UNUSED(checked);
-    settings->beginGroup(QLatin1Literal("bitcoin"));
-    settings->setValue(QLatin1Literal("enabled"),ui->bitcoin_enabled->isChecked());
-    settings->endGroup();
-}
-
-void MainWindow::on_bitcoin_address_editingFinished()
-{
-    if(ui->bitcoin_address->text().contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
-        ui->bitcoin_address->setStyleSheet(QString());
-    else
-        ui->bitcoin_address->setStyleSheet(QLatin1Literal("background-color: rgb(255, 230, 230);"));
-    settings->beginGroup(QLatin1Literal("bitcoin"));
-    settings->setValue(QLatin1Literal("address"),ui->bitcoin_address->text());
-    settings->endGroup();
-}
-
-void MainWindow::on_bitcoin_fee_editingFinished()
-{
-    settings->beginGroup(QLatin1Literal("bitcoin"));
-    settings->setValue(QLatin1Literal("fee"),ui->bitcoin_fee->value());
-    settings->endGroup();
-}
-
-void MainWindow::on_bitcoin_workingpath_editingFinished()
-{
-    settings->beginGroup(QLatin1Literal("bitcoin"));
-    settings->setValue(QLatin1Literal("workingPath"),ui->bitcoin_workingpath->text());
-    settings->endGroup();
-}
-
-void MainWindow::on_bitcoin_binarypath_editingFinished()
-{
-    settings->beginGroup(QLatin1Literal("bitcoin"));
-    settings->setValue(QLatin1Literal("binaryPath"),ui->bitcoin_binarypath->text());
-    settings->endGroup();
-}
-
-void MainWindow::on_bitcoin_port_editingFinished()
-{
-    settings->beginGroup(QLatin1Literal("bitcoin"));
-    settings->setValue(QLatin1Literal("port"),ui->bitcoin_port->value());
-    settings->endGroup();
-}
-
-void MainWindow::on_bitcoin_workingpath_browse_clicked()
-{
-    QString folder=QFileDialog::getExistingDirectory(this,tr("Working path"));
-    if(folder.isEmpty())
-        return;
-    ui->bitcoin_workingpath->setText(folder);
-    on_bitcoin_workingpath_editingFinished();
-}
-
-void MainWindow::on_bitcoin_binarypath_browse_clicked()
-{
-    QString file=
-        #ifdef Q_OS_WIN32
-            QFileDialog::getOpenFileName(this,tr("Bitcoind binary path"),QString(),tr("Application (*.exe)"));
-        #else
-            QFileDialog::getOpenFileName(this,tr("Bitcoind binary path"));
-        #endif
-    if(file.isEmpty())
-        return;
-    ui->bitcoin_binarypath->setText(file);
-    on_bitcoin_binarypath_editingFinished();
 }
 
 void MainWindow::on_compression_currentIndexChanged(int index)

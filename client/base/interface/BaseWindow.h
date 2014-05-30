@@ -172,8 +172,6 @@ private slots:
     void show_reputation();
     void addCash(const quint32 &cash);
     void removeCash(const quint32 &cash);
-    void addBitcoin(const double &bitcoin);
-    void removeBitcoin(const double &bitcoin);
     QPixmap getFrontSkin(const QString &skinName) const;
     QPixmap getFrontSkin(const quint32 &skinId) const;
     QPixmap getBackSkin(const quint32 &skinId) const;
@@ -329,12 +327,12 @@ private slots:
     void captureCityWin();
 
     //market
-    void marketList(const quint64 &price,const double &bitcoin,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList);
+    void marketList(const quint64 &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList);
     void addOwnMonster(const MarketMonster &marketMonster);
     void marketBuy(const bool &success);
     void marketBuyMonster(const PlayerMonster &playerMonster);
     void marketPut(const bool &success);
-    void marketGetCash(const quint64 &cash,const double &bitcoin);
+    void marketGetCash(const quint64 &cash);
     void marketWithdrawCanceled();
     void marketWithdrawObject(const quint32 &objectId,const quint32 &quantity);
     void marketWithdrawMonster(const PlayerMonster &playerMonster);
@@ -443,7 +441,6 @@ private:
     quint32 shopId;
     QHash<quint32,ItemToSellOrBuy> itemsIntoTheShop;
     quint64 cash,warehouse_cash;
-    double bitcoin;
     qint64 temp_warehouse_cash;// if >0 then Withdraw
     //selection of quantity
     quint32 tempQuantityForSell;
@@ -517,11 +514,9 @@ private:
     //market buy
     QList<QPair<quint32,quint32> > marketBuyObjectList;
     quint32 marketBuyCashInSuspend;
-    double marketBuyBitcoinInSuspend;
     bool marketBuyInSuspend;
     //market put
     quint32 marketPutCashInSuspend;
-    double marketPutBitcoinInSuspend;
     QList<QPair<quint32,quint32> > marketPutObjectInSuspendList;
     QList<CatchChallenger::PlayerMonster> marketPutMonsterList;
     QList<quint8> marketPutMonsterPlaceList;

@@ -678,13 +678,12 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             quint32 suggestedPrice=50;
             if(CommonDatapack::commonDatapack.items.item.contains(itemId))
                 suggestedPrice=CommonDatapack::commonDatapack.items.item.value(itemId).price;
-            GetPrice getPrice(this,bitcoin>=0,suggestedPrice);
+            GetPrice getPrice(this,suggestedPrice);
             getPrice.exec();
             if(!getPrice.isOK())
                 break;
-            CatchChallenger::Api_client_real::client->putMarketObject(itemId,quantity,getPrice.price(),getPrice.bitcoin());
+            CatchChallenger::Api_client_real::client->putMarketObject(itemId,quantity,getPrice.price());
             marketPutCashInSuspend=getPrice.price();
-            marketPutBitcoinInSuspend=getPrice.bitcoin();
             remove_to_inventory(itemId,quantity);
             QPair<quint32,quint32> pair;
             pair.first=itemId;
@@ -790,16 +789,15 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             {
                 if(playerMonster.at(index).id==itemId)
                 {
-                    GetPrice getPrice(this,bitcoin>=0,15000);
+                    GetPrice getPrice(this,15000);
                     getPrice.exec();
                     if(!getPrice.isOK())
                         break;
                     marketPutMonsterList << playerMonster.at(index);
                     marketPutMonsterPlaceList << index;
                     ClientFightEngine::fightEngine.removeMonster(itemId);
-                    CatchChallenger::Api_client_real::client->putMarketMonster(itemId,getPrice.price(),getPrice.bitcoin());
+                    CatchChallenger::Api_client_real::client->putMarketMonster(itemId,getPrice.price());
                     marketPutCashInSuspend=getPrice.price();
-                    marketPutBitcoinInSuspend=getPrice.bitcoin();
                     break;
                 }
                 index++;
@@ -3007,18 +3005,6 @@ void BaseWindow::removeCash(const quint32 &cash)
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(this->cash));
     ui->tradePlayerCash->setMaximum(this->cash);
-}
-
-void BaseWindow::addBitcoin(const double &bitcoin)
-{
-    this->bitcoin+=bitcoin;
-    ui->bitcoin->setText(QStringLiteral("%1&#3647;").arg(this->bitcoin));
-}
-
-void BaseWindow::removeBitcoin(const double &bitcoin)
-{
-    this->bitcoin-=bitcoin;
-    ui->bitcoin->setText(QStringLiteral("%1&#3647;").arg(this->bitcoin));
 }
 
 void BaseWindow::on_pushButton_interface_monsters_clicked()

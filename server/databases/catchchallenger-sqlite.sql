@@ -36,12 +36,6 @@ CREATE TABLE account (
 );
 CREATE UNIQUE INDEX "index_account" on account (id ASC);
 CREATE UNIQUE INDEX "login_account" on account (login ASC);
-CREATE TABLE bitcoin_history (
-    "character" INTEGER,
-    "date" INTEGER,
-    "change" REAL,
-    "reason" TEXT
-);
 CREATE TABLE bot_already_beaten (
     "character" INTEGER,
     "botfight_id" INTEGER
@@ -51,26 +45,16 @@ CREATE TABLE item (
     "character" INTEGER,
     "quantity" INTEGER,
     "place" TEXT,
-    "market_price" INTEGER,
-    "market_bitcoin" REAL
+    "market_price" INTEGER
 );
 CREATE INDEX "item_place" on item (place ASC);
-CREATE TABLE plant (
-    "map" TEXT,
-    "x" INTEGER,
-    "y" INTEGER,
-    "plant" INTEGER,
-    "character" INTEGER,
-    "plant_timestamps" INTEGER
-);
-CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE TABLE quest (
     "character" INTEGER,
     "quest" INTEGER,
     "finish_one_time" INTEGER,
     "step" INTEGER
 );
-CREATE TABLE recipes (
+CREATE TABLE "recipe" (
     "character" INTEGER,
     "recipe" INTEGER
 );
@@ -94,8 +78,7 @@ CREATE TABLE monster (
     "character_origin" INTEGER,
     "place" TEXT,
     "position" INTEGER,
-    "market_price" INTEGER,
-    "market_bitcoin" REAL
+    "market_price" INTEGER
 );
 CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
 CREATE INDEX "monster_place" on monster (place ASC);
@@ -121,8 +104,6 @@ CREATE TABLE character (
     "clan_leader" INTEGER,
     "date" INTEGER,
     "account" INTEGER,
-    "bitcoin_offset" REAL,
-    "market_bitcoin" REAL,
     "cash" INTEGER,
     "warehouse_cash" INTEGER,
     "time_to_delete" INTEGER,
@@ -135,3 +116,12 @@ CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on "character" (clan ASC);
 CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
 CREATE INDEX "player_link_account" on "character" (account ASC);
+CREATE TABLE plant (
+    "map" TEXT,
+    "x" INTEGER,
+    "y" INTEGER,
+    "plant" INTEGER,
+    "character" INTEGER,
+    "plant_timestamps" INTEGER
+, "id" INTEGER);
+CREATE UNIQUE INDEX "plant_primarykey" on plant (id ASC);

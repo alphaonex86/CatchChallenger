@@ -97,6 +97,8 @@ void ProcessControler::send_settings()
         formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
         formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+    else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
+        formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_PostgreSQL;
     else
         formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_Mysql;
     switch(formatedServerSettings.database.type)
@@ -110,6 +112,12 @@ void ProcessControler::send_settings()
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             formatedServerSettings.database.sqlite.file				= settings->value(QLatin1Literal("file")).toString();
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            formatedServerSettings.database.mysql.host				= settings->value(QLatin1Literal("mysql_host")).toString();
+            formatedServerSettings.database.mysql.db				= settings->value(QLatin1Literal("mysql_db")).toString();
+            formatedServerSettings.database.mysql.login				= settings->value(QLatin1Literal("mysql_login")).toString();
+            formatedServerSettings.database.mysql.pass				= settings->value(QLatin1Literal("mysql_pass")).toString();
         break;
     }
     if(settings->value(QLatin1Literal("db_fight_sync")).toString()==QLatin1Literal("FightSync_AtEachTurn"))
@@ -204,44 +212,6 @@ void ProcessControler::send_settings()
         }
     }
     settings->endGroup();
-
-    {
-        bool ok;
-        settings->beginGroup(QLatin1Literal("bitcoin"));
-        formatedServerSettings.bitcoin.address=settings->value(QLatin1Literal("address")).toString();
-        if(settings->contains(QLatin1Literal("binaryPath")) && !settings->value(QLatin1Literal("binaryPath")).toString().isEmpty())
-            formatedServerSettings.bitcoin.binaryPath=settings->value(QLatin1Literal("binaryPath")).toString();
-        else
-        {
-            #ifdef Q_OS_WIN32
-            formatedServerSettings.bitcoin.binaryPath                         = QLatin1Literal("%application_path%/bitcoin/bitcoind.exe");
-            #else
-            formatedServerSettings.bitcoin.binaryPath                         = QLatin1Literal("/usr/bin/bitcoind");
-            #endif
-        }
-        formatedServerSettings.bitcoin.enabled=(settings->value(QLatin1Literal("enabled")).toString()==QLatin1Literal("true"));
-        if(formatedServerSettings.bitcoin.enabled)
-        {
-            formatedServerSettings.bitcoin.fee=settings->value(QLatin1Literal("fee")).toDouble(&ok);
-            if(!ok)
-                formatedServerSettings.bitcoin.fee=1.0;
-            formatedServerSettings.bitcoin.port=settings->value(QLatin1Literal("port")).toUInt(&ok);
-            if(!ok)
-                formatedServerSettings.bitcoin.port=46349;
-            formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
-            if(settings->contains(QLatin1Literal("workingPath")) && !settings->value(QLatin1Literal("workingPath")).toString().isEmpty())
-                formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
-            else
-            {
-                #ifdef Q_OS_WIN32
-                formatedServerSettings.bitcoin.workingPath                        = QLatin1Literal("%application_path%/bitcoin-storage/");
-                #else
-                formatedServerSettings.bitcoin.workingPath                        = QDir::homePath()+QLatin1Literal("/.config/CatchChallenger/server/bitoin/");
-                #endif
-            }
-        }
-        settings->endGroup();
-    }
 
     server.setSettings(formatedServerSettings);
 }

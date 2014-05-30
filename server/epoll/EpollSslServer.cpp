@@ -192,4 +192,8 @@ CatchChallenger::ClientMapManagement * EpollSslServer::getClientMapManagement()
     return BaseServer::getClientMapManagement();
 }
 
+void EpollSslServer::unload_the_data()
+{
+    BaseServer::unload_the_data();
+}
 #endif

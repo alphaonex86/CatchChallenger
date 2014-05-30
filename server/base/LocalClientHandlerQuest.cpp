@@ -245,6 +245,12 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
                              .arg(quest.id)
                              );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("UPDATE quest SET step=0,finish_one_time=true WHERE character=%1 AND quest=%2;")
+                             .arg(player_informations->character_id)
+                             .arg(quest.id)
+                             );
+            break;
         }
         player_informations->public_and_private_informations.quests[quest.id].step=0;
         player_informations->public_and_private_informations.quests[quest.id].finish_one_time=true;
@@ -289,6 +295,13 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
                              .arg(player_informations->public_and_private_informations.quests.value(quest.id).step)
                              );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
+                             .arg(player_informations->character_id)
+                             .arg(quest.id)
+                             .arg(player_informations->public_and_private_informations.quests.value(quest.id).step)
+                             );
+            break;
         }
         addQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests.value(quest.id).step);
     }
@@ -318,6 +331,13 @@ bool LocalClientHandler::startQuest(const Quest &quest)
                              .arg(1)
                              );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,false,%3);")
+                             .arg(player_informations->character_id)
+                             .arg(quest.id)
+                             .arg(1)
+                             );
+            break;
         }
         player_informations->public_and_private_informations.quests[quest.id].step=1;
         player_informations->public_and_private_informations.quests[quest.id].finish_one_time=false;
@@ -335,6 +355,13 @@ bool LocalClientHandler::startQuest(const Quest &quest)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
+                             .arg(player_informations->character_id)
+                             .arg(quest.id)
+                             .arg(1)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
                 emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
