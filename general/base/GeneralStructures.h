@@ -324,8 +324,6 @@ struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
     quint64 cash,warehouse_cash;
-    double bitcoin;
-    QString bitcoinAddress;
     QHash<quint32,quint32> items,warehouse_items;
     //crafting
     QSet<quint32> recipes;
@@ -795,7 +793,6 @@ struct MarketObject
     quint32 objectId;
     quint32 quantity;
     quint32 price;
-    double bitcoin;
 };
 struct MarketMonster
 {
@@ -803,7 +800,6 @@ struct MarketMonster
     quint32 monster;
     quint8 level;
     quint32 price;
-    double bitcoin;
 };
 
 struct IndustryStatus

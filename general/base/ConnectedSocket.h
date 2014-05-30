@@ -10,13 +10,22 @@
 
 #include "QFakeSocket.h"
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifndef SERVERNOSSL
+        #include "../../server/epoll/EpollSslClient.h"
+    #else
+        #include "../../server/epoll/EpollClient.h"
+    #endif
+#endif
+
 namespace CatchChallenger {
+
 class ConnectedSocket : public QIODevice
 {
     Q_OBJECT
 public:
-    explicit ConnectedSocket(QFakeSocket *socket,QObject *parent = 0);
-    explicit ConnectedSocket(QSslSocket *socket,QObject *parent = 0);
+    explicit ConnectedSocket(QFakeSocket *socket);
+    explicit ConnectedSocket(QSslSocket *socket);
     ~ConnectedSocket();
     void	abort();
     void	connectToHost(const QString & hostName,quint16 port);
@@ -37,6 +46,15 @@ public:
     OpenMode openMode() const;
     QString errorString() const;
     void	close();
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifndef SERVERNOSSL
+    EpollSslClient *epollSocket;
+    explicit ConnectedSocket(EpollSslClient *socket);
+    #else
+    EpollClient *epollSocket;
+    explicit ConnectedSocket(EpollClient *socket);
+    #endif
+    #endif
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
     QByteArray tempClearData;

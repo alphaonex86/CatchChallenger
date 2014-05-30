@@ -71,7 +71,6 @@ struct Player_internal_informations
     bool character_loaded;
     quint32 character_id;
     quint64 market_cash;
-    double market_bitcoin;
     QByteArray rawPseudo;
     volatile bool isConnected;
     struct Rescue
@@ -129,7 +128,8 @@ struct ServerSettings
         enum Type
         {
             DatabaseType_Mysql,
-            DatabaseType_SQLite
+            DatabaseType_SQLite,
+            DatabaseType_PostgreSQL
         };
         Type type;
 
@@ -159,17 +159,6 @@ struct ServerSettings
         SQLite sqlite;
     };
     Database database;
-
-    struct Bitcoin
-    {
-        bool enabled;
-        QString address;
-        double fee;
-        QString workingPath;
-        QString binaryPath;
-        quint16 port;
-    };
-    Bitcoin bitcoin;
 
     //connection
     bool tolerantMode;
@@ -228,7 +217,6 @@ struct MarketPlayerMonster
     PlayerMonster monster;
     quint32 player;
     quint32 cash;
-    double bitcoin;
 };
 
 struct MarketItem
@@ -238,7 +226,6 @@ struct MarketItem
     quint32 quantity;
     quint32 player;
     quint32 cash;
-    double bitcoin;
 };
 
 struct ServerPrivateVariables
@@ -341,14 +328,6 @@ struct ServerPrivateVariables
     int botSpawnIndex;
     QHash<quint32,IndustryStatus> industriesStatus;
     QList<quint8> events;
-
-    //bitcoin
-    struct Bitcoin
-    {
-        bool enabled;
-        QProcess process;
-    };
-    Bitcoin bitcoin;
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp

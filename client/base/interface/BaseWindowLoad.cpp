@@ -82,12 +82,10 @@ void BaseWindow::resetAll()
     marketBuyInSuspend=false;
     marketBuyObjectList.clear();
     marketBuyCashInSuspend=0;
-    marketBuyBitcoinInSuspend=0;
     marketPutMonsterList.clear();
     marketPutMonsterPlaceList.clear();
     marketPutInSuspend=false;
     marketPutCashInSuspend=0;
-    marketPutBitcoinInSuspend=0;
     marketWithdrawInSuspend=false;
     marketWithdrawObjectList.clear();
     marketWithdrawMonsterList.clear();
@@ -207,7 +205,6 @@ void BaseWindow::have_current_player_info()
     allow=informations.allow;
     clan_leader=informations.clan_leader;
     cash=informations.cash;
-    bitcoin=informations.bitcoin;
     warehouse_cash=informations.warehouse_cash;
     quests=informations.quests;
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
@@ -215,26 +212,6 @@ void BaseWindow::have_current_player_info()
     ui->warehousePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(informations.cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(informations.cash));
-    if(informations.bitcoin>=0)
-    {
-        ui->label_bitcoin->setVisible(true);
-        ui->label_bitcoinAddress->setVisible(true);
-        ui->label_bitcoinAddress_point->setVisible(true);
-        ui->label_bitcoin_point->setVisible(true);
-        ui->bitcoin->setVisible(true);
-        ui->bitcoinAddress->setVisible(true);
-        ui->bitcoin->setText(QStringLiteral("%1&#3647;").arg(informations.bitcoin));
-        ui->bitcoinAddress->setText(informations.bitcoinAddress);
-    }
-    else
-    {
-        ui->label_bitcoin->setVisible(false);
-        ui->label_bitcoinAddress->setVisible(false);
-        ui->label_bitcoinAddress_point->setVisible(false);
-        ui->label_bitcoin_point->setVisible(false);
-        ui->bitcoin->setVisible(false);
-        ui->bitcoinAddress->setVisible(false);
-    }
     CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());
     DebugClass::debugConsole(QStringLiteral("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
     updateConnectingStatus();

@@ -718,7 +718,6 @@ void SoloWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
-    formatedServerSettings.bitcoin.enabled=false;
 
     internalServer->setSettings(formatedServerSettings);
 }*/

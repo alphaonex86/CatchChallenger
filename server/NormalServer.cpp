@@ -630,23 +630,6 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("capture_time"),QLatin1Literal("0:0"));
     settings->endGroup();
 
-    settings->beginGroup(QLatin1Literal("bitcoin"));
-    if(!settings->contains(QLatin1Literal("address")))
-        settings->setValue(QLatin1Literal("address"),QLatin1Literal("1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ"));
-    if(!settings->contains(QLatin1Literal("binaryPath")))
-        settings->setValue(QLatin1Literal("binaryPath"),QString());
-    if(!settings->contains(QLatin1Literal("enabled")))
-        settings->setValue(QLatin1Literal("enabled"),false);
-    if(!settings->contains(QLatin1Literal("fee")))
-        settings->setValue(QLatin1Literal("fee"),1.0);
-    if(!settings->contains(QLatin1Literal("history")))
-        settings->setValue(QLatin1Literal("history"),30);
-    if(!settings->contains(QLatin1Literal("port")))
-        settings->setValue(QLatin1Literal("port"),46349);
-    if(!settings->contains(QLatin1Literal("workingPath")))
-        settings->setValue(QLatin1Literal("workingPath"),QLatin1Literal("0:0"));
-    settings->endGroup();
-
     settings->sync();
 }
 

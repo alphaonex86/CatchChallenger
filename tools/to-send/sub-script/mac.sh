@@ -41,6 +41,15 @@ function compil {
 			echo "make failed on the mac: ${RETURN_CODE}"
 			exit
 		fi
+		
+		#vlc
+		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/VLC.app/Contents/MacOS/share/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/share/"
+		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/VLC.app/Contents/MacOS/lib/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/lib/"
+		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/VLC.app/Contents/MacOS/plugins/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/plugins/"
+		
+		#music
+		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/CatchChallenger/client/base/resources/music/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/music/"
+		
 		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/CatchChallenger/client/base/languages/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/languages/ --exclude=*.ts"
 		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/languages/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/languages/ --exclude=*.ts"
 		ssh ${SSHUSER}@${IPMAC} "rm -Rf /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/languages/en/"

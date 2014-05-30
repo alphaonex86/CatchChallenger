@@ -90,14 +90,6 @@ private slots:
     void on_comboBox_city_capture_frequency_currentIndexChanged(int index);
     void on_comboBox_city_capture_day_currentIndexChanged(int index);
     void on_timeEdit_city_capture_time_editingFinished();
-    void on_bitcoin_enabled_toggled(bool checked);
-    void on_bitcoin_address_editingFinished();
-    void on_bitcoin_fee_editingFinished();
-    void on_bitcoin_workingpath_editingFinished();
-    void on_bitcoin_binarypath_editingFinished();
-    void on_bitcoin_port_editingFinished();
-    void on_bitcoin_workingpath_browse_clicked();
-    void on_bitcoin_binarypath_browse_clicked();
     void on_compression_currentIndexChanged(int index);
     void on_min_character_editingFinished();
     void on_max_character_editingFinished();

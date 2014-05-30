@@ -39,6 +39,9 @@ void BaseServerCrafting::preload_the_plant_on_map()
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
         break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            queryText=QStringLiteral("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
+        break;
     }
     QSqlQuery plantOnMapQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!plantOnMapQuery.exec(queryText))
@@ -237,13 +240,19 @@ void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("DELETE FROM `plant` WHERE `map`=\"%1\" AND `x`=%2 AND `y`=%3")
+            queryText=QStringLiteral("DELETE FROM `plant` WHERE `map`='%1' AND `x`=%2 AND `y`=%3")
                 .arg(SqlFunction::quoteSqlVariable(map))
                 .arg(x)
                 .arg(y);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QStringLiteral("DELETE FROM plant WHERE map=\"%1\" AND x=%2 AND y=%3")
+        queryText=QStringLiteral("DELETE FROM plant WHERE map='%1' AND x=%2 AND y=%3")
+            .arg(SqlFunction::quoteSqlVariable(map))
+            .arg(x)
+            .arg(y);
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        queryText=QStringLiteral("DELETE FROM plant WHERE map='%1' AND x=%2 AND y=%3")
             .arg(SqlFunction::quoteSqlVariable(map))
             .arg(x)
             .arg(y);
