@@ -208,44 +208,6 @@ void send_settings()
     }
     settings->endGroup();
 
-    {
-        bool ok;
-        settings->beginGroup(QLatin1Literal("bitcoin"));
-        formatedServerSettings.bitcoin.address=settings->value(QLatin1Literal("address")).toString();
-        if(settings->contains(QLatin1Literal("binaryPath")) && !settings->value(QLatin1Literal("binaryPath")).toString().isEmpty())
-            formatedServerSettings.bitcoin.binaryPath=settings->value(QLatin1Literal("binaryPath")).toString();
-        else
-        {
-            #ifdef Q_OS_WIN32
-            formatedServerSettings.bitcoin.binaryPath                         = QLatin1Literal("%application_path%/bitcoin/bitcoind.exe");
-            #else
-            formatedServerSettings.bitcoin.binaryPath                         = QLatin1Literal("/usr/bin/bitcoind");
-            #endif
-        }
-        formatedServerSettings.bitcoin.enabled=(settings->value(QLatin1Literal("enabled")).toString()==QLatin1Literal("true"));
-        if(formatedServerSettings.bitcoin.enabled)
-        {
-            formatedServerSettings.bitcoin.fee=settings->value(QLatin1Literal("fee")).toDouble(&ok);
-            if(!ok)
-                formatedServerSettings.bitcoin.fee=1.0;
-            formatedServerSettings.bitcoin.port=settings->value(QLatin1Literal("port")).toUInt(&ok);
-            if(!ok)
-                formatedServerSettings.bitcoin.port=46349;
-            formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
-            if(settings->contains(QLatin1Literal("workingPath")) && !settings->value(QLatin1Literal("workingPath")).toString().isEmpty())
-                formatedServerSettings.bitcoin.workingPath=settings->value(QLatin1Literal("workingPath")).toString();
-            else
-            {
-                #ifdef Q_OS_WIN32
-                formatedServerSettings.bitcoin.workingPath                        = QLatin1Literal("%application_path%/bitcoin-storage/");
-                #else
-                formatedServerSettings.bitcoin.workingPath                        = QDir::homePath()+QLatin1Literal("/.config/CatchChallenger/server/bitoin/");
-                #endif
-            }
-        }
-        settings->endGroup();
-    }
-
     server->setSettings(formatedServerSettings);
 }
 
@@ -360,9 +322,9 @@ int main(int argc, char *argv[])
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
                         #ifndef SERVERNOSSL
-                        Client *client=new Client(new EpollSslClient(infd,server->getCtx()),server->getClientMapManagement());
+                        Client *client=new Client(new ConnectedSocket(new EpollSslClient(infd,server->getCtx())),server->getClientMapManagement());
                         #else
-                        Client *client=new Client(new EpollClient(infd,server->getCtx()),server->getClientMapManagement());
+                        Client *client=new Client(new ConnectedSocket(new EpollClient(infd,server->getCtx())),server->getClientMapManagement());
                         #endif
                         numberOfConnectedClient++;
                         int s = EpollSocket::make_non_blocking(infd);

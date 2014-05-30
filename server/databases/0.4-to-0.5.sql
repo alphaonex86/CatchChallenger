@@ -1,0 +1,10 @@
+DROP TABLE  `bitcoin_history`;
+DROP INDEX `PRIMARY` ON plant; 
+ALTER TABLE  `plant` ADD  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;
+ALTER TABLE  `character` DROP  `bitcoin_offset`;
+ALTER TABLE  `character` DROP  `market_bitcoin`;
+ALTER TABLE  `item` DROP  `market_bitcoin`;
+ALTER TABLE  `monster` DROP  `market_bitcoin`;
+ALTER TABLE  `plant` CHANGE  `map`  `map` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
+RENAME TABLE `recipes` TO `recipe`;
+ALTER TABLE  `reputation` ADD INDEX (  `character` ) ;

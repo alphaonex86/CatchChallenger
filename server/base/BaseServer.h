@@ -62,11 +62,6 @@ protected slots:
     //new connection
     virtual void newConnection();
     virtual void load_next_city_capture();
-    //bitcoin
-    void bitcoinProcessReadyReadStandardError();
-    void bitcoinProcessReadyReadStandardOutput();
-    void bitcoinProcessError(QProcess::ProcessError error);
-    void bitcoinProcessStateChanged(QProcess::ProcessState newState);
 signals:
     void error(const QString &error) const;
     void try_initAll() const;

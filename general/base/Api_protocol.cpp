@@ -2912,18 +2912,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> player_informations.warehouse_cash;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(double))
-                        {
-                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(__LINE__));
-                            return;
-                        }
-                        in >> player_informations.bitcoin;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                        {
-                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-                            return;
-                        }
-                        in >> player_informations.bitcoinAddress;
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the number of map, line: %1").arg(__LINE__));
@@ -3718,13 +3706,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     }
                     quint64 cash;
                     in >> cash;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                        return;
-                    }
-                    double bitcoin;
-                    in >> bitcoin;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                     {
                         parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
@@ -3759,12 +3740,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> marketObject.price;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
-                        {
-                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                            return;
-                        }
-                        in >> marketObject.bitcoin;
                         marketObjectList << marketObject;
                         index++;
                     }
@@ -3797,12 +3772,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> marketMonster.price;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
-                        {
-                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                            return;
-                        }
-                        in >> marketMonster.bitcoin;
                         marketMonsterList << marketMonster;
                         index++;
                     }
@@ -3835,12 +3804,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> marketObject.price;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
-                        {
-                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                            return;
-                        }
-                        in >> marketObject.bitcoin;
                         marketOwnObjectList << marketObject;
                         index++;
                     }
@@ -3873,16 +3836,10 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> marketMonster.price;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
-                        {
-                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                            return;
-                        }
-                        in >> marketMonster.bitcoin;
                         marketOwnMonsterList << marketMonster;
                         index++;
                     }
-                    emit marketList(cash,bitcoin,marketObjectList,marketMonsterList,marketOwnObjectList,marketOwnMonsterList);
+                    emit marketList(cash,marketObjectList,marketMonsterList,marketOwnObjectList,marketOwnMonsterList);
                 }
                 break;
                 case 0x0011:
@@ -4064,14 +4021,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     }
                     quint64 cash;
                     in >> cash;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                        return;
-                    }
-                    double bitcoin;
-                    in >> bitcoin;
-                    emit marketGetCash(cash,bitcoin);
+                    emit marketGetCash(cash);
                 break;
                 case 0x0014:
                 {
@@ -4879,7 +4829,7 @@ void Api_protocol::buyMarketMonster(const quint32 &monsterId)
     output->packFullOutcommingQuery(0x10,0x0011,queryNumber(),outputData);
 }
 
-void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin)
+void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -4888,13 +4838,12 @@ void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quanti
     out << objectId;
     out << quantity;
     out << price;
-    out << bitcoin;
     if(output==NULL)
         return;
     output->packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData);
 }
 
-void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &price,const double &bitcoin)
+void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &price)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -4902,7 +4851,6 @@ void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &pric
     out << (quint8)0x02;
     out << monsterId;
     out << price;
-    out << bitcoin;
     if(output==NULL)
         return;
     output->packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData);
@@ -5132,7 +5080,6 @@ void Api_protocol::resetAll()
     max_player=65535;
     number_of_map=0;
     player_informations.allow.clear();
-    player_informations.bitcoinAddress.clear();
     player_informations.bot_already_beaten.clear();
     player_informations.cash=0;
     player_informations.clan=0;
@@ -5145,7 +5092,6 @@ void Api_protocol::resetAll()
     player_informations.public_informations.skinId=0;
     player_informations.public_informations.speed=0;
     player_informations.public_informations.type=Player_type_normal;
-    player_informations.bitcoin=0;
     player_informations.repel_step=0;
     player_informations.recipes.clear();
     player_informations.playerMonster.clear();

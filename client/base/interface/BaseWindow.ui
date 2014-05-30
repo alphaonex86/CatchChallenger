@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>5</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -979,7 +979,7 @@ border-radius: 5px;
 }</string>
              </property>
              <property name="currentIndex">
-              <number>1</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tabWidgetTrainerCardPage1">
               <property name="styleSheet">
@@ -1187,105 +1187,6 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                           </spacer>
-                         </item>
-                        </layout>
-                       </item>
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_5">
-                         <item>
-                          <widget class="QLabel" name="label_bitcoin_point">
-                           <property name="minimumSize">
-                            <size>
-                             <width>8</width>
-                             <height>8</height>
-                            </size>
-                           </property>
-                           <property name="maximumSize">
-                            <size>
-                             <width>8</width>
-                             <height>8</height>
-                            </size>
-                           </property>
-                           <property name="pixmap">
-                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QLabel" name="label_bitcoin">
-                           <property name="text">
-                            <string>Bitcoin: </string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QLabel" name="bitcoin">
-                           <property name="minimumSize">
-                            <size>
-                             <width>150</width>
-                             <height>0</height>
-                            </size>
-                           </property>
-                           <property name="maximumSize">
-                            <size>
-                             <width>150</width>
-                             <height>16777215</height>
-                            </size>
-                           </property>
-                           <property name="textFormat">
-                            <enum>Qt::RichText</enum>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <spacer name="horizontalSpacer_48">
-                           <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
-                           </property>
-                           <property name="sizeHint" stdset="0">
-                            <size>
-                             <width>13</width>
-                             <height>20</height>
-                            </size>
-                           </property>
-                          </spacer>
-                         </item>
-                        </layout>
-                       </item>
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_53">
-                         <item>
-                          <widget class="QLabel" name="label_bitcoinAddress_point">
-                           <property name="minimumSize">
-                            <size>
-                             <width>8</width>
-                             <height>8</height>
-                            </size>
-                           </property>
-                           <property name="maximumSize">
-                            <size>
-                             <width>8</width>
-                             <height>8</height>
-                            </size>
-                           </property>
-                           <property name="pixmap">
-                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QLabel" name="label_bitcoinAddress">
-                           <property name="text">
-                            <string>Bitcoin address: </string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QLineEdit" name="bitcoinAddress">
-                           <property name="readOnly">
-                            <bool>true</bool>
-                           </property>
-                          </widget>
                          </item>
                         </layout>
                        </item>

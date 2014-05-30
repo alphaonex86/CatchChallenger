@@ -135,4 +135,9 @@ CatchChallenger::ClientMapManagement * EpollServer::getClientMapManagement()
 {
     return BaseServer::getClientMapManagement();
 }
+
+void EpollServer::unload_the_data()
+{
+    BaseServer::unload_the_data();
+}
 #endif

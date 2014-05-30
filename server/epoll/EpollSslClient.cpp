@@ -6,6 +6,7 @@
 #include <iostream>
 #include <netinet/tcp.h>
 #include <netdb.h>
+#include <sys/ioctl.h>
 
 char EpollSslClient::rawbuf[4096];
 
@@ -191,5 +192,22 @@ void EpollSslClient::flush()
 BaseClassSwitch::Type EpollSslClient::getType() const
 {
     return BaseClassSwitch::Type::Client;
+}
+
+bool EpollSslClient::isValid() const
+{
+    return infd!=-1;
+}
+
+long int EpollSslClient::bytesAvailable() const
+{
+    if(infd==-1)
+        return -1;
+    unsigned long int nbytes;
+    // gives shorter than true amounts on Unix domain sockets.
+    if(ioctl(infd, FIONREAD, &nbytes)>=0)
+        return nbytes;
+    else
+        return -1;
 }
 #endif

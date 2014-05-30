@@ -161,6 +161,12 @@ void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
                              .arg(player_informations->character_id)
                              );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
+                             .arg(tradeMonster.at(index).id)
+                             .arg(player_informations->character_id)
+                             );
+            break;
         }
         index++;
     }
@@ -327,6 +333,12 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
+                                     .arg(index+1)
+                                     .arg(playerMonster.id)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
                         emit dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)

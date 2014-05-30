@@ -20,6 +20,7 @@ public:
     Type getType() const;
     void preload_the_data();
     CatchChallenger::ClientMapManagement * getClientMapManagement();
+    void unload_the_data();
 private:
     int sfd;
 };

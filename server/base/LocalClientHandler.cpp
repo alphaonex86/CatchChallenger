@@ -28,6 +28,8 @@ QString LocalClientHandler::text_setevent=QLatin1Literal("setevent");
 QString LocalClientHandler::text_space=QLatin1Literal(" ");
 QString LocalClientHandler::text_0=QLatin1Literal("0");
 QString LocalClientHandler::text_1=QLatin1Literal("1");
+QString LocalClientHandler::text_false=QLatin1Literal("false");
+QString LocalClientHandler::text_true=QLatin1Literal("true");
 QString LocalClientHandler::text_take=QLatin1Literal("take");
 QString LocalClientHandler::text_tp=QLatin1Literal("tp");
 QString LocalClientHandler::text_trade=QLatin1Literal("trade");
@@ -117,16 +119,7 @@ void LocalClientHandler::extraStop()
 
     if(!player_informations->character_loaded)
         return;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
-        break;
-    }
+    emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
     //save the monster
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && localClientHandlerFight.isInFight())
         localClientHandlerFight.saveCurrentMonsterStat();
@@ -137,55 +130,25 @@ void LocalClientHandler::extraStop()
         while(index<size)
         {
             const PlayerMonster &playerMonster=player_informations->public_and_private_informations.playerMonster.at(index);
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster
-                                 .arg(playerMonster.id)
-                                 .arg(player_informations->character_id)
-                                 .arg(playerMonster.hp)
-                                 .arg(playerMonster.remaining_xp)
-                                 .arg(playerMonster.level)
-                                 .arg(playerMonster.sp)
-                                 .arg(index+1)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster
-                                 .arg(playerMonster.id)
-                                 .arg(player_informations->character_id)
-                                 .arg(playerMonster.hp)
-                                 .arg(playerMonster.remaining_xp)
-                                 .arg(playerMonster.level)
-                                 .arg(playerMonster.sp)
-                                 .arg(index+1)
-                                 );
-                break;
-            }
+            emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster
+                         .arg(playerMonster.id)
+                         .arg(player_informations->character_id)
+                         .arg(playerMonster.hp)
+                         .arg(playerMonster.remaining_xp)
+                         .arg(playerMonster.level)
+                         .arg(playerMonster.sp)
+                         .arg(index+1)
+                         );
             int sub_index=0;
             const int &sub_size=playerMonster.skills.size();
             while(sub_index<sub_size)
             {
                 const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster_skill
-                                     .arg(playerSkill.endurance)
-                                     .arg(playerMonster.id)
-                                     .arg(playerSkill.skill)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster_skill
-                                     .arg(playerSkill.endurance)
-                                     .arg(playerMonster.id)
-                                     .arg(playerSkill.skill)
-                                     );
-                    break;
-                }
+                emit dbQuery(GlobalServerData::serverPrivateVariables.db_query_monster_skill
+                             .arg(playerSkill.endurance)
+                             .arg(playerMonster.id)
+                             .arg(playerSkill.skill)
+                             );
                 sub_index++;
             }
             index++;
@@ -268,13 +231,13 @@ void LocalClientHandler::savePosition()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            updateMapPositionQuery=QStringLiteral("UPDATE `character` SET `map`=\"%1\",`x`=%2,`y`=%3,`orientation`=\"%4\",%5 WHERE `id`=%6")
+            updateMapPositionQuery=QStringLiteral("UPDATE `character` SET `map`='%1',`x`=%2,`y`=%3,`orientation`='%4',%5 WHERE `id`=%6")
                 .arg(SqlFunction::quoteSqlVariable(map_file_clean))
                 .arg(x)
                 .arg(y)
                 .arg(directionToStringToSave(getLastDirection()))
                 .arg(
-                        QStringLiteral("`rescue_map`=\"%1\",`rescue_x`=%2,`rescue_y`=%3,`rescue_orientation`=\"%4\",`unvalidated_rescue_map`=\"%5\",`unvalidated_rescue_x`=%6,`unvalidated_rescue_y`=%7,`unvalidated_rescue_orientation`=\"%8\"")
+                        QStringLiteral("`rescue_map`='%1',`rescue_x`=%2,`rescue_y`=%3,`rescue_orientation`='%4',`unvalidated_rescue_map`='%5',`unvalidated_rescue_x`=%6,`unvalidated_rescue_y`=%7,`unvalidated_rescue_orientation`='%8'")
                         .arg(rescue_map_file_clean)
                         .arg(player_informations->rescue.x)
                         .arg(player_informations->rescue.y)
@@ -287,13 +250,32 @@ void LocalClientHandler::savePosition()
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            updateMapPositionQuery=QStringLiteral("UPDATE character SET map=\"%1\",x=%2,y=%3,orientation=\"%4\",%5 WHERE id=%6")
+            updateMapPositionQuery=QStringLiteral("UPDATE character SET map='%1',x=%2,y=%3,orientation='%4',%5 WHERE id=%6")
                 .arg(SqlFunction::quoteSqlVariable(map_file_clean))
                 .arg(x)
                 .arg(y)
                 .arg(directionToStringToSave(getLastDirection()))
                 .arg(
-                        QStringLiteral("rescue_map=\"%1\",rescue_x=%2,rescue_y=%3,rescue_orientation=\"%4\",unvalidated_rescue_map=\"%5\",unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=\"%8\"")
+                        QStringLiteral("rescue_map='%1',rescue_x=%2,rescue_y=%3,rescue_orientation='%4',unvalidated_rescue_map='%5',unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation='%8'")
+                        .arg(rescue_map_file_clean)
+                        .arg(player_informations->rescue.x)
+                        .arg(player_informations->rescue.y)
+                        .arg(orientationToStringToSave(player_informations->rescue.orientation))
+                        .arg(unvalidated_rescue_map_file_clean)
+                        .arg(player_informations->unvalidated_rescue.x)
+                        .arg(player_informations->unvalidated_rescue.y)
+                        .arg(orientationToStringToSave(player_informations->unvalidated_rescue.orientation))
+                )
+                .arg(player_informations->character_id);
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            updateMapPositionQuery=QStringLiteral("UPDATE character SET map='%1',x=%2,y=%3,orientation='%4',%5 WHERE id=%6")
+                .arg(SqlFunction::quoteSqlVariable(map_file_clean))
+                .arg(x)
+                .arg(y)
+                .arg(directionToStringToSave(getLastDirection()))
+                .arg(
+                        QStringLiteral("rescue_map='%1',rescue_x=%2,rescue_y=%3,rescue_orientation='%4',unvalidated_rescue_map='%5',unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation='%8'")
                         .arg(rescue_map_file_clean)
                         .arg(player_informations->rescue.x)
                         .arg(player_informations->rescue.y)
@@ -585,6 +567,13 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
                          .arg(player_informations->character_id)
                          );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
+                         .arg(player_informations->public_and_private_informations.items.value(item))
+                         .arg(item)
+                         .arg(player_informations->character_id)
+                         );
+            break;
         }
     }
     else
@@ -600,6 +589,13 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QStringLiteral("INSERT INTO item(item,character,quantity,place) VALUES(%1,%2,%3,'wear');")
+                         .arg(item)
+                         .arg(player_informations->character_id)
+                         .arg(quantity)
+                         );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
                 emit dbQuery(QStringLiteral("INSERT INTO item(item,character,quantity,place) VALUES(%1,%2,%3,'wear');")
                          .arg(item)
                          .arg(player_informations->character_id)
@@ -633,6 +629,13 @@ void LocalClientHandler::addWarehouseObject(const quint32 &item,const quint32 &q
                          .arg(player_informations->character_id)
                          );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='warehouse';")
+                         .arg(player_informations->public_and_private_informations.warehouse_items.value(item))
+                         .arg(item)
+                         .arg(player_informations->character_id)
+                         );
+            break;
         }
     }
     else
@@ -648,6 +651,13 @@ void LocalClientHandler::addWarehouseObject(const quint32 &item,const quint32 &q
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QStringLiteral("INSERT INTO item(item,character,quantity,place) VALUES(%1,%2,%3,'warehouse');")
+                         .arg(item)
+                         .arg(player_informations->character_id)
+                         .arg(quantity)
+                         );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
                 emit dbQuery(QStringLiteral("INSERT INTO item(item,character,quantity,place) VALUES(%1,%2,%3,'warehouse');")
                          .arg(item)
                          .arg(player_informations->character_id)
@@ -683,6 +693,13 @@ quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quin
                                  .arg(player_informations->character_id)
                              );
                 break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='warehouse';")
+                                 .arg(player_informations->public_and_private_informations.warehouse_items.value(item))
+                                 .arg(item)
+                                 .arg(player_informations->character_id)
+                             );
+                break;
             }
             return quantity;
         }
@@ -700,6 +717,12 @@ quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quin
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='warehouse'")
+                             .arg(item)
+                             .arg(player_informations->character_id)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
                     emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='warehouse'")
                              .arg(item)
                              .arg(player_informations->character_id)
@@ -734,6 +757,13 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
                              .arg(player_informations->character_id)
                          );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
+                             .arg(player_informations->public_and_private_informations.items.value(item))
+                             .arg(item)
+                             .arg(player_informations->character_id)
+                         );
+            break;
         }
     }
     else
@@ -748,6 +778,12 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='wear'")
+                         .arg(item)
+                         .arg(player_informations->character_id)
+                         );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
                 emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='wear'")
                          .arg(item)
                          .arg(player_informations->character_id)
@@ -781,6 +817,13 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
                                  .arg(player_informations->character_id)
                              );
                 break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
+                                 .arg(player_informations->public_and_private_informations.items.value(item))
+                                 .arg(item)
+                                 .arg(player_informations->character_id)
+                             );
+                break;
             }
             return quantity;
         }
@@ -798,6 +841,12 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='wear'")
+                             .arg(item)
+                             .arg(player_informations->character_id)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
                     emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='wear'")
                              .arg(item)
                              .arg(player_informations->character_id)
@@ -831,12 +880,9 @@ quint32 LocalClientHandler::objectQuantity(const quint32 &item)
         return 0;
 }
 
-bool LocalClientHandler::addMarketCashWithoutSave(const quint64 &cash,const double &bitcoin)
+bool LocalClientHandler::addMarketCashWithoutSave(const quint64 &cash)
 {
-    if(bitcoin>0 && !bitcoinEnabled())
-        return false;
     player_informations->market_cash+=cash;
-    player_informations->market_bitcoin+=bitcoin;
     return true;
 }
 
@@ -855,6 +901,12 @@ void LocalClientHandler::addCash(const quint64 &cash, const bool &forceSave)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.cash)
+                     .arg(player_informations->character_id)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
             emit dbQuery(QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2;")
                      .arg(player_informations->public_and_private_informations.cash)
                      .arg(player_informations->character_id)
@@ -883,49 +935,9 @@ void LocalClientHandler::removeCash(const quint64 &cash)
                      .arg(player_informations->character_id)
                      );
         break;
-    }
-}
-
-void LocalClientHandler::addBitcoin(const double &bitcoin)
-{
-    if(bitcoin==0)
-        return;
-    player_informations->public_and_private_informations.bitcoin+=bitcoin;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QStringLiteral("UPDATE `character` SET `bitcoin`=%1 WHERE `id`=%2;")
-                         .arg(player_informations->public_and_private_informations.bitcoin)
-                         .arg(player_informations->character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QStringLiteral("UPDATE character SET bitcoin=%1 WHERE id=%2;")
-                     .arg(player_informations->public_and_private_informations.bitcoin)
-                     .arg(player_informations->character_id)
-                     );
-        break;
-    }
-}
-
-void LocalClientHandler::removeBitcoin(const double &bitcoin)
-{
-    if(bitcoin==0)
-        return;
-    player_informations->public_and_private_informations.bitcoin-=bitcoin;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QStringLiteral("UPDATE `character` SET `bitcoin`=%1 WHERE `id`=%2;")
-                         .arg(player_informations->public_and_private_informations.bitcoin)
-                         .arg(player_informations->character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QStringLiteral("UPDATE character SET bitcoin=%1 WHERE id=%2;")
-                     .arg(player_informations->public_and_private_informations.bitcoin)
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            emit dbQuery(QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.cash)
                      .arg(player_informations->character_id)
                      );
         break;
@@ -952,6 +964,12 @@ void LocalClientHandler::addWarehouseCash(const quint64 &cash, const bool &force
                      .arg(player_informations->character_id)
                      );
         break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            emit dbQuery(QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.warehouse_cash)
+                     .arg(player_informations->character_id)
+                     );
+        break;
     }
 }
 
@@ -970,6 +988,12 @@ void LocalClientHandler::removeWarehouseCash(const quint64 &cash)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.warehouse_cash)
+                     .arg(player_informations->character_id)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
             emit dbQuery(QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
                      .arg(player_informations->public_and_private_informations.warehouse_cash)
                      .arg(player_informations->character_id)
@@ -1037,6 +1061,12 @@ void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<qu
                                         .arg(player_informations->public_and_private_informations.playerMonster.size()+1)
                                         );
                         break;
+                        case ServerSettings::Database::DatabaseType_PostgreSQL:
+                            emit dbQuery(QStringLiteral("UPDATE monster SET place='wear',position=%2 WHERE id=%1;")
+                                        .arg(withdrawMonsters.at(index))
+                                        .arg(player_informations->public_and_private_informations.playerMonster.size()+1)
+                                        );
+                        break;
                     }
                     break;
                 }
@@ -1068,6 +1098,12 @@ void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<qu
                                         );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QStringLiteral("UPDATE monster SET place='warehouse',position=%2 WHERE id=%1;")
+                                        .arg(withdrawMonsters.at(index))
+                                        .arg(player_informations->public_and_private_informations.warehouse_playerMonster.size()+1)
+                                        );
+                        break;
+                        case ServerSettings::Database::DatabaseType_PostgreSQL:
                             emit dbQuery(QStringLiteral("UPDATE monster SET place='warehouse',position=%2 WHERE id=%1;")
                                         .arg(withdrawMonsters.at(index))
                                         .arg(player_informations->public_and_private_informations.warehouse_playerMonster.size()+1)
@@ -1643,13 +1679,19 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("INSERT INTO `recipes`(`character`,`recipe`) VALUES(%1,%2);")
+                emit dbQuery(QStringLiteral("INSERT INTO `recipe`(`character`,`recipe`) VALUES(%1,%2);")
                          .arg(player_informations->character_id)
                          .arg(recipeId)
                          );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("INSERT INTO recipes(character,recipe) VALUES(%1,%2);")
+                emit dbQuery(QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2);")
+                         .arg(player_informations->character_id)
+                         .arg(recipeId)
+                         );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2);")
                          .arg(player_informations->character_id)
                          .arg(recipeId)
                          );
@@ -2136,6 +2178,14 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
                              .arg(industryStatus.last_update)
                              );
             break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4);")
+                             .arg(factoryId)
+                             .arg(resourcesStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(productsStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(industryStatus.last_update)
+                             );
+            break;
         }
     }
     else
@@ -2152,6 +2202,14 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1")
+                             .arg(factoryId)
+                             .arg(resourcesStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(productsStringList.join(LocalClientHandler::text_dotcomma))
+                             .arg(industryStatus.last_update)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
                 emit dbQuery(QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1")
                              .arg(factoryId)
                              .arg(resourcesStringList.join(LocalClientHandler::text_dotcomma))
@@ -2524,6 +2582,12 @@ void LocalClientHandler::updateAllow()
                          .arg(player_informations->character_id)
                          );
         break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            emit dbQuery(QStringLiteral("UPDATE character SET allow='%1' WHERE id=%2;")
+                         .arg(FacilityLib::allowToString(player_informations->public_and_private_informations.allow))
+                         .arg(player_informations->character_id)
+                         );
+        break;
     }
 }
 
@@ -2569,7 +2633,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,\"%2\",%3,%4);")
+            emit dbQuery(QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
                              .arg(player_informations->character_id)
                              .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
@@ -2577,7 +2641,15 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,\"%2\",%3,%4);")
+                emit dbQuery(QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4);")
+                             .arg(player_informations->character_id)
+                             .arg(SqlFunction::quoteSqlVariable(type))
+                             .arg(playerReputation.point)
+                             .arg(playerReputation.level)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4);")
                              .arg(player_informations->character_id)
                              .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
@@ -2592,7 +2664,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("UPDATE `reputation` SET `point`=%3,`level`=%4 WHERE `character`=%1 AND `type`=\"%2\";")
+                emit dbQuery(QStringLiteral("UPDATE `reputation` SET `point`=%3,`level`=%4 WHERE `character`=%1 AND `type`='%2';")
                              .arg(player_informations->character_id)
                              .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
@@ -2600,7 +2672,15 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type=\"%2\";")
+                emit dbQuery(QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2';")
+                             .arg(player_informations->character_id)
+                             .arg(SqlFunction::quoteSqlVariable(type))
+                             .arg(playerReputation.point)
+                             .arg(playerReputation.level)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                emit dbQuery(QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2';")
                              .arg(player_informations->character_id)
                              .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
@@ -2871,14 +2951,21 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,\"%2\",%3);")
+                    emit dbQuery(QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);")
                              .arg(GlobalServerData::serverPrivateVariables.maxClanId)
                              .arg(SqlFunction::quoteSqlVariable(text))
                              .arg(QDateTime::currentMSecsSinceEpoch()/1000)
                              );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,\"%2\",%3);")
+                    emit dbQuery(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
+                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                             .arg(SqlFunction::quoteSqlVariable(text))
+                             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
                              .arg(GlobalServerData::serverPrivateVariables.maxClanId)
                              .arg(SqlFunction::quoteSqlVariable(text))
                              .arg(QDateTime::currentMSecsSinceEpoch()/1000)
@@ -2918,6 +3005,11 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                              );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
+                             .arg(player_informations->character_id)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
                     emit dbQuery(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
                              .arg(player_informations->character_id)
                              );
@@ -2966,6 +3058,11 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                                  .arg(players.at(index)->getPlayerId())
                                  );
                     break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
+                        emit dbQuery(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
+                                 .arg(players.at(index)->getPlayerId())
+                                 );
+                    break;
                 }
                 index++;
             }
@@ -2982,6 +3079,11 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                                  .arg(player_informations->public_and_private_informations.clan)
                                  );
                 break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("DELETE FROM clan WHERE id=%1")
+                                 .arg(player_informations->public_and_private_informations.clan)
+                                 );
+                break;
             }
             switch(GlobalServerData::serverSettings.database.type)
             {
@@ -2992,6 +3094,11 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QStringLiteral("DELETE FROM city WHERE city='%1'")
+                                 .arg(clan->capturedCity)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
                     emit dbQuery(QStringLiteral("DELETE FROM city WHERE city='%1'")
                                  .arg(clan->capturedCity)
                                  );
@@ -3110,6 +3217,12 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                                  .arg(player_informations->public_and_private_informations.clan)
                                  );
                     break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
+                        emit dbQuery(QStringLiteral("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2;")
+                                 .arg(text)
+                                 .arg(player_informations->public_and_private_informations.clan)
+                                 );
+                    break;
                 }
                 return;
             }
@@ -3210,10 +3323,20 @@ void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
 {
     //add into db
     QString clan_leader;
-    if(player_informations->public_and_private_informations.clan_leader)
-        clan_leader=LocalClientHandler::text_1;
+    if(GlobalServerData::serverSettings.database.type!=ServerSettings::Database::DatabaseType_PostgreSQL)
+    {
+        if(player_informations->public_and_private_informations.clan_leader)
+            clan_leader=LocalClientHandler::text_1;
+        else
+            clan_leader=LocalClientHandler::text_0;
+    }
     else
-        clan_leader=LocalClientHandler::text_0;
+    {
+        if(player_informations->public_and_private_informations.clan_leader)
+            clan_leader=LocalClientHandler::text_true;
+        else
+            clan_leader=LocalClientHandler::text_false;
+    }
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
@@ -3225,6 +3348,13 @@ void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
                      );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;")
+                     .arg(clanId)
+                     .arg(clan_leader)
+                     .arg(player_informations->character_id)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
             emit dbQuery(QStringLiteral("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;")
                      .arg(clanId)
                      .arg(clan_leader)
@@ -3248,6 +3378,11 @@ void LocalClientHandler::ejectToClan()
                      );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
+                     .arg(player_informations->character_id)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
             emit dbQuery(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
                      .arg(player_informations->character_id)
                      );
@@ -3627,6 +3762,11 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                                              .arg(clan->capturedCity)
                                              );
                             break;
+                            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                                emit dbQuery(QStringLiteral("DELETE FROM city WHERE city='%1'")
+                                             .arg(clan->capturedCity)
+                                             );
+                            break;
                         }
                         if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->captureCityInProgress))
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
@@ -3646,6 +3786,12 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                                                  .arg(clan->captureCityInProgress)
                                                  );
                                 break;
+                                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                                    emit dbQuery(QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';")
+                                                 .arg(clan->clanId)
+                                                 .arg(clan->captureCityInProgress)
+                                                 );
+                                break;
                             }
                         else
                             switch(GlobalServerData::serverSettings.database.type)
@@ -3658,6 +3804,12 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                                                  );
                                 break;
                                 case ServerSettings::Database::DatabaseType_SQLite:
+                                    emit dbQuery(QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');")
+                                                 .arg(clan->clanId)
+                                                 .arg(clan->captureCityInProgress)
+                                                 );
+                                break;
+                                case ServerSettings::Database::DatabaseType_PostgreSQL:
                                     emit dbQuery(QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');")
                                                  .arg(clan->clanId)
                                                  .arg(clan->captureCityInProgress)
@@ -3791,7 +3943,6 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint64)player_informations->market_cash;
-    out << (double)player_informations->market_bitcoin;
     int index;
     QList<MarketItem> marketItemList,marketOwnItemList;
     QList<MarketPlayerMonster> marketPlayerMonsterList,marketOwnPlayerMonsterList;
@@ -3800,13 +3951,10 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
     {
         const MarketItem &marketObject=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
-        if(bitcoinEnabled() || marketObject.bitcoin==0)
-        {
-            if(marketObject.player==player_informations->character_id)
-                marketOwnItemList << marketObject;
-            else
-                marketItemList << marketObject;
-        }
+        if(marketObject.player==player_informations->character_id)
+            marketOwnItemList << marketObject;
+        else
+            marketItemList << marketObject;
         index++;
     }
     //monster filter
@@ -3814,13 +3962,10 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
     while(index<GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster &marketPlayerMonster=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(index);
-        if(bitcoinEnabled() || marketPlayerMonster.bitcoin==0)
-        {
-            if(marketPlayerMonster.player==player_informations->character_id)
-                marketOwnPlayerMonsterList << marketPlayerMonster;
-            else
-                marketPlayerMonsterList << marketPlayerMonster;
-        }
+        if(marketPlayerMonster.player==player_informations->character_id)
+            marketOwnPlayerMonsterList << marketPlayerMonster;
+        else
+            marketPlayerMonsterList << marketPlayerMonster;
         index++;
     }
     //object
@@ -3833,7 +3978,6 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
         out << marketObject.item;
         out << marketObject.quantity;
         out << marketObject.cash;
-        out << marketObject.bitcoin;
         index++;
     }
     //monster
@@ -3846,7 +3990,6 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
         out << marketPlayerMonster.monster.monster;
         out << marketPlayerMonster.monster.level;
         out << marketPlayerMonster.cash;
-        out << marketPlayerMonster.bitcoin;
         index++;
     }
     //own object
@@ -3859,7 +4002,6 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
         out << marketObject.item;
         out << marketObject.quantity;
         out << marketObject.cash;
-        out << marketObject.bitcoin;
         index++;
     }
     //own monster
@@ -3872,7 +4014,6 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
         out << marketPlayerMonster.monster.monster;
         out << marketPlayerMonster.monster.level;
         out << marketPlayerMonster.cash;
-        out << marketPlayerMonster.bitcoin;
         index++;
     }
 
@@ -3914,27 +4055,6 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
                 emit postReply(query_id,outputData);
                 return;
             }
-            if(marketItem.bitcoin>0)
-            {
-                if(!bitcoinEnabled())
-                {
-                    emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
-                    return;
-                }
-                if(!playerById.value(marketItem.player)->bitcoinEnabled())
-                {
-                    emit message(QStringLiteral("The other have not the bitcoin enabled to buy their object"));
-                    out << (quint8)0x03;
-                    emit postReply(query_id,outputData);
-                    return;
-                }
-            }
-            if((quantity*marketItem.bitcoin)>player_informations->public_and_private_informations.bitcoin)
-            {
-                out << (quint8)0x03;
-                emit postReply(query_id,outputData);
-                return;
-            }
             //apply the buy
             if(marketItem.quantity==quantity)
             {
@@ -3948,6 +4068,12 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='market'")
+                                     .arg(marketItem.item)
+                                     .arg(marketItem.player)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
                         emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='market'")
                                      .arg(marketItem.item)
                                      .arg(marketItem.player)
@@ -3976,30 +4102,39 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
                                      .arg(marketItem.player)
                                      );
                     break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
+                        emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='market'")
+                                     .arg(marketItem.quantity-quantity)
+                                     .arg(marketItem.item)
+                                     .arg(marketItem.player)
+                                     );
+                    break;
                 }
             }
             removeCash(quantity*marketItem.cash);
-            if(marketItem.bitcoin>0)
-                removeBitcoin(quantity*marketItem.bitcoin);
             if(playerById.contains(marketItem.player))
             {
-                if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash,quantity*marketItem.bitcoin))
+                if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
                     emit message(QStringLiteral("Problem at market cash adding"));
             }
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1,`market_bitcoin`=`market_bitcoin`+%2 WHERE `id`=%3")
+                    emit dbQuery(QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2")
                                  .arg(quantity*marketItem.cash)
-                                 .arg(quantity*marketItem.bitcoin)
                                  .arg(marketItem.player)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QStringLiteral("UPDATE character SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                    emit dbQuery(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
                                  .arg(quantity*marketItem.cash)
-                                 .arg(quantity*marketItem.bitcoin)
+                                 .arg(marketItem.player)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
+                                 .arg(quantity*marketItem.cash)
                                  .arg(marketItem.player)
                                  );
                 break;
@@ -4045,51 +4180,27 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
                 emit postReply(query_id,outputData);
                 return;
             }
-            if(marketPlayerMonster.bitcoin>0)
-            {
-                if(!bitcoinEnabled())
-                {
-                    emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
-                    return;
-                }
-                if(!playerById.value(marketPlayerMonster.player)->bitcoinEnabled())
-                {
-                    emit message(QStringLiteral("The other have not the bitcoin enabled to buy their object"));
-                    out << (quint8)0x03;
-                    emit postReply(query_id,outputData);
-                    return;
-                }
-            }
-            if(marketPlayerMonster.bitcoin>player_informations->public_and_private_informations.bitcoin)
-            {
-                out << (quint8)0x03;
-                emit postReply(query_id,outputData);
-                return;
-            }
             //apply the buy
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
             removeCash(marketPlayerMonster.cash);
-            if(marketPlayerMonster.bitcoin>0)
-                removeBitcoin(marketPlayerMonster.bitcoin);
-            if(playerById.contains(marketPlayerMonster.player))
-            {
-                if(!playerById.value(marketPlayerMonster.player)->addMarketCashWithoutSave(marketPlayerMonster.cash,marketPlayerMonster.bitcoin))
-                    emit message(QStringLiteral("Problem at market cash adding"));
-            }
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1,`market_bitcoin`=`market_bitcoin`+%2 WHERE `id`=%3")
+                    emit dbQuery(QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2")
                                  .arg(marketPlayerMonster.cash)
-                                 .arg(marketPlayerMonster.bitcoin)
                                  .arg(marketPlayerMonster.player)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QStringLiteral("UPDATE character SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                    emit dbQuery(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
                                  .arg(marketPlayerMonster.cash)
-                                 .arg(marketPlayerMonster.bitcoin)
+                                 .arg(marketPlayerMonster.player)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
+                                 .arg(marketPlayerMonster.cash)
                                  .arg(marketPlayerMonster.player)
                                  );
                 break;
@@ -4112,6 +4223,13 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
                                  .arg(marketPlayerMonster.monster.id)
                                  );
                 break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("UPDATE monster SET place='wear',character=%1,position=%2 WHERE id=%3")
+                                 .arg(player_informations->character_id)
+                                 .arg(localClientHandlerFight.getPlayerMonster().size())
+                                 .arg(marketPlayerMonster.monster.id)
+                                 );
+                break;
             }
             out << (quint8)0x01;
             emit postReply(query_id,outputData);
@@ -4123,16 +4241,11 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
     emit postReply(query_id,outputData);
 }
 
-void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin)
+void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
         emit error(QStringLiteral("You can't use the market in trade/fight"));
-        return;
-    }
-    if(!bitcoinEnabled() && bitcoin>0)
-    {
-        emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
         return;
     }
     if(quantity<=0)
@@ -4158,7 +4271,6 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
         {
             removeObject(objectId,quantity);
             GlobalServerData::serverPrivateVariables.marketItemList[index].cash=price;
-            GlobalServerData::serverPrivateVariables.marketItemList[index].bitcoin=bitcoin;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
             out << (quint8)0x01;
             emit postReply(query_id,outputData);
@@ -4166,19 +4278,25 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QStringLiteral("UPDATE item SET `quantity`=%1,`market_price`=%2,`market_bitcoin`=%3 WHERE `item`=%4 AND `character`=%5 AND `place`='market';")
+                    emit dbQuery(QStringLiteral("UPDATE item SET `quantity`=%1,`market_price`=%2 WHERE `item`=%3 AND `character`=%4 AND `place`='market';")
                                  .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                                  .arg(price)
-                                 .arg(bitcoin)
                                  .arg(marketItem.item)
                                  .arg(marketItem.player)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1,market_price=%2,market_bitcoin=%3 WHERE item=%4 AND character=%5 AND place='market';")
+                    emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4 AND place='market';")
                                  .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                                  .arg(price)
-                                 .arg(bitcoin)
+                                 .arg(marketItem.item)
+                                 .arg(marketItem.player)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4 AND place='market';")
+                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
+                                 .arg(price)
                                  .arg(marketItem.item)
                                  .arg(marketItem.player)
                                  );
@@ -4201,26 +4319,31 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`,`place`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,'market',%4,%5);")
+            emit dbQuery(QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`,`place`,`market_price`) VALUES(%1,%2,%3,'market',%4);")
                          .arg(objectId)
                          .arg(player_informations->character_id)
                          .arg(quantity)
                          .arg(price)
-                         .arg(bitcoin)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QStringLiteral("INSERT INTO item(item,character,quantity,place,market_price,market_bitcoin) VALUES(%1,%2,%3,'market',%4,%5);")
+            emit dbQuery(QStringLiteral("INSERT INTO item(item,character,quantity,place,market_price) VALUES(%1,%2,%3,'market',%4);")
                          .arg(objectId)
                          .arg(player_informations->character_id)
                          .arg(quantity)
                          .arg(price)
-                         .arg(bitcoin)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            emit dbQuery(QStringLiteral("INSERT INTO item(item,character,quantity,place,market_price) VALUES(%1,%2,%3,'market',%4);")
+                         .arg(objectId)
+                         .arg(player_informations->character_id)
+                         .arg(quantity)
+                         .arg(price)
                          );
         break;
     }
     MarketItem marketItem;
-    marketItem.bitcoin=bitcoin;
     marketItem.cash=price;
     marketItem.item=objectId;
     marketItem.marketObjectId=marketObjectIdList.first();
@@ -4232,16 +4355,11 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
     emit postReply(query_id,outputData);
 }
 
-void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price,const double &bitcoin)
+void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price)
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
     {
         emit error(QStringLiteral("You can't use the market in trade/fight"));
-        return;
-    }
-    if(!bitcoinEnabled() && bitcoin>0)
-    {
-        emit error(QStringLiteral("Try put in bitcoin but don't have bitcoin access"));
         return;
     }
     QByteArray outputData;
@@ -4261,7 +4379,6 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
                 return;
             }
             MarketPlayerMonster marketPlayerMonster;
-            marketPlayerMonster.bitcoin=bitcoin;
             marketPlayerMonster.cash=price;
             marketPlayerMonster.monster=playerMonster;
             marketPlayerMonster.player=player_informations->character_id;
@@ -4271,16 +4388,20 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QStringLiteral("UPDATE `monster` SET `place`='market',`market_price`=%1,`market_bitcoin`=%2 WHERE `id`=%3;")
+                    emit dbQuery(QStringLiteral("UPDATE `monster` SET `place`='market',`market_price`=%1 WHERE `id`=%2;")
                                  .arg(price)
-                                 .arg(bitcoin)
                                  .arg(monsterId)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QStringLiteral("UPDATE monster SET place='market',market_price=%1,market_bitcoin=%2 WHERE id=%3;")
+                    emit dbQuery(QStringLiteral("UPDATE monster SET place='market',market_price=%1 WHERE id=%2;")
                                  .arg(price)
-                                 .arg(bitcoin)
+                                 .arg(monsterId)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                    emit dbQuery(QStringLiteral("UPDATE monster SET place='market',market_price=%1 WHERE id=%2;")
+                                 .arg(price)
                                  .arg(monsterId)
                                  );
                 break;
@@ -4303,6 +4424,12 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
                                      .arg(playerMonster.id)
                                      );
                     break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
+                        emit dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
+                                     .arg(index+1)
+                                     .arg(playerMonster.id)
+                                     );
+                    break;
                 }
                 index++;
             }
@@ -4316,11 +4443,6 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
     emit postReply(query_id,outputData);
 }
 
-bool LocalClientHandler::bitcoinEnabled() const
-{
-    return GlobalServerData::serverPrivateVariables.bitcoin.enabled && player_informations->public_and_private_informations.bitcoin>=0;
-}
-
 void LocalClientHandler::recoverMarketCash(const quint32 &query_id)
 {
     if(getInTrade() || localClientHandlerFight.isInFight())
@@ -4328,59 +4450,34 @@ void LocalClientHandler::recoverMarketCash(const quint32 &query_id)
         emit error(QStringLiteral("You can't use the market in trade/fight"));
         return;
     }
-    bool bitcoin_enabled=bitcoinEnabled();
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint64)player_informations->market_cash;
-    if(bitcoin_enabled)
-    {
-        if(player_informations->market_bitcoin>=0)
-            emit message(QStringLiteral("Get %1 bitcoin from the market").arg(player_informations->market_bitcoin));
-        out << (double)player_informations->market_bitcoin;
-        player_informations->public_and_private_informations.bitcoin+=player_informations->market_bitcoin;
-        player_informations->market_bitcoin=0;
-    }
-    else
-        out << (double)0;
     player_informations->public_and_private_informations.cash+=player_informations->market_cash;
     player_informations->market_cash=0;
-    if(bitcoin_enabled)
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("UPDATE `character` SET `cash`=%1,`bitcoin`=%2,`market_cash`=0,`market_bitcoin`=0 WHERE `id`=%3;")
-                             .arg(player_informations->public_and_private_informations.cash)
-                             .arg(player_informations->public_and_private_informations.bitcoin)
-                             .arg(player_informations->character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("UPDATE character SET cash=%1,bitcoin=%2,market_cash=0,market_bitcoin=0 WHERE id=%3;")
-                             .arg(player_informations->public_and_private_informations.cash)
-                             .arg(player_informations->public_and_private_informations.bitcoin)
-                             .arg(player_informations->character_id)
-                             );
-            break;
-        }
-    else
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("UPDATE `character` SET `cash`=%1,`market_cash`=0,`market_bitcoin`=0 WHERE `id`=%2;")
-                             .arg(player_informations->public_and_private_informations.cash)
-                             .arg(player_informations->character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("UPDATE character SET cash=%1,market_cash=0,market_bitcoin=0 WHERE id=%2;")
-                             .arg(player_informations->public_and_private_informations.cash)
-                             .arg(player_informations->character_id)
-                             );
-            break;
-        }
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QStringLiteral("UPDATE `character` SET `cash`=%1,`market_cash`=0 WHERE `id`=%2;")
+                         .arg(player_informations->public_and_private_informations.cash)
+                         .arg(player_informations->character_id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;")
+                         .arg(player_informations->public_and_private_informations.cash)
+                         .arg(player_informations->character_id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            emit dbQuery(QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;")
+                         .arg(player_informations->public_and_private_informations.cash)
+                         .arg(player_informations->character_id)
+                         );
+        break;
+    }
     emit postReply(query_id,outputData);
 }
 
@@ -4441,6 +4538,12 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
                                      .arg(player_informations->character_id)
                                      );
                     break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
+                        emit dbQuery(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2 AND place='market'")
+                                     .arg(objectId)
+                                     .arg(player_informations->character_id)
+                                     );
+                    break;
                 }
             }
             else
@@ -4456,6 +4559,13 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='market'")
+                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
+                                     .arg(objectId)
+                                     .arg(player_informations->character_id)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
                         emit dbQuery(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='market'")
                                      .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                                      .arg(objectId)
@@ -4514,6 +4624,12 @@ void LocalClientHandler::withdrawMarketMonster(const quint32 &query_id,const qui
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QStringLiteral("UPDATE monster SET place='wear',position=%1 WHERE id=%2;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster.size())
+                                 .arg(player_informations->public_and_private_informations.playerMonster.last().id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_PostgreSQL:
                     emit dbQuery(QStringLiteral("UPDATE monster SET place='wear',position=%1 WHERE id=%2;")
                                  .arg(player_informations->public_and_private_informations.playerMonster.size())
                                  .arg(player_informations->public_and_private_informations.playerMonster.last().id)

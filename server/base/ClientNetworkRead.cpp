@@ -1516,9 +1516,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                         parseError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                         return;
                     }
-                    double bitcoin;
-                    in >> bitcoin;
-                    emit putMarketObject(queryNumber,objectId,quantity,price,bitcoin);
+                    emit putMarketObject(queryNumber,objectId,quantity,price);
                 }
                 else
                 {
@@ -1541,9 +1539,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                         parseError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                         return;
                     }
-                    double bitcoin;
-                    in >> bitcoin;
-                    emit putMarketMonster(queryNumber,monsterId,price,bitcoin);
+                    emit putMarketMonster(queryNumber,monsterId,price);
                 }
             }
             break;

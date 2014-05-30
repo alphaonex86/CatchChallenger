@@ -192,6 +192,16 @@ void ClientLocalBroadcast::seedValidated()
                      .arg(current_time)
                      );
         break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            emit dbQuery(QStringLiteral("INSERT INTO plant(map,x,y,plant,character,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
+                     .arg(SqlFunction::quoteSqlVariable(map_file))
+                     .arg(plantOnMap.x)
+                     .arg(plantOnMap.y)
+                     .arg(plantOnMap.plant)
+                     .arg(player_informations->character_id)
+                     .arg(current_time)
+                     );
+        break;
     }
 
     //send to all player
@@ -434,6 +444,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QStringLiteral("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
+                                 .arg(SqlFunction::quoteSqlVariable(map_file))
+                                 .arg(x)
+                                 .arg(y)
+                                 );
+                    break;
+                    case ServerSettings::Database::DatabaseType_PostgreSQL:
                         emit dbQuery(QStringLiteral("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
                                  .arg(SqlFunction::quoteSqlVariable(map_file))
                                  .arg(x)
