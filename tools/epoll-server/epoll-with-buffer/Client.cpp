@@ -21,6 +21,7 @@ void Client::close()
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
+        epoll_ctl(epfd, EPOLL_CTL_DEL, infd, NULL);
         ::close(infd);
         printf("Closed connection on descriptor %d\n",infd);
         infd=-1;

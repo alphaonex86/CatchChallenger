@@ -66,6 +66,8 @@ bool Server::tryListen(char *port)
         perror("can't put in non blocking");
         return false;
     }
+    if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
+    abort ();
 
     s = listen(sfd, SOMAXCONN);
     if(s == -1)

@@ -1193,7 +1193,7 @@ quint32 LocalClientHandlerFight::catchAWild(const bool &toStorage, const PlayerM
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
             emit dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`) VALUES(%1,%2);")
-                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
+                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
                               .arg(monster_id)
                               .arg(newMonster.hp)
                               .arg(player_informations->character_id)
@@ -1214,7 +1214,7 @@ quint32 LocalClientHandlerFight::catchAWild(const bool &toStorage, const PlayerM
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             emit dbQuery(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,place,position) VALUES(%1,%2);")
-                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
+                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
                               .arg(monster_id)
                               .arg(newMonster.hp)
                               .arg(player_informations->character_id)
@@ -1235,7 +1235,7 @@ quint32 LocalClientHandlerFight::catchAWild(const bool &toStorage, const PlayerM
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
             emit dbQuery(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,place,position) VALUES(%1,%2);")
-                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
+                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
                               .arg(monster_id)
                               .arg(newMonster.hp)
                               .arg(player_informations->character_id)
