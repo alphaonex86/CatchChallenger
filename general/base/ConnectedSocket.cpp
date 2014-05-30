@@ -3,8 +3,10 @@
 
 using namespace CatchChallenger;
 
-ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
-    QIODevice(parent),
+ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    epollSocket(NULL),
+    #endif
     fakeSocket(socket),
     sslSocket(NULL)
 {
@@ -17,8 +19,10 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
-ConnectedSocket::ConnectedSocket(QSslSocket *socket,QObject *parent) :
-    QIODevice(parent),
+ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    epollSocket(NULL),
+    #endif
     fakeSocket(NULL),
     sslSocket(socket)
 {
@@ -35,8 +39,26 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket,QObject *parent) :
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifndef SERVERNOSSL
+ConnectedSocket::ConnectedSocket(EpollSslClient *socket) :
+#else
+ConnectedSocket::ConnectedSocket(EpollClient *socket) :
+#endif
+    epollSocket(socket),
+    fakeSocket(NULL),
+    sslSocket(NULL)
+{
+    open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+}
+#endif
+
 ConnectedSocket::~ConnectedSocket()
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+        delete epollSocket;
+    #endif
     if(sslSocket!=NULL)
     {
         QSslSocket *sslSocket=this->sslSocket;
@@ -69,6 +91,9 @@ void ConnectedSocket::encrypted()
 
 void ConnectedSocket::destroyedSocket()
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    epollSocket=NULL;
+    #endif
     sslSocket=NULL;
     fakeSocket=NULL;
 }
@@ -106,6 +131,10 @@ void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
 
 void ConnectedSocket::disconnectFromHost()
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+        epollSocket->close();
+    #endif
     if(fakeSocket!=NULL)
         fakeSocket->disconnectFromHost();
     if(sslSocket!=NULL)
@@ -132,6 +161,10 @@ bool ConnectedSocket::flush()
 
 bool ConnectedSocket::isValid() const
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+        return epollSocket->isValid();
+    #endif
     if(fakeSocket!=NULL)
         return fakeSocket->isValid();
     if(sslSocket!=NULL)
@@ -182,6 +215,15 @@ quint16	ConnectedSocket::peerPort() const
 
 QAbstractSocket::SocketState ConnectedSocket::state() const
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+    {
+        if(epollSocket->isValid())
+            return QAbstractSocket::ConnectedState;
+        else
+            return QAbstractSocket::UnconnectedState;
+    }
+    #endif
     if(fakeSocket!=NULL)
         return fakeSocket->state();
     if(sslSocket!=NULL)
@@ -209,6 +251,10 @@ bool ConnectedSocket::waitForDisconnected(int msecs)
 
 qint64 ConnectedSocket::bytesAvailable() const
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+        return epollSocket->bytesAvailable();
+    #endif
     if(fakeSocket!=NULL)
         return fakeSocket->bytesAvailable();
     if(sslSocket!=NULL)
@@ -223,6 +269,10 @@ qint64 ConnectedSocket::bytesAvailable() const
 
 QIODevice::OpenMode ConnectedSocket::openMode() const
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+        return QIODevice::ReadWrite;
+    #endif
     if(fakeSocket!=NULL)
         return fakeSocket->openMode();
     if(sslSocket!=NULL)
@@ -246,6 +296,10 @@ void ConnectedSocket::close()
 
 qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+        return epollSocket->read(data,maxSize);
+    #endif
     if(fakeSocket!=NULL)
         return fakeSocket->read(data,maxSize);
     if(sslSocket!=NULL)
@@ -260,6 +314,10 @@ qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 
 qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(epollSocket!=NULL)
+        return epollSocket->write(const_cast<char *>(data),maxSize);
+    #endif
     if(fakeSocket!=NULL)
         return fakeSocket->write(data,maxSize);
     if(sslSocket!=NULL)

@@ -119,6 +119,8 @@ private:
     static QString text_space;
     static QString text_0;
     static QString text_1;
+    static QString text_false;
+    static QString text_true;
     static QString text_take;
     static QString text_tp;
     static QString text_trade;
@@ -142,11 +144,9 @@ public slots:
     quint32 removeObject(const quint32 &item,const quint32 &quantity=1);
     void sendRemoveObject(const quint32 &item,const quint32 &quantity=1);
     quint32 objectQuantity(const quint32 &item);
-    bool addMarketCashWithoutSave(const quint64 &cash,const double &bitcoin);
+    bool addMarketCashWithoutSave(const quint64 &cash);
     void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);
-    void addBitcoin(const double &bitcoin);
-    void removeBitcoin(const double &bitcoin);
     void addWarehouseCash(const quint64 &cash,const bool &forceSave=false);
     void removeWarehouseCash(const quint64 &cash);
     void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
@@ -228,9 +228,8 @@ public slots:
     void getMarketList(const quint32 &query_id);
     void buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity);
     void buyMarketMonster(const quint32 &query_id,const quint32 &monsterId);
-    void putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin);
-    void putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price,const double &bitcoin);
-    bool bitcoinEnabled() const;
+    void putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void putMarketMonster(const quint32 &query_id, const quint32 &monsterId, const quint32 &price);
     void recoverMarketCash(const quint32 &query_id);
     void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);

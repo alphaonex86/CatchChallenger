@@ -7,13 +7,10 @@
 
 using namespace CatchChallenger;
 
-void BaseWindow::marketList(const quint64 &price,const double &bitcoin,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList)
+void BaseWindow::marketList(const quint64 &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList)
 {
     ui->marketWithdraw->setVisible(true);
-    if(this->bitcoin>=0)
-        ui->marketStat->setText(tr("Cash to withdraw: %1$, %2&#3647;").arg(price).arg(bitcoin));
-    else
-        ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(price));
+    ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(price));
     int index;
     //the object list
     ui->marketObject->clear();
@@ -34,14 +31,9 @@ void BaseWindow::marketList(const quint64 &price,const double &bitcoin,const QLi
         QListWidgetItem *item=new QListWidgetItem();
         item->setData(99,marketMonster.monsterId);
         item->setData(98,marketMonster.price);
-        item->setData(97,marketMonster.bitcoin);
         item->setData(96,marketMonster.level);
         QString price;
-        if(marketMonster.bitcoin>0 && marketMonster.price>0)
-            price=tr("Price: %1$, %2&#3647;").arg(marketMonster.price).arg(marketMonster.bitcoin);
-        else if(marketMonster.bitcoin>0)
-            price=tr("Price: %1&#3647;").arg(marketMonster.bitcoin);
-        else if(marketMonster.price>0)
+        if(marketMonster.price>0)
             price=tr("Price: %1$").arg(marketMonster.price);
         else
             price=tr("Price: Free");
@@ -84,13 +76,8 @@ void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
     QListWidgetItem *item=new QListWidgetItem();
     item->setData(99,marketMonster.monsterId);
     item->setData(98,marketMonster.price);
-    item->setData(97,marketMonster.bitcoin);
     QString price;
-    if(marketMonster.bitcoin>0 && marketMonster.price>0)
-        price=tr("Price: %1$, %2&#3647;").arg(marketMonster.price).arg(marketMonster.bitcoin);
-    else if(marketMonster.bitcoin>0)
-        price=tr("Price: %1&#3647;").arg(marketMonster.bitcoin);
-    else if(marketMonster.price>0)
+    if(marketMonster.price>0)
         price=tr("Price: %1$").arg(marketMonster.price);
     else
         price=tr("Price: Free");
@@ -114,7 +101,6 @@ void BaseWindow::marketBuy(const bool &success)
     if(!success)
     {
         addCash(marketBuyCashInSuspend);
-        addBitcoin(marketBuyBitcoinInSuspend);
         marketBuyObjectList.removeFirst();
         QMessageBox::warning(this,tr("Warning"),tr("Your buy in the market have failed"));
     }
@@ -126,7 +112,6 @@ void BaseWindow::marketBuy(const bool &success)
         marketBuyObjectList.removeFirst();
     }
     marketBuyCashInSuspend=0;
-    marketBuyBitcoinInSuspend=0;
 }
 
 void BaseWindow::marketBuyMonster(const PlayerMonster &playerMonster)
@@ -136,7 +121,6 @@ void BaseWindow::marketBuyMonster(const PlayerMonster &playerMonster)
     ClientFightEngine::fightEngine.addPlayerMonster(playerMonster);
     load_monsters();
     marketBuyCashInSuspend=0;
-    marketBuyBitcoinInSuspend=0;
 }
 
 void BaseWindow::marketPut(const bool &success)
@@ -157,7 +141,6 @@ void BaseWindow::marketPut(const bool &success)
         if(!marketPutMonsterList.isEmpty())
         {
             MarketMonster marketMonster;
-            marketMonster.bitcoin=marketPutBitcoinInSuspend;
             marketMonster.price=marketPutCashInSuspend;
             marketMonster.level=marketPutMonsterList.first().level;
             marketMonster.monster=marketPutMonsterList.first().monster;
@@ -167,7 +150,6 @@ void BaseWindow::marketPut(const bool &success)
         if(!marketPutObjectInSuspendList.isEmpty())
         {
             MarketObject marketObject;
-            marketObject.bitcoin=marketPutBitcoinInSuspend;
             marketObject.price=marketPutCashInSuspend;
             marketObject.marketObjectId=0;
             marketObject.objectId=marketPutObjectInSuspendList.first().first;
@@ -178,20 +160,15 @@ void BaseWindow::marketPut(const bool &success)
         }
     }
     marketPutCashInSuspend=0;
-    marketPutBitcoinInSuspend=0;
     marketPutObjectInSuspendList.clear();
     marketPutMonsterList.clear();
     marketPutMonsterPlaceList.clear();
 }
 
-void BaseWindow::marketGetCash(const quint64 &cash,const double &bitcoin)
+void BaseWindow::marketGetCash(const quint64 &cash)
 {
     addCash(cash);
-    addBitcoin(bitcoin);
-    if(this->bitcoin>=0)
-        ui->marketStat->setText(tr("Cash to withdraw: %1$, %2&#3647;").arg(0).arg(0));
-    else
-        ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(0));
+    ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(0));
 }
 
 void BaseWindow::marketWithdrawCanceled()
@@ -251,14 +228,9 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
     item->setData(99,marketObject.marketObjectId);
     item->setData(98,marketObject.quantity);
     item->setData(97,marketObject.price);
-    item->setData(96,marketObject.bitcoin);
     item->setData(95,marketObject.objectId);
     QString price;
-    if(marketObject.bitcoin>0 && marketObject.price>0)
-        price=tr("Price: %1$, %2&#3647;").arg(marketObject.price).arg(marketObject.bitcoin);
-    else if(marketObject.bitcoin>0)
-        price=tr("Price: %1&#3647;").arg(marketObject.bitcoin);
-    else if(marketObject.price>0)
+    if(marketObject.price>0)
         price=tr("Price: %1$").arg(marketObject.price);
     else
         price=tr("Price: Free");
@@ -286,23 +258,12 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
         return;
     }
     quint32 priceQuantity;
-    quint32 bitcoinQuantity;
     if(item->data(97).toUInt()>0)
         priceQuantity=cash/item->data(97).toUInt();
     else
         priceQuantity=item->data(98).toUInt();
-    if(item->data(96).toDouble()>0)
-        bitcoinQuantity=bitcoin/item->data(96).toUInt();
-    else
-        bitcoinQuantity=item->data(98).toUInt();
     if(priceQuantity>item->data(98).toUInt())
         priceQuantity=item->data(98).toUInt();
-    if(bitcoinQuantity>item->data(98).toUInt())
-        bitcoinQuantity=item->data(98).toUInt();
-    if(priceQuantity>bitcoinQuantity)
-        priceQuantity=bitcoinQuantity;
-    if(bitcoinQuantity>priceQuantity)
-        bitcoinQuantity=priceQuantity;
     quint32 quantity=priceQuantity;
     if(quantity==0)
     {
@@ -323,9 +284,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
     marketBuyObjectList << newEntry;
     marketBuyInSuspend=true;
     marketBuyCashInSuspend=quantity*item->data(97).toUInt();
-    marketBuyBitcoinInSuspend=quantity*item->data(96).toDouble();
     removeCash(marketBuyCashInSuspend);
-    removeBitcoin(marketBuyBitcoinInSuspend);
     item->setData(98,item->data(98).toUInt()-quantity);
     if(item->data(98).toUInt()==0)
         delete item;
@@ -335,7 +294,6 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
         marketObject.marketObjectId=item->data(99).toUInt();
         marketObject.quantity=item->data(98).toUInt();
         marketObject.price=item->data(97).toUInt();
-        marketObject.bitcoin=item->data(96).toDouble();
         marketObject.objectId=item->data(95).toUInt();
         updateMarketObject(item,marketObject);
     }
@@ -362,7 +320,6 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
     marketObject.marketObjectId=item->data(99).toUInt();
     marketObject.quantity=item->data(98).toUInt();
     marketObject.price=item->data(97).toUInt();
-    marketObject.bitcoin=item->data(96).toDouble();
     marketObject.objectId=item->data(95).toUInt();
     marketWithdrawObjectList << marketObject;
     item->setData(98,item->data(98).toUInt()-quantity);
@@ -380,28 +337,15 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
         return;
     }
     quint32 priceQuantity;
-    quint32 bitcoinQuantity;
     if(item->data(98).toUInt()>0)
         priceQuantity=cash/item->data(98).toUInt();
     else
         priceQuantity=1;
-    if(item->data(97).toDouble()>0)
-        bitcoinQuantity=bitcoin/item->data(97).toUInt();
-    else
-        bitcoinQuantity=1;
     if(priceQuantity>1)
         priceQuantity=1;
-    if(bitcoinQuantity>1)
-        bitcoinQuantity=1;
-    if(priceQuantity>bitcoinQuantity)
-        priceQuantity=bitcoinQuantity;
-    if(bitcoinQuantity>priceQuantity)
-        bitcoinQuantity=priceQuantity;
     quint32 quantity=priceQuantity;
     marketBuyCashInSuspend=item->data(98).toUInt();
-    marketBuyBitcoinInSuspend=item->data(97).toDouble();
     removeCash(marketBuyCashInSuspend);
-    removeBitcoin(marketBuyBitcoinInSuspend);
     if(quantity==0)
     {
         QMessageBox::warning(this,tr("Error"),tr("Have not cash to buy it"));
@@ -426,7 +370,6 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
     CatchChallenger::MarketMonster playerMonster;
     playerMonster.monster=item->data(99).toUInt();
     playerMonster.price=item->data(98).toUInt();
-    playerMonster.bitcoin=item->data(97).toDouble();
     playerMonster.level=item->data(96).toUInt();
     marketWithdrawMonsterList << playerMonster;
     CatchChallenger::Api_client_real::client->withdrawMarketMonster(item->data(99).toUInt());

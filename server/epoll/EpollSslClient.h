@@ -23,6 +23,8 @@ public:
     void flush();
     #endif
     Type getType() const;
+    bool isValid() const;
+    long int bytesAvailable() const;
 private:
     static char rawbuf[BUFFER_MAX_SIZE];
 private:

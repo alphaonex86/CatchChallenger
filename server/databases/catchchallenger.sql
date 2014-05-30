@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `account` (
   `email` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
 
 -- --------------------------------------------------------
 
@@ -37,19 +37,6 @@ CREATE TABLE IF NOT EXISTS `account_register` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `login_2` (`login`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `bitcoin_history`
---
-
-CREATE TABLE IF NOT EXISTS `bitcoin_history` (
-  `character` int(11) NOT NULL,
-  `date` int(11) NOT NULL,
-  `change` double NOT NULL,
-  `reason` text NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -92,8 +79,6 @@ CREATE TABLE IF NOT EXISTS `character` (
   `allow` text NOT NULL,
   `clan_leader` tinyint(1) NOT NULL,
   `date` int(11) unsigned NOT NULL,
-  `bitcoin_offset` double NOT NULL,
-  `market_bitcoin` double NOT NULL,
   `cash` bigint(20) unsigned NOT NULL,
   `warehouse_cash` bigint(20) unsigned NOT NULL,
   `market_cash` bigint(20) unsigned NOT NULL,
@@ -106,7 +91,7 @@ CREATE TABLE IF NOT EXISTS `character` (
   UNIQUE KEY `pseudo_2` (`pseudo`),
   KEY `clan` (`clan`),
   KEY `account` (`account`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
 
 -- --------------------------------------------------------
 
@@ -160,7 +145,6 @@ CREATE TABLE IF NOT EXISTS `item` (
   `quantity` int(11) unsigned NOT NULL,
   `place` enum('wear','warehouse','market') NOT NULL,
   `market_price` bigint(20) unsigned NOT NULL,
-  `market_bitcoin` double unsigned NOT NULL,
   PRIMARY KEY (`item`,`character`,`place`),
   KEY `player_id` (`character`),
   KEY `place` (`place`)
@@ -187,11 +171,10 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `place` enum('wear','warehouse','market') NOT NULL,
   `position` tinyint(3) unsigned NOT NULL,
   `market_price` bigint(20) unsigned NOT NULL,
-  `market_bitcoin` double unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `player` (`character`),
   KEY `place` (`place`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
 
 -- --------------------------------------------------------
 
@@ -229,14 +212,15 @@ CREATE TABLE IF NOT EXISTS `monster_skill` (
 --
 
 CREATE TABLE IF NOT EXISTS `plant` (
-  `map` varchar(64) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `map` text NOT NULL,
   `x` tinyint(3) unsigned NOT NULL,
   `y` tinyint(3) unsigned NOT NULL,
   `plant` tinyint(3) unsigned NOT NULL,
   `character` int(11) NOT NULL,
   `plant_timestamps` int(11) unsigned NOT NULL,
-  PRIMARY KEY (`map`,`x`,`y`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=6 ;
 
 -- --------------------------------------------------------
 
@@ -256,10 +240,10 @@ CREATE TABLE IF NOT EXISTS `quest` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `recipes`
+-- Table structure for table `recipe`
 --
 
-CREATE TABLE IF NOT EXISTS `recipes` (
+CREATE TABLE IF NOT EXISTS `recipe` (
   `character` int(11) NOT NULL,
   `recipe` smallint(5) unsigned NOT NULL,
   PRIMARY KEY (`character`,`recipe`),
@@ -277,5 +261,6 @@ CREATE TABLE IF NOT EXISTS `reputation` (
   `type` varchar(16) NOT NULL,
   `point` bigint(20) NOT NULL,
   `level` tinyint(4) NOT NULL,
-  PRIMARY KEY (`character`,`type`)
+  PRIMARY KEY (`character`,`type`),
+  KEY `character` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

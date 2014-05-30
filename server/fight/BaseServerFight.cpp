@@ -47,6 +47,9 @@ void BaseServerFight::load_monsters_max_id()
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
+        break;
     }
     QSqlQuery maxMonsterIdQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!maxMonsterIdQuery.exec(queryText))
