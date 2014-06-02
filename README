@@ -21,19 +21,28 @@ Is into 3 part: server, client, datapack.
 ====================================================
 Compiling
 
-Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvorbis/libogg for the client, Qt5
+Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvorbis/libogg/libvlc for the client, Qt5
+For the server: db, db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
 For the Gui server:
 cd server/
 qmake catchchallenger-server-gui.pro
 make
+git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 For the CLI server:
 cd server/
 qmake catchchallenger-server-cli.pro
 make
+git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+For the Epoll server (linux only):
+cd server/
+qmake catchchallenger-server-epoll.pro
+make
+git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 For the game solo:
 cd client/single-player/
 qmake *.pro
 make
+git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 For the MMORPG game:
 cd client/single-server/
 qmake *.pro
@@ -41,7 +50,8 @@ make
 
 Assemble it, for the SERVER AND GAME SOLO put the datapack from:
 https://github.com/alphaonex86/datapack
-near the application.
+near the application, you nead have then: CatchChallenger-application(.exe), the datapack -> then datapack/informations.xml
+See the compiled example for windows, you need follow the same organisation for the other OS.
 
 ======================================================
 Server:
