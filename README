@@ -52,6 +52,14 @@ Assemble it, for the SERVER AND GAME SOLO put the datapack from:
 https://github.com/alphaonex86/datapack
 near the application, you nead have then: CatchChallenger-application(.exe), the datapack -> then datapack/informations.xml
 See the compiled example for windows, you need follow the same organisation for the other OS.
+Under linux I have for the server:
+/home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/catchchallenger-server-gui (application)
+/home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/datapack/ (datapack)
+/home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/datapack/informations.xml (datapack informations)
+Under linux I have for the single player game:
+/home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/catchchallenger-single-player (application)
+/home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/datapack/ (datapack)
+/home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/datapack/informations.xml (datapack informations)
 
 ======================================================
 Server:
