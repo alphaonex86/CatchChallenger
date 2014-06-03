@@ -10,6 +10,7 @@ class MapServerCrafting
 public:
     struct PlantOnMap
     {
+        quint32 id;
         quint8 x;
         quint8 y;
         quint8 plant;//plant id

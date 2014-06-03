@@ -95,13 +95,8 @@ BaseServer::BaseServer() :
 
     GlobalServerData::serverSettings.httpDatapackMirror                         = QString();
     GlobalServerData::serverSettings.datapackCache                              = -1;
-    #ifdef Q_OS_LINUX
-    GlobalServerData::serverSettings.linuxSettings.tcpCork                      = true;
-    #endif
 
     GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QLatin1String("/datapack/");
-    GlobalServerData::serverSettings.server_ip                                  = QString();
-    GlobalServerData::serverSettings.server_port                                = 42489;
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.anonymous                                  = false;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
@@ -1988,7 +1983,7 @@ bool BaseServer::check_if_now_stopped()
     return true;
 }
 
-void BaseServer::setSettings(ServerSettings settings)
+void BaseServer::setSettings(const ServerSettings &settings)
 {
     //load it
     GlobalServerData::serverSettings=settings;
@@ -1996,7 +1991,7 @@ void BaseServer::setSettings(ServerSettings settings)
     loadAndFixSettings();
 }
 
-ServerSettings BaseServer::getSettings()
+ServerSettings BaseServer::getSettings() const
 {
     return GlobalServerData::serverSettings;
 }
@@ -2037,10 +2032,6 @@ void BaseServer::loadAndFixSettings()
     if(CommonSettings::commonSettings.character_delete_time<=0)
         CommonSettings::commonSettings.character_delete_time=7*24*3600;
 
-    if(GlobalServerData::serverSettings.server_port<=0)
-        GlobalServerData::serverSettings.server_port=42489;
-    if(GlobalServerData::serverSettings.proxy_port<=0)
-        GlobalServerData::serverSettings.proxy=QString();
     if(GlobalServerData::serverSettings.datapackCache<-1)
         GlobalServerData::serverSettings.datapackCache=-1;
     if(!GlobalServerData::serverSettings.httpDatapackMirror.contains(QRegularExpression("^https?://[0-9a-z]")))

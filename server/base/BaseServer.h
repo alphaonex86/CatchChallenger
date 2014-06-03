@@ -41,8 +41,8 @@ class BaseServer : public QObject, public BaseServerCrafting, public BaseServerF
 public:
     explicit BaseServer();
     virtual ~BaseServer();
-    void setSettings(ServerSettings settings);
-    ServerSettings getSettings();
+    void setSettings(const ServerSettings &settings);
+    ServerSettings getSettings() const;
     //stat function
     virtual bool isListen();
     virtual bool isStopped();

@@ -263,7 +263,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
     }
     if(error!=QAbstractSocket::RemoteHostClosedError)
     {
-        normalOutput(QStringLiteral("error detected for the client: %1").arg(error));
+        normalOutput(QStringLiteral("error detected for the client: %1 %2").arg(error).arg(socket->errorString()));
         socket->disconnectFromHost();
     }
 }

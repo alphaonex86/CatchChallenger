@@ -1,5 +1,8 @@
 #include "ConnectedSocket.h"
 #include <QSslSocket>
+#include <unistd.h>
+#include <iostream>
+#include <fcntl.h>
 
 using namespace CatchChallenger;
 
@@ -8,7 +11,8 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
     epollSocket(NULL),
     #endif
     fakeSocket(socket),
-    sslSocket(NULL)
+    sslSocket(NULL),
+    tcpSocket(NULL)
 {
     connect(socket,&QFakeSocket::destroyed,     this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
     connect(socket,&QFakeSocket::connected,     this,&ConnectedSocket::connected,Qt::QueuedConnection);
@@ -24,18 +28,39 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
     epollSocket(NULL),
     #endif
     fakeSocket(NULL),
-    sslSocket(socket)
+    sslSocket(socket),
+    tcpSocket(NULL)
 {
     socket->setSocketOption(QAbstractSocket::KeepAliveOption,1);
     connect(socket,&QSslSocket::readyRead,      this,&ConnectedSocket::readyRead,Qt::DirectConnection);
-    connect(socket,&QSslSocket::encrypted,      this,&ConnectedSocket::encrypted,Qt::QueuedConnection);
+    connect(socket,&QSslSocket::encrypted,      this,&ConnectedSocket::purgeBuffer,Qt::QueuedConnection);
     connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::connected,Qt::QueuedConnection);
     connect(socket,&QSslSocket::destroyed,      this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
     //connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::startHandshake,Qt::QueuedConnection);
     connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
     connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
     connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection);
-    encrypted();
+    connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,static_cast<void(ConnectedSocket::*)(const QList<QSslError> &errors)>(&ConnectedSocket::sslErrors),Qt::QueuedConnection);
+    purgeBuffer();
+    open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+}
+
+ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    epollSocket(NULL),
+    #endif
+    fakeSocket(NULL),
+    sslSocket(NULL),
+    tcpSocket(socket)
+{
+    socket->setSocketOption(QAbstractSocket::KeepAliveOption,1);
+    connect(socket,&QTcpSocket::readyRead,      this,&ConnectedSocket::readyRead,Qt::DirectConnection);
+    connect(socket,&QTcpSocket::connected,      this,&ConnectedSocket::connected,Qt::QueuedConnection);
+    connect(socket,&QTcpSocket::destroyed,      this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
+    //connect(socket,&QTcpSocket::connected,      this,&ConnectedSocket::startHandshake,Qt::QueuedConnection);
+    connect(socket,&QTcpSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
+    connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
+    connect(socket,&QTcpSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
@@ -47,7 +72,8 @@ ConnectedSocket::ConnectedSocket(EpollClient *socket) :
 #endif
     epollSocket(socket),
     fakeSocket(NULL),
-    sslSocket(NULL)
+    sslSocket(NULL),
+    tcpSocket(NULL)
 {
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
@@ -60,28 +86,25 @@ ConnectedSocket::~ConnectedSocket()
         delete epollSocket;
     #endif
     if(sslSocket!=NULL)
-    {
-        QSslSocket *sslSocket=this->sslSocket;
-        this->sslSocket=NULL;
         delete sslSocket;
-    }
+    if(tcpSocket!=NULL)
+        delete tcpSocket;
     if(fakeSocket!=NULL)
-    {
-        QFakeSocket *fakeSocket=this->fakeSocket;
-        this->fakeSocket=NULL;
         delete fakeSocket;
-    }
 }
 
-void ConnectedSocket::encrypted()
+QList<QSslError> ConnectedSocket::sslErrors() const
+{
+    if(sslSocket!=NULL)
+        return sslSocket->sslErrors();
+    else
+        return QList<QSslError>();
+}
+
+void ConnectedSocket::purgeBuffer()
 {
     if(sslSocket!=NULL)
     {
-        if(!tempClearData.isEmpty())
-        {
-            sslSocket->write(tempClearData.data(),tempClearData.size());
-            tempClearData.clear();
-        }
         if(sslSocket->bytesAvailable())
             emit readyRead();
         if(sslSocket->encryptedBytesAvailable())
@@ -95,6 +118,7 @@ void ConnectedSocket::destroyedSocket()
     epollSocket=NULL;
     #endif
     sslSocket=NULL;
+    tcpSocket=NULL;
     fakeSocket=NULL;
 }
 
@@ -104,22 +128,32 @@ void ConnectedSocket::abort()
         fakeSocket->abort();
     if(sslSocket!=NULL)
         sslSocket->abort();
+    if(tcpSocket!=NULL)
+        tcpSocket->abort();
 }
 
 void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
 {
+    if(state()!=QAbstractSocket::UnconnectedState)
+        return;
     if(fakeSocket!=NULL)
         fakeSocket->connectToHost();
-    if(sslSocket!=NULL)
-        sslSocket->connectToHostEncrypted(hostName,port);
+    else if(sslSocket!=NULL)
+        sslSocket->connectToHost(hostName,port);
+    else if(tcpSocket!=NULL)
+        tcpSocket->connectToHost(hostName,port);
 }
 
 void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
 {
+    if(state()!=QAbstractSocket::UnconnectedState)
+        return;
     if(fakeSocket!=NULL)
         fakeSocket->connectToHost();
-    if(sslSocket!=NULL)
-        sslSocket->connectToHost(address,port);
+    else if(sslSocket!=NULL)
+        sslSocket->connectToHost(address.toString(),port);
+    else if(tcpSocket!=NULL)
+        tcpSocket->connectToHost(address,port);
 }
 
 /*void ConnectedSocket::startHandshake()
@@ -131,6 +165,8 @@ void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
 
 void ConnectedSocket::disconnectFromHost()
 {
+    if(state()!=QAbstractSocket::ConnectedState)
+        return;
     #ifdef EPOLLCATCHCHALLENGERSERVER
     if(epollSocket!=NULL)
         epollSocket->close();
@@ -139,6 +175,8 @@ void ConnectedSocket::disconnectFromHost()
         fakeSocket->disconnectFromHost();
     if(sslSocket!=NULL)
         sslSocket->disconnectFromHost();
+    if(tcpSocket!=NULL)
+        tcpSocket->disconnectFromHost();
 }
 
 QAbstractSocket::SocketError ConnectedSocket::error() const
@@ -147,6 +185,8 @@ QAbstractSocket::SocketError ConnectedSocket::error() const
         return fakeSocket->error();
     if(sslSocket!=NULL)
         return sslSocket->error();
+    if(tcpSocket!=NULL)
+        return tcpSocket->error();
     return QAbstractSocket::UnknownSocketError;
 }
 
@@ -156,6 +196,8 @@ bool ConnectedSocket::flush()
         return true;
     if(sslSocket!=NULL)
         return sslSocket->flush();
+    if(tcpSocket!=NULL)
+        return tcpSocket->flush();
     return false;
 }
 
@@ -167,8 +209,10 @@ bool ConnectedSocket::isValid() const
     #endif
     if(fakeSocket!=NULL)
         return fakeSocket->isValid();
-    if(sslSocket!=NULL)
+    else if(sslSocket!=NULL)
         return sslSocket->isValid();
+    else if(tcpSocket!=NULL)
+        return tcpSocket->isValid();
     return false;
 }
 
@@ -178,6 +222,8 @@ QHostAddress ConnectedSocket::localAddress() const
         return QHostAddress::LocalHost;
     if(sslSocket!=NULL)
         return sslSocket->localAddress();
+    if(tcpSocket!=NULL)
+        return tcpSocket->localAddress();
     return QHostAddress::Null;
 }
 
@@ -187,6 +233,8 @@ quint16	ConnectedSocket::localPort() const
         return 9999;
     if(sslSocket!=NULL)
         return sslSocket->localPort();
+    if(tcpSocket!=NULL)
+        return tcpSocket->localPort();
     return 0;
 }
 
@@ -196,6 +244,8 @@ QHostAddress	ConnectedSocket::peerAddress() const
         return QHostAddress::LocalHost;
     if(sslSocket!=NULL)
         return sslSocket->peerAddress();
+    if(tcpSocket!=NULL)
+        return tcpSocket->peerAddress();
     return QHostAddress::Null;
 }
 
@@ -210,6 +260,8 @@ quint16	ConnectedSocket::peerPort() const
         return 15000;
     if(sslSocket!=NULL)
         return sslSocket->peerPort();
+    if(tcpSocket!=NULL)
+        return tcpSocket->peerPort();
     return 0;
 }
 
@@ -228,6 +280,8 @@ QAbstractSocket::SocketState ConnectedSocket::state() const
         return fakeSocket->state();
     if(sslSocket!=NULL)
         return sslSocket->state();
+    if(tcpSocket!=NULL)
+        return tcpSocket->state();
     return QAbstractSocket::UnconnectedState;
 }
 
@@ -237,6 +291,8 @@ bool ConnectedSocket::waitForConnected(int msecs)
         return true;
     if(sslSocket!=NULL)
         return sslSocket->waitForConnected(msecs);
+    if(tcpSocket!=NULL)
+        return tcpSocket->waitForConnected(msecs);
     return false;
 }
 
@@ -246,6 +302,8 @@ bool ConnectedSocket::waitForDisconnected(int msecs)
         return true;
     if(sslSocket!=NULL)
         return sslSocket->waitForDisconnected(msecs);
+    if(tcpSocket!=NULL)
+        return tcpSocket->waitForDisconnected(msecs);
     return false;
 }
 
@@ -257,13 +315,11 @@ qint64 ConnectedSocket::bytesAvailable() const
     #endif
     if(fakeSocket!=NULL)
         return fakeSocket->bytesAvailable();
+    if(tcpSocket!=NULL)
+        return tcpSocket->bytesAvailable();
     if(sslSocket!=NULL)
-    {
-        if(sslSocket->isEncrypted())
-            return sslSocket->bytesAvailable();
+        return sslSocket->bytesAvailable();
         else
-            return 0;
-    }
     return -1;
 }
 
@@ -277,6 +333,8 @@ QIODevice::OpenMode ConnectedSocket::openMode() const
         return fakeSocket->openMode();
     if(sslSocket!=NULL)
         return sslSocket->openMode();
+    if(tcpSocket!=NULL)
+        return tcpSocket->openMode();
     return QIODevice::NotOpen;
 }
 
@@ -286,6 +344,8 @@ QString ConnectedSocket::errorString() const
         return fakeSocket->errorString();
     if(sslSocket!=NULL)
         return sslSocket->errorString();
+    if(tcpSocket!=NULL)
+        return tcpSocket->errorString();
     return QString();
 }
 
@@ -302,13 +362,10 @@ qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
     #endif
     if(fakeSocket!=NULL)
         return fakeSocket->read(data,maxSize);
+    if(tcpSocket!=NULL)
+        return tcpSocket->read(data,maxSize);
     if(sslSocket!=NULL)
-    {
-        if(sslSocket->isEncrypted())
-            return sslSocket->read(data,maxSize);
-        else
-            return 0;
-    }
+        return sslSocket->read(data,maxSize);
     return -1;
 }
 
@@ -320,16 +377,10 @@ qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
     #endif
     if(fakeSocket!=NULL)
         return fakeSocket->write(data,maxSize);
+    if(tcpSocket!=NULL)
+        return tcpSocket->write(data,maxSize);
     if(sslSocket!=NULL)
-    {
-        if(sslSocket->isEncrypted())
-            return sslSocket->write(data,maxSize);
-        else
-        {
-            tempClearData+=QByteArray(data,maxSize);
-            return maxSize;
-        }
-    }
+        return sslSocket->write(data,maxSize);
     return -1;
 }
 

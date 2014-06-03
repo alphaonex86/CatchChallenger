@@ -59,6 +59,7 @@ private slots:
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();
+    void connectTheExternalSocket();
     QString serverToDatapachPath(ListEntryEnvolued *selectedServer) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
@@ -110,6 +111,8 @@ private slots:
     void logged();
     void gameIsLoaded();
     void updateTheOkButton();
+    void sslHandcheckIsFinished();
+    void readForFirstHeader();
     static void vlcevent(const libvlc_event_t* event, void* ptr);
 private:
     enum ServerMode
@@ -135,7 +138,7 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
-    QSslSocket *realSocket;
+    QSslSocket *realSslSocket;
     QList<ListEntryEnvolued *> datapack,server;
     QHash<ListEntryEnvolued *,QString> datapackPathList;
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
@@ -157,6 +160,7 @@ private:
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
     libvlc_media_player_t *vlcPlayer;
+    bool haveFirstHeader;
 };
 
 #endif // MAINWINDOW_H

@@ -1,6 +1,7 @@
 #include "QSslServer.h"
 #include "../general/base/DebugClass.h"
 #include <QSslSocket>
+#include <unistd.h>
 
 using namespace CatchChallenger;
 
@@ -8,22 +9,32 @@ QSslServer::QSslServer(const QSslCertificate &sslCertificate,const QSslKey &sslK
 {
     this->sslCertificate=sslCertificate;
     this->sslKey=sslKey;
+    firstHeader[0x00]=0x01;
+}
+
+QSslServer::QSslServer()
+{
+    firstHeader[0x00]=0x00;
 }
 
 void QSslServer::incomingConnection(qintptr socketDescriptor)
 {
-   QSslSocket * socket = new QSslSocket;
-   socket->setSocketDescriptor(socketDescriptor);
-   socket->setPrivateKey(sslKey);
-   socket->setLocalCertificate(sslCertificate);
-   QList<QSslCertificate> certificates;
-   certificates << sslCertificate;
-   socket->setCaCertificates(certificates);
-   socket->setPeerVerifyMode(QSslSocket::VerifyNone);
-   socket->ignoreSslErrors();
-   socket->startServerEncryption();
-   connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&QSslServer::sslErrors);
-   addPendingConnection(socket);
+    QSslSocket * socket = new QSslSocket;
+    socket->setSocketDescriptor(socketDescriptor);
+    socket->write(firstHeader);
+    if(!sslCertificate.isNull())
+    {
+        socket->setPrivateKey(sslKey);
+        socket->setLocalCertificate(sslCertificate);
+        QList<QSslCertificate> certificates;
+        certificates << sslCertificate;
+        socket->setCaCertificates(certificates);
+        socket->setPeerVerifyMode(QSslSocket::VerifyNone);
+        socket->ignoreSslErrors();
+        socket->startServerEncryption();
+        connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&QSslServer::sslErrors);
+    }
+    addPendingConnection(socket);
 }
 
 void QSslServer::sslErrors(const QList<QSslError> &errors)

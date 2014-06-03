@@ -7,7 +7,9 @@
 
 #include "BaseClassSwitch.h"
 #include "../base/BaseServer.h"
+#include "../base/ServerStructures.h"
 
+namespace CatchChallenger {
 class EpollServer : public BaseClassSwitch, public CatchChallenger::BaseServer
 {
 public:
@@ -21,9 +23,15 @@ public:
     void preload_the_data();
     CatchChallenger::ClientMapManagement * getClientMapManagement();
     void unload_the_data();
+    void setNormalSettings(const NormalServerSettings &settings);
+    NormalServerSettings getNormalSettings() const;
+    void loadAndFixSettings();
 private:
     int sfd;
+    NormalServerSettings normalServerSettings;
+    int yes;
 };
+}
 
 #endif
 

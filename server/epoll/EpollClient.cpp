@@ -7,8 +7,13 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <cstring>
+#include "../base/GlobalServerData.h"
+#include "Epoll.h"
+#include "EpollSocket.h"
 
-EpollClient::EpollClient(const int &infd) :
+using namespace CatchChallenger;
+
+EpollClient::EpollClient(const int &infd,const bool &tcpCork) :
     #ifndef SERVERNOBUFFER
     bufferSize(0),
     #endif
@@ -17,10 +22,13 @@ EpollClient::EpollClient(const int &infd) :
     #ifndef SERVERNOBUFFER
     memset(buffer,0,4096);
     #endif
-    //set cork for CatchChallener because don't have real time part
-    int state = 1;
-    if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-        std::cerr << "Unable to apply tcp cork" << std::endl;
+    if(tcpCork)
+    {
+        //set cork for CatchChallener because don't have real time part
+        int state = 1;
+        if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+            std::cerr << "Unable to apply tcp cork" << std::endl;
+    }
 }
 
 EpollClient::~EpollClient()
@@ -28,6 +36,26 @@ EpollClient::~EpollClient()
     close();
 }
 
+bool EpollClient::init()
+{
+    int s = EpollSocket::make_non_blocking(infd);
+    if(s == -1)
+        return false;
+    epoll_event event;
+    event.data.ptr = client;
+    #ifndef SERVERNOBUFFER
+    event.events = EPOLLIN | EPOLLET | EPOLLOUT;
+    #else
+    event.events = EPOLLIN | EPOLLET;
+    #endif
+    s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+    if(s == -1)
+    {
+        std::cerr << "epoll_ctl on socket error" << std::endl;
+        return false;
+    }
+    return true;
+}
 
 void EpollClient::close()
 {
@@ -38,7 +66,7 @@ void EpollClient::close()
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
-        epoll_ctl(epfd, EPOLL_CTL_DEL, infd, NULL);
+        Epoll::epoll.ctl(EPOLL_CTL_DEL, infd, NULL);
         ::close(infd);
         std::cout << "Closed connection on descriptor " << infd << std::endl;
         infd=-1;

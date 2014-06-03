@@ -30,6 +30,7 @@ QSettings *settings=NULL;
 void send_settings()
 {
     ServerSettings formatedServerSettings=server->getSettings();
+    NormalServerSettings formatedServerNormalSettings=server->getNormalSettings();
 
     //common var
     CommonSettings::commonSettings.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
@@ -43,18 +44,18 @@ void send_settings()
     formatedServerSettings.dontSendPlayerType                       = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
 
     //the listen
-    formatedServerSettings.server_port					= settings->value(QLatin1Literal("server-port")).toUInt();
-    formatedServerSettings.server_ip					= settings->value(QLatin1Literal("server-ip")).toString();
+    formatedServerNormalSettings.server_port			= settings->value(QLatin1Literal("server-port")).toUInt();
+    formatedServerNormalSettings.server_ip				= settings->value(QLatin1Literal("server-ip")).toString();
+    formatedServerNormalSettings.proxy					= settings->value(QLatin1Literal("proxy")).toString();
+    formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
+
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
-    formatedServerSettings.proxy					    = settings->value(QLatin1Literal("proxy")).toString();
-    formatedServerSettings.proxy_port					= settings->value(QLatin1Literal("proxy_port")).toUInt();
-
     formatedServerSettings.httpDatapackMirror			= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
-    formatedServerSettings.linuxSettings.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
+    formatedServerNormalSettings.linuxSettings.tcpCork	= settings->value(QLatin1Literal("tcpCork")).toBool();
     settings->endGroup();
     #endif
 
@@ -100,6 +101,8 @@ void send_settings()
         formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
         formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+    else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
+        formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_PostgreSQL;
     else
         formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_Mysql;
     switch(formatedServerSettings.database.type)
@@ -209,6 +212,7 @@ void send_settings()
     settings->endGroup();
 
     server->setSettings(formatedServerSettings);
+    server->setNormalSettings(formatedServerNormalSettings);
 }
 
 int main(int argc, char *argv[])
@@ -256,6 +260,29 @@ int main(int argc, char *argv[])
     memset(buf,0,4096);
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
+
+    bool tcpCork;
+    {
+        const ServerSettings &formatedServerSettings=server->getSettings();
+        const NormalServerSettings &formatedServerNormalSettings=server->getNormalSettings();
+        tcpCork=formatedServerNormalSettings.linuxSettings.tcpCork;
+
+        if(!formatedServerNormalSettings.proxy.isEmpty())
+        {
+            qDebug() << "Proxy not supported: " << settings->status();
+            return EXIT_FAILURE;
+        }
+        if(!formatedServerNormalSettings.proxy.isEmpty())
+        {
+            qDebug() << "Proxy not supported";
+            return EXIT_FAILURE;
+        }
+        if(formatedServerSettings.database.type!=CatchChallenger::ServerSettings::Database::DatabaseType_PostgreSQL)
+        {
+            qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
+            return EXIT_FAILURE;
+        }
+    }
 
     bool closed;
     int numberOfConnectedClient=0;
@@ -322,27 +349,15 @@ int main(int argc, char *argv[])
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
                         #ifndef SERVERNOSSL
-                        Client *client=new Client(new ConnectedSocket(new EpollSslClient(infd,server->getCtx())),server->getClientMapManagement());
+                        EpollSslClient *epollClient=new EpollSslClient(infd,server->getCtx(),tcpCork);
                         #else
-                        Client *client=new Client(new ConnectedSocket(new EpollClient(infd,server->getCtx())),server->getClientMapManagement());
+                        EpollClient *epollClient=new EpollClient(infd,server->getCtx(),tcpCork);
                         #endif
                         numberOfConnectedClient++;
-                        int s = EpollSocket::make_non_blocking(infd);
-                        if(s == -1)
-                            return EPOLLERR;
-                        epoll_event event;
-                        event.data.ptr = client;
-                        #ifndef SERVERNOBUFFER
-                        event.events = EPOLLIN | EPOLLET | EPOLLOUT;
-                        #else
-                        event.events = EPOLLIN | EPOLLET;
-                        #endif
-                        s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
-                        if(s == -1)
-                        {
-                            std::cerr << "epoll_ctl on socket error" << std::endl;
-                            return EPOLLERR;
-                        }
+                        if(!epollClient->init())
+                            delete epollClient;
+                        else
+                            /*Client *client=*/new Client(new ConnectedSocket(epollClient),server->getClientMapManagement());
                     }
                     continue;
                 }
