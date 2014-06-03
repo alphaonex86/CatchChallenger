@@ -17,6 +17,13 @@ using namespace CatchChallenger;
 EpollServer::EpollServer()
 {
     sfd=-1;
+
+    normalServerSettings.server_ip      = QString();
+    normalServerSettings.server_port    = 42489;
+    normalServerSettings.useSsl         = true;
+    #ifdef Q_OS_LINUX
+    normalServerSettings.linuxSettings.tcpCork                      = true;
+    #endif
 }
 
 EpollServer::~EpollServer()
@@ -77,6 +84,7 @@ bool EpollServer::tryListen()
         std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
+    yes=1;
     if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
     {
         sfd=-1;
@@ -145,5 +153,24 @@ CatchChallenger::ClientMapManagement * EpollServer::getClientMapManagement()
 void EpollServer::unload_the_data()
 {
     BaseServer::unload_the_data();
+}
+
+void EpollServer::setNormalSettings(const NormalServerSettings &settings)
+{
+    normalServerSettings=settings;
+    loadAndFixSettings();
+}
+
+NormalServerSettings EpollServer::getNormalSettings() const
+{
+    return normalServerSettings;
+}
+
+void EpollServer::loadAndFixSettings()
+{
+    if(normalServerSettings.server_port<=0)
+        normalServerSettings.server_port=42489;
+    if(normalServerSettings.proxy_port<=0)
+        normalServerSettings.proxy=QString();
 }
 #endif

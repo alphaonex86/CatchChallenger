@@ -33,6 +33,7 @@ private slots:
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();
+    void connectTheExternalSocket();
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();
@@ -50,8 +51,10 @@ private slots:
     void on_lineEditLogin_textChanged(const QString &arg1);
     void logged();
     void updateTheOkButton();
+    void sslHandcheckIsFinished();
+    void readForFirstHeader();
 private:
-    QSslSocket *realSocket;
+    QSslSocket *realSslSocket;
     Ui::MainWindow *ui;
     void resetAll();
     QStringList chat_list_player_pseudo;
@@ -70,6 +73,7 @@ private:
     QHash<QString,quint32> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
+    bool haveFirstHeader;
 
     QString server_name;
     QString server_dns_or_ip;
