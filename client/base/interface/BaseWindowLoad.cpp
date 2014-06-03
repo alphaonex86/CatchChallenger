@@ -185,7 +185,6 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
         {
             haveShowDisconnectionReason=false;
             ui->label_connecting_status->setText(tr("Try initialise the protocol..."));
-            CatchChallenger::Api_client_real::client->sendProtocol();
         }
         else
             ui->label_connecting_status->setText(tr("Connecting to the server..."));

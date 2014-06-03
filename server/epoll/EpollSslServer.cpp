@@ -17,6 +17,13 @@ using namespace CatchChallenger;
 EpollSslServer::EpollSslServer()
 {
     sfd=-1;
+
+    normalServerSettings.server_ip      = QString();
+    normalServerSettings.server_port    = 42489;
+    normalServerSettings.useSsl         = true;
+    #ifdef Q_OS_LINUX
+    normalServerSettings.linuxSettings.tcpCork                      = true;
+    #endif
 }
 
 EpollSslServer::~EpollSslServer()
@@ -80,10 +87,10 @@ bool EpollSslServer::tryListen()
     hints.ai_socktype = SOCK_STREAM; /* We want a TCP socket */
     hints.ai_flags = AI_PASSIVE;     /* All interfaces */
 
-    if(!GlobalServerData::serverSettings.server_ip.isEmpty())
-        s = getaddrinfo(GlobalServerData::serverSettings.server_ip.toUtf8().constData(), QString::number(GlobalServerData::serverSettings.server_port).toUtf8().constData(), &hints, &result);
+    if(!normalServerSettings.server_ip.isEmpty())
+        s = getaddrinfo(normalServerSettings.server_ip.toUtf8().constData(), QString::number(normalServerSettings.server_port).toUtf8().constData(), &hints, &result);
     else
-        s = getaddrinfo(NULL, QString::number(GlobalServerData::serverSettings.server_port).toUtf8().constData(), &hints, &result);
+        s = getaddrinfo(NULL, QString::number(normalServerSettings.server_port).toUtf8().constData(), &hints, &result);
     if (s != 0)
     {
         std::cerr << "getaddrinfo:" << gai_strerror(s) << std::endl;
@@ -122,6 +129,7 @@ bool EpollSslServer::tryListen()
         std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
+    yes=1;
     if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
     {
         sfd=-1;
@@ -201,5 +209,25 @@ CatchChallenger::ClientMapManagement * EpollSslServer::getClientMapManagement()
 void EpollSslServer::unload_the_data()
 {
     BaseServer::unload_the_data();
+}
+
+
+void EpollSslServer::setNormalSettings(const NormalServerSettings &settings)
+{
+    normalServerSettings=settings;
+    loadAndFixSettings();
+}
+
+NormalServerSettings EpollSslServer::getNormalSettings() const
+{
+    return normalServerSettings;
+}
+
+void EpollSslServer::loadAndFixSettings()
+{
+    if(normalServerSettings.server_port<=0)
+        normalServerSettings.server_port=42489;
+    if(normalServerSettings.proxy_port<=0)
+        normalServerSettings.proxy=QString();
 }
 #endif

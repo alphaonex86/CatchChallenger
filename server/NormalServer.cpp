@@ -2,6 +2,7 @@
 #include "base/GlobalServerData.h"
 #include "../general/base/FacilityLib.h"
 #include <QSslSocket>
+#include <QTcpSocket>
 #include <QNetworkProxy>
 
 #ifdef Q_OS_LINUX
@@ -21,9 +22,16 @@ QString NormalServer::text_stop=QLatin1Literal("stop");
 NormalServer::NormalServer() :
     BaseServer()
 {
-    server                  = NULL;
+    sslServer               = NULL;
     sslCertificate          = NULL;
     sslKey                  = NULL;
+
+    normalServerSettings.server_ip      = QString();
+    normalServerSettings.server_port    = 42489;
+    normalServerSettings.useSsl         = true;
+    #ifdef Q_OS_LINUX
+    normalServerSettings.linuxSettings.tcpCork                      = true;
+    #endif
 
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//broad cast (0)
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//map management (1)
@@ -61,11 +69,11 @@ NormalServer::~NormalServer()
         tempThread->wait();
         delete tempThread;
     }
-    if(server!=NULL)
+    if(sslServer!=NULL)
     {
-        server->close();/// \warning crash due to different thread
-        server->deleteLater();
-        server=NULL;
+        sslServer->close();/// \warning crash due to different thread
+        sslServer->deleteLater();
+        sslServer=NULL;
     }
 
     botThread->quit();
@@ -78,6 +86,17 @@ NormalServer::~NormalServer()
         delete sslKey;
     if(sslCertificate!=NULL)
         delete sslCertificate;
+}
+
+void NormalServer::setNormalSettings(const NormalServerSettings &settings)
+{
+    normalServerSettings=settings;
+    loadAndFixSettings();
+}
+
+NormalServerSettings NormalServer::getNormalSettings() const
+{
+    return normalServerSettings;
 }
 
 void NormalServer::initAll()
@@ -102,94 +121,98 @@ void NormalServer::load_settings()
 //start with allow real player to connect
 void NormalServer::start_internal_server()
 {
-    if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
+    if(normalServerSettings.useSsl)
     {
-        QStringList args;
-        args << "req" << "-newkey" << "rsa:4096" << "-sha512" << "-x509" << "-nodes" << "-days" << "3560" << "-out" << QCoreApplication::applicationDirPath()+"/server.crt"
-                << "-keyout" << QCoreApplication::applicationDirPath()+"/server.key" << "-subj" << "/C=FR/ST=South-West/L=Paris/O=Catchchallenger/OU=Developer Department/CN=*"
-                   << "-extensions usr_cert";
-        #ifdef Q_OS_WIN32
-        QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl.exe";
-        #else
-        QString opensslAppPath="/usr/bin/openssl";
-        #endif
-        QProcess process;
-        process.start(opensslAppPath,args);
-        process.waitForFinished();
-        process.setWorkingDirectory(QCoreApplication::applicationDirPath());
-        if(process.exitCode()!=0 || !QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
+        if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
         {
-            if(process.exitCode()!=0)
+            QStringList args;
+            args << "req" << "-newkey" << "rsa:4096" << "-sha512" << "-x509" << "-nodes" << "-days" << "3560" << "-out" << QCoreApplication::applicationDirPath()+"/server.crt"
+                    << "-keyout" << QCoreApplication::applicationDirPath()+"/server.key" << "-subj" << "/C=FR/ST=South-West/L=Paris/O=Catchchallenger/OU=Developer Department/CN=*"
+                    << "-extensions usr_cert";
+            #ifdef Q_OS_WIN32
+            QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl.exe";
+            #else
+            QString opensslAppPath="/usr/bin/openssl";
+            #endif
+            QProcess process;
+            process.start(opensslAppPath,args);
+            process.waitForFinished();
+            process.setWorkingDirectory(QCoreApplication::applicationDirPath());
+            if(process.exitCode()!=0 || !QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
             {
-                DebugClass::debugConsole(QStringLiteral("return code: %1, output: %2, error: %3, error string: %4, exitStatus: %5").arg(process.exitCode()).arg(QString::fromLocal8Bit(process.readAll())).arg(process.error()).arg(process.errorString()).arg(process.exitStatus()));
-                DebugClass::debugConsole(QStringLiteral("for start: %1 %2").arg(opensslAppPath).arg(args.join(" ")));
+                if(process.exitCode()!=0)
+                {
+                    DebugClass::debugConsole(QStringLiteral("return code: %1, output: %2, error: %3, error string: %4, exitStatus: %5").arg(process.exitCode()).arg(QString::fromLocal8Bit(process.readAll())).arg(process.error()).arg(process.errorString()).arg(process.exitStatus()));
+                    DebugClass::debugConsole(QStringLiteral("for start: %1 %2").arg(opensslAppPath).arg(args.join(" ")));
+                }
+                process.kill();
+                DebugClass::debugConsole(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+                stat=Down;
+                emit is_started(false);
+                emit error(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+                return;
             }
             process.kill();
-            DebugClass::debugConsole(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+        }
+
+        if(sslKey!=NULL)
+            delete sslKey;
+        QFile key(QCoreApplication::applicationDirPath()+"/server.key");
+        if(!key.open(QIODevice::ReadOnly))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to access to the server key: %1").arg(key.errorString()));
             stat=Down;
             emit is_started(false);
-            emit error(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+            emit error(QStringLiteral("Unable to access to the server key"));
             return;
         }
-        process.kill();
-    }
+        QByteArray keyData=key.readAll();
+        key.close();
+        QSslKey sslKey(keyData,QSsl::Rsa);
+        if(sslKey.isNull())
+        {
+            DebugClass::debugConsole(QStringLiteral("Server key is wrong"));
+            stat=Down;
+            emit is_started(false);
+            emit error(QStringLiteral("Server key is wrong"));
+            return;
+        }
 
-    if(sslKey!=NULL)
-        delete sslKey;
-    QFile key(QCoreApplication::applicationDirPath()+"/server.key");
-    if(!key.open(QIODevice::ReadOnly))
-    {
-        DebugClass::debugConsole(QStringLiteral("Unable to access to the server key: %1").arg(key.errorString()));
-        stat=Down;
-        emit is_started(false);
-        emit error(QStringLiteral("Unable to access to the server key"));
-        return;
+        if(sslCertificate!=NULL)
+            delete sslCertificate;
+        QFile certificate(QCoreApplication::applicationDirPath()+"/server.crt");
+        if(!certificate.open(QIODevice::ReadOnly))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to access to the server certificate: %1").arg(certificate.errorString()));
+            stat=Down;
+            emit is_started(false);
+            emit error(QStringLiteral("Unable to access to the server certificate"));
+            return;
+        }
+        QByteArray certificateData=certificate.readAll();
+        certificate.close();
+        QSslCertificate sslCertificate(certificateData);
+        if(sslCertificate.isNull())
+        {
+            DebugClass::debugConsole(QStringLiteral("Server certificate is wrong"));
+            stat=Down;
+            emit is_started(false);
+            emit error(QStringLiteral("Server certificate is wrong"));
+            return;
+        }
+        if(sslServer==NULL)
+            sslServer=new QSslServer(sslCertificate,sslKey);
     }
-    QByteArray keyData=key.readAll();
-    key.close();
-    QSslKey sslKey(keyData,QSsl::Rsa);
-    if(sslKey.isNull())
+    else
     {
-        DebugClass::debugConsole(QStringLiteral("Server key is wrong"));
-        stat=Down;
-        emit is_started(false);
-        emit error(QStringLiteral("Server key is wrong"));
-        return;
+        if(sslServer==NULL)
+            sslServer=new QSslServer();
     }
-
-    if(sslCertificate!=NULL)
-        delete sslCertificate;
-    QFile certificate(QCoreApplication::applicationDirPath()+"/server.crt");
-    if(!certificate.open(QIODevice::ReadOnly))
+    connect(sslServer,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
+    if(sslServer->isListening())
     {
-        DebugClass::debugConsole(QStringLiteral("Unable to access to the server certificate: %1").arg(certificate.errorString()));
-        stat=Down;
-        emit is_started(false);
-        emit error(QStringLiteral("Unable to access to the server certificate"));
-        return;
-    }
-    QByteArray certificateData=certificate.readAll();
-    certificate.close();
-    QSslCertificate sslCertificate(certificateData);
-    if(sslCertificate.isNull())
-    {
-        DebugClass::debugConsole(QStringLiteral("Server certificate is wrong"));
-        stat=Down;
-        emit is_started(false);
-        emit error(QStringLiteral("Server certificate is wrong"));
-        return;
-    }
-
-    if(server==NULL)
-    {
-        server=new QSslServer(sslCertificate,sslKey);
-        //to do in the thread
-        connect(server,&QSslServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
-    }
-    if(server->isListening())
-    {
-        DebugClass::debugConsole(QStringLiteral("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
-        emit error(QStringLiteral("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
+        DebugClass::debugConsole(QStringLiteral("Already listening on %1").arg(listenIpAndPort(sslServer->serverAddress().toString(),sslServer->serverPort())));
+        emit error(QStringLiteral("Already listening on %1").arg(listenIpAndPort(sslServer->serverAddress().toString(),sslServer->serverPort())));
         return;
     }
     if(oneInstanceRunning)
@@ -205,22 +228,22 @@ void NormalServer::start_internal_server()
     stat=InUp;
     load_settings();
     QHostAddress address = QHostAddress::Any;
-    if(!GlobalServerData::serverSettings.server_ip.isEmpty())
-        address.setAddress(GlobalServerData::serverSettings.server_ip);
-    if(!GlobalServerData::serverSettings.proxy.isEmpty())
+    if(!normalServerSettings.server_ip.isEmpty())
+        address.setAddress(normalServerSettings.server_ip);
+    if(!normalServerSettings.proxy.isEmpty())
     {
-        QNetworkProxy proxy=server->proxy();
+        QNetworkProxy proxy=sslServer->proxy();
         proxy.setType(QNetworkProxy::Socks5Proxy);
-        proxy.setHostName(GlobalServerData::serverSettings.proxy);
-        proxy.setPort(GlobalServerData::serverSettings.proxy_port);
-        server->setProxy(proxy);
+        proxy.setHostName(normalServerSettings.proxy);
+        proxy.setPort(normalServerSettings.proxy_port);
+        sslServer->setProxy(proxy);
     }
-    if(!server->listen(address,GlobalServerData::serverSettings.server_port))
+    if(!sslServer->listen(address,normalServerSettings.server_port))
     {
-        DebugClass::debugConsole(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
+        DebugClass::debugConsole(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(normalServerSettings.server_ip,normalServerSettings.server_port)).arg(sslServer->errorString()));
         stat=Down;
         emit is_started(false);
-        emit error(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
+        emit error(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(normalServerSettings.server_ip,normalServerSettings.server_port)).arg(sslServer->errorString()));
         return;
     }
     if(!QFakeServer::server.listen())
@@ -232,9 +255,9 @@ void NormalServer::start_internal_server()
         return;
     }
     #ifdef Q_OS_LINUX
-    if(GlobalServerData::serverSettings.linuxSettings.tcpCork)
+    if(normalServerSettings.linuxSettings.tcpCork)
     {
-        qintptr socketDescriptor=server->socketDescriptor();
+        qintptr socketDescriptor=sslServer->socketDescriptor();
         if(socketDescriptor!=-1)
         {
             int state = 1;
@@ -246,14 +269,14 @@ void NormalServer::start_internal_server()
     }
     #endif
 
-    if(GlobalServerData::serverSettings.server_ip.isEmpty())
-        DebugClass::debugConsole(QStringLiteral("Listen *:%1").arg(GlobalServerData::serverSettings.server_port));
+    if(normalServerSettings.server_ip.isEmpty())
+        DebugClass::debugConsole(QStringLiteral("Listen *:%1").arg(normalServerSettings.server_port));
     else
-        DebugClass::debugConsole("Listen "+GlobalServerData::serverSettings.server_ip+":"+QString::number(GlobalServerData::serverSettings.server_port));
+        DebugClass::debugConsole("Listen "+normalServerSettings.server_ip+":"+QString::number(normalServerSettings.server_port));
 
     if(!initialize_the_database())
     {
-        server->close();
+        sslServer->close();
         stat=Down;
         emit is_started(false);
         return;
@@ -262,7 +285,7 @@ void NormalServer::start_internal_server()
     if(!GlobalServerData::serverPrivateVariables.db->open())
     {
         DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
-        server->close();
+        sslServer->close();
         stat=Down;
         emit is_started(false);
         emit error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
@@ -283,11 +306,11 @@ bool NormalServer::check_if_now_stopped()
     if(!BaseServer::check_if_now_stopped())
         return false;
     oneInstanceRunning=false;
-    if(server!=NULL)
+    if(sslServer!=NULL)
     {
-        server->close();
-        delete server;
-        server=NULL;
+        sslServer->close();
+        delete sslServer;
+        sslServer=NULL;
     }
     return true;
 }
@@ -297,11 +320,11 @@ void NormalServer::stop_internal_server()
 {
     BaseServer::stop_internal_server();
 
-    if(server!=NULL)
+    if(sslServer!=NULL)
     {
-        server->close();
-        delete server;
-        server=NULL;
+        sslServer->close();
+        delete sslServer;
+        sslServer=NULL;
     }
 
     if(sslKey!=NULL)
@@ -365,10 +388,10 @@ void NormalServer::newConnection()
         else
             DebugClass::debugConsole("NULL client with fake socket");
     }
-    if(server!=NULL)
-        while(server->hasPendingConnections())
+    if(sslServer!=NULL)
+        while(sslServer->hasPendingConnections())
         {
-            QSslSocket *socket = static_cast<QSslSocket *>(server->nextPendingConnection());
+            QSslSocket *socket = static_cast<QSslSocket *>(sslServer->nextPendingConnection());
             const QHostAddress &peerAddress=socket->peerAddress();
             bool kicked=kickedHosts.contains(peerAddress);
             if(kicked)
@@ -383,7 +406,7 @@ void NormalServer::newConnection()
                 if(socket!=NULL)
                 {
                     #ifdef Q_OS_LINUX
-                    if(GlobalServerData::serverSettings.linuxSettings.tcpCork)
+                    if(normalServerSettings.linuxSettings.tcpCork)
                     {
                         qintptr socketDescriptor=socket->socketDescriptor();
                         if(socketDescriptor!=-1)
@@ -521,6 +544,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("httpDatapackMirror"),QString());
     if(!settings->contains(QLatin1Literal("datapackCache")))
         settings->setValue(QLatin1Literal("datapackCache"),-1);
+    if(!settings->contains(QLatin1Literal("useSsl")))
+        settings->setValue(QLatin1Literal("useSsl"),true);
 
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
@@ -633,3 +658,10 @@ void NormalServer::checkSettingsFile(QSettings *settings)
     settings->sync();
 }
 
+void NormalServer::loadAndFixSettings()
+{
+    if(normalServerSettings.server_port<=0)
+        normalServerSettings.server_port=42489;
+    if(normalServerSettings.proxy_port<=0)
+        normalServerSettings.proxy=QString();
+}

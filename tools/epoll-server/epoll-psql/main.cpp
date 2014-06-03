@@ -49,7 +49,7 @@ int main (int argc, char *argv[])
   efd = epoll_create1 (0);
   if (efd == -1)
     {
-      perror ("epoll_create");
+      std::cerr << "epoll_create" << std::endl;
       abort ();
     }
 
@@ -57,18 +57,18 @@ int main (int argc, char *argv[])
   const ConnStatusType &connStatusType=PQstatus(conn);
   if(connStatusType==CONNECTION_BAD)
   {
-     perror("pg connexion not OK");
+     std::cerr << "pg connexion not OK" << std::endl;
      exit(1);
   }
   if(PQsetnonblocking(conn,1)!=0)
   {
-     perror("pg no blocking error");
+     std::cerr << "pg no blocking error" << std::endl;
      exit(1);
   }
   int sock = PQsocket(conn);
   if (sock < 0)
   {
-     perror("pg no sock");
+     std::cerr << "pg no sock" << std::endl;
      exit(1);
   }
   epoll_event event;
@@ -78,7 +78,7 @@ int main (int argc, char *argv[])
     // add the socket to the epoll file descriptors
     if(epoll_ctl(efd, EPOLL_CTL_ADD, sock, &event) != 0)
     {
-       perror("epoll_ctl, adding socket\n");
+       std::cerr << "epoll_ctl, adding socket" << std::endl;
        exit(1);
     }
 
@@ -96,7 +96,7 @@ int main (int argc, char *argv[])
         {
           if (events[i].events & EPOLLERR)
           {
-             perror("epoll_ctl, socket error\n");
+             std::cerr << "epoll_ctl, socket error" << std::endl;
              continue;
           }
           else
@@ -124,11 +124,11 @@ int main (int argc, char *argv[])
               }
 
               if (events[i].events & EPOLLOUT) //socket is ready for writing
-                    perror("epoll_ctl, socket ready to write\n");
+                    std::cerr << "epoll_ctl, socket ready to write" << std::endl;
 
               if (events[i].events & EPOLLIN) //socket is ready for writing
               {
-                perror("epoll_ctl, socket ready to read\n");
+                std::cerr << "epoll_ctl, socket ready to read" << std::endl;
                 PQconsumeInput(conn);
                 PGnotify *notify;
                 while ((notify = PQnotifies(conn)) != NULL)
@@ -172,14 +172,14 @@ int main (int argc, char *argv[])
                     /*query_id=PQsendQuery(conn, "SELECT id,password FROM account WHERE id=1;");
                     if(query_id==0)
                     {
-                        perror("query repeat send failed\n");
+                        std::cerr << "query repeat send failed" << std::endl;
                         query_id=-1;
                     }*/
                 }
               }
 
               if (events[i].events & (EPOLLRDHUP | EPOLLHUP)) //socket closed, delete and create a new one
-                 perror("epoll_ctl, socket closed\n");
+                 std::cerr << "epoll_ctl, socket closed" << std::endl;
            }
         }
   }

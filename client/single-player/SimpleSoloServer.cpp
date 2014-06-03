@@ -119,7 +119,11 @@ void SimpleSoloServer::stateChanged(QAbstractSocket::SocketState socketState)
         resetAll();
     }
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+    {
         CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
+        if(socketState==QAbstractSocket::ConnectedState)
+            CatchChallenger::Api_client_real::client->sendProtocol();
+    }
 }
 
 void SimpleSoloServer::serverError(const QString &error)

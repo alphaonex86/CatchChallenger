@@ -7,7 +7,9 @@
 
 #include "BaseClassSwitch.h"
 #include "../base/BaseServer.h"
+#include "../base/ServerStructures.h"
 
+namespace CatchChallenger {
 class EpollSslServer : public BaseClassSwitch, public CatchChallenger::BaseServer
 {
 public:
@@ -22,14 +24,20 @@ public:
     void preload_the_data();
     CatchChallenger::ClientMapManagement * getClientMapManagement();
     void unload_the_data();
+    void setNormalSettings(const NormalServerSettings &settings);
+    NormalServerSettings getNormalSettings() const;
+    void loadAndFixSettings();
 private:
     int sfd;
     SSL_CTX *ctx;
+    NormalServerSettings normalServerSettings;
+    int yes;
 private:
     void initSslPart();
     SSL_CTX* InitServerCTX();
     void LoadCertificates(SSL_CTX* ctx, const char* CertFile, const char* KeyFile);
 };
+}
 #endif
 
 #endif // EPOLL_SSL_SERVER_H

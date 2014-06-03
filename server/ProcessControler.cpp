@@ -27,6 +27,7 @@ ProcessControler::~ProcessControler()
 void ProcessControler::send_settings()
 {
     CatchChallenger::ServerSettings formatedServerSettings=server.getSettings();
+    NormalServerSettings formatedServerNormalSettings=server.getNormalSettings();
 
     //common var
     CommonSettings::commonSettings.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
@@ -40,18 +41,19 @@ void ProcessControler::send_settings()
     formatedServerSettings.dontSendPlayerType                       = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
 
     //the listen
-    formatedServerSettings.server_port					= settings->value(QLatin1Literal("server-port")).toUInt();
-    formatedServerSettings.server_ip					= settings->value(QLatin1Literal("server-ip")).toString();
+    formatedServerNormalSettings.server_port			= settings->value(QLatin1Literal("server-port")).toUInt();
+    formatedServerNormalSettings.server_ip				= settings->value(QLatin1Literal("server-ip")).toString();
+    formatedServerNormalSettings.proxy					= settings->value(QLatin1Literal("proxy")).toString();
+    formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
+    formatedServerNormalSettings.useSsl					= settings->value(QLatin1Literal("useSsl")).toUInt();
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
-    formatedServerSettings.proxy					    = settings->value(QLatin1Literal("proxy")).toString();
-    formatedServerSettings.proxy_port					= settings->value(QLatin1Literal("proxy_port")).toUInt();
 
     formatedServerSettings.httpDatapackMirror			= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
-    formatedServerSettings.linuxSettings.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
+    formatedServerNormalSettings.linuxSettings.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
     settings->endGroup();
     #endif
 
@@ -214,6 +216,7 @@ void ProcessControler::send_settings()
     settings->endGroup();
 
     server.setSettings(formatedServerSettings);
+    server.setNormalSettings(formatedServerNormalSettings);
 }
 
 void ProcessControler::server_is_started(bool is_started)
