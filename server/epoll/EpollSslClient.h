@@ -8,10 +8,11 @@
 
 #define BUFFER_MAX_SIZE 4096
 
+namespace CatchChallenger {
 class EpollSslClient : public BaseClassSwitch
 {
 public:
-    EpollSslClient(const int &infd,SSL_CTX *ctx);
+    EpollSslClient(const int &infd, SSL_CTX *ctx, const bool &tcpCork);
     ~EpollSslClient();
     #ifndef SERVERNOBUFFER
     static void staticInit();
@@ -25,6 +26,7 @@ public:
     Type getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
+    bool init();
 private:
     static char rawbuf[BUFFER_MAX_SIZE];
 private:
@@ -37,6 +39,7 @@ private:
     SSL* ssl;
     bool bHandShakeOver;
 };
+}
 
 #endif
 

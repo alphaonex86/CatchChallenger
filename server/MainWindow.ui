@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>10</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -310,28 +310,28 @@
           </property>
          </widget>
         </item>
-        <item row="11" column="1">
+        <item row="12" column="1">
          <widget class="QCheckBox" name="anonymous">
           <property name="text">
            <string>Anonymous</string>
           </property>
          </widget>
         </item>
-        <item row="12" column="1">
+        <item row="13" column="1">
          <widget class="QCheckBox" name="automatic_account_creation">
           <property name="text">
            <string>Automatic account creation</string>
           </property>
          </widget>
         </item>
-        <item row="13" column="0">
+        <item row="14" column="0">
          <widget class="QLabel" name="label_31">
           <property name="text">
            <string>Server message</string>
           </property>
          </widget>
         </item>
-        <item row="13" column="1">
+        <item row="14" column="1">
          <widget class="QPlainTextEdit" name="server_message">
           <property name="maximumSize">
            <size>
@@ -341,21 +341,21 @@
           </property>
          </widget>
         </item>
-        <item row="14" column="1">
+        <item row="15" column="1">
          <widget class="QCheckBox" name="dontSendPlayerType">
           <property name="text">
            <string>Don't send the player type</string>
           </property>
          </widget>
         </item>
-        <item row="15" column="0">
+        <item row="16" column="0">
          <widget class="QLabel" name="label_32">
           <property name="text">
            <string>Proxy</string>
           </property>
          </widget>
         </item>
-        <item row="15" column="1">
+        <item row="16" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
            <widget class="QLineEdit" name="proxy">
@@ -391,6 +391,13 @@
            </spacer>
           </item>
          </layout>
+        </item>
+        <item row="11" column="1">
+         <widget class="QCheckBox" name="useSsl">
+          <property name="text">
+           <string>Use ssl</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

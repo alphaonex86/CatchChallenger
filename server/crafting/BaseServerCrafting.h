@@ -12,7 +12,7 @@ protected:
     virtual void unload_the_plant_on_map();
     virtual void unload_shop();
 
-    virtual void remove_plant_on_map(const QString &map,const quint8 &x,const quint8 &y);
+    virtual void remove_plant_on_map(const quint32 &id);
 
 protected:
     static QString text_dottmx;

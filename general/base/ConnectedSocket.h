@@ -26,6 +26,7 @@ class ConnectedSocket : public QIODevice
 public:
     explicit ConnectedSocket(QFakeSocket *socket);
     explicit ConnectedSocket(QSslSocket *socket);
+    explicit ConnectedSocket(QTcpSocket *socket);
     ~ConnectedSocket();
     void	abort();
     void	connectToHost(const QString & hostName,quint16 port);
@@ -57,21 +58,22 @@ public:
     #endif
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
-    QByteArray tempClearData;
+    QTcpSocket *tcpSocket;
 protected:
-    virtual bool	isSequential() const;
-    virtual bool canReadLine() const;
-    virtual qint64	readData(char * data, qint64 maxSize);
-    virtual qint64	writeData(const char * data, qint64 maxSize);
-    void sslErrors(const QList<QSslError> &errors);
+    bool	isSequential() const;
+    bool canReadLine() const;
+    qint64	readData(char * data, qint64 maxSize);
+    qint64	writeData(const char * data, qint64 maxSize);
+    QList<QSslError> sslErrors() const;
 signals:
     void	connected();
     void	disconnected();
     void	error(QAbstractSocket::SocketError socketError);
     void	stateChanged(QAbstractSocket::SocketState socketState);
+    void    sslErrors(const QList<QSslError> &errors);
 private slots:
     void destroyedSocket();
-    void encrypted();
+    void purgeBuffer();
     //void startHandshake();
 };
 }

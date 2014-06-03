@@ -7,10 +7,15 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
+#include "../base/GlobalServerData.h"
+#include "Epoll.h"
+#include "EpollSocket.h"
+
+using namespace CatchChallenger;
 
 char EpollSslClient::rawbuf[4096];
 
-EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
+EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx,const bool &tcpCork) :
     #ifndef SERVERNOBUFFER
     bufferSizeClearToOutput(0),
     #endif
@@ -48,15 +53,39 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
         break;
     }
 
-    //set cork for CatchChallener because don't have real time part
-    int state = 1;
-    if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-        std::cerr << "Unable to apply tcp cork" << std::endl;
+    if(tcpCork)
+    {
+        //set cork for CatchChallener because don't have real time part
+        int state = 1;
+        if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+            std::cerr << "Unable to apply tcp cork" << std::endl;
+    }
 }
 
 EpollSslClient::~EpollSslClient()
 {
     close();
+}
+
+bool EpollSslClient::init()
+{
+    int s = EpollSocket::make_non_blocking(infd);
+    if(s == -1)
+        return false;
+    epoll_event event;
+    event.data.ptr = this;
+    #ifndef SERVERNOBUFFER
+    event.events = EPOLLIN | EPOLLET | EPOLLOUT;
+    #else
+    event.events = EPOLLIN | EPOLLET;
+    #endif
+    s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+    if(s == -1)
+    {
+        std::cerr << "epoll_ctl on socket error" << std::endl;
+        return false;
+    }
+    return true;
 }
 
 #ifndef SERVERNOBUFFER
@@ -75,7 +104,7 @@ void EpollSslClient::close()
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
-        epoll_ctl(epfd, EPOLL_CTL_DEL, infd, NULL);
+        Epoll::epoll.ctl(EPOLL_CTL_DEL, infd, NULL);
         ::close(infd);
         std::cout << "Closed connection on descriptor" << infd << std::endl;
         infd=-1;

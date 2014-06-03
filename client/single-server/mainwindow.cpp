@@ -15,8 +15,8 @@
 #include <netinet/tcp.h>
 #endif
 
-#define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
-//#define SERVER_DNS_OR_IP "localhost"
+//#define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
+#define SERVER_DNS_OR_IP "localhost"
 #define SERVER_NAME tr("Official server")
 #define SERVER_PORT 42489
 
@@ -29,9 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<QList<RssNews::RssEntry> >("QList<RssNews::RssEntry>");
 
-    realSocket=new QSslSocket();
+    realSslSocket=new QSslSocket();
     #ifdef Q_OS_LINUX
-    qintptr socketDescriptor=realSocket->socketDescriptor();
+    qintptr socketDescriptor=realSslSocket->socketDescriptor();
     if(socketDescriptor!=-1)
     {
         int state = 1;
@@ -41,11 +41,10 @@ MainWindow::MainWindow(QWidget *parent) :
     else
         qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");
     #endif
-    realSocket->ignoreSslErrors();
-    realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
-    connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
-    socket=new CatchChallenger::ConnectedSocket(realSocket);
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
+    haveFirstHeader=false;
+    socket=NULL;
+    realSslSocket=NULL;
+    CatchChallenger::Api_client_real::client=NULL;
     ui->setupUi(this);
     ui->update->setVisible(false);
     ui->news->setVisible(false);
@@ -112,12 +111,6 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->lineEditPass->setText(QString());
         ui->checkBoxRememberPassword->setChecked(!ui->lineEditPass->text().isEmpty());
     }
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&MainWindow::message);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&MainWindow::have_current_player_info);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::logged,this,&MainWindow::logged);
-    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
-    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&MainWindow::stateChanged,Qt::QueuedConnection);
     connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton);
 
     stopFlood.setSingleShot(false);
@@ -127,8 +120,6 @@ MainWindow::MainWindow(QWidget *parent) :
     numberForFlood=0;
     haveShowDisconnectionReason=false;
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
-    CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
-    CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
 
     stateChanged(QAbstractSocket::UnconnectedState);
@@ -138,17 +129,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    CatchChallenger::Api_client_real::client->tryDisconnect();
-    delete CatchChallenger::Api_client_real::client;
+    if(CatchChallenger::Api_client_real::client!=NULL)
+    {
+        CatchChallenger::Api_client_real::client->tryDisconnect();
+        delete CatchChallenger::Api_client_real::client;
+    }
     delete CatchChallenger::BaseWindow::baseWindow;
     delete ui;
-    delete socket;
+    if(socket!=NULL)
+        delete socket;
 }
 
 void MainWindow::resetAll()
 {
-    CatchChallenger::Api_client_real::client->resetAll();
-    CatchChallenger::BaseWindow::baseWindow->resetAll();
+    if(CatchChallenger::Api_client_real::client!=NULL)
+    {
+        CatchChallenger::Api_client_real::client->resetAll();
+        CatchChallenger::Api_client_real::client->deleteLater();
+        CatchChallenger::Api_client_real::client=NULL;
+    }
+    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+        CatchChallenger::BaseWindow::baseWindow->resetAll();
     ui->stackedWidget->setCurrentWidget(ui->page_login);
     updateTheOkButton();
     chat_list_player_pseudo.clear();
@@ -246,18 +247,49 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     loginList.insert(0,ui->lineEditLogin->text());
     settings.setValue("login",loginList);
 
+    if(socket!=NULL)
+    {
+        socket->disconnectFromHost();
+        socket->abort();
+        delete socket;
+        socket=NULL;
+        realSslSocket=NULL;
+    }
+
     QString host=server_dns_or_ip;
     quint16 port=server_port;
 
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
+    realSslSocket=new QSslSocket();
     if(!proxy_dns_or_ip.isEmpty())
     {
-        QNetworkProxy proxy=realSocket->proxy();
+        QNetworkProxy proxy=realSslSocket->proxy();
         proxy.setHostName(proxy_dns_or_ip);
         proxy.setPort(proxy_port);
         proxy.setType(QNetworkProxy::Socks5Proxy);
-        realSocket->setProxy(proxy);
+        realSslSocket->setProxy(proxy);
     }
+    haveFirstHeader=false;
+    ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
+    connect(realSslSocket,&QSslSocket::readyRead,this,&MainWindow::readForFirstHeader,Qt::DirectConnection);
+
+    CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectingState);
+    realSslSocket->connectToHost(host,port);
+}
+
+void MainWindow::connectTheExternalSocket()
+{
+    socket=new CatchChallenger::ConnectedSocket(realSslSocket);
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection);
+    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(const QList<QSslError> &errors)>(&CatchChallenger::ConnectedSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
+    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
+    connect(socket,                                                 static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
+    CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
+    CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
     QDir datapack(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/datapack/"));
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
@@ -266,8 +298,9 @@ void MainWindow::on_pushButtonTryLogin_clicked()
             return;
         }
     CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
-    static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(host,port);
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
+    CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectedState);
+    CatchChallenger::Api_client_real::client->sendProtocol();
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -275,7 +308,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     if(socketState==QAbstractSocket::ConnectedState)
     {
         #ifdef Q_OS_LINUX
-        qintptr socketDescriptor=realSocket->socketDescriptor();
+        qintptr socketDescriptor=realSslSocket->socketDescriptor();
         if(socketDescriptor!=-1)
         {
             int state = 1;
@@ -294,11 +327,20 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
+        /*socket will do that's if(realSocket!=NULL)
+        {
+            delete realSocket;
+            realSocket=NULL;
+        }*/
         resetAll();
+        /*if(serverMode==ServerMode_Remote)
+            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
     }
     if(socketState==QAbstractSocket::ConnectedState)
+    {
         haveShowDisconnectionReason=false;
-    CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
+        CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
+    }
 }
 
 void MainWindow::error(QAbstractSocket::SocketError socketError)
@@ -308,6 +350,8 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
+        if(realSslSocket!=NULL)
+            return;
         if(haveShowDisconnectionReason)
             return;
         QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server"));
@@ -462,5 +506,35 @@ void MainWindow::updateTheOkButton()
         ui->pushButtonTryLogin->setEnabled(false);
         ui->pushButtonTryLogin->setText(tr("Ok (%1)").arg(timeToWait-secondLstSinceConnexion));
         return;
+    }
+}
+
+void MainWindow::sslHandcheckIsFinished()
+{
+    connectTheExternalSocket();
+}
+
+void MainWindow::readForFirstHeader()
+{
+    if(haveFirstHeader)
+        return;
+    if(realSslSocket==NULL)
+        return;
+    QSslSocket *socket=qobject_cast<QSslSocket *>(sender());
+    if(socket==NULL)
+        return;
+    quint8 value;
+    if(realSslSocket->read((char*)&value,sizeof(value))==sizeof(value))
+    {
+        haveFirstHeader=true;
+        if(value==0x01)
+        {
+            socket->setPeerVerifyMode(QSslSocket::VerifyNone);
+            socket->ignoreSslErrors();
+            socket->startClientEncryption();
+            connect(socket,&QSslSocket::encrypted,this,&MainWindow::sslHandcheckIsFinished);
+        }
+        else
+            connectTheExternalSocket();
     }
 }

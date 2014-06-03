@@ -160,6 +160,13 @@ void ClientLocalBroadcast::seedValidated()
     emit postReply(plant_list_in_waiting.first().query_id,data);
     quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     MapServerCrafting::PlantOnMap plantOnMap;
+    if(GlobalServerData::serverPrivateVariables.plantUnusedId.isEmpty())
+    {
+        GlobalServerData::serverPrivateVariables.maxPlantId++;
+        plantOnMap.id=GlobalServerData::serverPrivateVariables.maxPlantId;
+    }
+    else
+        plantOnMap.id << GlobalServerData::serverPrivateVariables.plantUnusedId.takeFirst();
     plantOnMap.x=plant_list_in_waiting.first().x;
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
@@ -173,7 +180,8 @@ void ClientLocalBroadcast::seedValidated()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QStringLiteral("INSERT INTO `plant`(`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+                         .arg(plantOnMap.id)
                          .arg(SqlFunction::quoteSqlVariable(map_file))
                          .arg(plantOnMap.x)
                          .arg(plantOnMap.y)
@@ -183,8 +191,9 @@ void ClientLocalBroadcast::seedValidated()
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QStringLiteral("INSERT INTO plant(map,x,y,plant,character,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
                      .arg(SqlFunction::quoteSqlVariable(map_file))
+                     .arg(plantOnMap.id)
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)
@@ -193,7 +202,8 @@ void ClientLocalBroadcast::seedValidated()
                      );
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            emit dbQuery(QStringLiteral("INSERT INTO plant(map,x,y,plant,character,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+                     .arg(plantOnMap.id)
                      .arg(SqlFunction::quoteSqlVariable(map_file))
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
@@ -437,25 +447,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QStringLiteral("DELETE FROM `plant` WHERE `map`=\'%1\' AND `x`=%2 AND `y`=%3")
-                                     .arg(SqlFunction::quoteSqlVariable(map_file))
-                                     .arg(x)
-                                     .arg(y)
-                                     );
+                        emit dbQuery(QStringLiteral("DELETE FROM `plant` WHERE `id`=%1").arg(plant.id));
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QStringLiteral("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
-                                 .arg(SqlFunction::quoteSqlVariable(map_file))
-                                 .arg(x)
-                                 .arg(y)
-                                 );
+                        emit dbQuery(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
                     break;
                     case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        emit dbQuery(QStringLiteral("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
-                                 .arg(SqlFunction::quoteSqlVariable(map_file))
-                                 .arg(x)
-                                 .arg(y)
-                                 );
+                        emit dbQuery(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
                     break;
                 }
 

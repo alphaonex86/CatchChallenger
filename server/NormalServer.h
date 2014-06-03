@@ -35,6 +35,8 @@ class NormalServer : public BaseServer
 public:
     explicit NormalServer();
     virtual ~NormalServer();
+    void setNormalSettings(const NormalServerSettings &settings);
+    NormalServerSettings getNormalSettings() const;
     //stat function
     quint16 player_current();
     quint16 player_max();
@@ -42,6 +44,7 @@ public:
     bool isListen();
     bool isStopped();
     static void checkSettingsFile(QSettings *settings);
+
 public slots:
     //to manipulate the server for restart and stop
     void start_server();
@@ -57,7 +60,7 @@ private:
     //internal usefull function
     QString listenIpAndPort(QString server_ip,quint16 server_port);
     //store about the network
-    QSslServer *server;
+    QSslServer *sslServer;
     int number_of_client;
     EventThreader * botThread;
     EventThreader * eventDispatcherThread;
@@ -68,6 +71,7 @@ private:
     QSslKey *sslKey;
     QHash<QHostAddress,QDateTime> kickedHosts;
     QTimer purgeKickedHostTimer;
+    NormalServerSettings normalServerSettings;
 
     static QString text_restart;
     static QString text_stop;
@@ -86,6 +90,7 @@ private slots:
     bool check_if_now_stopped();
     void start_internal_server();
     void sslErrors(const QList<QSslError> &errors);
+    virtual void loadAndFixSettings();
 signals:
     //async the call
     void need_be_stopped();

@@ -7,9 +7,9 @@ namespace CatchChallenger {
 class GlobalServerData
 {
 public:
-	//shared into all the program
-	static ServerSettings serverSettings;
-	static ServerPrivateVariables serverPrivateVariables;
+    //shared into all the program
+    static ServerSettings serverSettings;
+    static ServerPrivateVariables serverPrivateVariables;
 };
 }
 

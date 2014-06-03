@@ -291,6 +291,7 @@ void MainWindow::load_settings()
     ui->server_port->setValue(settings->value(QLatin1Literal("server-port")).toUInt());
     ui->tolerantMode->setChecked(settings->value(QLatin1Literal("tolerantMode")).toBool());
     ui->forceClientToSendAtMapChange->setChecked(settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool());
+    ui->useSsl->setChecked(settings->value(QLatin1Literal("useSsl")).toBool());
     if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("none"))
         ui->compression->setCurrentIndex(0);
     else if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("xz"))
@@ -568,6 +569,7 @@ void MainWindow::load_settings()
 void MainWindow::send_settings()
 {
     ServerSettings formatedServerSettings=server.getSettings();
+    NormalServerSettings formatedServerNormalSettings=server.getNormalSettings();
 
     //common var
     CommonSettings::commonSettings.min_character					= ui->min_character->value();
@@ -584,12 +586,13 @@ void MainWindow::send_settings()
     CommonSettings::commonSettings.forceClientToSendAtMapChange		= ui->forceClientToSendAtMapChange->isChecked();
 
     //the listen
-    formatedServerSettings.server_port					= ui->server_port->value();
-    formatedServerSettings.server_ip					= ui->server_ip->text();
+    formatedServerNormalSettings.server_port			= ui->server_port->value();
+    formatedServerNormalSettings.server_ip				= ui->server_ip->text();
+    formatedServerNormalSettings.proxy    				= ui->proxy->text();
+    formatedServerNormalSettings.proxy_port				= ui->proxy_port->value();
+    formatedServerNormalSettings.useSsl					= ui->useSsl->isChecked();
     formatedServerSettings.anonymous					= ui->anonymous->isChecked();
     formatedServerSettings.server_message				= ui->server_message->toPlainText();
-    formatedServerSettings.proxy    					= ui->proxy->text();
-    formatedServerSettings.proxy_port					= ui->proxy_port->value();
     formatedServerSettings.httpDatapackMirror    		= ui->httpDatapackMirror->text();
     if(!ui->datapack_cache->isChecked())
         formatedServerSettings.datapackCache			= -1;
@@ -598,7 +601,7 @@ void MainWindow::send_settings()
     else
         formatedServerSettings.datapackCache			= ui->datapack_cache_timeout->value();
     #ifdef Q_OS_LINUX
-    formatedServerSettings.linuxSettings.tcpCork    	= ui->linux_socket_cork->isChecked();
+    formatedServerNormalSettings.linuxSettings.tcpCork  = ui->linux_socket_cork->isChecked();
     #endif
 
     //ddos
@@ -751,6 +754,7 @@ void MainWindow::send_settings()
     formatedServerSettings.city.capture.minute=time.minute();
 
     server.setSettings(formatedServerSettings);
+    server.setNormalSettings(formatedServerNormalSettings);
 }
 
 void MainWindow::on_max_player_valueChanged(int arg1)
@@ -1237,4 +1241,9 @@ void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleReemit_toggled(
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
     settings->setValue(QLatin1Literal("Reemit"),checked);
     settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_useSsl_toggled(bool checked)
+{
+    settings->setValue(QLatin1Literal("useSsl"),checked);
 }

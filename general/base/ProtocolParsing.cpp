@@ -220,6 +220,7 @@ void ProtocolParsing::initialiseTheVariable()
     qRegisterMetaType<QList<Skill::AttackReturn> >("QList<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
     qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
     qRegisterMetaType<QList<CharacterEntry> >("QList<CharacterEntry>");
+    qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
 }
 
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)

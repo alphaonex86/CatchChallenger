@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fcntl.h>
 
+using namespace CatchChallenger;
+
 int EpollSocket::make_non_blocking(int sfd)
 {
     int flags, s;

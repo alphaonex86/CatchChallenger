@@ -97,6 +97,21 @@ struct Player_internal_informations
     OldEvents oldEvents;
 };
 
+struct NormalServerSettings
+{
+    quint16 server_port;
+    QString server_ip;
+    QString proxy;
+    quint16 proxy_port;
+    bool useSsl;
+
+    struct LinuxSettings
+    {
+        bool tcpCork;
+    };
+    LinuxSettings linuxSettings;
+};
+
 struct ServerSettings
 {
     CompressionType compressionType;
@@ -106,22 +121,12 @@ struct ServerSettings
     quint16 max_players;//not common because if null info not send
 
     //the listen, implicit on the client
-    quint16 server_port;
-    QString server_ip;
-    QString proxy;
-    quint16 proxy_port;
     QString datapack_basePath;
     bool anonymous;
     QString server_message;
     bool dontSendPlayerType;
     QString httpDatapackMirror;
     qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
-
-    struct LinuxSettings
-    {
-        bool tcpCork;
-    };
-    LinuxSettings linuxSettings;
 
     struct Database
     {
@@ -328,6 +333,11 @@ struct ServerPrivateVariables
     int botSpawnIndex;
     QHash<quint32,IndustryStatus> industriesStatus;
     QList<quint8> events;
+
+    //plant
+    QList<quint32> plantUsedId;
+    QList<quint32> plantUnusedId;
+    quint32 maxPlantId;
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp

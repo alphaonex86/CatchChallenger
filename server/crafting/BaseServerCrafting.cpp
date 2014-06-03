@@ -34,13 +34,13 @@ void BaseServerCrafting::preload_the_plant_on_map()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `map`,`x`,`y`,`plant`,`character`,`plant_timestamps` FROM `plant`");
+            queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps` FROM `plant`");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
+            queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            queryText=QStringLiteral("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
+            queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }
     QSqlQuery plantOnMapQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -49,7 +49,32 @@ void BaseServerCrafting::preload_the_plant_on_map()
     while(plantOnMapQuery.next())
     {
         bool ok;
-        QString map=plantOnMapQuery.value(0).toString();
+        const quint32 &id=plantOnMapQuery.value(0).toUInt(&ok);
+        if(ok)
+        {
+            DebugClass::debugConsole(QStringLiteral("Plant id ignored because is not a number: %1").arg(plantOnMapQuery.value(0).toString()));
+            continue;
+        }
+        if(GlobalServerData::serverPrivateVariables.plantUsedId.contains(id))
+        {
+            DebugClass::debugConsole(QStringLiteral("Plant id already found: %1").arg(plantOnMapQuery.value(0).toString()));
+            continue;
+        }
+        if(GlobalServerData::serverPrivateVariables.plantUnusedId.contains(id))
+            GlobalServerData::serverPrivateVariables.plantUnusedId.removeOne(id);
+        GlobalServerData::serverPrivateVariables.plantUsedId << id;
+        //put the unused id
+        if(GlobalServerData::serverPrivateVariables.maxPlantId<id)
+        {
+            quint32 index=GlobalServerData::serverPrivateVariables.maxPlantId+1;
+            while(index<id)
+            {
+                GlobalServerData::serverPrivateVariables.plantUnusedId << index;
+                index++;
+            }
+            GlobalServerData::serverPrivateVariables.maxPlantId=id;
+        }
+        QString map=plantOnMapQuery.value(1).toString();
         if(!map.endsWith(BaseServerCrafting::text_dottmx))
             map+=BaseServerCrafting::text_dottmx;
         if(!GlobalServerData::serverPrivateVariables.map_list.contains(map))
@@ -62,7 +87,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(map));
             continue;
         }
-        const quint8 &x=plantOnMapQuery.value(1).toUInt(&ok);
+        const quint8 &x=plantOnMapQuery.value(2).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x is not a number"));
@@ -73,7 +98,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->width).arg(map).arg(x));
             continue;
         }
-        const quint8 &y=plantOnMapQuery.value(2).toUInt(&ok);
+        const quint8 &y=plantOnMapQuery.value(3).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y is not a number"));
@@ -84,16 +109,16 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->height).arg(map).arg(y));
             continue;
         }
-        const quint8 &plant=plantOnMapQuery.value(3).toUInt(&ok);
+        const quint8 &plant=plantOnMapQuery.value(4).toUInt(&ok);
         if(!ok)
             continue;
         if(!CommonDatapack::commonDatapack.plants.contains(plant))
         {
             DebugClass::debugConsole(QStringLiteral("Plant dropped to not block the player, due to missing plant into the list: %1").arg(plant));
-            remove_plant_on_map(map,x,y);
+            remove_plant_on_map(id);
             continue;
         }
-        const quint32 &character=plantOnMapQuery.value(4).toUInt(&ok);
+        const quint32 &character=plantOnMapQuery.value(5).toUInt(&ok);
         if(!ok)
             continue;
         if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list.value(map),x,y))
@@ -101,7 +126,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(map).arg(x).arg(y));
             continue;
         }
-        const quint64 &plant_timestamps=plantOnMapQuery.value(5).toULongLong(&ok);
+        const quint64 &plant_timestamps=plantOnMapQuery.value(6).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant timestamps is not a number: %1 (%2,%3)").arg(map).arg(x).arg(y));
@@ -110,6 +135,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
 
         //plant_timestamps
         MapServerCrafting::PlantOnMap plantOnMap;
+        plantOnMap.id=id;
         plantOnMap.x=x;
         plantOnMap.y=y;
         plantOnMap.plant=plant;
@@ -233,29 +259,20 @@ void BaseServerCrafting::preload_shop()
     DebugClass::debugConsole(QStringLiteral("%1 shops(s) loaded").arg(GlobalServerData::serverPrivateVariables.shops.size()));
 }
 
-void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,const quint8 &y)
+void BaseServerCrafting::remove_plant_on_map(const quint32 &id)
 {
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("DELETE FROM `plant` WHERE `map`='%1' AND `x`=%2 AND `y`=%3")
-                .arg(SqlFunction::quoteSqlVariable(map))
-                .arg(x)
-                .arg(y);
+            queryText=QStringLiteral("DELETE FROM `plant` WHERE `id`=%1").arg(id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QStringLiteral("DELETE FROM plant WHERE map='%1' AND x=%2 AND y=%3")
-            .arg(SqlFunction::quoteSqlVariable(map))
-            .arg(x)
-            .arg(y);
+            queryText=QStringLiteral("DELETE FROM plant WHERE id=%1").arg(id);
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-        queryText=QStringLiteral("DELETE FROM plant WHERE map='%1' AND x=%2 AND y=%3")
-            .arg(SqlFunction::quoteSqlVariable(map))
-            .arg(x)
-            .arg(y);
+            queryText=QStringLiteral("DELETE FROM plant WHERE id=%1").arg(id);
         break;
     }
     QSqlQuery removePlantOnMapQuery(queryText,*GlobalServerData::serverPrivateVariables.db);
