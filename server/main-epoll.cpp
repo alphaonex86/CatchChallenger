@@ -51,7 +51,7 @@ void send_settings()
 
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
-    formatedServerSettings.httpDatapackMirror			= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
+    CommonSettings::commonSettings.httpDatapackMirror	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
     server->preload_the_data();
 
     TimerDisplayEventBySeconds timerDisplayEventBySeconds;
-    if(!timerDisplayEventBySeconds.init())
+    if(!timerDisplayEventBySeconds.start(1000))
         return EXIT_FAILURE;
 
     #ifndef SERVERNOBUFFER
@@ -282,8 +282,12 @@ int main(int argc, char *argv[])
             qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
             return EXIT_FAILURE;
         }
-        formatedServerSettings.datapackCache=0;
-        if(formatedServerSettings.httpDatapackMirror.isEmpty())
+        if(formatedServerSettings.datapackCache!=0)
+        {
+            qDebug() << "datapackCache need be 0 to have infinit datapack caching";
+            return EXIT_FAILURE;
+        }
+        if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
         {
             qDebug() << "Need use mirror http";
             return EXIT_FAILURE;

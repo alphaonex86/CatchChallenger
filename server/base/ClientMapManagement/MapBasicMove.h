@@ -14,9 +14,14 @@
 /** \warning No static variable due to thread access to this class!!! */
 
 namespace CatchChallenger {
-class MapBasicMove : public QObject
+class MapBasicMove
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit MapBasicMove();
     virtual ~MapBasicMove();
@@ -40,14 +45,20 @@ protected:
     //volatile bool stopCurrentMethod;
     //volatile bool stopIt;
     virtual void extraStop();
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     //normal signals
     void error(const QString &error) const;
     void message(const QString &message) const;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void isReadyToStop() const;
+    #endif
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
-public slots:
+public:
     //map slots, transmited by the current ClientNetworkRead
     virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);

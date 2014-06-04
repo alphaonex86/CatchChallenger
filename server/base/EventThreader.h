@@ -1,6 +1,7 @@
 #ifndef CATCHCHALLENGER_EVENTTHREADER_H
 #define CATCHCHALLENGER_EVENTTHREADER_H
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QThread>
 
 namespace CatchChallenger {
@@ -18,5 +19,6 @@ signals:
     void return_latency() const;
 };
 }
+#endif
 
 #endif // EVENTTHREADER_H

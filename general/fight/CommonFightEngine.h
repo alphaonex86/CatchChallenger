@@ -12,9 +12,14 @@
 
 namespace CatchChallenger {
 //only the logique here, store nothing
-class CommonFightEngine : public QObject
+class CommonFightEngine
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     CommonFightEngine();
     virtual void resetAll();
@@ -101,7 +106,11 @@ protected:
     virtual bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
     virtual bool setSkillLevel(PlayerMonster * currentMonster,const int &index,const quint8 &level);
     virtual bool removeSkill(PlayerMonster * currentMonster,const int &index);
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     void error(const QString &error) const;
     void message(const QString &message) const;
 protected:

@@ -2,6 +2,11 @@
 #include "GlobalServerData.h"
 #include "MapServer.h"
 #include "ClientNetworkReadWithoutSender.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "Client.h"
+#define dbQuery(a) client->clientHeavyLoad.dbQuery(a)
+#define message(a) client->normalOutput(a)
+#endif
 
 using namespace CatchChallenger;
 
@@ -120,17 +125,23 @@ void ClientNetworkRead::askIfIsReadyToStop()
 {
     ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.clientList.removeOne(this);
     stopIt=true;
-    emit isReadyToStop();
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    /*emit */isReadyToStop();
+    #endif
 }
 
 void ClientNetworkRead::sendNewEvent(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        emit error(QStringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        client->errorOutput(QStringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
+        #else
+        /*emit */error(QStringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
+        #endif
         return;
     }
-    emit sendQuery(0x79,0x0002,queryNumberList.first(),data);
+    /*emit */sendQuery(0x79,0x0002,queryNumberList.first(),data);
     queryNumberList.removeFirst();
 }
 
@@ -138,7 +149,11 @@ void ClientNetworkRead::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,
 {
     if(queryNumberList.empty())
     {
-        emit error(QStringLiteral("Sorry, no free query number to send this query of teleportation"));
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        client->errorOutput(QStringLiteral("Sorry, no free query number to send this query of teleportation"));
+        #else
+        /*emit */error(QStringLiteral("Sorry, no free query number to send this query of teleportation"));
+        #endif
         return;
     }
     TeleportationPoint teleportationPoint;
@@ -159,7 +174,7 @@ void ClientNetworkRead::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,
     out << (COORD_TYPE)x;
     out << (COORD_TYPE)y;
     out << (quint8)orientation;
-    emit sendQuery(0x79,0x0001,queryNumberList.first(),outputData);
+    /*emit */sendQuery(0x79,0x0001,queryNumberList.first(),outputData);
     queryNumberList.removeFirst();
 }
 
@@ -167,10 +182,14 @@ void ClientNetworkRead::sendTradeRequest(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        emit error(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        client->errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        #else
+        /*emit */error(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        #endif
         return;
     }
-    emit sendQuery(0x80,0x0001,queryNumberList.first(),data);
+    /*emit */sendQuery(0x80,0x0001,queryNumberList.first(),data);
     queryNumberList.removeFirst();
 }
 
@@ -178,10 +197,14 @@ void ClientNetworkRead::sendBattleRequest(const QByteArray &data)
 {
     if(queryNumberList.empty())
     {
-        emit error(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        client->errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        #else
+        /*emit */error(QStringLiteral("Sorry, no free query number to send this query of trade"));
+        #endif
         return;
     }
-    emit sendQuery(0x90,0x0001,queryNumberList.first(),data);
+    /*emit */sendQuery(0x90,0x0001,queryNumberList.first(),data);
     queryNumberList.removeFirst();
 }
 
@@ -190,11 +213,15 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
     if(stopIt)
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QStringLiteral("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
+    /*emit */message(QStringLiteral("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
     {
-        emit error("Too many packet in sort time, check DDOS limit");
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        client->errorOutput("Too many packet in sort time, check DDOS limit");
+        #else
+        /*emit */error("Too many packet in sort time, check DDOS limit");
+        #endif
         return;
     }
     otherPacketKickNewValue++;
@@ -218,8 +245,12 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                     {
                         out << (quint8)0x03;		//server full
                         out << ClientNetworkRead::text_server_full;
-                        emit postReply(queryNumber,outputData);
-                        emit error(ClientNetworkRead::text_server_full);
+                        /*emit */postReply(queryNumber,outputData);
+                        #ifdef EPOLLCATCHCHALLENGERSERVER
+                        client->errorOutput(ClientNetworkRead::text_server_full);
+                        #else
+                        /*emit */error(ClientNetworkRead::text_server_full);
+                        #endif
                         return;
                     }
                     if(protocol==PROTOCOL_HEADER)
@@ -237,21 +268,29 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                                 out << (quint8)0x02;
                             break;
                             default:
-                                emit error("Compression selected wrong");
+                                #ifdef EPOLLCATCHCHALLENGERSERVER
+                                client->errorOutput("Compression selected wrong");
+                                #else
+                                /*emit */error("Compression selected wrong");
+                                #endif
                             return;
                         }
-                        emit postReply(queryNumber,outputData);
+                        /*emit */postReply(queryNumber,outputData);
                         have_send_protocol=true;
                         ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.clientList << this;
                         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                        emit message(QStringLiteral("Protocol sended and replied"));
+                        /*emit */message(QStringLiteral("Protocol sended and replied"));
                         #endif
                     }
                     else
                     {
                         out << (quint8)0x02;		//protocol not supported
-                        emit postReply(queryNumber,outputData);
-                        emit error("Wrong protocol");
+                        /*emit */postReply(queryNumber,outputData);
+                        #ifdef EPOLLCATCHCHALLENGERSERVER
+                        client->errorOutput("Wrong protocol");
+                        #else
+                        /*emit */error("Wrong protocol");
+                        #endif
                         return;
                     }
                 }
@@ -259,7 +298,11 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
             case 0x0002:
                 if(!have_send_protocol)
                 {
-                    emit error("send login before the protocol");
+                    #ifdef EPOLLCATCHCHALLENGERSERVER
+                    client->errorOutput("send login before the protocol");
+                    #else
+                    /*emit */error("send login before the protocol");
+                    #endif
                     return;
                 }
                 if((data.size()-in.device()->pos())!=(64*2))
@@ -267,14 +310,22 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                 else if(is_logging_in_progess)
                 {
                     out << (quint8)1;
-                    emit postReply(queryNumber,outputData);
-                    emit error("Loggin in progress");
+                    /*emit */postReply(queryNumber,outputData);
+                    #ifdef EPOLLCATCHCHALLENGERSERVER
+                    client->errorOutput("Loggin in progress");
+                    #else
+                    /*emit */error("Loggin in progress");
+                    #endif
                 }
                 else if(player_informations->character_loaded)
                 {
                     out << (quint8)1;
-                    emit postReply(queryNumber,outputData);
-                    emit error("Already logged");
+                    /*emit */postReply(queryNumber,outputData);
+                    #ifdef EPOLLCATCHCHALLENGERSERVER
+                    client->errorOutput("Already logged");
+                    #else
+                    /*emit */error("Already logged");
+                    #endif
                 }
                 else
                 {
@@ -283,7 +334,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                     const QByteArray &login=data_extracted.mid(0,64);
                     data_extracted.remove(0,64);
                     const QByteArray &hash=data_extracted;
-                    emit askLogin(queryNumber,login,hash);
+                    /*emit */askLogin(queryNumber,login,hash);
                     return;
                 }
             break;
@@ -310,13 +361,13 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
     if(!player_informations->character_loaded)
     {
         //wrong protocol
-        emit needDisconnectTheClient();
+        /*emit */needDisconnectTheClient();
         //parseError(QStringLiteral("is not logged, parseMessage(%1)").arg(mainCodeType));
         return;
     }
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QStringLiteral("parseMessage(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
+    /*emit */message(QStringLiteral("parseMessage(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -326,7 +377,11 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
         {
             if((movePacketKickTotalCache+movePacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitMove)
             {
-                emit error("Too many move in sort time, check DDOS limit");
+                #ifdef EPOLLCATCHCHALLENGERSERVER
+                client->errorOutput("Too many move in sort time, check DDOS limit");
+                #else
+                /*emit */error("Too many move in sort time, check DDOS limit");
+                #endif
                 return;
             }
             movePacketKickNewValue++;
@@ -343,13 +398,17 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
             parseError(QStringLiteral("Bad direction number: %1").arg(direction));
             return;
         }
-        emit moveThePlayer(previousMovedUnit,(Direction)direction);
+        /*emit */moveThePlayer(previousMovedUnit,(Direction)direction);
         break;
         case 0x61:
         {
             if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
             {
-                emit error("Too many packet in sort time, check DDOS limit");
+                #ifdef EPOLLCATCHCHALLENGERSERVER
+                client->errorOutput("Too many packet in sort time, check DDOS limit");
+                #else
+                /*emit */error("Too many packet in sort time, check DDOS limit");
+                #endif
                 return;
             }
             otherPacketKickNewValue++;
@@ -360,7 +419,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
             }
             quint32 skill;
             in >> skill;
-            emit useSkill(skill);
+            /*emit */useSkill(skill);
         }
         break;
         default:
@@ -388,7 +447,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
     if(!player_informations->character_loaded)
     {
         //wrong protocol
-        emit needDisconnectTheClient();
+        /*emit */needDisconnectTheClient();
         //parseError(QStringLiteral("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
     }
@@ -396,14 +455,18 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
     {
         if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
         {
-            emit error("Too many packet in sort time, check DDOS limit");
+            #ifdef EPOLLCATCHCHALLENGERSERVER
+            client->errorOutput("Too many packet in sort time, check DDOS limit");
+            #else
+            /*emit */error("Too many packet in sort time, check DDOS limit");
+            #endif
             return;
         }
         otherPacketKickNewValue++;
     }
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QStringLiteral("parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
+    /*emit */message(QStringLiteral("parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -420,7 +483,11 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
             {
                 if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
                 {
-                    emit error("Too many chat in sort time, check DDOS limit");
+                    #ifdef EPOLLCATCHCHALLENGERSERVER
+                    client->errorOutput("Too many chat in sort time, check DDOS limit");
+                    #else
+                    /*emit */error("Too many chat in sort time, check DDOS limit");
+                    #endif
                     return;
                 }
                 chatPacketKickNewValue++;
@@ -448,8 +515,8 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                             return;
                         QString pseudo;
                         in >> pseudo;
-                        emit message(ClientNetworkRead::text_slashpmspace+pseudo+ClientNetworkRead::text_space+text);
-                        emit sendPM(text,pseudo);
+                        /*emit */message(ClientNetworkRead::text_slashpmspace+pseudo+ClientNetworkRead::text_space+text);
+                        /*emit */sendPM(text,pseudo);
                     }
                     else
                     {
@@ -469,7 +536,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                         if(chatType==Chat_type_local)
                         {
                             if(CommonSettings::commonSettings.chat_allow_local)
-                                emit sendLocalChatText(text);
+                                /*emit */sendLocalChatText(text);
                             else
                             {
                                 parseError("can't send chat local because is disabled: "+QString::number(chatType));
@@ -479,7 +546,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                         else
                         {
                             if(CommonSettings::commonSettings.chat_allow_clan || CommonSettings::commonSettings.chat_allow_all)
-                                emit sendChatText((Chat_type)chatType,text);
+                                /*emit */sendChatText((Chat_type)chatType,text);
                             else
                             {
                                 parseError("can't send chat other because is disabled: "+QString::number(chatType));
@@ -508,26 +575,26 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                             {
                                 if(command==ClientNetworkRead::text_playernumber)
                                 {
-                                    emit sendBroadCastCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendBroadCastCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                     return;
                                 }
                                 else if(command==ClientNetworkRead::text_playerlist)
                                 {
-                                    emit sendBroadCastCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+" "+text);
+                                    /*emit */sendBroadCastCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+" "+text);
                                     return;
                                 }
                                 else if(command==ClientNetworkRead::text_trade)
                                 {
-                                    emit sendHandlerCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendHandlerCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                     return;
                                 }
                                 else if(command==ClientNetworkRead::text_battle)
                                 {
-                                    emit sendHandlerCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendHandlerCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                     return;
                                 }
                             }
@@ -536,58 +603,58 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                             {
                                 if(command==ClientNetworkRead::text_give)
                                 {
-                                    emit sendHandlerCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendHandlerCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else if(command==ClientNetworkRead::text_setevent)
                                 {
-                                    emit sendHandlerCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendHandlerCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else if(command==ClientNetworkRead::text_take)
                                 {
-                                    emit sendHandlerCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendHandlerCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else if(command==ClientNetworkRead::text_tp)
                                 {
-                                    emit sendHandlerCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendHandlerCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else if(command==ClientNetworkRead::text_kick)
                                 {
-                                    emit sendBroadCastCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendBroadCastCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else if(command==ClientNetworkRead::text_chat)
                                 {
-                                    emit sendBroadCastCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendBroadCastCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else if(command==ClientNetworkRead::text_setrights)
                                 {
-                                    emit sendBroadCastCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */sendBroadCastCommand(command,text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else if(command==ClientNetworkRead::text_stop || command==ClientNetworkRead::text_restart)
                                 {
                                     BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                                    emit message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else
                                 {
-                                    emit message(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                    /*emit */message(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
                                     receiveSystemText(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                             }
                             else
                             {
-                                emit message(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
+                                /*emit */message(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 receiveSystemText(ClientNetworkRead::text_unknown_send_command_slash+command+ClientNetworkRead::text_space+text);
                             }
                         }
                         else
-                            emit message(ClientNetworkRead::text_commands_seem_not_right+text);
+                            /*emit */message(ClientNetworkRead::text_commands_seem_not_right+text);
                     }
                 }
                 return;
@@ -606,10 +673,10 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                 switch(returnCode)
                 {
                     case 0x01:
-                        emit clanInvite(true);
+                        /*emit */clanInvite(true);
                     break;
                     case 0x02:
-                        emit clanInvite(false);
+                        /*emit */clanInvite(false);
                     break;
                     default:
                         parseError(QStringLiteral("wrong return code for clan invite ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
@@ -644,7 +711,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 quantity;
                     in >> quantity;
-                    emit destroyObject(itemId,quantity);
+                    /*emit */destroyObject(itemId,quantity);
                 }
                 break;
                 //Destroy an object
@@ -669,7 +736,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                             }
                             quint64 cash;
                             in >> cash;
-                            emit tradeAddTradeCash(cash);
+                            /*emit */tradeAddTradeCash(cash);
                         }
                         break;
                         //item
@@ -689,7 +756,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                             }
                             quint32 quantity;
                             in >> quantity;
-                            emit tradeAddTradeObject(item,quantity);
+                            /*emit */tradeAddTradeObject(item,quantity);
                         }
                         break;
                         //monster
@@ -702,7 +769,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                             }
                             quint32 monsterId;
                             in >> monsterId;
-                            emit tradeAddTradeMonster(monsterId);
+                            /*emit */tradeAddTradeMonster(monsterId);
                         }
                         break;
                         default:
@@ -714,11 +781,11 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                 break;
                 //trade finished after the accept
                 case 0x0004:
-                    emit tradeFinished();
+                    /*emit */tradeFinished();
                 break;
                 //trade canceled after the accept
                 case 0x0005:
-                    emit tradeCanceled();
+                    /*emit */tradeCanceled();
                 break;
                 //deposite/withdraw to the warehouse
                 case 0x0006:
@@ -798,7 +865,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                         depositeMonsters << id;
                         index++;
                     }
-                    emit wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);
+                    /*emit */wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);
                 }
                 break;
                 default:
@@ -813,7 +880,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
             {
                 //Try escape
                 case 0x0002:
-                    emit tryEscape();
+                    /*emit */tryEscape();
                 break;
                 //Learn skill
                 case 0x0004:
@@ -832,12 +899,12 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 skill;
                     in >> skill;
-                    emit learnSkill(monsterId,skill);
+                    /*emit */learnSkill(monsterId,skill);
                 }
                 break;
                 //Heal all the monster
                 case 0x0006:
-                    emit heal();
+                    /*emit */heal();
                 break;
                 //Request bot fight
                 case 0x0007:
@@ -849,7 +916,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 fightId;
                     in >> fightId;
-                    emit requestFight(fightId);
+                    /*emit */requestFight(fightId);
                 }
                 break;
                 //move the monster
@@ -882,7 +949,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint8 position;
                     in >> position;
-                    emit moveMonster(moveUp,position);
+                    /*emit */moveMonster(moveUp,position);
                 }
                 break;
                 //change monster in fight
@@ -895,7 +962,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 monsterId;
                     in >> monsterId;
-                    emit changeOfMonsterInFight(monsterId);
+                    /*emit */changeOfMonsterInFight(monsterId);
                 }
                 break;
                 //Monster evolution validated
@@ -908,7 +975,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 monsterId;
                     in >> monsterId;
-                    emit confirmEvolution(monsterId);
+                    /*emit */confirmEvolution(monsterId);
                 }
                 break;
                 //Monster evolution validated
@@ -928,7 +995,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 monsterId;
                     in >> monsterId;
-                    emit useObjectOnMonster(item,monsterId);
+                    /*emit */useObjectOnMonster(item,monsterId);
                 }
                 break;
                 default:
@@ -951,7 +1018,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 questId;
                     in >> questId;
-                    emit newQuestAction(QuestAction_Start,questId);
+                    /*emit */newQuestAction(QuestAction_Start,questId);
                 }
                 break;
                 //Quest finish
@@ -964,7 +1031,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 questId;
                     in >> questId;
-                    emit newQuestAction(QuestAction_Finish,questId);
+                    /*emit */newQuestAction(QuestAction_Finish,questId);
                 }
                 break;
                 //Quest cancel
@@ -977,7 +1044,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 questId;
                     in >> questId;
-                    emit newQuestAction(QuestAction_Cancel,questId);
+                    /*emit */newQuestAction(QuestAction_Cancel,questId);
                 }
                 break;
                 //Quest next step
@@ -990,7 +1057,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     }
                     quint32 questId;
                     in >> questId;
-                    emit newQuestAction(QuestAction_NextStep,questId);
+                    /*emit */newQuestAction(QuestAction_NextStep,questId);
                 }
                 break;
                 //Waiting for city caputre
@@ -1004,9 +1071,9 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     quint8 cancel;
                     in >> cancel;
                     if(cancel==0x00)
-                        emit waitingForCityCaputre(false);
+                        /*emit */waitingForCityCaputre(false);
                     else
-                        emit waitingForCityCaputre(true);
+                        /*emit */waitingForCityCaputre(true);
                 }
                 break;
                 default:
@@ -1066,13 +1133,17 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
     {
-        emit error("Too many packet in sort time, check DDOS limit");
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        client->errorOutput("Too many packet in sort time, check DDOS limit");
+        #else
+        /*emit */error("Too many packet in sort time, check DDOS limit");
+        #endif
         return;
     }
     otherPacketKickNewValue++;
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
+    /*emit */message(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -1105,7 +1176,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     return;
                 }
                 in >> skin;
-                emit addCharacter(queryNumber,profileIndex,pseudo,skin);
+                /*emit */addCharacter(queryNumber,profileIndex,pseudo,skin);
             }
             break;
             //Remove character
@@ -1118,7 +1189,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     return;
                 }
                 in >> characterId;
-                emit removeCharacter(queryNumber,characterId);
+                /*emit */removeCharacter(queryNumber,characterId);
             }
             break;
             //Select character
@@ -1131,7 +1202,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     return;
                 }
                 in >> characterId;
-                emit selectCharacter(queryNumber,characterId);
+                /*emit */selectCharacter(queryNumber,characterId);
             }
             break;
             //Send datapack file list
@@ -1172,7 +1243,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     timestamps << tempTimestamps;
                     index++;
                 }
-                emit datapackList(queryNumber,files,timestamps);
+                /*emit */datapackList(queryNumber,files,timestamps);
             }
             break;
             //Clan action
@@ -1198,12 +1269,12 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                         }
                         QString tempString;
                         in >> tempString;
-                        emit clanAction(queryNumber,clanActionId,tempString);
+                        /*emit */clanAction(queryNumber,clanActionId,tempString);
                     }
                     break;
                     case 0x02:
                     case 0x03:
-                        emit clanAction(queryNumber,clanActionId,QString());
+                        /*emit */clanAction(queryNumber,clanActionId,QString());
                     break;
                     default:
                     parseError(QStringLiteral("unknown clan action code"));
@@ -1230,12 +1301,12 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint8 plant_id;
                 in >> plant_id;
-                emit plantSeed(queryNumber,plant_id);
+                /*emit */plantSeed(queryNumber,plant_id);
             }
             break;
             //Collect mature plant
             case 0x0007:
-                emit collectPlant(queryNumber);
+                /*emit */collectPlant(queryNumber);
             break;
             //Usage of recipe
             case 0x0008:
@@ -1246,7 +1317,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 recipe_id;
                 in >> recipe_id;
-                emit useRecipe(queryNumber,recipe_id);
+                /*emit */useRecipe(queryNumber,recipe_id);
             break;
             //Use object
             case 0x0009:
@@ -1257,7 +1328,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 objectId;
                 in >> objectId;
-                emit useObject(queryNumber,objectId);
+                /*emit */useObject(queryNumber,objectId);
             break;
             //Get shop list
             case 0x000A:
@@ -1269,7 +1340,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 shopId;
                 in >> shopId;
-                emit getShopList(queryNumber,shopId);
+                /*emit */getShopList(queryNumber,shopId);
             }
             break;
             //Buy object
@@ -1303,7 +1374,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 price;
                 in >> price;
-                emit buyObject(queryNumber,shopId,objectId,quantity,price);
+                /*emit */buyObject(queryNumber,shopId,objectId,quantity,price);
             }
             break;
             //Sell object
@@ -1337,7 +1408,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 price;
                 in >> price;
-                emit sellObject(queryNumber,shopId,objectId,quantity,price);
+                /*emit */sellObject(queryNumber,shopId,objectId,quantity,price);
             }
             break;
             case 0x000D:
@@ -1349,7 +1420,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 factoryId;
                 in >> factoryId;
-                emit getFactoryList(queryNumber,factoryId);
+                /*emit */getFactoryList(queryNumber,factoryId);
             }
             break;
             case 0x000E:
@@ -1382,7 +1453,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 price;
                 in >> price;
-                emit buyFactoryObject(queryNumber,factoryId,objectId,quantity,price);
+                /*emit */buyFactoryObject(queryNumber,factoryId,objectId,quantity,price);
             }
             break;
             case 0x000F:
@@ -1415,11 +1486,11 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 }
                 quint32 price;
                 in >> price;
-                emit sellFactoryObject(queryNumber,factoryId,objectId,quantity,price);
+                /*emit */sellFactoryObject(queryNumber,factoryId,objectId,quantity,price);
             }
             break;
             case 0x0010:
-                emit getMarketList(queryNumber);
+                /*emit */getMarketList(queryNumber);
             break;
             case 0x0011:
             {
@@ -1455,7 +1526,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     }
                     quint32 quantity;
                     in >> quantity;
-                    emit buyMarketObject(queryNumber,marketObjectId,quantity);
+                    /*emit */buyMarketObject(queryNumber,marketObjectId,quantity);
                 }
                 else
                 {
@@ -1466,7 +1537,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     }
                     quint32 monsterId;
                     in >> monsterId;
-                    emit buyMarketMonster(queryNumber,monsterId);
+                    /*emit */buyMarketMonster(queryNumber,monsterId);
                 }
             }
             break;
@@ -1516,7 +1587,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                         parseError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                         return;
                     }
-                    emit putMarketObject(queryNumber,objectId,quantity,price);
+                    /*emit */putMarketObject(queryNumber,objectId,quantity,price);
                 }
                 else
                 {
@@ -1539,12 +1610,12 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                         parseError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                         return;
                     }
-                    emit putMarketMonster(queryNumber,monsterId,price);
+                    /*emit */putMarketMonster(queryNumber,monsterId,price);
                 }
             }
             break;
             case 0x0013:
-                emit recoverMarketCash(queryNumber);
+                /*emit */recoverMarketCash(queryNumber);
             break;
             case 0x0014:
             {
@@ -1580,7 +1651,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     }
                     quint32 quantity;
                     in >> quantity;
-                    emit withdrawMarketObject(queryNumber,objectId,quantity);
+                    /*emit */withdrawMarketObject(queryNumber,objectId,quantity);
                 }
                 else
                 {
@@ -1591,7 +1662,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                     }
                     quint32 monsterId;
                     in >> monsterId;
-                    emit withdrawMarketMonster(queryNumber,monsterId);
+                    /*emit */withdrawMarketMonster(queryNumber,monsterId);
                 }
             }
             break;
@@ -1655,7 +1726,7 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
     }
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
+    /*emit */message(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -1666,13 +1737,13 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
         {
             //teleportation
             case 0x0001:
-                emit message("emit teleportValidatedTo() from protocol");
-                emit teleportValidatedTo(lastTeleportation.first().map,lastTeleportation.first().x,lastTeleportation.first().y,lastTeleportation.first().orientation);
+                /*emit */message("/*emit */teleportValidatedTo() from protocol");
+                /*emit */teleportValidatedTo(lastTeleportation.first().map,lastTeleportation.first().x,lastTeleportation.first().y,lastTeleportation.first().orientation);
                 lastTeleportation.removeFirst();
             break;
             //Event change
             case 0x0002:
-                emit removeFirstEventInQueue();
+                /*emit */removeFirstEventInQueue();
             break;
             default:
                 parseError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
@@ -1691,10 +1762,10 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
                     switch(returnCode)
                     {
                         case 0x01:
-                            emit tradeAccepted();
+                            /*emit */tradeAccepted();
                         break;
                         case 0x02:
-                            emit tradeCanceled();
+                            /*emit */tradeCanceled();
                         break;
                         default:
                             parseError(QStringLiteral("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
@@ -1719,10 +1790,10 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
                     switch(returnCode)
                     {
                         case 0x01:
-                            emit battleAccepted();
+                            /*emit */battleAccepted();
                         break;
                         case 0x02:
-                            emit battleCanceled();
+                            /*emit */battleCanceled();
                         break;
                         default:
                             parseError(QStringLiteral("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
@@ -1757,9 +1828,15 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
 void ClientNetworkRead::parseError(const QString &errorString)
 {
     if(GlobalServerData::serverSettings.tolerantMode)
-        emit message(QStringLiteral("Packed dropped, due to: %1").arg(errorString));
+        /*emit */message(QStringLiteral("Packed dropped, due to: %1").arg(errorString));
     else
-        emit error(errorString);
+    {
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        client->errorOutput(errorString);
+        #else
+        /*emit */error(errorString);
+        #endif
+    }
 }
 
 /// \warning it need be complete protocol trame
@@ -1782,5 +1859,5 @@ void ClientNetworkRead::receiveSystemText(const QString &text)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)Chat_type_system;
     out << text;
-    emit sendFullPacket(0xC2,0x0005,outputData);
+    /*emit */sendFullPacket(0xC2,0x0005,outputData);
 }

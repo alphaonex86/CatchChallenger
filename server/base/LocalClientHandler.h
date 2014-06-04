@@ -25,9 +25,14 @@
  * Only here you need use the random list */
 
 namespace CatchChallenger {
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
 class LocalClientHandler : public MapBasicMove
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit LocalClientHandler();
     ~LocalClientHandler();
@@ -57,6 +62,9 @@ public:
     //market
     static QList<quint16> marketObjectIdList;
     static QRegularExpression tmxRemove;
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    Client *client;
+#endif
 private:
     bool checkCollision();
 
@@ -127,7 +135,7 @@ private:
     static QString text_battle;
     static QString text_to;
     static QString text_dotcomma;
-public slots:
+public:
     void put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     void createMemoryClan();
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
@@ -233,7 +241,11 @@ public slots:
     void recoverMarketCash(const quint32 &query_id);
     void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
-private slots:
+#ifndef EPOLLCATCHCHALLENGERSERVER
+private:
+#else
+public:
+#endif
     void extraStop();
     static QString directionToStringToSave(const Direction &direction);
     static QString orientationToStringToSave(const Orientation &orientation);
@@ -244,7 +256,11 @@ private slots:
     bool startQuest(const Quest &quest);
     void addQuestStepDrop(const quint32 &questId,const quint8 &questStep);
     void removeQuestStepDrop(const quint32 &questId,const quint8 &questStep);
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     void askClan(const quint32 &clanId);
     void dbQuery(const QString &sqlQuery) const;
     void askRandomNumber() const;

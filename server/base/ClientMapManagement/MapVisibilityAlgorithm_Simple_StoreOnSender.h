@@ -8,7 +8,6 @@
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnSender : public ClientMapManagement
 {
-    Q_OBJECT
 public:
     explicit MapVisibilityAlgorithm_Simple_StoreOnSender();
     ~MapVisibilityAlgorithm_Simple_StoreOnSender();
@@ -48,12 +47,12 @@ public:
     bool                                to_send_insert;
     bool                    			to_send_reinsert;
     QList<map_management_movement>      to_send_move;
-public slots:
+public:
     //map slots, transmited by the current ClientNetworkRead
     void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
-private slots:
+private:
     void extraStop();
 };
 }

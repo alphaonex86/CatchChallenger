@@ -8,21 +8,23 @@ PlayerUpdater::PlayerUpdater() :
     sended_connected_players(0),
     next_send_timer(NULL)
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     connect(this,&PlayerUpdater::send_addConnectedPlayer,this,&PlayerUpdater::internal_addConnectedPlayer,Qt::QueuedConnection);
     connect(this,&PlayerUpdater::send_removeConnectedPlayer,this,&PlayerUpdater::internal_removeConnectedPlayer,Qt::QueuedConnection);
 
     connect(this,&PlayerUpdater::try_initAll,                  this,&PlayerUpdater::initAll,              Qt::QueuedConnection);
-    emit try_initAll();
+    /*emit */try_initAll();
+    #endif
 }
 
 void PlayerUpdater::addConnectedPlayer()
 {
-    emit send_addConnectedPlayer();
+    /*emit */send_addConnectedPlayer();
 }
 
 void PlayerUpdater::removeConnectedPlayer()
 {
-    emit send_removeConnectedPlayer();
+    /*emit */send_removeConnectedPlayer();
 }
 
 void PlayerUpdater::initAll()
@@ -35,7 +37,9 @@ void PlayerUpdater::initAll()
         //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=9*16*4=576B/s
         next_send_timer->setInterval(250);
 
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         connect(next_send_timer,&QTimer::timeout,this,&PlayerUpdater::send_timer,Qt::QueuedConnection);
+        #endif
     }
 }
 
@@ -97,6 +101,6 @@ void PlayerUpdater::send_timer()
     if(GlobalServerData::serverSettings.sendPlayerNumber && sended_connected_players!=connected_players)
     {
         sended_connected_players=connected_players;
-        emit newConnectedPlayer(connected_players);
+        /*emit */newConnectedPlayer(connected_players);
     }
 }
