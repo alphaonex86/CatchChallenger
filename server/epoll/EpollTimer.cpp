@@ -9,6 +9,8 @@ char buff_temp[sizeof(uint64_t)];
 
 EpollTimer::EpollTimer()
 {
+    tfd=-1;
+    singleShot=false;
 }
 
 BaseClassSwitch::Type EpollTimer::getType() const
@@ -16,8 +18,10 @@ BaseClassSwitch::Type EpollTimer::getType() const
     return BaseClassSwitch::Type::Timer;
 }
 
-bool EpollTimer::init()
+bool EpollTimer::start(const unsigned int &msec)
 {
+    if(tfd!=-1)
+        return false;
     if((tfd=::timerfd_create(CLOCK_REALTIME,0)) < 0)
     {
         std::cerr << "Timer creation error" << std::endl;
@@ -31,11 +35,20 @@ bool EpollTimer::init()
         return false;
     }
     itimerspec new_value;
-    new_value.it_value.tv_sec = now.tv_sec + 2;
-    new_value.it_value.tv_nsec = now.tv_nsec;
-    new_value.it_interval.tv_sec = 1;
-    new_value.it_interval.tv_nsec = 0;
-
+    if(singleShot)
+    {
+        new_value.it_value.tv_sec = now.tv_sec + msec/1000;
+        new_value.it_value.tv_nsec = now.tv_nsec + msec%1000*1000000;
+        new_value.it_interval.tv_sec = 0;
+        new_value.it_interval.tv_nsec = 0;
+    }
+    else
+    {
+        new_value.it_value.tv_sec = now.tv_sec + msec/1000;
+        new_value.it_value.tv_nsec = now.tv_nsec + msec%1000*1000000;
+        new_value.it_interval.tv_sec = msec/1000;
+        new_value.it_interval.tv_nsec = msec%1000*1000000;
+    }
 
     int result=::timerfd_settime(tfd, TFD_TIMER_ABSTIME, &new_value, NULL);
     if(result<0)
@@ -52,6 +65,21 @@ bool EpollTimer::init()
         return false;
     }
     return true;
+}
+
+bool EpollTimer::start()
+{
+    return start(msec);
+}
+
+void EpollTimer::setInterval(const unsigned int &msec)
+{
+    this->msec=msec;
+}
+
+void EpollTimer::setSingleShot(const bool &singleShot)
+{
+    this->singleShot=singleShot;
 }
 
 void EpollTimer::exec()

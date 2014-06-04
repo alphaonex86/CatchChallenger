@@ -1,3 +1,4 @@
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include "QFakeSocket.h"
 #include "QFakeServer.h"
 #include "DebugClass.h"
@@ -193,3 +194,4 @@ bool QFakeSocket::canReadLine () const
 {
     return false;
 }
+#endif

@@ -8,7 +8,8 @@ QT       -= gui widgets
 #DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERNOSSL
 
-DEFINES += EPOLLCATCHCHALLENGERSERVER
+DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
+DEFINES -= Q_MOC_RUN
 
 LIBS += -lssl -lcrypto
 
@@ -28,7 +29,11 @@ SOURCES += main-epoll.cpp \
     epoll/EpollSslServer.cpp \
     epoll/Epoll.cpp \
     epoll/EpollTimer.cpp \
-    epoll/TimerDisplayEventBySeconds.cpp
+    epoll/TimerDisplayEventBySeconds.cpp \
+    epoll/TimerCityCapture.cpp \
+    epoll/TimerSendInsertMoveRemove.cpp \
+    epoll/TimerPositionSync.cpp \
+    epoll/TimerDdos.cpp
 
 HEADERS += epoll/EpollSocket.h \
     epoll/EpollClient.h \
@@ -38,5 +43,9 @@ HEADERS += epoll/EpollSocket.h \
     epoll/Epoll.h \
     epoll/BaseClassSwitch.h \
     epoll/EpollTimer.h \
-    epoll/TimerDisplayEventBySeconds.h
+    epoll/TimerDisplayEventBySeconds.h \
+    epoll/TimerCityCapture.h \
+    epoll/TimerPositionSync.h \
+    epoll/TimerSendInsertMoveRemove.h \
+    epoll/TimerDdos.h
 

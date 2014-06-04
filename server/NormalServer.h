@@ -47,8 +47,10 @@ public:
 
 public slots:
     //to manipulate the server for restart and stop
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void start_server();
     void stop_server();
+    #endif
     //todo
     /*void send_system_message(QString text);
     void send_pm_message(QString pseudo,QString text);*/
@@ -77,7 +79,9 @@ private:
     static QString text_stop;
 private slots:
     //new connection
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void newConnection();
+    #endif
     void kicked(const QHostAddress &host);
     void purgeKickedHost();
     //remove all finished client
@@ -86,11 +90,14 @@ private slots:
     //parse general order from the client
     void serverCommand(const QString &command,const QString &extraText);
     //starting function
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void stop_internal_server();
     bool check_if_now_stopped();
     void start_internal_server();
     void sslErrors(const QList<QSslError> &errors);
+    #endif
     virtual void loadAndFixSettings();
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
     //async the call
     void need_be_stopped();
@@ -99,6 +106,7 @@ signals:
     void new_player_is_connected(const Player_internal_informations &player);
     void player_is_disconnected(const QString &pseudo);
     void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
+#endif
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &map_to_send,const QString &map_file);
 };

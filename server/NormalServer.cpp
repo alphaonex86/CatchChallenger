@@ -33,6 +33,7 @@ NormalServer::NormalServer() :
     normalServerSettings.linuxSettings.tcpCork                      = true;
     #endif
 
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//broad cast (0)
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//map management (1)
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//network read (2)
@@ -50,12 +51,14 @@ NormalServer::NormalServer() :
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::player_is_disconnected,this,&NormalServer::player_is_disconnected,Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_chat_message,this,&NormalServer::new_chat_message,Qt::QueuedConnection);
     connect(&purgeKickedHostTimer,&QTimer::timeout,this,&NormalServer::purgeKickedHost,Qt::QueuedConnection);
+    #endif
 }
 
 /** call only when the server is down
  * \warning this function is thread safe because it quit all thread before remove */
 NormalServer::~NormalServer()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     int index=0;
     while(index<GlobalServerData::serverPrivateVariables.eventThreaderList.size())
     {
@@ -86,6 +89,7 @@ NormalServer::~NormalServer()
         delete sslKey;
     if(sslCertificate!=NULL)
         delete sslCertificate;
+    #endif
 }
 
 void NormalServer::setNormalSettings(const NormalServerSettings &settings)
@@ -118,6 +122,7 @@ void NormalServer::load_settings()
     GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 //start with allow real player to connect
 void NormalServer::start_internal_server()
 {
@@ -148,8 +153,8 @@ void NormalServer::start_internal_server()
                 process.kill();
                 DebugClass::debugConsole(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
                 stat=Down;
-                emit is_started(false);
-                emit error(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+                /*emit */is_started(false);
+                /*emit */error(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
                 return;
             }
             process.kill();
@@ -162,8 +167,8 @@ void NormalServer::start_internal_server()
         {
             DebugClass::debugConsole(QStringLiteral("Unable to access to the server key: %1").arg(key.errorString()));
             stat=Down;
-            emit is_started(false);
-            emit error(QStringLiteral("Unable to access to the server key"));
+            /*emit */is_started(false);
+            /*emit */error(QStringLiteral("Unable to access to the server key"));
             return;
         }
         QByteArray keyData=key.readAll();
@@ -173,8 +178,8 @@ void NormalServer::start_internal_server()
         {
             DebugClass::debugConsole(QStringLiteral("Server key is wrong"));
             stat=Down;
-            emit is_started(false);
-            emit error(QStringLiteral("Server key is wrong"));
+            /*emit */is_started(false);
+            /*emit */error(QStringLiteral("Server key is wrong"));
             return;
         }
 
@@ -185,8 +190,8 @@ void NormalServer::start_internal_server()
         {
             DebugClass::debugConsole(QStringLiteral("Unable to access to the server certificate: %1").arg(certificate.errorString()));
             stat=Down;
-            emit is_started(false);
-            emit error(QStringLiteral("Unable to access to the server certificate"));
+            /*emit */is_started(false);
+            /*emit */error(QStringLiteral("Unable to access to the server certificate"));
             return;
         }
         QByteArray certificateData=certificate.readAll();
@@ -196,8 +201,8 @@ void NormalServer::start_internal_server()
         {
             DebugClass::debugConsole(QStringLiteral("Server certificate is wrong"));
             stat=Down;
-            emit is_started(false);
-            emit error(QStringLiteral("Server certificate is wrong"));
+            /*emit */is_started(false);
+            /*emit */error(QStringLiteral("Server certificate is wrong"));
             return;
         }
         if(sslServer==NULL)
@@ -212,7 +217,7 @@ void NormalServer::start_internal_server()
     if(sslServer->isListening())
     {
         DebugClass::debugConsole(QStringLiteral("Already listening on %1").arg(listenIpAndPort(sslServer->serverAddress().toString(),sslServer->serverPort())));
-        emit error(QStringLiteral("Already listening on %1").arg(listenIpAndPort(sslServer->serverAddress().toString(),sslServer->serverPort())));
+        /*emit */error(QStringLiteral("Already listening on %1").arg(listenIpAndPort(sslServer->serverAddress().toString(),sslServer->serverPort())));
         return;
     }
     if(oneInstanceRunning)
@@ -242,18 +247,20 @@ void NormalServer::start_internal_server()
     {
         DebugClass::debugConsole(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(normalServerSettings.server_ip,normalServerSettings.server_port)).arg(sslServer->errorString()));
         stat=Down;
-        emit is_started(false);
-        emit error(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(normalServerSettings.server_ip,normalServerSettings.server_port)).arg(sslServer->errorString()));
+        /*emit */is_started(false);
+        /*emit */error(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(normalServerSettings.server_ip,normalServerSettings.server_port)).arg(sslServer->errorString()));
         return;
     }
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!QFakeServer::server.listen())
     {
         DebugClass::debugConsole(QStringLiteral("Unable to listen the internal server"));
         stat=Down;
-        emit is_started(false);
-        emit error(QStringLiteral("Unable to listen the internal server"));
+        /*emit */is_started(false);
+        /*emit */error(QStringLiteral("Unable to listen the internal server"));
         return;
     }
+    #endif
     #ifdef Q_OS_LINUX
     if(normalServerSettings.linuxSettings.tcpCork)
     {
@@ -278,7 +285,7 @@ void NormalServer::start_internal_server()
     {
         sslServer->close();
         stat=Down;
-        emit is_started(false);
+        /*emit */is_started(false);
         return;
     }
 
@@ -287,15 +294,15 @@ void NormalServer::start_internal_server()
         DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         sslServer->close();
         stat=Down;
-        emit is_started(false);
-        emit error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
+        /*emit */is_started(false);
+        /*emit */error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         return;
     }
     BaseServer::start_internal_server();
     preload_the_data();
     stat=Up;
     oneInstanceRunning=true;
-    emit is_started(true);
+    /*emit */is_started(true);
     return;
 }
 
@@ -332,11 +339,13 @@ void NormalServer::stop_internal_server()
     if(sslCertificate!=NULL)
         delete sslCertificate;
 }
+#endif
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////
 
 void NormalServer::removeOneClient()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
     {
@@ -346,10 +355,12 @@ void NormalServer::removeOneClient()
     client_list.remove(client);
     client->deleteLater();
     check_if_now_stopped();
+    #endif
 }
 
 ///////////////////////////////////// Generic command //////////////////////////////////
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void NormalServer::serverCommand(const QString &command, const QString &extraText)
 {
     Q_UNUSED(extraText);
@@ -360,12 +371,13 @@ void NormalServer::serverCommand(const QString &command, const QString &extraTex
         return;
     }
     if(command==NormalServer::text_restart)
-        emit need_be_restarted();
+        /*emit */need_be_restarted();
     else if(command==NormalServer::text_stop)
-        emit need_be_stopped();
+        /*emit */need_be_stopped();
     else
         DebugClass::debugConsole(QStringLiteral("unknow command: %1").arg(command));
 }
+#endif
 
 //////////////////////////////////// Function secondary //////////////////////////////
 QString NormalServer::listenIpAndPort(QString server_ip,quint16 server_port)
@@ -375,6 +387,7 @@ QString NormalServer::listenIpAndPort(QString server_ip,quint16 server_port)
     return server_ip+QLatin1Literal(":")+QString::number(server_port);
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void NormalServer::newConnection()
 {
     while(QFakeServer::server.hasPendingConnections())
@@ -431,6 +444,7 @@ void NormalServer::newConnection()
                 socket->disconnectFromHost();
         }
 }
+#endif
 
 void NormalServer::kicked(const QHostAddress &host)
 {
@@ -456,6 +470,7 @@ void NormalServer::purgeKickedHost()
     }
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void NormalServer::sslErrors(const QList<QSslError> &errors)
 {
     int index=0;
@@ -465,6 +480,7 @@ void NormalServer::sslErrors(const QList<QSslError> &errors)
         index++;
     }
 }
+#endif
 
 bool NormalServer::isListen()
 {
@@ -488,15 +504,17 @@ quint16 NormalServer::player_max()
 
 /////////////////////////////////// Async the call ///////////////////////////////////
 /// \brief Called when event loop is setup
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void NormalServer::start_server()
 {
-    emit need_be_started();
+    /*emit */need_be_started();
 }
 
 void NormalServer::stop_server()
 {
-    emit try_stop_server();
+    /*emit */try_stop_server();
 }
+#endif
 
 void NormalServer::checkSettingsFile(QSettings *settings)
 {

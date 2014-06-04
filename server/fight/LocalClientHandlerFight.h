@@ -18,9 +18,14 @@
  * Only here you need use the random list */
 
 namespace CatchChallenger {
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class LocalClientHandler;
+#endif
 class LocalClientHandlerFight : public CommonFightEngine
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit LocalClientHandlerFight();
     virtual ~LocalClientHandlerFight();
@@ -71,6 +76,9 @@ public:
     bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
     bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
     bool addLevel(PlayerMonster * monster, const quint8 &numberOfLevel=1);
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    LocalClientHandler *localClientHandler;
+#endif
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
@@ -113,7 +121,11 @@ private:
     bool isInCityCapture;
     QList<Skill::AttackReturn> attackReturn;
     QHash<quint32, QHash<quint32,quint32> > deferedEndurance;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     void dbQuery(const QString &sqlQuery) const;
     void askRandomNumber() const;
     void receiveSystemText(const QString &text,const bool &important=false) const;

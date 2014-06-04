@@ -5,12 +5,21 @@
 #include <QTimer>
 
 namespace CatchChallenger {
-class PlayerUpdater : public QObject
+class PlayerUpdater
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit PlayerUpdater();
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     void newConnectedPlayer(quint16 connected_players) const;
     void send_addConnectedPlayer() const;
     void send_removeConnectedPlayer() const;

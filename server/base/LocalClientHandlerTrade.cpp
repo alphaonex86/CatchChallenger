@@ -13,18 +13,18 @@ void LocalClientHandler::registerTradeRequest(LocalClientHandler * otherPlayerTr
 {
     if(getInTrade())
     {
-        emit message(QLatin1String("Already in trade, internal error"));
+        /*emit */message(QLatin1String("Already in trade, internal error"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QStringLiteral("%1 have requested trade with you").arg(otherPlayerTrade->player_informations->public_and_private_informations.public_informations.pseudo));
+    /*emit */message(QStringLiteral("%1 have requested trade with you").arg(otherPlayerTrade->player_informations->public_and_private_informations.public_informations.pseudo));
     #endif
     this->otherPlayerTrade=otherPlayerTrade;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << otherPlayerTrade->player_informations->public_and_private_informations.public_informations.skinId;
-    emit sendTradeRequest(otherPlayerTrade->player_informations->rawPseudo+outputData);
+    /*emit */sendTradeRequest(otherPlayerTrade->player_informations->rawPseudo+outputData);
 }
 
 bool LocalClientHandler::getIsFreezed()
@@ -65,19 +65,19 @@ void LocalClientHandler::tradeFinished()
 {
     if(!tradeIsValidated)
     {
-        emit error(QLatin1String("Trade not valid"));
+        /*emit */error(QLatin1String("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error(QLatin1String("Trade is freezed, unable to re-free"));
+        /*emit */error(QLatin1String("Trade is freezed, unable to re-free"));
         return;
     }
     tradeIsFreezed=true;
     if(getIsFreezed() && otherPlayerTrade->getIsFreezed())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message("Trade finished");
+        /*emit */message("Trade finished");
         #endif
         //cash
         otherPlayerTrade->addCash(tradeCash,(otherPlayerTrade->getTradeCash()!=0));
@@ -116,17 +116,17 @@ void LocalClientHandler::tradeFinished()
         otherPlayerTrade->addExistingMonster(tradeMonster);
         addExistingMonster(otherPlayerTrade->tradeMonster);
 
-        emit otherPlayerTrade->sendFullPacket(0xD0,0x0008);
-        emit sendFullPacket(0xD0,0x0008);
+        /*emit */otherPlayerTrade->sendFullPacket(0xD0,0x0008);
+        /*emit */sendFullPacket(0xD0,0x0008);
         otherPlayerTrade->resetTheTrade();
         resetTheTrade();
     }
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message(QLatin1String("Trade freezed"));
+        /*emit */message(QLatin1String("Trade freezed"));
         #endif
-        emit otherPlayerTrade->sendFullPacket(0xD0,0x0007);
+        /*emit */otherPlayerTrade->sendFullPacket(0xD0,0x0007);
     }
 }
 
@@ -150,19 +150,19 @@ void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;")
+                /*emit */dbQuery(QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;")
                              .arg(tradeMonster.at(index).id)
                              .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
+                /*emit */dbQuery(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
                              .arg(tradeMonster.at(index).id)
                              .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_PostgreSQL:
-                emit dbQuery(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
+                /*emit */dbQuery(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
                              .arg(tradeMonster.at(index).id)
                              .arg(player_informations->character_id)
                              );
@@ -177,26 +177,26 @@ void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
 {
     if(!tradeIsValidated)
     {
-        emit error(QLatin1String("Trade not valid"));
+        /*emit */error(QLatin1String("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error(QLatin1String("Trade is freezed, unable to change something"));
+        /*emit */error(QLatin1String("Trade is freezed, unable to change something"));
         return;
     }
     if(cash==0)
     {
-        emit error(QLatin1String("Can't add 0 cash!"));
+        /*emit */error(QLatin1String("Can't add 0 cash!"));
         return;
     }
     if(cash>player_informations->public_and_private_informations.cash)
     {
-        emit error(QLatin1String("Trade cash superior to the actual cash"));
+        /*emit */error(QLatin1String("Trade cash superior to the actual cash"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QStringLiteral("Add cash to trade: %1").arg(cash));
+    /*emit */message(QStringLiteral("Add cash to trade: %1").arg(cash));
     #endif
     tradeCash+=cash;
     player_informations->public_and_private_informations.cash-=cash;
@@ -205,33 +205,33 @@ void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << cash;
-    emit otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
+    /*emit */otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
 }
 
 void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &quantity)
 {
     if(!tradeIsValidated)
     {
-        emit error(QLatin1String("Trade not valid"));
+        /*emit */error(QLatin1String("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error(QLatin1String("Trade is freezed, unable to change something"));
+        /*emit */error(QLatin1String("Trade is freezed, unable to change something"));
         return;
     }
     if(quantity==0)
     {
-        emit error(QLatin1String("Can add 0 of quantity"));
+        /*emit */error(QLatin1String("Can add 0 of quantity"));
         return;
     }
     if(quantity>objectQuantity(item))
     {
-        emit error(QStringLiteral("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
+        /*emit */error(QStringLiteral("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QStringLiteral("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
+    /*emit */message(QStringLiteral("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
     #endif
     if(tradeObjects.contains(item))
         tradeObjects[item]+=quantity;
@@ -246,33 +246,33 @@ void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &
     out << (quint8)0x02;
     out << item;
     out << quantity;
-    emit otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
+    /*emit */otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
 }
 
 void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
 {
     if(!tradeIsValidated)
     {
-        emit error(QLatin1String("Trade not valid"));
+        /*emit */error(QLatin1String("Trade not valid"));
         return;
     }
     if(tradeIsFreezed)
     {
-        emit error(QLatin1String("Trade is freezed, unable to change something"));
+        /*emit */error(QLatin1String("Trade is freezed, unable to change something"));
         return;
     }
     if(player_informations->public_and_private_informations.playerMonster.size()<=1)
     {
-        emit error(QLatin1String("Unable to trade your last monster"));
+        /*emit */error(QLatin1String("Unable to trade your last monster"));
         return;
     }
     if(localClientHandlerFight.isInFight())
     {
-        emit error(QLatin1String("You can't trade monster because you are in fight"));
+        /*emit */error(QLatin1String("You can't trade monster because you are in fight"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QStringLiteral("Add monster to trade: %1").arg(monsterId));
+    /*emit */message(QStringLiteral("Add monster to trade: %1").arg(monsterId));
     #endif
     int index=0;
     while(index<player_informations->public_and_private_informations.playerMonster.size())
@@ -281,7 +281,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
         {
             if(!localClientHandlerFight.remainMonstersToFight(monsterId))
             {
-                emit error(QLatin1String("You can't trade this msonter because you will be without monster to fight"));
+                /*emit */error(QLatin1String("You can't trade this msonter because you will be without monster to fight"));
                 return;
             }
             tradeMonster << player_informations->public_and_private_informations.playerMonster.at(index);
@@ -319,7 +319,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
                 out << (quint8)monster.skills.at(sub_index).level;
                 sub_index++;
             }
-            emit otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
+            /*emit */otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
             while(index<player_informations->public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=player_informations->public_and_private_informations.playerMonster.at(index);
@@ -327,19 +327,19 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
+                        /*emit */dbQuery(QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
+                        /*emit */dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        emit dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
+                        /*emit */dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)
                                      );
@@ -351,18 +351,18 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
         }
         index++;
     }
-    emit error(QLatin1String("Trade monster not found"));
+    /*emit */error(QLatin1String("Trade monster not found"));
 }
 
 void LocalClientHandler::internalTradeCanceled(const bool &send)
 {
     if(otherPlayerTrade==NULL)
     {
-        //emit message("Trade already canceled");
+        ///*emit */message("Trade already canceled");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QLatin1String("Trade canceled"));
+    /*emit */message(QLatin1String("Trade canceled"));
     #endif
     if(tradeIsValidated)
     {
@@ -385,9 +385,9 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
     if(send)
     {
         if(tradeIsValidated)
-            emit sendFullPacket(0xD0,0x0006);
+            /*emit */sendFullPacket(0xD0,0x0006);
         else
-            emit receiveSystemText(QLatin1String("Trade declined"));
+            /*emit */receiveSystemText(QLatin1String("Trade declined"));
     }
     tradeIsValidated=false;
 }
@@ -396,16 +396,16 @@ void LocalClientHandler::internalTradeAccepted(const bool &send)
 {
     if(otherPlayerTrade==NULL)
     {
-        emit message(QLatin1String("Can't accept trade if not in trade"));
+        /*emit */message(QLatin1String("Can't accept trade if not in trade"));
         return;
     }
     if(tradeIsValidated)
     {
-        emit message(QLatin1String("Trade already validated"));
+        /*emit */message(QLatin1String("Trade already validated"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QLatin1String("Trade accepted"));
+    /*emit */message(QLatin1String("Trade accepted"));
     #endif
     tradeIsValidated=true;
     tradeIsFreezed=false;
@@ -416,6 +416,6 @@ void LocalClientHandler::internalTradeAccepted(const bool &send)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << otherPlayerTrade->player_informations->public_and_private_informations.public_informations.skinId;
-        emit sendFullPacket(0xD0,0x0005,otherPlayerTrade->player_informations->rawPseudo+outputData);
+        /*emit */sendFullPacket(0xD0,0x0005,otherPlayerTrade->player_informations->rawPseudo+outputData);
     }
 }

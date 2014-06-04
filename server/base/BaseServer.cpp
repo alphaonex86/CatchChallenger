@@ -11,7 +11,9 @@
 #include <QByteArray>
 #include <QDateTime>
 #include <QTime>
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
+#endif
 
 using namespace CatchChallenger;
 
@@ -76,8 +78,9 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.connected_players      = 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
     GlobalServerData::serverPrivateVariables.db                     = NULL;
-    GlobalServerData::serverPrivateVariables.timer_player_map       = NULL;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.timer_city_capture     = NULL;
+    #endif
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
@@ -142,18 +145,20 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
     GlobalServerData::serverSettings.city.capture.minute                        = 0;
 
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     connect(&QFakeServer::server,&QFakeServer::newConnection,this,&BaseServer::newConnection,       Qt::QueuedConnection);
     connect(this,&BaseServer::need_be_started,              this,&BaseServer::start_internal_server,Qt::QueuedConnection);
     connect(this,&BaseServer::try_stop_server,              this,&BaseServer::stop_internal_server, Qt::QueuedConnection);
     connect(this,&BaseServer::try_initAll,                  this,&BaseServer::initAll,              Qt::QueuedConnection);
-    emit try_initAll();
+    #endif
+    /*emit */try_initAll();
 
     srand(time(NULL));
 }
 
 void BaseServer::start()
 {
-    emit need_be_started();
+    /*emit */need_be_started();
 }
 
 /** call only when the server is down
@@ -161,7 +166,9 @@ void BaseServer::start()
 BaseServer::~BaseServer()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.eventThreaderList.clear();
+    #endif
     closeDB();
 }
 
@@ -182,6 +189,7 @@ void BaseServer::initAll()
 {
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void BaseServer::moveToThreadForContructor()
 {
     GlobalServerData::serverPrivateVariables.player_updater.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
@@ -189,6 +197,7 @@ void BaseServer::moveToThreadForContructor()
     MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(1));
     LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(4));
 }
+#endif
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
 
@@ -907,12 +916,14 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
 
 void BaseServer::preload_the_city_capture()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
         delete GlobalServerData::serverPrivateVariables.timer_city_capture;
     GlobalServerData::serverPrivateVariables.timer_city_capture=new QTimer();
     GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);
     connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&BaseServer::load_next_city_capture,Qt::QueuedConnection);
     connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,&LocalClientHandler::startTheCityCapture);
+    #endif
     load_next_city_capture();
 }
 
@@ -1292,7 +1303,9 @@ void BaseServer::preload_the_players()
         index++;
     }
 
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     connect(&GlobalServerData::serverPrivateVariables.player_updater,&PlayerUpdater::newConnectedPlayer,&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::receive_instant_player_number,Qt::QueuedConnection);
+    #endif
 }
 
 void BaseServer::preload_the_visibility_algorithm()
@@ -1303,12 +1316,20 @@ void BaseServer::preload_the_visibility_algorithm()
         case MapVisibilityAlgorithmSelection_WithBorder:
         if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
         {
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
             GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
+            #else
+            delete GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove;
+            #endif
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new QTimer();
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
         connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,&MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender,&MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer,Qt::QueuedConnection);
+        #else
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new TimerSendInsertMoveRemove();
+        #endif
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
         break;
         case MapVisibilityAlgorithmSelection_None:
         default:
@@ -1566,9 +1587,11 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
 
 void BaseServer::load_next_city_capture()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
     qint64 time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
     GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
+    #endif
 }
 
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
@@ -1744,7 +1767,7 @@ bool BaseServer::initialize_the_database()
     if(!GlobalServerData::serverPrivateVariables.db->open())
     {
         DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
-        emit error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
+        /*emit */error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         return false;
     }
     //post open fonction
@@ -1896,11 +1919,13 @@ void BaseServer::unload_industries()
 
 void BaseServer::unload_the_city_capture()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
     {
         delete GlobalServerData::serverPrivateVariables.timer_city_capture;
         GlobalServerData::serverPrivateVariables.timer_city_capture=NULL;
     }
+    #endif
 }
 
 void BaseServer::unload_the_bots()
@@ -1931,8 +1956,12 @@ void BaseServer::unload_the_visibility_algorithm()
 {
     if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
     {
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
+        #else
+        delete GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove;
+        #endif
     }
 }
 
@@ -1975,7 +2004,7 @@ bool BaseServer::check_if_now_stopped()
         closeDB();
     }
     stat=Down;
-    emit is_started(false);
+    /*emit */is_started(false);
 
     unload_the_data();
     return true;
@@ -2113,16 +2142,24 @@ void BaseServer::loadAndFixSettings()
     }
 
     if(GlobalServerData::serverSettings.database.secondToPositionSync==0)
+    {
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         GlobalServerData::serverPrivateVariables.positionSync.stop();
+        #endif
+    }
     else
     {
         GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000);
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,&LocalClientHandlerWithoutSender::localClientHandlerWithoutSender,&LocalClientHandlerWithoutSender::doAllAction,Qt::QueuedConnection);
+        #endif
     }
     GlobalServerData::serverPrivateVariables.ddosTimer.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000);
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&LocalClientHandlerWithoutSender::localClientHandlerWithoutSender, &LocalClientHandlerWithoutSender::doDDOSAction,Qt::QueuedConnection);
     connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&BroadCastWithoutSender::broadCastWithoutSender,                   &BroadCastWithoutSender::doDDOSAction,Qt::QueuedConnection);
     connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender,   &ClientNetworkReadWithoutSender::doDDOSAction,Qt::QueuedConnection);
+    #endif
 
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -2219,8 +2256,10 @@ void BaseServer::stop_internal_server()
     QSetIterator<Client *> i(client_list);
      while (i.hasNext())
          i.next()->disconnectClient();
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     QFakeServer::server.disconnectedSocket();
     QFakeServer::server.close();
+    #endif
 
     check_if_now_stopped();
 }
@@ -2252,6 +2291,7 @@ ClientMapManagement * BaseServer::getClientMapManagement()
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void BaseServer::removeOneClient()
 {
     Client *client=qobject_cast<Client *>(QObject::sender());
@@ -2263,9 +2303,11 @@ void BaseServer::removeOneClient()
     client_list.remove(client);
     client->deleteLater();
 }
+#endif
 
 /////////////////////////////////////// player related //////////////////////////////////////
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void BaseServer::newConnection()
 {
     while(QFakeServer::server.hasPendingConnections())
@@ -2280,11 +2322,14 @@ void BaseServer::newConnection()
             DebugClass::debugConsole("NULL client at BaseServer::newConnection()");
     }
 }
+#endif
 
 void BaseServer::connect_the_last_client(Client * client)
 {
     client_list << client;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     connect(client,&Client::isReadyToDelete,this,&BaseServer::removeOneClient,Qt::QueuedConnection);
+    #endif
 }
 
 bool BaseServer::isListen()
@@ -2299,7 +2344,7 @@ bool BaseServer::isStopped()
 
 void BaseServer::stop()
 {
-    emit try_stop_server();
+    /*emit */try_stop_server();
 }
 
 void BaseServer::load_clan_max_id()

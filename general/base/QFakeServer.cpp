@@ -1,3 +1,4 @@
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include "QFakeServer.h"
 #include "QFakeSocket.h"
 
@@ -133,3 +134,4 @@ void QFakeServer::disconnectedSocket()
         }
     }
 }
+#endif

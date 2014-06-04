@@ -7,13 +7,18 @@
 namespace CatchChallenger {
 class ClientNetworkRead;
 
-class ClientNetworkReadWithoutSender : public QObject
+class ClientNetworkReadWithoutSender
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     static ClientNetworkReadWithoutSender clientNetworkReadWithoutSender;
     QList<ClientNetworkRead *> clientList;
-public slots:
+public:
     void doDDOSAction();
 };
 }

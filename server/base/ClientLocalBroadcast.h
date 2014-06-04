@@ -22,15 +22,23 @@
 /** \brief broadcast at the local map */
 
 namespace CatchChallenger {
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
 class ClientLocalBroadcast : public MapBasicMove
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit ClientLocalBroadcast();
     ~ClientLocalBroadcast();
 
     static QString text_dottmx;
-public slots:
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    Client *client;
+#endif
+public:
     //chat
     void sendLocalChatText(const QString &text);
     //map move
@@ -56,7 +64,11 @@ protected:
         quint8 x,y;
     };
     QList<PlantInWaiting> plant_list_in_waiting;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     //send reply
     void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     //seed

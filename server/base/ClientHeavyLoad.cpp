@@ -7,6 +7,9 @@
 #include "../../general/base/CommonMap.h"
 #include "SqlFunction.h"
 #include "LocalClientHandler.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "Client.h"
+#endif
 
 #include <QProcess>
 
@@ -73,17 +76,17 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_login.isEmpty())
     {
-        emit error(QStringLiteral("askLogin() Query login is empty, bug"));
+        /*emit */error(QStringLiteral("askLogin() Query login is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_insert_login.isEmpty())
     {
-        emit error(QStringLiteral("askLogin() Query inset login is empty, bug"));
+        /*emit */error(QStringLiteral("askLogin() Query inset login is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_characters.isEmpty())
     {
-        emit error(QStringLiteral("askLogin() Query characters is empty, bug"));
+        /*emit */error(QStringLiteral("askLogin() Query characters is empty, bug"));
         return;
     }
     #endif
@@ -99,7 +102,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     {
         QSqlQuery accountQuery(*GlobalServerData::serverPrivateVariables.db);
         if(!accountQuery.exec(GlobalServerData::serverPrivateVariables.db_query_login.arg(QString(login.toHex()))))
-            emit message(accountQuery.lastQuery()+": "+accountQuery.lastError().text());
+            /*emit */message(accountQuery.lastQuery()+": "+accountQuery.lastError().text());
         bool ok;
         if(!accountQuery.next())
         {
@@ -138,7 +141,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     }
 
     //send signals into the server
-    emit message(QStringLiteral("Logged the account %1").arg(player_informations->account_id));
+    /*emit */message(QStringLiteral("Logged the account %1").arg(player_informations->account_id));
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -153,6 +156,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         else
             out << (quint16)65535;
     }
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
         out << (quint32)0x00000000;
     else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
@@ -162,6 +166,9 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     }
     else
         out << (quint32)0x00000000;
+    #else
+    out << (quint32)0x00000000;
+    #endif
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
     out << (quint16)GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime;
 
@@ -188,7 +195,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     {
         QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
         if(!characterQuery.exec(GlobalServerData::serverPrivateVariables.db_query_characters.arg(player_informations->account_id).arg(CommonSettings::commonSettings.max_character)))
-            emit message(characterQuery.lastQuery()+": "+characterQuery.lastError().text());
+            /*emit */message(characterQuery.lastQuery()+": "+characterQuery.lastError().text());
         const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
         QList<CharacterEntry> characterEntryList;
         bool ok;
@@ -201,19 +208,19 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
                 quint32 time_to_delete=characterQuery.value(3).toUInt(&ok);
                 if(!ok)
                 {
-                    emit message(QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(characterQuery.value(3).toString()).arg(player_informations->account_id));
+                    /*emit */message(QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(characterQuery.value(3).toString()).arg(player_informations->account_id));
                     time_to_delete=0;
                 }
                 characterEntry.played_time=characterQuery.value(4).toUInt(&ok);
                 if(!ok)
                 {
-                    emit message(QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(characterQuery.value(4).toString()).arg(player_informations->account_id));
+                    /*emit */message(QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(characterQuery.value(4).toString()).arg(player_informations->account_id));
                     characterEntry.played_time=0;
                 }
                 characterEntry.last_connect=characterQuery.value(5).toUInt(&ok);
                 if(!ok)
                 {
-                    emit message(QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(characterQuery.value(5).toString()).arg(player_informations->account_id));
+                    /*emit */message(QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(characterQuery.value(5).toString()).arg(player_informations->account_id));
                     characterEntry.last_connect=current_time;
                 }
                 if(current_time>=time_to_delete && time_to_delete!=0)
@@ -231,7 +238,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
                 }
             }
             else
-                emit message(QStringLiteral("Character id is not number: %1 for %2").arg(characterQuery.value(0).toString()).arg(player_informations->account_id));
+                /*emit */message(QStringLiteral("Character id is not number: %1 for %2").arg(characterQuery.value(0).toString()).arg(player_informations->account_id));
         }
         if(CommonSettings::commonSettings.max_character==0)
         {
@@ -259,7 +266,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         }
     }
 
-    emit postReply(query_id,outputData);
+    /*emit */postReply(query_id,outputData);
 }
 
 void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
@@ -267,64 +274,64 @@ void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_monster_by_character_id.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_monster_buff.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_buff is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_buff is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_skill is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_skill is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_bot_already_beaten is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_bot_already_beaten is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_character.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_character is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_character is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_item.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_item is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_item is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_monster.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_plant.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_plant is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_plant is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_quest.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_quest is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_quest is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_recipes is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_recipes is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_delete_reputation.isEmpty())
     {
-        emit error(QStringLiteral("deleteCharacterNow() Query db_query_delete_reputation is empty, bug"));
+        /*emit */error(QStringLiteral("deleteCharacterNow() Query db_query_delete_reputation is empty, bug"));
         return;
     }
     #endif
     bool ok;
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monstersQuery.exec(GlobalServerData::serverPrivateVariables.db_query_monster_by_character_id.arg(characterId)))
-        emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
+        /*emit */message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
     while(monstersQuery.next())
     {
         const quint32 &monsterId=monstersQuery.value(0).toUInt(&ok);
@@ -349,54 +356,54 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo.isEmpty())
     {
-        emit error(QStringLiteral("addCharacter() Query is empty, bug"));
+        /*emit */error(QStringLiteral("addCharacter() Query is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_insert_monster.isEmpty())
     {
-        emit error(QStringLiteral("addCharacter() Query db_query_insert_monster is empty, bug"));
+        /*emit */error(QStringLiteral("addCharacter() Query db_query_insert_monster is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill.isEmpty())
     {
-        emit error(QStringLiteral("addCharacter() Query db_query_insert_monster_skill is empty, bug"));
+        /*emit */error(QStringLiteral("addCharacter() Query db_query_insert_monster_skill is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_insert_reputation.isEmpty())
     {
-        emit error(QStringLiteral("addCharacter() Query db_query_insert_reputation is empty, bug"));
+        /*emit */error(QStringLiteral("addCharacter() Query db_query_insert_reputation is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_insert_item.isEmpty())
     {
-        emit error(QStringLiteral("addCharacter() Query db_query_insert_item is empty, bug"));
+        /*emit */error(QStringLiteral("addCharacter() Query db_query_insert_item is empty, bug"));
         return;
     }
     #endif
     if(player_informations->number_of_character>=CommonSettings::commonSettings.max_character)
     {
-        emit error(QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(player_informations->number_of_character).arg(CommonSettings::commonSettings.max_character));
+        /*emit */error(QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(player_informations->number_of_character).arg(CommonSettings::commonSettings.max_character));
         return;
     }
     if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
     {
-        emit error(QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
+        /*emit */error(QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
         return;
     }
     if(pseudo.size()>CommonSettings::commonSettings.max_pseudo_size)
     {
-        emit error(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettings::commonSettings.max_pseudo_size));
+        /*emit */error(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettings::commonSettings.max_pseudo_size));
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
     if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skin))
     {
-        emit error(QStringLiteral("skin provided: %1 is not into profile forced skin list: %2").arg(skin).arg(profile.forcedskin.join(";")));
+        /*emit */error(QStringLiteral("skin provided: %1 is not into profile forced skin list: %2").arg(skin).arg(profile.forcedskin.join(";")));
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.skinList.contains(skin))
     {
-        emit error(QStringLiteral("skin provided: %1 is not into skin listed").arg(skin));
+        /*emit */error(QStringLiteral("skin provided: %1 is not into skin listed").arg(skin));
         return;
     }
 
@@ -404,12 +411,12 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monstersQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo.arg(SqlFunction::quoteSqlVariable(pseudo))))
     {
-        emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
+        /*emit */message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint32)0x00000000;
-        emit postReply(query_id,outputData);
+        /*emit */postReply(query_id,outputData);
         return;
     }
     if(monstersQuery.next())
@@ -418,7 +425,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint32)0x00000000;
-        emit postReply(query_id,outputData);
+        /*emit */postReply(query_id,outputData);
         return;
     }
 
@@ -544,7 +551,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         }
         else
         {
-            emit error(QStringLiteral("monster not found to start: %1 is not into profile forced skin list: %2").arg(monsterId));
+            /*emit */error(QStringLiteral("monster not found to start: %1 is not into profile forced skin list: %2").arg(monsterId));
             return;
         }
     }
@@ -575,7 +582,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << characterId;
-    emit postReply(query_id,outputData);
+    /*emit */postReply(query_id,outputData);
 }
 
 void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &characterId)
@@ -583,12 +590,12 @@ void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &cha
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id.isEmpty())
     {
-        emit error(QStringLiteral("removeCharacter() Query is empty, bug"));
+        /*emit */error(QStringLiteral("removeCharacter() Query is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete_by_id.isEmpty())
     {
-        emit error(QStringLiteral("removeCharacter() Query db_query_update_character_time_to_delete_by_id is empty, bug"));
+        /*emit */error(QStringLiteral("removeCharacter() Query db_query_update_character_time_to_delete_by_id is empty, bug"));
         return;
     }
     #endif
@@ -626,7 +633,7 @@ void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &cha
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
-    emit postReply(query_id,outputData);
+    /*emit */postReply(query_id,outputData);
 }
 
 void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &characterId)
@@ -634,17 +641,17 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_character_by_id.isEmpty())
     {
-        emit error(QStringLiteral("selectCharacter() Query is empty, bug"));
+        /*emit */error(QStringLiteral("selectCharacter() Query is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect.isEmpty())
     {
-        emit error(QStringLiteral("selectCharacter() Query db_query_update_character_last_connect is empty, bug"));
+        /*emit */error(QStringLiteral("selectCharacter() Query db_query_update_character_last_connect is empty, bug"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.isEmpty())
     {
-        emit error(QStringLiteral("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug"));
+        /*emit */error(QStringLiteral("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug"));
         return;
     }
     #endif
@@ -700,9 +707,9 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         return;
     }
     if(GlobalServerData::serverSettings.anonymous)
-        emit message(QStringLiteral("Charater id is logged: %1").arg(characterId));
+        /*emit */message(QStringLiteral("Charater id is logged: %1").arg(characterId));
     else
-        emit message(QStringLiteral("Charater is logged: %1").arg(characterQuery.value(1).toString()));
+        /*emit */message(QStringLiteral("Charater is logged: %1").arg(characterQuery.value(1).toString()));
     const quint32 &time_to_delete=characterQuery.value(22).toUInt(&ok);
     if(!ok || time_to_delete>0)
         dbQuery(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.arg(characterId));
@@ -711,13 +718,13 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     player_informations->public_and_private_informations.clan=characterQuery.value(8).toUInt(&ok);
     if(!ok)
     {
-        emit message(QStringLiteral("clan id is not an number, clan disabled"));
+        /*emit */message(QStringLiteral("clan id is not an number, clan disabled"));
         player_informations->public_and_private_informations.clan=0;//no clan
     }
     player_informations->public_and_private_informations.clan_leader=(characterQuery.value(20).toUInt(&ok)==1);
     if(!ok)
     {
-        emit message(QStringLiteral("clan_leader id is not an number, clan_leader disabled"));
+        /*emit */message(QStringLiteral("clan_leader id is not an number, clan_leader disabled"));
         player_informations->public_and_private_informations.clan_leader=false;//no clan
     }
     player_informations->public_and_private_informations.public_informations.pseudo=characterQuery.value(1).toString();
@@ -726,7 +733,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         player_informations->public_and_private_informations.public_informations.skinId=GlobalServerData::serverPrivateVariables.skinList.value(skinString);
     else
     {
-        emit message(QStringLiteral("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
+        /*emit */message(QStringLiteral("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
         player_informations->public_and_private_informations.public_informations.skinId=0;
     }
     QString type=characterQuery.value(7).toString();
@@ -740,19 +747,19 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         player_informations->public_and_private_informations.public_informations.type=Player_type_dev;
     else
     {
-        emit message(QStringLiteral("Mysql wrong type value").arg(type));
+        /*emit */message(QStringLiteral("Mysql wrong type value").arg(type));
         player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
     }
     player_informations->public_and_private_informations.cash=characterQuery.value(9).toUInt(&ok);
     if(!ok)
     {
-        emit message(QStringLiteral("cash id is not an number, cash set to 0"));
+        /*emit */message(QStringLiteral("cash id is not an number, cash set to 0"));
         player_informations->public_and_private_informations.cash=0;
     }
     player_informations->public_and_private_informations.warehouse_cash=characterQuery.value(18).toUInt(&ok);
     if(!ok)
     {
-        emit message(QStringLiteral("warehouse cash id is not an number, warehouse cash set to 0"));
+        /*emit */message(QStringLiteral("warehouse cash id is not an number, warehouse cash set to 0"));
         player_informations->public_and_private_informations.warehouse_cash=0;
     }
     player_informations->market_cash=characterQuery.value(21).toULongLong(&ok);
@@ -781,7 +788,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     else
     {
         orentation=Orientation_bottom;
-        emit message(QStringLiteral("Wrong orientation corrected with bottom"));
+        /*emit */message(QStringLiteral("Wrong orientation corrected with bottom"));
     }
     player_informations->public_and_private_informations.allow=FacilityLib::StringToAllow(characterQuery.value(19).toString());
     //all is rights
@@ -845,7 +852,7 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
 {
     if(!GlobalServerData::serverPrivateVariables.map_list.contains(rescue_map.toString()))
     {
-        emit message(QStringLiteral("rescue map ,not found"));
+        /*emit */message(QStringLiteral("rescue map ,not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -853,26 +860,26 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     const quint8 &rescue_new_x=rescue_x.toUInt(&ok);
     if(!ok)
     {
-        emit message(QStringLiteral("rescue x coord is not a number"));
+        /*emit */message(QStringLiteral("rescue x coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint8 &rescue_new_y=rescue_y.toUInt(&ok);
     if(!ok)
     {
-        emit message(QStringLiteral("rescue y coord is not a number"));
+        /*emit */message(QStringLiteral("rescue y coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->width)
     {
-        emit message(QStringLiteral("rescue x to out of map"));
+        /*emit */message(QStringLiteral("rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->height)
     {
-        emit message(QStringLiteral("rescue y to out of map"));
+        /*emit */message(QStringLiteral("rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -889,37 +896,37 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     else
     {
         rescue_new_orientation=Orientation_bottom;
-        emit message(QStringLiteral("Wrong rescue orientation corrected with bottom"));
+        /*emit */message(QStringLiteral("Wrong rescue orientation corrected with bottom"));
     }
     if(!GlobalServerData::serverPrivateVariables.map_list.contains(unvalidated_rescue_map.toString()))
     {
-        emit message(QStringLiteral("unvalidated rescue map ,not found"));
+        /*emit */message(QStringLiteral("unvalidated rescue map ,not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint8 &unvalidated_rescue_new_x=unvalidated_rescue_x.toUInt(&ok);
     if(!ok)
     {
-        emit message(QStringLiteral("unvalidated rescue x coord is not a number"));
+        /*emit */message(QStringLiteral("unvalidated rescue x coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint8 &unvalidated_rescue_new_y=unvalidated_rescue_y.toUInt(&ok);
     if(!ok)
     {
-        emit message(QStringLiteral("unvalidated rescue y coord is not a number"));
+        /*emit */message(QStringLiteral("unvalidated rescue y coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->width)
     {
-        emit message(QStringLiteral("unvalidated rescue x to out of map"));
+        /*emit */message(QStringLiteral("unvalidated rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->height)
     {
-        emit message(QStringLiteral("unvalidated rescue y to out of map"));
+        /*emit */message(QStringLiteral("unvalidated rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -936,7 +943,7 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     else
     {
         unvalidated_rescue_new_orientation=Orientation_bottom;
-        emit message(QStringLiteral("Wrong unvalidated rescue orientation corrected with bottom"));
+        /*emit */message(QStringLiteral("Wrong unvalidated rescue orientation corrected with bottom"));
     }
     loginIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,
                                  GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString()),rescue_new_x,rescue_new_y,rescue_new_orientation,
@@ -957,7 +964,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_clan.isEmpty())
     {
-        emit error(QStringLiteral("loginIsRightWithParsedRescue() Query is empty, bug"));
+        /*emit */error(QStringLiteral("loginIsRightWithParsedRescue() Query is empty, bug"));
         return;
     }
     #endif
@@ -990,11 +997,11 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         else
         {
             clanConnectedCount[player_informations->public_and_private_informations.clan]=1;
-            emit message(QStringLiteral("First client of the clan: %1, get the info").arg(player_informations->public_and_private_informations.clan));
+            /*emit */message(QStringLiteral("First client of the clan: %1, get the info").arg(player_informations->public_and_private_informations.clan));
             //do the query
             QSqlQuery clanQuery(*GlobalServerData::serverPrivateVariables.db);
             if(!clanQuery.exec(GlobalServerData::serverPrivateVariables.db_query_clan.arg(player_informations->public_and_private_informations.clan)))
-                emit message(clanQuery.lastQuery()+": "+clanQuery.lastError().text());
+                /*emit */message(clanQuery.lastQuery()+": "+clanQuery.lastError().text());
             //parse the result
             if(clanQuery.next())
             {
@@ -1003,12 +1010,12 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
                 if(!ok)
                 {
                     cash=0;
-                    emit message(QStringLiteral("Warning: clan linked: %1 have wrong cash value, then reseted to 0"));
+                    /*emit */message(QStringLiteral("Warning: clan linked: %1 have wrong cash value, then reseted to 0"));
                 }
-                emit haveClanInfo(player_informations->public_and_private_informations.clan,clanQuery.value(0).toString(),cash);
+                /*emit */haveClanInfo(player_informations->public_and_private_informations.clan,clanQuery.value(0).toString(),cash);
             }
             else
-                emit message(QStringLiteral("Warning: clan linked: %1 is not found into db"));
+                /*emit */message(QStringLiteral("Warning: clan linked: %1 is not found into db"));
         }
     }
     if(player_informations->public_and_private_informations.clan_leader)
@@ -1109,7 +1116,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
             out << k.next();
     }
 
-    emit postReply(query_id,outputData);
+    /*emit */postReply(query_id,outputData);
     sendInventory();
 
     player_informations->rescue.map=rescue_map;
@@ -1122,10 +1129,10 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     player_informations->unvalidated_rescue.orientation=unvalidated_rescue_orientation;
 
     //send signals into the server
-    emit message(QStringLiteral("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
-    emit send_player_informations();
-    emit isLogged();
-    emit put_on_the_map(
+    /*emit */message(QStringLiteral("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
+    /*emit */send_player_informations();
+    /*emit */isLogged();
+    /*emit */put_on_the_map(
                 map,//map pointer
         x,
         y,
@@ -1141,10 +1148,10 @@ void ClientHeavyLoad::loginIsWrong(const quint8 &query_id,const QString &message
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)01;
     out << QString(messageToSend);
-    emit postReply(query_id,outputData);
+    /*emit */postReply(query_id,outputData);
 
     //send to server to stop the connection
-    emit error(debugMessage);
+    /*emit */error(debugMessage);
 }
 
 void ClientHeavyLoad::characterSelectionIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage)
@@ -1155,10 +1162,10 @@ void ClientHeavyLoad::characterSelectionIsWrong(const quint8 &query_id,const QSt
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)01;
     out << QString(messageToSend);
-    emit postReply(query_id,outputData);
+    /*emit */postReply(query_id,outputData);
 
     //send to server to stop the connection
-    emit error(debugMessage);
+    /*emit */error(debugMessage);
 }
 
 //load linked data (like item, quests, ...)
@@ -1177,7 +1184,7 @@ bool ClientHeavyLoad::loadTheRawUTF8String()
     player_informations->rawPseudo=FacilityLib::toUTF8(player_informations->public_and_private_informations.public_informations.pseudo);
     if(player_informations->rawPseudo.isEmpty())
     {
-        emit message(QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+        /*emit */message(QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return false;
     }
     return true;
@@ -1196,7 +1203,9 @@ void ClientHeavyLoad::askIfIsReadyToStop()
                 clanConnectedCount.remove(player_informations->public_and_private_informations.clan);
         }
     }
-    emit isReadyToStop();
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    /*emit */isReadyToStop();
+    #endif
 }
 
 QHash<QString, quint32> ClientHeavyLoad::datapack_file_list_cached()
@@ -1266,7 +1275,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 {
     if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
     {
-        emit error("Can't use because mirror is defined");
+        /*emit */error("Can't use because mirror is defined");
         return;
     }
     tempDatapackListReplyArray.clear();
@@ -1293,12 +1302,12 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             const quint32 &remote_mtime=timestamps.at(index);
             if(fileName.contains(ClientHeavyLoad::text_dotslash) || fileName.contains(ClientHeavyLoad::text_antislash) || fileName.contains(ClientHeavyLoad::text_double_slash))
             {
-                emit error(QStringLiteral("file name contains illegale char: %1").arg(fileName));
+                /*emit */error(QStringLiteral("file name contains illegale char: %1").arg(fileName));
                 return;
             }
             if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(ClientHeavyLoad::text_slash))
             {
-                emit error(QStringLiteral("start with wrong string: %1").arg(fileName));
+                /*emit */error(QStringLiteral("start with wrong string: %1").arg(fileName));
                 return;
             }
             if(filesListForSize.contains(fileName))
@@ -1338,14 +1347,14 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint32)datapckFileNumber;
         out << (quint32)datapckFileSize;
-        emit sendFullPacket(0xC2,0x000C,outputData);
+        /*emit */sendFullPacket(0xC2,0x000C,outputData);
     }
     if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
     {
         //validate, remove or update the file actualy on the client
         if(tempDatapackListReplyTestCount!=files.size())
         {
-            emit error("Bit count return not match");
+            /*emit */error("Bit count return not match");
             return;
         }
         //send not in the list
@@ -1366,13 +1375,13 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         QByteArray outputData(FacilityLib::toUTF8(CommonSettings::commonSettings.httpDatapackMirror));
         if(outputData.size()>255 || outputData.isEmpty())
         {
-            emit error(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
+            /*emit */error(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
             return;
         }
         //validate, remove or update the file actualy on the client
         if(tempDatapackListReplyTestCount!=files.size())
         {
-            emit error("Bit count return not match");
+            /*emit */error("Bit count return not match");
             return;
         }
         if(!fileToSendList.isEmpty())
@@ -1388,7 +1397,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
                 const QByteArray &rawFileName=FacilityLib::toUTF8(fileToSendList.at(index).file);
                 if(rawFileName.size()>255 || rawFileName.isEmpty())
                 {
-                    emit error(QLatin1Literal("file path too big or not compatible with utf8"));
+                    /*emit */error(QLatin1Literal("file path too big or not compatible with utf8"));
                     return;
                 }
                 const quint64 &fileInfoModTime=fileToSendList.at(index).mtime;
@@ -1397,7 +1406,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
                 out << (quint64)fileInfoModTime;
                 index++;
             }
-            emit sendFullPacket(0xC2,0x000D,outputData);
+            /*emit */sendFullPacket(0xC2,0x000D,outputData);
         }
         purgeDatapackListReply(query_id);
     }
@@ -1478,7 +1487,7 @@ void ClientHeavyLoad::purgeDatapackListReply(const quint8 &query_id)
     }
     if(tempDatapackListReplyArray.isEmpty())
         tempDatapackListReplyArray[0x00]=0x00;
-    emit postReply(query_id,tempDatapackListReplyArray);
+    /*emit */postReply(query_id,tempDatapackListReplyArray);
     tempDatapackListReplyArray.clear();
 }
 
@@ -1490,7 +1499,7 @@ void ClientHeavyLoad::sendFileContent()
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint8)rawFilesCount;
-        emit sendFullPacket(0xC2,0x0003,outputData+rawFiles);
+        /*emit */sendFullPacket(0xC2,0x0003,outputData+rawFiles);
         rawFiles.clear();
         rawFilesCount=0;
     }
@@ -1504,7 +1513,7 @@ void ClientHeavyLoad::sendCompressedFileContent()
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint8)compressedFilesCount;
-        emit sendFullPacket(0xC2,0x0004,outputData+compressedFiles);
+        /*emit */sendFullPacket(0xC2,0x0004,outputData+compressedFiles);
         compressedFiles.clear();
         compressedFilesCount=0;
     }
@@ -1521,12 +1530,6 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
     if(file.open(QIODevice::ReadOnly))
     {
         const QByteArray &content=file.readAll();
-        /*emit message(QStringLiteral("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
-                 .arg(fileName)
-                 .arg(checkMtime)
-                 .arg(mtime)
-                 .arg(localMtime)
-        );*/
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
@@ -1555,7 +1558,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
             {
                 QByteArray outputData2;
                 outputData2[0x00]=0x01;
-                emit sendFullPacket(0xC2,0x0003,outputData2+fileNameRaw+outputData+content);
+                /*emit */sendFullPacket(0xC2,0x0003,outputData2+fileNameRaw+outputData+content);
             }
             else
             {
@@ -1582,16 +1585,16 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryText.isEmpty())
     {
-        emit error(QStringLiteral("dbQuery() Query is empty, bug"));
+        /*emit */error(QStringLiteral("dbQuery() Query is empty, bug"));
         return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    emit message(QStringLiteral("Do mysql query: ")+queryText);
+    /*emit */message(QStringLiteral("Do mysql query: ")+queryText);
     #endif
     QSqlQuery sqlQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!sqlQuery.exec(queryText))
-        emit message(sqlQuery.lastQuery()+QLatin1String(": ")+sqlQuery.lastError().text());
+        /*emit */message(sqlQuery.lastQuery()+QLatin1String(": ")+sqlQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
 }
 
@@ -1600,7 +1603,7 @@ void ClientHeavyLoad::loadReputation()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id.isEmpty())
     {
-        emit error(QStringLiteral("loadReputation() Query is empty, bug"));
+        /*emit */error(QStringLiteral("loadReputation() Query is empty, bug"));
         return;
     }
     #endif
@@ -1608,7 +1611,7 @@ void ClientHeavyLoad::loadReputation()
     bool ok;
     QSqlQuery reputationQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!reputationQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id.arg(player_informations->character_id)))
-        emit message(reputationQuery.lastQuery()+QLatin1String(": ")+reputationQuery.lastError().text());
+        /*emit */message(reputationQuery.lastQuery()+QLatin1String(": ")+reputationQuery.lastError().text());
     //parse the result
     while(reputationQuery.next())
     {
@@ -1616,30 +1619,30 @@ void ClientHeavyLoad::loadReputation()
         qint32 point=reputationQuery.value(1).toInt(&ok);
         if(!ok)
         {
-            emit message(QStringLiteral("point is not a number, skip: %1").arg(type));
+            /*emit */message(QStringLiteral("point is not a number, skip: %1").arg(type));
             continue;
         }
         const qint32 &level=reputationQuery.value(2).toInt(&ok);
         if(!ok)
         {
-            emit message(QStringLiteral("level is not a number, skip: %1").arg(type));
+            /*emit */message(QStringLiteral("level is not a number, skip: %1").arg(type));
             continue;
         }
         if(level<-100 || level>100)
         {
-            emit message(QStringLiteral("level is <100 or >100, skip: %1").arg(type));
+            /*emit */message(QStringLiteral("level is <100 or >100, skip: %1").arg(type));
             continue;
         }
         if(!CommonDatapack::commonDatapack.reputation.contains(type))
         {
-            emit message(QStringLiteral("The reputation: %1 don't exist").arg(type));
+            /*emit */message(QStringLiteral("The reputation: %1 don't exist").arg(type));
             continue;
         }
         if(level>=0)
         {
             if(level>=CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size())
             {
-                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size()));
+                /*emit */message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size()));
                 continue;
             }
         }
@@ -1647,7 +1650,7 @@ void ClientHeavyLoad::loadReputation()
         {
             if((-level)>CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
             {
-                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size()));
+                /*emit */message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size()));
                 continue;
             }
         }
@@ -1655,12 +1658,12 @@ void ClientHeavyLoad::loadReputation()
         {
             if(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size()==(level+1))//start at level 0 in positive
             {
-                emit message(QStringLiteral("The reputation level is already at max, drop point"));
+                /*emit */message(QStringLiteral("The reputation level is already at max, drop point"));
                 point=0;
             }
             if(point>=CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(level+1))//start at level 0 in positive
             {
-                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(level)));
+                /*emit */message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(level)));
                 continue;
             }
         }
@@ -1668,12 +1671,12 @@ void ClientHeavyLoad::loadReputation()
         {
             if(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size()==-level)//start at level -1 in negative
             {
-                emit message(QStringLiteral("The reputation level is already at min, drop point"));
+                /*emit */message(QStringLiteral("The reputation level is already at min, drop point"));
                 point=0;
             }
             if(point<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-level))//start at level -1 in negative
             {
-                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(level)));
+                /*emit */message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(level)));
                 continue;
             }
         }
@@ -1687,7 +1690,7 @@ void ClientHeavyLoad::loadQuests()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id.isEmpty())
     {
-        emit error(QStringLiteral("loadQuests() Query is empty, bug"));
+        /*emit */error(QStringLiteral("loadQuests() Query is empty, bug"));
         return;
     }
     #endif
@@ -1695,7 +1698,7 @@ void ClientHeavyLoad::loadQuests()
     bool ok,ok2;
     QSqlQuery questsQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!questsQuery.exec(GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id.arg(player_informations->character_id)))
-        emit message(questsQuery.lastQuery()+": "+questsQuery.lastError().text());
+        /*emit */message(questsQuery.lastQuery()+": "+questsQuery.lastError().text());
     //parse the result
     while(questsQuery.next())
     {
@@ -1705,22 +1708,22 @@ void ClientHeavyLoad::loadQuests()
         playerQuest.step=questsQuery.value(2).toUInt(&ok2);
         if(!ok || !ok2)
         {
-            emit message(QStringLiteral("wrong value type for quest, skip: %1").arg(id));
+            /*emit */message(QStringLiteral("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
         if(!CommonDatapack::commonDatapack.quests.contains(id))
         {
-            emit message(QStringLiteral("quest is not into the quests list, skip: %1").arg(id));
+            /*emit */message(QStringLiteral("quest is not into the quests list, skip: %1").arg(id));
             continue;
         }
         if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapack::commonDatapack.quests.value(id).steps.size())
         {
-            emit message(QStringLiteral("step out of quest range, skip: %1").arg(id));
+            /*emit */message(QStringLiteral("step out of quest range, skip: %1").arg(id));
             continue;
         }
         if(playerQuest.step<=0 && !playerQuest.finish_one_time)
         {
-            emit message(QStringLiteral("can't be to step 0 if have never finish the quest, skip: %1").arg(id));
+            /*emit */message(QStringLiteral("can't be to step 0 if have never finish the quest, skip: %1").arg(id));
             continue;
         }
         player_informations->public_and_private_informations.quests[id]=playerQuest;

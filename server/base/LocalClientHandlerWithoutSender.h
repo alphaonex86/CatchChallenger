@@ -4,15 +4,20 @@
 #include <QObject>
 
 namespace CatchChallenger {
-class LocalClientHandlerWithoutSender : public QObject
+class LocalClientHandlerWithoutSender
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit LocalClientHandlerWithoutSender();
     virtual ~LocalClientHandlerWithoutSender();
     static LocalClientHandlerWithoutSender localClientHandlerWithoutSender;
     QList<void*> allClient;
-public slots:
+public:
     void doAllAction();
     void doDDOSAction();
 };

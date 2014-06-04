@@ -139,7 +139,9 @@ QByteArray lzmaUncompress(QByteArray data)
 ProtocolParsing::ProtocolParsing(ConnectedSocket * socket) :
     socket(socket)
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     connect(socket,&ConnectedSocket::disconnected,this,&ProtocolParsing::reset,Qt::QueuedConnection);
+    #endif
 }
 
 void ProtocolParsing::initialiseTheVariable()
@@ -255,8 +257,10 @@ ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTr
     need_query_number(false),
     have_query_number(false)
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
         DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
+    #endif
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
@@ -264,7 +268,7 @@ bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data) const
 {
     if(data.size()<(int)sizeof(qint32))
     {
-        emit error("header size not suffisient");
+        /*emit */error("header size not suffisient");
         return false;
     }
     qint32 stringSize;
@@ -273,12 +277,12 @@ bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data) const
     in >> stringSize;
     if(stringSize>65535)
     {
-        emit error(QStringLiteral("String size is wrong: %1").arg(stringSize));
+        /*emit */error(QStringLiteral("String size is wrong: %1").arg(stringSize));
         return false;
     }
     if(data.size()<stringSize)
     {
-        emit error(QStringLiteral("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
+        /*emit */error(QStringLiteral("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
         return false;
     }
     return true;
@@ -603,13 +607,13 @@ void ProtocolParsingInput::parseIncommingData()
                         }
                         else
                         {
-                            emit error("size is null");
+                            /*emit */error("size is null");
                             return;
                         }
                     }
                     break;
                     default:
-                    emit error(QStringLiteral("size not understand, internal bug: %1").arg(data_size.size()));
+                    /*emit */error(QStringLiteral("size not understand, internal bug: %1").arg(data_size.size()));
                     return;
                 }
             }
@@ -621,7 +625,7 @@ void ProtocolParsingInput::parseIncommingData()
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!haveData_dataSize)
         {
-            emit error("have not the size here!");
+            /*emit */error("have not the size here!");
             return;
         }
         #endif
@@ -630,7 +634,7 @@ void ProtocolParsingInput::parseIncommingData()
         #endif
         if(dataSize>16*1024*1024)
         {
-            emit error("packet size too big");
+            /*emit */error("packet size too big");
             return;
         }
         RXSize+=in.device()->pos();
@@ -710,7 +714,7 @@ void ProtocolParsingInput::parseIncommingData()
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(dataSize!=(quint32)data.size())
         {
-            emit error("wrong data size here");
+            /*emit */error("wrong data size here");
             return;
         }
         #endif
@@ -785,7 +789,7 @@ void ProtocolParsingInput::parseIncommingData()
                     #ifdef PROTOCOLPARSINGINPUTDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
                     #endif
-                    emit newInputQuery(mainCodeType,queryNumber);
+                    /*emit */newInputQuery(mainCodeType,queryNumber);
                     parseQuery(mainCodeType,queryNumber,data);
                 }
                 else
@@ -827,7 +831,7 @@ void ProtocolParsingInput::parseIncommingData()
                                     break;
                                 }
                     }
-                    emit newFullInputQuery(mainCodeType,subCodeType,queryNumber);
+                    /*emit */newFullInputQuery(mainCodeType,subCodeType,queryNumber);
                     parseFullQuery(mainCodeType,subCodeType,queryNumber,data);
                 }
             }
@@ -838,7 +842,7 @@ void ProtocolParsingInput::parseIncommingData()
                 {
                     if(!reply_mainCodeType.contains(queryNumber))
                     {
-                        emit error("reply to a query not send");
+                        /*emit */error("reply to a query not send");
                         return;
                     }
                     mainCodeType=reply_mainCodeType.value(queryNumber);
@@ -956,7 +960,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 {
     if(reply_mainCodeType.contains(queryNumber))
     {
-        emit error("Query with this query number already found");
+        /*emit */error("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1005,7 +1009,7 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
 {
     if(reply_mainCodeType.contains(queryNumber))
     {
-        emit error("Query with this query number already found");
+        /*emit */error("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1091,7 +1095,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     #endif
     if(replySize.contains(queryNumber))
     {
-        emit error("Query with this query number already found");
+        /*emit */error("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1161,7 +1165,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
     #endif
     if(replySize.contains(queryNumber))
     {
-        emit error("Query with this query number already found");
+        /*emit */error("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1293,7 +1297,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     const QByteArray &newData=computeOutcommingQuery(isClient,mainCodeType,queryNumber,data);
     if(newData.isEmpty())
         return false;
-    emit newOutputQuery(mainCodeType,queryNumber);
+    /*emit */newOutputQuery(mainCodeType,queryNumber);
     return internalPackOutcommingData(newData);
 }
 
@@ -1302,7 +1306,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
     const QByteArray &newData=computeFullOutcommingQuery(isClient,mainCodeType,subCodeType,queryNumber,data);
     if(newData.isEmpty())
         return false;
-    emit newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
+    /*emit */newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
     return internalPackOutcommingData(newData);
 }
 
@@ -1312,7 +1316,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
     DebugClass::debugConsole("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    emit message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
+    /*emit */message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(socket->openMode()|QIODevice::WriteOnly)
@@ -1325,7 +1329,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
             if(Q_UNLIKELY(data.size()!=byteWriten))
             {
                 DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                /*emit */error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
                 return false;
             }
             return true;
@@ -1341,7 +1345,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
                 if(Q_UNLIKELY(dataToSend.size()!=byteWriten))
                 {
                     DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                    emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                    /*emit */error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
                     return false;
                 }
                 data.remove(0,dataToSend.size());
@@ -1353,7 +1357,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
     else
     {
         DebugClass::debugConsole(QStringLiteral("Socket open in read only!"));
-        emit error(QStringLiteral("Socket open in read only!"));
+        /*emit */error(QStringLiteral("Socket open in read only!"));
         return false;
     }
     #endif
@@ -1366,13 +1370,13 @@ bool ProtocolParsingOutput::internalSendRawSmallPacket(const QByteArray &data)
     DebugClass::debugConsole("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    emit message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
+    /*emit */message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(data.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
     {
         DebugClass::debugConsole(QStringLiteral("ProtocolParsingOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
-        emit error(QStringLiteral("ProtocolParsingOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
+        /*emit */error(QStringLiteral("ProtocolParsingOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
         return false;
     }
     #endif
@@ -1382,7 +1386,7 @@ bool ProtocolParsingOutput::internalSendRawSmallPacket(const QByteArray &data)
     if(Q_UNLIKELY(data.size()!=byteWriten))
     {
         DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        /*emit */error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
         return false;
     }
     return true;

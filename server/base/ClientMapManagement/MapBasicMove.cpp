@@ -31,13 +31,17 @@ void MapBasicMove::askIfIsReadyToStop()
 {
     if(map==NULL)
     {
-        emit isReadyToStop();
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        /*emit */isReadyToStop();
+        #endif
         return;
     }
     extraStop();
 
     map=NULL;
-    emit isReadyToStop();
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    /*emit */isReadyToStop();
+    #endif
 }
 
 Direction MapBasicMove::getLastDirection() const
@@ -77,12 +81,12 @@ void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,c
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(this->x>(map->width-1))
     {
-        emit message(QStringLiteral("put_on_the_map(): Wrong x: %1").arg(x));
+        /*emit */message(QStringLiteral("put_on_the_map(): Wrong x: %1").arg(x));
         this->x=map->width-1;
     }
     if(this->y>(map->height-1))
     {
-        emit message(QStringLiteral("put_on_the_map(): Wrong y: %1").arg(y));
+        /*emit */message(QStringLiteral("put_on_the_map(): Wrong y: %1").arg(y));
         this->y=map->height-1;
     }
     #endif
@@ -100,7 +104,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
     quint8 moveThePlayer_index_move=0;
     if(Q_UNLIKELY(last_direction==direction))
     {
-        emit error(QStringLiteral("Previous action is same direction: %1").arg(last_direction));
+        /*emit */error(QStringLiteral("Previous action is same direction: %1").arg(last_direction));
         return false;
     }
     switch(last_direction)
@@ -111,7 +115,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
-                emit error(QStringLiteral("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
+                error(QStringLiteral("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
                 return false;
             }*/
             while(moveThePlayer_index_move<previousMovedUnit)
@@ -124,7 +128,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesTop);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    emit error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -135,7 +139,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             /* can be look into other direction
             if(unlikely(previousMovedUnit>0))
             {
-                emit error(QStringLiteral("Direction_look_at_top: Previous action is not moving: %1").arg(last_direction));
+                error(QStringLiteral("Direction_look_at_top: Previous action is not moving: %1").arg(last_direction));
                 return false;
             }*/
         break;
@@ -158,7 +162,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesRight);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    emit error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -192,7 +196,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesBottom);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    emit error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -203,7 +207,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             /* can be look into other direction
             if(unlikely(previousMovedUnit>0))
             {
-                emit error(QStringLiteral("Direction_look_at_bottom: Previous action is not moving: %1").arg(last_direction));
+                error(QStringLiteral("Direction_look_at_bottom: Previous action is not moving: %1").arg(last_direction));
                 return false;
             }*/
         break;
@@ -213,7 +217,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
-                emit error(QStringLiteral("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
+                error(QStringLiteral("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
                 return false;
             }*/
             while(moveThePlayer_index_move<previousMovedUnit)
@@ -226,7 +230,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesLeft);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    emit error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -237,12 +241,12 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             /* can be look into other direction
             if(unlikely(previousMovedUnit>0))
             {
-                emit error(QStringLiteral("Direction_look_at_left: Previous action is not moving: %1").arg(last_direction));
+                error(QStringLiteral("Direction_look_at_left: Previous action is not moving: %1").arg(last_direction));
                 return false;
             }*/
         break;
         default:
-            emit error(QStringLiteral("moveThePlayer(): direction not managed"));
+            /*emit */error(QStringLiteral("moveThePlayer(): direction not managed"));
             return false;
         break;
     }

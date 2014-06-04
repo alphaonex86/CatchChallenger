@@ -1,3 +1,4 @@
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include "FakeBot.h"
 #include "../GlobalServerData.h"
 #include "../ClientMapManagement/MapBasicMove.h"
@@ -211,3 +212,4 @@ void FakeBot::send_player_move(const quint8 &moved_unit,const Direction &the_dir
 {
     api.send_player_move(moved_unit,the_direction);
 }
+#endif

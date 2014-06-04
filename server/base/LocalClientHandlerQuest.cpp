@@ -2,6 +2,9 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
 #include "GlobalServerData.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "Client.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -10,7 +13,7 @@ void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 
 {
     if(!CommonDatapack::commonDatapack.quests.contains(questId))
     {
-        emit error(QStringLiteral("unknow questId: %1").arg(questId));
+        /*emit */error(QStringLiteral("unknown questId: %1").arg(questId));
         return;
     }
     const Quest &quest=CommonDatapack::commonDatapack.quests.value(questId);
@@ -19,7 +22,7 @@ void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 
         case QuestAction_Start:
             if(!haveStartQuestRequirement(quest))
             {
-                emit error(QStringLiteral("have not quest requirement: %1").arg(questId));
+                /*emit */error(QStringLiteral("have not quest requirement: %1").arg(questId));
                 return;
             }
             startQuest(quest);
@@ -30,13 +33,13 @@ void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 
         case QuestAction_NextStep:
             if(!haveNextStepQuestRequirements(quest))
             {
-                emit error(QStringLiteral("have not next step quest requirement: %1").arg(questId));
+                /*emit */error(QStringLiteral("have not next step quest requirement: %1").arg(questId));
                 return;
             }
             nextStepQuest(quest);
         break;
         default:
-            emit error(QStringLiteral("newQuestAction unknow: %1").arg(action));
+            /*emit */error(QStringLiteral("newQuestAction unknow: %1").arg(action));
         return;
     }
 }
@@ -44,19 +47,19 @@ void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 
 void LocalClientHandler::addQuestStepDrop(const quint32 &questId,const quint8 &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    emit message(QStringLiteral("addQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
+    /*emit */message(QStringLiteral("addQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
     if(!addQuestStepDrop(player_informations,questId,questStep))
-        emit message(QStringLiteral("error append drop for quest have failed: %1").arg(questId));
+        /*emit */message(QStringLiteral("error append drop for quest have failed: %1").arg(questId));
 }
 
 void LocalClientHandler::removeQuestStepDrop(const quint32 &questId,const quint8 &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    emit message(QStringLiteral("removeQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
+    /*emit */message(QStringLiteral("removeQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
     if(!removeQuestStepDrop(player_informations,questId,questStep))
-        emit message(QStringLiteral("error append drop for quest have failed: %1").arg(questId));
+        /*emit */message(QStringLiteral("error append drop for quest have failed: %1").arg(questId));
 }
 
 bool LocalClientHandler::addQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step)
@@ -123,17 +126,17 @@ MonsterDrops LocalClientHandler::questItemMonsterToMonsterDrops(const Quest::Ite
 bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    emit message(QStringLiteral("check quest step requirement for: %1").arg(quest.id));
+    /*emit */message(QStringLiteral("check quest step requirement for: %1").arg(quest.id));
     #endif
     if(!player_informations->public_and_private_informations.quests.contains(quest.id))
     {
-        emit message(QStringLiteral("player quest not found: %1").arg(quest.id));
+        /*emit */message(QStringLiteral("player quest not found: %1").arg(quest.id));
         return false;
     }
     const quint8 &step=player_informations->public_and_private_informations.quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
-        emit message(QStringLiteral("step out of range for: %1").arg(quest.id));
+        /*emit */message(QStringLiteral("step out of range for: %1").arg(quest.id));
         return false;
     }
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
@@ -143,7 +146,7 @@ bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Qu
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
         if(objectQuantity(item.item)<item.quantity)
         {
-            emit message(QStringLiteral("quest requirement, have not the quantity for the item: %1").arg(item.item));
+            /*emit */message(QStringLiteral("quest requirement, have not the quantity for the item: %1").arg(item.item));
             return false;
         }
         index++;
@@ -154,7 +157,7 @@ bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Qu
         const quint32 &fightId=requirements.fightId.at(index);
         if(!player_informations->public_and_private_informations.bot_already_beaten.contains(fightId))
         {
-            emit message(QStringLiteral("quest requirement, have not beat the bot: %1").arg(fightId));
+            /*emit */message(QStringLiteral("quest requirement, have not beat the bot: %1").arg(fightId));
             return false;
         }
         index++;
@@ -165,18 +168,18 @@ bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Qu
 bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    emit message(QStringLiteral("check quest requirement for: %1").arg(quest.id));
+    /*emit */message(QStringLiteral("check quest requirement for: %1").arg(quest.id));
     #endif
     if(player_informations->public_and_private_informations.quests.contains(quest.id))
     {
         if(player_informations->public_and_private_informations.quests.value(quest.id).step!=0)
         {
-            emit message(QStringLiteral("can start the quest because is already running: %1").arg(quest.id));
+            /*emit */message(QStringLiteral("can start the quest because is already running: %1").arg(quest.id));
             return false;
         }
         if(player_informations->public_and_private_informations.quests.value(quest.id).finish_one_time && !quest.repeatable)
         {
-            emit message(QStringLiteral("done one time and no repeatable: %1").arg(quest.id));
+            /*emit */message(QStringLiteral("done one time and no repeatable: %1").arg(quest.id));
             return false;
         }
     }
@@ -186,12 +189,12 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
         const quint32 &questId=quest.requirements.quests.at(index);
         if(!player_informations->public_and_private_informations.quests.contains(questId))
         {
-            emit message(QStringLiteral("have never started the quest: %1").arg(questId));
+            /*emit */message(QStringLiteral("have never started the quest: %1").arg(questId));
             return false;
         }
         if(!player_informations->public_and_private_informations.quests.value(questId).finish_one_time)
         {
-            emit message(QStringLiteral("quest never finished: %1").arg(questId));
+            /*emit */message(QStringLiteral("quest never finished: %1").arg(questId));
             return false;
         }
         index++;
@@ -202,17 +205,17 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
 bool LocalClientHandler::nextStepQuest(const Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    emit message(QStringLiteral("drop quest step requirement for: %1").arg(quest.id));
+    /*emit */message(QStringLiteral("drop quest step requirement for: %1").arg(quest.id));
     #endif
     if(!player_informations->public_and_private_informations.quests.contains(quest.id))
     {
-        emit message(QStringLiteral("step out of range for: %1").arg(quest.id));
+        /*emit */message(QStringLiteral("step out of range for: %1").arg(quest.id));
         return false;
     }
     quint8 step=player_informations->public_and_private_informations.quests.value(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
-        emit message(QStringLiteral("step out of range for: %1").arg(quest.id));
+        /*emit */message(QStringLiteral("step out of range for: %1").arg(quest.id));
         return false;
     }
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
@@ -228,25 +231,25 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
     if(player_informations->public_and_private_informations.quests.value(quest.id).step>quest.steps.size())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-        emit message(QStringLiteral("finish the quest: %1").arg(quest.id));
+        /*emit */message(QStringLiteral("finish the quest: %1").arg(quest.id));
         #endif
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("UPDATE `quest` SET `step`=0,`finish_one_time`=1 WHERE `character`=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE `quest` SET `step`=0,`finish_one_time`=1 WHERE `character`=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_PostgreSQL:
-                emit dbQuery(QStringLiteral("UPDATE quest SET step=0,finish_one_time=true WHERE character=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE quest SET step=0,finish_one_time=true WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              );
@@ -276,27 +279,27 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-        emit message(QStringLiteral("next step in the quest: %1").arg(quest.id));
+        /*emit */message(QStringLiteral("next step in the quest: %1").arg(quest.id));
         #endif
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND `quest`=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND `quest`=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(player_informations->public_and_private_informations.quests.value(quest.id).step)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(player_informations->public_and_private_informations.quests.value(quest.id).step)
                              );
             break;
             case ServerSettings::Database::DatabaseType_PostgreSQL:
-                emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(player_informations->public_and_private_informations.quests.value(quest.id).step)
@@ -316,7 +319,7 @@ bool LocalClientHandler::startQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,%3,%4);")
+                /*emit */dbQuery(QStringLiteral("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,%3,%4);")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(0)
@@ -324,7 +327,7 @@ bool LocalClientHandler::startQuest(const Quest &quest)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);")
+                /*emit */dbQuery(QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(0)
@@ -332,7 +335,7 @@ bool LocalClientHandler::startQuest(const Quest &quest)
                              );
             break;
             case ServerSettings::Database::DatabaseType_PostgreSQL:
-                emit dbQuery(QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,false,%3);")
+                /*emit */dbQuery(QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,false,%3);")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(1)
@@ -348,21 +351,21 @@ bool LocalClientHandler::startQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(1)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(1)
                              );
             break;
             case ServerSettings::Database::DatabaseType_PostgreSQL:
-                emit dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
+                /*emit */dbQuery(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(1)

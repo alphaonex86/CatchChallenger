@@ -12,11 +12,16 @@
 #include "MapBasicMove.h"
 
 namespace CatchChallenger {
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
 class Map_custom;
 
 class ClientMapManagement : public MapBasicMove
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit ClientMapManagement();
     virtual ~ClientMapManagement();
@@ -26,15 +31,18 @@ public:
     //drop all clients
     virtual void dropAllClients();
     virtual void dropAllBorderClients();
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    Client *client;
+#endif
 protected:
     //pass to the Map management visibility algorithm
     virtual void insertClient() = 0;
     virtual void moveClient(const quint8 &previousMovedUnit,const Direction &direction) = 0;
-public slots:
+public:
     //map slots, transmited by the current ClientNetworkRead
     virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     virtual void purgeBuffer() = 0;
-private slots:
+private:
     virtual void extraStop();
 };
 }
