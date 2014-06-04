@@ -15,6 +15,7 @@
 #include <QDateTime>
 #include <QCryptographicHash>
 #include <QNetworkAccessManager>
+#include <QNetworkProxy>
 
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
@@ -40,8 +41,11 @@ public:
 
     //datapack related
     void sendDatapackContent();
+    void test_mirror();
+    void httpFinishedForDatapackList();
     const QStringList listDatapack(QString suffix);
     void cleanDatapack(QString suffix);
+    void setProxy(const QNetworkProxy &proxy);
 protected:
     void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
@@ -51,6 +55,9 @@ private:
     QString host;
     quint16 port;
     quint64 RXSize,TXSize;
+    int index_mirror;
+    bool test_with_proxy;
+    QNetworkProxy proxy;
 
     //file list
     struct query_files

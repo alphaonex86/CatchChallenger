@@ -166,7 +166,7 @@ void ClientLocalBroadcast::seedValidated()
         plantOnMap.id=GlobalServerData::serverPrivateVariables.maxPlantId;
     }
     else
-        plantOnMap.id << GlobalServerData::serverPrivateVariables.plantUnusedId.takeFirst();
+        plantOnMap.id=GlobalServerData::serverPrivateVariables.plantUnusedId.takeFirst();
     plantOnMap.x=plant_list_in_waiting.first().x;
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
@@ -496,6 +496,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 emit postReply(query_id,data);
                 emit addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
 
+                GlobalServerData::serverPrivateVariables.plantUnusedId << plant.id;
                 static_cast<MapServer *>(map)->plants.removeAt(index);
                 return;
             }

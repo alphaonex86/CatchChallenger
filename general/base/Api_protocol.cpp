@@ -2707,6 +2707,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> CommonSettings::commonSettings.factoryPriceChange;
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the httpDatapackMirror, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.httpDatapackMirror;
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the characterListSize, line: %1").arg(__LINE__));
