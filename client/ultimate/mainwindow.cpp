@@ -904,6 +904,9 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     connect(realSslSocket,&QSslSocket::readyRead,this,&MainWindow::readForFirstHeader,Qt::DirectConnection);
 
     CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectingState);
+    connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
+    connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
+    connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
     realSslSocket->connectToHost(serverConnexion.value(selectedServer)->host,serverConnexion.value(selectedServer)->port);
     serverConnexion.value(selectedServer)->connexionCounter++;
     serverConnexion.value(selectedServer)->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
@@ -915,13 +918,18 @@ void MainWindow::connectTheExternalSocket()
 {
     socket=new CatchChallenger::ConnectedSocket(realSslSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
+    if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
+    {
+        QNetworkProxy proxy=realSslSocket->proxy();
+        proxy.setType(QNetworkProxy::Socks5Proxy);
+        proxy.setHostName(serverConnexion.value(selectedServer)->proxyHost);
+        proxy.setPort(serverConnexion.value(selectedServer)->proxyPort);
+        static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->setProxy(proxy);
+    }
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection);
-    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(const QList<QSslError> &errors)>(&CatchChallenger::ConnectedSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
-    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
-    connect(socket,                                                 static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
     QDir datapack(serverToDatapachPath(selectedServer));

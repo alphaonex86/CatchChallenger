@@ -282,6 +282,12 @@ int main(int argc, char *argv[])
             qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
             return EXIT_FAILURE;
         }
+        formatedServerSettings.datapackCache=0;
+        if(formatedServerSettings.httpDatapackMirror.isEmpty())
+        {
+            qDebug() << "Need use mirror http";
+            return EXIT_FAILURE;
+        }
     }
 
     bool closed;
