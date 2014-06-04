@@ -92,14 +92,12 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     GlobalServerData::serverSettings.database.sqlite.file                       = QString();
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
-
-    GlobalServerData::serverSettings.httpDatapackMirror                         = QString();
     GlobalServerData::serverSettings.datapackCache                              = -1;
-
     GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QLatin1String("/datapack/");
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.anonymous                                  = false;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
+    CommonSettings::commonSettings.httpDatapackMirror                         = QString();
     CommonSettings::commonSettings.forceClientToSendAtMapChange = true;
     CommonSettings::commonSettings.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     CommonSettings::commonSettings.dontSendPseudo         = false;
@@ -2034,12 +2032,12 @@ void BaseServer::loadAndFixSettings()
 
     if(GlobalServerData::serverSettings.datapackCache<-1)
         GlobalServerData::serverSettings.datapackCache=-1;
-    if(!GlobalServerData::serverSettings.httpDatapackMirror.contains(QRegularExpression("^https?://[0-9a-z]")))
-        GlobalServerData::serverSettings.httpDatapackMirror.clear();
+    if(!CommonSettings::commonSettings.httpDatapackMirror.contains(QRegularExpression("^https?://[0-9a-z]")))
+        CommonSettings::commonSettings.httpDatapackMirror.clear();
     else
     {
-        if(!GlobalServerData::serverSettings.httpDatapackMirror.endsWith(QLatin1Literal("/")))
-            GlobalServerData::serverSettings.httpDatapackMirror+=QLatin1Literal("/");
+        if(!CommonSettings::commonSettings.httpDatapackMirror.endsWith(QLatin1Literal("/")))
+            CommonSettings::commonSettings.httpDatapackMirror+=QLatin1Literal("/");
     }
 
     //check the settings here

@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -488,7 +488,7 @@
         <item row="4" column="1">
          <widget class="QLineEdit" name="httpDatapackMirror">
           <property name="placeholderText">
-           <string>Empty if don't use, else http://server/datapack/</string>
+           <string>Empty if don't use, else http://serverprimary/datapack/;http://serversecondary/datapack/</string>
           </property>
          </widget>
         </item>
