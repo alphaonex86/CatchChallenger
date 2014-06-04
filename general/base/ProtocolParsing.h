@@ -11,9 +11,17 @@
 #include "ConnectedSocket.h"
 
 namespace CatchChallenger {
-class ProtocolParsing : public QObject
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
+class ProtocolParsing
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     enum CompressionType
     {
@@ -53,9 +61,17 @@ protected:
     static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketServerToClient;
     static QSet<quint8> replyComressionOnlyMainCodePacketClientToServer;
     static QSet<quint8> replyComressionOnlyMainCodePacketServerToClient;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     void error(const QString &error) const;
     void message(const QString &message) const;
+#ifdef EPOLLCATCHCHALLENGERSERVER
+public:
+    Client *client;
+#endif
 private slots:
     virtual void reset() = 0;
 };
@@ -103,7 +119,11 @@ protected:
     QHash<quint8,quint16> reply_subCodeType;
 private slots:
     void reset();
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
     void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
 public slots:
@@ -153,7 +173,11 @@ private:
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     QSet<quint8> queryReceived;
     #endif
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
     void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
 public slots:

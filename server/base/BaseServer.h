@@ -37,7 +37,9 @@
 namespace CatchChallenger {
 class BaseServer : public QObject, public BaseServerCrafting, public BaseServerFight
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit BaseServer();
     virtual ~BaseServer();
@@ -51,18 +53,24 @@ public:
     void load_account_max_id();
     void load_character_max_id();
     void start();
-protected slots:
+protected:
     virtual void start_internal_server();
     virtual void stop_internal_server();
     //init, constructor, destructor
     virtual void initAll();//call before all
-    virtual void moveToThreadForContructor();
     //remove all finished client
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     virtual void removeOneClient();
-    //new connection
     virtual void newConnection();
+    virtual void moveToThreadForContructor();
+    #endif
+    //new connection
     virtual void load_next_city_capture();
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     void error(const QString &error) const;
     void try_initAll() const;
     void try_stop_server() const;

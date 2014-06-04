@@ -1,25 +1,26 @@
 #include "EventThreader.h"
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 using namespace CatchChallenger;
 EventThreader::EventThreader()
 {
-	start();
-	moveToThread(this);
+    start();
+    moveToThread(this);
 }
 
 EventThreader::~EventThreader()
 {
-	quit();
-	wait();
+    quit();
+    wait();
 }
 
 void EventThreader::run()
 {
-	exec();
+    exec();
 }
 
 void EventThreader::probe_latency()
 {
-	emit return_latency();
+    emit return_latency();
 }
-
+#endif

@@ -2,6 +2,9 @@
 #include "BroadCastWithoutSender.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "GlobalServerData.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "Client.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -28,7 +31,7 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
         return;
     if(this->player_informations==NULL)
         return;
-    emit message(QStringLiteral("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+    /*emit */message(QStringLiteral("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
 
     QByteArray finalData;
@@ -63,7 +66,7 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
 {
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
     {
-        emit error(QStringLiteral("ClientLocalBroadcast::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        /*emit */error(QStringLiteral("ClientLocalBroadcast::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
     CommonMap *old_map=map;
@@ -83,7 +86,7 @@ void ClientLocalBroadcast::insertClient(CommonMap *map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.contains(this))
-        emit message(QLatin1String("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
+        /*emit */message(QLatin1String("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
     else
     #endif
     static_cast<MapServer *>(map)->clientsForBroadcast << this;
@@ -95,7 +98,7 @@ void ClientLocalBroadcast::removeClient(CommonMap *map, const bool &withDestroy)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1)
-        emit message(QStringLiteral("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: %1").arg(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)));
+        /*emit */message(QStringLiteral("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: %1").arg(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)));
     #endif
     static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
 

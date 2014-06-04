@@ -17,7 +17,9 @@
 namespace CatchChallenger {
 class ClientNetworkRead : public ProtocolParsingInput
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit ClientNetworkRead(Player_internal_informations *player_informations,ConnectedSocket * socket);
     void stopRead();
@@ -29,7 +31,7 @@ public:
         COORD_TYPE y;
         Orientation orientation;
     };
-public slots:
+public:
     void fake_receive_data(const QByteArray &data);
     void purgeReadBuffer();
     //normal slots
@@ -54,7 +56,11 @@ private:
 
     void parseError(const QString &errorString);
     void receiveSystemText(const QString &text);
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     //normal signals
     void needDisconnectTheClient();
     void sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray()) const;
@@ -63,7 +69,9 @@ signals:
     //send reply
     void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     //normal signals
+#ifndef EPOLLCATCHCHALLENGERSERVER
     void isReadyToStop() const;
+#endif
     //packet parsed (heavy)
     void askLogin(const quint8 &query_id,const QByteArray &login,const QByteArray &hash) const;
     void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps) const;

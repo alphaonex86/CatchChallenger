@@ -6,14 +6,23 @@
 #include "ServerStructures.h"
 
 namespace CatchChallenger {
-class BroadCastWithoutSender : public QObject
+class BroadCastWithoutSender
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 private:
     explicit BroadCastWithoutSender();
 public:
     static BroadCastWithoutSender broadCastWithoutSender;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     void serverCommand(const QString &command,const QString &extraText) const;
     void new_player_is_connected(const Player_internal_informations &newPlayer) const;
     void player_is_disconnected(const QString &oldPlayer) const;

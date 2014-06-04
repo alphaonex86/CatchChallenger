@@ -23,7 +23,7 @@ Api_client_virtual::~Api_client_virtual()
 
 void Api_client_virtual::sendDatapackContent()
 {
-    emit haveTheDatapack();
+    /*emit */haveTheDatapack();
 }
 
 void Api_client_virtual::tryDisconnect()

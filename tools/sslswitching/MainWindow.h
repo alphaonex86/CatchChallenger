@@ -17,6 +17,7 @@ public:
     ~MainWindow();
 private slots:
     void on_test_clicked();
+private:
     void test_socket();
     void newConnection();
     void newServerSocketData();

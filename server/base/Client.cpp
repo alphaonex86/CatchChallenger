@@ -12,7 +12,9 @@ using namespace CatchChallenger;
 
 Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement) :
     ask_is_ready_to_stop(false),
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     stopped_object(0),
+    #endif
     socket(socket),
     clientBroadCast(),
     clientHeavyLoad(),
@@ -29,6 +31,7 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
     player_informations.isConnected=true;
     player_informations.public_and_private_informations.repel_step=0;
 
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Qt::ConnectionType coTypeAsync=Qt::DirectConnection;
     {
         int index=1;
@@ -56,13 +59,27 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
 
     connect(socket,	static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error),         this, &Client::connectionError);
     connect(socket,	&ConnectedSocket::disconnected,	this, &Client::disconnectClient);
+    #endif
 
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     clientBroadCast.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
     clientMapManagement->moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(1));
     clientNetworkRead.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(2));
     clientHeavyLoad.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(3));
     localClientHandler.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(4));
     clientLocalBroadcast.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(5));
+    #endif
+
+    //set parent in C style
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    clientNetworkRead.client=this;
+    clientNetworkWrite.client=this;
+    clientBroadCast.client=this;
+    clientMapManagement->client=this;
+    clientHeavyLoad.client=this;
+    localClientHandler.client=this;
+    clientLocalBroadcast.client=this;
+    #endif
 
     //set variables
     clientBroadCast.setVariable(&player_informations);
@@ -71,6 +88,7 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
     localClientHandler.setVariable(&player_informations);
     clientLocalBroadcast.setVariable(&player_informations);
 
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     //connect input/ouput
     connect(&clientNetworkRead,     &ClientNetworkRead::newFullInputQuery,      &clientNetworkWrite,    &ClientNetworkWrite::newFullInputQuery, coTypeAsync);
     connect(&clientNetworkRead,     &ClientNetworkRead::newInputQuery,          &clientNetworkWrite,    &ClientNetworkWrite::newInputQuery,     coTypeAsync);
@@ -232,6 +250,7 @@ Client::Client(ConnectedSocket *socket, ClientMapManagement *clientMapManagement
     connect(this,&Client::askIfIsReadyToStop,&clientNetworkWrite,        &ClientNetworkWrite::askIfIsReadyToStop,    coTypeAsync);
     connect(this,&Client::askIfIsReadyToStop,&localClientHandler,        &MapBasicMove::askIfIsReadyToStop,          coTypeAsync);
     connect(this,&Client::askIfIsReadyToStop,&clientLocalBroadcast,      &MapBasicMove::askIfIsReadyToStop,          coTypeAsync);
+    #endif
 
     clientNetworkRead.purgeReadBuffer();
 }
@@ -243,7 +262,9 @@ Client::~Client()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     disconnect(this);
+    #endif
     if(socket!=NULL)
     {
         delete socket;
@@ -255,18 +276,13 @@ Client::~Client()
 void Client::connectionError(QAbstractSocket::SocketError error)
 {
     player_informations.isConnected=false;
-    ConnectedSocket *socket=qobject_cast<ConnectedSocket *>(QObject::sender());
-    if(socket==NULL)
-    {
-        normalOutput("Unlocated client socket at error");
-        return;
-    }
     if(error!=QAbstractSocket::RemoteHostClosedError)
     {
-        normalOutput(QStringLiteral("error detected for the client: %1 %2").arg(error).arg(socket->errorString()));
+        normalOutput(QStringLiteral("error detected for the client: %1 %2").arg(error));
         socket->disconnectFromHost();
     }
 }
+
 
 /// \warning called in one other thread!!!
 void Client::disconnectClient()
@@ -289,11 +305,18 @@ void Client::disconnectClient()
     }
     clientNetworkRead.stopRead();
 
-    emit askIfIsReadyToStop();
+    clientBroadCast.askIfIsReadyToStop();
+    clientHeavyLoad.askIfIsReadyToStop();
+    clientNetworkRead.askIfIsReadyToStop();
+    clientNetworkWrite.askIfIsReadyToStop();
+    localClientHandler.askIfIsReadyToStop();
+    clientLocalBroadcast.askIfIsReadyToStop();
+    clientMapManagement->askIfIsReadyToStop();
 
     BroadCastWithoutSender::broadCastWithoutSender.emit_player_is_disconnected(player_informations.public_and_private_informations.public_informations.pseudo);
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void Client::disconnectNextStep()
 {
     stopped_object++;
@@ -308,14 +331,14 @@ void Client::disconnectNextStep()
         }
         player_informations.character_loaded=false;
 
-        emit askIfIsReadyToStop();
+        /*emit */askIfIsReadyToStop();
         return;
     }
     if(stopped_object==(OBJECTTOSTOP*2))
     {
         clientMapManagement->deleteLater();
 
-        emit isReadyToDelete();
+        /*emit */isReadyToDelete();
         return;
     }
     if(stopped_object>(OBJECTTOSTOP*2))
@@ -324,6 +347,7 @@ void Client::disconnectNextStep()
         return;
     }
 }
+#endif
 
 //* do the message by the general broadcast */
 void Client::errorOutput(const QString &errorString)
@@ -393,7 +417,9 @@ QString Client::getPseudo()
     return player_informations.public_and_private_informations.public_informations.pseudo;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void Client::fake_receive_data(QByteArray data)
 {
-    emit fake_send_received_data(data);
+    /*emit */fake_send_received_data(data);
 }
+#endif

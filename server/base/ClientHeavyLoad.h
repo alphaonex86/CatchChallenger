@@ -23,9 +23,17 @@
 #include "../../general/base/DebugClass.h"
 
 namespace CatchChallenger {
-class ClientHeavyLoad : public QObject
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
+class ClientHeavyLoad
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit ClientHeavyLoad();
     ~ClientHeavyLoad();
@@ -69,7 +77,10 @@ public:
         QString file;
         quint32 mtime;
     };
-public slots:
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    Client *client;
+#endif
+public:
     void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
     void deleteCharacterNow(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
@@ -118,11 +129,17 @@ private:
     QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
     QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
     static QRegularExpression fileNameStartStringRegex;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     //normal signals
     void error(const QString &error) const;
     void message(const QString &message) const;
+#ifndef EPOLLCATCHCHALLENGERSERVER
     void isReadyToStop() const;
+#endif
     //send packet on network
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;

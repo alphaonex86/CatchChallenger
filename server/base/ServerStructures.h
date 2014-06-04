@@ -6,7 +6,9 @@
 #include <QStringList>
 #include <QString>
 #include <QSqlDatabase>
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
+#endif
 #include <QMutex>
 #include <QHash>
 #include <QVariant>
@@ -22,6 +24,12 @@
 #include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
 #include "../../general/base/CommonSettings.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "epoll/TimerCityCapture.h"
+#include "epoll/TimerDdos.h"
+#include "epoll/TimerPositionSync.h"
+#include "epoll/TimerSendInsertMoveRemove.h"
+#endif
 
 namespace CatchChallenger {
 class EventThreader;
@@ -299,14 +307,25 @@ struct ServerPrivateVariables
     QList<MarketItem> marketItemList;
     QList<MarketPlayerMonster> marketPlayerMonsterList;
 
+    //timer and thread
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+        QList<QThread *> eventThreaderList;
+        QTimer *timer_city_capture;
+        QTimer *timer_to_send_insert_move_remove;
+        QTimer positionSync;
+        QTimer ddosTimer;
+    #else
+        //TimerCityCapture *timer_city_capture;
+        TimerDdos ddosTimer;
+        TimerPositionSync positionSync;
+        TimerSendInsertMoveRemove *timer_to_send_insert_move_remove;
+    #endif
+
     //general data
-    QList<QThread *> eventThreaderList;
-    QTimer *timer_player_map;
     bool stopIt;
     quint32 maxClanId;
     quint32 maxAccountId;
     quint32 maxCharacterId;
-    QTimer *timer_city_capture;
     QDateTime time_city_capture;
 
     //datapack
@@ -316,9 +335,6 @@ struct ServerPrivateVariables
     QHash<QString,CommonMap *> map_list;
     QList<CommonMap *> flat_map_list;
     QHash<quint32,QString> id_map_to_map;
-    QTimer *timer_to_send_insert_move_remove;
-    QTimer positionSync;
-    QTimer ddosTimer;
     qint8 sizeofInsertRequest;
 
     //connection

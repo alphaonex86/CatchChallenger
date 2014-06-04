@@ -24,7 +24,6 @@
 namespace CatchChallenger {
 class Api_client_virtual : public Api_protocol
 {
-    Q_OBJECT
 public:
     explicit Api_client_virtual(ConnectedSocket *socket,const QString &forcedDatapack);
     ~Api_client_virtual();
