@@ -12,13 +12,21 @@
 #include "../VariableServer.h"
 
 namespace CatchChallenger {
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
 class ClientNetworkWrite : public ProtocolParsingOutput
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit ClientNetworkWrite(Player_internal_informations *player_informations,ConnectedSocket * socket);
     ~ClientNetworkWrite();
-public slots:
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    Client *client;
+#endif
+public:
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
     void sendPacket(const quint8 &mainIdent,const QByteArray &data);
     void sendRawSmallPacket(const QByteArray &data);
@@ -31,8 +39,10 @@ public slots:
 private:
     ConnectedSocket * socket;
     Player_internal_informations *player_informations;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
     void isReadyToStop() const;
+#endif
 };
 }
 

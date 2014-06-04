@@ -22,15 +22,21 @@ namespace CatchChallenger {
 
 class ConnectedSocket : public QIODevice
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     explicit ConnectedSocket(QFakeSocket *socket);
     explicit ConnectedSocket(QSslSocket *socket);
     explicit ConnectedSocket(QTcpSocket *socket);
+    #endif
     ~ConnectedSocket();
     void	abort();
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void	connectToHost(const QString & hostName,quint16 port);
     void	connectToHost(const QHostAddress & address,quint16 port);
+    #endif
     void	disconnectFromHost();
     QAbstractSocket::SocketError error() const;
     bool	flush();
@@ -48,17 +54,18 @@ public:
     QString errorString() const;
     void	close();
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    #ifndef SERVERNOSSL
-    EpollSslClient *epollSocket;
-    explicit ConnectedSocket(EpollSslClient *socket);
+            #ifndef SERVERNOSSL
+            EpollSslClient *epollSocket;
+            explicit ConnectedSocket(EpollSslClient *socket);
+        #else
+            EpollClient *epollSocket;
+            explicit ConnectedSocket(EpollClient *socket);
+        #endif
     #else
-    EpollClient *epollSocket;
-    explicit ConnectedSocket(EpollClient *socket);
-    #endif
-    #endif
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
     QTcpSocket *tcpSocket;
+    #endif
 protected:
     bool	isSequential() const;
     bool canReadLine() const;

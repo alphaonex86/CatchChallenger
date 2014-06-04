@@ -43,7 +43,7 @@ void ClientMapManagement::extraStop()
 bool ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    emit message(QStringLiteral("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
+    /*emit */message(QStringLiteral("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
     #endif
     if(Q_UNLIKELY(!MapBasicMove::moveThePlayer(previousMovedUnit,direction)))
         return false;
@@ -53,10 +53,10 @@ bool ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 
 void ClientMapManagement::dropAllClients()
 {
-    emit sendPacket(0xC4);
+    /*emit */sendPacket(0xC4);
 }
 
 void ClientMapManagement::dropAllBorderClients()
 {
-    emit sendPacket(0xC9);
+    /*emit */sendPacket(0xC9);
 }

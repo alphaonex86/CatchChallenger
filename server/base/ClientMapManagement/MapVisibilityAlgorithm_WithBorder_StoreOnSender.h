@@ -81,13 +81,13 @@ private:
     QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >	to_send_move;
     QSet<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
     QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>			to_send_reinsert;
-public slots:
+public:
     void purgeBuffer();
-    //map slots, transmited by the current ClientNetworkRead
+    //map, transmited by the current ClientNetworkRead
     void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     void teleportValidatedTo(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
-private slots:
+private:
     void extraStop();
 };
 }

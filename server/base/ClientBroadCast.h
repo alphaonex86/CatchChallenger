@@ -18,9 +18,17 @@
 namespace CatchChallenger {
 /// \warning here, 0 random should be call
 /// \warning here only the call with global scope need be do
-class ClientBroadCast : public QObject
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
+class ClientBroadCast
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit ClientBroadCast();
     ~ClientBroadCast();
@@ -67,7 +75,11 @@ public:
     static QList<int> privateChatDrop;
     static int privateChatDropTotalCache;
     static int privateChatDropNewValue;
-public slots:
+#ifdef EPOLLCATCHCHALLENGERSERVER
+public:
+    Client *client;
+#endif
+public:
     //global slot
     void sendPM(const QString &text,const QString &pseudo);
     void receiveChatText(const Chat_type &chatType, const QString &text, const Player_internal_informations *sender_informations);
@@ -84,12 +96,18 @@ public slots:
     void sendSystemMessage(const QString &text,const bool &important=false);
     //clan
     void clanChange(const quint32 &clanId);
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+protected:
+#endif
     //normal signals
     void error(const QString &error) const;
     void kicked() const;
     void message(const QString &message) const;
+#ifndef EPOLLCATCHCHALLENGERSERVER
     void isReadyToStop() const;
+#endif
     //send packet on network
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;

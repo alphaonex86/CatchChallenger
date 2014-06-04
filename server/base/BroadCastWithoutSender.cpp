@@ -13,22 +13,22 @@ BroadCastWithoutSender::BroadCastWithoutSender()
 
 void BroadCastWithoutSender::emit_serverCommand(const QString &command,const QString &extraText)
 {
-    emit serverCommand(command,extraText);
+    /*emit */serverCommand(command,extraText);
 }
 
 void BroadCastWithoutSender::emit_new_player_is_connected(const Player_internal_informations &newPlayer)
 {
-    emit new_player_is_connected(newPlayer);
+    /*emit */new_player_is_connected(newPlayer);
 }
 
 void BroadCastWithoutSender::emit_player_is_disconnected(const QString &oldPlayer)
 {
-    emit player_is_disconnected(oldPlayer);
+    /*emit */player_is_disconnected(oldPlayer);
 }
 
 void BroadCastWithoutSender::emit_new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text)
 {
-    emit new_chat_message(pseudo,type,text);
+    /*emit */new_chat_message(pseudo,type,text);
 }
 
 void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connected_players)

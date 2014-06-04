@@ -1,3 +1,4 @@
+#ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QObject>
 #include <QTimer>
 #include <QSemaphore>
@@ -59,3 +60,4 @@ signals:
 }
 
 #endif // FakeBot_H
+#endif
