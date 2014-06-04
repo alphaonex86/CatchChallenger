@@ -183,6 +183,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     out << (quint8)CommonSettings::commonSettings.chat_allow_private;
     out << (quint8)CommonSettings::commonSettings.chat_allow_clan;
     out << (quint8)CommonSettings::commonSettings.factoryPriceChange;
+    out << CommonSettings::commonSettings.httpDatapackMirror;
 
     {
         QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -1263,6 +1264,11 @@ QHash<QString,quint32> ClientHeavyLoad::datapack_file_list()
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
 {
+    if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+    {
+        emit error("Can't use because mirror is defined");
+        return;
+    }
     tempDatapackListReplyArray.clear();
     tempDatapackListReplyTestCount=0;
     rawFiles.clear();
@@ -1334,7 +1340,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         out << (quint32)datapckFileSize;
         emit sendFullPacket(0xC2,0x000C,outputData);
     }
-    if(GlobalServerData::serverSettings.httpDatapackMirror.isEmpty())
+    if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
     {
         //validate, remove or update the file actualy on the client
         if(tempDatapackListReplyTestCount!=files.size())
@@ -1357,7 +1363,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     }
     else
     {
-        QByteArray outputData(FacilityLib::toUTF8(GlobalServerData::serverSettings.httpDatapackMirror));
+        QByteArray outputData(FacilityLib::toUTF8(CommonSettings::commonSettings.httpDatapackMirror));
         if(outputData.size()>255 || outputData.isEmpty())
         {
             emit error(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));

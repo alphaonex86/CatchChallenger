@@ -593,7 +593,7 @@ void MainWindow::send_settings()
     formatedServerNormalSettings.useSsl					= ui->useSsl->isChecked();
     formatedServerSettings.anonymous					= ui->anonymous->isChecked();
     formatedServerSettings.server_message				= ui->server_message->toPlainText();
-    formatedServerSettings.httpDatapackMirror    		= ui->httpDatapackMirror->text();
+    CommonSettings::commonSettings.httpDatapackMirror    		= ui->httpDatapackMirror->text();
     if(!ui->datapack_cache->isChecked())
         formatedServerSettings.datapackCache			= -1;
     else if(!ui->datapack_cache_timeout_checkbox->isChecked())
