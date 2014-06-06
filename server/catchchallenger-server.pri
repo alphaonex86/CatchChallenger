@@ -21,7 +21,6 @@ SOURCES += \
     $$PWD/base/PlayerUpdater.cpp \
     $$PWD/base/MapServer.cpp \
     $$PWD/base/BroadCastWithoutSender.cpp \
-    $$PWD/base/Bot/FakeBot.cpp \
     $$PWD/base/ClientMapManagement/ClientMapManagement.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
@@ -38,7 +37,6 @@ SOURCES += \
     $$PWD/fight/LocalClientHandlerFight.cpp \
     $$PWD/fight/BaseServerFight.cpp \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
-    $$PWD/base/Api_client_virtual.cpp \
     $$PWD/fight/ClientHeavyLoadFight.cpp
 
 HEADERS += \
@@ -60,7 +58,6 @@ HEADERS += \
     $$PWD/base/BroadCastWithoutSender.h \
     $$PWD/base/PlayerUpdater.h \
     $$PWD/base/MapServer.h \
-    $$PWD/base/Bot/FakeBot.h \
     $$PWD/base/ClientMapManagement/ClientMapManagement.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
@@ -74,7 +71,6 @@ HEADERS += \
     $$PWD/crafting/BaseServerCrafting.h \
     $$PWD/crafting/MapServerCrafting.h \
     $$PWD/fight/ServerStructuresFight.h \
-    $$PWD/base/Api_client_virtual.h \
     $$PWD/fight/BaseServerFight.h \
     $$PWD/fight/LocalClientHandlerFight.h
 

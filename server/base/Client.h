@@ -1,3 +1,6 @@
+#ifndef CATCHCHALLENGER_CLIENT_H
+#define CATCHCHALLENGER_CLIENT_H
+
 #include <QObject>
 #include <QTcpSocket>
 #include <QHostAddress>
@@ -21,9 +24,6 @@
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
-
-#ifndef CATCHCHALLENGER_CLIENT_H
-#define CATCHCHALLENGER_CLIENT_H
 
 namespace CatchChallenger {
 class Client

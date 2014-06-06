@@ -5,6 +5,7 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonMap.h"
+#include "../../general/base/ProtocolParsing.h"
 #include "SqlFunction.h"
 #include "LocalClientHandler.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -1131,7 +1132,6 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     //send signals into the server
     /*emit */message(QStringLiteral("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
     /*emit */send_player_informations();
-    /*emit */isLogged();
     /*emit */put_on_the_map(
                 map,//map pointer
         x,
@@ -1730,3 +1730,58 @@ void ClientHeavyLoad::loadQuests()
         LocalClientHandler::addQuestStepDrop(player_informations,id,playerQuest.step);
     }
 }
+
+//signals for epoll
+#ifdef EPOLLCATCHCHALLENGERSERVER
+//normal signals
+void ClientHeavyLoad::error(const QString &error) const
+{
+    client->errorOutput(error);
+}
+
+void ClientHeavyLoad::message(const QString &message) const
+{
+    client->normalOutput(message);
+}
+
+//send packet on network
+void ClientHeavyLoad::sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendFullPacket(mainIdent,subIdent,data);
+}
+
+void ClientHeavyLoad::sendPacket(const quint8 &mainIdent,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendPacket(mainIdent,data);
+}
+
+//send reply
+void ClientHeavyLoad::postReply(const quint8 &queryNumber,const QByteArray &data) const
+{
+    client->clientNetworkWrite.postReply(queryNumber,data);
+}
+
+//login linked signals
+void ClientHeavyLoad::send_player_informations() const
+{
+    client->send_player_informations();
+    client->clientBroadCast.send_player_informations();
+}
+
+void ClientHeavyLoad::put_on_the_map(CommonMap* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation) const
+{
+    client->localClientHandler.put_on_the_map(map,x,y,orientation);
+    client->clientLocalBroadcast.put_on_the_map(map,x,y,orientation);
+}
+
+//random linked signals
+void ClientHeavyLoad::newRandomNumber(const QByteArray &randomData) const
+{
+    client->localClientHandler.newRandomNumber(randomData);
+}
+
+void ClientHeavyLoad::haveClanInfo(const quint32 &clanId,const QString &clanName,const quint64 &cash)
+{
+    client->localClientHandler.haveClanInfo(clanId,clanName,cash);
+}
+#endif

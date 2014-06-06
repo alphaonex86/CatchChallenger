@@ -72,13 +72,17 @@ protected:
     qint64	readData(char * data, qint64 maxSize);
     qint64	writeData(const char * data, qint64 maxSize);
     QList<QSslError> sslErrors() const;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     void	connected();
     void	disconnected();
     void	error(QAbstractSocket::SocketError socketError);
     void	stateChanged(QAbstractSocket::SocketState socketState);
     void    sslErrors(const QList<QSslError> &errors);
-private slots:
+private:
     void destroyedSocket();
     void purgeBuffer();
     //void startHandshake();

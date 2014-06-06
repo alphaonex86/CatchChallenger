@@ -12,9 +12,10 @@
 #include "epoll/EpollTimer.h"
 #include "epoll/TimerDisplayEventBySeconds.h"
 #include "base/ServerStructures.h"
-#include "NormalServer.h"
+#include "NormalServerGlobal.h"
 #include "base/GlobalServerData.h"
 #include "base/Client.h"
+#include "../general/base/FacilityLib.h"
 
 #define MAXEVENTS 512
 
@@ -227,7 +228,7 @@ int main(int argc, char *argv[])
         qDebug() << "Error settings (1): " << settings->status();
         return EXIT_FAILURE;
     }
-    CatchChallenger::NormalServer::checkSettingsFile(settings);
+    NormalServerGlobal::checkSettingsFile(settings);
 
     if(settings->status()!=QSettings::NoError)
     {
@@ -247,9 +248,35 @@ int main(int argc, char *argv[])
         return EPOLLERR;
     server->preload_the_data();
 
+    TimerCityCapture timerCityCapture;
+    TimerDdos timerDdos;
     TimerDisplayEventBySeconds timerDisplayEventBySeconds;
-    if(!timerDisplayEventBySeconds.start(1000))
-        return EXIT_FAILURE;
+    TimerPositionSync timerPositionSync;
+    TimerSendInsertMoveRemove timerSendInsertMoveRemove;
+    {
+        GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
+        const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+        timerCityCapture.setSingleShot(true);
+        if(!timerCityCapture.start(time))
+            return EXIT_FAILURE;
+    }
+    {
+        if(!timerDdos.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000))
+            return EXIT_FAILURE;
+    }
+    {
+        if(!timerDisplayEventBySeconds.start(1000))
+            return EXIT_FAILURE;
+    }
+    {
+        if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
+            if(!timerPositionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000))
+                return EXIT_FAILURE;
+    }
+    {
+        if(!timerSendInsertMoveRemove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT))
+            return EXIT_FAILURE;
+    }
 
     #ifndef SERVERNOBUFFER
     #ifndef SERVERNOSSL
@@ -303,6 +330,7 @@ int main(int argc, char *argv[])
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
         for(i = 0; i < number_of_events; i++)
         {
+            timerDisplayEventBySeconds.addCount();
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
                 case BaseClassSwitch::Type::Server:
@@ -375,7 +403,6 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::Type::Client:
                 {
                     closed=true;
-                    //timerDisplayEventBySeconds.addCount();
                     #ifndef SERVERNOSSL
                     EpollSslClient *client=static_cast<EpollSslClient *>(events[i].data.ptr);
                     #else

@@ -1,5 +1,11 @@
 #include "CommonFightEngine.h"
 #include "../base/CommonDatapack.h"
+#include "../general/base/GeneralVariable.h"
+
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "../../server/base/LocalClientHandler.h"
+#include "../../server/base/Client.h"
+#endif
 
 #include <QtMath>
 
@@ -1355,7 +1361,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             int xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            /*emit */message(QStringLiteral("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            /*emit */message(QStringLiteral("You win %1 xp and %2 sp").arg(wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
             #endif
         }
     }
@@ -1375,7 +1381,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             int xp=botmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            /*emit */message(QStringLiteral("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            /*emit */message(QStringLiteral("You win %1 xp and %2 sp").arg(botmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(botmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
             #endif
         }
     }
@@ -2416,7 +2422,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             if(!buffIsValid(buff.effect))
             {
                 /*emit */error("Buff is not valid");
-                return tempReturnBuff;
+                return attackReturn;
             }
             #endif
             bool success;
@@ -2521,3 +2527,16 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
 {
     return genericMonsterAttack(getCurrentMonster(),getOtherMonster(),skill,skillLevel);
 }
+
+//signals
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void CommonFightEngine::error(const QString &error) const
+{
+    localClientHandler->client->normalOutput(error);
+}
+
+void CommonFightEngine::message(const QString &message) const
+{
+    localClientHandler->client->normalOutput(message);
+}
+#endif
