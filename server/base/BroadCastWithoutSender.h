@@ -20,18 +20,18 @@ public:
     static BroadCastWithoutSender broadCastWithoutSender;
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
-#else
-public:
-#endif
     void serverCommand(const QString &command,const QString &extraText) const;
     void new_player_is_connected(const Player_internal_informations &newPlayer) const;
     void player_is_disconnected(const QString &oldPlayer) const;
     void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text) const;
-public slots:
+#endif
+public:
+#ifndef EPOLLCATCHCHALLENGERSERVER
     void emit_serverCommand(const QString &command,const QString &extraText);
     void emit_new_player_is_connected(const Player_internal_informations &newPlayer);
     void emit_player_is_disconnected(const QString &oldPlayer);
     void emit_new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
+#endif
     void receive_instant_player_number(const qint16 &connected_players);
     void doDDOSAction();
 };

@@ -14,6 +14,9 @@
 /** \warning No static variable due to thread access to this class!!! */
 
 namespace CatchChallenger {
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class Client;
+#endif
 class MapBasicMove
         #ifndef EPOLLCATCHCHALLENGERSERVER
         : public QObject
@@ -35,6 +38,9 @@ public:
 
     //internal var
     Player_internal_informations *player_informations;
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    Client *client;
+#endif
 protected:
     //pass to the Map management visibility algorithm
     virtual bool singleMove(const Direction &direction) = 0;

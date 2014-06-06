@@ -6,8 +6,7 @@ LIBS += -lz -llzma
 
 TEMPLATE = app
 
-SOURCES += $$PWD/base/Api_protocol.cpp \
-    $$PWD/base/DebugClass.cpp \
+SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/base/ChatParsing.cpp \
     $$PWD/base/QFakeSocket.cpp \
     $$PWD/base/QFakeServer.cpp \
@@ -23,8 +22,7 @@ SOURCES += $$PWD/base/Api_protocol.cpp \
     $$PWD/fight/CommonFightEngine.cpp \
     $$PWD/base/CommonSettings.cpp
 
-HEADERS  += $$PWD/base/Api_protocol.h \
-    $$PWD/base/DebugClass.h \
+HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/GeneralStructures.h \
     $$PWD/base/ChatParsing.h \
     $$PWD/base/QFakeServer.h \

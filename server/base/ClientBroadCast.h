@@ -101,13 +101,13 @@ signals:
 #else
 protected:
 #endif
+#ifndef EPOLLCATCHCHALLENGERSERVER
+    void isReadyToStop() const;
+#endif
     //normal signals
     void error(const QString &error) const;
     void kicked() const;
     void message(const QString &message) const;
-#ifndef EPOLLCATCHCHALLENGERSERVER
-    void isReadyToStop() const;
-#endif
     //send packet on network
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;

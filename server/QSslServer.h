@@ -8,7 +8,6 @@
 
 class QSslServer : public QTcpServer
 {
-    Q_OBJECT
 public:
     explicit QSslServer(const QSslCertificate &sslCertificate,const QSslKey &sslKey);
     explicit QSslServer();
@@ -18,7 +17,7 @@ private:
     QSslCertificate sslCertificate;
     QSslKey sslKey;
     QByteArray firstHeader;
-private slots:
+private:
     void sslErrors(const QList<QSslError> &errors);
 };
 

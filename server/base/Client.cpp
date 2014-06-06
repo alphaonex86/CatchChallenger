@@ -313,7 +313,9 @@ void Client::disconnectClient()
     clientLocalBroadcast.askIfIsReadyToStop();
     clientMapManagement->askIfIsReadyToStop();
 
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_player_is_disconnected(player_informations.public_and_private_informations.public_informations.pseudo);
+    #endif
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -405,7 +407,9 @@ void Client::send_player_informations()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("load the normal player id: %1, simplified id: %2").arg(player_informations.character_id).arg(player_informations.public_and_private_informations.public_informations.simplifiedId));
     #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(player_informations);
+    #endif
     this->player_informations=player_informations;
     GlobalServerData::serverPrivateVariables.connected_players++;
     if(GlobalServerData::serverSettings.sendPlayerNumber)

@@ -150,16 +150,20 @@ BaseServer::BaseServer() :
     connect(this,&BaseServer::need_be_started,              this,&BaseServer::start_internal_server,Qt::QueuedConnection);
     connect(this,&BaseServer::try_stop_server,              this,&BaseServer::stop_internal_server, Qt::QueuedConnection);
     connect(this,&BaseServer::try_initAll,                  this,&BaseServer::initAll,              Qt::QueuedConnection);
-    #endif
     /*emit */try_initAll();
+    #else
+    initAll();
+    #endif
 
     srand(time(NULL));
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void BaseServer::start()
 {
     /*emit */need_be_started();
 }
+#endif
 
 /** call only when the server is down
  * \warning this function is thread safe because it quit all thread before remove */
@@ -1589,7 +1593,7 @@ void BaseServer::load_next_city_capture()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-    qint64 time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+    const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
     GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
     #endif
 }
@@ -1613,7 +1617,7 @@ bool BaseServer::initialize_the_database()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        DebugClass::debugConsole(QStringLiteral("database type unknow"));
+        DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
         case ServerSettings::Database::DatabaseType_Mysql:
         GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
@@ -2004,7 +2008,9 @@ bool BaseServer::check_if_now_stopped()
         closeDB();
     }
     stat=Down;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     /*emit */is_started(false);
+    #endif
 
     unload_the_data();
     return true;
@@ -2332,6 +2338,7 @@ void BaseServer::connect_the_last_client(Client * client)
     #endif
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 bool BaseServer::isListen()
 {
     return (stat==Up);
@@ -2346,6 +2353,7 @@ void BaseServer::stop()
 {
     /*emit */try_stop_server();
 }
+#endif
 
 void BaseServer::load_clan_max_id()
 {
@@ -2445,3 +2453,11 @@ void BaseServer::load_character_max_id()
         }
     }
 }
+
+//signals for epoll
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void BaseServer::error(const QString &error) const
+{
+    Q_UNUSED(error);
+}
+#endif
