@@ -1,5 +1,3 @@
-#include "ClientMapManagement/MapBasicMove.h"
-
 #ifndef CATCHCHALLENGER_LOCALPLAYERHANDLER_H
 #define CATCHCHALLENGER_LOCALPLAYERHANDLER_H
 
@@ -11,6 +9,7 @@
 #include <QSqlQuery>
 #include <QPair>
 
+#include "ClientMapManagement/MapBasicMove.h"
 #include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "EventThreader.h"
@@ -62,9 +61,6 @@ public:
     //market
     static QList<quint16> marketObjectIdList;
     static QRegularExpression tmxRemove;
-#ifdef EPOLLCATCHCHALLENGERSERVER
-    Client *client;
-#endif
 private:
     bool checkCollision();
 
@@ -259,9 +255,8 @@ public:
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
 #else
-protected:
+public:
 #endif
-    void askClan(const quint32 &clanId);
     void dbQuery(const QString &sqlQuery) const;
     void askRandomNumber() const;
     void receiveSystemText(const QString &text,const bool &important=false) const;

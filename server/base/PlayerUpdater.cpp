@@ -2,6 +2,10 @@
 #include "../../general/base/DebugClass.h"
 #include "GlobalServerData.h"
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "BroadCastWithoutSender.h"
+#endif
+
 using namespace CatchChallenger;
 PlayerUpdater::PlayerUpdater() :
     connected_players(0),
@@ -14,17 +18,27 @@ PlayerUpdater::PlayerUpdater() :
 
     connect(this,&PlayerUpdater::try_initAll,                  this,&PlayerUpdater::initAll,              Qt::QueuedConnection);
     /*emit */try_initAll();
+    #else
+    initAll();
     #endif
 }
 
 void PlayerUpdater::addConnectedPlayer()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     /*emit */send_addConnectedPlayer();
+    #else
+    internal_addConnectedPlayer();
+    #endif
 }
 
 void PlayerUpdater::removeConnectedPlayer()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     /*emit */send_removeConnectedPlayer();
+    #else
+    internal_removeConnectedPlayer();
+    #endif
 }
 
 void PlayerUpdater::initAll()
@@ -101,6 +115,10 @@ void PlayerUpdater::send_timer()
     if(GlobalServerData::serverSettings.sendPlayerNumber && sended_connected_players!=connected_players)
     {
         sended_connected_players=connected_players;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         /*emit */newConnectedPlayer(connected_players);
+        #else
+        BroadCastWithoutSender::broadCastWithoutSender.receive_instant_player_number(connected_players);
+        #endif
     }
 }

@@ -32,7 +32,9 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
     if(this->player_informations==NULL)
         return;
     /*emit */message(QStringLiteral("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
+    #endif
 
     QByteArray finalData;
     {
@@ -123,3 +125,32 @@ void ClientLocalBroadcast::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE
     if(mapChange)
         sendNearPlant();
 }
+
+//signals
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void ClientLocalBroadcast::postReply(const quint8 &queryNumber,const QByteArray &data) const
+{
+    client->clientNetworkWrite.postReply(queryNumber,data);
+}
+
+void ClientLocalBroadcast::useSeed(const quint8 &plant_id) const
+{
+    client->localClientHandler.useSeed(plant_id);
+}
+
+void ClientLocalBroadcast::addObjectAndSend(const quint32 &item,const quint32 &quantity) const
+{
+    client->localClientHandler.addObjectAndSend(item,quantity);
+}
+
+void ClientLocalBroadcast::dbQuery(const QString &sqlQuery) const
+{
+    client->clientHeavyLoad.dbQuery(sqlQuery);
+}
+
+bool ClientLocalBroadcast::sendRawSmallPacket(const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendRawSmallPacket(data);
+    return true;
+}
+#endif

@@ -17,17 +17,15 @@ public:
     explicit PlayerUpdater();
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
-#else
-public:
-#endif
     void newConnectedPlayer(quint16 connected_players) const;
     void send_addConnectedPlayer() const;
     void send_removeConnectedPlayer() const;
     void try_initAll() const;
-public slots:
+#endif
+public:
     void addConnectedPlayer();
     void removeConnectedPlayer();
-private slots:
+private:
     void internal_addConnectedPlayer();
     void internal_removeConnectedPlayer();
     void send_timer();

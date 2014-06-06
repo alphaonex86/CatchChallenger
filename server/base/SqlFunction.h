@@ -1,7 +1,7 @@
-#include <QString>
-
 #ifndef CATCHCHALLENGER_SQLFUNCTION_H
 #define CATCHCHALLENGER_SQLFUNCTION_H
+
+#include <QString>
 
 namespace CatchChallenger {
 class SqlFunction

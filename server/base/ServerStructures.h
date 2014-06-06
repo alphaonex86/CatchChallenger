@@ -37,7 +37,6 @@ class Map_custom;
 class CommonMap;
 class ClientBroadCast;
 class ClientMapManagement;
-class FakeBot;
 class PlayerUpdater;
 class Map_server_MapVisibility_Simple_StoreOnReceiver;
 

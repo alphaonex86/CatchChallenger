@@ -1,4 +1,5 @@
-include(catchchallenger-server-normal.pri)
+include(catchchallenger-server.pri)
+include(../general/general.pri)
 
 QT       -= gui widgets
 
@@ -9,7 +10,6 @@ QT       -= gui widgets
 #DEFINES += SERVERNOSSL
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
-DEFINES -= Q_MOC_RUN
 
 LIBS += -lssl -lcrypto
 
@@ -33,7 +33,8 @@ SOURCES += main-epoll.cpp \
     epoll/TimerCityCapture.cpp \
     epoll/TimerSendInsertMoveRemove.cpp \
     epoll/TimerPositionSync.cpp \
-    epoll/TimerDdos.cpp
+    epoll/TimerDdos.cpp \
+    NormalServerGlobal.cpp
 
 HEADERS += epoll/EpollSocket.h \
     epoll/EpollClient.h \
@@ -47,5 +48,6 @@ HEADERS += epoll/EpollSocket.h \
     epoll/TimerCityCapture.h \
     epoll/TimerPositionSync.h \
     epoll/TimerSendInsertMoveRemove.h \
-    epoll/TimerDdos.h
+    epoll/TimerDdos.h \
+    NormalServerGlobal.h
 

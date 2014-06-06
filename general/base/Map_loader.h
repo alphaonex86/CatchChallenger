@@ -11,9 +11,14 @@
 #include "CommonMap.h"
 
 namespace CatchChallenger {
-class Map_loader : public QObject
+class Map_loader
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
-    Q_OBJECT
+#ifndef EPOLLCATCHCHALLENGERSERVER
+Q_OBJECT
+#endif
 public:
     explicit Map_loader();
     ~Map_loader();

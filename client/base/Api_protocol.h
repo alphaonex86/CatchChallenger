@@ -22,7 +22,9 @@
 namespace CatchChallenger {
 class Api_protocol : public ProtocolParsingInput, public MoveOnTheMap
 {
-    Q_OBJECT
+#ifndef EPOLLCATCHCHALLENGERSERVER
+Q_OBJECT
+#endif
 public:
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
@@ -59,7 +61,7 @@ private:
 
     //to send trame
     quint8 lastQueryNumber;
-protected slots:
+protected:
     virtual void socketDestroyed();
 protected:
     //have message without reply
@@ -103,7 +105,11 @@ protected:
     //battle
     QList<quint32> battleRequestId;
     bool isInBattle;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
+#else
+public:
+#endif
     void newError(const QString &error,const QString &detailedError) const;
 
     //protocol/connection info
@@ -212,7 +218,7 @@ signals:
     void marketWithdrawCanceled() const;
     void marketWithdrawObject(const quint32 &objectId,const quint32 &quantity) const;
     void marketWithdrawMonster(const PlayerMonster &playerMonster) const;
-public slots:
+public:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
     void sendChatText(const CatchChallenger::Chat_type &chatType,const QString &text);

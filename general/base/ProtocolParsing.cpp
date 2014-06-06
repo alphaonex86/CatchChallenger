@@ -1,6 +1,9 @@
 #include "ProtocolParsing.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "../../server/base/Client.h"
+#endif
 
 #include <lzma.h>
 
@@ -225,6 +228,19 @@ void ProtocolParsing::initialiseTheVariable()
     qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
 }
 
+//signals
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void ProtocolParsing::error(const QString &error) const
+{
+    client->errorOutput(error);
+}
+
+void ProtocolParsing::message(const QString &message) const
+{
+    client->normalOutput(message);
+}
+#endif
+
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 {
     if(maxPlayers<=255)
@@ -264,6 +280,19 @@ ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTr
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
+//signals
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void ProtocolParsingInput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const
+{
+    client->clientNetworkWrite.newInputQuery(mainCodeType,queryNumber);
+}
+
+void ProtocolParsingInput::newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const
+{
+    client->clientNetworkWrite.newFullInputQuery(mainCodeType,subCodeType,queryNumber);
+}
+#endif
+
 bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data) const
 {
     if(data.size()<(int)sizeof(qint32))
@@ -300,6 +329,19 @@ ProtocolParsingOutput::ProtocolParsingOutput(ConnectedSocket * socket,PacketMode
 {
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
+
+//signals
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void ProtocolParsingOutput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const
+{
+    client->clientNetworkRead.newOutputQuery(mainCodeType,queryNumber);
+}
+
+void ProtocolParsingOutput::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const
+{
+    client->clientNetworkRead.newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
+}
+#endif
 
 void ProtocolParsingInput::parseIncommingData()
 {

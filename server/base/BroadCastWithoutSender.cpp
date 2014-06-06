@@ -11,6 +11,7 @@ BroadCastWithoutSender::BroadCastWithoutSender()
 {
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void BroadCastWithoutSender::emit_serverCommand(const QString &command,const QString &extraText)
 {
     /*emit */serverCommand(command,extraText);
@@ -30,6 +31,7 @@ void BroadCastWithoutSender::emit_new_chat_message(const QString &pseudo,const C
 {
     /*emit */new_chat_message(pseudo,type,text);
 }
+#endif
 
 void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connected_players)
 {
@@ -105,3 +107,4 @@ void BroadCastWithoutSender::doDDOSAction()
         ClientBroadCast::privateChatDropNewValue=0;
     }
 }
+
