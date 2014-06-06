@@ -1,9 +1,9 @@
+#ifndef CATCHCHALLENGER_MOVEONTHEMAP_H
+#define CATCHCHALLENGER_MOVEONTHEMAP_H
+
 #include <QObject>
 
 #include "GeneralStructures.h"
-
-#ifndef CATCHCHALLENGER_MOVEONTHEMAP_H
-#define CATCHCHALLENGER_MOVEONTHEMAP_H
 
 //to group the step by step move into line move
 /* template <typename TMap = Map>

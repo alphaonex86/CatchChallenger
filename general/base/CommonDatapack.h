@@ -13,13 +13,18 @@
 #include "GeneralStructures.h"
 
 namespace CatchChallenger {
-class CommonDatapack : public QObject
+class CommonDatapack
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        : public QObject
+        #endif
 {
-    Q_OBJECT
+#ifndef EPOLLCATCHCHALLENGERSERVER
+Q_OBJECT
+#endif
 public:
     explicit CommonDatapack();
     static CommonDatapack commonDatapack;
-public slots:
+public:
     void unload();
     void parseDatapack(const QString &datapackPath);
 public:
@@ -46,7 +51,7 @@ private:
     QMutex inProgress;
     bool isParsed;
     QString datapackPath;
-private slots:
+private:
     void parseTypes();
     void parseItems();
     void parseIndustries();

@@ -18,9 +18,6 @@
  * Only here you need use the random list */
 
 namespace CatchChallenger {
-#ifdef EPOLLCATCHCHALLENGERSERVER
-class LocalClientHandler;
-#endif
 class LocalClientHandlerFight : public CommonFightEngine
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -76,9 +73,6 @@ public:
     bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
     bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
     bool addLevel(PlayerMonster * monster, const quint8 &numberOfLevel=1);
-#ifdef EPOLLCATCHCHALLENGERSERVER
-    LocalClientHandler *localClientHandler;
-#endif
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();

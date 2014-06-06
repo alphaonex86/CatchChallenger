@@ -42,7 +42,9 @@ ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_inform
     have_send_protocol(false),
     is_logging_in_progess(false),
     stopIt(false),
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     socket(socket),
+    #endif
     player_informations(player_informations),
     movePacketKickTotalCache(0),
     movePacketKickNewValue(0),
@@ -638,7 +640,9 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                                 }
                                 else if(command==ClientNetworkRead::text_stop || command==ClientNetworkRead::text_restart)
                                 {
+                                    #ifndef EPOLLCATCHCHALLENGERSERVER
                                     BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
+                                    #endif
                                     /*emit */message(ClientNetworkRead::text_send_command_slash+command+ClientNetworkRead::text_space+text);
                                 }
                                 else
@@ -1861,3 +1865,323 @@ void ClientNetworkRead::receiveSystemText(const QString &text)
     out << text;
     /*emit */sendFullPacket(0xC2,0x0005,outputData);
 }
+
+//signals for epoll
+#ifdef EPOLLCATCHCHALLENGERSERVER
+//normal signals
+void ClientNetworkRead::needDisconnectTheClient()
+{
+    client->disconnectClient();
+}
+
+void ClientNetworkRead::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendFullPacket(mainCodeType,subCodeType,data);
+}
+
+void ClientNetworkRead::sendPacket(const quint8 &mainCodeType,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendPacket(mainCodeType,data);
+}
+
+void ClientNetworkRead::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendQuery(mainIdent,subIdent,queryNumber,data);
+}
+
+//send reply
+void ClientNetworkRead::postReply(const quint8 &queryNumber,const QByteArray &data) const
+{
+    client->clientNetworkWrite.postReply(queryNumber,data);
+}
+
+//packet parsed (heavy)
+void ClientNetworkRead::askLogin(const quint8 &query_id,const QByteArray &login,const QByteArray &hash) const
+{
+    client->clientHeavyLoad.askLogin(query_id,login,hash);
+}
+
+void ClientNetworkRead::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps) const
+{
+    client->clientHeavyLoad.datapackList(query_id,files,timestamps);
+}
+
+//packet parsed (map management)
+void ClientNetworkRead::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction) const
+{
+    client->clientMapManagement->moveThePlayer(previousMovedUnit,direction);
+    client->localClientHandler.moveThePlayer(previousMovedUnit,direction);
+    client->clientLocalBroadcast.moveThePlayer(previousMovedUnit,direction);
+}
+
+void ClientNetworkRead::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const
+{
+    client->localClientHandler.teleportValidatedTo(map,x,y,orientation);
+    client->clientLocalBroadcast.teleportValidatedTo(map,x,y,orientation);
+    client->clientMapManagement->teleportValidatedTo(map,x,y,orientation);
+}
+
+//reply
+void ClientNetworkRead::removeFirstEventInQueue() const
+{
+    client->localClientHandler.removeFirstEventInQueue();
+}
+
+//character
+void ClientNetworkRead::addCharacter(const quint8 &query_id, const quint8 &profileIndex,const QString &pseudo,const QString &skin) const
+{
+    client->clientHeavyLoad.addCharacter(query_id,profileIndex,pseudo,skin);
+}
+
+void ClientNetworkRead::removeCharacter(const quint8 &query_id, const quint32 &characterId) const
+{
+    client->clientHeavyLoad.removeCharacter(query_id,characterId);
+}
+
+void ClientNetworkRead::selectCharacter(const quint8 &query_id, const quint32 &characterId) const
+{
+    client->clientHeavyLoad.selectCharacter(query_id,characterId);
+}
+
+//trade
+void ClientNetworkRead::tradeCanceled() const
+{
+    client->localClientHandler.tradeCanceled();
+}
+
+void ClientNetworkRead::tradeAccepted() const
+{
+    client->localClientHandler.tradeAccepted();
+}
+
+void ClientNetworkRead::tradeFinished() const
+{
+    client->localClientHandler.tradeFinished();
+}
+
+void ClientNetworkRead::tradeAddTradeCash(const quint64 &cash) const
+{
+    client->localClientHandler.tradeAddTradeCash(cash);
+}
+
+void ClientNetworkRead::tradeAddTradeObject(const quint32 &item,const quint32 &quantity) const
+{
+    client->localClientHandler.tradeAddTradeObject(item,quantity);
+}
+
+void ClientNetworkRead::tradeAddTradeMonster(const quint32 &monsterId) const
+{
+    client->localClientHandler.tradeAddTradeMonster(monsterId);
+}
+
+//packet parsed (broadcast)
+void ClientNetworkRead::sendPM(const QString &text,const QString &pseudo) const
+{
+    client->clientBroadCast.sendPM(text,pseudo);
+}
+
+void ClientNetworkRead::sendChatText(const Chat_type &chatType,const QString &text) const
+{
+    client->clientBroadCast.sendChatText(chatType,text);
+}
+
+void ClientNetworkRead::sendLocalChatText(const QString &text) const
+{
+    client->clientLocalBroadcast.sendLocalChatText(text);
+}
+
+void ClientNetworkRead::sendBroadCastCommand(const QString &command,const QString &extraText) const
+{
+    client->clientBroadCast.sendBroadCastCommand(command,extraText);
+}
+
+void ClientNetworkRead::sendHandlerCommand(const QString &command,const QString &extraText) const
+{
+    client->localClientHandler.sendHandlerCommand(command,extraText);
+}
+
+//plant
+void ClientNetworkRead::plantSeed(const quint8 &query_id,const quint8 &plant_id) const
+{
+    client->clientLocalBroadcast.plantSeed(query_id,plant_id);
+}
+
+void ClientNetworkRead::collectPlant(const quint8 &query_id) const
+{
+    client->clientLocalBroadcast.collectPlant(query_id);
+}
+
+//crafting
+void ClientNetworkRead::useRecipe(const quint8 &query_id,const quint32 &recipe_id) const
+{
+    client->localClientHandler.useRecipe(query_id,recipe_id);
+}
+
+//inventory
+void ClientNetworkRead::destroyObject(const quint32 &itemId,const quint32 &quantity) const
+{
+    client->localClientHandler.destroyObject(itemId,quantity);
+}
+
+void ClientNetworkRead::useObject(const quint8 &query_id,const quint32 &itemId) const
+{
+    client->localClientHandler.useObject(query_id,itemId);
+}
+
+void ClientNetworkRead::useObjectOnMonster(const quint32 &object,const quint32 &monster) const
+{
+    client->localClientHandler.useObjectOnMonster(object,monster);
+}
+
+void ClientNetworkRead::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters) const
+{
+    client->localClientHandler.wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);
+}
+
+//shop
+void ClientNetworkRead::getShopList(const quint32 &query_id,const quint32 &shopId) const
+{
+    client->localClientHandler.getShopList(query_id,shopId);
+}
+
+void ClientNetworkRead::buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const
+{
+    client->localClientHandler.buyObject(query_id,shopId,objectId,quantity,price);
+}
+
+void ClientNetworkRead::sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const
+{
+    client->localClientHandler.sellObject(query_id,shopId,objectId,quantity,price);
+}
+
+//factory
+void ClientNetworkRead::getFactoryList(const quint32 &query_id,const quint32 &shopId) const
+{
+    client->localClientHandler.getFactoryList(query_id,shopId);
+}
+
+void ClientNetworkRead::buyFactoryObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const
+{
+    client->localClientHandler.buyFactoryProduct(query_id,shopId,objectId,quantity,price);
+}
+
+void ClientNetworkRead::sellFactoryObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const
+{
+    client->localClientHandler.sellFactoryResource(query_id,shopId,objectId,quantity,price);
+}
+
+//fight
+void ClientNetworkRead::tryEscape() const
+{
+    client->localClientHandler.tryEscape();
+}
+
+void ClientNetworkRead::useSkill(const quint32 &skill) const
+{
+    client->localClientHandler.useSkill(skill);
+}
+
+void ClientNetworkRead::learnSkill(const quint32 &monsterId,const quint32 &skill) const
+{
+    client->localClientHandler.learnSkill(monsterId,skill);
+}
+
+void ClientNetworkRead::heal() const
+{
+    client->localClientHandler.heal();
+}
+
+void ClientNetworkRead::requestFight(const quint32 &fightId) const
+{
+    client->localClientHandler.requestFight(fightId);
+}
+
+void ClientNetworkRead::moveMonster(const bool &up,const quint8 &number) const
+{
+    client->localClientHandler.moveMonster(up,number);
+}
+
+void ClientNetworkRead::changeOfMonsterInFight(const quint32 &monsterId) const
+{
+    client->localClientHandler.changeOfMonsterInFight(monsterId);
+}
+
+void ClientNetworkRead::confirmEvolution(const quint32 &monsterId)
+{
+    client->localClientHandler.confirmEvolution(monsterId);
+}
+
+//quest
+void ClientNetworkRead::newQuestAction(const QuestAction &action,const quint32 &questId) const
+{
+    client->localClientHandler.newQuestAction(action,questId);
+}
+
+//battle
+void ClientNetworkRead::battleCanceled() const
+{
+    client->localClientHandler.battleCanceled();
+}
+
+void ClientNetworkRead::battleAccepted() const
+{
+    client->localClientHandler.battleAccepted();
+}
+
+//clan
+void ClientNetworkRead::clanAction(const quint8 &query_id,const quint8 &action,const QString &text) const
+{
+    client->localClientHandler.clanAction(query_id,action,text);
+}
+
+void ClientNetworkRead::clanInvite(const bool &accept) const
+{
+    client->localClientHandler.clanInvite(accept);
+}
+
+void ClientNetworkRead::waitingForCityCaputre(const bool &cancel) const
+{
+    client->localClientHandler.waitingForCityCaputre(cancel);
+}
+
+//market
+void ClientNetworkRead::getMarketList(const quint32 &query_id) const
+{
+    client->localClientHandler.getMarketList(query_id);
+}
+
+void ClientNetworkRead::buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity) const
+{
+    client->localClientHandler.buyMarketObject(query_id,marketObjectId,quantity);
+}
+
+void ClientNetworkRead::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId) const
+{
+    client->localClientHandler.buyMarketMonster(query_id,monsterId);
+}
+
+void ClientNetworkRead::putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const
+{
+    client->localClientHandler.putMarketObject(query_id,objectId,quantity,price);
+}
+
+void ClientNetworkRead::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price) const
+{
+    client->localClientHandler.putMarketMonster(query_id,monsterId,price);
+}
+
+void ClientNetworkRead::recoverMarketCash(const quint32 &query_id) const
+{
+    client->localClientHandler.recoverMarketCash(query_id);
+}
+
+void ClientNetworkRead::withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity) const
+{
+    client->localClientHandler.withdrawMarketObject(query_id,objectId,quantity);
+}
+
+void ClientNetworkRead::withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId) const
+{
+    client->localClientHandler.withdrawMarketMonster(query_id,monsterId);
+}
+#endif

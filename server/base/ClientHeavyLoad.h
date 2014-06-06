@@ -137,9 +137,6 @@ protected:
     //normal signals
     void error(const QString &error) const;
     void message(const QString &message) const;
-#ifndef EPOLLCATCHCHALLENGERSERVER
-    void isReadyToStop() const;
-#endif
     //send packet on network
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
@@ -147,11 +144,13 @@ protected:
     void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     //login linked signals
     void send_player_informations() const;
-    void isLogged() const;
     void put_on_the_map(CommonMap* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation) const;
     //random linked signals
     void newRandomNumber(const QByteArray &randomData) const;
     void haveClanInfo(const quint32 &clanId,const QString &clanName,const quint64 &cash);
+#ifndef EPOLLCATCHCHALLENGERSERVER
+    void isReadyToStop() const;
+#endif
 };
 }
 

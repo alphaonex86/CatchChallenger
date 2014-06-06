@@ -4695,3 +4695,56 @@ bool LocalClientHandler::haveReputationRequirements(const QList<ReputationRequir
     }
     return true;
 }
+
+//signals for epoll
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void LocalClientHandler::dbQuery(const QString &sqlQuery) const
+{
+    client->clientHeavyLoad.dbQuery(sqlQuery);
+}
+
+void LocalClientHandler::askRandomNumber() const
+{
+    client->clientHeavyLoad.askedRandomNumber();
+}
+
+void LocalClientHandler::receiveSystemText(const QString &text,const bool &important) const
+{
+    client->clientBroadCast.receiveSystemText(text,important);
+}
+
+void LocalClientHandler::postReply(const quint8 &queryNumber,const QByteArray &data) const
+{
+    client->clientNetworkWrite.postReply(queryNumber,data);
+}
+
+void LocalClientHandler::sendTradeRequest(const QByteArray &data) const
+{
+    client->clientNetworkRead.sendTradeRequest(data);
+}
+
+void LocalClientHandler::sendBattleRequest(const QByteArray &data) const
+{
+    client->clientNetworkRead.sendBattleRequest(data);
+}
+
+void LocalClientHandler::clanChange(const quint32 &clanId) const
+{
+    client->clientBroadCast.clanChange(clanId);
+}
+
+void LocalClientHandler::sendNewEvent(const QByteArray &data) const
+{
+    client->clientNetworkRead.sendNewEvent(data);
+}
+
+void LocalClientHandler::seedValidated() const
+{
+    client->clientLocalBroadcast.seedValidated();
+}
+
+void LocalClientHandler::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const
+{
+    client->clientNetworkRead.teleportTo(map,x,y,orientation);
+}
+#endif

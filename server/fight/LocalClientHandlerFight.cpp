@@ -31,7 +31,11 @@ LocalClientHandlerFight::~LocalClientHandlerFight()
 void LocalClientHandlerFight::getRandomNumberIfNeeded() const
 {
     if(randomSeeds.size()<=CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE)
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        /*emit */askRandomNumber();
+        #else
         /*emit */localClientHandler->client->clientHeavyLoad.askIfIsReadyToStop();
+        #endif
 }
 
 bool LocalClientHandlerFight::tryEscape()
@@ -1996,3 +2000,61 @@ bool LocalClientHandlerFight::removeSkill(PlayerMonster * currentMonster,const i
     }
     return true;
 }
+
+//signals
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void LocalClientHandlerFight::dbQuery(const QString &sqlQuery) const
+{
+    localClientHandler->client->clientHeavyLoad.dbQuery(sqlQuery);
+}
+
+void LocalClientHandlerFight::askRandomNumber() const
+{
+    localClientHandler->client->clientHeavyLoad.askedRandomNumber();
+}
+
+void LocalClientHandlerFight::receiveSystemText(const QString &text,const bool &important) const
+{
+    localClientHandler->client->clientBroadCast.receiveSystemText(text,important);
+}
+
+void LocalClientHandlerFight::postReply(const quint8 &queryNumber,const QByteArray &data) const
+{
+    localClientHandler->client->clientNetworkWrite.postReply(queryNumber,data);
+}
+
+void LocalClientHandlerFight::sendBattleRequest(const QByteArray &data) const
+{
+    localClientHandler->sendBattleRequest(data);
+}
+
+void LocalClientHandlerFight::sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data) const
+{
+    localClientHandler->client->clientNetworkWrite.sendFullPacket(mainIdent,subIdent,data);
+}
+
+void LocalClientHandlerFight::sendPacket(const quint8 &mainIdent,const QByteArray &data) const
+{
+    localClientHandler->client->clientNetworkWrite.sendPacket(mainIdent,data);
+}
+
+void LocalClientHandlerFight::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const
+{
+    localClientHandler->teleportTo(map,x,y,orientation);
+}
+
+void LocalClientHandlerFight::addObjectAndSend(const quint32 &item,const quint32 &quantity) const
+{
+    localClientHandler->addObjectAndSend(item,quantity);
+}
+
+void LocalClientHandlerFight::addCash(const quint64 &cash,const bool &forceSave) const
+{
+    localClientHandler->addCash(cash,forceSave);
+}
+
+void LocalClientHandlerFight::fightOrBattleFinish(const bool &win,const quint32 &fightId)
+{
+    localClientHandler->fightOrBattleFinish(win,fightId);
+}
+#endif

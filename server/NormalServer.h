@@ -1,3 +1,6 @@
+#ifndef CATCHCHALLENGER_EVENTDISPATCHER_H
+#define CATCHCHALLENGER_EVENTDISPATCHER_H
+
 #include <QObject>
 #include <QSettings>
 #include <QTcpServer>
@@ -16,7 +19,6 @@
 #include "base/ServerStructures.h"
 #include "base/Client.h"
 #include "../general/base/Map_loader.h"
-#include "base/Bot/FakeBot.h"
 #include "../general/base/ProtocolParsing.h"
 #include "../general/base/QFakeServer.h"
 #include "../general/base/QFakeSocket.h"
@@ -24,14 +26,14 @@
 #include "crafting/BaseServerCrafting.h"
 #include "base/BaseServer.h"
 #include "QSslServer.h"
-
-#ifndef CATCHCHALLENGER_EVENTDISPATCHER_H
-#define CATCHCHALLENGER_EVENTDISPATCHER_H
+#include "NormalServerGlobal.h"
 
 namespace CatchChallenger {
-class NormalServer : public BaseServer
+class NormalServer : public BaseServer, public NormalServerGlobal
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #endif
 public:
     explicit NormalServer();
     virtual ~NormalServer();
@@ -40,14 +42,11 @@ public:
     //stat function
     quint16 player_current();
     quint16 player_max();
-    //stat function
-    bool isListen();
-    bool isStopped();
-    static void checkSettingsFile(QSettings *settings);
-
-public slots:
+public:
     //to manipulate the server for restart and stop
     #ifndef EPOLLCATCHCHALLENGERSERVER
+    bool isListen();
+    bool isStopped();
     void start_server();
     void stop_server();
     #endif
@@ -77,7 +76,7 @@ private:
 
     static QString text_restart;
     static QString text_stop;
-private slots:
+private:
     //new connection
     #ifndef EPOLLCATCHCHALLENGERSERVER
     void newConnection();

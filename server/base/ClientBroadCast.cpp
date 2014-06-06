@@ -76,25 +76,12 @@ void ClientBroadCast::sendSystemMessage(const QString &text,const bool &importan
     }
 
     const int &size=clientBroadCastList.size();
-    if(important)
+    int index=0;
+    while(index<size)
     {
-        int index=0;
-        while(index<size)
-        {
-            if(clientBroadCastList.at(index)!=this)
-                clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
-            index++;
-        }
-    }
-    else
-    {
-        int index=0;
-        while(index<size)
-        {
-            if(clientBroadCastList.at(index)!=this)
-                clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
-            index++;
-        }
+        if(clientBroadCastList.at(index)!=this)
+            clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
+        index++;
     }
 }
 
@@ -132,7 +119,9 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
     }
     if(!GlobalServerData::serverSettings.anonymous)
         /*emit */message(QStringLiteral("[chat PM]: %1 -> %2: %3").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QStringLiteral("to %1: %2").arg(pseudo).arg(text));
+    #endif
     playerByPseudo.value(pseudo)->receiveChatText(Chat_type_pm,text,this->player_informations);
 }
 
@@ -190,7 +179,9 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
         {
             if(!GlobalServerData::serverSettings.anonymous)
                 /*emit */message(QStringLiteral("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(clan).arg(text));
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
+            #endif
             QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(clan);
 
             QByteArray finalData;
@@ -230,7 +221,9 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
             return;
         if(!GlobalServerData::serverSettings.anonymous)
             /*emit */message(QStringLiteral("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
+        #endif
 
         QByteArray finalData;
         {
@@ -396,3 +389,37 @@ void ClientBroadCast::setRights(const Player_type& type)
 {
     player_informations->public_and_private_informations.public_informations.type=type;
 }
+
+//signals
+#ifdef EPOLLCATCHCHALLENGERSERVER
+void ClientBroadCast::error(const QString &error) const
+{
+    client->errorOutput(error);
+}
+
+void ClientBroadCast::kicked() const
+{
+    client->kick();
+}
+
+void ClientBroadCast::message(const QString &message) const
+{
+    client->normalOutput(message);
+}
+
+void ClientBroadCast::sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendFullPacket(mainIdent,subIdent,data);
+}
+
+void ClientBroadCast::sendPacket(const quint8 &mainIdent,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendPacket(mainIdent,data);
+}
+
+bool ClientBroadCast::sendRawSmallPacket(const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendRawSmallPacket(data);
+    return true;
+}
+#endif

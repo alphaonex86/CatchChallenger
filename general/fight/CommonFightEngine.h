@@ -8,9 +8,11 @@
 
 #include "../base/GeneralStructures.h"
 #include "../../general/base/CommonMap.h"
-#include "../base/Api_protocol.h"
 
 namespace CatchChallenger {
+#ifdef EPOLLCATCHCHALLENGERSERVER
+class LocalClientHandler;
+#endif
 //only the logique here, store nothing
 class CommonFightEngine
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -83,8 +85,11 @@ public:
     virtual void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
     virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
-public slots:
+public:
     void newRandomNumber(const QByteArray &randomData);
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    LocalClientHandler *localClientHandler;
+#endif
 protected:
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);

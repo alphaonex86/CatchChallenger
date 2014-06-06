@@ -1,3 +1,6 @@
+#ifndef CATCHCHALLENGER_BASESERVER_H
+#define CATCHCHALLENGER_BASESERVER_H
+
 #include <QObject>
 #include <QSettings>
 #include <QDebug>
@@ -19,7 +22,6 @@
 #include "../../general/base/QFakeSocket.h"
 #include "ServerStructures.h"
 #include "Client.h"
-#include "Bot/FakeBot.h"
 #include "MapServer.h"
 #include "../crafting/BaseServerCrafting.h"
 #include "../fight/BaseServerFight.h"
@@ -31,11 +33,12 @@
 #include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
 #include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 
-#ifndef CATCHCHALLENGER_BASESERVER_H
-#define CATCHCHALLENGER_BASESERVER_H
-
 namespace CatchChallenger {
-class BaseServer : public QObject, public BaseServerCrafting, public BaseServerFight
+class BaseServer :
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        public QObject,
+        #endif
+        public BaseServerCrafting, public BaseServerFight
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
@@ -45,14 +48,17 @@ public:
     virtual ~BaseServer();
     void setSettings(const ServerSettings &settings);
     ServerSettings getSettings() const;
-    //stat function
-    virtual bool isListen();
-    virtual bool isStopped();
-    virtual void stop();
+
     void load_clan_max_id();
     void load_account_max_id();
     void load_character_max_id();
+
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void start();
+    virtual bool isListen();
+    virtual bool isStopped();
+    virtual void stop();
+    #endif
 protected:
     virtual void start_internal_server();
     virtual void stop_internal_server();
@@ -72,11 +78,13 @@ signals:
 public:
 #endif
     void error(const QString &error) const;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void try_initAll() const;
     void try_stop_server() const;
     void need_be_started() const;
     //stat
     void is_started(const bool &) const;
+    #endif
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     virtual void connect_the_last_client(Client * client);

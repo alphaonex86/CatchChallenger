@@ -1,7 +1,7 @@
-#include "../base/ServerStructures.h"
-
 #ifndef CATCHCHALLENGER_BASESERVERCRAFTING_H
 #define CATCHCHALLENGER_BASESERVERCRAFTING_H
+
+#include "../base/ServerStructures.h"
 
 namespace CatchChallenger {
 class BaseServerCrafting

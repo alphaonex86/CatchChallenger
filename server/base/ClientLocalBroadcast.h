@@ -1,5 +1,3 @@
-#include "ClientMapManagement/MapBasicMove.h"
-
 #ifndef CATCHCHALLENGER_CLIENTLOCALBROADCAST_H
 #define CATCHCHALLENGER_CLIENTLOCALBROADCAST_H
 
@@ -12,6 +10,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+#include "ClientMapManagement/MapBasicMove.h"
 #include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "EventThreader.h"

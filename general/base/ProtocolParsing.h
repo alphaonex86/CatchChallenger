@@ -72,19 +72,21 @@ protected:
 public:
     Client *client;
 #endif
-private slots:
+private:
     virtual void reset() = 0;
 };
 
 class ProtocolParsingInput : public ProtocolParsing
 {
-    Q_OBJECT
+#ifndef EPOLLCATCHCHALLENGERSERVER
+Q_OBJECT
+#endif
 public:
     ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
     friend class ProtocolParsing;
     bool checkStringIntegrity(const QByteArray & data) const;
     quint64 getRXSize() const;
-protected slots:
+protected:
     void parseIncommingData();
 protected:
     //have message without reply
@@ -117,23 +119,25 @@ protected:
     QHash<quint8,quint16> replySize;
     QHash<quint8,quint8> reply_mainCodeType;
     QHash<quint8,quint16> reply_subCodeType;
-private slots:
+private:
     void reset();
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
 #else
-protected:
+public:
 #endif
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
     void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
-public slots:
+public:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 };
 
 class ProtocolParsingOutput : public ProtocolParsing
 {
-    Q_OBJECT
+#ifndef EPOLLCATCHCHALLENGERSERVER
+Q_OBJECT
+#endif
 public:
     ProtocolParsingOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
     friend class ProtocolParsing;
@@ -176,17 +180,17 @@ private:
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
 #else
-protected:
+public:
 #endif
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
     void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
-public slots:
+public:
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
     //no control to be more fast
     bool internalSendRawSmallPacket(const QByteArray &data);
-private slots:
+private:
     void reset();
 };
 }

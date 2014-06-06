@@ -1,4 +1,8 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
+
+#ifndef CATCHCHALLENGER_FakeBot_H
+#define CATCHCHALLENGER_FakeBot_H
+
 #include <QObject>
 #include <QTimer>
 #include <QSemaphore>
@@ -12,9 +16,6 @@
 #include "../../../general/base/ConnectedSocket.h"
 #include "../MapServer.h"
 #include "../Api_client_virtual.h"
-
-#ifndef CATCHCHALLENGER_FakeBot_H
-#define CATCHCHALLENGER_FakeBot_H
 
 namespace CatchChallenger {
 class FakeBot : public QObject, public MoveOnTheMap

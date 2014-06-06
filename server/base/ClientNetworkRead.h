@@ -59,7 +59,10 @@ private:
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
 #else
-protected:
+public:
+#endif
+#ifndef EPOLLCATCHCHALLENGERSERVER
+    void isReadyToStop() const;
 #endif
     //normal signals
     void needDisconnectTheClient();
@@ -68,10 +71,6 @@ protected:
     void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data) const;
     //send reply
     void postReply(const quint8 &queryNumber,const QByteArray &data) const;
-    //normal signals
-#ifndef EPOLLCATCHCHALLENGERSERVER
-    void isReadyToStop() const;
-#endif
     //packet parsed (heavy)
     void askLogin(const quint8 &query_id,const QByteArray &login,const QByteArray &hash) const;
     void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps) const;
@@ -148,14 +147,18 @@ private:
     bool is_logging_in_progess;
     bool stopIt;
     // function
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     ConnectedSocket * socket;
+    #endif
     Player_internal_informations *player_informations;
     //to prevent memory presure
     quint8 previousMovedUnit;
     quint8 direction;
     QList<TeleportationPoint> lastTeleportation;
     //to parse the netwrok stream
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     quint8 mainCodeType;
+    #endif
     quint16 subCodeType;
     quint8 queryNumber;
     QList<quint8> queryNumberList;

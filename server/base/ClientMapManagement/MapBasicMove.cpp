@@ -2,6 +2,9 @@
 #include "../MapServer.h"
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/MoveOnTheMap.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "../Client.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -253,3 +256,26 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
     last_direction=direction;
     return true;
 }
+
+#ifdef EPOLLCATCHCHALLENGERSERVER
+//normal signals
+void MapBasicMove::error(const QString &error) const
+{
+    client->errorOutput(error);
+}
+
+void MapBasicMove::message(const QString &message) const
+{
+    client->normalOutput(message);
+}
+
+void MapBasicMove::sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendFullPacket(mainIdent,subIdent,data);
+}
+
+void MapBasicMove::sendPacket(const quint8 &mainIdent,const QByteArray &data) const
+{
+    client->clientNetworkWrite.sendPacket(mainIdent,data);
+}
+#endif
