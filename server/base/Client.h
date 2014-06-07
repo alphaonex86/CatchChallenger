@@ -94,6 +94,8 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVER
     /// \warning it need be complete protocol trame
     void fake_receive_data(QByteArray data);
+    #else
+    void parseIncommingData();
     #endif
 };
 }

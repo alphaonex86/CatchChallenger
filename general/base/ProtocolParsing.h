@@ -86,7 +86,11 @@ public:
     friend class ProtocolParsing;
     bool checkStringIntegrity(const QByteArray & data) const;
     quint64 getRXSize() const;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 protected:
+#else
+public:
+#endif
     void parseIncommingData();
 protected:
     //have message without reply

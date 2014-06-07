@@ -26,7 +26,6 @@ public:
     Type getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
-    bool init();
 private:
     static char rawbuf[BUFFER_MAX_SIZE];
 private:

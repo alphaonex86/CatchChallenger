@@ -6,12 +6,12 @@ QT       -= gui widgets
 #QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
 #QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
 
-#DEFINES += SERVERNOBUFFER
-#DEFINES += SERVERNOSSL
+DEFINES += SERVERNOBUFFER
+DEFINES += SERVERNOSSL
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 
-LIBS += -lssl -lcrypto
+#LIBS += -lssl -lcrypto
 
 CONFIG += c++11
 
