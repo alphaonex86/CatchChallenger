@@ -67,27 +67,6 @@ EpollSslClient::~EpollSslClient()
     close();
 }
 
-bool EpollSslClient::init()
-{
-    int s = EpollSocket::make_non_blocking(infd);
-    if(s == -1)
-        return false;
-    epoll_event event;
-    event.data.ptr = this;
-    #ifndef SERVERNOBUFFER
-    event.events = EPOLLIN | EPOLLET | EPOLLOUT;
-    #else
-    event.events = EPOLLIN | EPOLLET;
-    #endif
-    s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
-    if(s == -1)
-    {
-        std::cerr << "epoll_ctl on socket error" << std::endl;
-        return false;
-    }
-    return true;
-}
-
 #ifndef SERVERNOBUFFER
 void EpollSslClient::staticInit()
 {
