@@ -42,10 +42,10 @@ bool EpollServer::tryListen()
     hints.ai_socktype = SOCK_STREAM; /* We want a TCP socket */
     hints.ai_flags = AI_PASSIVE;     /* All interfaces */
 
-    if(!GlobalServerData::serverSettings.server_ip.isEmpty())
-        s = getaddrinfo(GlobalServerData::serverSettings.server_ip.toUtf8().constData(), QString::number(GlobalServerData::serverSettings.server_port).toUtf8().constData(), &hints, &result);
+    if(!normalServerSettings.server_ip.isEmpty())
+        s = getaddrinfo(normalServerSettings.server_ip.toUtf8().constData(), QString::number(normalServerSettings.server_port).toUtf8().constData(), &hints, &result);
     else
-        s = getaddrinfo(NULL, QString::number(GlobalServerData::serverSettings.server_port).toUtf8().constData(), &hints, &result);
+        s = getaddrinfo(NULL, QString::number(normalServerSettings.server_port).toUtf8().constData(), &hints, &result);
     if (s != 0)
     {
         std::cerr << "getaddrinfo:" << gai_strerror(s) << std::endl;

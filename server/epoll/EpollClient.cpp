@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
+#include <sys/ioctl.h>
 #include <cstring>
 #include "../base/GlobalServerData.h"
 #include "Epoll.h"
@@ -34,27 +35,6 @@ EpollClient::EpollClient(const int &infd,const bool &tcpCork) :
 EpollClient::~EpollClient()
 {
     close();
-}
-
-bool EpollClient::init()
-{
-    int s = EpollSocket::make_non_blocking(infd);
-    if(s == -1)
-        return false;
-    epoll_event event;
-    event.data.ptr = client;
-    #ifndef SERVERNOBUFFER
-    event.events = EPOLLIN | EPOLLET | EPOLLOUT;
-    #else
-    event.events = EPOLLIN | EPOLLET;
-    #endif
-    s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
-    if(s == -1)
-    {
-        std::cerr << "epoll_ctl on socket error" << std::endl;
-        return false;
-    }
-    return true;
 }
 
 void EpollClient::close()

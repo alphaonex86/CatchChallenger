@@ -426,4 +426,10 @@ void Client::fake_receive_data(QByteArray data)
 {
     /*emit */fake_send_received_data(data);
 }
+#else
+void Client::parseIncommingData()
+{
+    clientNetworkRead.parseIncommingData();
+}
+
 #endif

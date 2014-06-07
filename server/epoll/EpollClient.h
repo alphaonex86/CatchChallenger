@@ -21,7 +21,6 @@ public:
     Type getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
-    bool init();
 private:
     #ifndef SERVERNOBUFFER
     char buffer[BUFFER_MAX_SIZE];
