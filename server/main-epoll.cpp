@@ -24,7 +24,7 @@ using namespace CatchChallenger;
 #ifndef SERVERNOSSL
 EpollSslServer *server=NULL;
 #else
-Epollerver *server=NULL;
+EpollServer *server=NULL;
 #endif
 QSettings *settings=NULL;
 
@@ -389,13 +389,33 @@ int main(int argc, char *argv[])
                         #ifndef SERVERNOSSL
                         EpollSslClient *epollClient=new EpollSslClient(infd,server->getCtx(),tcpCork);
                         #else
-                        EpollClient *epollClient=new EpollClient(infd,server->getCtx(),tcpCork);
+                        EpollClient *epollClient=new EpollClient(infd,tcpCork);
                         #endif
                         numberOfConnectedClient++;
-                        if(!epollClient->init())
+
+                        int s = EpollSocket::make_non_blocking(infd);
+                        if(s == -1)
+                        {
+                            std::cerr << "unable to make to socket non blocking" << std::endl;
                             delete epollClient;
+                        }
                         else
-                            /*Client *client=*/new Client(new ConnectedSocket(epollClient),server->getClientMapManagement());
+                        {
+                            Client *client=new Client(new ConnectedSocket(epollClient),server->getClientMapManagement());
+                            epoll_event event;
+                            event.data.ptr = client;
+                            #ifndef SERVERNOBUFFER
+                            event.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                            #else
+                            event.events = EPOLLIN | EPOLLET;
+                            #endif
+                            s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            if(s == -1)
+                            {
+                                std::cerr << "epoll_ctl on socket error" << std::endl;
+                                delete client;
+                            }
+                        }
                     }
                     continue;
                 }
@@ -403,11 +423,7 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::Type::Client:
                 {
                     closed=true;
-                    #ifndef SERVERNOSSL
-                    EpollSslClient *client=static_cast<EpollSslClient *>(events[i].data.ptr);
-                    #else
-                    EpollClient *client=static_cast<EpollClient *>(events[i].data.ptr);
-                    #endif
+                    Client *client=static_cast<Client *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -415,36 +431,13 @@ int main(int argc, char *argv[])
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        numberOfConnectedClient--;
                         delete client;
                         continue;
                     }
                     //ready to read
                     if(events[i].events & EPOLLIN)
-                    {
-                        /* We have data on the fd waiting to be read. Read and
-                        display it. We must read whatever data is available
-                        completely, as we are running in edge-triggered mode
-                        and won't get a notification again for the same
-                        data. */
-                        const ssize_t &count = client->read(buf,sizeof(buf));
-                        //bug or close, or buffer full
-                        if(count<0)
-                        {
-                            delete client;
-                            numberOfConnectedClient--;
-                        }
-                        else
-                        {
-                            if(client->write(buf,count)!=count)
-                            {
-                                //buffer full, we disconnect this client
-                                delete client;
-                                numberOfConnectedClient--;
-                            }
-                            else
-                                closed=false;
-                        }
-                    }
+                        client->clientNetworkRead.parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)
