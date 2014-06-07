@@ -29,11 +29,12 @@ SOURCES += main-epoll.cpp \
     epoll/EpollSslServer.cpp \
     epoll/Epoll.cpp \
     epoll/EpollTimer.cpp \
-    epoll/TimerDisplayEventBySeconds.cpp \
-    epoll/TimerCityCapture.cpp \
-    epoll/TimerSendInsertMoveRemove.cpp \
-    epoll/TimerPositionSync.cpp \
-    epoll/TimerDdos.cpp \
+    epoll/db/EpollPostgresql.cpp \
+    epoll/timer/TimerDisplayEventBySeconds.cpp \
+    epoll/timer/TimerCityCapture.cpp \
+    epoll/timer/TimerSendInsertMoveRemove.cpp \
+    epoll/timer/TimerPositionSync.cpp \
+    epoll/timer/TimerDdos.cpp \
     NormalServerGlobal.cpp
 
 HEADERS += epoll/EpollSocket.h \
@@ -44,10 +45,11 @@ HEADERS += epoll/EpollSocket.h \
     epoll/Epoll.h \
     epoll/BaseClassSwitch.h \
     epoll/EpollTimer.h \
-    epoll/TimerDisplayEventBySeconds.h \
-    epoll/TimerCityCapture.h \
-    epoll/TimerPositionSync.h \
-    epoll/TimerSendInsertMoveRemove.h \
-    epoll/TimerDdos.h \
+    epoll/db/EpollPostgresql.h \
+    epoll/timer/TimerDisplayEventBySeconds.h \
+    epoll/timer/TimerCityCapture.h \
+    epoll/timer/TimerPositionSync.h \
+    epoll/timer/TimerSendInsertMoveRemove.h \
+    epoll/timer/TimerDdos.h \
     NormalServerGlobal.h
 
