@@ -10,11 +10,16 @@
 #include "epoll/EpollServer.h"
 #include "epoll/Epoll.h"
 #include "epoll/EpollTimer.h"
-#include "epoll/TimerDisplayEventBySeconds.h"
+#include "epoll/timer/TimerCityCapture.h"
+#include "epoll/timer/TimerDdos.h"
+#include "epoll/timer/TimerDisplayEventBySeconds.h"
+#include "epoll/timer/TimerPositionSync.h"
+#include "epoll/timer/TimerSendInsertMoveRemove.h"
 #include "base/ServerStructures.h"
 #include "NormalServerGlobal.h"
 #include "base/GlobalServerData.h"
 #include "base/Client.h"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
 #include "../general/base/FacilityLib.h"
 
 #define MAXEVENTS 512
@@ -157,7 +162,6 @@ void send_settings()
         settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
         formatedServerSettings.mapVisibility.simple.max				= settings->value(QLatin1Literal("Max")).toUInt();
         formatedServerSettings.mapVisibility.simple.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
-        formatedServerSettings.mapVisibility.simple.storeOnSender   = settings->value(QLatin1Literal("StoreOnSender")).toBool();
         formatedServerSettings.mapVisibility.simple.reemit          = settings->value(QLatin1Literal("Reemit")).toBool();
         settings->endGroup();
     }
@@ -168,7 +172,6 @@ void send_settings()
         formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= settings->value(QLatin1Literal("ReshowWithBorder")).toUInt();
         formatedServerSettings.mapVisibility.withBorder.max				= settings->value(QLatin1Literal("Max")).toUInt();
         formatedServerSettings.mapVisibility.withBorder.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
-        formatedServerSettings.mapVisibility.withBorder.storeOnSender	= settings->value(QLatin1Literal("StoreOnSender")).toBool();
         settings->endGroup();
     }
 
@@ -221,6 +224,13 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     Q_UNUSED(a);
 
+    QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/information.xml"));
+    if(datapackFolder.isDir())
+    {
+        qDebug() << "No datapack found into: " << datapackFolder.absoluteFilePath();
+        return EXIT_FAILURE;
+    }
+
     const QString &configFile=QCoreApplication::applicationDirPath()+QLatin1Literal("/server.properties");
     settings=new QSettings(configFile,QSettings::IniFormat);
     if(settings->status()!=QSettings::NoError)
@@ -237,6 +247,16 @@ int main(int argc, char *argv[])
     }
     if(!Epoll::epoll.init())
         return EPOLLERR;
+
+    if(GlobalServerData::serverPrivateVariables.db.syncConnect(
+                GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
+                GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
+                GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
+                GlobalServerData::serverSettings.database.mysql.pass.toLatin1()))
+    {
+        qDebug() << "Unable to connect to database";
+        return EXIT_FAILURE;
+    }
 
     #ifndef SERVERNOSSL
     server=new EpollSslServer();
@@ -321,7 +341,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    bool closed;
     int numberOfConnectedClient=0;
     /* The event loop */
     int number_of_events, i;
@@ -351,7 +370,11 @@ int main(int argc, char *argv[])
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
                         const int &infd = server->accept(&in_addr, &in_len);
-
+                        if(!server->isReady())
+                        {
+                            ::close(infd);
+                            break;
+                        }
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||
@@ -401,7 +424,7 @@ int main(int argc, char *argv[])
                         }
                         else
                         {
-                            Client *client=new Client(new ConnectedSocket(epollClient),server->getClientMapManagement());
+                            MapVisibilityAlgorithm_Simple_StoreOnSender *client=new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(epollClient));
                             epoll_event event;
                             event.data.ptr = client;
                             #ifndef SERVERNOBUFFER
@@ -422,7 +445,6 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Client:
                 {
-                    closed=true;
                     Client *client=static_cast<Client *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -437,7 +459,7 @@ int main(int argc, char *argv[])
                     }
                     //ready to read
                     if(events[i].events & EPOLLIN)
-                        client->clientNetworkRead.parseIncommingData();
+                        client->parseIncommingData();
                     #ifndef SERVERNOBUFFER
                     //ready to write
                     if(events[i].events & EPOLLOUT)

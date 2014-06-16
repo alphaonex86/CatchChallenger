@@ -21,15 +21,17 @@ public:
     int getSfd();
     Type getType() const;
     void preload_the_data();
-    CatchChallenger::ClientMapManagement * getClientMapManagement();
     void unload_the_data();
     void setNormalSettings(const NormalServerSettings &settings);
     NormalServerSettings getNormalSettings() const;
     void loadAndFixSettings();
+    void preload_finish();
+    bool isReady();
 private:
     int sfd;
     NormalServerSettings normalServerSettings;
     int yes;
+    bool ready;
 };
 }
 

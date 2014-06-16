@@ -23,60 +23,42 @@
 #include "ServerStructures.h"
 #include "Client.h"
 #include "MapServer.h"
-#include "../crafting/BaseServerCrafting.h"
-#include "../fight/BaseServerFight.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
-#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
-#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 
 namespace CatchChallenger {
-class BaseServer :
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        public QObject,
-        #endif
-        public BaseServerCrafting, public BaseServerFight
+class BaseServer
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    Q_OBJECT
-    #endif
 public:
     explicit BaseServer();
-    virtual ~BaseServer();
+    ~BaseServer();
     void setSettings(const ServerSettings &settings);
     ServerSettings getSettings() const;
 
     void load_clan_max_id();
+    static void load_clan_max_id_static(void *object);
+    void load_clan_max_id_return();
+
     void load_account_max_id();
+    static void load_account_max_id_static(void *object);
+    void load_account_max_id_return();
+
     void load_character_max_id();
+    static void load_character_max_id_static(void *object);
+    void load_character_max_id_return();
 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     void start();
-    virtual bool isListen();
-    virtual bool isStopped();
-    virtual void stop();
+    bool isListen();
+    bool isStopped();
+    void stop();
     #endif
 protected:
-    virtual void start_internal_server();
-    virtual void stop_internal_server();
+    void start_internal_server();
+    void stop_internal_server();
     //init, constructor, destructor
-    virtual void initAll();//call before all
+    void initAll();//call before all
     //remove all finished client
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    virtual void removeOneClient();
-    virtual void newConnection();
-    virtual void moveToThreadForContructor();
-    #endif
-    //new connection
-    virtual void load_next_city_capture();
-#ifndef EPOLLCATCHCHALLENGERSERVER
-signals:
-#else
+    void load_next_city_capture();
 public:
-#endif
     void error(const QString &error) const;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     void try_initAll() const;
@@ -86,14 +68,11 @@ public:
     void is_started(const bool &) const;
     #endif
 protected:
-    virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
-    virtual void connect_the_last_client(Client * client);
+    void parseJustLoadedMap(const Map_to_send &,const QString &);
     void closeDB();
     //starting function
-    virtual bool check_if_now_stopped();//return true if can be stopped
-    virtual void loadAndFixSettings();
-    //player related
-    virtual ClientMapManagement * getClientMapManagement();
+    bool check_if_now_stopped();//return true if can be stopped
+    void loadAndFixSettings();
 
     //stat
     enum ServerStat
@@ -113,40 +92,71 @@ protected:
         Map_semi_border border;
         Map_to_send old_map;
     };
-    virtual void preload_the_data();
-    virtual void preload_the_events();
-    virtual void preload_the_ddos();
-    virtual void preload_zone();
-    virtual void preload_industries();
-    virtual void preload_market_monsters();
-    virtual void preload_market_items();
-    virtual void preload_the_city_capture();
-    virtual void preload_the_map();
-    virtual void preload_the_skin();
-    virtual void preload_the_datapack();
-    virtual void preload_the_players();
-    virtual void preload_the_visibility_algorithm();
-    virtual void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
-    virtual void unload_industries();
-    virtual void unload_zone();
-    virtual void unload_market();
-    virtual void unload_the_city_capture();
-    virtual void unload_the_bots();
-    virtual void unload_the_data();
-    virtual void unload_the_static_data();
-    virtual void unload_the_map();
-    virtual void unload_the_skin();
-    virtual void unload_the_datapack();
-    virtual void unload_the_players();
-    virtual void unload_the_visibility_algorithm();
-    virtual void unload_the_ddos();
-    virtual void unload_the_events();
+    void preload_the_data();
+    void preload_the_events();
+    void preload_the_randomData();
+    void preload_the_ddos();
+    void preload_zone();
+    void preload_industries();
+    void preload_market_monsters();
+    void preload_market_items();
+    void preload_the_city_capture();
+    void preload_the_map();
+    void preload_the_skin();
+    void preload_the_datapack();
+    void preload_the_players();
+    void preload_the_visibility_algorithm();
+    void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
+    void preload_finish();
+    void preload_the_plant_on_map();
+    static void preload_the_plant_on_map_static(void *object);
+    void preload_the_plant_on_map_return();
+    void preload_shop();
+    void preload_monsters_drops();
+    void load_monsters_max_id();
+    static void load_monsters_max_id_static(void *object);
+    void load_monsters_max_id_return();
+    QHash<quint32,MonsterDrops> loadMonsterDrop(const QString &file, QHash<quint32,Item> items,const QHash<quint32,Monster> &monsters);
 
-    virtual QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
-    virtual QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
+    static void preload_zone_static(void *object);
+    void preload_zone_init();
+    void preload_zone_return();
+    static void preload_industries_static(void *object);
+    void preload_industries_return();
+    static void preload_market_items_static(void *object);
+    void preload_market_items_return();
+    static void preload_market_monsters_static(void *object);
+    void preload_market_monsters_return();
 
-    virtual bool initialize_the_database();
-    virtual void loadBotFile(const QString &mapfile, const QString &fileName);
+    void unload_industries();
+    void unload_zone();
+    void unload_market();
+    void unload_the_city_capture();
+    void unload_the_bots();
+    void unload_the_data();
+    void unload_the_static_data();
+    void unload_the_map();
+    void unload_the_skin();
+    void unload_the_datapack();
+    void unload_the_players();
+    void unload_the_visibility_algorithm();
+    void unload_the_ddos();
+    void unload_the_events();
+    void unload_the_plant_on_map();
+    void unload_shop();
+    void unload_monsters_drops();
+    void unload_the_randomData();
+
+    void loadMonsterBuffs(const quint32 &index);
+    static void loadMonsterBuffs_static(void *object);
+    void loadMonsterBuffs_return();
+
+    void loadMonsterSkills(const quint32 &index);
+    static void loadMonsterSkills_static(void *object);
+    void loadMonsterSkills_return();
+
+    bool initialize_the_database();
+    void loadBotFile(const QString &mapfile, const QString &fileName);
     //FakeServer server;//wrong, create another object, here need use the global static object
 
     //to keep client list, QSet because it will have lot of more disconnecion than server closing
@@ -155,6 +165,11 @@ protected:
 
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
     QSet<quint32> botIdLoaded;
+    QTime timeDatapack;
+
+    QFileInfoList entryListZone;
+    int entryListIndex;
+    QString zoneCodeName;
 
     static QRegularExpression regexXmlFile;
     static QString text_dotxml;
@@ -186,6 +201,21 @@ protected:
     static QString text_name;
     static QString text_step;
     static QString text_arrow;
+    static QString text_dottmx;
+    static QString text_shops;
+    static QString text_product;
+    static QString text_itemId;
+    static QString text_overridePrice;
+    static QString text_list;
+    static QString text_monster;
+    static QString text_monsters;
+    static QString text_drops;
+    static QString text_drop;
+    static QString text_item;
+    static QString text_quantity_min;
+    static QString text_quantity_max;
+    static QString text_luck;
+    static QString text_percent;
 };
 }
 

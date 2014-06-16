@@ -1,5 +1,5 @@
 #include "BroadCastWithoutSender.h"
-#include "ClientBroadCast.h"
+#include "Client.h"
 #include "GlobalServerData.h"
 #include "../../general/base/ProtocolParsing.h"
 
@@ -17,7 +17,7 @@ void BroadCastWithoutSender::emit_serverCommand(const QString &command,const QSt
     /*emit */serverCommand(command,extraText);
 }
 
-void BroadCastWithoutSender::emit_new_player_is_connected(const Player_internal_informations &newPlayer)
+void BroadCastWithoutSender::emit_new_player_is_connected(const Player_private_and_public_informations &newPlayer)
 {
     /*emit */new_player_is_connected(newPlayer);
 }
@@ -37,7 +37,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
 {
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
-        if(ClientBroadCast::clientBroadCastList.isEmpty())
+        if(Client::clientBroadCastList.isEmpty())
             return;
 
         QByteArray finalData;
@@ -49,14 +49,14 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
                 out << (qint8)connected_players;
             else
                 out << (qint16)connected_players;
-            finalData=ProtocolParsingOutput::computeOutcommingData(false,0xC3,outputData);
+            finalData=ProtocolParsingInputOutput::computeOutcommingData(false,0xC3,outputData);
         }
 
         int index=0;
-        const int &list_size=ClientBroadCast::clientBroadCastList.size();
+        const int &list_size=Client::clientBroadCastList.size();
         while(index<list_size)
         {
-            ClientBroadCast::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,finalData);
+            Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,finalData);
             index++;
         }
     }
@@ -64,47 +64,47 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
 
 void BroadCastWithoutSender::doDDOSAction()
 {
-    if(ClientBroadCast::generalChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    if(Client::generalChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        ClientBroadCast::generalChatDropTotalCache=0;
+        Client::generalChatDropTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
-            ClientBroadCast::generalChatDrop[index]=ClientBroadCast::generalChatDrop[index+1];
-            ClientBroadCast::generalChatDropTotalCache+=ClientBroadCast::generalChatDrop[index];
+            Client::generalChatDrop[index]=Client::generalChatDrop[index+1];
+            Client::generalChatDropTotalCache+=Client::generalChatDrop[index];
             index++;
         }
-        ClientBroadCast::generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=ClientBroadCast::generalChatDropNewValue;
-        ClientBroadCast::generalChatDropTotalCache+=ClientBroadCast::generalChatDropNewValue;
-        ClientBroadCast::generalChatDropNewValue=0;
+        Client::generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::generalChatDropNewValue;
+        Client::generalChatDropTotalCache+=Client::generalChatDropNewValue;
+        Client::generalChatDropNewValue=0;
     }
-    if(ClientBroadCast::clanChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    if(Client::clanChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        ClientBroadCast::clanChatDropTotalCache=0;
+        Client::clanChatDropTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
-            ClientBroadCast::clanChatDrop[index]=ClientBroadCast::clanChatDrop[index+1];
-            ClientBroadCast::clanChatDropTotalCache+=ClientBroadCast::clanChatDrop[index];
+            Client::clanChatDrop[index]=Client::clanChatDrop[index+1];
+            Client::clanChatDropTotalCache+=Client::clanChatDrop[index];
             index++;
         }
-        ClientBroadCast::clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=ClientBroadCast::clanChatDropNewValue;
-        ClientBroadCast::clanChatDropTotalCache+=ClientBroadCast::clanChatDropNewValue;
-        ClientBroadCast::clanChatDropNewValue=0;
+        Client::clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::clanChatDropNewValue;
+        Client::clanChatDropTotalCache+=Client::clanChatDropNewValue;
+        Client::clanChatDropNewValue=0;
     }
-    if(ClientBroadCast::privateChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    if(Client::privateChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        ClientBroadCast::privateChatDropTotalCache=0;
+        Client::privateChatDropTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
-            ClientBroadCast::privateChatDrop[index]=ClientBroadCast::privateChatDrop[index+1];
-            ClientBroadCast::privateChatDropTotalCache+=ClientBroadCast::privateChatDrop[index];
+            Client::privateChatDrop[index]=Client::privateChatDrop[index+1];
+            Client::privateChatDropTotalCache+=Client::privateChatDrop[index];
             index++;
         }
-        ClientBroadCast::privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=ClientBroadCast::privateChatDropNewValue;
-        ClientBroadCast::privateChatDropTotalCache+=ClientBroadCast::privateChatDropNewValue;
-        ClientBroadCast::privateChatDropNewValue=0;
+        Client::privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::privateChatDropNewValue;
+        Client::privateChatDropTotalCache+=Client::privateChatDropNewValue;
+        Client::privateChatDropNewValue=0;
     }
 }
 

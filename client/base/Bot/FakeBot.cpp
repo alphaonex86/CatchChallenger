@@ -1,8 +1,8 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "FakeBot.h"
-#include "../GlobalServerData.h"
-#include "../ClientMapManagement/MapBasicMove.h"
 #include "../Api_client_virtual.h"
+#include "../../../general/base/CommonMap.h"
+#include "../../../general/base/MoveOnTheMap.h"
 
 #include <QHostAddress>
 
@@ -15,7 +15,7 @@ QSemaphore FakeBot::wait_to_stop;
 /// \todo ask player information at the insert
 FakeBot::FakeBot() :
     socket(&fakeSocket),
-    api(&socket,GlobalServerData::serverSettings.datapack_basePath)
+    api(&socket,"")
 {
     connect(&api,&Api_client_virtual::insert_player,            this,&FakeBot::insert_player);
     connect(&api,&Api_client_virtual::have_current_player_info, this,&FakeBot::have_current_player_info);
@@ -127,7 +127,12 @@ void FakeBot::random_new_step()
 //quint32,QString,quint16,quint16,quint8,quint16
 void FakeBot::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
-    if(!GlobalServerData::serverPrivateVariables.id_map_to_map.contains(mapId))
+    Q_UNUSED(player);
+    Q_UNUSED(mapId);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(direction);
+    /*if(!GlobalServerData::serverPrivateVariables.id_map_to_map.contains(mapId))
     {
         /// \bug here pass after delete a party, create a new
         DebugClass::debugConsole("mapId id not found for bot");
@@ -158,7 +163,7 @@ void FakeBot::insert_player(const CatchChallenger::Player_public_informations &p
         this->x=x;
         this->y=y;
         this->last_direction=direction;
-    }
+    }*/
 }
 
 void FakeBot::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)

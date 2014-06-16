@@ -24,12 +24,12 @@
 #include "../general/base/QFakeSocket.h"
 #include "base/MapServer.h"
 #include "crafting/BaseServerCrafting.h"
-#include "base/BaseServer.h"
+#include "base/QtServer.h"
 #include "QSslServer.h"
 #include "NormalServerGlobal.h"
 
 namespace CatchChallenger {
-class NormalServer : public BaseServer, public NormalServerGlobal
+class NormalServer : public QtServer, public NormalServerGlobal
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT

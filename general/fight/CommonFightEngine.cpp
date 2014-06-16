@@ -1,11 +1,6 @@
 #include "CommonFightEngine.h"
 #include "../base/CommonDatapack.h"
-#include "../general/base/GeneralVariable.h"
-
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../../server/base/LocalClientHandler.h"
-#include "../../server/base/Client.h"
-#endif
+#include "../base/GeneralVariable.h"
 
 #include <QtMath>
 
@@ -14,19 +9,18 @@ using namespace CatchChallenger;
 CommonFightEngine::CommonFightEngine()
 {
     resetAll();
-    player_informations=NULL;
 }
 
-bool CommonFightEngine::canEscape() const
+bool CommonFightEngine::canEscape()
 {
     if(!isInFight())//check if is in fight
     {
-        /*emit */error(QStringLiteral("error: tryEscape() when is not in fight"));
+        errorFightEngine(QStringLiteral("error: tryEscape() when is not in fight"));
         return false;
     }
     if(wildMonsters.isEmpty())
     {
-        /*emit */message("You can't escape because it's not a wild monster");
+        messageFightEngine("You can't escape because it's not a wild monster");
         return false;
     }
     return true;
@@ -38,12 +32,11 @@ void CommonFightEngine::resetAll()
     ableToFight=false;
     wildMonsters.clear();
     botFightMonsters.clear();
-    randomSeeds.clear();
     selectedMonster=0;
     doTurnIfChangeOfMonster=true;
 }
 
-bool CommonFightEngine::otherMonsterIsKO() const
+bool CommonFightEngine::otherMonsterIsKO()
 {
     PublicPlayerMonster * publicPlayerMonster=getOtherMonster();
     if(publicPlayerMonster==NULL)
@@ -58,7 +51,7 @@ bool CommonFightEngine::genericMonsterIsKO(const PublicPlayerMonster * publicPla
     return false;
 }
 
-bool CommonFightEngine::currentMonsterIsKO() const
+bool CommonFightEngine::currentMonsterIsKO()
 {
     PlayerMonster * playerMonster=getCurrentMonster();
     if(playerMonster==NULL)
@@ -107,21 +100,21 @@ bool CommonFightEngine::dropKOOtherMonster()
 void CommonFightEngine::healAllMonsters()
 {
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        if(player_informations->playerMonster.at(index).egg_step==0)
+        if(public_and_private_informations.playerMonster.at(index).egg_step==0)
         {
-            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(player_informations->playerMonster.at(index).monster),player_informations->playerMonster.at(index).level);
-            player_informations->playerMonster[index].hp=stat.hp;
-            player_informations->playerMonster[index].buffs.clear();
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(public_and_private_informations.playerMonster.at(index).monster),public_and_private_informations.playerMonster.at(index).level);
+            public_and_private_informations.playerMonster[index].hp=stat.hp;
+            public_and_private_informations.playerMonster[index].buffs.clear();
             int sub_index=0;
-            while(sub_index<player_informations->playerMonster.value(index).skills.size())
+            while(sub_index<public_and_private_informations.playerMonster.value(index).skills.size())
             {
-                player_informations->playerMonster[index].skills[sub_index].endurance=
+                public_and_private_informations.playerMonster[index].skills[sub_index].endurance=
                         CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(
-                        player_informations->playerMonster[index].skills.at(sub_index).skill
+                        public_and_private_informations.playerMonster[index].skills.at(sub_index).skill
                         )
-                        .level.at(player_informations->playerMonster.value(index).skills.at(sub_index).level-1).endurance;
+                        .level.at(public_and_private_informations.playerMonster.value(index).skills.at(sub_index).level-1).endurance;
                 sub_index++;
             }
         }
@@ -135,9 +128,9 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId, const quint32 &skil
 {
     int index=0;
     int sub_index2,sub_index;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        const PlayerMonster &monster=player_informations->playerMonster.at(index);
+        const PlayerMonster &monster=public_and_private_informations.playerMonster.at(index);
         //have located the monster
         if(monster.id==monsterId)
         {
@@ -167,28 +160,28 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId, const quint32 &skil
                     {
                         if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(learn.learnSkill))
                         {
-                            /*emit */error(QStringLiteral("Skill to learn not found into learnSkill()"));
+                            errorFightEngine(QStringLiteral("Skill to learn not found into learnSkill()"));
                             return false;
                         }
                         if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.size()>learn.learnSkillLevel)
                         {
-                            /*emit */error(QStringLiteral("Skill level to learn not found learnSkill()"));
+                            errorFightEngine(QStringLiteral("Skill level to learn not found learnSkill()"));
                             return false;
                         }
                         quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
                         if(sp>monster.sp)
                             return false;
-                        player_informations->playerMonster[index].sp-=sp;
+                        public_and_private_informations.playerMonster[index].sp-=sp;
                         if(learn.learnSkillLevel==1)
                         {
                             PlayerMonster::PlayerSkill temp;
                             temp.skill=skill;
                             temp.level=1;
                             temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
-                            addSkill(&player_informations->playerMonster[index],temp);
+                            addSkill(&public_and_private_informations.playerMonster[index],temp);
                         }
                         else
-                            setSkillLevel(&player_informations->playerMonster[index],sub_index2,player_informations->playerMonster.at(index).skills.at(sub_index2).level+1);
+                            setSkillLevel(&public_and_private_informations.playerMonster[index],sub_index2,public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level+1);
                         return true;
                     }
                 }
@@ -205,23 +198,23 @@ bool CommonFightEngine::learnSkillByItem(PlayerMonster *playerMonster, const qui
 {
     if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(playerMonster->monster))
     {
-        /*emit */error(QStringLiteral("Monster id not found into learnSkillByItem()"));
+        errorFightEngine(QStringLiteral("Monster id not found into learnSkillByItem()"));
         return false;
     }
     if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster).learnByItem.contains(itemId))
     {
-        /*emit */error(QStringLiteral("Item id not found into learnSkillByItem()"));
+        errorFightEngine(QStringLiteral("Item id not found into learnSkillByItem()"));
         return false;
     }
     const Monster::AttackToLearnByItem &attackToLearnByItem=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster).learnByItem.value(itemId);
     if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(attackToLearnByItem.learnSkill))
     {
-        /*emit */error(QStringLiteral("Skill to learn not found into learnSkill()"));
+        errorFightEngine(QStringLiteral("Skill to learn not found into learnSkill()"));
         return false;
     }
     if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(attackToLearnByItem.learnSkill).level.size()>attackToLearnByItem.learnSkillLevel)
     {
-        /*emit */error(QStringLiteral("Skill level to learn not found learnSkill()"));
+        errorFightEngine(QStringLiteral("Skill level to learn not found learnSkill()"));
         return false;
     }
     //search if have already the previous skill
@@ -287,16 +280,6 @@ bool CommonFightEngine::isInFightWithWild() const
     return !wildMonsters.empty();
 }
 
-void CommonFightEngine::newRandomNumber(const QByteArray &randomData)
-{
-    randomSeeds+=randomData;
-}
-
-void CommonFightEngine::setVariable(Player_private_and_public_informations *player_informations)
-{
-    this->player_informations=player_informations;
-}
-
 bool CommonFightEngine::getAbleToFight() const
 {
     return ableToFight;
@@ -304,7 +287,7 @@ bool CommonFightEngine::getAbleToFight() const
 
 bool CommonFightEngine::haveMonsters() const
 {
-    return !player_informations->playerMonster.isEmpty();
+    return !public_and_private_informations.playerMonster.isEmpty();
 }
 
 //return is have random seed to do random step
@@ -312,7 +295,7 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const quint8 &x,co
 {
     if(isInFight())
     {
-        /*emit */message(QStringLiteral("map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y));
+        messageFightEngine(QStringLiteral("map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y));
         return false;
     }
     if(map.parsed_layer.monstersCollisionMap==NULL)
@@ -323,10 +306,10 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const quint8 &x,co
     if(monstersCollisionValue.walkOn.isEmpty())
         return true;
     else
-        return randomSeeds.size()>=CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT;
+        return randomSeedsSize()>=CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT;
 
     /// no fight in this zone
-    /*emit */message(QStringLiteral("map: %1 (%2,%3), no fight in this zone").arg(map.map_file).arg(x).arg(y));
+    messageFightEngine(QStringLiteral("map: %1 (%2,%3), no fight in this zone").arg(map.map_file).arg(x).arg(y));
     return true;
 }
 
@@ -363,7 +346,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     {
         if(monsterList.isEmpty())
         {
-            /*emit */error(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+            errorFightEngine(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
             *ok=false;
             playerMonster.monster=0;
             playerMonster.level=0;
@@ -372,7 +355,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
         }
         else
         {
-            /*emit */message(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+            messageFightEngine(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
             playerMonster.monster=monsterList.first().id;
             //select the level
             if(monsterList.first().maxLevel==monsterList.first().minLevel)
@@ -465,19 +448,14 @@ void CommonFightEngine::updateCanDoFight()
 {
     if(isInBattle())
     {
-        /*emit */error(QStringLiteral("Can't auto select the next monster when is in battle"));
+        errorFightEngine(QStringLiteral("Can't auto select the next monster when is in battle"));
         return;
     }
     ableToFight=false;
-    if(player_informations==NULL)
-    {
-        /*emit */error(QStringLiteral("player_informations is NULL"));
-        return;
-    }
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        const PlayerMonster &playerMonsterEntry=player_informations->playerMonster.at(index);
+        const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(index);
         if(!monsterIsKO(playerMonsterEntry))
         {
             selectedMonster=index;
@@ -490,12 +468,10 @@ void CommonFightEngine::updateCanDoFight()
 
 bool CommonFightEngine::haveAnotherMonsterOnThePlayerToFight() const
 {
-    if(player_informations==NULL)
-        return false;
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        const PlayerMonster &playerMonsterEntry=player_informations->playerMonster.at(index);
+        const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(index);
         if(!monsterIsKO(playerMonsterEntry))
             return true;
         index++;
@@ -503,29 +479,24 @@ bool CommonFightEngine::haveAnotherMonsterOnThePlayerToFight() const
     return false;
 }
 
-bool CommonFightEngine::haveAnotherEnnemyMonsterToFight() const
+bool CommonFightEngine::haveAnotherEnnemyMonsterToFight()
 {
     if(!wildMonsters.isEmpty())
         return false;
     if(!botFightMonsters.isEmpty())
         return botFightMonsters.size()>1;
-    /*emit */error("Unable to locate the other monster");
+    errorFightEngine("Unable to locate the other monster");
     return false;
 }
 
-PlayerMonster * CommonFightEngine::getCurrentMonster() const
+PlayerMonster * CommonFightEngine::getCurrentMonster()
 {
-    if(player_informations==NULL)
-    {
-        /*emit */error(QStringLiteral("player_informations is NULL"));
-        return NULL;
-    }
-    int playerMonsterSize=player_informations->playerMonster.size();
+    const int &playerMonsterSize=public_and_private_informations.playerMonster.size();
     if(selectedMonster>=0 && selectedMonster<playerMonsterSize)
-        return &player_informations->playerMonster[selectedMonster];
+        return &public_and_private_informations.playerMonster[selectedMonster];
     else
     {
-        /*emit */error(QStringLiteral("selectedMonster is out of range, max: %1").arg(playerMonsterSize));
+        errorFightEngine(QStringLiteral("selectedMonster is out of range, max: %1").arg(playerMonsterSize));
         return NULL;
     }
 }
@@ -540,7 +511,7 @@ quint8 CommonFightEngine::getOtherSelectedMonsterNumber() const
     return 0;
 }
 
-PublicPlayerMonster *CommonFightEngine::getOtherMonster() const
+PublicPlayerMonster *CommonFightEngine::getOtherMonster()
 {
     if(!wildMonsters.isEmpty())
         return (PublicPlayerMonster *)&wildMonsters.first();
@@ -552,15 +523,10 @@ PublicPlayerMonster *CommonFightEngine::getOtherMonster() const
 
 bool CommonFightEngine::remainMonstersToFight(const quint32 &monsterId) const
 {
-    if(player_informations==NULL)
-    {
-        /*emit */error("player_informations is NULL");
-        return false;
-    }
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        const PlayerMonster &playerMonsterEntry=player_informations->playerMonster.at(index);
+        const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(index);
         if(playerMonsterEntry.id==monsterId)
         {
             //the current monster can't fight, echange it will do nothing
@@ -602,7 +568,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
             otherMonster=currentMonster;
         break;
         default:
-            /*emit */error("Not apply match, can't apply the buff");
+            errorFightEngine("Not apply match, can't apply the buff");
         break;
     }
     if(effect.quantity==0)
@@ -696,12 +662,12 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
     if(effect.quantity<0 && quantity>0)
     {
         quantity=-1;
-        /*emit */error("Wrong calculated value");
+        errorFightEngine("Wrong calculated value");
     }
     if(effect.quantity>0 && quantity<0)
     {
         quantity=1;
-        /*emit */error("Wrong calculated value");
+        errorFightEngine("Wrong calculated value");
     }
     //kill
     if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
@@ -745,12 +711,12 @@ int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, Public
 {
     if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
     {
-        /*emit */error(QStringLiteral("apply a unknown buff"));
+        errorFightEngine(QStringLiteral("apply a unknown buff"));
         return -4;
     }
     if(effect.level>CommonDatapack::commonDatapack.monsterBuffs.value(effect.buff).level.size())
     {
-        /*emit */error(QStringLiteral("apply buff level out of range"));
+        errorFightEngine(QStringLiteral("apply buff level out of range"));
         return -4;
     }
     PlayerBuff tempBuff;
@@ -797,7 +763,7 @@ int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, Public
             return -1;
         break;
         default:
-            /*emit */error("Not apply match, can't apply the buff");
+            errorFightEngine("Not apply match, can't apply the buff");
             return -4;
         break;
     }
@@ -808,12 +774,12 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
 {
     if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
     {
-        /*emit */error(QStringLiteral("apply a unknown buff"));
+        errorFightEngine(QStringLiteral("apply a unknown buff"));
         return;
     }
     if(effect.level>CommonDatapack::commonDatapack.monsterBuffs.value(effect.buff).level.size())
     {
-        /*emit */error(QStringLiteral("apply buff level out of range"));
+        errorFightEngine(QStringLiteral("apply buff level out of range"));
         return;
     }
     int index=0;
@@ -825,7 +791,7 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
             PublicPlayerMonster * otherMonster=getOtherMonster();
             if(otherMonster==NULL)
             {
-                /*emit */error("Other monster not found for buff remove");
+                errorFightEngine("Other monster not found for buff remove");
                 return;
             }
             while(index<otherMonster->buffs.size())
@@ -833,7 +799,7 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
                 if(otherMonster->buffs.at(index).buff==effect.buff)
                 {
                     if(otherMonster->buffs.at(index).level!=effect.level)
-                        /*emit */message(QStringLiteral("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(otherMonster->buffs.at(index).level).arg(effect.level));
+                        messageFightEngine(QStringLiteral("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(otherMonster->buffs.at(index).level).arg(effect.level));
                     otherMonster->buffs.removeAt(index);
                     return;
                 }
@@ -847,7 +813,7 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
             PublicPlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
             {
-                /*emit */error("Other monster not found for buff remove");
+                errorFightEngine("Other monster not found for buff remove");
                 return;
             }
             while(index<currentMonster->buffs.size())
@@ -855,7 +821,7 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
                 if(currentMonster->buffs.at(index).buff==effect.buff)
                 {
                     if(currentMonster->buffs.at(index).level!=effect.level)
-                        /*emit */message(QStringLiteral("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(currentMonster->buffs.at(index).level).arg(effect.level));
+                        messageFightEngine(QStringLiteral("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(currentMonster->buffs.at(index).level).arg(effect.level));
                     currentMonster->buffs.removeAt(index);
                     return;
                 }
@@ -864,11 +830,11 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
         }
         break;
         default:
-            /*emit */error("Not apply match, can't apply the buff");
+            errorFightEngine("Not apply match, can't apply the buff");
             return;
         break;
     }
-    /*emit */error("Buff not found to remove");
+    errorFightEngine("Buff not found to remove");
 }
 
 void CommonFightEngine::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster)
@@ -894,25 +860,25 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
 {
     if(!haveThisMonster(monster))
     {
-        /*emit */error(QStringLiteral("have not this monster: %1").arg(object));
+        errorFightEngine(QStringLiteral("have not this monster: %1").arg(object));
         return false;
     }
     PlayerMonster * playerMonster=monsterById(monster);
     if(genericMonsterIsKO(playerMonster))
     {
-        /*emit */error(QStringLiteral("can't be applyied on KO monster: %1").arg(object));
+        errorFightEngine(QStringLiteral("can't be applyied on KO monster: %1").arg(object));
         return false;
     }
     if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(object))
     {
         if(isInFight())
         {
-            /*emit */error(QStringLiteral("this item %1 can't be used in fight").arg(object));
+            errorFightEngine(QStringLiteral("this item %1 can't be used in fight").arg(object));
             return false;
         }
         if(!CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(object).contains(playerMonster->monster))
         {
-            /*emit */error(QStringLiteral("this item %1 can't be applied on this monster %2").arg(object).arg(playerMonster->monster));
+            errorFightEngine(QStringLiteral("this item %1 can't be applied on this monster %2").arg(object).arg(playerMonster->monster));
             return false;
         }
         confirmEvolutionTo(playerMonster,CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(object).value(playerMonster->monster));
@@ -943,7 +909,7 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
                             removeAllBuffOnMonster(playerMonster);
                     break;
                     default:
-                        /*emit */message(QStringLiteral("Item %1 have unknown effect").arg(object));
+                        messageFightEngine(QStringLiteral("Item %1 have unknown effect").arg(object));
                     break;
                 }
                 index++;
@@ -955,7 +921,7 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
         {
             if(isInFight())
             {
-                /*emit */error(QStringLiteral("this item %1 can't be used in fight").arg(object));
+                errorFightEngine(QStringLiteral("this item %1 can't be used in fight").arg(object));
                 return false;
             }
             const QList<MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight = CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.values(object);
@@ -968,13 +934,13 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
                     case MonsterItemEffectTypeOutOfFight_AddLevel:
                         if(playerMonster->level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                         {
-                            /*emit */error(QStringLiteral("this item %1 can't be used on monster at level max").arg(object));
+                            errorFightEngine(QStringLiteral("this item %1 can't be used on monster at level max").arg(object));
                             return false;
                         }
                         addLevel(playerMonster);
                     break;
                     default:
-                        /*emit */message(QStringLiteral("Item %1 have unknown effect").arg(object));
+                        messageFightEngine(QStringLiteral("Item %1 have unknown effect").arg(object));
                     break;
                 }
                 index++;
@@ -985,19 +951,19 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
     {
         if(isInFight())
         {
-            /*emit */error(QStringLiteral("this item %1 can't be used in fight").arg(object));
+            errorFightEngine(QStringLiteral("this item %1 can't be used in fight").arg(object));
             return false;
         }
         if(!CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.value(object).contains(playerMonster->monster))
         {
-            /*emit */error(QStringLiteral("this item %1 can't be applied on this monster %2").arg(object).arg(playerMonster->monster));
+            errorFightEngine(QStringLiteral("this item %1 can't be applied on this monster %2").arg(object).arg(playerMonster->monster));
             return false;
         }
         return learnSkillByItem(playerMonster,object);
     }
     else
     {
-        /*emit */error(QStringLiteral("This object can't be applied on monster: %1").arg(object));
+        errorFightEngine(QStringLiteral("This object can't be applied on monster: %1").arg(object));
         return false;
     }
 
@@ -1038,20 +1004,15 @@ bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
 {
     if(!isInFight())
         return false;
-    if(player_informations==NULL)
-    {
-        /*emit */error(QStringLiteral("player_informations is NULL"));
-        return false;
-    }
     if(getCurrentMonster()->id==monsterId)
     {
-        /*emit */error(QStringLiteral("try change monster but is already on the current monster"));
+        errorFightEngine(QStringLiteral("try change monster but is already on the current monster"));
         return false;
     }
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        const PlayerMonster &playerMonsterEntry=player_informations->playerMonster.at(index);
+        const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(index);
         if(playerMonsterEntry.id==monsterId)
         {
             if(!monsterIsKO(playerMonsterEntry))
@@ -1069,7 +1030,7 @@ bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
         }
         index++;
     }
-    /*emit */error(QStringLiteral("unable to locate the new monster to change"));
+    errorFightEngine(QStringLiteral("unable to locate the new monster to change"));
     return false;
 }
 
@@ -1091,13 +1052,6 @@ ApplyOn CommonFightEngine::invertApplyOn(const ApplyOn &applyOn)
     }
 }
 
-quint8 CommonFightEngine::getOneSeed(const quint8 &max)
-{
-    quint8 number=static_cast<quint8>(randomSeeds.at(0));
-    randomSeeds.remove(0,1);
-    return number%(max+1);
-}
-
 bool CommonFightEngine::internalTryEscape()
 {
     doTurnIfChangeOfMonster=true;
@@ -1105,12 +1059,12 @@ bool CommonFightEngine::internalTryEscape()
     PlayerMonster * playerMonster=getCurrentMonster();
     if(playerMonster==NULL)
     {
-        /*emit */error("No current monster to try escape");
+        errorFightEngine("No current monster to try escape");
         return false;
     }
     if(wildMonsters.isEmpty())
     {
-        /*emit */error("Not againts wild monster");
+        errorFightEngine("Not againts wild monster");
         return false;
     }
     if(wildMonsters.first().level<playerMonster->level && value<75)
@@ -1126,7 +1080,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
 {
     if(wildMonsters.isEmpty())
     {
-        /*emit */error("Not againts wild monster");
+        errorFightEngine("Not againts wild monster");
         return false;
     }
     const Monster::Stat &wildMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(wildMonsters.first().monster),wildMonsters.first().level);
@@ -1146,13 +1100,13 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
                     bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
                 else
                 {
-                    /*emit */error(QStringLiteral("Buff level for wild monter not found: %1 at level %2").arg(playerBuff.buff).arg(playerBuff.level));
+                    errorFightEngine(QStringLiteral("Buff level for wild monter not found: %1 at level %2").arg(playerBuff.buff).arg(playerBuff.level));
                     bonusStat+=1.0;
                 }
             }
             else
             {
-                /*emit */error(QStringLiteral("Buff for wild monter not found: %1").arg(playerBuff.buff));
+                errorFightEngine(QStringLiteral("Buff for wild monter not found: %1").arg(playerBuff.buff));
                 bonusStat+=1.0;
             }
             index++;
@@ -1168,7 +1122,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         return true;
     quint32 realRate=65535*qPow((float)tempRate/(float)255,0.25);
 
-    /*emit */message(QStringLiteral("Formule: (%1*(%2-%3)*%4*%5)/(%6), realRate: %7")
+    messageFightEngine(QStringLiteral("Formule: (%1*(%2-%3)*%4*%5)/(%6), realRate: %7")
                  .arg(catch_rate)
                  .arg(wildMonsterStat.hp*maxTempRate)
                  .arg(minTempRate*wildMonsters.first().hp)
@@ -1195,7 +1149,7 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
     if(internalTryCapture(CommonDatapack::commonDatapack.items.trap.value(item)))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        /*emit */message(QStringLiteral("capture is successful"));
+        messageFightEngine(QStringLiteral("capture is successful"));
         #endif
         PlayerMonster newMonster;
         newMonster.buffs=wildMonsters.first().buffs;
@@ -1209,13 +1163,13 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
         newMonster.remaining_xp=0;
         newMonster.skills=wildMonsters.first().skills;
         newMonster.sp=0;
-        newMonster.id=catchAWild(player_informations->playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
+        newMonster.id=catchAWild(public_and_private_informations.playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
         return newMonster.id;
     }
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        /*emit */message(QStringLiteral("capture is failed"));
+        messageFightEngine(QStringLiteral("capture is failed"));
         #endif
         generateOtherAttack();//Skill::AttackReturn attackReturn=
         return 0;
@@ -1225,21 +1179,21 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
 void CommonFightEngine::fightFinished()
 {
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
         int sub_index=0;
-        while(sub_index<player_informations->playerMonster.at(index).buffs.size())
+        while(sub_index<public_and_private_informations.playerMonster.at(index).buffs.size())
         {
-            if(CommonDatapack::commonDatapack.monsterBuffs.contains(player_informations->playerMonster.at(index).buffs.at(sub_index).buff))
+            if(CommonDatapack::commonDatapack.monsterBuffs.contains(public_and_private_informations.playerMonster.at(index).buffs.at(sub_index).buff))
             {
-                const PlayerBuff &playerBuff=player_informations->playerMonster.at(index).buffs.at(sub_index);
+                const PlayerBuff &playerBuff=public_and_private_informations.playerMonster.at(index).buffs.at(sub_index);
                 if(CommonDatapack::commonDatapack.monsterBuffs.value(playerBuff.buff).level.at(playerBuff.level-1).duration!=Buff::Duration_Always)
-                    player_informations->playerMonster[index].buffs.removeAt(sub_index);
+                    public_and_private_informations.playerMonster[index].buffs.removeAt(sub_index);
                 else
                     sub_index++;
             }
             else
-                player_informations->playerMonster[index].buffs.removeAt(sub_index);
+                public_and_private_informations.playerMonster[index].buffs.removeAt(sub_index);
         }
         index++;
     }
@@ -1250,25 +1204,25 @@ void CommonFightEngine::fightFinished()
 
 void CommonFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
 {
-    player_informations->playerMonster << playerMonster;
+    public_and_private_informations.playerMonster << playerMonster;
     updateCanDoFight();
 }
 
 void CommonFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
-    player_informations->playerMonster << playerMonster;
+    public_and_private_informations.playerMonster << playerMonster;
     updateCanDoFight();
 }
 
 void CommonFightEngine::insertPlayerMonster(const quint8 &place,const PlayerMonster &playerMonster)
 {
-    player_informations->playerMonster.insert(place,playerMonster);
+    public_and_private_informations.playerMonster.insert(place,playerMonster);
     updateCanDoFight();
 }
 
 QList<PlayerMonster> CommonFightEngine::getPlayerMonster() const
 {
-    return player_informations->playerMonster;
+    return public_and_private_informations.playerMonster;
 }
 
 bool CommonFightEngine::moveUpMonster(const quint8 &number)
@@ -1277,9 +1231,9 @@ bool CommonFightEngine::moveUpMonster(const quint8 &number)
         return false;
     if(number==0)
         return false;
-    if(number>=(player_informations->playerMonster.size()))
+    if(number>=(public_and_private_informations.playerMonster.size()))
         return false;
-    player_informations->playerMonster.swap(number,number-1);
+    public_and_private_informations.playerMonster.swap(number,number-1);
     updateCanDoFight();
     return true;
 }
@@ -1288,9 +1242,9 @@ bool CommonFightEngine::moveDownMonster(const quint8 &number)
 {
     if(isInFight())
         return false;
-    if(number>=(player_informations->playerMonster.size()-1))
+    if(number>=(public_and_private_informations.playerMonster.size()-1))
         return false;
-    player_informations->playerMonster.swap(number,number+1);
+    public_and_private_informations.playerMonster.swap(number,number+1);
     updateCanDoFight();
     return true;
 }
@@ -1298,11 +1252,11 @@ bool CommonFightEngine::moveDownMonster(const quint8 &number)
 bool CommonFightEngine::removeMonster(const quint32 &monsterId)
 {
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        if(player_informations->playerMonster.at(index).id==monsterId)
+        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
         {
-            player_informations->playerMonster.removeAt(index);
+            public_and_private_informations.playerMonster.removeAt(index);
             updateCanDoFight();
             return true;
         }
@@ -1314,22 +1268,22 @@ bool CommonFightEngine::removeMonster(const quint32 &monsterId)
 bool CommonFightEngine::haveThisMonster(const quint32 &monsterId) const
 {
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        if(player_informations->playerMonster.at(index).id==monsterId)
+        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
             return true;
         index++;
     }
     return false;
 }
 
-PlayerMonster * CommonFightEngine::monsterById(const quint32 &monsterId) const
+PlayerMonster * CommonFightEngine::monsterById(const quint32 &monsterId)
 {
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        if(player_informations->playerMonster.at(index).id==monsterId)
-            return &player_informations->playerMonster[index];
+        if(public_and_private_informations.playerMonster.at(index).id==monsterId)
+            return &public_and_private_informations.playerMonster[index];
         index++;
     }
     return NULL;
@@ -1342,7 +1296,7 @@ void CommonFightEngine::wildDrop(const quint32 &monster)
 
 bool CommonFightEngine::checkKOOtherMonstersForGain()
 {
-    /*emit */message(QStringLiteral("checkKOOtherMonstersForGain()"));
+    messageFightEngine(QStringLiteral("checkKOOtherMonstersForGain()"));
     bool winTheTurn=false;
     if(!wildMonsters.isEmpty())
     {
@@ -1350,7 +1304,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
         {
             winTheTurn=true;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            /*emit */message(QStringLiteral("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
+            messageFightEngine(QStringLiteral("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
             #endif
             //drop the drop item here
             wildDrop(wildMonsters.first().monster);
@@ -1361,7 +1315,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             int xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            /*emit */message(QStringLiteral("You win %1 xp and %2 sp").arg(wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            messageFightEngine(QStringLiteral("You win %1 xp and %2 sp").arg(wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
             #endif
         }
     }
@@ -1371,7 +1325,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
         {
             winTheTurn=true;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            /*emit */message(QStringLiteral("The wild monster (%1) is KO").arg(botFightMonsters.first().monster));
+            messageFightEngine(QStringLiteral("The wild monster (%1) is KO").arg(botFightMonsters.first().monster));
             #endif
             //don't drop item because it's not a wild fight
             //give xp/sp here
@@ -1381,7 +1335,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             int xp=botmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            /*emit */message(QStringLiteral("You win %1 xp and %2 sp").arg(botmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(botmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            messageFightEngine(QStringLiteral("You win %1 xp and %2 sp").arg(botmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX).arg(botmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
             #endif
         }
     }
@@ -1393,7 +1347,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
     }
     else
     {
-        /*emit */error("unknown other monster type");
+        errorFightEngine("unknown other monster type");
         return false;
     }
     return winTheTurn;
@@ -1424,7 +1378,7 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
         if(new_max_hp>old_max_hp)
             monster->hp+=new_max_hp-old_max_hp;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        /*emit */message(QStringLiteral("You pass to the level %1").arg(level));
+        messageFightEngine(QStringLiteral("You pass to the level %1").arg(level));
         #endif
         if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
         {
@@ -1445,38 +1399,38 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const quint8 &numberOf
 {
     if(monster->level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
     {
-        /*emit */error(QStringLiteral("Monster is already at the level max into addLevel()"));
+        errorFightEngine(QStringLiteral("Monster is already at the level max into addLevel()"));
         return false;
     }
     int monsterIndex=0;
-    const int &monsterListSize=player_informations->playerMonster.size();
+    const int &monsterListSize=public_and_private_informations.playerMonster.size();
     while(monsterIndex<monsterListSize)
     {
-        if(&player_informations->playerMonster.at(monsterIndex)==monster)
+        if(&public_and_private_informations.playerMonster.at(monsterIndex)==monster)
             break;
         monsterIndex++;
     }
     if(monsterIndex==monsterListSize)
     {
-        /*emit */error(QStringLiteral("Monster index not for to add level"));
+        errorFightEngine(QStringLiteral("Monster index not for to add level"));
         return false;
     }
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster->monster);
-    const quint8 &level=player_informations->playerMonster.at(monsterIndex).level;
+    const quint8 &level=public_and_private_informations.playerMonster.at(monsterIndex).level;
     const quint32 &old_max_hp=getStat(monsterInformations,level).hp;
     const quint32 &new_max_hp=getStat(monsterInformations,level+1).hp;
     levelUp(level,monsterIndex);
     if(new_max_hp>old_max_hp)
         monster->hp+=new_max_hp-old_max_hp;
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-    /*emit */message(QStringLiteral("You pass to the level %1 on your monster %2").arg(level).arg(monster->id));
+    messageFightEngine(QStringLiteral("You pass to the level %1 on your monster %2").arg(level).arg(monster->id));
     #endif
 
-    if((player_informations->playerMonster.value(monsterIndex).level+numberOfLevel)>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-        player_informations->playerMonster[monsterIndex].level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    if((public_and_private_informations.playerMonster.value(monsterIndex).level+numberOfLevel)>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+        public_and_private_informations.playerMonster[monsterIndex].level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     else
-        player_informations->playerMonster[monsterIndex].level+=numberOfLevel;
-    player_informations->playerMonster[monsterIndex].remaining_xp=0;
+        public_and_private_informations.playerMonster[monsterIndex].level+=numberOfLevel;
+    public_and_private_informations.playerMonster[monsterIndex].remaining_xp=0;
     return true;
 }
 
@@ -1493,7 +1447,7 @@ bool CommonFightEngine::tryEscape()
     if(internalTryEscape())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        /*emit */message(QStringLiteral("escape is successful"));
+        messageFightEngine(QStringLiteral("escape is successful"));
         #endif
         wildMonsters.clear();
         return true;
@@ -1501,7 +1455,7 @@ bool CommonFightEngine::tryEscape()
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        /*emit */message(QStringLiteral("escape is failed"));
+        messageFightEngine(QStringLiteral("escape is failed"));
         #endif
         generateOtherAttack();//Skill::AttackReturn attackReturn=
         return false;
@@ -1510,7 +1464,7 @@ bool CommonFightEngine::tryEscape()
 
 bool CommonFightEngine::canDoFightAction()
 {
-    if(randomSeeds.size()>5)
+    if(randomSeedsSize()>5)
         return true;
     else
         return false;
@@ -1539,30 +1493,30 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
         {
-            /*emit */error("Unable to locate the current monster");
+            errorFightEngine("Unable to locate the current monster");
             return;
         }
         if(currentMonsterIsKO())
         {
-            /*emit */error("Can't attack with KO monster");
+            errorFightEngine("Can't attack with KO monster");
             return;
         }
         const PublicPlayerMonster * otherMonster=getOtherMonster();
         if(otherMonster==NULL)
         {
-            /*emit */error("Unable to locate the other monster");
+            errorFightEngine("Unable to locate the other monster");
             return;
         }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 0)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 0)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 0)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 0)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return;
         }
     }
@@ -1575,30 +1529,30 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
             {
-                /*emit */error("Unable to locate the current monster");
+                errorFightEngine("Unable to locate the current monster");
                 return;
             }
             if(currentMonsterIsKO())
             {
-                /*emit */error("Can't attack with KO monster");
+                errorFightEngine("Can't attack with KO monster");
                 return;
             }
             const PublicPlayerMonster * otherMonster=getOtherMonster();
             if(otherMonster==NULL)
             {
-                /*emit */error("Unable to locate the other monster");
+                errorFightEngine("Unable to locate the other monster");
                 return;
             }
             Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
                 return;
             }
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1609,30 +1563,30 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
             {
-                /*emit */error("Unable to locate the current monster");
+                errorFightEngine("Unable to locate the current monster");
                 return;
             }
             if(currentMonsterIsKO())
             {
-                /*emit */error("Can't attack with KO monster");
+                errorFightEngine("Can't attack with KO monster");
                 return;
             }
             const PublicPlayerMonster * otherMonster=getOtherMonster();
             if(otherMonster==NULL)
             {
-                /*emit */error("Unable to locate the other monster");
+                errorFightEngine("Unable to locate the other monster");
                 return;
             }
             Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
                 return;
             }
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1653,25 +1607,25 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
         {
-            /*emit */error("Unable to locate the current monster");
+            errorFightEngine("Unable to locate the current monster");
             return;
         }
         const PublicPlayerMonster * otherMonster=getOtherMonster();
         if(otherMonster==NULL)
         {
-            /*emit */error("Unable to locate the other monster");
+            errorFightEngine("Unable to locate the other monster");
             return;
         }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 4)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 4)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 4)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 4)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return;
         }
     }
@@ -1684,30 +1638,30 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
             {
-                /*emit */error("Unable to locate the current monster");
+                errorFightEngine("Unable to locate the current monster");
                 return;
             }
             if(currentMonsterIsKO())
             {
-                /*emit */error("Can't attack with KO monster");
+                errorFightEngine("Can't attack with KO monster");
                 return;
             }
             const PublicPlayerMonster * otherMonster=getOtherMonster();
             if(otherMonster==NULL)
             {
-                /*emit */error("Unable to locate the other monster");
+                errorFightEngine("Unable to locate the other monster");
                 return;
             }
             Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
                 return;
             }
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1719,25 +1673,25 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
             {
-                /*emit */error("Unable to locate the current monster");
+                errorFightEngine("Unable to locate the current monster");
                 return;
             }
             const PublicPlayerMonster * otherMonster=getOtherMonster();
             if(otherMonster==NULL)
             {
-                /*emit */error("Unable to locate the other monster");
+                errorFightEngine("Unable to locate the other monster");
                 return;
             }
             Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
                 return;
             }
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1748,25 +1702,25 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
         {
-            /*emit */error("Unable to locate the current monster");
+            errorFightEngine("Unable to locate the current monster");
             return;
         }
         const PublicPlayerMonster * otherMonster=getOtherMonster();
         if(otherMonster==NULL)
         {
-            /*emit */error("Unable to locate the other monster");
+            errorFightEngine("Unable to locate the other monster");
             return;
         }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 5)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 5)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 5)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 5)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return;
         }
     }
@@ -1779,30 +1733,30 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
             {
-                /*emit */error("Unable to locate the current monster");
+                errorFightEngine("Unable to locate the current monster");
                 return;
             }
             if(currentMonsterIsKO())
             {
-                /*emit */error("Can't attack with KO monster");
+                errorFightEngine("Can't attack with KO monster");
                 return;
             }
             const PublicPlayerMonster * otherMonster=getOtherMonster();
             if(otherMonster==NULL)
             {
-                /*emit */error("Unable to locate the other monster");
+                errorFightEngine("Unable to locate the other monster");
                 return;
             }
             Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 3)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 3)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
                 return;
             }
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 3)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use doTheTurn() at 3)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1813,25 +1767,25 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
             {
-                /*emit */error("Unable to locate the current monster");
+                errorFightEngine("Unable to locate the current monster");
                 return;
             }
             const PublicPlayerMonster * otherMonster=getOtherMonster();
             if(otherMonster==NULL)
             {
-                /*emit */error("Unable to locate the other monster");
+                errorFightEngine("Unable to locate the other monster");
                 return;
             }
             Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 3)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 3)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
                 return;
             }
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 3)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+                errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 after the skill use doTheTurn() at 3)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
                 return;
             }
         }
@@ -1852,25 +1806,25 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
         {
-            /*emit */error("Unable to locate the current monster");
+            errorFightEngine("Unable to locate the current monster");
             return;
         }
         const PublicPlayerMonster * otherMonster=getOtherMonster();
         if(otherMonster==NULL)
         {
-            /*emit */error("Unable to locate the other monster");
+            errorFightEngine("Unable to locate the other monster");
             return;
         }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 6)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 6)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 6)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use doTheTurn() at 6)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return;
         }
     }
@@ -2005,24 +1959,24 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     doTurnIfChangeOfMonster=true;
     if(!isInFight())
     {
-        /*emit */error("Try use skill when not in fight");
+        errorFightEngine("Try use skill when not in fight");
         return false;
     }
     PlayerMonster * currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
     {
-        /*emit */error("Unable to locate the current monster");
+        errorFightEngine("Unable to locate the current monster");
         return false;
     }
     if(currentMonsterIsKO())
     {
-        /*emit */error("Can't attack with KO monster");
+        errorFightEngine("Can't attack with KO monster");
         return false;
     }
     const PublicPlayerMonster * otherMonster=getOtherMonster();
     if(otherMonster==NULL)
     {
-        /*emit */error("Unable to locate the other monster");
+        errorFightEngine("Unable to locate the other monster");
         return false;
     }
     quint8 skillLevel=getSkillLevel(skill);
@@ -2032,7 +1986,7 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
             skillLevel=1;
         else
         {
-            /*emit */error(QStringLiteral("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
+            errorFightEngine(QStringLiteral("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
             return false;
         }
     }
@@ -2044,12 +1998,12 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 before the skill use").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return false;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 before the skill use").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return false;
         }
     }
@@ -2061,12 +2015,12 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return false;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return false;
         }
     }
@@ -2074,12 +2028,12 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     return true;
 }
 
-quint8 CommonFightEngine::getSkillLevel(const quint32 &skill) const
+quint8 CommonFightEngine::getSkillLevel(const quint32 &skill)
 {
     PlayerMonster * currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
     {
-        /*emit */error("Unable to locate the current monster");
+        errorFightEngine("Unable to locate the current monster");
         return 0;
     }
     int index=0;
@@ -2097,7 +2051,7 @@ quint8 CommonFightEngine::decreaseSkillEndurance(const quint32 &skill)
     PlayerMonster * currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
     {
-        /*emit */error("Unable to locate the current monster");
+        errorFightEngine("Unable to locate the current monster");
         return 0;
     }
     int index=0;
@@ -2113,12 +2067,12 @@ quint8 CommonFightEngine::decreaseSkillEndurance(const quint32 &skill)
     return 0;
 }
 
-bool CommonFightEngine::haveMoreEndurance() const
+bool CommonFightEngine::haveMoreEndurance()
 {
     PlayerMonster * currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
     {
-        /*emit */error("Unable to locate the current monster");
+        errorFightEngine("Unable to locate the current monster");
         return false;
     }
     int index=0;
@@ -2153,7 +2107,7 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
     bool ok;
     if(isInFight())
     {
-        /*emit */error(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+        errorFightEngine(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
     }
 
@@ -2165,7 +2119,7 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
     quint8 zoneCode=map->parsed_layer.monstersCollisionMap[x+y*map->width];
     if(zoneCode>=map->parsed_layer.monstersCollisionList.size())
     {
-        /*emit */error(QStringLiteral("error: map: %1 (%2,%3), zone code out of range").arg(map->map_file).arg(x).arg(y));
+        errorFightEngine(QStringLiteral("error: map: %1 (%2,%3), zone code out of range").arg(map->map_file).arg(x).arg(y));
         /// no fight in this zone
         return false;
     }
@@ -2185,14 +2139,14 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
             {
                 if(!ableToFight)
                 {
-                    /*emit */error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorFightEngine(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return false;
                 }
                 if(stepFight==0)
                 {
-                    if(randomSeeds.size()==0)
+                    if(randomSeedsSize()==0)
                     {
-                        /*emit */error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+                        errorFightEngine(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
                         return false;
                     }
                     else
@@ -2221,13 +2175,13 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
                     if(ok)
                     {
                         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                        /*emit */message(QStringLiteral("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
+                        messageFightEngine(QStringLiteral("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
                         #endif
                         startTheFight();
                         wildMonsters << monster;
                     }
                     else
-                        /*emit */error(QStringLiteral("error: no more random seed here to have the get"));
+                        errorFightEngine(QStringLiteral("error: no more random seed here to have the get"));
                     return ok;
                 }
                 else
@@ -2253,21 +2207,21 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         otherMonster=&botFightMonsters.first();
     else
     {
-        /*emit */error("no other monster found");
+        errorFightEngine("no other monster found");
         return attackReturn;
     }
     if(otherMonster->skills.empty())
     {
         if(CommonDatapack::commonDatapack.monsterSkills.contains(0))
         {
-            /*emit */message("Generated bot/wild default attack");
+            messageFightEngine("Generated bot/wild default attack");
             attackReturn=genericMonsterAttack(otherMonster,getCurrentMonster(),0,1);
             attackReturn.doByTheCurrentMonster=false;
             return attackReturn;
         }
         else
         {
-            /*emit */message("No other monster attack todo");
+            messageFightEngine("No other monster attack todo");
             return attackReturn;
         }
     }
@@ -2279,7 +2233,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(position>=otherMonster->skills.size())
     {
-        /*emit */message(QStringLiteral("Position out of range: %1 on %2 total skill(s)")
+        messageFightEngine(QStringLiteral("Position out of range: %1 on %2 total skill(s)")
                      .arg(position)
                      .arg(otherMonster->skills.size())
                      );
@@ -2287,7 +2241,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     }
     #endif
     const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster->skills.at(position);
-    /*emit */message(QStringLiteral("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
+    messageFightEngine(QStringLiteral("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
                  .arg(otherMonsterSkill.skill)
                  .arg(position)
                  .arg(otherMonsterSkill.level)
@@ -2308,34 +2262,34 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     {
         if(currentMonster==NULL)
         {
-            /*emit */error("Unable to locate the current monster");
+            errorFightEngine("Unable to locate the current monster");
             return attackReturn;
         }
         if(currentMonster->hp==0)
         {
-            /*emit */error("Can't attack with KO monster");
+            errorFightEngine("Can't attack with KO monster");
             return attackReturn;
         }
         if(otherMonster==NULL)
         {
-            /*emit */error("Unable to locate the other monster");
+            errorFightEngine("Unable to locate the other monster");
             return attackReturn;
         }
         if(otherMonster->hp==0)
         {
-            /*emit */error("Can't attack with KO monster");
+            errorFightEngine("Can't attack with KO monster");
             return attackReturn;
         }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 1)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return attackReturn;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 1)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return attackReturn;
         }
     }
@@ -2343,7 +2297,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     const Skill &skillDef=CommonDatapack::commonDatapack.monsterSkills.value(skill);
     const Skill::SkillList &skillList=skillDef.level.at(skillLevel-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-    /*emit */message(QStringLiteral("You use skill %1 at level %2").arg(skill).arg(skillLevel));
+    messageFightEngine(QStringLiteral("You use skill %1 at level %2").arg(skill).arg(skillLevel));
     #endif
     int index;
     //do the skill
@@ -2375,7 +2329,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                     {
                         if(currentMonster->hp!=(currentMonsterHp+lifeEffectReturn.quantity))
                         {
-                            /*emit */error(QStringLiteral("life effect: Returned damage don't match with the real effect on current monster: %1!=(%2+%3)").arg(currentMonster->hp).arg(currentMonsterHp).arg(lifeEffectReturn.quantity));
+                            errorFightEngine(QStringLiteral("life effect: Returned damage don't match with the real effect on current monster: %1!=(%2+%3)").arg(currentMonster->hp).arg(currentMonsterHp).arg(lifeEffectReturn.quantity));
                             return attackReturn;
                         }
                     }
@@ -2383,7 +2337,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                     {
                         if(otherMonster->hp!=(otherMonsterHp+lifeEffectReturn.quantity))
                         {
-                            /*emit */error(QStringLiteral("life effect: Returned damage don't match with the real effect on other monster: %1!=(%2+%3)").arg(otherMonster->hp).arg(otherMonsterHp).arg(lifeEffectReturn.quantity));
+                            errorFightEngine(QStringLiteral("life effect: Returned damage don't match with the real effect on other monster: %1!=(%2+%3)").arg(otherMonster->hp).arg(otherMonsterHp).arg(lifeEffectReturn.quantity));
                             return attackReturn;
                         }
                     }
@@ -2401,12 +2355,12 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return attackReturn;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return attackReturn;
         }
     }
@@ -2421,7 +2375,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
             if(!buffIsValid(buff.effect))
             {
-                /*emit */error("Buff is not valid");
+                errorFightEngine("Buff is not valid");
                 return attackReturn;
             }
             #endif
@@ -2433,14 +2387,14 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                 success=(getOneSeed(100)<buff.success);
                 #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
                 if(success)
-                    /*emit */message(QStringLiteral("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+                    messageFightEngine(QStringLiteral("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
                 #endif
             }
             if(success)
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
                 if(success)
-                    /*emit */message(QStringLiteral("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+                    messageFightEngine(QStringLiteral("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
                 #endif
                 if(addBuffEffectFull(buff.effect,currentMonster,otherMonster)>=-2)//0 to X, update buff, -1 added, -2 updated same buff at same level
                 {
@@ -2458,12 +2412,12 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return attackReturn;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return attackReturn;
         }
     }
@@ -2490,12 +2444,12 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
         }
         if(currentMonster->hp!=currentMonsterHp)
         {
-            /*emit */error(QStringLiteral("buff effect: Returned damage don't match with the real effect on current monster: %1!=(%2+%3)").arg(currentMonster->hp).arg(currentMonsterHp).arg(lifeEffectMonster.at(index).quantity));
+            errorFightEngine(QStringLiteral("buff effect: Returned damage don't match with the real effect on current monster: %1!=(%2+%3)").arg(currentMonster->hp).arg(currentMonsterHp).arg(lifeEffectMonster.at(index).quantity));
             return attackReturn;
         }
         if(otherMonster->hp!=otherMonsterHp)
         {
-            /*emit */error(QStringLiteral("buff effect: Returned damage don't match with the real effect on other monster: %1!=(%2+%3)").arg(otherMonster->hp).arg(otherMonsterHp).arg(lifeEffectMonster.at(index).quantity));
+            errorFightEngine(QStringLiteral("buff effect: Returned damage don't match with the real effect on other monster: %1!=(%2+%3)").arg(otherMonster->hp).arg(otherMonsterHp).arg(lifeEffectMonster.at(index).quantity));
             return attackReturn;
         }
         #endif
@@ -2510,12 +2464,12 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of current monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonster->level).arg(currentMonsterStat.hp));
             return attackReturn;
         }
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            /*emit */error(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
+            errorFightEngine(QStringLiteral("The hp %1 of other monster %2 at level %3 is greater than the max %4 the skill use genericMonsterAttack() at 2)").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonster->level).arg(otherMonsterStat.hp));
             return attackReturn;
         }
     }
@@ -2527,16 +2481,3 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
 {
     return genericMonsterAttack(getCurrentMonster(),getOtherMonster(),skill,skillLevel);
 }
-
-//signals
-#ifdef EPOLLCATCHCHALLENGERSERVER
-void CommonFightEngine::error(const QString &error) const
-{
-    localClientHandler->client->normalOutput(error);
-}
-
-void CommonFightEngine::message(const QString &message) const
-{
-    localClientHandler->client->normalOutput(message);
-}
-#endif

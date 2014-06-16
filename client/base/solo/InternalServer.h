@@ -15,18 +15,17 @@
 #include "../../../server/base/ServerStructures.h"
 #include "../../../server/base/Client.h"
 #include "../../../general/base/Map_loader.h"
-#include "../../../server/base/Bot/FakeBot.h"
 #include "../../../general/base/ProtocolParsing.h"
 #include "../../../general/base/QFakeServer.h"
 #include "../../../general/base/QFakeSocket.h"
 #include "../../../server/base/MapServer.h"
-#include "../../../server/base/BaseServer.h"
+#include "../../../server/base/QtServer.h"
 
 #ifndef CATCHCHALLENGER_INTERNALSERVER_H
 #define CATCHCHALLENGER_INTERNALSERVER_H
 
 namespace CatchChallenger {
-class InternalServer : public BaseServer
+class InternalServer : public QtServer
 {
     Q_OBJECT
 public:

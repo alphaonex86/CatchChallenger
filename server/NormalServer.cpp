@@ -20,7 +20,7 @@ QString NormalServer::text_restart=QLatin1Literal("restart");
 QString NormalServer::text_stop=QLatin1Literal("stop");
 
 NormalServer::NormalServer() :
-    BaseServer()
+    QtServer()
 {
     sslServer               = NULL;
     sslCertificate          = NULL;

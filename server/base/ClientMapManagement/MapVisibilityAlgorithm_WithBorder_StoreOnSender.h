@@ -1,16 +1,20 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHBORDER_STOREONSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHBORDER_STOREONSENDER_H
 
-#include "ClientMapManagement.h"
+#include "../Client.h"
 #include "Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 #include "../../../general/base/CommonMap.h"
 
+#include <QHash>
+#include <QSet>
+#include <QByteArray>
+
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public ClientMapManagement
+class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public Client
 {
 public:
-    explicit MapVisibilityAlgorithm_WithBorder_StoreOnSender();
-    ~MapVisibilityAlgorithm_WithBorder_StoreOnSender();
+    explicit MapVisibilityAlgorithm_WithBorder_StoreOnSender(ConnectedSocket *socket);
+    virtual ~MapVisibilityAlgorithm_WithBorder_StoreOnSender();
     void reinsertAllClient();
     void reinsertAllClientIncludingBorderClients();
     void reinsertCurrentPlayerOnlyTheBorderClients();

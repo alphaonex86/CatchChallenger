@@ -1,4 +1,4 @@
-include(catchchallenger-server.pri)
+include(catchchallenger-server-qt.pri)
 include(../general/general.pri)
 
 SOURCES += $$PWD/NormalServer.cpp \

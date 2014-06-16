@@ -1,4 +1,4 @@
-#include "BaseServerCrafting.h"
+#include "../base/BaseServer.h"
 #include "MapServerCrafting.h"
 #include "../VariableServer.h"
 #include "../base/MapServer.h"
@@ -18,17 +18,8 @@
 
 using namespace CatchChallenger;
 
-QString BaseServerCrafting::text_dottmx=QLatin1Literal(".tmx");
-QString BaseServerCrafting::text_shops=QLatin1Literal("shops");
-QString BaseServerCrafting::text_shop=QLatin1Literal("shop");
-QString BaseServerCrafting::text_id=QLatin1Literal("id");
-QString BaseServerCrafting::text_product=QLatin1Literal("product");
-QString BaseServerCrafting::text_itemId=QLatin1Literal("itemId");
-QString BaseServerCrafting::text_overridePrice=QLatin1Literal("overridePrice");
-
-void BaseServerCrafting::preload_the_plant_on_map()
+void BaseServer::preload_the_plant_on_map()
 {
-    int plant_on_the_map=0;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -43,21 +34,33 @@ void BaseServerCrafting::preload_the_plant_on_map()
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }
-    QSqlQuery plantOnMapQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!plantOnMapQuery.exec(queryText))
-        DebugClass::debugConsole(plantOnMapQuery.lastQuery()+": "+plantOnMapQuery.lastError().text());
-    while(plantOnMapQuery.next())
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_the_plant_on_map_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        load_clan_max_id();
+    }
+}
+
+void BaseServer::preload_the_plant_on_map_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_the_plant_on_map_return();
+}
+
+void BaseServer::preload_the_plant_on_map_return()
+{
+    int plant_on_the_map=0;
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
-        const quint32 &id=plantOnMapQuery.value(0).toUInt(&ok);
+        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(ok)
         {
-            DebugClass::debugConsole(QStringLiteral("Plant id ignored because is not a number: %1").arg(plantOnMapQuery.value(0).toString()));
+            DebugClass::debugConsole(QStringLiteral("Plant id ignored because is not a number: %1").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
             continue;
         }
         if(GlobalServerData::serverPrivateVariables.plantUsedId.contains(id))
         {
-            DebugClass::debugConsole(QStringLiteral("Plant id already found: %1").arg(plantOnMapQuery.value(0).toString()));
+            DebugClass::debugConsole(QStringLiteral("Plant id already found: %1").arg(id));
             continue;
         }
         if(GlobalServerData::serverPrivateVariables.plantUnusedId.contains(id))
@@ -74,9 +77,9 @@ void BaseServerCrafting::preload_the_plant_on_map()
             }
             GlobalServerData::serverPrivateVariables.maxPlantId=id;
         }
-        QString map=plantOnMapQuery.value(1).toString();
-        if(!map.endsWith(BaseServerCrafting::text_dottmx))
-            map+=BaseServerCrafting::text_dottmx;
+        QString map(GlobalServerData::serverPrivateVariables.db.value(1));
+        if(!map.endsWith(BaseServer::text_dottmx))
+            map+=BaseServer::text_dottmx;
         if(!GlobalServerData::serverPrivateVariables.map_list.contains(map))
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists: %1").arg(map));
@@ -87,7 +90,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(map));
             continue;
         }
-        const quint8 &x=plantOnMapQuery.value(2).toUInt(&ok);
+        const quint8 &x=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x is not a number"));
@@ -98,7 +101,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->width).arg(map).arg(x));
             continue;
         }
-        const quint8 &y=plantOnMapQuery.value(3).toUInt(&ok);
+        const quint8 &y=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y is not a number"));
@@ -109,16 +112,15 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list.value(map)->height).arg(map).arg(y));
             continue;
         }
-        const quint8 &plant=plantOnMapQuery.value(4).toUInt(&ok);
+        const quint8 &plant=QString(GlobalServerData::serverPrivateVariables.db.value(4)).toUInt(&ok);
         if(!ok)
             continue;
         if(!CommonDatapack::commonDatapack.plants.contains(plant))
         {
             DebugClass::debugConsole(QStringLiteral("Plant dropped to not block the player, due to missing plant into the list: %1").arg(plant));
-            remove_plant_on_map(id);
             continue;
         }
-        const quint32 &character=plantOnMapQuery.value(5).toUInt(&ok);
+        const quint32 &character=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
         if(!ok)
             continue;
         if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list.value(map),x,y))
@@ -126,7 +128,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(map).arg(x).arg(y));
             continue;
         }
-        const quint64 &plant_timestamps=plantOnMapQuery.value(6).toULongLong(&ok);
+        const quint64 &plant_timestamps=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant timestamps is not a number: %1 (%2,%3)").arg(map).arg(x).arg(y));
@@ -155,9 +157,10 @@ void BaseServerCrafting::preload_the_plant_on_map()
     }
 
     DebugClass::debugConsole(QStringLiteral("%1 plant(s) on the map loaded").arg(plant_on_the_map));
+    load_clan_max_id();
 }
 
-void BaseServerCrafting::preload_shop()
+void BaseServer::preload_shop()
 {
     const QString &file=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_SHOP)+QStringLiteral("shop.xml");
     QDomDocument domDocument;
@@ -184,7 +187,7 @@ void BaseServerCrafting::preload_shop()
         }
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=BaseServerCrafting::text_shops)
+    if(root.tagName()!=BaseServer::text_shops)
     {
         DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, \"shops\" root balise not found for the xml file").arg(file));
         return;
@@ -192,27 +195,27 @@ void BaseServerCrafting::preload_shop()
 
     //load the content
     bool ok;
-    QDomElement shopItem = root.firstChildElement(BaseServerCrafting::text_shop);
+    QDomElement shopItem = root.firstChildElement(BaseServer::text_shop);
     while(!shopItem.isNull())
     {
         if(shopItem.isElement())
         {
-            if(shopItem.hasAttribute(BaseServerCrafting::text_id))
+            if(shopItem.hasAttribute(BaseServer::text_id))
             {
-                quint32 id=shopItem.attribute(BaseServerCrafting::text_id).toUInt(&ok);
+                quint32 id=shopItem.attribute(BaseServer::text_id).toUInt(&ok);
                 if(ok)
                 {
                     if(!GlobalServerData::serverPrivateVariables.shops.contains(id))
                     {
                         Shop shop;
-                        QDomElement product = shopItem.firstChildElement(BaseServerCrafting::text_product);
+                        QDomElement product = shopItem.firstChildElement(BaseServer::text_product);
                         while(!product.isNull())
                         {
                             if(product.isElement())
                             {
-                                if(product.hasAttribute(BaseServerCrafting::text_itemId))
+                                if(product.hasAttribute(BaseServer::text_itemId))
                                 {
-                                    quint32 itemId=product.attribute(BaseServerCrafting::text_itemId).toUInt(&ok);
+                                    quint32 itemId=product.attribute(BaseServer::text_itemId).toUInt(&ok);
                                     if(!ok)
                                         DebugClass::debugConsole(QStringLiteral("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                     else
@@ -222,9 +225,9 @@ void BaseServerCrafting::preload_shop()
                                         else
                                         {
                                             quint32 price=CommonDatapack::commonDatapack.items.item.value(itemId).price;
-                                            if(product.hasAttribute(BaseServerCrafting::text_overridePrice))
+                                            if(product.hasAttribute(BaseServer::text_overridePrice))
                                             {
-                                                price=product.attribute(BaseServerCrafting::text_overridePrice).toUInt(&ok);
+                                                price=product.attribute(BaseServer::text_overridePrice).toUInt(&ok);
                                                 if(!ok)
                                                     price=CommonDatapack::commonDatapack.items.item.value(itemId).price;
                                             }
@@ -238,7 +241,7 @@ void BaseServerCrafting::preload_shop()
                             }
                             else
                                 DebugClass::debugConsole(QStringLiteral("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
-                            product = product.nextSiblingElement(BaseServerCrafting::text_product);
+                            product = product.nextSiblingElement(BaseServer::text_product);
                         }
                         GlobalServerData::serverPrivateVariables.shops[id]=shop;
                     }
@@ -253,37 +256,17 @@ void BaseServerCrafting::preload_shop()
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
-        shopItem = shopItem.nextSiblingElement(BaseServerCrafting::text_shop);
+        shopItem = shopItem.nextSiblingElement(BaseServer::text_shop);
     }
 
     DebugClass::debugConsole(QStringLiteral("%1 shops(s) loaded").arg(GlobalServerData::serverPrivateVariables.shops.size()));
 }
 
-void BaseServerCrafting::remove_plant_on_map(const quint32 &id)
-{
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("DELETE FROM `plant` WHERE `id`=%1").arg(id);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("DELETE FROM plant WHERE id=%1").arg(id);
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            queryText=QStringLiteral("DELETE FROM plant WHERE id=%1").arg(id);
-        break;
-    }
-    QSqlQuery removePlantOnMapQuery(queryText,*GlobalServerData::serverPrivateVariables.db);
-    Q_UNUSED(removePlantOnMapQuery);
-}
-
-void BaseServerCrafting::unload_the_plant_on_map()
+void BaseServer::unload_the_plant_on_map()
 {
 }
 
-void BaseServerCrafting::unload_shop()
+void BaseServer::unload_shop()
 {
     GlobalServerData::serverPrivateVariables.shops.clear();
 }

@@ -21,7 +21,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "ClientStructures.h"
-#include "../../general/base/Api_protocol.h"
+#include "Api_protocol.h"
 
 namespace CatchChallenger {
 class Api_client_real : public Api_protocol

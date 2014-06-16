@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_MAPCONTROLLER_H
 
 #include "MapControllerMP.h"
-#include "../../../general/base/Api_protocol.h"
+#include "../Api_protocol.h"
 
 #include <QString>
 #include <QList>

@@ -14,7 +14,6 @@
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../../../general/base/QFakeSocket.h"
 #include "../../../general/base/ConnectedSocket.h"
-#include "../MapServer.h"
 #include "../Api_client_virtual.h"
 
 namespace CatchChallenger {

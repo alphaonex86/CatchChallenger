@@ -16,35 +16,12 @@ using namespace CatchChallenger;
 /** Never reserve the list, because it have square memory usage, and use more cpu */
 
 MapBasicMove::MapBasicMove() :
-    player_informations(NULL),
     map(NULL)
 {
 }
 
 MapBasicMove::~MapBasicMove()
 {
-}
-
-void MapBasicMove::setVariable(Player_internal_informations *player_informations)
-{
-    this->player_informations=player_informations;
-}
-
-void MapBasicMove::askIfIsReadyToStop()
-{
-    if(map==NULL)
-    {
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        /*emit */isReadyToStop();
-        #endif
-        return;
-    }
-    extraStop();
-
-    map=NULL;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    /*emit */isReadyToStop();
-    #endif
 }
 
 Direction MapBasicMove::getLastDirection() const
@@ -67,8 +44,14 @@ COORD_TYPE MapBasicMove::getY() const
     return y;
 }
 
-void MapBasicMove::extraStop()
+void MapBasicMove::errorOutput(const QString &errorString)
 {
+    Q_UNUSED(errorString);
+}
+
+void MapBasicMove::normalOutput(const QString &message) const
+{
+    Q_UNUSED(message);
 }
 
 void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
@@ -84,12 +67,12 @@ void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,c
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(this->x>(map->width-1))
     {
-        /*emit */message(QStringLiteral("put_on_the_map(): Wrong x: %1").arg(x));
+        normalOutput(QStringLiteral("put_on_the_map(): Wrong x: %1").arg(x));
         this->x=map->width-1;
     }
     if(this->y>(map->height-1))
     {
-        /*emit */message(QStringLiteral("put_on_the_map(): Wrong y: %1").arg(y));
+        normalOutput(QStringLiteral("put_on_the_map(): Wrong y: %1").arg(y));
         this->y=map->height-1;
     }
     #endif
@@ -107,7 +90,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
     quint8 moveThePlayer_index_move=0;
     if(Q_UNLIKELY(last_direction==direction))
     {
-        /*emit */error(QStringLiteral("Previous action is same direction: %1").arg(last_direction));
+        errorOutput(QStringLiteral("Previous action is same direction: %1").arg(last_direction));
         return false;
     }
     switch(last_direction)
@@ -131,7 +114,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesTop);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -165,7 +148,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesRight);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -199,7 +182,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesBottom);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -233,7 +216,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
                 } while(ledge==ParsedLayerLedges_LedgesLeft);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    /*emit */error(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
+                    errorOutput(QStringLiteral("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -249,33 +232,10 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
         break;
         default:
-            /*emit */error(QStringLiteral("moveThePlayer(): direction not managed"));
+            errorOutput(QStringLiteral("moveThePlayer(): direction not managed"));
             return false;
         break;
     }
     last_direction=direction;
     return true;
 }
-
-#ifdef EPOLLCATCHCHALLENGERSERVER
-//normal signals
-void MapBasicMove::error(const QString &error) const
-{
-    client->errorOutput(error);
-}
-
-void MapBasicMove::message(const QString &message) const
-{
-    client->normalOutput(message);
-}
-
-void MapBasicMove::sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data) const
-{
-    client->clientNetworkWrite.sendFullPacket(mainIdent,subIdent,data);
-}
-
-void MapBasicMove::sendPacket(const quint8 &mainIdent,const QByteArray &data) const
-{
-    client->clientNetworkWrite.sendPacket(mainIdent,data);
-}
-#endif

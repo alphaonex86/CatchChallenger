@@ -1,7 +1,7 @@
 #ifndef TIMERDISPLAYEVENTBYSECONDS_H
 #define TIMERDISPLAYEVENTBYSECONDS_H
 
-#include "EpollTimer.h"
+#include "../EpollTimer.h"
 
 class TimerDisplayEventBySeconds : public EpollTimer
 {

@@ -14,68 +14,31 @@
 /** \warning No static variable due to thread access to this class!!! */
 
 namespace CatchChallenger {
-#ifdef EPOLLCATCHCHALLENGERSERVER
-class Client;
-#endif
 class MapBasicMove
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        : public QObject
-        #endif
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    Q_OBJECT
-    #endif
 public:
     explicit MapBasicMove();
-    virtual ~MapBasicMove();
-    virtual void setVariable(Player_internal_informations *player_informations);
+    ~MapBasicMove();
     //info linked
+
+    CommonMap *map;
+    COORD_TYPE x,y;
+    Direction last_direction;
 
     Direction getLastDirection() const;
     CommonMap* getMap() const;
     COORD_TYPE getX() const;
     COORD_TYPE getY() const;
-
-    //internal var
-    Player_internal_informations *player_informations;
-#ifdef EPOLLCATCHCHALLENGERSERVER
-    Client *client;
-#endif
-protected:
-    //pass to the Map management visibility algorithm
-    virtual bool singleMove(const Direction &direction) = 0;
-    COORD_TYPE			x,y;//can't be negative
-    CommonMap*                map;
-
-    //related to stop
-    //volatile bool stopCurrentMethod;
-    //volatile bool stopIt;
-    virtual void extraStop();
-#ifndef EPOLLCATCHCHALLENGERSERVER
-signals:
-#else
-public:
-#endif
-    //normal signals
-    void error(const QString &error) const;
-    void message(const QString &message) const;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    void isReadyToStop() const;
-    #endif
-    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
-    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
 public:
     //map slots, transmited by the current ClientNetworkRead
-    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
-    virtual void teleportValidatedTo(CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
-    //normal slots
-    virtual void askIfIsReadyToStop();
-private:
-    //temp variable for put on map
-    /*quint8 moveThePlayer_index_move;*/ /// \warning not static because have multiple thread access
-    //map vector informations
-    Direction			last_direction;
+    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    void teleportValidatedTo(CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
+protected:
+    //normal management related
+    void errorOutput(const QString &errorString);
+    void normalOutput(const QString &message) const;
+    virtual bool singleMove(const Direction &direction) = 0;
 };
 }
 

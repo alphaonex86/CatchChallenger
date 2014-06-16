@@ -134,7 +134,7 @@ BaseWindow::BaseWindow() :
     connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
 
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::error);
 
     connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX);
 
@@ -205,8 +205,8 @@ void BaseWindow::connectAllSignals()
 
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::error,              this,&BaseWindow::error,            Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,            this,&BaseWindow::message,          Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newError,           this,&BaseWindow::error,            Qt::QueuedConnection);
+    //connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,            this,&BaseWindow::message,          Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::notLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::logged,             this,&BaseWindow::logged,           Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection);

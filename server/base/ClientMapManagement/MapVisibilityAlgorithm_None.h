@@ -1,16 +1,13 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_NONE_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_NONE_H
 
-#include "ClientMapManagement.h"
-#include "../MapServer.h"
-#include "../../../general/base/CommonMap.h"
+#include "../Client.h"
 
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_None : public ClientMapManagement
+class MapVisibilityAlgorithm_None : public Client
 {
 public:
-    explicit MapVisibilityAlgorithm_None();
-    ~MapVisibilityAlgorithm_None();
+    explicit MapVisibilityAlgorithm_None(ConnectedSocket *socket);
 protected:
     //add clients linked
     void insertClient();

@@ -5,7 +5,6 @@
 #include <QList>
 #include <QStringList>
 #include <QString>
-#include <QSqlDatabase>
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
 #endif
@@ -13,7 +12,6 @@
 #include <QHash>
 #include <QVariant>
 #include <QSet>
-#include <QSqlQuery>
 #include <QDataStream>
 #include <QMultiHash>
 #include <QRegularExpression>
@@ -25,26 +23,35 @@
 #include "PlayerUpdater.h"
 #include "../../general/base/CommonSettings.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
-#include "epoll/TimerCityCapture.h"
-#include "epoll/TimerDdos.h"
-#include "epoll/TimerPositionSync.h"
-#include "epoll/TimerSendInsertMoveRemove.h"
+#include "epoll/timer/TimerCityCapture.h"
+#include "epoll/timer/TimerDdos.h"
+#include "epoll/timer/TimerPositionSync.h"
+#include "epoll/timer/TimerSendInsertMoveRemove.h"
+#include "epoll/db/EpollPostgresql.h"
+#else
+#include "QtDatabase.h"
 #endif
 
 namespace CatchChallenger {
 class EventThreader;
 class Map_custom;
 class CommonMap;
-class ClientBroadCast;
 class ClientMapManagement;
 class PlayerUpdater;
 class Map_server_MapVisibility_Simple_StoreOnReceiver;
+class Client;
 
 struct Map_player_info
 {
     CommonMap *map;
     int x,y;
     QString skin;
+};
+
+struct FileToSend
+{
+    QString file;
+    quint32 mtime;
 };
 
 enum MapVisibilityAlgorithmSelection
@@ -70,38 +77,12 @@ struct MonsterDrops
     quint32 luck;//seam be 0 to 100
 };
 
-struct Player_internal_informations
+struct PlayerOnMap
 {
-    Player_private_and_public_informations public_and_private_informations;
-    quint32 account_id;//0 if not logged
-    quint8 number_of_character;
-    bool character_loaded;
-    quint32 character_id;
-    quint64 market_cash;
-    QByteArray rawPseudo;
-    volatile bool isConnected;
-    struct Rescue
-    {
-        CommonMap* map;
-        COORD_TYPE x;
-        COORD_TYPE y;
-        Orientation orientation;
-    };
-    Rescue rescue;
-    Rescue unvalidated_rescue;
-    QMultiHash<quint32,MonsterDrops> questsDrop;
-    QDateTime connectedSince;
-    struct OldEvents
-    {
-        struct OldEventEntry
-        {
-            quint8 event;
-            quint8 eventValue;
-        };
-        QDateTime time;
-        QList<OldEventEntry> oldEventList;
-    };
-    OldEvents oldEvents;
+    CommonMap* map;
+    COORD_TYPE x;
+    COORD_TYPE y;
+    Orientation orientation;
 };
 
 struct NormalServerSettings
@@ -184,7 +165,6 @@ struct ServerSettings
         {
             quint16 max;
             quint16 reshow;
-            bool storeOnSender;
             bool reemit;
         };
         MapVisibility_Simple simple;
@@ -194,7 +174,6 @@ struct ServerSettings
             quint16 reshowWithBorder;
             quint16 max;
             quint16 reshow;
-            bool storeOnSender;
         };
         MapVisibility_WithBorder withBorder;
     };
@@ -239,10 +218,35 @@ struct MarketItem
     quint32 cash;
 };
 
+struct Clan
+{
+    QString captureCityInProgress;
+    QString capturedCity;
+    quint32 clanId;
+    QList<Client *> players;
+
+    //the db info
+    QString name;
+    quint64 cash;
+};
+
+struct CaptureCityValidated
+{
+    QList<Client *> players;
+    QList<Client *> playersInFight;
+    QList<quint32> bots;
+    QList<quint32> botsInFight;
+    QHash<quint32,quint16> clanSize;
+};
+
 struct ServerPrivateVariables
 {
     //bd
-    QSqlDatabase *db;//use pointer here to init in correct thread
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    EpollPostgresql db;
+    #else
+    QtDatabase db;
+    #endif
     QString db_type_string;
 
     //query
@@ -301,6 +305,7 @@ struct ServerPrivateVariables
     QHash<QString,CityStatus> cityStatusList;
     QHash<quint32,QString> cityStatusListReverse;
     QSet<quint32> tradedMonster;
+    QByteArray randomData;
 
     //market
     QList<MarketItem> marketItemList;
@@ -308,7 +313,6 @@ struct ServerPrivateVariables
 
     //timer and thread
     #ifndef EPOLLCATCHCHALLENGERSERVER
-        QList<QThread *> eventThreaderList;
         QTimer *timer_city_capture;
         QTimer *timer_to_send_insert_move_remove;
         QTimer positionSync;
@@ -326,6 +330,7 @@ struct ServerPrivateVariables
     quint32 maxAccountId;
     quint32 maxCharacterId;
     QDateTime time_city_capture;
+    QHash<quint32,Clan *> clanList;
 
     //datapack
     QHash<QString,quint8> skinList;

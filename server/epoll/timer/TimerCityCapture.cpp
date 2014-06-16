@@ -1,7 +1,7 @@
 #include "TimerCityCapture.h"
-#include "Epoll.h"
+#include "../Epoll.h"
 
-#include "../base/LocalClientHandler.h"
+#include "../../base/Client.h"
 
 #include <iostream>
 
@@ -11,6 +11,6 @@ TimerCityCapture::TimerCityCapture()
 
 void TimerCityCapture::exec()
 {
-    CatchChallenger::LocalClientHandler::startTheCityCapture();
+    CatchChallenger::Client::startTheCityCapture();
     EpollTimer::exec();
 }

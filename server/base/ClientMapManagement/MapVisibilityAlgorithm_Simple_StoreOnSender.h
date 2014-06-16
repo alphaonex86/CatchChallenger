@@ -1,16 +1,18 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_STOREONSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_STOREONSENDER_H
 
-#include "ClientMapManagement.h"
+#include "../Client.h"
 #include "Map_server_MapVisibility_Simple_StoreOnSender.h"
 #include "../../../general/base/CommonMap.h"
 
+#include <QList>
+
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_Simple_StoreOnSender : public ClientMapManagement
+class MapVisibilityAlgorithm_Simple_StoreOnSender : public Client
 {
 public:
-    explicit MapVisibilityAlgorithm_Simple_StoreOnSender();
-    ~MapVisibilityAlgorithm_Simple_StoreOnSender();
+    explicit MapVisibilityAlgorithm_Simple_StoreOnSender(ConnectedSocket *socket);
+    virtual ~MapVisibilityAlgorithm_Simple_StoreOnSender();
     void reinsertAllClient();
     //drop all clients
     void dropAllClients();

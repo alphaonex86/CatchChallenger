@@ -19,7 +19,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/ConnectedSocket.h"
-#include "../../general/base/Api_protocol.h"
+#include "Api_protocol.h"
 
 namespace CatchChallenger {
 class Api_client_virtual : public Api_protocol
