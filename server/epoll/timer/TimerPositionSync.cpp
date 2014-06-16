@@ -1,7 +1,7 @@
 #include "TimerPositionSync.h"
-#include "Epoll.h"
+#include "../Epoll.h"
 
-#include "../base/LocalClientHandlerWithoutSender.h"
+#include "../../base/LocalClientHandlerWithoutSender.h"
 
 #include <iostream>
 

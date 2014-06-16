@@ -99,6 +99,7 @@ QString DatapackGeneralLoader::text_event=QLatin1String("event");
 
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
+    QRegExp excludeFilterRegex(QLatin1String("[\"']"));
     QRegExp typeRegex(QLatin1String("^[a-z]{1,32}$"));
     QDomDocument domDocument;
     QHash<QString, Reputation> reputation;
@@ -244,8 +245,12 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                     }
                 if(ok)
                 {
-                    reputation[item.attribute(DatapackGeneralLoader::text_type)].reputation_positive=point_list_positive;
-                    reputation[item.attribute(DatapackGeneralLoader::text_type)].reputation_negative=point_list_negative;
+                    const QString &type=item.attribute(DatapackGeneralLoader::text_type);
+                    if(!type.contains(excludeFilterRegex))
+                    {
+                        reputation[type].reputation_positive=point_list_positive;
+                        reputation[type].reputation_negative=point_list_negative;
+                    }
                 }
             }
             else

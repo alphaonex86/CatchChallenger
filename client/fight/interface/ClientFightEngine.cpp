@@ -206,6 +206,7 @@ void ClientFightEngine::resetAll()
 {
     mLastGivenXP=0;
 
+    randomSeeds.clear();
     player_informations_local.playerMonster.clear();
     attackReturnList.clear();
 
@@ -390,7 +391,7 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
     this->attackReturnList << attackReturnList;
 }
 
-PublicPlayerMonster * ClientFightEngine::getOtherMonster() const
+PublicPlayerMonster * ClientFightEngine::getOtherMonster()
 {
     if(!battleCurrentMonster.isEmpty())
         return (PublicPlayerMonster *)&battleCurrentMonster.first();
@@ -526,7 +527,7 @@ bool ClientFightEngine::doTheOtherMonsterTurn()
 
 void ClientFightEngine::levelUp(const quint8 &level, const quint8 &monsterIndex)
 {
-    const PlayerMonster &monster=player_informations->playerMonster.at(monsterIndex);
+    const PlayerMonster &monster=public_and_private_informations.playerMonster.at(monsterIndex);
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster.monster);
     int index=0;
     while(index<monsterInformations.evolutions.size())
@@ -547,27 +548,27 @@ PlayerMonster * ClientFightEngine::evolutionByLevelUp()
         return NULL;
     quint8 monsterIndex=mEvolutionByLevelUp.first();
     mEvolutionByLevelUp.removeFirst();
-    return &player_informations->playerMonster[monsterIndex];
+    return &public_and_private_informations.playerMonster[monsterIndex];
 }
 
 void ClientFightEngine::confirmEvolution(const quint32 &monterId)
 {
     CatchChallenger::Api_client_real::client->confirmEvolution(monterId);
     int index=0;
-    while(index<player_informations->playerMonster.size())
+    while(index<public_and_private_informations.playerMonster.size())
     {
-        if(player_informations->playerMonster.at(index).id==monterId)
+        if(public_and_private_informations.playerMonster.at(index).id==monterId)
         {
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(index).monster];
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[public_and_private_informations.playerMonster.at(index).monster];
             int sub_index=0;
             while(sub_index<monsterInformations.evolutions.size())
             {
                 if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
                 {
-                    player_informations->playerMonster[index].monster=monsterInformations.evolutions.at(sub_index).evolveTo;
-                    Monster::Stat stat=getStat(monsterInformations,player_informations->playerMonster[index].level);
-                    if(player_informations->playerMonster[index].hp>stat.hp)
-                        player_informations->playerMonster[index].hp=stat.hp;
+                    public_and_private_informations.playerMonster[index].monster=monsterInformations.evolutions.at(sub_index).evolveTo;
+                    Monster::Stat stat=getStat(monsterInformations,public_and_private_informations.playerMonster[index].level);
+                    if(public_and_private_informations.playerMonster[index].hp>stat.hp)
+                        public_and_private_informations.playerMonster[index].hp=stat.hp;
                     return;
                 }
                 sub_index++;
@@ -593,4 +594,31 @@ quint32 ClientFightEngine::lastGivenXP()
     quint32 tempLastGivenXP=mLastGivenXP;
     mLastGivenXP=0;
     return tempLastGivenXP;
+}
+
+void ClientFightEngine::errorFightEngine(const QString &errorMessage)
+{
+    error(errorMessage);
+}
+
+void ClientFightEngine::messageFightEngine(const QString &message) const
+{
+    qDebug() << message;
+}
+
+quint32 ClientFightEngine::randomSeedsSize() const
+{
+    return randomSeeds.size();
+}
+
+quint8 ClientFightEngine::getOneSeed(const quint8 &max)
+{
+    const quint8 &number=randomSeeds.at(0);
+    randomSeeds.remove(0,1);
+    return number%(max+1);
+}
+
+void ClientFightEngine::newRandomNumber(const QByteArray &data)
+{
+    randomSeeds.append(data);
 }

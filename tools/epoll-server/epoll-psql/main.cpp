@@ -6,7 +6,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/epoll.h>
 #include <errno.h>
 #include <iostream>
 #include <list>

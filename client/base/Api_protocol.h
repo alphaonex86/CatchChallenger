@@ -20,11 +20,9 @@
 #include "../../general/base/MoveOnTheMap.h"
 
 namespace CatchChallenger {
-class Api_protocol : public ProtocolParsingInput, public MoveOnTheMap
+class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap, public QObject
 {
-#ifndef EPOLLCATCHCHALLENGERSERVER
 Q_OBJECT
-#endif
 public:
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
@@ -37,7 +35,6 @@ public:
     Player_private_and_public_informations get_player_informations();
     QString getPseudo();
     quint16 getId();
-    quint64 getTXSize();
 
     virtual void sendDatapackContent() = 0;
     virtual void tryDisconnect() = 0;
@@ -63,6 +60,9 @@ private:
     quint8 lastQueryNumber;
 protected:
     virtual void socketDestroyed();
+
+    void errorParsingLayer(const QString &error);
+    void messageParsingLayer(const QString &message) const;
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
@@ -86,7 +86,6 @@ protected:
     quint32 number_of_map;
 
     //to send trame
-    ProtocolParsingOutput *output;
     quint8 queryNumber();
     static QSet<QString> extensionAllowed;
 
@@ -105,11 +104,7 @@ protected:
     //battle
     QList<quint32> battleRequestId;
     bool isInBattle;
-#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
-#else
-public:
-#endif
     void newError(const QString &error,const QString &detailedError) const;
 
     //protocol/connection info
@@ -123,7 +118,7 @@ public:
     void random_seeds(const QByteArray &data) const;
 
     //character
-    void newCharacterId(const quint32 &characterId) const;
+    void newCharacterId(const quint8 &returnCode,const quint32 &characterId) const;
     void haveCharacter() const;
     //events
     void setEvents(const QList<QPair<quint8,quint8> > &events) const;

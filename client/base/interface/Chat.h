@@ -3,7 +3,7 @@
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/base/Api_protocol.h"
+#include "../Api_protocol.h"
 
 #include <QWidget>
 #include <QTimer>

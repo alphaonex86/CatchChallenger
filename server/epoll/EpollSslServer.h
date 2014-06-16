@@ -27,11 +27,14 @@ public:
     void setNormalSettings(const NormalServerSettings &settings);
     NormalServerSettings getNormalSettings() const;
     void loadAndFixSettings();
+    void preload_finish();
+    bool isReady();
 private:
     int sfd;
     SSL_CTX *ctx;
     NormalServerSettings normalServerSettings;
     int yes;
+    bool ready;
 private:
     void initSslPart();
     SSL_CTX* InitServerCTX();

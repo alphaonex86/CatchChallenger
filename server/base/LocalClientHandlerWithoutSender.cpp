@@ -1,5 +1,6 @@
 #include "LocalClientHandlerWithoutSender.h"
-#include "LocalClientHandler.h"
+#include "MapServer.h"
+#include "Client.h"
 #include "GlobalServerData.h"
 
 using namespace CatchChallenger;
@@ -22,7 +23,7 @@ void LocalClientHandlerWithoutSender::doAllAction()
         const int &list_size=allClient.size();
         while(index<list_size)
         {
-            static_cast<LocalClientHandler*>(allClient.at(index))->savePosition();
+            static_cast<Client *>(allClient.at(index))->savePosition();
             index++;
         }
     }

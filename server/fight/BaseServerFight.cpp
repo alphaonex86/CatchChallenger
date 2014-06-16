@@ -1,4 +1,4 @@
-#include "BaseServerFight.h"
+#include "../base/BaseServer.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/DebugClass.h"
@@ -16,26 +16,14 @@
 
 using namespace CatchChallenger;
 
-QString BaseServerFight::text_list=QLatin1Literal("list");
-QString BaseServerFight::text_id=QLatin1Literal("id");
-QString BaseServerFight::text_monster=QLatin1Literal("monster");
-QString BaseServerFight::text_monsters=QLatin1Literal("monsters");
-QString BaseServerFight::text_drops=QLatin1Literal("drops");
-QString BaseServerFight::text_drop=QLatin1Literal("drop");
-QString BaseServerFight::text_item=QLatin1Literal("item");
-QString BaseServerFight::text_quantity_min=QLatin1Literal("quantity_min");
-QString BaseServerFight::text_quantity_max=QLatin1Literal("quantity_max");
-QString BaseServerFight::text_luck=QLatin1Literal("luck");
-QString BaseServerFight::text_percent=QLatin1Literal("percent");
-
-void BaseServerFight::preload_monsters_drops()
+void BaseServer::preload_monsters_drops()
 {
     GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+QLatin1String(DATAPACK_BASE_PATH_MONSTERS)+QLatin1String("monster.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
 
     DebugClass::debugConsole(QStringLiteral("%1 monster drop(s) loaded").arg(CommonDatapack::commonDatapack.monsters.size()));
 }
 
-void BaseServerFight::load_monsters_max_id()
+void BaseServer::load_monsters_max_id()
 {
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
@@ -51,14 +39,26 @@ void BaseServerFight::load_monsters_max_id()
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }
-    QSqlQuery maxMonsterIdQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!maxMonsterIdQuery.exec(queryText))
-        DebugClass::debugConsole(maxMonsterIdQuery.lastQuery()+": "+maxMonsterIdQuery.lastError().text());
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        preload_the_plant_on_map();
+    }
+    return;
+}
+
+void BaseServer::load_monsters_max_id_static(void *object)
+{
+    static_cast<BaseServer *>(object)->load_monsters_max_id_return();
+}
+
+void BaseServer::load_monsters_max_id_return()
+{
     GlobalServerData::serverPrivateVariables.maxMonsterId=0;
-    while(maxMonsterIdQuery.next())
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
-        GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterIdQuery.value(0).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
@@ -66,72 +66,10 @@ void BaseServerFight::load_monsters_max_id()
             continue;
         }
     }
+    preload_the_plant_on_map();
 }
 
-void BaseServerFight::check_monsters_map()
-{
-    return;//disable, do at loadtime
-/*    quint32 monstersChecked=0,zoneChecked=0;
-    int index;
-
-    QHashIterator<QString,CommonMap *> i(GlobalServerData::serverPrivateVariables.map_list);
-    while (i.hasNext()) {
-        i.next();
-        if(!i.value()->grassMonster.isEmpty())
-        {
-            monstersChecked+=i.value()->grassMonster.size();
-            zoneChecked++;
-            index=0;
-            while(index<i.value()->grassMonster.size())
-            {
-                if(!CommonDatapack::commonDatapack.monsters.contains(i.value()->grassMonster.at(index).id))
-                {
-                    DebugClass::debugConsole(QStringLiteral("drop grass monster for the map: %1; because the monster %2 don't exists").arg(i.key()).arg(i.value()->grassMonster.at(index).id));
-                    GlobalServerData::serverPrivateVariables.map_list[i.key()]->grassMonster.clear();
-                    break;
-                }
-                index++;
-            }
-        }
-        if(!i.value()->waterMonster.isEmpty())
-        {
-            monstersChecked+=i.value()->waterMonster.size();
-            zoneChecked++;
-            index=0;
-            while(index<i.value()->waterMonster.size())
-            {
-                if(!CommonDatapack::commonDatapack.monsters.contains(i.value()->waterMonster.at(index).id))
-                {
-                    DebugClass::debugConsole(QStringLiteral("drop water monster for the map: %1; because the monster %2 don't exists").arg(i.key()).arg(i.value()->waterMonster.at(index).id));
-                    GlobalServerData::serverPrivateVariables.map_list[i.key()]->waterMonster.clear();
-                    break;
-                }
-                index++;
-            }
-        }
-        if(!i.value()->caveMonster.isEmpty())
-        {
-            monstersChecked+=i.value()->caveMonster.size();
-            zoneChecked++;
-            index=0;
-            while(index<i.value()->grassMonster.size())
-            {
-                if(!CommonDatapack::commonDatapack.monsters.contains(i.value()->caveMonster.at(index).id))
-                {
-                    DebugClass::debugConsole(QStringLiteral("drop cave monster for the map: %1; because the monster %2 don't exists").arg(i.key()).arg(i.value()->caveMonster.at(index).id));
-                    GlobalServerData::serverPrivateVariables.map_list[i.key()]->caveMonster.clear();
-                    break;
-                }
-                index++;
-            }
-        }
-    }
-
-    DebugClass::debugConsole(QStringLiteral("%1 monster(s) into %2 zone(s) for %3 map(s) checked").arg(monstersChecked).arg(zoneChecked).arg(GlobalServerData::serverPrivateVariables.map_list.size()));*/
-
-}
-
-QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file, QHash<quint32,Item> items,const QHash<quint32,Monster> &monsters)
+QHash<quint32,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHash<quint32,Item> items,const QHash<quint32,Monster> &monsters)
 {
     QDomDocument domDocument;
     QMultiHash<quint32,MonsterDrops> monsterDrops;
@@ -159,7 +97,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=BaseServerFight::text_monsters)
+    if(root.tagName()!=BaseServer::text_monsters)
     {
         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"monsters\" root balise not found for the xml file").arg(file));
         return monsterDrops;
@@ -167,36 +105,36 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(BaseServerFight::text_monster);
+    QDomElement item = root.firstChildElement(BaseServer::text_monster);
     while(!item.isNull())
     {
         if(item.isElement())
         {
-            if(item.hasAttribute(BaseServerFight::text_id))
+            if(item.hasAttribute(BaseServer::text_id))
             {
-                const quint32 &id=item.attribute(BaseServerFight::text_id).toUInt(&ok);
+                const quint32 &id=item.attribute(BaseServer::text_id).toUInt(&ok);
                 if(!ok)
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else if(!monsters.contains(id))
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id into the monster list, skip: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
-                    QDomElement drops = item.firstChildElement(BaseServerFight::text_drops);
+                    QDomElement drops = item.firstChildElement(BaseServer::text_drops);
                     if(!drops.isNull())
                     {
                         if(drops.isElement())
                         {
-                            QDomElement drop = drops.firstChildElement(BaseServerFight::text_drop);
+                            QDomElement drop = drops.firstChildElement(BaseServer::text_drop);
                             while(!drop.isNull())
                             {
                                 if(drop.isElement())
                                 {
-                                    if(drop.hasAttribute(BaseServerFight::text_item))
+                                    if(drop.hasAttribute(BaseServer::text_item))
                                     {
                                         MonsterDrops dropVar;
-                                        if(drop.hasAttribute(BaseServerFight::text_quantity_min))
+                                        if(drop.hasAttribute(BaseServer::text_quantity_min))
                                         {
-                                            dropVar.quantity_min=drop.attribute(BaseServerFight::text_quantity_min).toUInt(&ok);
+                                            dropVar.quantity_min=drop.attribute(BaseServer::text_quantity_min).toUInt(&ok);
                                             if(!ok)
                                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_min is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                         }
@@ -204,9 +142,9 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                             dropVar.quantity_min=1;
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(BaseServerFight::text_quantity_max))
+                                            if(drop.hasAttribute(BaseServer::text_quantity_max))
                                             {
-                                                dropVar.quantity_max=drop.attribute(BaseServerFight::text_quantity_max).toUInt(&ok);
+                                                dropVar.quantity_max=drop.attribute(BaseServer::text_quantity_max).toUInt(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_max is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                             }
@@ -239,10 +177,10 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                         }
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(BaseServerFight::text_luck))
+                                            if(drop.hasAttribute(BaseServer::text_luck))
                                             {
-                                                QString luck=drop.attribute(BaseServerFight::text_luck);
-                                                luck.remove(BaseServerFight::text_percent);
+                                                QString luck=drop.attribute(BaseServer::text_luck);
+                                                luck.remove(BaseServer::text_percent);
                                                 dropVar.luck=luck.toUShort(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
@@ -265,9 +203,9 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                         }
                                         if(ok)
                                         {
-                                            if(drop.hasAttribute(BaseServerFight::text_item))
+                                            if(drop.hasAttribute(BaseServer::text_item))
                                             {
-                                                dropVar.item=drop.attribute(BaseServerFight::text_item).toUInt(&ok);
+                                                dropVar.item=drop.attribute(BaseServer::text_item).toUInt(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                             }
@@ -304,7 +242,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                 }
                                 else
                                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                drop = drop.nextSiblingElement(BaseServerFight::text_drop);
+                                drop = drop.nextSiblingElement(BaseServer::text_drop);
                             }
                         }
                         else
@@ -317,12 +255,12 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
         }
         else
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(BaseServerFight::text_monster);
+        item = item.nextSiblingElement(BaseServer::text_monster);
     }
     return monsterDrops;
 }
 
-void BaseServerFight::unload_monsters_drops()
+void BaseServer::unload_monsters_drops()
 {
     GlobalServerData::serverPrivateVariables.monsterDrops.clear();
 }

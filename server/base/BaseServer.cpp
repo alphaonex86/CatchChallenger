@@ -3,7 +3,11 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/DatapackGeneralLoader.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
+#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
+#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 #include "LocalClientHandlerWithoutSender.h"
 #include "ClientNetworkReadWithoutSender.h"
 
@@ -47,6 +51,21 @@ QString BaseServer::text_id=QLatin1String("id");
 QString BaseServer::text_name=QLatin1String("name");
 QString BaseServer::text_step=QLatin1String("step");
 QString BaseServer::text_arrow=QLatin1String("->");
+QString BaseServer::text_dottmx=QLatin1Literal(".tmx");
+QString BaseServer::text_shops=QLatin1Literal("shops");
+QString BaseServer::text_product=QLatin1Literal("product");
+QString BaseServer::text_itemId=QLatin1Literal("itemId");
+QString BaseServer::text_overridePrice=QLatin1Literal("overridePrice");
+QString BaseServer::text_list=QLatin1Literal("list");
+QString BaseServer::text_monster=QLatin1Literal("monster");
+QString BaseServer::text_monsters=QLatin1Literal("monsters");
+QString BaseServer::text_drops=QLatin1Literal("drops");
+QString BaseServer::text_drop=QLatin1Literal("drop");
+QString BaseServer::text_item=QLatin1Literal("item");
+QString BaseServer::text_quantity_min=QLatin1Literal("quantity_min");
+QString BaseServer::text_quantity_max=QLatin1Literal("quantity_max");
+QString BaseServer::text_luck=QLatin1Literal("luck");
+QString BaseServer::text_percent=QLatin1Literal("percent");
 
 BaseServer::BaseServer() :
     stat(Down),
@@ -54,30 +73,10 @@ BaseServer::BaseServer() :
 {
     ProtocolParsing::initialiseTheVariable();
 
-    qRegisterMetaType<Chat_type>("Chat_type");
-    qRegisterMetaType<Player_internal_informations>("Player_internal_informations");
-    qRegisterMetaType<QList<quint64> >("QList<quint64>");
-    qRegisterMetaType<Orientation>("Orientation");
-    qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
-    qRegisterMetaType<Chat_type>("Chat_type");
-    qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
-    qRegisterMetaType<Map_server_MapVisibility_Simple_StoreOnReceiver*>("Map_server_MapVisibility_simple*");
-    qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
-    qRegisterMetaType<QSqlQuery>("QSqlQuery");
-    qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");
-    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
-    qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
-    qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
-    qRegisterMetaType<Direction>("Direction");
-    qRegisterMetaType<QuestAction>("QuestAction");
-    qRegisterMetaType<QList<QPair<quint32,qint32> > >("QList<QPair<quint32,qint32> >");
-    qRegisterMetaType<QList<qint32> >("QList<quint32>");
-
     ProtocolParsing::compressionType                                = ProtocolParsing::CompressionType_Zlib;
 
     GlobalServerData::serverPrivateVariables.connected_players      = 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
-    GlobalServerData::serverPrivateVariables.db                     = NULL;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.timer_city_capture     = NULL;
     #endif
@@ -125,13 +124,11 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithmSelection_Simple;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
-    GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender         = true;
     GlobalServerData::serverSettings.mapVisibility.simple.reemit                = true;
     GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder     = 20;
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder  = 10;
     GlobalServerData::serverSettings.mapVisibility.withBorder.max               = 30;
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshow            = 20;
-    GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender     = true;
     GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue      = 3;
     GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval       = 5;
     GlobalServerData::serverSettings.ddos.kickLimitMove                         = 60;
@@ -145,15 +142,7 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
     GlobalServerData::serverSettings.city.capture.minute                        = 0;
 
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    connect(&QFakeServer::server,&QFakeServer::newConnection,this,&BaseServer::newConnection,       Qt::QueuedConnection);
-    connect(this,&BaseServer::need_be_started,              this,&BaseServer::start_internal_server,Qt::QueuedConnection);
-    connect(this,&BaseServer::try_stop_server,              this,&BaseServer::stop_internal_server, Qt::QueuedConnection);
-    connect(this,&BaseServer::try_initAll,                  this,&BaseServer::initAll,              Qt::QueuedConnection);
-    /*emit */try_initAll();
-    #else
     initAll();
-    #endif
 
     srand(time(NULL));
 }
@@ -161,7 +150,7 @@ BaseServer::BaseServer() :
 #ifndef EPOLLCATCHCHALLENGERSERVER
 void BaseServer::start()
 {
-    /*emit */need_be_started();
+    need_be_started();
 }
 #endif
 
@@ -170,43 +159,24 @@ void BaseServer::start()
 BaseServer::~BaseServer()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    GlobalServerData::serverPrivateVariables.eventThreaderList.clear();
-    #endif
     closeDB();
 }
 
 void BaseServer::closeDB()
 {
-    if(GlobalServerData::serverPrivateVariables.db!=NULL)
-    {
-        GlobalServerData::serverPrivateVariables.db->commit();
-        GlobalServerData::serverPrivateVariables.db->close();
-        QString connectionName=GlobalServerData::serverPrivateVariables.db->connectionName();
-        delete GlobalServerData::serverPrivateVariables.db;
-        GlobalServerData::serverPrivateVariables.db=NULL;
-        QSqlDatabase::removeDatabase(connectionName);
-    }
+    GlobalServerData::serverPrivateVariables.db.syncDisconnect();
 }
 
 void BaseServer::initAll()
 {
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-void BaseServer::moveToThreadForContructor()
-{
-    GlobalServerData::serverPrivateVariables.player_updater.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
-    BroadCastWithoutSender::broadCastWithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
-    MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(1));
-    LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(4));
-}
-#endif
-
 //////////////////////////////////////////// server starting //////////////////////////////////////
 
 void BaseServer::preload_the_data()
 {
+    DebugClass::debugConsole(QStringLiteral("Preload data for server version %1").arg(CATCHCHALLENGER_VERSION));
+
     if(dataLoaded)
         return;
     dataLoaded=true;
@@ -218,23 +188,28 @@ void BaseServer::preload_the_data()
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
         qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
     }
-    QTime time;
-    time.restart();
-    preload_the_events(),
+    timeDatapack.restart();
+    preload_the_randomData();
+    preload_the_events();
     preload_the_ddos();
     preload_the_datapack();
     preload_the_skin();
     preload_shop();
     preload_the_players();
     preload_monsters_drops();
-    load_monsters_max_id();
     preload_the_map();
-    preload_the_plant_on_map();
-    check_monsters_map();
     preload_the_visibility_algorithm();
-    load_clan_max_id();
     preload_the_city_capture();
     preload_zone();
+    qDebug() << QStringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
+    timeDatapack.restart();
+
+    //start SQL load
+    load_monsters_max_id();
+    /* old code:
+    load_monsters_max_id();
+    preload_the_plant_on_map();
+    load_clan_max_id();
     preload_industries();
     preload_market_monsters();
     preload_market_items();
@@ -243,6 +218,7 @@ void BaseServer::preload_the_data()
     if(CommonSettings::commonSettings.max_character)
         load_character_max_id();
     qDebug() << QStringLiteral("Loaded the server datapack into %1ms").arg(time.elapsed());
+    */
 }
 
 void BaseServer::preload_the_events()
@@ -256,48 +232,58 @@ void BaseServer::preload_the_events()
     }
 }
 
+void BaseServer::preload_the_randomData()
+{
+    GlobalServerData::serverPrivateVariables.randomData.clear();
+    QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
+    randomDataStream.setVersion(QDataStream::Qt_4_4);
+    int index=0;
+    while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+    {
+        randomDataStream << quint8(rand()%256);
+        index++;
+    }
+}
+
 void BaseServer::preload_the_ddos()
 {
     unload_the_ddos();
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        ClientBroadCast::generalChatDrop << 0;
-        ClientBroadCast::clanChatDrop << 0;
-        ClientBroadCast::privateChatDrop << 0;
+        Client::generalChatDrop << 0;
+        Client::clanChatDrop << 0;
+        Client::privateChatDrop << 0;
         index++;
     }
-    ClientBroadCast::generalChatDropTotalCache=0;
-    ClientBroadCast::generalChatDropNewValue=0;
-    ClientBroadCast::clanChatDropTotalCache=0;
-    ClientBroadCast::clanChatDropNewValue=0;
-    ClientBroadCast::privateChatDropTotalCache=0;
-    ClientBroadCast::privateChatDropNewValue=0;
+    Client::generalChatDropTotalCache=0;
+    Client::generalChatDropNewValue=0;
+    Client::clanChatDropTotalCache=0;
+    Client::clanChatDropNewValue=0;
+    Client::privateChatDropTotalCache=0;
+    Client::privateChatDropNewValue=0;
 }
 
-void BaseServer::preload_zone()
+void BaseServer::preload_zone_init()
 {
-    //open and quick check the file
-    QFileInfoList entryList(QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
-    int index=0;
-    const int &listsize=entryList.size();
-    while(index<listsize)
+    const int &listsize=entryListZone.size();
+    while(entryListIndex<listsize)
     {
-        if(!entryList.at(index).isFile())
+        if(!entryListZone.at(entryListIndex).isFile())
         {
-            index++;
+            entryListIndex++;
             continue;
         }
-        if(!entryList.at(index).fileName().contains(regexXmlFile))
+        if(!entryListZone.at(entryListIndex).fileName().contains(regexXmlFile))
         {
-            qDebug() << QStringLiteral("%1 the zone file name not match").arg(entryList.at(index).fileName());
-            index++;
+            qDebug() << QStringLiteral("%1 the zone file name not match").arg(entryListZone.at(entryListIndex).fileName());
+            entryListIndex++;
             continue;
         }
-        QString zoneCodeName(entryList.at(index).fileName());
+        zoneCodeName=entryListZone.at(entryListIndex).fileName();
         zoneCodeName.remove(BaseServer::text_dotxml);
         QDomDocument domDocument;
-        const QString &file=entryList.at(index).absoluteFilePath();
+        const QString &file=entryListZone.at(entryListIndex).absoluteFilePath();
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
@@ -307,7 +293,7 @@ void BaseServer::preload_zone()
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
-                index++;
+                entryListIndex++;
                 continue;
             }
             xmlContent=itemsFile.readAll();
@@ -317,7 +303,7 @@ void BaseServer::preload_zone()
             if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
-                index++;
+                entryListIndex++;
                 continue;
             }
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
@@ -325,14 +311,14 @@ void BaseServer::preload_zone()
         if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(zoneCodeName))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, zone code name already found");
-            index++;
+            entryListIndex++;
             continue;
         }
         QDomElement root(domDocument.documentElement());
         if(root.tagName()!=BaseServer::text_zone)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
-            index++;
+            entryListIndex++;
             continue;
         }
 
@@ -380,25 +366,47 @@ void BaseServer::preload_zone()
                 queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
             break;
         }
-        QSqlQuery cityStatusQuery(*GlobalServerData::serverPrivateVariables.db);
-        if(!cityStatusQuery.exec(queryText))
-            DebugClass::debugConsole(cityStatusQuery.lastQuery()+": "+cityStatusQuery.lastError().text());
-        if(cityStatusQuery.next())
+        if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static))
         {
-            bool ok;
-            const quint32 &clanId=cityStatusQuery.value(0).toUInt(&ok);
-            if(ok)
-            {
-                GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
-                GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
-            }
-            else
-                DebugClass::debugConsole(QStringLiteral("clan id is failed to convert to number for city status"));
+            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+            entryListIndex++;
         }
-        index++;
+        else
+            return;
     }
 
     qDebug() << QStringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
+}
+
+void BaseServer::preload_zone()
+{
+    //open and quick check the file
+    entryListZone=QFileInfoList(QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
+    entryListIndex=0;
+    preload_zone_init();
+}
+
+void BaseServer::preload_zone_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_zone_return();
+}
+
+void BaseServer::preload_zone_return()
+{
+    if(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        bool ok;
+        const quint32 &clanId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(ok)
+        {
+            GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
+            GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("clan id is failed to convert to number for city status"));
+    }
+    entryListIndex++;
+    preload_zone_init();
 }
 
 void BaseServer::preload_industries()
@@ -417,14 +425,25 @@ void BaseServer::preload_industries()
             queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
     }
-    QSqlQuery industryStatusQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!industryStatusQuery.exec(queryText))
-        DebugClass::debugConsole(industryStatusQuery.lastQuery()+": "+industryStatusQuery.lastError().text());
-    while(industryStatusQuery.next())
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        preload_market_monsters();
+    }
+}
+
+void BaseServer::preload_industries_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_industries_return();
+}
+
+void BaseServer::preload_industries_return()
+{
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         IndustryStatus industryStatus;
         bool ok;
-        quint32 id=industryStatusQuery.value(0).toUInt(&ok);
+        quint32 id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
             DebugClass::debugConsole(QStringLiteral("preload_industries: id is not a number"));
         if(ok)
@@ -437,7 +456,7 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            const QStringList &resourcesStringList=industryStatusQuery.value(1).toString().split(BaseServer::text_dotcomma);
+            const QStringList &resourcesStringList=QString(GlobalServerData::serverPrivateVariables.db.value(1)).split(BaseServer::text_dotcomma);
             int index=0;
             const int &listsize=resourcesStringList.size();
             while(index<listsize)
@@ -490,7 +509,7 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            const QStringList &productsStringList=industryStatusQuery.value(2).toString().split(BaseServer::text_dotcomma);
+            const QStringList &productsStringList=QString(GlobalServerData::serverPrivateVariables.db.value(2)).split(BaseServer::text_dotcomma);
             int index=0;
             const int &listsize=productsStringList.size();
             while(index<listsize)
@@ -543,186 +562,182 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            industryStatus.last_update=industryStatusQuery.value(3).toUInt(&ok);
+            industryStatus.last_update=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
             if(!ok)
                 DebugClass::debugConsole(QStringLiteral("preload_industries: last_update is not a number"));
         }
         if(ok)
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
-        else
-        {
-            QString queryText;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QStringLiteral("DELETE FROM `industries` WHERE `id`='%1'").arg(industryStatusQuery.value(0).toString());
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    queryText=QStringLiteral("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    queryText=QStringLiteral("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
-                break;
-            }
-            QSqlQuery industryDeleteQuery(*GlobalServerData::serverPrivateVariables.db);
-            if(!industryDeleteQuery.exec(queryText))
-                DebugClass::debugConsole(industryDeleteQuery.lastQuery()+": "+industryDeleteQuery.lastError().text());
-        }
     }
     qDebug() << QStringLiteral("%1 industrie(s) status loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size());
+    preload_market_monsters();
 }
 
 void BaseServer::preload_market_monsters()
-{    QString queryText;
-     switch(GlobalServerData::serverSettings.database.type)
-     {
-         default:
-         case ServerSettings::Database::DatabaseType_Mysql:
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster` WHERE `place`='market' ORDER BY `position` ASC");
-         break;
-         case ServerSettings::Database::DatabaseType_SQLite:
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster WHERE place='market' ORDER BY position ASC");
-         break;
-         case ServerSettings::Database::DatabaseType_PostgreSQL:
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster WHERE place='market' ORDER BY position ASC");
-         break;
-     }
-     bool ok;
-     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
-     if(!monstersQuery.exec(queryText))
-         DebugClass::debugConsole(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
-     while(monstersQuery.next())
-     {
-         MarketPlayerMonster marketPlayerMonster;
-         PlayerMonster playerMonster;
-         playerMonster.id=monstersQuery.value(0).toUInt(&ok);
-         if(!ok)
-             DebugClass::debugConsole(QStringLiteral("monsterId: %1 is not a number").arg(monstersQuery.value(0).toString()));
-         if(ok)
-         {
-             playerMonster.monster=monstersQuery.value(2).toUInt(&ok);
-             if(ok)
-             {
-                 if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
-                 {
-                     ok=false;
-                     DebugClass::debugConsole(QStringLiteral("monster: %1 is not into monster list").arg(playerMonster.monster));
-                 }
-             }
-             else
-                 DebugClass::debugConsole(QStringLiteral("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
-         }
-         if(ok)
-         {
-             playerMonster.level=monstersQuery.value(3).toUInt(&ok);
-             if(ok)
-             {
-                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                 {
-                     DebugClass::debugConsole(QStringLiteral("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
-                     playerMonster.level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                 }
-             }
-             else
-                 DebugClass::debugConsole(QStringLiteral("level: %1 is not a number").arg(monstersQuery.value(3).toString()));
-         }
-         if(ok)
-         {
-             playerMonster.remaining_xp=monstersQuery.value(4).toUInt(&ok);
-             if(ok)
-             {
-                 if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1))
-                 {
-                     DebugClass::debugConsole(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1)));
-                     playerMonster.remaining_xp=0;
-                 }
-             }
-             else
-                 DebugClass::debugConsole(QStringLiteral("monster xp: %1 is not a number").arg(monstersQuery.value(4).toString()));
-         }
-         if(ok)
-         {
-             playerMonster.sp=monstersQuery.value(5).toUInt(&ok);
-             if(!ok)
-                 DebugClass::debugConsole(QStringLiteral("monster sp: %1 is not a number").arg(monstersQuery.value(5).toString()));
-         }
-         if(ok)
-         {
-             playerMonster.catched_with=monstersQuery.value(6).toUInt(&ok);
-             if(ok)
-             {
-                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
-                     DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
-             }
-             else
-                 DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));
-         }
-         if(ok)
-         {
-             if(monstersQuery.value(7).toString()==BaseServer::text_male)
-                 playerMonster.gender=Gender_Male;
-             else if(monstersQuery.value(7).toString()==BaseServer::text_female)
-                 playerMonster.gender=Gender_Female;
-             else if(monstersQuery.value(7).toString()==BaseServer::text_unknown)
-                 playerMonster.gender=Gender_Unknown;
-             else
-             {
-                 playerMonster.gender=Gender_Unknown;
-                 DebugClass::debugConsole(QStringLiteral("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
-                 ok=false;
-             }
-         }
-         if(ok)
-         {
-             playerMonster.egg_step=monstersQuery.value(8).toUInt(&ok);
-             if(!ok)
-                 DebugClass::debugConsole(QStringLiteral("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
-         }
-         if(ok)
-             marketPlayerMonster.player=monstersQuery.value(9).toUInt(&ok);
-         if(ok)
-             marketPlayerMonster.cash=monstersQuery.value(10).toULongLong(&ok);
-         //stats
-         if(ok)
-         {
-             playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
-             if(ok)
-             {
-                 const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster),playerMonster.level);
-                 if(playerMonster.hp>stat.hp)
-                 {
-                     DebugClass::debugConsole(QStringLiteral("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
-                                  .arg(playerMonster.hp)
-                                  .arg(stat.hp)
-                                  .arg(playerMonster.level)
-                                  .arg(playerMonster.monster)
-                                  );
-                     playerMonster.hp=stat.hp;
-                 }
-             }
-             else
-                 DebugClass::debugConsole(QStringLiteral("monster hp: %1 is not a number").arg(monstersQuery.value(1).toString()));
-         }
-         //finish it
-         if(ok)
-         {
-             playerMonster.buffs=loadMonsterBuffs(playerMonster.id);
-             playerMonster.skills=loadMonsterSkills(playerMonster.id);
-             marketPlayerMonster.monster=playerMonster;
-             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
-         }
-     }
+        break;
+    }
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        preload_market_items();
+    }
+}
+
+void BaseServer::preload_market_monsters_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_market_monsters_return();
+}
+
+void BaseServer::preload_market_monsters_return()
+{
+    bool ok;
+    while(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        MarketPlayerMonster marketPlayerMonster;
+        PlayerMonster playerMonster;
+        playerMonster.id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(!ok)
+            DebugClass::debugConsole(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
+        if(ok)
+        {
+            playerMonster.monster=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+            if(ok)
+            {
+                if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
+                {
+                    ok=false;
+                    DebugClass::debugConsole(QStringLiteral("monster: %1 is not into monster list").arg(playerMonster.monster));
+                }
+            }
+            else
+            DebugClass::debugConsole(QStringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
+        }
+        if(ok)
+        {
+            playerMonster.level=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
+            if(ok)
+            {
+                if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                {
+                    DebugClass::debugConsole(QStringLiteral("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+                    playerMonster.level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+                }
+            }
+            else
+                DebugClass::debugConsole(QStringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(3)));
+        }
+        if(ok)
+        {
+            playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db.value(4)).toUInt(&ok);
+            if(ok)
+            {
+                if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1))
+                {
+                    DebugClass::debugConsole(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1)));
+                    playerMonster.remaining_xp=0;
+                }
+            }
+            else
+                DebugClass::debugConsole(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(4)));
+        }
+        if(ok)
+        {
+            playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
+            if(!ok)
+                DebugClass::debugConsole(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+        }
+        if(ok)
+        {
+            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toUInt(&ok);
+            if(ok)
+            {
+                if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
+                    DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
+            }
+            else
+                DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(6)));
+        }
+        if(ok)
+        {
+            const QString &value=QString(GlobalServerData::serverPrivateVariables.db.value(7));
+            if(value==BaseServer::text_male)
+                playerMonster.gender=Gender_Male;
+            else if(value==BaseServer::text_female)
+                playerMonster.gender=Gender_Female;
+            else if(value==BaseServer::text_unknown)
+                playerMonster.gender=Gender_Unknown;
+            else
+            {
+                playerMonster.gender=Gender_Unknown;
+                DebugClass::debugConsole(QStringLiteral("unknown monster gender: %1").arg(value));
+                ok=false;
+            }
+        }
+        if(ok)
+        {
+            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8)).toUInt(&ok);
+            if(!ok)
+                DebugClass::debugConsole(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8)));
+        }
+        if(ok)
+            marketPlayerMonster.player=QString(GlobalServerData::serverPrivateVariables.db.value(9)).toUInt(&ok);
+        if(ok)
+            marketPlayerMonster.cash=QString(GlobalServerData::serverPrivateVariables.db.value(10)).toULongLong(&ok);
+        //stats
+        if(ok)
+        {
+            playerMonster.hp=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+            if(ok)
+            {
+                const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster),playerMonster.level);
+                if(playerMonster.hp>stat.hp)
+                {
+                    DebugClass::debugConsole(QStringLiteral("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
+                    .arg(playerMonster.hp)
+                    .arg(stat.hp)
+                    .arg(playerMonster.level)
+                    .arg(playerMonster.monster)
+                    );
+                    playerMonster.hp=stat.hp;
+                }
+            }
+            else
+            DebugClass::debugConsole(QStringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(1)));
+        }
+        //finish it
+        if(ok)
+        {
+            marketPlayerMonster.monster=playerMonster;
+            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
+        }
+    }
+    if(!GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.isEmpty())
+        loadMonsterBuffs(0);
+    else
+        preload_market_items();
 }
 
 void BaseServer::preload_market_items()
 {
-    LocalClientHandler::marketObjectIdList.clear();
-    LocalClientHandler::marketObjectIdList.reserve(65535);
+    Client::marketObjectIdList.clear();
+    Client::marketObjectIdList.reserve(65535);
     int index=0;
     while(index<=65535)
     {
-        LocalClientHandler::marketObjectIdList << index;
+        Client::marketObjectIdList << index;
         index++;
     }
     //do the query
@@ -740,75 +755,115 @@ void BaseServer::preload_market_items()
             queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item WHERE place='market'");
         break;
     }
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        if(GlobalServerData::serverSettings.automatic_account_creation)
+            load_account_max_id();
+        else if(CommonSettings::commonSettings.max_character)
+            load_character_max_id();
+        else
+            preload_finish();
+    }
+}
+
+void BaseServer::preload_market_items_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_market_items_return();
+}
+
+void BaseServer::preload_market_items_return()
+{
     bool ok;
-    QSqlQuery itemQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!itemQuery.exec(queryText))
-        DebugClass::debugConsole(itemQuery.lastQuery()+": "+itemQuery.lastError().text());
     //parse the result
-    while(itemQuery.next())
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         MarketItem marketItem;
-        marketItem.item=itemQuery.value(0).toUInt(&ok);
+        marketItem.item=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("item id is not a number, skip"));
             continue;
         }
-        marketItem.quantity=itemQuery.value(1).toUInt(&ok);
+        marketItem.quantity=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("quantity is not a number, skip"));
             continue;
         }
-        marketItem.player=itemQuery.value(2).toUInt(&ok);
+        marketItem.player=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("player id is not a number, skip"));
             continue;
         }
-        marketItem.cash=itemQuery.value(3).toULongLong(&ok);
+        marketItem.cash=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("cash is not a number, skip"));
             continue;
         }
-        if(LocalClientHandler::marketObjectIdList.isEmpty())
+        if(Client::marketObjectIdList.isEmpty())
         {
             DebugClass::debugConsole(QStringLiteral("not more marketObjectId into the list, skip"));
             return;
         }
-        marketItem.marketObjectId=LocalClientHandler::marketObjectIdList.first();
-        LocalClientHandler::marketObjectIdList.removeFirst();
+        marketItem.marketObjectId=Client::marketObjectIdList.first();
+        Client::marketObjectIdList.removeFirst();
         GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
     }
+    if(GlobalServerData::serverSettings.automatic_account_creation)
+        load_account_max_id();
+    else if(CommonSettings::commonSettings.max_character)
+        load_character_max_id();
+    else
+        preload_finish();
 }
 
-QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
+void BaseServer::loadMonsterBuffs(const quint32 &index)
 {
-    QList<PlayerBuff> buffs;
+    entryListIndex=index;
+    if(index>=(quint32)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
+    {
+        loadMonsterSkills(0);
+        return;
+    }
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(index);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(index);
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(index);
         break;
     }
 
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterBuffs_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        loadMonsterSkills(0);
+    }
+}
+
+void BaseServer::loadMonsterBuffs_static(void *object)
+{
+    static_cast<BaseServer *>(object)->loadMonsterBuffs_return();
+}
+
+void BaseServer::loadMonsterBuffs_return()
+{
+    const quint32 &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
+    QList<PlayerBuff> buffs;
     bool ok;
-    QSqlQuery monsterBuffsQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!monsterBuffsQuery.exec(queryText))
-        DebugClass::debugConsole(monsterBuffsQuery.lastQuery()+": "+monsterBuffsQuery.lastError().text());
-    while(monsterBuffsQuery.next())
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         PlayerBuff buff;
-        buff.buff=monsterBuffsQuery.value(0).toUInt(&ok);
+        buff.buff=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(ok)
         {
             if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
@@ -818,10 +873,10 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
             }
         }
         else
-            DebugClass::debugConsole(QStringLiteral("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
+            DebugClass::debugConsole(QStringLiteral("buff id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
         if(ok)
         {
-            buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
+            buff.level=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
             if(ok)
             {
                 if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.size())
@@ -831,7 +886,7 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
+                DebugClass::debugConsole(QStringLiteral("buff level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
         }
         if(ok)
         {
@@ -844,35 +899,52 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
         if(ok)
             buffs << buff;
     }
-    return buffs;
+    loadMonsterBuffs(entryListIndex+1);
 }
 
-QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &monsterId)
+void BaseServer::loadMonsterSkills(const quint32 &index)
 {
-    QList<PlayerMonster::PlayerSkill> skills;
+    entryListIndex=index;
+    if(index>=(quint32)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
+    {
+        preload_market_items();
+        return;
+    }
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(index);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(index);
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(index);
         break;
     }
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterSkills_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        preload_market_items();
+    }
+}
 
+void BaseServer::loadMonsterSkills_static(void *object)
+{
+    static_cast<BaseServer *>(object)->loadMonsterSkills_return();
+}
+
+void BaseServer::loadMonsterSkills_return()
+{
+    const quint32 &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
+    QList<PlayerMonster::PlayerSkill> skills;
     bool ok;
-    QSqlQuery monsterSkillsQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!monsterSkillsQuery.exec(queryText))
-        DebugClass::debugConsole(monsterSkillsQuery.lastQuery()+": "+monsterSkillsQuery.lastError().text());
-    while(monsterSkillsQuery.next())
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         PlayerMonster::PlayerSkill skill;
-        skill.skill=monsterSkillsQuery.value(0).toUInt(&ok);
+        skill.skill=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(ok)
         {
             if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
@@ -882,10 +954,10 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
             }
         }
         else
-            DebugClass::debugConsole(QStringLiteral("skill id: %1 is not a number").arg(monsterSkillsQuery.value(0).toString()));
+            DebugClass::debugConsole(QStringLiteral("skill id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
         if(ok)
         {
-            skill.level=monsterSkillsQuery.value(1).toUInt(&ok);
+            skill.level=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
             if(ok)
             {
                 if(skill.level>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.size())
@@ -895,11 +967,11 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
+                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(1)));
         }
         if(ok)
         {
-            skill.endurance=monsterSkillsQuery.value(2).toUInt(&ok);
+            skill.endurance=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
             if(ok)
             {
                 if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance)
@@ -910,12 +982,12 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
+                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
         }
         if(ok)
             skills << skill;
     }
-    return skills;
+    loadMonsterSkills(entryListIndex+1);
 }
 
 void BaseServer::preload_the_city_capture()
@@ -925,8 +997,6 @@ void BaseServer::preload_the_city_capture()
         delete GlobalServerData::serverPrivateVariables.timer_city_capture;
     GlobalServerData::serverPrivateVariables.timer_city_capture=new QTimer();
     GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);
-    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&BaseServer::load_next_city_capture,Qt::QueuedConnection);
-    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,&LocalClientHandler::startTheCityCapture);
     #endif
     load_next_city_capture();
 }
@@ -947,12 +1017,14 @@ void BaseServer::preload_the_map()
     int size=returnList.size();
     int index=0;
     int sub_index;
+    QString tmxRemove(".tmx");
     QRegularExpression mapFilter(QLatin1String("\\.tmx$"));
+    QRegularExpression mapExclude(QLatin1String("[\"']"));
     while(index<size)
     {
         QString fileName=returnList.at(index);
         fileName.replace(BaseServer::text_antislash,BaseServer::text_slash);
-        if(fileName.contains(mapFilter))
+        if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             DebugClass::debugConsole(QStringLiteral("load the map: %1").arg(fileName));
@@ -963,16 +1035,10 @@ void BaseServer::preload_the_map()
                 switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithmSelection_Simple:
-                        if(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
-                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_Simple_StoreOnSender;
-                        else
-                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_Simple_StoreOnReceiver;
+                        GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_Simple_StoreOnSender;
                     break;
                     case MapVisibilityAlgorithmSelection_WithBorder:
-                        if(GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender)
-                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_WithBorder_StoreOnSender;
-                        else
-                            GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_WithBorder_StoreOnReceiver;
+                        GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_WithBorder_StoreOnSender;
                     break;
                     case MapVisibilityAlgorithmSelection_None:
                     default:
@@ -985,6 +1051,7 @@ void BaseServer::preload_the_map()
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer	= map_temp.map_to_send.parsed_layer;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file		= fileName;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file.remove(tmxRemove);
 
                 map_name << fileName;
 
@@ -1290,26 +1357,22 @@ void BaseServer::preload_the_skin()
 void BaseServer::preload_the_datapack()
 {
     QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED+BaseServer::text_dotcomma+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
-    ClientHeavyLoad::extensionAllowed=extensionAllowedTemp.toSet();
+    Client::extensionAllowed=extensionAllowedTemp.toSet();
     QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
-    ClientHeavyLoad::compressedExtension=compressedExtensionAllowedTemp.toSet();
-    ClientHeavyLoad::datapack_list_cache_timestamp=0;
+    Client::compressedExtension=compressedExtensionAllowedTemp.toSet();
+    Client::datapack_list_cache_timestamp=0;
 }
 
 void BaseServer::preload_the_players()
 {
-    ClientHeavyLoad::simplifiedIdList.clear();
-    LocalClientHandler::marketObjectIdList.reserve(GlobalServerData::serverSettings.max_players);
+    Client::simplifiedIdList.clear();
+    Client::marketObjectIdList.reserve(GlobalServerData::serverSettings.max_players);
     int index=0;
     while(index<GlobalServerData::serverSettings.max_players)
     {
-        ClientHeavyLoad::simplifiedIdList << index;
+        Client::simplifiedIdList << index;
         index++;
     }
-
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    connect(&GlobalServerData::serverPrivateVariables.player_updater,&PlayerUpdater::newConnectedPlayer,&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::receive_instant_player_number,Qt::QueuedConnection);
-    #endif
 }
 
 void BaseServer::preload_the_visibility_algorithm()
@@ -1329,7 +1392,6 @@ void BaseServer::preload_the_visibility_algorithm()
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new QTimer();
-        connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,&MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender,&MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer,Qt::QueuedConnection);
         #else
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new TimerSendInsertMoveRemove();
         #endif
@@ -1340,40 +1402,13 @@ void BaseServer::preload_the_visibility_algorithm()
         break;
     }
 
-    QHash<QString,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
-    QHash<QString,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithmSelection_Simple:
-        if(!GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
-            while (i != i_end)
-            {
-                static_cast<Map_server_MapVisibility_Simple_StoreOnReceiver *>(i.value())->show=true;
-                i++;
-            }
+            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple"));
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
-        if(!GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender)
-            while (i != i_end)
-            {
-                static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver *>(i.value())->show=true;
-                static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver *>(i.value())->showWithBorder=true;
-                static_cast<Map_server_MapVisibility_WithBorder_StoreOnReceiver *>(i.value())->clientsOnBorder=0;
-                i++;
-            }
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-        default:
-        break;
-    }
-
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        case MapVisibilityAlgorithmSelection_Simple:
-            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple, storeOnSender: %1").arg(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender));
-        break;
-        case MapVisibilityAlgorithmSelection_WithBorder:
-            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple, storeOnSender: %1").arg(GlobalServerData::serverSettings.mapVisibility.withBorder.storeOnSender));
+            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple"));
         break;
         case MapVisibilityAlgorithmSelection_None:
             DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_None"));
@@ -1589,6 +1624,10 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     DebugClass::debugConsole(QStringLiteral("%1 bots(s) on map loaded").arg(bots_number));
 }
 
+void BaseServer::preload_finish()
+{
+}
+
 void BaseServer::load_next_city_capture()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1604,29 +1643,35 @@ void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
 
 bool BaseServer::initialize_the_database()
 {
-    if(GlobalServerData::serverPrivateVariables.db!=NULL)
+    if(GlobalServerData::serverPrivateVariables.db.isConnected())
     {
-        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2 (%3), previous connection: %4")
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
                                  .arg(GlobalServerData::serverPrivateVariables.db_type_string)
                                  .arg(GlobalServerData::serverSettings.database.mysql.host)
-                                 .arg(GlobalServerData::serverPrivateVariables.db->isOpen())
-                                 .arg(QSqlDatabase::connectionNames().join(";"))
                                  );
-        closeDB();
+        GlobalServerData::serverPrivateVariables.db.syncDisconnect();
     }
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case ServerSettings::Database::DatabaseType_Mysql:
-        GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL","server");
-        GlobalServerData::serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
-        GlobalServerData::serverPrivateVariables.db->setHostName(GlobalServerData::serverSettings.database.mysql.host);
-        GlobalServerData::serverPrivateVariables.db->setDatabaseName(GlobalServerData::serverSettings.database.mysql.db);
-        GlobalServerData::serverPrivateVariables.db->setUserName(GlobalServerData::serverSettings.database.mysql.login);
-        GlobalServerData::serverPrivateVariables.db->setPassword(GlobalServerData::serverSettings.database.mysql.pass);
+        if(!GlobalServerData::serverPrivateVariables.db.syncConnectMysql(
+                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
+                    ))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(GlobalServerData::serverPrivateVariables.db_type_string)
+                                     .arg(GlobalServerData::serverSettings.database.mysql.host));
         GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("mysql");
 
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')");
@@ -1670,10 +1715,15 @@ bool BaseServer::initialize_the_database()
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1");
         break;
+
         case ServerSettings::Database::DatabaseType_SQLite:
-        GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE","server");
-        GlobalServerData::serverPrivateVariables.db->setDatabaseName(GlobalServerData::serverSettings.database.sqlite.file);
+        if(!GlobalServerData::serverPrivateVariables.db.syncConnectSqlite(GlobalServerData::serverSettings.database.mysql.db.toLatin1()))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database.sqlite.file));
         GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("sqlite");
 
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
@@ -1717,14 +1767,33 @@ bool BaseServer::initialize_the_database()
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
         break;
+        #endif
+
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-        GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QPSQL","server");
-        GlobalServerData::serverPrivateVariables.db->setHostName(GlobalServerData::serverSettings.database.mysql.host);
-        GlobalServerData::serverPrivateVariables.db->setDatabaseName(GlobalServerData::serverSettings.database.mysql.db);
-        GlobalServerData::serverPrivateVariables.db->setUserName(GlobalServerData::serverSettings.database.mysql.login);
-        GlobalServerData::serverPrivateVariables.db->setPassword(GlobalServerData::serverSettings.database.mysql.pass);
-        GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("sqlite");
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        if(!GlobalServerData::serverPrivateVariables.db.syncConnectPostgresql(
+                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
+                    ))
+        #else
+        if(!GlobalServerData::serverPrivateVariables.db.syncConnect(
+                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
+                    ))
+        #endif
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(GlobalServerData::serverPrivateVariables.db_type_string)
+                                     .arg(GlobalServerData::serverSettings.database.mysql.host));
+        GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("postgresql");
 
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);");
@@ -1768,25 +1837,6 @@ bool BaseServer::initialize_the_database()
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db->open())
-    {
-        DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
-        /*emit */error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
-        return false;
-    }
-    //post open fonction
-    {
-        if(GlobalServerData::serverSettings.database.type==ServerSettings::Database::DatabaseType_PostgreSQL)
-        {
-            QSqlQuery searchPathQuery(*GlobalServerData::serverPrivateVariables.db);
-            if(!searchPathQuery.exec("SET search_path = catchchallenger;"))
-                DebugClass::debugConsole(searchPathQuery.lastQuery()+": "+searchPathQuery.lastError().text());
-        }
-    }
-    DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2 (%3)")
-                             .arg(GlobalServerData::serverPrivateVariables.db_type_string)
-                             .arg(GlobalServerData::serverSettings.database.mysql.host)
-                             .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
     return true;
 }
 
@@ -1891,17 +1941,14 @@ void BaseServer::unload_the_data()
     unload_the_static_data();
     unload_the_ddos();
     unload_the_events();
+    unload_the_randomData();
 
     CommonDatapack::commonDatapack.unload();
 }
 
 void BaseServer::unload_the_static_data()
 {
-    LocalClientHandler::resetAll();
-    ClientBroadCast::playerByPseudo.clear();
-    ClientBroadCast::playerByClan.clear();
-    ClientBroadCast::clientBroadCastList.clear();
-    ClientHeavyLoad::simplifiedIdList.clear();
+    Client::simplifiedIdList.clear();
 }
 
 void BaseServer::unload_zone()
@@ -1971,9 +2018,9 @@ void BaseServer::unload_the_visibility_algorithm()
 
 void BaseServer::unload_the_ddos()
 {
-    ClientBroadCast::generalChatDrop.clear();
-    ClientBroadCast::clanChatDrop.clear();
-    ClientBroadCast::privateChatDrop.clear();
+    Client::generalChatDrop.clear();
+    Client::clanChatDrop.clear();
+    Client::privateChatDrop.clear();
 }
 
 void BaseServer::unload_the_events()
@@ -1983,12 +2030,17 @@ void BaseServer::unload_the_events()
 
 void BaseServer::unload_the_datapack()
 {
-    ClientHeavyLoad::compressedExtension.clear();
+    Client::compressedExtension.clear();
 }
 
 void BaseServer::unload_the_players()
 {
-    ClientHeavyLoad::simplifiedIdList.clear();
+    Client::simplifiedIdList.clear();
+}
+
+void BaseServer::unload_the_randomData()
+{
+    GlobalServerData::serverPrivateVariables.randomData.clear();
 }
 
 bool BaseServer::check_if_now_stopped()
@@ -1999,17 +2051,16 @@ bool BaseServer::check_if_now_stopped()
         return false;
 
     DebugClass::debugConsole("Fully stopped");
-    if(GlobalServerData::serverPrivateVariables.db!=NULL)
+    if(GlobalServerData::serverPrivateVariables.db.isConnected())
     {
-        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2 (%3)")
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
                                  .arg(GlobalServerData::serverPrivateVariables.db_type_string)
-                                 .arg(GlobalServerData::serverSettings.database.mysql.host)
-                                 .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
-        closeDB();
+                                 .arg(GlobalServerData::serverSettings.database.mysql.host));
+        GlobalServerData::serverPrivateVariables.db.syncDisconnect();
     }
     stat=Down;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    /*emit */is_started(false);
+    is_started(false);
     #endif
 
     unload_the_data();
@@ -2156,16 +2207,8 @@ void BaseServer::loadAndFixSettings()
     else
     {
         GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000);
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,&LocalClientHandlerWithoutSender::localClientHandlerWithoutSender,&LocalClientHandlerWithoutSender::doAllAction,Qt::QueuedConnection);
-        #endif
     }
     GlobalServerData::serverPrivateVariables.ddosTimer.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000);
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&LocalClientHandlerWithoutSender::localClientHandlerWithoutSender, &LocalClientHandlerWithoutSender::doDDOSAction,Qt::QueuedConnection);
-    connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&BroadCastWithoutSender::broadCastWithoutSender,                   &BroadCastWithoutSender::doDDOSAction,Qt::QueuedConnection);
-    connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,&ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender,   &ClientNetworkReadWithoutSender::doDDOSAction,Qt::QueuedConnection);
-    #endif
 
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -2270,74 +2313,6 @@ void BaseServer::stop_internal_server()
     check_if_now_stopped();
 }
 
-/////////////////////////////////////// player related //////////////////////////////////////
-ClientMapManagement * BaseServer::getClientMapManagement()
-{
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        default:
-        case MapVisibilityAlgorithmSelection_Simple:
-            if(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
-                return new MapVisibilityAlgorithm_Simple_StoreOnSender();
-            else
-                return new MapVisibilityAlgorithm_Simple_StoreOnReceiver();
-        break;
-        case MapVisibilityAlgorithmSelection_WithBorder:
-            if(GlobalServerData::serverSettings.mapVisibility.simple.storeOnSender)
-                return new MapVisibilityAlgorithm_WithBorder_StoreOnSender();
-            else
-                return new MapVisibilityAlgorithm_WithBorder_StoreOnReceiver();
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-            return new MapVisibilityAlgorithm_None();
-        break;
-    }
-}
-
-
-/////////////////////////////////////////////////// Object removing /////////////////////////////////////
-
-#ifndef EPOLLCATCHCHALLENGERSERVER
-void BaseServer::removeOneClient()
-{
-    Client *client=qobject_cast<Client *>(QObject::sender());
-    if(client==NULL)
-    {
-        DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
-        return;
-    }
-    client_list.remove(client);
-    client->deleteLater();
-}
-#endif
-
-/////////////////////////////////////// player related //////////////////////////////////////
-
-#ifndef EPOLLCATCHCHALLENGERSERVER
-void BaseServer::newConnection()
-{
-    while(QFakeServer::server.hasPendingConnections())
-    {
-        QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
-        if(socket!=NULL)
-        {
-            DebugClass::debugConsole(QStringLiteral("newConnection(): new client connected by fake socket"));
-            connect_the_last_client(new Client(new ConnectedSocket(socket),getClientMapManagement()));
-        }
-        else
-            DebugClass::debugConsole("NULL client at BaseServer::newConnection()");
-    }
-}
-#endif
-
-void BaseServer::connect_the_last_client(Client * client)
-{
-    client_list << client;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    connect(client,&Client::isReadyToDelete,this,&BaseServer::removeOneClient,Qt::QueuedConnection);
-    #endif
-}
-
 #ifndef EPOLLCATCHCHALLENGERSERVER
 bool BaseServer::isListen()
 {
@@ -2351,12 +2326,13 @@ bool BaseServer::isStopped()
 
 void BaseServer::stop()
 {
-    /*emit */try_stop_server();
+    try_stop_server();
 }
 #endif
 
 void BaseServer::load_clan_max_id()
 {
+    GlobalServerData::serverPrivateVariables.maxClanId=0;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -2371,14 +2347,25 @@ void BaseServer::load_clan_max_id()
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
         break;
     }
-    QSqlQuery maxClanIdQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!maxClanIdQuery.exec(queryText))
-        DebugClass::debugConsole(maxClanIdQuery.lastQuery()+": "+maxClanIdQuery.lastError().text());
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_clan_max_id_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        preload_industries();
+    }
+}
+
+void BaseServer::load_clan_max_id_static(void *object)
+{
+    static_cast<BaseServer *>(object)->load_clan_max_id_return();
+}
+
+void BaseServer::load_clan_max_id_return()
+{
     GlobalServerData::serverPrivateVariables.maxClanId=0;
-    while(maxClanIdQuery.next())
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
-        GlobalServerData::serverPrivateVariables.maxClanId=maxClanIdQuery.value(0).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxClanId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
@@ -2386,6 +2373,7 @@ void BaseServer::load_clan_max_id()
             continue;
         }
     }
+    preload_industries();
 }
 
 void BaseServer::load_account_max_id()
@@ -2404,14 +2392,28 @@ void BaseServer::load_account_max_id()
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
         break;
     }
-    QSqlQuery maxAccountIdQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!maxAccountIdQuery.exec(queryText))
-        DebugClass::debugConsole(maxAccountIdQuery.lastQuery()+": "+maxAccountIdQuery.lastError().text());
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_account_max_id_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        if(CommonSettings::commonSettings.max_character)
+            load_character_max_id();
+        else
+            preload_finish();
+    }
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
-    while(maxAccountIdQuery.next())
+}
+
+void BaseServer::load_account_max_id_static(void *object)
+{
+    static_cast<BaseServer *>(object)->load_account_max_id_return();
+}
+
+void BaseServer::load_account_max_id_return()
+{
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
-        GlobalServerData::serverPrivateVariables.maxAccountId=maxAccountIdQuery.value(0).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxAccountId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
@@ -2419,6 +2421,10 @@ void BaseServer::load_account_max_id()
             continue;
         }
     }
+    if(CommonSettings::commonSettings.max_character)
+        load_character_max_id();
+    else
+        preload_finish();
 }
 
 void BaseServer::load_character_max_id()
@@ -2437,14 +2443,25 @@ void BaseServer::load_character_max_id()
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
         break;
     }
-    QSqlQuery maxCharacterIdQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!maxCharacterIdQuery.exec(queryText))
-        DebugClass::debugConsole(maxCharacterIdQuery.lastQuery()+QLatin1String(": ")+maxCharacterIdQuery.lastError().text());
+    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static))
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        preload_finish();
+    }
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
-    while(maxCharacterIdQuery.next())
+}
+
+void BaseServer::load_character_max_id_static(void *object)
+{
+    static_cast<BaseServer *>(object)->load_character_max_id_return();
+}
+
+void BaseServer::load_character_max_id_return()
+{
+    while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
-        GlobalServerData::serverPrivateVariables.maxCharacterId=maxCharacterIdQuery.value(0).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxCharacterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
@@ -2452,6 +2469,7 @@ void BaseServer::load_character_max_id()
             continue;
         }
     }
+    preload_finish();
 }
 
 //signals for epoll

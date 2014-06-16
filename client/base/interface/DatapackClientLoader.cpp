@@ -755,10 +755,11 @@ void DatapackClientLoader::parseMaps()
     const int &size=returnList.size();
     int index=0;
     QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
+    QRegularExpression mapExclude(QLatin1String("[\"']"));
     while(index<size)
     {
         QString fileName=returnList.at(index);
-        if(fileName.contains(mapFilter))
+        if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
             maps << fileName;
         index++;
     }

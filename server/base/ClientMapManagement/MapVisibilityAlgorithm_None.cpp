@@ -2,11 +2,8 @@
 
 using namespace CatchChallenger;
 
-MapVisibilityAlgorithm_None::MapVisibilityAlgorithm_None()
-{
-}
-
-MapVisibilityAlgorithm_None::~MapVisibilityAlgorithm_None()
+MapVisibilityAlgorithm_None::MapVisibilityAlgorithm_None(ConnectedSocket *socket) :
+    Client(socket)
 {
 }
 

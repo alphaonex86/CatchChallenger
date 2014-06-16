@@ -1,7 +1,7 @@
 #ifndef TIMERPOSITIONSYNC_H
 #define TIMERPOSITIONSYNC_H
 
-#include "EpollTimer.h"
+#include "../EpollTimer.h"
 
 class TimerPositionSync : public EpollTimer
 {

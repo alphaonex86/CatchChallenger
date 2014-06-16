@@ -142,9 +142,6 @@ QByteArray lzmaUncompress(QByteArray data)
 ProtocolParsing::ProtocolParsing(ConnectedSocket * socket) :
     socket(socket)
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    connect(socket,&ConnectedSocket::disconnected,this,&ProtocolParsing::reset,Qt::QueuedConnection);
-    #endif
 }
 
 void ProtocolParsing::initialiseTheVariable()
@@ -228,19 +225,6 @@ void ProtocolParsing::initialiseTheVariable()
     qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
 }
 
-//signals
-#ifdef EPOLLCATCHCHALLENGERSERVER
-void ProtocolParsing::error(const QString &error) const
-{
-    client->errorOutput(error);
-}
-
-void ProtocolParsing::message(const QString &message) const
-{
-    client->normalOutput(message);
-}
-#endif
-
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 {
     if(maxPlayers<=255)
@@ -255,7 +239,7 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
     }
 }
 
-ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
+ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
     ProtocolParsing(socket),
     // for data
     canStartReadData(false),
@@ -271,33 +255,22 @@ ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTr
     have_subCodeType(false),
     need_subCodeType(false),
     need_query_number(false),
-    have_query_number(false)
+    have_query_number(false),
+    TXSize(0),
+    byteWriten(0)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
-        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
+    //if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInputOutput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
+    //    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
-//signals
-#ifdef EPOLLCATCHCHALLENGERSERVER
-void ProtocolParsingInput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const
-{
-    client->clientNetworkWrite.newInputQuery(mainCodeType,queryNumber);
-}
-
-void ProtocolParsingInput::newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const
-{
-    client->clientNetworkWrite.newFullInputQuery(mainCodeType,subCodeType,queryNumber);
-}
-#endif
-
-bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data) const
+bool ProtocolParsingInputOutput::checkStringIntegrity(const QByteArray & data) const
 {
     if(data.size()<(int)sizeof(qint32))
     {
-        /*emit */error("header size not suffisient");
+        errorParsingLayer("header size not suffisient");
         return false;
     }
     qint32 stringSize;
@@ -306,44 +279,23 @@ bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data) const
     in >> stringSize;
     if(stringSize>65535)
     {
-        /*emit */error(QStringLiteral("String size is wrong: %1").arg(stringSize));
+        errorParsingLayer(QStringLiteral("String size is wrong: %1").arg(stringSize));
         return false;
     }
     if(data.size()<stringSize)
     {
-        /*emit */error(QStringLiteral("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
+        errorParsingLayer(QStringLiteral("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
         return false;
     }
     return true;
 }
 
-quint64 ProtocolParsingInput::getRXSize() const
+quint64 ProtocolParsingInputOutput::getRXSize() const
 {
     return RXSize;
 }
 
-ProtocolParsingOutput::ProtocolParsingOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
-    ProtocolParsing(socket),
-    TXSize(0),
-    byteWriten(0)
-{
-    isClient=(packetModeTransmission==PacketModeTransmission_Client);
-}
-
-//signals
-#ifdef EPOLLCATCHCHALLENGERSERVER
-void ProtocolParsingOutput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const
-{
-    client->clientNetworkRead.newOutputQuery(mainCodeType,queryNumber);
-}
-
-void ProtocolParsingOutput::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const
-{
-    client->clientNetworkRead.newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
-}
-#endif
-
-void ProtocolParsingInput::parseIncommingData()
+void ProtocolParsingInputOutput::parseIncommingData()
 {
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): socket->bytesAvailable(): %1").arg(socket->bytesAvailable()));
@@ -649,13 +601,13 @@ void ProtocolParsingInput::parseIncommingData()
                         }
                         else
                         {
-                            /*emit */error("size is null");
+                            errorParsingLayer("size is null");
                             return;
                         }
                     }
                     break;
                     default:
-                    /*emit */error(QStringLiteral("size not understand, internal bug: %1").arg(data_size.size()));
+                    errorParsingLayer(QStringLiteral("size not understand, internal bug: %1").arg(data_size.size()));
                     return;
                 }
             }
@@ -667,7 +619,7 @@ void ProtocolParsingInput::parseIncommingData()
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!haveData_dataSize)
         {
-            /*emit */error("have not the size here!");
+            errorParsingLayer("have not the size here!");
             return;
         }
         #endif
@@ -676,7 +628,7 @@ void ProtocolParsingInput::parseIncommingData()
         #endif
         if(dataSize>16*1024*1024)
         {
-            /*emit */error("packet size too big");
+            errorParsingLayer("packet size too big");
             return;
         }
         RXSize+=in.device()->pos();
@@ -756,17 +708,17 @@ void ProtocolParsingInput::parseIncommingData()
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(dataSize!=(quint32)data.size())
         {
-            /*emit */error("wrong data size here");
+            errorParsingLayer("wrong data size here");
             return;
         }
         #endif
-        #ifdef PROTOCOLPARSINGINPUTDEBUG
+        #ifdef ProtocolParsingInputOutputDEBUG
         if(isClient)
             DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): parse message as client"));
         else
             DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): parse message as server"));
         #endif
-        #ifdef PROTOCOLPARSINGINPUTDEBUG
+        #ifdef ProtocolParsingInputOutputDEBUG
         DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data: %1").arg(QString(data.toHex())));
         #endif
         //message
@@ -774,14 +726,14 @@ void ProtocolParsingInput::parseIncommingData()
         {
             if(!need_subCodeType)
             {
-                #ifdef PROTOCOLPARSINGINPUTDEBUG
+                #ifdef ProtocolParsingInputOutputDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
                 #endif
                 parseMessage(mainCodeType,data);
             }
             else
             {
-                #ifdef PROTOCOLPARSINGINPUTDEBUG
+                #ifdef ProtocolParsingInputOutputDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                 #endif
                 if(isClient)
@@ -828,7 +780,7 @@ void ProtocolParsingInput::parseIncommingData()
             {
                 if(!need_subCodeType)
                 {
-                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    #ifdef ProtocolParsingInputOutputDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
                     #endif
                     /*emit */newInputQuery(mainCodeType,queryNumber);
@@ -836,7 +788,7 @@ void ProtocolParsingInput::parseIncommingData()
                 }
                 else
                 {
-                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    #ifdef ProtocolParsingInputOutputDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                     #endif
                     if(isClient)
@@ -884,12 +836,12 @@ void ProtocolParsingInput::parseIncommingData()
                 {
                     if(!reply_mainCodeType.contains(queryNumber))
                     {
-                        /*emit */error("reply to a query not send");
+                        errorParsingLayer("reply to a query not send");
                         return;
                     }
                     mainCodeType=reply_mainCodeType.value(queryNumber);
                     reply_mainCodeType.remove(queryNumber);
-                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    #ifdef ProtocolParsingInputOutputDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
                     #endif
                     if(isClient)
@@ -932,7 +884,7 @@ void ProtocolParsingInput::parseIncommingData()
                     subCodeType=reply_subCodeType.value(queryNumber);
                     reply_mainCodeType.remove(queryNumber);
                     reply_subCodeType.remove(queryNumber);
-                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    #ifdef ProtocolParsingInputOutputDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
                     #endif
                     if(isClient)
@@ -981,8 +933,15 @@ void ProtocolParsingInput::parseIncommingData()
 
 }
 
-void ProtocolParsingInput::reset()
+void ProtocolParsingInputOutput::reset()
 {
+    TXSize=0;
+    replySize.clear();
+    replyCompression.clear();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    queryReceived.clear();
+    #endif
+
     RXSize=0;
     replySize.clear();
     reply_mainCodeType.clear();
@@ -991,18 +950,18 @@ void ProtocolParsingInput::reset()
     dataClear();
 }
 
-void ProtocolParsingInput::dataClear()
+void ProtocolParsingInputOutput::dataClear()
 {
     data.clear();
     dataSize=0;
     haveData=false;
 }
 
-void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
     if(reply_mainCodeType.contains(queryNumber))
     {
-        /*emit */error("Query with this query number already found");
+        errorParsingLayer("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1010,7 +969,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1019,7 +978,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
             replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient.value(mainCodeType);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
             #endif
         }
     }
@@ -1028,7 +987,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1037,21 +996,21 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
             replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer.value(mainCodeType);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
             #endif
         }
     }
-    #ifdef PROTOCOLPARSINGINPUTDEBUG
-    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+    #ifdef ProtocolParsingInputOutputDEBUG
+    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
     #endif
     reply_mainCodeType[queryNumber]=mainCodeType;
 }
 
-void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
     if(reply_mainCodeType.contains(queryNumber))
     {
-        /*emit */error("Query with this query number already found");
+        errorParsingLayer("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1059,7 +1018,7 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1070,7 +1029,7 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             #endif
         }
     }
@@ -1079,7 +1038,7 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1090,18 +1049,18 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             #endif
         }
     }
-    #ifdef PROTOCOLPARSINGINPUTDEBUG
-    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+    #ifdef ProtocolParsingInputOutputDEBUG
+    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
     #endif
     reply_mainCodeType[queryNumber]=mainCodeType;
     reply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber, const QByteArray &data)
+bool ProtocolParsingInputOutput::postReplyData(const quint8 &queryNumber, const QByteArray &data)
 {
     const QByteArray &newData=computeReplyData(queryNumber,data);
     if(newData.isEmpty())
@@ -1109,12 +1068,12 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber, const QByte
     return internalPackOutcommingData(newData);
 }
 
-quint64 ProtocolParsingOutput::getTXSize() const
+quint64 ProtocolParsingInputOutput::getTXSize() const
 {
     return TXSize;
 }
 
-QByteArray ProtocolParsingOutput::computeCompression(const QByteArray &data)
+QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data)
 {
     switch(compressionType)
     {
@@ -1128,7 +1087,7 @@ QByteArray ProtocolParsingOutput::computeCompression(const QByteArray &data)
     }
 }
 
-void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
@@ -1137,7 +1096,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     #endif
     if(replySize.contains(queryNumber))
     {
-        /*emit */error("Query with this query number already found");
+        errorParsingLayer("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1145,7 +1104,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1173,7 +1132,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1198,7 +1157,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     }
 }
 
-void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
@@ -1207,7 +1166,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
     #endif
     if(replySize.contains(queryNumber))
     {
-        /*emit */error("Query with this query number already found");
+        errorParsingLayer("Query with this query number already found");
         return;
     }
     if(isClient)
@@ -1215,7 +1174,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1268,7 +1227,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1318,7 +1277,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
     }
 }
 
-bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
     const QByteArray &newData=computeFullOutcommingData(isClient,mainCodeType,subCodeType,data);
     if(newData.isEmpty())
@@ -1326,7 +1285,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
     return internalPackOutcommingData(newData);
 }
 
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
+bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
 {
     const QByteArray &newData=computeOutcommingData(isClient,mainCodeType,data);
     if(newData.isEmpty())
@@ -1334,7 +1293,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
     return internalPackOutcommingData(newData);
 }
 
-bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     const QByteArray &newData=computeOutcommingQuery(isClient,mainCodeType,queryNumber,data);
     if(newData.isEmpty())
@@ -1343,7 +1302,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     return internalPackOutcommingData(newData);
 }
 
-bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     const QByteArray &newData=computeFullOutcommingQuery(isClient,mainCodeType,subCodeType,queryNumber,data);
     if(newData.isEmpty())
@@ -1352,7 +1311,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
     return internalPackOutcommingData(newData);
 }
 
-bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
+bool ProtocolParsingInputOutput::internalPackOutcommingData(QByteArray data)
 {
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole("internalPackOutcommingData(): start");
@@ -1371,7 +1330,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
             if(Q_UNLIKELY(data.size()!=byteWriten))
             {
                 DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                /*emit */error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
                 return false;
             }
             return true;
@@ -1387,7 +1346,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
                 if(Q_UNLIKELY(dataToSend.size()!=byteWriten))
                 {
                     DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                    /*emit */error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                    errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
                     return false;
                 }
                 data.remove(0,dataToSend.size());
@@ -1399,14 +1358,14 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
     else
     {
         DebugClass::debugConsole(QStringLiteral("Socket open in read only!"));
-        /*emit */error(QStringLiteral("Socket open in read only!"));
+        errorParsingLayer(QStringLiteral("Socket open in read only!"));
         return false;
     }
     #endif
 }
 
 //no control to be more fast
-bool ProtocolParsingOutput::internalSendRawSmallPacket(const QByteArray &data)
+bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const QByteArray &data)
 {
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole("internalPackOutcommingData(): start");
@@ -1417,8 +1376,8 @@ bool ProtocolParsingOutput::internalSendRawSmallPacket(const QByteArray &data)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(data.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
     {
-        DebugClass::debugConsole(QStringLiteral("ProtocolParsingOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
-        /*emit */error(QStringLiteral("ProtocolParsingOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
+        DebugClass::debugConsole(QStringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
+        errorParsingLayer(QStringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
         return false;
     }
     #endif
@@ -1428,13 +1387,13 @@ bool ProtocolParsingOutput::internalSendRawSmallPacket(const QByteArray &data)
     if(Q_UNLIKELY(data.size()!=byteWriten))
     {
         DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        /*emit */error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
         return false;
     }
     return true;
 }
 
-QByteArray ProtocolParsingOutput::encodeSize(quint32 size)
+QByteArray ProtocolParsingInputOutput::encodeSize(quint32 size)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -1447,17 +1406,7 @@ QByteArray ProtocolParsingOutput::encodeSize(quint32 size)
     return block;
 }
 
-void ProtocolParsingOutput::reset()
-{
-    TXSize=0;
-    replySize.clear();
-    replyCompression.clear();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    queryReceived.clear();
-    #endif
-}
-
-QByteArray ProtocolParsingOutput::computeOutcommingData(const bool &isClient,const quint8 &mainCodeType,const QByteArray &data)
+QByteArray ProtocolParsingInputOutput::computeOutcommingData(const bool &isClient,const quint8 &mainCodeType,const QByteArray &data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -1468,12 +1417,12 @@ QByteArray ProtocolParsingOutput::computeOutcommingData(const bool &isClient,con
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return QByteArray();
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
             return QByteArray();
         }
         #endif
@@ -1506,12 +1455,12 @@ QByteArray ProtocolParsingOutput::computeOutcommingData(const bool &isClient,con
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return QByteArray();
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
             return QByteArray();
         }
         #endif
@@ -1541,7 +1490,7 @@ QByteArray ProtocolParsingOutput::computeOutcommingData(const bool &isClient,con
     }
 }
 
-QByteArray ProtocolParsingOutput::computeOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+QByteArray ProtocolParsingInputOutput::computeOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -1553,12 +1502,12 @@ QByteArray ProtocolParsingOutput::computeOutcommingQuery(const bool &isClient,co
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return QByteArray();
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return QByteArray();
         }
         #endif
@@ -1591,12 +1540,12 @@ QByteArray ProtocolParsingOutput::computeOutcommingQuery(const bool &isClient,co
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return QByteArray();
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return QByteArray();
         }
         #endif
@@ -1626,7 +1575,7 @@ QByteArray ProtocolParsingOutput::computeOutcommingQuery(const bool &isClient,co
     }
 }
 
-QByteArray ProtocolParsingOutput::computeFullOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -1639,12 +1588,12 @@ QByteArray ProtocolParsingOutput::computeFullOutcommingQuery(const bool &isClien
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         #endif
@@ -1748,12 +1697,12 @@ QByteArray ProtocolParsingOutput::computeFullOutcommingQuery(const bool &isClien
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         #endif
@@ -1854,7 +1803,7 @@ QByteArray ProtocolParsingOutput::computeFullOutcommingQuery(const bool &isClien
     }
 }
 
-QByteArray ProtocolParsingOutput::computeFullOutcommingData(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(const bool &isClient,const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -1866,12 +1815,12 @@ QByteArray ProtocolParsingOutput::computeFullOutcommingData(const bool &isClient
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         #endif
@@ -1975,12 +1924,12 @@ QByteArray ProtocolParsingOutput::computeFullOutcommingData(const bool &isClient
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return QByteArray();
         }
         #endif
@@ -2081,12 +2030,12 @@ QByteArray ProtocolParsingOutput::computeFullOutcommingData(const bool &isClient
     }
 }
 
-QByteArray ProtocolParsingOutput::computeReplyData(const quint8 &queryNumber, const QByteArray &data)
+QByteArray ProtocolParsingInputOutput::computeReplyData(const quint8 &queryNumber, const QByteArray &data)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!queryReceived.contains(queryNumber))
     {
-        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
         return QByteArray();
     }
     else
