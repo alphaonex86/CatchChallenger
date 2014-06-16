@@ -9,7 +9,6 @@
 #include <QList>
 #include <QByteArray>
 #include <QSqlDatabase>
-#include <QSqlError>
 #include <QDir>
 #include <QSemaphore>
 #include <QString>
@@ -44,34 +43,15 @@ public:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);
     void load_character_max_id_return();
-
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    void start();
-    bool isListen();
-    bool isStopped();
-    void stop();
-    #endif
 protected:
-    void start_internal_server();
-    void stop_internal_server();
     //init, constructor, destructor
     void initAll();//call before all
     //remove all finished client
     void load_next_city_capture();
-public:
-    void error(const QString &error) const;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    void try_initAll() const;
-    void try_stop_server() const;
-    void need_be_started() const;
-    //stat
-    void is_started(const bool &) const;
-    #endif
 protected:
     void parseJustLoadedMap(const Map_to_send &,const QString &);
     void closeDB();
     //starting function
-    bool check_if_now_stopped();//return true if can be stopped
     void loadAndFixSettings();
 
     //stat

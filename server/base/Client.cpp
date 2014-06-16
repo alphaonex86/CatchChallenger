@@ -254,12 +254,12 @@ QByteArray Client::getRawPseudo() const
 {
     fake_send_received_data(data);
 }*/
-#else
+#endif
+
 void Client::parseIncommingData()
 {
     ProtocolParsingInputOutput::parseIncommingData();
 }
-#endif
 
 void Client::errorFightEngine(const QString &error)
 {

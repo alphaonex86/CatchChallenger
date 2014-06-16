@@ -4,7 +4,6 @@
 #include <QSet>
 #include <QHash>
 #include <QByteArray>
-#include <QObject>
 
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
@@ -65,7 +64,7 @@ class ProtocolParsingInputOutput : public ProtocolParsing
 public:
     ProtocolParsingInputOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
     friend class ProtocolParsing;
-    bool checkStringIntegrity(const QByteArray & data) const;
+    bool checkStringIntegrity(const QByteArray & data);
     quint64 getRXSize() const;
 protected:
     void parseIncommingData();

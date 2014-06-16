@@ -14,7 +14,7 @@
 
 namespace CatchChallenger {
 //only the logique here, store nothing
-class ClientFightEngine : public CommonFightEngine, public QObject
+class ClientFightEngine : public QObject, public CommonFightEngine
 {
     Q_OBJECT
 public:

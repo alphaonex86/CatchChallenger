@@ -5,7 +5,7 @@
 #include "BaseServer.h"
 
 namespace CatchChallenger {
-class QtServer : public BaseServer, public QObject
+class QtServer : public QObject, public BaseServer
 {
     Q_OBJECT
 public:
@@ -17,6 +17,19 @@ public:
     void send_insert_move_remove();
     void positionSync();
     void ddosTimer();
+    void start();
+    bool isListen();
+    bool isStopped();
+    void stop();
+    bool check_if_now_stopped();//return true if can be stopped
+    void stop_internal_server();
+signals:
+    void try_initAll() const;
+    void try_stop_server() const;
+    void need_be_started() const;
+    //stat
+    void is_started(const bool &) const;
+    void error(const QString &error) const;
 };
 }
 

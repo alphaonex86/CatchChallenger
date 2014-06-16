@@ -44,7 +44,6 @@ void InternalServer::start_internal_server()
         emit is_started(false);
         return;
     }
-    BaseServer::start_internal_server();
     preload_the_data();
     stat=Up;
     emit is_started(true);
