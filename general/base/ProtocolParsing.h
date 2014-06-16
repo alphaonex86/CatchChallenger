@@ -11,17 +11,9 @@
 #include "ConnectedSocket.h"
 
 namespace CatchChallenger {
-#ifdef EPOLLCATCHCHALLENGERSERVER
-class Client;
-#endif
+
 class ProtocolParsing
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        : public QObject
-        #endif
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    Q_OBJECT
-    #endif
 public:
     enum CompressionType
     {
@@ -61,36 +53,21 @@ protected:
     static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketServerToClient;
     static QSet<quint8> replyComressionOnlyMainCodePacketClientToServer;
     static QSet<quint8> replyComressionOnlyMainCodePacketServerToClient;
-#ifndef EPOLLCATCHCHALLENGERSERVER
-signals:
-#else
 protected:
-#endif
-    void error(const QString &error) const;
-    void message(const QString &message) const;
-#ifdef EPOLLCATCHCHALLENGERSERVER
-public:
-    Client *client;
-#endif
+    virtual void errorParsingLayer(const QString &error) = 0;
+    virtual void messageParsingLayer(const QString &message) const = 0;
 private:
     virtual void reset() = 0;
 };
 
-class ProtocolParsingInput : public ProtocolParsing
+class ProtocolParsingInputOutput : public ProtocolParsing
 {
-#ifndef EPOLLCATCHCHALLENGERSERVER
-Q_OBJECT
-#endif
 public:
-    ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
+    ProtocolParsingInputOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
     friend class ProtocolParsing;
     bool checkStringIntegrity(const QByteArray & data) const;
     quint64 getRXSize() const;
-#ifndef EPOLLCATCHCHALLENGERSERVER
 protected:
-#else
-public:
-#endif
     void parseIncommingData();
 protected:
     //have message without reply
@@ -125,27 +102,9 @@ protected:
     QHash<quint8,quint16> reply_subCodeType;
 private:
     void reset();
-#ifndef EPOLLCATCHCHALLENGERSERVER
-signals:
-#else
-public:
-#endif
-    void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
-    void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
 public:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
-};
-
-class ProtocolParsingOutput : public ProtocolParsing
-{
-#ifndef EPOLLCATCHCHALLENGERSERVER
-Q_OBJECT
-#endif
-public:
-    ProtocolParsingOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
-    friend class ProtocolParsing;
-
     //send message without reply
     bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
     bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
@@ -172,31 +131,21 @@ private:
     static QByteArray encodeSize(quint32 size);
 
     quint64 TXSize;
-    bool isClient;
     //temp data
     qint64 byteWriten;
     //reply to the query
-    QHash<quint8,quint16> replySize;
     QSet<quint8> replyCompression;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     QSet<quint8> queryReceived;
     #endif
-#ifndef EPOLLCATCHCHALLENGERSERVER
-signals:
-#else
-public:
-#endif
-    void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber) const;
-    void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber) const;
 public:
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
     //no control to be more fast
     bool internalSendRawSmallPacket(const QByteArray &data);
-private:
-    void reset();
 };
+
 }
 
 #endif // PROTOCOLPARSING_H

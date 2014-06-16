@@ -1,10 +1,10 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHOUTSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHOUTSENDER_H
 
-#include <QObject>
+#include <QList>
 
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_WithoutSender : public QObject
+class MapVisibilityAlgorithm_WithoutSender
 {
 public:
     explicit MapVisibilityAlgorithm_WithoutSender();

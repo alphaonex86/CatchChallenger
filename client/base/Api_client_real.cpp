@@ -61,7 +61,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         if(datapackFilesList.isEmpty() && data.size()==1)
                         {
                             if(!httpMode)
-                                emit haveTheDatapack();
+                                haveTheDatapack();
                             return;
                         }
                         QList<bool> boolList;
@@ -80,7 +80,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         }
                         if(boolList.size()<datapackFilesList.size())
                         {
-                            emit newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
                         int index=0;
@@ -92,7 +92,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                                 QFile file(mDatapack+text_slash+datapackFilesList.at(index));
                                 if(!file.remove())
                                     DebugClass::debugConsole(QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
-                                //emit removeFile(datapackFilesList.at(index));
+                                //removeFile(datapackFilesList.at(index));
                             }
                             boolList.removeFirst();
                             index++;
@@ -101,11 +101,11 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         cleanDatapack(QString());
                         if(boolList.size()>=8)
                         {
-                            emit newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
                         if(!httpMode)
-                            emit haveTheDatapack();
+                            haveTheDatapack();
                     }
                     return;
                 break;
@@ -209,7 +209,7 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
             DebugClass::debugConsole(QStringLiteral("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
             return;
         }
-        emit newDatapackFile(data.size());
+        newDatapackFile(data.size());
         #ifdef Q_CC_GNU
             //this function avalaible on unix and mingw
             utimbuf butime;
@@ -251,7 +251,7 @@ void Api_client_real::httpFinished()
     if(urlInWaitingList.isEmpty())
     {
         httpError=true;
-        emit error(QStringLiteral("no more reply in waiting"));
+        newError(tr("Datapack downloading error"),QStringLiteral("no more reply in waiting"));
         socket->disconnectFromHost();
         return;
     }
@@ -259,7 +259,7 @@ void Api_client_real::httpFinished()
     if(reply==NULL)
     {
         httpError=true;
-        emit error(QStringLiteral("reply for http is NULL"));
+        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
         socket->disconnectFromHost();
         return;
     }
@@ -267,7 +267,7 @@ void Api_client_real::httpFinished()
     if(!reply->isFinished())
     {
         httpError=true;
-        emit newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: not finished"));
+        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: not finished"));
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
@@ -275,13 +275,13 @@ void Api_client_real::httpFinished()
     else if(reply->error())
     {
         httpError=true;
-        emit newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
     } else if(!redirectionTarget.isNull()) {
         httpError=true;
-        emit newError(tr("Unable to download the datapack"),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        newError(tr("Unable to download the datapack"),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
@@ -289,7 +289,7 @@ void Api_client_real::httpFinished()
     if(!urlInWaitingList.contains(reply))
     {
         httpError=true;
-        emit error(QStringLiteral("reply of unknown query"));
+        newError(tr("Datapack downloading error"),QStringLiteral("reply of unknown query"));
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
@@ -302,7 +302,7 @@ void Api_client_real::httpFinished()
         DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingList.size()));
     reply->deleteLater();
     if(urlInWaitingList.isEmpty())
-        emit haveTheDatapack();
+        haveTheDatapack();
 }
 
 void Api_client_real::tryDisconnect()
@@ -357,9 +357,7 @@ void Api_client_real::sendDatapackContent()
             out << (quint64)info.st_mtime;
             index++;
         }
-        if(output==NULL)
-            return;
-        output->packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
+        packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
     }
     else
     {
@@ -386,7 +384,7 @@ void Api_client_real::httpFinishedForDatapackList()
     if(reply==NULL)
     {
         httpError=true;
-        emit error(QStringLiteral("reply for http is NULL"));
+        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
         socket->disconnectFromHost();
         return;
     }
@@ -404,7 +402,7 @@ void Api_client_real::httpFinishedForDatapackList()
                 index_mirror=0;
             }
             else
-                emit newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed: %1").arg(reply->errorString()));
+                newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed: %1").arg(reply->errorString()));
         }
         return;
     }
@@ -456,9 +454,9 @@ void Api_client_real::httpFinishedForDatapackList()
         }
         datapackFilesList.clear();
         if(fileToGet==0)
-            emit haveTheDatapack();
+            haveTheDatapack();
         else
-            emit datapackSize(fileToGet,sizeToGet);
+            datapackSize(fileToGet,sizeToGet);
     }
 }
 

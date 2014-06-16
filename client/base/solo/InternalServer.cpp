@@ -5,15 +5,8 @@
 using namespace CatchChallenger;
 
 InternalServer::InternalServer() :
-    BaseServer()
+    QtServer()
 {
-    GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//broad cast (0)
-    GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//map management (1)
-    GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//network read (2)
-    GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//heavy load (3)
-    GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//local calcule (4)
-    GlobalServerData::serverPrivateVariables.eventThreaderList << thread();//local broad cast (5)
-    moveToThreadForContructor();
 }
 
 /** call only when the server is down
@@ -62,6 +55,6 @@ void InternalServer::start_internal_server()
 
 void InternalServer::removeOneClient()
 {
-    BaseServer::removeOneClient();
+    QtServer::removeOneClient();
     check_if_now_stopped();
 }

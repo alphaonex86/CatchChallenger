@@ -16,6 +16,7 @@ using namespace CatchChallenger;
 
 EpollServer::EpollServer()
 {
+    ready=false;
     sfd=-1;
 
     normalServerSettings.server_ip      = QString();
@@ -29,6 +30,16 @@ EpollServer::EpollServer()
 EpollServer::~EpollServer()
 {
     close();
+}
+
+void EpollServer::preload_finish()
+{
+    ready=true;
+}
+
+bool EpollServer::isReady()
+{
+    return ready;
 }
 
 bool EpollServer::tryListen()
@@ -143,11 +154,6 @@ BaseClassSwitch::Type EpollServer::getType() const
 void EpollServer::preload_the_data()
 {
     BaseServer::preload_the_data();
-}
-
-CatchChallenger::ClientMapManagement * EpollServer::getClientMapManagement()
-{
-    return BaseServer::getClientMapManagement();
 }
 
 void EpollServer::unload_the_data()

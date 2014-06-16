@@ -14,14 +14,14 @@ class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
 class MapVisibilityAlgorithm_WithBorder_StoreOnReceiver;
 class MapVisibilityAlgorithm_Simple_StoreOnSender;
 class MapVisibilityAlgorithm_WithBorder_StoreOnSender;
-class ClientLocalBroadcast;
+class Client;
 
 class MapServer : public CommonMap, public MapServerCrafting
 {
 public:
     MapServer();
     void doDDOSCompute();
-    QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
+    QList<Client *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
     QHash<QPair<quint8,quint8>,Orientation> rescue;
     QList<int> localChatDrop;
     int localChatDropTotalCache;

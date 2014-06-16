@@ -52,8 +52,9 @@
 
 //put for map, add for local thread
 //put this size into the options
-#define CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE 512
-#define CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE 128
+#define CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE 4096
+#define CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE 256
+#define CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE 32
 
 /// check more, then use more cpu, it's to develop and detect the internal bug
 #define CATCHCHALLENGER_SERVER_EXTRA_CHECK

@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_MAPCONTROLLERMP_H
 
 #include "../../fight/interface/MapVisualiserPlayerWithFight.h"
-#include "../../../general/base/Api_protocol.h"
+#include "../Api_protocol.h"
 
 #include <QString>
 #include <QList>

@@ -24,6 +24,7 @@ SOURCES += $$PWD/base/DebugClass.cpp \
 
 HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/GeneralStructures.h \
+    $$PWD/base/ClientBase.h \
     $$PWD/base/ChatParsing.h \
     $$PWD/base/QFakeServer.h \
     $$PWD/base/ProtocolParsing.h \

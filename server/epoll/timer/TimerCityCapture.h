@@ -1,7 +1,7 @@
 #ifndef TIMERCITYCAPTURE_H
 #define TIMERCITYCAPTURE_H
 
-#include "EpollTimer.h"
+#include "../EpollTimer.h"
 
 class TimerCityCapture : public EpollTimer
 {
