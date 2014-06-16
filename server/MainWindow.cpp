@@ -129,10 +129,10 @@ void MainWindow::server_need_be_restarted()
     server.stop_server();
 }
 
-void MainWindow::new_player_is_connected(Player_internal_informations player)
+void MainWindow::new_player_is_connected(Player_private_and_public_informations player)
 {
     QIcon icon;
-    switch(player.public_and_private_informations.public_informations.type)
+    switch(player.public_informations.type)
     {
         case Player_type_premium:
             icon=QIcon(QLatin1Literal(":/images/chat/premium.png"));
@@ -147,7 +147,7 @@ void MainWindow::new_player_is_connected(Player_internal_informations player)
         break;
     }
 
-    ui->listPlayer->addItem(new QListWidgetItem(icon,player.public_and_private_informations.public_informations.pseudo));
+    ui->listPlayer->addItem(new QListWidgetItem(icon,player.public_informations.pseudo));
     players << player;
 }
 
@@ -163,7 +163,7 @@ void MainWindow::player_is_disconnected(QString pseudo)
     index=0;
     while(index<players.size())
     {
-        if(players.at(index).public_and_private_informations.public_informations.pseudo==pseudo)
+        if(players.at(index).public_informations.pseudo==pseudo)
         {
             players.removeAt(index);
             break;
@@ -177,10 +177,10 @@ void MainWindow::new_chat_message(QString pseudo,Chat_type type,QString text)
     int index=0;
     while(index<players.size())
     {
-        if(players.at(index).public_and_private_informations.public_informations.pseudo==pseudo)
+        if(players.at(index).public_informations.pseudo==pseudo)
         {
             QString html=ui->textBrowserChat->toHtml();
-            html+=ChatParsing::new_chat_message(players.at(index).public_and_private_informations.public_informations.pseudo,players.at(index).public_and_private_informations.public_informations.type,type,text);
+            html+=ChatParsing::new_chat_message(players.at(index).public_informations.pseudo,players.at(index).public_informations.type,type,text);
             if(html.size()>1024*1024)
                 html=html.mid(html.size()-1024*1024,1024*1024);
             ui->textBrowserChat->setHtml(html);
@@ -382,7 +382,6 @@ void MainWindow::load_settings()
             reshow=tempValue;
             settings->setValue(QLatin1Literal("Reshow"),reshow);
         }
-        ui->MapVisibilityAlgorithmSimpleStoreOnSender->setChecked(settings->value(QLatin1Literal("StoreOnSender")).toBool());
         settings->endGroup();
         ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
         ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
@@ -422,7 +421,6 @@ void MainWindow::load_settings()
             reshowWithBorder=reshow;
             settings->setValue(QLatin1Literal("ReshowWithBorder"),reshow);
         }
-        ui->MapVisibilityAlgorithmWithBorderStoreOnSender->setChecked(settings->value(QLatin1Literal("StoreOnSender")).toBool());
         settings->endGroup();
         ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(tempValueWithBorder);
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setValue(reshowWithBorder);
@@ -706,13 +704,11 @@ void MainWindow::send_settings()
 
     formatedServerSettings.mapVisibility.simple.max                 = ui->MapVisibilityAlgorithmSimpleMax->value();
     formatedServerSettings.mapVisibility.simple.reshow              = ui->MapVisibilityAlgorithmSimpleReshow->value();
-    formatedServerSettings.mapVisibility.simple.storeOnSender       = ui->MapVisibilityAlgorithmSimpleStoreOnSender->isChecked();
     formatedServerSettings.mapVisibility.simple.reemit              = ui->MapVisibilityAlgorithmSimpleReemit->isChecked();
     formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->value();
     formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->value();
     formatedServerSettings.mapVisibility.withBorder.max				= ui->MapVisibilityAlgorithmWithBorderMax->value();
     formatedServerSettings.mapVisibility.withBorder.reshow			= ui->MapVisibilityAlgorithmWithBorderReshow->value();
-    formatedServerSettings.mapVisibility.withBorder.storeOnSender	= ui->MapVisibilityAlgorithmWithBorderStoreOnSender->isChecked();
 
     switch(ui->comboBox_city_capture_frequency->currentIndex())
     {

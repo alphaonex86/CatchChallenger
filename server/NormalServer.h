@@ -23,7 +23,6 @@
 #include "../general/base/QFakeServer.h"
 #include "../general/base/QFakeSocket.h"
 #include "base/MapServer.h"
-#include "crafting/BaseServerCrafting.h"
 #include "base/QtServer.h"
 #include "QSslServer.h"
 #include "NormalServerGlobal.h"
@@ -78,9 +77,7 @@ private:
     static QString text_stop;
 private:
     //new connection
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     void newConnection();
-    #endif
     void kicked(const QHostAddress &host);
     void purgeKickedHost();
     //remove all finished client
@@ -89,23 +86,19 @@ private:
     //parse general order from the client
     void serverCommand(const QString &command,const QString &extraText);
     //starting function
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     void stop_internal_server();
     bool check_if_now_stopped();
     void start_internal_server();
     void sslErrors(const QList<QSslError> &errors);
-    #endif
     virtual void loadAndFixSettings();
-#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
     //async the call
     void need_be_stopped();
     void need_be_restarted();
     //stat player
-    void new_player_is_connected(const Player_internal_informations &player);
+    void new_player_is_connected(const Player_private_and_public_informations &player);
     void player_is_disconnected(const QString &pseudo);
     void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
-#endif
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &map_to_send,const QString &map_file);
 };

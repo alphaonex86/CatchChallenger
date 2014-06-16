@@ -147,13 +147,6 @@ BaseServer::BaseServer() :
     srand(time(NULL));
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-void BaseServer::start()
-{
-    need_be_started();
-}
-#endif
-
 /** call only when the server is down
  * \warning this function is thread safe because it quit all thread before remove */
 BaseServer::~BaseServer()
@@ -1408,11 +1401,10 @@ void BaseServer::preload_the_visibility_algorithm()
             DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple"));
         break;
         case MapVisibilityAlgorithmSelection_WithBorder:
-            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_Simple"));
+            DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_WithBorder"));
         break;
         case MapVisibilityAlgorithmSelection_None:
             DebugClass::debugConsole(QStringLiteral("Visibility: MapVisibilityAlgorithmSelection_None"));
-        default:
         break;
     }
 }
@@ -2043,30 +2035,6 @@ void BaseServer::unload_the_randomData()
     GlobalServerData::serverPrivateVariables.randomData.clear();
 }
 
-bool BaseServer::check_if_now_stopped()
-{
-    if(client_list.size()!=0)
-        return false;
-    if(stat!=InDown)
-        return false;
-
-    DebugClass::debugConsole("Fully stopped");
-    if(GlobalServerData::serverPrivateVariables.db.isConnected())
-    {
-        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(GlobalServerData::serverPrivateVariables.db_type_string)
-                                 .arg(GlobalServerData::serverSettings.database.mysql.host));
-        GlobalServerData::serverPrivateVariables.db.syncDisconnect();
-    }
-    stat=Down;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    is_started(false);
-    #endif
-
-    unload_the_data();
-    return true;
-}
-
 void BaseServer::setSettings(const ServerSettings &settings)
 {
     //load it
@@ -2286,50 +2254,6 @@ void BaseServer::loadAndFixSettings()
     }
 }
 
-void BaseServer::start_internal_server()
-{
-}
-
-//call by normal stop
-void BaseServer::stop_internal_server()
-{
-    if(stat!=Up && stat!=InDown)
-    {
-        if(stat!=Down)
-            DebugClass::debugConsole("Is in wrong stat for stopping: "+QString::number((int)stat));
-        return;
-    }
-    DebugClass::debugConsole("Try stop");
-    stat=InDown;
-
-    QSetIterator<Client *> i(client_list);
-     while (i.hasNext())
-         i.next()->disconnectClient();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    QFakeServer::server.disconnectedSocket();
-    QFakeServer::server.close();
-    #endif
-
-    check_if_now_stopped();
-}
-
-#ifndef EPOLLCATCHCHALLENGERSERVER
-bool BaseServer::isListen()
-{
-    return (stat==Up);
-}
-
-bool BaseServer::isStopped()
-{
-    return (stat==Down);
-}
-
-void BaseServer::stop()
-{
-    try_stop_server();
-}
-#endif
-
 void BaseServer::load_clan_max_id()
 {
     GlobalServerData::serverPrivateVariables.maxClanId=0;
@@ -2472,10 +2396,3 @@ void BaseServer::load_character_max_id_return()
     preload_finish();
 }
 
-//signals for epoll
-#ifdef EPOLLCATCHCHALLENGERSERVER
-void BaseServer::error(const QString &error) const
-{
-    Q_UNUSED(error);
-}
-#endif

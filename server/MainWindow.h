@@ -37,7 +37,7 @@ private:
     QSettings *settings;
     void load_settings();
     void send_settings();
-    QList<Player_internal_informations> players;
+    QList<Player_private_and_public_informations> players;
     QTimer timer_update_the_info;
     QTimer check_latency;
     QTime time_latency;
@@ -50,7 +50,7 @@ private slots:
     void server_is_started(bool is_started);
     void server_need_be_stopped();
     void server_need_be_restarted();
-    void new_player_is_connected(Player_internal_informations player);
+    void new_player_is_connected(Player_private_and_public_informations player);
     void player_is_disconnected(QString pseudo);
     void new_chat_message(QString pseudo,Chat_type type,QString text);
     void server_error(QString error);
