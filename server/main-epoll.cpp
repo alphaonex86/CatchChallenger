@@ -19,7 +19,9 @@
 #include "NormalServerGlobal.h"
 #include "base/GlobalServerData.h"
 #include "base/Client.h"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_None.h"
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 #include "../general/base/FacilityLib.h"
 
 #define MAXEVENTS 512
@@ -424,7 +426,20 @@ int main(int argc, char *argv[])
                         }
                         else
                         {
-                            MapVisibilityAlgorithm_Simple_StoreOnSender *client=new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(epollClient));
+                            Client *client;
+                            switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+                            {
+                                case MapVisibilityAlgorithmSelection_Simple:
+                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(epollClient));
+                                break;
+                                case MapVisibilityAlgorithmSelection_WithBorder:
+                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(epollClient));
+                                break;
+                                default:
+                                case MapVisibilityAlgorithmSelection_None:
+                                    client=new MapVisibilityAlgorithm_None(new ConnectedSocket(epollClient));
+                                break;
+                            }
                             epoll_event event;
                             event.data.ptr = client;
                             #ifndef SERVERNOBUFFER

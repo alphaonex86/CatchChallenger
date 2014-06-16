@@ -92,8 +92,6 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("Max"),50);
     if(!settings->contains(QLatin1Literal("Reshow")))
         settings->setValue(QLatin1Literal("Reshow"),30);
-    if(!settings->contains(QLatin1Literal("StoreOnSender")))
-        settings->setValue(QLatin1Literal("StoreOnSender"),true);
     if(!settings->contains(QLatin1Literal("Reemit")))
         settings->setValue(QLatin1Literal("Reemit"),false);
     settings->endGroup();
@@ -107,8 +105,6 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("Max"),50);
     if(!settings->contains(QLatin1Literal("Reshow")))
         settings->setValue(QLatin1Literal("Reshow"),30);
-    if(!settings->contains(QLatin1Literal("StoreOnSender")))
-        settings->setValue(QLatin1Literal("StoreOnSender"),true);
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("rates"));

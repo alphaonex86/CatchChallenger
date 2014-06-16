@@ -16,7 +16,6 @@ class CommonFightEngine : public ClientBase
 public:
     CommonFightEngine();
     void resetAll();
-    void setVariable(Player_private_and_public_informations *player_informations);
     bool isInFight() const;
     bool isInFightWithWild() const;
     bool getAbleToFight() const;

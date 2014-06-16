@@ -20,9 +20,9 @@
 #include "../../general/base/MoveOnTheMap.h"
 
 namespace CatchChallenger {
-class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap, public QObject
+class Api_protocol : public QObject, public ProtocolParsingInputOutput, public MoveOnTheMap
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
@@ -106,6 +106,7 @@ protected:
     bool isInBattle;
 signals:
     void newError(const QString &error,const QString &detailedError) const;
+    void message(const QString &message) const;
 
     //protocol/connection info
     void disconnected(const QString &reason) const;

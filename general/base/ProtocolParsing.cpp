@@ -266,7 +266,7 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket,
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
-bool ProtocolParsingInputOutput::checkStringIntegrity(const QByteArray & data) const
+bool ProtocolParsingInputOutput::checkStringIntegrity(const QByteArray & data)
 {
     if(data.size()<(int)sizeof(qint32))
     {
