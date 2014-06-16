@@ -21,7 +21,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         int index=0;
         while(index<clients.size())
         {
-            clients.at(index)->sendPacket(0xC4);
+            clients.at(index)->dropAllClients();
             index++;
         }
         return;
@@ -51,25 +51,26 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             while (index<clients.size())
             {
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                    out << (quint8)clients.at(index)->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                    out << (quint8)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
                 else
-                    out << (quint16)clients.at(index)->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                    out << (quint16)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
                 out << (COORD_TYPE)clients.at(index)->getX();
                 out << (COORD_TYPE)clients.at(index)->getY();
                 if(GlobalServerData::serverSettings.dontSendPlayerType)
                     out << (quint8)((quint8)clients.at(index)->getLastDirection() | (quint8)Player_type_normal);
                 else
-                    out << (quint8)((quint8)clients.at(index)->getLastDirection() | (quint8)clients.at(index)->player_informations->public_and_private_informations.public_informations.type);
+                    out << (quint8)((quint8)clients.at(index)->getLastDirection() | (quint8)clients.at(index)->public_and_private_informations.public_informations.type);
                 if(CommonSettings::commonSettings.forcedSpeed==0)
-                    out << clients.at(index)->player_informations->public_and_private_informations.public_informations.speed;
+                    out << clients.at(index)->public_and_private_informations.public_informations.speed;
                 //pseudo
                 if(!CommonSettings::commonSettings.dontSendPseudo)
                 {
-                    purgeBuffer_outputData+=clients.at(index)->player_informations->rawPseudo;
-                    out.device()->seek(out.device()->pos()+clients.at(index)->player_informations->rawPseudo.size());
+                    const QByteArray &rawPseudo=clients.at(index)->getRawPseudo();
+                    purgeBuffer_outputData+=rawPseudo;
+                    out.device()->seek(out.device()->pos()+rawPseudo.size());
                 }
                 //skin
-                out << clients.at(index)->player_informations->public_and_private_informations.public_informations.skinId;
+                out << clients.at(index)->public_and_private_informations.public_informations.skinId;
                 ++index;
             }
         }
@@ -116,25 +117,26 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     if(index!=index_subindex)
                     {
                         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                            out << (quint8)clients.at(index_subindex)->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << (quint8)clients.at(index_subindex)->public_and_private_informations.public_informations.simplifiedId;
                         else
-                            out << (quint16)clients.at(index_subindex)->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << (quint16)clients.at(index_subindex)->public_and_private_informations.public_informations.simplifiedId;
                         out << (COORD_TYPE)clients.at(index_subindex)->getX();
                         out << (COORD_TYPE)clients.at(index_subindex)->getY();
                         if(GlobalServerData::serverSettings.dontSendPlayerType)
                             out << (quint8)((quint8)clients.at(index_subindex)->getLastDirection() | (quint8)Player_type_normal);
                         else
-                            out << (quint8)((quint8)clients.at(index_subindex)->getLastDirection() | (quint8)clients.at(index_subindex)->player_informations->public_and_private_informations.public_informations.type);
+                            out << (quint8)((quint8)clients.at(index_subindex)->getLastDirection() | (quint8)clients.at(index_subindex)->public_and_private_informations.public_informations.type);
                         if(CommonSettings::commonSettings.forcedSpeed==0)
-                            out << clients.at(index_subindex)->player_informations->public_and_private_informations.public_informations.speed;
+                            out << clients.at(index_subindex)->public_and_private_informations.public_informations.speed;
                         //pseudo
                         if(!CommonSettings::commonSettings.dontSendPseudo)
                         {
-                            purgeBuffer_outputData+=clients.at(index_subindex)->player_informations->rawPseudo;
-                            out.device()->seek(out.device()->pos()+clients.at(index_subindex)->player_informations->rawPseudo.size());
+                            const QByteArray &rawPseudo=clients.at(index_subindex)->getRawPseudo();
+                            purgeBuffer_outputData+=rawPseudo;
+                            out.device()->seek(out.device()->pos()+rawPseudo.size());
                         }
                         //skin
-                        out << clients.at(index_subindex)->player_informations->public_and_private_informations.public_informations.skinId;
+                        out << clients.at(index_subindex)->public_and_private_informations.public_informations.skinId;
                     }
                     ++index_subindex;
                 }
@@ -241,9 +243,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     {
                         const MapVisibilityAlgorithm_Simple_StoreOnSender &client=*clientsToSendDataOldClients[index_subindex];
                         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                            out << (quint8)client.player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << (quint8)client.public_and_private_informations.public_informations.simplifiedId;
                         else
-                            out << (quint16)client.player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << (quint16)client.public_and_private_informations.public_informations.simplifiedId;
                         out << (quint8)client.to_send_move.size();
                         index_move=0;
                         while(index_move<client.to_send_move.size())
@@ -298,9 +300,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             const MapVisibilityAlgorithm_Simple_StoreOnSender &client=*clientsToSendDataOldClients[index_subindex];
                             if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                                out << (quint8)client.player_informations->public_and_private_informations.public_informations.simplifiedId;
+                                out << (quint8)client.public_and_private_informations.public_informations.simplifiedId;
                             else
-                                out << (quint16)client.player_informations->public_and_private_informations.public_informations.simplifiedId;
+                                out << (quint16)client.public_and_private_informations.public_informations.simplifiedId;
                             out << (quint8)client.to_send_move.size();
                             index_move=0;
                             while(index_move<client.to_send_move.size())
@@ -344,25 +346,26 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             while (index_subindex<clientsToSendDataSizeNewClients)
             {
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                    out << (quint8)clientsToSendDataNewClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                    out << (quint8)clientsToSendDataNewClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
                 else
-                    out << (quint16)clientsToSendDataNewClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                    out << (quint16)clientsToSendDataNewClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
                 out << (COORD_TYPE)clientsToSendDataNewClients[index_subindex]->getX();
                 out << (COORD_TYPE)clientsToSendDataNewClients[index_subindex]->getY();
                 if(GlobalServerData::serverSettings.dontSendPlayerType)
                     out << (quint8)((quint8)clientsToSendDataNewClients[index_subindex]->getLastDirection() | (quint8)Player_type_normal);
                 else
-                    out << (quint8)((quint8)clientsToSendDataNewClients[index_subindex]->getLastDirection() | (quint8)clientsToSendDataNewClients[index_subindex]->player_informations->public_and_private_informations.public_informations.type);
+                    out << (quint8)((quint8)clientsToSendDataNewClients[index_subindex]->getLastDirection() | (quint8)clientsToSendDataNewClients[index_subindex]->public_and_private_informations.public_informations.type);
                 if(CommonSettings::commonSettings.forcedSpeed==0)
-                    out << clientsToSendDataNewClients[index_subindex]->player_informations->public_and_private_informations.public_informations.speed;
+                    out << clientsToSendDataNewClients[index_subindex]->public_and_private_informations.public_informations.speed;
                 //pseudo
                 if(!CommonSettings::commonSettings.dontSendPseudo)
                 {
-                    purgeBuffer+=clientsToSendDataNewClients[index_subindex]->player_informations->rawPseudo;
-                    out.device()->seek(out.device()->pos()+clientsToSendDataNewClients[index_subindex]->player_informations->rawPseudo.size());
+                    const QByteArray &rawPseudo=clients.at(index_subindex)->getRawPseudo();
+                    purgeBuffer+=rawPseudo;
+                    out.device()->seek(out.device()->pos()+rawPseudo.size());
                 }
                 //skin
-                out << clientsToSendDataNewClients[index_subindex]->player_informations->public_and_private_informations.public_informations.skinId;
+                out << clientsToSendDataNewClients[index_subindex]->public_and_private_informations.public_informations.skinId;
                 ++index_subindex;
             }
         }
@@ -406,9 +409,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     if(clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
                     {
                         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                            out << (quint8)clientsToSendDataOldClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << (quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
                         else
-                            out << (quint16)clientsToSendDataOldClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                            out << (quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
                         out << clientsToSendDataOldClients[index_subindex]->getX();
                         out << clientsToSendDataOldClients[index_subindex]->getY();
                         out << (quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
@@ -456,9 +459,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->to_send_reinsert)
                         {
                             if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                                out << (quint8)clientsToSendDataOldClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                                out << (quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
                             else
-                                out << (quint16)clientsToSendDataOldClients[index_subindex]->player_informations->public_and_private_informations.public_informations.simplifiedId;
+                                out << (quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
                             out << clientsToSendDataOldClients[index_subindex]->getX();
                             out << clientsToSendDataOldClients[index_subindex]->getY();
                             out << (quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();

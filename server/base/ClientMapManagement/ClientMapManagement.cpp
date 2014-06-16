@@ -12,38 +12,10 @@ using namespace CatchChallenger;
 
 /// \todo drop this class
 
-ClientMapManagement::ClientMapManagement()
-{
-}
-
-ClientMapManagement::~ClientMapManagement()
-{
-}
-
-Map_player_info ClientMapManagement::getMapPlayerInfo() const
-{
-    Map_player_info temp;
-    temp.map		= map;
-    temp.x			= x;
-    temp.y			= y;
-    return temp;
-}
-
-void ClientMapManagement::setVariable(Player_internal_informations *player_informations)
-{
-    MapBasicMove::setVariable(player_informations);
-}
-
-void ClientMapManagement::extraStop()
-{
-    //call MapVisibilityAlgorithm to remove
-    //removeClient(); -> do by unload from map
-}
-
 bool ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    /*emit */message(QStringLiteral("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
+    message(QStringLiteral("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
     #endif
     if(Q_UNLIKELY(!MapBasicMove::moveThePlayer(previousMovedUnit,direction)))
         return false;
@@ -51,12 +23,3 @@ bool ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
     return true;
 }
 
-void ClientMapManagement::dropAllClients()
-{
-    /*emit */sendPacket(0xC4);
-}
-
-void ClientMapManagement::dropAllBorderClients()
-{
-    /*emit */sendPacket(0xC9);
-}

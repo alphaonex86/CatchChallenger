@@ -19,7 +19,7 @@
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../Api_client_real.h"
-#include "../../general/base/Api_protocol.h"
+#include "../Api_protocol.h"
 #include "MapController.h"
 #include "Chat.h"
 #include "NewProfile.h"

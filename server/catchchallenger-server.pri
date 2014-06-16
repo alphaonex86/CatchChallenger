@@ -13,7 +13,9 @@ SOURCES += \
     $$PWD/base/ClientLocalBroadcast.cpp \
     $$PWD/base/EventThreader.cpp \
     $$PWD/base/Client.cpp \
+    $$PWD/base/ClientStaticVar.cpp \
     $$PWD/base/ClientHeavyLoad.cpp \
+    $$PWD/base/ClientHeavyLoadSelectChar.cpp \
     $$PWD/base/ClientNetworkWrite.cpp \
     $$PWD/base/ClientNetworkRead.cpp \
     $$PWD/base/ClientNetworkReadWithoutSender.cpp \
@@ -24,8 +26,6 @@ SOURCES += \
     $$PWD/base/ClientMapManagement/ClientMapManagement.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.cpp \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.cpp \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.cpp \
@@ -37,7 +37,8 @@ SOURCES += \
     $$PWD/fight/LocalClientHandlerFight.cpp \
     $$PWD/fight/BaseServerFight.cpp \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
-    $$PWD/fight/ClientHeavyLoadFight.cpp
+    $$PWD/fight/ClientHeavyLoadFight.cpp \
+    $$PWD/base/QtDatabase.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
@@ -45,12 +46,10 @@ HEADERS += \
     $$PWD/base/BaseServer.h \
     $$PWD/base/LocalClientHandler.h \
     $$PWD/base/LocalClientHandlerWithoutSender.h \
-    $$PWD/base/ClientLocalBroadcast.h \
     $$PWD/VariableServer.h \
     $$PWD/base/ServerStructures.h \
     $$PWD/base/EventThreader.h \
     $$PWD/base/Client.h \
-    $$PWD/base/ClientHeavyLoad.h \
     $$PWD/base/ClientNetworkWrite.h \
     $$PWD/base/ClientNetworkRead.h \
     $$PWD/base/ClientNetworkReadWithoutSender.h \
@@ -61,8 +60,6 @@ HEADERS += \
     $$PWD/base/ClientMapManagement/ClientMapManagement.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnReceiver.h \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnReceiver.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h \
@@ -72,7 +69,8 @@ HEADERS += \
     $$PWD/crafting/MapServerCrafting.h \
     $$PWD/fight/ServerStructuresFight.h \
     $$PWD/fight/BaseServerFight.h \
-    $$PWD/fight/LocalClientHandlerFight.h
+    $$PWD/base/DatabaseBase.h \
+    $$PWD/base/QtDatabase.h
 
 RESOURCES += \
     $$PWD/all-server-resources.qrc

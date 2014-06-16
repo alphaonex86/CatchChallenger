@@ -1,5 +1,6 @@
-#include "../base/ClientLocalBroadcast.h"
+#include "../base/Client.h"
 #include "../base/BroadCastWithoutSender.h"
+#include "../base/MapServer.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../base/GlobalServerData.h"
@@ -8,16 +9,14 @@
 
 using namespace CatchChallenger;
 
-QString ClientLocalBroadcast::text_dottmx;
-
-void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_id)
+void Client::plantSeed(const quint8 &query_id,const quint8 &plant_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    /*emit */message(QStringLiteral("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
+    normalOutput(QStringLiteral("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
     #endif
     if(!CommonDatapack::commonDatapack.plants.contains(plant_id))
     {
-        /*emit */error(QStringLiteral("plant_id not found: %1").arg(plant_id));
+        errorOutput(QStringLiteral("plant_id not found: %1").arg(plant_id));
         return;
     }
     CommonMap *map=this->map;
@@ -31,13 +30,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
@@ -46,13 +45,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
@@ -61,13 +60,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
@@ -76,24 +75,24 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
         default:
-        /*emit */error("Wrong direction to plant a seed");
+        errorOutput("Wrong direction to plant a seed");
         return;
     }
     //check if is dirt
     if(!MoveOnTheMap::isDirt(*map,x,y))
     {
-        /*emit */error("Try pu seed out of the dirt");
+        errorOutput("Try pu seed out of the dirt");
         return;
     }
     //check if is free
@@ -105,7 +104,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
         {
             QByteArray data;
             data[0]=0x02;
-            /*emit */postReply(query_id,data);
+            postReply(query_id,data);
             return;
         }
         index++;
@@ -119,13 +118,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
     plantInWaiting.y=y;
 
     plant_list_in_waiting << plantInWaiting;
-    /*emit */useSeed(plant_id);
+    useSeed(plant_id);
 }
 
-void ClientLocalBroadcast::seedValidated()
+void Client::seedValidated()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    /*emit */message(QStringLiteral("seedValidated()"));
+    normalOutput(QStringLiteral("seedValidated()"));
     #endif
     /* useless, clean the protocol
     if(!ok)
@@ -144,10 +143,10 @@ void ClientLocalBroadcast::seedValidated()
         {
             if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
             {
-                /*emit */addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
+                addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
                 QByteArray data;
                 data[0]=0x02;
-                /*emit */postReply(plant_list_in_waiting.first().query_id,data);
+                postReply(plant_list_in_waiting.first().query_id,data);
                 plant_list_in_waiting.removeFirst();
                 return;
             }
@@ -157,7 +156,7 @@ void ClientLocalBroadcast::seedValidated()
     //is ok
     QByteArray data;
     data[0]=0x01;
-    /*emit */postReply(plant_list_in_waiting.first().query_id,data);
+    postReply(plant_list_in_waiting.first().query_id,data);
     quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     MapServerCrafting::PlantOnMap plantOnMap;
     if(GlobalServerData::serverPrivateVariables.plantUnusedId.isEmpty())
@@ -170,45 +169,44 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.x=plant_list_in_waiting.first().x;
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
-    plantOnMap.character=player_informations->character_id;
+    plantOnMap.character=character_id;
     plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds;
     plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
-    QString map_file=plant_list_in_waiting.first().map->map_file;
-    map_file.remove(text_dottmx);
+    const QString &map_file=plant_list_in_waiting.first().map->map_file;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            /*emit */dbQuery(QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+            dbQueryWrite(QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
                          .arg(plantOnMap.id)
-                         .arg(SqlFunction::quoteSqlVariable(map_file))
+                         .arg(map_file)
                          .arg(plantOnMap.x)
                          .arg(plantOnMap.y)
                          .arg(plantOnMap.plant)
-                         .arg(player_informations->character_id)
+                         .arg(character_id)
                          .arg(current_time)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            /*emit */dbQuery(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
-                     .arg(SqlFunction::quoteSqlVariable(map_file))
+            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+                     .arg(map_file)
                      .arg(plantOnMap.id)
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)
-                     .arg(player_informations->character_id)
+                     .arg(character_id)
                      .arg(current_time)
                      );
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            /*emit */dbQuery(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
                      .arg(plantOnMap.id)
-                     .arg(SqlFunction::quoteSqlVariable(map_file))
+                     .arg(map_file)
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)
-                     .arg(player_informations->character_id)
+                     .arg(character_id)
                      .arg(current_time)
                      );
         break;
@@ -237,12 +235,12 @@ void ClientLocalBroadcast::seedValidated()
                 out << (quint16)0;
             else if((plantOnMap.mature_at-current_time)>65535)
             {
-                /*emit */message(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
+                normalOutput(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
                 out << (quint16)(65535);
             }
             else
                 out << (quint16)(plantOnMap.mature_at-current_time);
-            finalData=ProtocolParsingOutput::computeOutcommingData(false,0xD1,outputData);
+            finalData=ProtocolParsingInputOutput::computeOutcommingData(false,0xD1,outputData);
         }
 
         quint16 index=0;
@@ -257,7 +255,7 @@ void ClientLocalBroadcast::seedValidated()
     plant_list_in_waiting.removeFirst();
 }
 
-void ClientLocalBroadcast::sendNearPlant()
+void Client::sendNearPlant()
 {
     //Insert plant on map
     const quint16 &plant_list_size=static_cast<MapServer *>(map)->plants.size();
@@ -285,7 +283,7 @@ void ClientLocalBroadcast::sendNearPlant()
             out << (quint16)0;
         else if((plant.mature_at-current_time)>65535)
         {
-            /*emit */message(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plant.plant));
+            normalOutput(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plant.plant));
             out << (quint16)(65535);
         }
         else
@@ -296,17 +294,17 @@ void ClientLocalBroadcast::sendNearPlant()
             remaining_seconds_to_mature=0;
         else
             remaining_seconds_to_mature=(plant.mature_at-current_time);
-        /*emit */message(QStringLiteral("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
+        normalOutput(QStringLiteral("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
         #endif
         index++;
     }
-    /*emit */sendPacket(0xD1,outputData);
+    sendPacket(0xD1,outputData);
 }
 
-void ClientLocalBroadcast::removeNearPlant()
+void Client::removeNearPlant()
 {
     #if defined(DEBUG_MESSAGE_MAP_PLANTS)
-    /*emit */message("removeNearPlant()");
+    normalOutput("removeNearPlant()");
     #endif
     //send the remove plant
     const quint16 &plant_list_size=static_cast<MapServer *>(map)->plants.size();
@@ -329,17 +327,17 @@ void ClientLocalBroadcast::removeNearPlant()
         out << plant.x;
         out << plant.y;
         #if defined(DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE) && defined(DEBUG_MESSAGE_MAP_PLANTS)
-        /*emit */message(QStringLiteral("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+        normalOutput(QStringLiteral("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
         #endif
         index++;
     }
-    /*emit */sendPacket(0xD2,outputData);
+    sendPacket(0xD2,outputData);
 }
 
-void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
+void Client::collectPlant(const quint8 &query_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    /*emit */message(QStringLiteral("collectPlant(%1)").arg(query_id));
+    normalOutput(QStringLiteral("collectPlant(%1)").arg(query_id));
     #endif
     CommonMap *map=this->map;
     quint8 x=this->x;
@@ -352,13 +350,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
@@ -367,13 +365,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
@@ -382,13 +380,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
@@ -397,24 +395,24 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    /*emit */error(QStringLiteral("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    errorOutput(QStringLiteral("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
             else
             {
-                /*emit */error("No valid map in this direction");
+                errorOutput("No valid map in this direction");
                 return;
             }
         break;
         default:
-        /*emit */error("Wrong direction to plant a seed");
+        errorOutput("Wrong direction to plant a seed");
         return;
     }
     //check if is dirt
     if(!MoveOnTheMap::isDirt(*map,x,y))
     {
-        /*emit */error("Try pu seed out of the dirt");
+        errorOutput("Try pu seed out of the dirt");
         return;
     }
     //check if is free
@@ -430,30 +428,30 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 QByteArray data;
                 data[0]=Plant_collect_impossible;
-                /*emit */postReply(query_id,data);
+                postReply(query_id,data);
                 return;
             }
             //check if owned
-            if(plant.character==player_informations->character_id ||
+            if(plant.character==character_id ||
                     current_time>plant.player_owned_expire_at ||
-                    player_informations->public_and_private_informations.public_informations.type==Player_type_gm ||
-                    player_informations->public_and_private_informations.public_informations.type==Player_type_dev
+                    public_and_private_informations.public_informations.type==Player_type_gm ||
+                    public_and_private_informations.public_informations.type==Player_type_dev
                     )
             {
                 QString map_file=map->map_file;
-                map_file.remove(ClientLocalBroadcast::text_dottmx);
+                map_file.remove(Client::text_dottmx);
                 //remove plant from db
                 switch(GlobalServerData::serverSettings.database.type)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        /*emit */dbQuery(QStringLiteral("DELETE FROM `plant` WHERE `id`=%1").arg(plant.id));
+                        dbQueryWrite(QStringLiteral("DELETE FROM `plant` WHERE `id`=%1").arg(plant.id));
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        /*emit */dbQuery(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
+                        dbQueryWrite(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
                     break;
                     case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        /*emit */dbQuery(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
+                        dbQueryWrite(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
                     break;
                 }
 
@@ -472,7 +470,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                         out << (quint32)map->id;
                     out << plant.x;
                     out << plant.y;
-                    finalData=ProtocolParsingOutput::computeOutcommingData(false,0xD2,outputData);
+                    finalData=ProtocolParsingInputOutput::computeOutcommingData(false,0xD2,outputData);
                 }
 
                 {
@@ -493,8 +491,8 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
 
                 QByteArray data;
                 data[0]=Plant_collect_correctly_collected;
-                /*emit */postReply(query_id,data);
-                /*emit */addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
+                postReply(query_id,data);
+                addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
 
                 GlobalServerData::serverPrivateVariables.plantUnusedId << plant.id;
                 static_cast<MapServer *>(map)->plants.removeAt(index);
@@ -504,7 +502,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 QByteArray data;
                 data[0]=Plant_collect_owned_by_another_player;
-                /*emit */postReply(query_id,data);
+                postReply(query_id,data);
                 return;
             }
         }
@@ -512,5 +510,5 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
     }
     QByteArray data;
     data[0]=Plant_collect_empty_dirt;
-    /*emit */postReply(query_id,data);
+    postReply(query_id,data);
 }

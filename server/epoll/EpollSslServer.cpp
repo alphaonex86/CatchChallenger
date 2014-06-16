@@ -14,8 +14,11 @@
 
 using namespace CatchChallenger;
 
+void eventLoop();
+
 EpollSslServer::EpollSslServer()
 {
+    ready=false;
     sfd=-1;
 
     normalServerSettings.server_ip      = QString();
@@ -29,6 +32,16 @@ EpollSslServer::EpollSslServer()
 EpollSslServer::~EpollSslServer()
 {
     close();
+}
+
+void EpollServer::preload_finish()
+{
+    ready=true;
+}
+
+bool EpollServer::isReady()
+{
+    return ready;
 }
 
 //Graph: create SSL_METHOD and create SSL_CTX

@@ -1,9 +1,9 @@
 #include "TimerDdos.h"
-#include "Epoll.h"
+#include "../Epoll.h"
 
-#include "../base/LocalClientHandlerWithoutSender.h"
-#include "../base/BroadCastWithoutSender.h"
-#include "../base/ClientNetworkReadWithoutSender.h"
+#include "../../base/LocalClientHandlerWithoutSender.h"
+#include "../../base/BroadCastWithoutSender.h"
+#include "../../base/ClientNetworkReadWithoutSender.h"
 
 #include <iostream>
 
