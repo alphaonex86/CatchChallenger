@@ -14,7 +14,6 @@ ClientFightEngine ClientFightEngine::fightEngine;
 ClientFightEngine::ClientFightEngine()
 {
     resetAll();
-    CommonFightEngine::setVariable(&this->player_informations_local);
 }
 
 ClientFightEngine::~ClientFightEngine()
