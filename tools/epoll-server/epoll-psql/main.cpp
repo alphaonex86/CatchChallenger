@@ -52,7 +52,8 @@ int main (int argc, char *argv[])
       abort ();
     }
 
-  PGconn *conn=PQconnectStart("dbname=catchchallenger user=root");
+  //PGconn *conn=PQconnectStart("dbname=catchchallenger user=root");
+  PGconn *conn=PQconnectStart("dbname=catchchallenger host=localhost user=root");
   const ConnStatusType &connStatusType=PQstatus(conn);
   if(connStatusType==CONNECTION_BAD)
   {

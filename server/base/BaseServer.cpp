@@ -362,6 +362,7 @@ void BaseServer::preload_zone_init()
         if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static))
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+            abort();//stop because can't do the first db access
             entryListIndex++;
         }
         else
@@ -2086,12 +2087,26 @@ void BaseServer::loadAndFixSettings()
 
     if(GlobalServerData::serverSettings.datapackCache<-1)
         GlobalServerData::serverSettings.datapackCache=-1;
-    if(!CommonSettings::commonSettings.httpDatapackMirror.contains(QRegularExpression("^https?://[0-9a-z]")))
-        CommonSettings::commonSettings.httpDatapackMirror.clear();
-    else
     {
-        if(!CommonSettings::commonSettings.httpDatapackMirror.endsWith(QLatin1Literal("/")))
-            CommonSettings::commonSettings.httpDatapackMirror+=QLatin1Literal("/");
+        QStringList newMirrorList;
+        QRegularExpression httpMatch("^https?://.+$");
+        const QStringList &mirrorList=CommonSettings::commonSettings.httpDatapackMirror.split(";");
+        int index=0;
+        while(index<mirrorList.size())
+        {
+            const QString &mirror=mirrorList.at(index);
+            if(!mirror.contains(httpMatch))
+                qDebug() << "Mirror wrong: " << mirror.toLocal8Bit();
+            else
+            {
+                if(mirror.endsWith("/"))
+                    newMirrorList << mirror;
+                else
+                    newMirrorList << mirror+"/";
+            }
+            index++;
+        }
+        CommonSettings::commonSettings.httpDatapackMirror=newMirrorList.join(";");
     }
 
     //check the settings here

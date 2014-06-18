@@ -1,15 +1,20 @@
-#ifndef EPOLLPOSTGRESQL_H
-#define EPOLLPOSTGRESQL_H
+#ifndef CATCHCHALLENGER_EPOLLPOSTGRESQL_H
+#define CATCHCHALLENGER_EPOLLPOSTGRESQL_H
 
 #include <postgresql-9.3/libpq-fe.h>
+#include <QList>
 
 #include "../../base/DatabaseBase.h"
+#include "../BaseClassSwitch.h"
 
-class EpollPostgresql
+#define CATCHCHALLENGER_MAXBDQUERIES 256
+
+class EpollPostgresql : public BaseClassSwitch
 {
 public:
     EpollPostgresql();
     ~EpollPostgresql();
+    Type getType() const;
     bool syncConnect(const char * host, const char * dbname, const char * user, const char * password);
     void syncDisconnect();
     bool asyncRead(const char *query,void * returnObject,CallBackDatabase method);
@@ -29,11 +34,11 @@ public:
     };
 private:
     PGconn *conn;
-    int queueSize;
     int tuleIndex;
     PGresult *result;
-    CallBack queue[256];
+    QList<CallBack> queue;
     static char emptyString[1];
+    bool started;
 };
 
 #endif

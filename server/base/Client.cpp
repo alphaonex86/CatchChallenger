@@ -79,6 +79,13 @@ Client::~Client()
     }
 }
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
+BaseClassSwitch::Type Client::getType() const
+{
+    return BaseClassSwitch::Type::Client;
+}
+#endif
+
 /// \brief new error at connexion
 void Client::connectionError(QAbstractSocket::SocketError error)
 {
