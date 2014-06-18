@@ -596,6 +596,7 @@ void Client::selectClan_return()
         public_and_private_informations.clan=0;
         normalOutput(QStringLiteral("Warning: clan linked: %1 is not found into db"));
     }
+    GlobalServerData::serverPrivateVariables.db.clear();
     loginIsRightAfterClan();
 }
 

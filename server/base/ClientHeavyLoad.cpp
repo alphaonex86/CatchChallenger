@@ -444,6 +444,7 @@ void Client::addCharacter_return()
     AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.takeFirst());
     if(GlobalServerData::serverPrivateVariables.db.next())
     {
+        GlobalServerData::serverPrivateVariables.db.clear();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
@@ -453,6 +454,7 @@ void Client::addCharacter_return()
         delete addCharacterParam;
         return;
     }
+    GlobalServerData::serverPrivateVariables.db.clear();
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(addCharacterParam->profileIndex);
 
     number_of_character++;
