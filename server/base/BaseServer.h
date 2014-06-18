@@ -100,6 +100,7 @@ protected:
 
     static void preload_zone_static(void *object);
     void preload_zone_init();
+    void preload_zone_sql();
     void preload_zone_return();
     static void preload_industries_static(void *object);
     void preload_industries_return();
@@ -149,7 +150,7 @@ protected:
 
     QFileInfoList entryListZone;
     int entryListIndex;
-    QString zoneCodeName;
+    int plant_on_the_map;
 
     static QRegularExpression regexXmlFile;
     static QString text_dotxml;

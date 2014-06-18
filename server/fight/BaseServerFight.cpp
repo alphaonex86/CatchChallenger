@@ -25,6 +25,8 @@ void BaseServer::preload_monsters_drops()
 
 void BaseServer::load_monsters_max_id()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL city loaded").arg(GlobalServerData::serverPrivateVariables.cityStatusList.size()));
+
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -41,8 +43,9 @@ void BaseServer::load_monsters_max_id()
     }
     if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static))
     {
-        abort();//stop because can't do the first db access
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        abort();//stop because can't do the first db access
+        plant_on_the_map=0;
         preload_the_plant_on_map();
     }
     return;
@@ -67,6 +70,7 @@ void BaseServer::load_monsters_max_id_return()
             continue;
         }
     }
+    plant_on_the_map=0;
     preload_the_plant_on_map();
 }
 

@@ -20,6 +20,8 @@ using namespace CatchChallenger;
 
 void BaseServer::preload_the_plant_on_map()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL monster max id").arg(GlobalServerData::serverPrivateVariables.maxMonsterId));
+
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -48,12 +50,11 @@ void BaseServer::preload_the_plant_on_map_static(void *object)
 
 void BaseServer::preload_the_plant_on_map_return()
 {
-    int plant_on_the_map=0;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
         const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
-        if(ok)
+        if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant id ignored because is not a number: %1").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
             continue;
@@ -156,7 +157,6 @@ void BaseServer::preload_the_plant_on_map_return()
         plant_on_the_map++;
     }
 
-    DebugClass::debugConsole(QStringLiteral("%1 plant(s) on the map loaded").arg(plant_on_the_map));
     load_clan_max_id();
 }
 
