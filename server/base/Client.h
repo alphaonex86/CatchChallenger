@@ -14,13 +14,22 @@
 #include "../../general/fight/CommonFightEngine.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../VariableServer.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "../epoll/BaseClassSwitch.h"
+#endif
 
 namespace CatchChallenger {
 class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        ,public BaseClassSwitch
+        #endif
 {
 public:
     explicit Client(ConnectedSocket *socket);
     virtual ~Client();
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    BaseClassSwitch::Type getType() const;
+    #endif
     //to get some info
     QString getPseudo();
     void savePosition();

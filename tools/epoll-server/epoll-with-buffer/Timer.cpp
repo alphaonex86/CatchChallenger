@@ -19,14 +19,14 @@ BaseClassSwitch::Type Timer::getType()
 
 bool Timer::init()
 {
-    if((tfd=::timerfd_create(CLOCK_REALTIME,0)) < 0)
+    if((tfd=::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
     {
         perror("timerfd create error");
         return false;
     }
 
     timespec now;
-    if (clock_gettime(CLOCK_REALTIME, &now) == -1)
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
     {
         perror("clock_gettime");
         return false;
@@ -38,7 +38,7 @@ bool Timer::init()
     new_value.it_interval.tv_nsec = 0;
 
 
-    int result=::timerfd_settime(tfd, TFD_TIMER_ABSTIME, &new_value, NULL);
+    int result=::timerfd_settime(tfd, NULL, &new_value, NULL);
     if(result<0)
     {
         perror("settime error");
