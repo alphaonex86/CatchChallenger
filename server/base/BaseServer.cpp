@@ -198,8 +198,8 @@ void BaseServer::preload_the_data()
     timeDatapack.restart();
 
     //start SQL load
-    load_monsters_max_id();
-    /* old code:
+    preload_zone_sql();
+    /*
     load_monsters_max_id();
     preload_the_plant_on_map();
     load_clan_max_id();
@@ -260,23 +260,24 @@ void BaseServer::preload_the_ddos()
 void BaseServer::preload_zone_init()
 {
     const int &listsize=entryListZone.size();
-    while(entryListIndex<listsize)
+    int index=0;
+    while(index<listsize)
     {
-        if(!entryListZone.at(entryListIndex).isFile())
+        if(!entryListZone.at(index).isFile())
         {
-            entryListIndex++;
+            index++;
             continue;
         }
-        if(!entryListZone.at(entryListIndex).fileName().contains(regexXmlFile))
+        if(!entryListZone.at(index).fileName().contains(regexXmlFile))
         {
-            qDebug() << QStringLiteral("%1 the zone file name not match").arg(entryListZone.at(entryListIndex).fileName());
-            entryListIndex++;
+            qDebug() << QStringLiteral("%1 the zone file name not match").arg(entryListZone.at(index).fileName());
+            index++;
             continue;
         }
-        zoneCodeName=entryListZone.at(entryListIndex).fileName();
+        QString zoneCodeName=entryListZone.at(index).fileName();
         zoneCodeName.remove(BaseServer::text_dotxml);
         QDomDocument domDocument;
-        const QString &file=entryListZone.at(entryListIndex).absoluteFilePath();
+        const QString &file=entryListZone.at(index).absoluteFilePath();
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
@@ -286,7 +287,7 @@ void BaseServer::preload_zone_init()
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
-                entryListIndex++;
+                index++;
                 continue;
             }
             xmlContent=itemsFile.readAll();
@@ -296,7 +297,7 @@ void BaseServer::preload_zone_init()
             if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
-                entryListIndex++;
+                index++;
                 continue;
             }
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
@@ -304,14 +305,14 @@ void BaseServer::preload_zone_init()
         if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(zoneCodeName))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, zone code name already found");
-            entryListIndex++;
+            index++;
             continue;
         }
         QDomElement root(domDocument.documentElement());
         if(root.tagName()!=BaseServer::text_zone)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
-            entryListIndex++;
+            index++;
             continue;
         }
 
@@ -345,6 +346,19 @@ void BaseServer::preload_zone_init()
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(capture.tagName()).arg(capture.lineNumber());
         }
+        index++;
+    }
+
+    qDebug() << QStringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
+}
+
+void BaseServer::preload_zone_sql()
+{
+    const int &listsize=entryListZone.size();
+    while(entryListIndex<listsize)
+    {
+        QString zoneCodeName=entryListZone.at(entryListIndex).fileName();
+        zoneCodeName.remove(BaseServer::text_dotxml);
         QString queryText;
         switch(GlobalServerData::serverSettings.database.type)
         {
@@ -364,12 +378,12 @@ void BaseServer::preload_zone_init()
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             abort();//stop because can't do the first db access
             entryListIndex++;
+            load_monsters_max_id();
         }
         else
             return;
     }
-
-    qDebug() << QStringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
+    load_monsters_max_id();
 }
 
 void BaseServer::preload_zone()
@@ -390,7 +404,10 @@ void BaseServer::preload_zone_return()
     if(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
-        const quint32 &clanId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        QString zoneCodeName=entryListZone.at(entryListIndex).fileName();
+        zoneCodeName.remove(BaseServer::text_dotxml);
+        const QString &tempString=QString(GlobalServerData::serverPrivateVariables.db.value(0));
+        const quint32 &clanId=tempString.toUInt(&ok);
         if(ok)
         {
             GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
@@ -399,12 +416,15 @@ void BaseServer::preload_zone_return()
         else
             DebugClass::debugConsole(QStringLiteral("clan id is failed to convert to number for city status"));
     }
+    GlobalServerData::serverPrivateVariables.db.clear();
     entryListIndex++;
-    preload_zone_init();
+    preload_zone_sql();
 }
 
 void BaseServer::preload_industries()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL clan max id").arg(GlobalServerData::serverPrivateVariables.maxClanId));
+
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -563,12 +583,13 @@ void BaseServer::preload_industries_return()
         if(ok)
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
     }
-    qDebug() << QStringLiteral("%1 industrie(s) status loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size());
     preload_market_monsters();
 }
 
 void BaseServer::preload_market_monsters()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL industrie loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size()));
+
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -726,6 +747,8 @@ void BaseServer::preload_market_monsters_return()
 
 void BaseServer::preload_market_items()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL monster list loaded").arg(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size()));
+
     Client::marketObjectIdList.clear();
     Client::marketObjectIdList.reserve(65535);
     int index=0;
@@ -1619,6 +1642,8 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
 
 void BaseServer::preload_finish()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL market item").arg(GlobalServerData::serverPrivateVariables.marketItemList.size()));
+    qDebug() << QStringLiteral("Loaded the server SQL datapack into %1ms").arg(timeDatapack.elapsed());
 }
 
 void BaseServer::load_next_city_capture()
@@ -2271,6 +2296,8 @@ void BaseServer::loadAndFixSettings()
 
 void BaseServer::load_clan_max_id()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL plant on map").arg(plant_on_the_map));
+
     GlobalServerData::serverPrivateVariables.maxClanId=0;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)

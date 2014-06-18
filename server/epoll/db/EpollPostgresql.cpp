@@ -23,6 +23,7 @@ void EpollPostgresql::noticeProcessor(void *arg, const char *message)
 EpollPostgresql::EpollPostgresql() :
     conn(NULL),
     tuleIndex(-1),
+    ntuples(0),
     result(NULL)
 {
 }
@@ -60,7 +61,7 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
         strcat(strCoPG,"dbname=");
         strcat(strCoPG,dbname);
     }
-    if(strlen(host)>0)
+    if(strlen(host)>0 && strcmp(host,"localhost")!=0)
     {
         strcat(strCoPG," host=");
         strcat(strCoPG,host);
@@ -132,6 +133,15 @@ bool EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackD
         std::cerr << "pg not connected" << std::endl;
         return false;
     }
+    if(queue.size()>0)
+    {
+        CallBack callback;
+        callback.object=NULL;
+        callback.method=NULL;
+        queue << callback;
+        queriesList << QString::fromUtf8(query);
+        return true;
+    }
     if(queue.size()>=256)
     {
         std::cerr << "pg queue full" << std::endl;
@@ -140,7 +150,7 @@ bool EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackD
     int query_id=PQsendQuery(conn,query);
     if(query_id==0)
     {
-        std::cerr << "query send failed" << std::endl;
+        std::cerr << "query send failed: " << errorMessage() << std::endl;
         return false;
     }
     CallBack callback;
@@ -156,6 +166,15 @@ bool EpollPostgresql::asyncWrite(const char *query)
     {
         std::cerr << "pg not connected" << std::endl;
         return false;
+    }
+    if(queue.size()>0)
+    {
+        CallBack callback;
+        callback.object=NULL;
+        callback.method=NULL;
+        queue << callback;
+        queriesList << QString::fromUtf8(query);
+        return true;
     }
     if(queue.size()>=256)
     {
@@ -175,6 +194,17 @@ bool EpollPostgresql::asyncWrite(const char *query)
     return true;
 }
 
+void EpollPostgresql::clear()
+{
+    while(result!=NULL)
+    {
+        PQclear(result);
+        result=PQgetResult(conn);
+    }
+    ntuples=0;
+    tuleIndex=-1;
+}
+
 bool EpollPostgresql::readyToRead()
 {
     const ConnStatusType &connStatusType=PQstatus(conn);
@@ -190,11 +220,26 @@ bool EpollPostgresql::readyToRead()
             started=true;
             std::cout << "Connexion CONNECTION_STARTED" << std::endl;
         }
+        else if(connStatusType==CONNECTION_AWAITING_RESPONSE)
+            std::cout << "Connexion CONNECTION_AWAITING_RESPONSE" << std::endl;
         else
         {
-            started=false;
-            std::cerr << "Connexion not ok: " << connStatusType << std::endl;
-            return false;
+            if(connStatusType==CONNECTION_BAD)
+            {
+                started=false;
+                std::cerr << "Connexion not ok: CONNECTION_BAD" << std::endl;
+                return false;
+            }
+            else if(connStatusType==CONNECTION_AUTH_OK)
+                std::cerr << "Connexion not ok: CONNECTION_AUTH_OK" << std::endl;
+            else if(connStatusType==CONNECTION_SETENV)
+                std::cerr << "Connexion not ok: CONNECTION_SETENV" << std::endl;
+            else if(connStatusType==CONNECTION_SSL_STARTUP)
+                std::cerr << "Connexion not ok: CONNECTION_SSL_STARTUP" << std::endl;
+            else if(connStatusType==CONNECTION_NEEDED)
+                std::cerr << "Connexion not ok: CONNECTION_NEEDED" << std::endl;
+            else
+                std::cerr << "Connexion not ok: " << connStatusType << std::endl;
         }
     }
     if(connStatusType!=CONNECTION_BAD)
@@ -222,17 +267,28 @@ bool EpollPostgresql::readyToRead()
             result=NULL;
         }
         tuleIndex=-1;
+        ntuples=0;
         result=PQgetResult(conn);
         if(result!=NULL)
         {
+            ntuples=PQntuples(result);
             if(!queue.isEmpty())
             {
                 CallBack callback=queue.takeFirst();
                 if(callback.method!=NULL)
                     callback.method(callback.object);
             }
-            PQclear(result);
-            result=NULL;
+            if(result!=NULL)
+                clear();
+            if(!queriesList.isEmpty())
+            {
+                int query_id=PQsendQuery(conn,queriesList.takeFirst().toUtf8());
+                if(query_id==0)
+                {
+                    std::cerr << "query async send failed: " << errorMessage() << std::endl;
+                    return false;
+                }
+            }
         }
     }
     return true;
@@ -245,27 +301,18 @@ char *EpollPostgresql::errorMessage()
 
 bool EpollPostgresql::next()
 {
-    if(result!=NULL && tuleIndex==-1)
+    if(result==NULL)
+        return false;
+    if(tuleIndex+1<ntuples)
     {
-        tuleIndex=0;
+        tuleIndex++;
         return true;
     }
-    if(result!=NULL)
-        PQclear(result);
-    if((result = PQgetResult(conn)) != NULL)
-    {
-        if(PQresultStatus(result) != PGRES_TUPLES_OK)
-        {
-            result=NULL;
-            std::cout << "FETCH ALL failed: " << PQerrorMessage(conn) << std::endl;
-            return false;
-        }
-        else
-            tuleIndex++;
-    }
     else
+    {
+        clear();
         return false;
-    return true;
+    }
 }
 
 char * EpollPostgresql::value(const int &value)

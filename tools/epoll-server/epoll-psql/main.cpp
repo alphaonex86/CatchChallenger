@@ -53,7 +53,7 @@ int main (int argc, char *argv[])
     }
 
   //PGconn *conn=PQconnectStart("dbname=catchchallenger user=root");
-  PGconn *conn=PQconnectStart("dbname=catchchallenger host=localhost user=root");
+  PGconn *conn=PQconnectStart("host=localhost dbname=catchchallenger user=root");
   const ConnStatusType &connStatusType=PQstatus(conn);
   if(connStatusType==CONNECTION_BAD)
   {
@@ -105,9 +105,9 @@ int main (int argc, char *argv[])
               if(connStatusType!=CONNECTION_OK)
               {
                   if(connStatusType==CONNECTION_MADE)
-                    fprintf(stderr,"Connexion CONNECTION_MADE\n");
+                    fprintf(stderr,"Connexion CONNECTION_MADE, Connected to server...\n");
                   else if(connStatusType==CONNECTION_STARTED)
-                    fprintf(stderr,"Connexion CONNECTION_STARTED\n");
+                    fprintf(stderr,"Connexion CONNECTION_STARTED, Connecting...\n");
                   else
                       fprintf(stderr,"Connexion not ok: %d\n",connStatusType);
               }
@@ -119,8 +119,16 @@ int main (int argc, char *argv[])
                     fprintf(stderr,"Connexion status: PGRES_POLLING_FAILED, bye\n");
                     exit(1);
                   }
-                  /*else if(postgresPollingStatusType==PGRES_POLLING_OK)
-                    fprintf(stderr,"Connexion status: PGRES_POLLING_OK\n");*/
+                  else if(postgresPollingStatusType==PGRES_POLLING_OK)
+                    fprintf(stderr,"Connexion status: PGRES_POLLING_OK\n");
+                  else if(postgresPollingStatusType==PGRES_POLLING_ACTIVE)
+                    fprintf(stderr,"Connexion status: PGRES_POLLING_ACTIVE");
+                  else if(postgresPollingStatusType==PGRES_POLLING_READING)
+                    fprintf(stderr,"Connexion status: PGRES_POLLING_ACTIVE");
+                  else if(postgresPollingStatusType==PGRES_POLLING_WRITING)
+                    fprintf(stderr,"Connexion status: PGRES_POLLING_OK\n");
+                  else
+                      fprintf(stderr,"Connexion status: %d\n",postgresPollingStatusType);
               }
 
               if (events[i].events & EPOLLOUT) //socket is ready for writing
