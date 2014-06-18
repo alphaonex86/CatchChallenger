@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sys/timerfd.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 char buff_temp[sizeof(uint64_t)];
 
@@ -22,14 +24,14 @@ bool EpollTimer::start(const unsigned int &msec)
 {
     if(tfd!=-1)
         return false;
-    if((tfd=::timerfd_create(CLOCK_REALTIME,0)) < 0)
+    if((tfd=::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
     {
         std::cerr << "Timer creation error" << std::endl;
         return false;
     }
 
     timespec now;
-    if (clock_gettime(CLOCK_REALTIME, &now) == -1)
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
     {
         std::cerr << "clock_gettime error" << std::endl;
         return false;
@@ -38,22 +40,23 @@ bool EpollTimer::start(const unsigned int &msec)
     if(singleShot)
     {
         new_value.it_value.tv_sec = now.tv_sec + msec/1000;
-        new_value.it_value.tv_nsec = now.tv_nsec + msec%1000*1000000;
+        new_value.it_value.tv_nsec = now.tv_nsec + (msec%1000)*1000000;
         new_value.it_interval.tv_sec = 0;
         new_value.it_interval.tv_nsec = 0;
     }
     else
     {
         new_value.it_value.tv_sec = now.tv_sec + msec/1000;
-        new_value.it_value.tv_nsec = now.tv_nsec + msec%1000*1000000;
+        new_value.it_value.tv_nsec = now.tv_nsec + (msec%1000)*1000000;
         new_value.it_interval.tv_sec = msec/1000;
-        new_value.it_interval.tv_nsec = msec%1000*1000000;
+        new_value.it_interval.tv_nsec = (msec%1000)*1000000;
     }
 
-    int result=::timerfd_settime(tfd, TFD_TIMER_ABSTIME, &new_value, NULL);
+    const int result=::timerfd_settime(tfd, NULL, &new_value, NULL);
     if(result<0)
     {
-        std::cerr << "settime error" << std::endl;
+        //settime error: 22: Invalid argument
+        std::cerr << "settime error: " << errno << ": " << strerror(errno) << std::endl;
         return false;
     }
     epoll_event event;
