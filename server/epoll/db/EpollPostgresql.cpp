@@ -22,17 +22,9 @@ void EpollPostgresql::noticeProcessor(void *arg, const char *message)
 
 EpollPostgresql::EpollPostgresql() :
     conn(NULL),
-    queueSize(0),
     tuleIndex(-1),
     result(NULL)
 {
-    unsigned int index=0;
-    while(index<sizeof(queue))
-    {
-        queue[index].object=NULL;
-        queue[index].method=NULL;
-        index++;
-    }
 }
 
 EpollPostgresql::~EpollPostgresql()
@@ -43,9 +35,14 @@ EpollPostgresql::~EpollPostgresql()
         PQfinish(conn);
 }
 
+BaseClassSwitch::Type EpollPostgresql::getType() const
+{
+    return BaseClassSwitch::Type::Database;
+}
+
 bool EpollPostgresql::isConnected() const
 {
-    return conn!=NULL;
+    return conn!=NULL && started;
 }
 
 bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const char * user, const char * password)
@@ -57,8 +54,12 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
     }
 
     char strCoPG[255];
-    strcpy(strCoPG,"dbname=");
-    strcat(strCoPG,dbname);
+    strcpy(strCoPG,"");
+    if(strlen(dbname)>0)
+    {
+        strcat(strCoPG,"dbname=");
+        strcat(strCoPG,dbname);
+    }
     if(strlen(host)>0)
     {
         strcat(strCoPG," host=");
@@ -94,8 +95,8 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
        return false;
     }
     epoll_event event;
-    event.events = EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET ;
-    event.data.fd = sock;
+    event.events = EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET;
+    event.data.ptr = this;
 
     // add the socket to the epoll file descriptors
     if(Epoll::epoll.ctl(EPOLL_CTL_ADD,sock,&event) != 0)
@@ -131,7 +132,7 @@ bool EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackD
         std::cerr << "pg not connected" << std::endl;
         return false;
     }
-    if(queueSize>=256)
+    if(queue.size()>=256)
     {
         std::cerr << "pg queue full" << std::endl;
         return false;
@@ -142,9 +143,10 @@ bool EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackD
         std::cerr << "query send failed" << std::endl;
         return false;
     }
-    queue[queueSize].object=returnObject;
-    queue[queueSize].method=method;
-    queueSize++;
+    CallBack callback;
+    callback.object=returnObject;
+    callback.method=method;
+    queue << callback;
     return true;
 }
 
@@ -155,7 +157,7 @@ bool EpollPostgresql::asyncWrite(const char *query)
         std::cerr << "pg not connected" << std::endl;
         return false;
     }
-    if(queueSize>=256)
+    if(queue.size()>=256)
     {
         std::cerr << "pg queue full" << std::endl;
         return false;
@@ -166,9 +168,10 @@ bool EpollPostgresql::asyncWrite(const char *query)
         std::cerr << "query send failed" << std::endl;
         return false;
     }
-    queue[queueSize].object=NULL;
-    queue[queueSize].method=NULL;
-    queueSize++;
+    CallBack callback;
+    callback.object=NULL;
+    callback.method=NULL;
+    queue << callback;
     return true;
 }
 
@@ -178,11 +181,18 @@ bool EpollPostgresql::readyToRead()
     if(connStatusType!=CONNECTION_OK)
     {
         if(connStatusType==CONNECTION_MADE)
+        {
+            started=true;
             std::cout << "Connexion CONNECTION_MADE" << std::endl;
+        }
         else if(connStatusType==CONNECTION_STARTED)
+        {
+            started=true;
             std::cout << "Connexion CONNECTION_STARTED" << std::endl;
+        }
         else
         {
+            started=false;
             std::cerr << "Connexion not ok: " << connStatusType << std::endl;
             return false;
         }
@@ -212,28 +222,21 @@ bool EpollPostgresql::readyToRead()
             result=NULL;
         }
         tuleIndex=-1;
-        if(queue[0].method!=NULL)
-            queue[0].method(queue[0].object);
-        queueSize--;
-        memmove(queue,queue+sizeof(CallBack *),queueSize*sizeof(CallBack *));
+        result=PQgetResult(conn);
+        if(result!=NULL)
+        {
+            if(!queue.isEmpty())
+            {
+                CallBack callback=queue.takeFirst();
+                if(callback.method!=NULL)
+                    callback.method(callback.object);
+            }
+            PQclear(result);
+            result=NULL;
+        }
     }
     return true;
 }
-
-/*
-for (i = 0; i < nFields; i++)
-{
-    int ptype = PQftype(result, i);
-    std::cout << PQfname(result, i);
-}
-std::cout << "\n------------\n";
-// next, print out the rows
-for (i = 0; i < PQntuples(result); i++)
-{
-    for (int j = 0; j < nFields; j++)
-        std::cout << PQgetvalue(result, i, j);
-    std::cout << "\n";
-}*/
 
 char *EpollPostgresql::errorMessage()
 {
@@ -242,6 +245,11 @@ char *EpollPostgresql::errorMessage()
 
 bool EpollPostgresql::next()
 {
+    if(result!=NULL && tuleIndex==-1)
+    {
+        tuleIndex=0;
+        return true;
+    }
     if(result!=NULL)
         PQclear(result);
     if((result = PQgetResult(conn)) != NULL)

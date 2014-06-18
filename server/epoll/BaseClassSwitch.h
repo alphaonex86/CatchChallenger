@@ -9,7 +9,8 @@ public:
     {
         Server,
         Client,
-        Timer
+        Timer,
+        Database
     };
     virtual Type getType() const = 0;
 };

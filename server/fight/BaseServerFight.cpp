@@ -41,6 +41,7 @@ void BaseServer::load_monsters_max_id()
     }
     if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static))
     {
+        abort();//stop because can't do the first db access
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         preload_the_plant_on_map();
     }

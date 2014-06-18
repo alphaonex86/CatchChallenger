@@ -226,6 +226,8 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     Q_UNUSED(a);
 
+    bool datapack_loaded=false;
+
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/information.xml"));
     if(datapackFolder.isDir())
     {
@@ -250,25 +252,25 @@ int main(int argc, char *argv[])
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
-    if(GlobalServerData::serverPrivateVariables.db.syncConnect(
-                GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
-                GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
-                GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
-                GlobalServerData::serverSettings.database.mysql.pass.toLatin1()))
-    {
-        qDebug() << "Unable to connect to database";
-        return EXIT_FAILURE;
-    }
-
     #ifndef SERVERNOSSL
     server=new EpollSslServer();
     #else
     server=new EpollServer();
     #endif
     send_settings();
+
+    if(!GlobalServerData::serverPrivateVariables.db.syncConnect(
+                GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
+                GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
+                GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
+                GlobalServerData::serverSettings.database.mysql.pass.toLatin1()))
+    {
+        qDebug() << "Unable to connect to database:" << GlobalServerData::serverPrivateVariables.db.errorMessage();
+        return EXIT_FAILURE;
+    }
+
     if(!server->tryListen())
         return EPOLLERR;
-    server->preload_the_data();
 
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
@@ -310,6 +312,7 @@ int main(int argc, char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
+    server->loadAndFixSettings();
     bool tcpCork;
     {
         const ServerSettings &formatedServerSettings=server->getSettings();
@@ -328,18 +331,37 @@ int main(int argc, char *argv[])
         }
         if(formatedServerSettings.database.type!=CatchChallenger::ServerSettings::Database::DatabaseType_PostgreSQL)
         {
-            qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
-            return EXIT_FAILURE;
-        }
-        if(formatedServerSettings.datapackCache!=0)
-        {
-            qDebug() << "datapackCache need be 0 to have infinit datapack caching";
+            settings->beginGroup(QLatin1Literal("db"));
+            qDebug() << "Only postgresql is supported for now:" << settings->value(QLatin1Literal("type")).toString();
+            settings->endGroup();
             return EXIT_FAILURE;
         }
         if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
         {
             qDebug() << "Need use mirror http";
             return EXIT_FAILURE;
+        }
+        else
+        {
+            QStringList newMirrorList;
+            QRegularExpression httpMatch("^https?://.+$");
+            const QStringList &mirrorList=CommonSettings::commonSettings.httpDatapackMirror.split(";");
+            int index=0;
+            while(index<mirrorList.size())
+            {
+                const QString &mirror=mirrorList.at(index);
+                if(!mirror.contains(httpMatch))
+                {
+                    qDebug() << "Mirror wrong: " << mirror.toLocal8Bit();
+                    return EXIT_FAILURE;
+                }
+                if(mirror.endsWith("/"))
+                    newMirrorList << mirror;
+                else
+                    newMirrorList << mirror+"/";
+                index++;
+            }
+            CommonSettings::commonSettings.httpDatapackMirror=newMirrorList.join(";");
         }
     }
 
@@ -485,6 +507,15 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Timer:
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
+                break;
+                case BaseClassSwitch::Type::Database:
+                    if(events[i].events & EPOLLIN)
+                        if(!datapack_loaded)
+                        {
+                            server->preload_the_data();
+                            datapack_loaded=true;
+                        }
+                    static_cast<EpollPostgresql *>(events[i].data.ptr)->readyToRead();
                 break;
                 default:
                     std::cerr << "unknown event" << std::endl;
