@@ -509,13 +509,18 @@ int main(int argc, char *argv[])
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                 break;
                 case BaseClassSwitch::Type::Database:
-                    if(events[i].events & EPOLLIN)
-                        if(!datapack_loaded)
+                {
+                    EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
+                    db->readyToRead();
+                    if(!datapack_loaded)
+                    {
+                        if(db->isConnected() && events[i].events & EPOLLIN)
                         {
                             server->preload_the_data();
                             datapack_loaded=true;
                         }
-                    static_cast<EpollPostgresql *>(events[i].data.ptr)->readyToRead();
+                    }
+                }
                 break;
                 default:
                     std::cerr << "unknown event" << std::endl;

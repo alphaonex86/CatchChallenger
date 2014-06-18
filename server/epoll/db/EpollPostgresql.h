@@ -3,6 +3,7 @@
 
 #include <postgresql-9.3/libpq-fe.h>
 #include <QList>
+#include <QString>
 
 #include "../../base/DatabaseBase.h"
 #include "../BaseClassSwitch.h"
@@ -22,6 +23,7 @@ public:
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
     bool readyToRead();
+    void clear();
     char * errorMessage();
     bool next();
     char * value(const int &value);
@@ -35,8 +37,10 @@ public:
 private:
     PGconn *conn;
     int tuleIndex;
+    int ntuples;
     PGresult *result;
     QList<CallBack> queue;
+    QList<QString> queriesList;
     static char emptyString[1];
     bool started;
 };
