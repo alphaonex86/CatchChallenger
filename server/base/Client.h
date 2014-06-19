@@ -19,10 +19,11 @@
 #endif
 
 namespace CatchChallenger {
-class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement
+class Client :
         #ifdef EPOLLCATCHCHALLENGERSERVER
-        ,public BaseClassSwitch
+        public BaseClassSwitch,
         #endif
+        public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement
 {
 public:
     explicit Client(ConnectedSocket *socket);

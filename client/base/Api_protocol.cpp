@@ -31,6 +31,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     }
 
     connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
+    connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::DirectConnection);
 
     resetAll();
 }
@@ -42,6 +43,11 @@ Api_protocol::~Api_protocol()
 void Api_protocol::socketDestroyed()
 {
     socket=NULL;
+}
+
+void Api_protocol::parseIncommingData()
+{
+    ProtocolParsingInputOutput::parseIncommingData();
 }
 
 void Api_protocol::errorParsingLayer(const QString &error)
@@ -5018,11 +5024,6 @@ void Api_protocol::resetAll()
 
     //to send trame
     lastQueryNumber=1;
-}
-
-void Api_protocol::startReadData()
-{
-    canStartReadData=true;
 }
 
 QString Api_protocol::datapackPath() const

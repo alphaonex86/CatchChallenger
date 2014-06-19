@@ -35,7 +35,6 @@ FakeBot::FakeBot() :
 
 /*	predefinied_step << Direction_move_at_top;
     predefinied_step << Direction_move_at_bottom;*/
-    api.startReadData();
 }
 
 FakeBot::~FakeBot()
