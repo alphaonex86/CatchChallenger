@@ -297,8 +297,6 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::random_seeds,&ClientFightEngine::fightEngine,&ClientFightEngine::newRandomNumber);
 
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection);
-
-    CatchChallenger::Api_client_real::client->startReadData();
 }
 
 void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)

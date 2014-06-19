@@ -87,7 +87,7 @@ protected:
     void preload_the_players();
     void preload_the_visibility_algorithm();
     void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
-    void preload_finish();
+    virtual void preload_finish();
     void preload_the_plant_on_map();
     static void preload_the_plant_on_map_static(void *object);
     void preload_the_plant_on_map_return();

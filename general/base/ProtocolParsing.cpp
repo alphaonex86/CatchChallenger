@@ -6,8 +6,26 @@
 #endif
 
 #include <lzma.h>
+#include <byteswap.h>
+#include <endian.h>
+
+#ifdef __BYTE_ORDER
+  #if __BYTE_ORDER == __BIG_ENDIAN //if both are not defined it is TRUE!
+    #define be16toh(a) a
+    #define be32toh(a) a
+    #define be64toh(a) a
+  #elif __BYTE_ORDER == __LITTLE_ENDIAN
+  #elif __BYTE_ORDER == __PDP_ENDIAN
+  #else
+    #error "Endian determination failed"
+  #endif
+#else
+  #error "Endian determination failed"
+#endif
 
 using namespace CatchChallenger;
+
+char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 
 QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
 //if is a query
@@ -242,7 +260,6 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
     ProtocolParsing(socket),
     // for data
-    canStartReadData(false),
     haveData(false),
     haveData_dataSize(0),
     is_reply(false),
@@ -266,25 +283,27 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket,
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
-bool ProtocolParsingInputOutput::checkStringIntegrity(const QByteArray & data)
+bool ProtocolParsingInputOutput::checkStringIntegrity(const QByteArray &data)
 {
-    if(data.size()<(int)sizeof(qint32))
+    return checkStringIntegrity(data.constData(),data.size());
+}
+
+bool ProtocolParsingInputOutput::checkStringIntegrity(const char *data, const unsigned int &size)
+{
+    if(size<(int)sizeof(unsigned int))
     {
         errorParsingLayer("header size not suffisient");
         return false;
     }
-    qint32 stringSize;
-    QDataStream in(data);
-    in.setVersion(QDataStream::Qt_4_4);
-    in >> stringSize;
+    const quint32 &stringSize=be32toh(*reinterpret_cast<const quint32 *>(data));
     if(stringSize>65535)
     {
         errorParsingLayer(QStringLiteral("String size is wrong: %1").arg(stringSize));
         return false;
     }
-    if(data.size()<stringSize)
+    if(size<stringSize)
     {
-        errorParsingLayer(QStringLiteral("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
+        errorParsingLayer(QStringLiteral("String size is greater than the data: %1>%2").arg(size).arg(stringSize));
         return false;
     }
     return true;
@@ -300,20 +319,32 @@ void ProtocolParsingInputOutput::parseIncommingData()
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): socket->bytesAvailable(): %1").arg(socket->bytesAvailable()));
     #endif
-    if(!canStartReadData)
-        return;
 
-    //put this as general
-    QDataStream in(socket);
-    in.setVersion(QDataStream::Qt_4_4);
-
-    while(socket->bytesAvailable()>0)
+    while(1)
     {
+        quint32 size;
+        quint32 cursor=0;
+        if(header_cut.isEmpty())
+        {
+            const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
+            memcpy(ProtocolParsingInputOutput::commonBuffer,header_cut.constData(),header_cut.size());
+            size=socket->readData(ProtocolParsingInputOutput::commonBuffer,size_to_get)+header_cut.size();
+            header_cut.resize(0);
+        }
+        else
+            size=socket->readData(ProtocolParsingInputOutput::commonBuffer,CATCHCHALLENGER_COMMONBUFFERSIZE);
+        if(size==0)
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): size returned is 0!"));
+            return;
+        }
+
         if(!haveData)
         {
-            if(socket->bytesAvailable()<(int)sizeof(quint8))//ignore because first int is cuted!
+            if((size-cursor)<sizeof(quint8))//ignore because first int is cuted!
                 return;
-            in >> mainCodeType;
+            mainCodeType=static_cast<quint8>(*(ProtocolParsingInputOutput::commonBuffer+cursor));
+            cursor+=sizeof(quint8);
             #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
             #endif
@@ -327,7 +358,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             else
                 need_subCodeType=!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType);
             need_query_number=false;
-            data_size.clear();
+            data_size.resize(0);
         }
 
         if(!have_subCodeType)
@@ -393,12 +424,15 @@ void ProtocolParsingInputOutput::parseIncommingData()
                 #ifdef PROTOCOLPARSINGDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_subCodeType"));
                 #endif
-                if(socket->bytesAvailable()<(int)sizeof(quint16))//ignore because first int is cuted!
+                if((size-cursor)<sizeof(quint16))//ignore because first int is cuted!
                 {
-                    RXSize+=in.device()->pos();
+                    RXSize+=size;
+                    if((size-cursor)>0)
+                        header_cut.append(ProtocolParsingInputOutput::commonBuffer+cursor,(size-cursor));
                     return;
                 }
-                in >> subCodeType;
+                subCodeType=static_cast<quint16>(*(ProtocolParsingInputOutput::commonBuffer+cursor));
+                cursor+=sizeof(quint16);
 
                 if(isClient)
                 {
@@ -464,12 +498,13 @@ void ProtocolParsingInputOutput::parseIncommingData()
             #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number"));
             #endif
-            if(socket->bytesAvailable()<(int)sizeof(quint8))
+            if((size-cursor)<sizeof(quint8))
             {
-                RXSize+=in.device()->pos();//todo, write message: need more bytes
+                RXSize+=size;//todo, write message: need more bytes
                 return;
             }
-            in >> queryNumber;
+            queryNumber=static_cast<quint8>(*(ProtocolParsingInputOutput::commonBuffer+cursor));
+            cursor+=sizeof(quint8);
 
             // it's reply
             if(is_reply)
@@ -510,12 +545,13 @@ void ProtocolParsingInputOutput::parseIncommingData()
                 {
                     case 0:
                     {
-                        if(socket->bytesAvailable()<(int)sizeof(quint8))
+                        if((size-cursor)<sizeof(quint8))
                         {
-                            RXSize+=in.device()->pos();
+                            RXSize+=size;
                             return;
                         }
-                        data_size+=socket->read(sizeof(quint8));
+                        data_size.append(static_cast<quint8>(*(ProtocolParsingInputOutput::commonBuffer+cursor)));
+                        cursor+=sizeof(quint8);
                         QDataStream in_size(data_size);
                         in_size.setVersion(QDataStream::Qt_4_4);
                         in_size >> temp_size_8Bits;
@@ -534,7 +570,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
                             #endif
                             if(data_size.size()==0)
                             {
-                                RXSize+=in.device()->pos();
+                                RXSize+=size;
                                 DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
                                 return;
                             }
@@ -543,12 +579,15 @@ void ProtocolParsingInputOutput::parseIncommingData()
                     break;
                     case sizeof(quint8):
                     {
-                        if(socket->bytesAvailable()<(int)sizeof(quint16))
+                        if((size-cursor)<sizeof(quint16))
                         {
-                            RXSize+=in.device()->pos();
+                            RXSize+=size;
+                            if((size-cursor)>0)
+                                header_cut.append(ProtocolParsingInputOutput::commonBuffer+cursor,(size-cursor));
                             return;
                         }
-                        data_size+=socket->read(sizeof(quint8));
+                        data_size.append(static_cast<quint8>(*(ProtocolParsingInputOutput::commonBuffer+cursor)));
+                        cursor+=sizeof(quint8);
                         {
                             QDataStream in_size(data_size);
                             in_size.setVersion(QDataStream::Qt_4_4);
@@ -556,7 +595,8 @@ void ProtocolParsingInputOutput::parseIncommingData()
                         }
                         if(temp_size_16Bits!=0x0000)
                         {
-                            data_size+=socket->read(sizeof(quint8));
+                            data_size.append(static_cast<quint8>(*(ProtocolParsingInputOutput::commonBuffer+cursor)));
+                            cursor+=sizeof(quint8);
                             QDataStream in_size(data_size);
                             in_size.setVersion(QDataStream::Qt_4_4);
                             //in_size.device()->seek(sizeof(quint8)); or in_size >> temp_size_8Bits;, not both
@@ -575,8 +615,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
                             #endif
                             if(data_size.size()==sizeof(quint8))
                             {
-                                RXSize+=in.device()->pos();
+                                RXSize+=size;
                                 DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
+                                header_cut.append(ProtocolParsingInputOutput::commonBuffer+cursor,(size-cursor));
                                 return;
                             }
                         }
@@ -584,12 +625,15 @@ void ProtocolParsingInputOutput::parseIncommingData()
                     break;
                     case sizeof(quint16):
                     {
-                        if(socket->bytesAvailable()<(int)sizeof(quint32))
+                        if((size-cursor)<sizeof(quint32))
                         {
-                            RXSize+=in.device()->pos();
+                            RXSize+=size;
+                            if((size-cursor)>0)
+                                header_cut.append(ProtocolParsingInputOutput::commonBuffer+cursor,(size-cursor));
                             return;
                         }
-                        data_size+=socket->read(sizeof(quint32));
+                        data_size.append(static_cast<quint32>(*(ProtocolParsingInputOutput::commonBuffer+cursor)));
+                        cursor+=sizeof(quint32);
                         QDataStream in_size(data_size);
                         in_size.setVersion(QDataStream::Qt_4_4);
                         in_size >> temp_size_16Bits;
@@ -602,6 +646,8 @@ void ProtocolParsingInputOutput::parseIncommingData()
                         else
                         {
                             errorParsingLayer("size is null");
+                            if((size-cursor)>0)
+                                header_cut.append(ProtocolParsingInputOutput::commonBuffer+cursor,(size-cursor));
                             return;
                         }
                     }
@@ -631,68 +677,27 @@ void ProtocolParsingInputOutput::parseIncommingData()
             errorParsingLayer("packet size too big");
             return;
         }
-        RXSize+=in.device()->pos();
+        RXSize+=size;
         if(dataSize>0)
         {
-            do
+            //if have too many data, or just the size
+            if((dataSize-data.size())<=(size-cursor))
             {
-                //if have too many data, or just the size
-                if((dataSize-data.size())<=socket->bytesAvailable())
-                {
-                    RXSize+=dataSize-data.size();
-                    data.append(socket->read(dataSize-data.size()));
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): remaining data: %1").arg(socket->bytesAvailable()));
-                    #endif
-                }
-                else //if need more data
-                {
-                    /*if(socket->bytesAvailable()<CATCHCHALLENGER_MIN_PACKET_SIZE && (dataSize-data.size())>CATCHCHALLENGER_MIN_PACKET_SIZE)
-                    {
-                        if(!need_query_number)
-                        {
-                            if(!need_subCodeType)
-                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
-                            else
-                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
-                        }
-                        else
-                        {
-                            if(!is_reply)
-                            {
-                                if(!need_subCodeType)
-                                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
-                                else
-                                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
-                            }
-                            else
-                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-                        }
-                        dataClear();
-                        return;
-                    }*/
-                    RXSize+=socket->bytesAvailable();
-                    data.append(socket->readAll());
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need more to recompose: %1").arg(dataSize-data.size()));
-                    #endif
-                }
-            } while(
-                //need more data
-                (dataSize-data.size())>0 &&
-                //and have more data
-                socket->bytesAvailable()>0
-                );
-
-            if((dataSize-data.size())>0)
-            {
+                const quint32 &size_to_append=dataSize-data.size();
+                RXSize+=size_to_append;
+                data.append(ProtocolParsingInputOutput::commonBuffer+cursor,size_to_append);
+                cursor+=size_to_append;
                 #ifdef PROTOCOLPARSINGDEBUG
-                if(!need_subCodeType)
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): not suffisent data: %1, wait more tcp packet").arg(mainCodeType));
-                else
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): not suffisent data: %1,%2, wait more tcp packet").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): remaining data: %1").arg((size-cursor)));
                 #endif
-
+            }
+            else //if need more data
+            {
+                RXSize+=(size-cursor);
+                data.append(ProtocolParsingInputOutput::commonBuffer+cursor,(size-cursor));
+                #ifdef PROTOCOLPARSINGDEBUG
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need more to recompose: %1").arg(dataSize-data.size()));
+                #endif
                 return;
             }
         }
@@ -926,6 +931,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
             }
         }
         dataClear();
+
+        if(size<CATCHCHALLENGER_COMMONBUFFERSIZE)
+            return;
     }
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): finish parse the input"));

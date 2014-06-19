@@ -365,6 +365,13 @@ int main(int argc, char *argv[])
         }
     }
 
+    char encodingBuff[1];
+    #ifndef SERVERNOSSL
+    encodingBuff[0]=0x01;
+    #else
+    encodingBuff[0]=0x00;
+    #endif
+
     int numberOfConnectedClient=0;
     /* The event loop */
     int number_of_events, i;
@@ -396,6 +403,8 @@ int main(int argc, char *argv[])
                         const int &infd = server->accept(&in_addr, &in_len);
                         if(!server->isReady())
                         {
+                            /// \todo dont clean error on client into this case
+                            std::cerr << "client connect when the server is not ready" << std::endl;
                             ::close(infd);
                             break;
                         }
@@ -414,11 +423,12 @@ int main(int argc, char *argv[])
                                 break;
                             }
                         }
+                        /* do at the protocol negociation to send the reason
                         if(numberOfConnectedClient>=GlobalServerData::serverSettings.max_players)
                         {
                             ::close(infd);
                             break;
-                        }
+                        }*/
 
                         //just for informations
                         {
@@ -464,17 +474,15 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            #ifndef SERVERNOBUFFER
-                            event.events = EPOLLIN | EPOLLET | EPOLLOUT;
-                            #else
-                            event.events = EPOLLIN | EPOLLET;
-                            #endif
+                            event.events = EPOLLIN | EPOLLET | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLRDHUP;
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
                                 delete client;
                             }
+                            else
+                                ::write(infd,encodingBuff,sizeof(encodingBuff));
                         }
                     }
                     continue;

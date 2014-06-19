@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
 char buff_temp[sizeof(uint64_t)];
 
@@ -41,6 +42,11 @@ bool EpollTimer::start(const unsigned int &msec)
     {
         new_value.it_value.tv_sec = now.tv_sec + msec/1000;
         new_value.it_value.tv_nsec = now.tv_nsec + (msec%1000)*1000000;
+        if(new_value.it_value.tv_nsec>999999999)
+        {
+            new_value.it_value.tv_nsec-=1000000000;
+            new_value.it_value.tv_sec++;
+        }
         new_value.it_interval.tv_sec = 0;
         new_value.it_interval.tv_nsec = 0;
     }
@@ -48,11 +54,21 @@ bool EpollTimer::start(const unsigned int &msec)
     {
         new_value.it_value.tv_sec = now.tv_sec + msec/1000;
         new_value.it_value.tv_nsec = now.tv_nsec + (msec%1000)*1000000;
+        if(new_value.it_value.tv_nsec>999999999)
+        {
+            new_value.it_value.tv_nsec-=1000000000;
+            new_value.it_value.tv_sec++;
+        }
         new_value.it_interval.tv_sec = msec/1000;
         new_value.it_interval.tv_nsec = (msec%1000)*1000000;
+        if(new_value.it_interval.tv_nsec>999999999)
+        {
+            new_value.it_interval.tv_nsec-=1000000000;
+            new_value.it_interval.tv_sec++;
+        }
     }
 
-    const int result=::timerfd_settime(tfd, NULL, &new_value, NULL);
+    const int &result=::timerfd_settime(tfd, 0, &new_value, NULL);
     if(result<0)
     {
         //settime error: 22: Invalid argument

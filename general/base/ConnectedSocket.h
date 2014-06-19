@@ -52,6 +52,8 @@ public:
     qint64	bytesAvailable() const;
     OpenMode openMode() const;
     QString errorString() const;
+    qint64	readData(char * data, qint64 maxSize);
+    qint64	writeData(const char * data, qint64 maxSize);
     void	close();
     #ifdef EPOLLCATCHCHALLENGERSERVER
             #ifndef SERVERNOSSL
@@ -69,8 +71,6 @@ public:
 protected:
     bool	isSequential() const;
     bool canReadLine() const;
-    qint64	readData(char * data, qint64 maxSize);
-    qint64	writeData(const char * data, qint64 maxSize);
     QList<QSslError> sslErrors() const;
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:

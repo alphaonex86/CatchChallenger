@@ -12,14 +12,14 @@ char QtDatabase::emptyString[]={'\0'};
 
 QtDatabase::QtDatabase() :
     conn(NULL),
-    queryList(NULL)
+    sqlQuery(NULL)
 {
 }
 
 QtDatabase::~QtDatabase()
 {
-    if(queryList!=NULL)
-        delete queryList;
+    if(sqlQuery!=NULL)
+        delete sqlQuery;
     if(conn!=NULL)
         delete conn;
 }
@@ -123,17 +123,17 @@ bool QtDatabase::asyncRead(const char *query,void * returnObject, CallBackDataba
         std::cerr << "pg not connected" << std::endl;
         return false;
     }
-    if(queryList!=NULL)
-        delete queryList;
-    queryList=new QSqlQuery(*conn);
-    if(!queryList->exec(query))
+    if(query!=NULL)
+        delete query;
+    sqlQuery=new QSqlQuery(*conn);
+    if(!sqlQuery->exec(query))
     {
-        qDebug() << QString(queryList->lastQuery()+": "+queryList->lastError().text());
+        qDebug() << QString(sqlQuery->lastQuery()+": "+sqlQuery->lastError().text());
         return false;
     }
     method(returnObject);
-    delete queryList;
-    queryList=NULL;
+    delete query;
+    query=NULL;
     return true;
 }
 
@@ -153,6 +153,15 @@ bool QtDatabase::asyncWrite(const char *query)
     return true;
 }
 
+void QtDatabase::clear()
+{
+    if(sqlQuery!=NULL)
+    {
+        delete sqlQuery;
+        sqlQuery=NULL;
+    }
+}
+
 char *QtDatabase::errorMessage()
 {
     return (conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
@@ -162,19 +171,19 @@ bool QtDatabase::next()
 {
     if(conn==NULL)
         return false;
-    if(queryList==NULL)
+    if(sqlQuery==NULL)
         return false;
-    if(!queryList->next())
+    if(!sqlQuery->next())
     {
-        delete queryList;
-        queryList=NULL;
+        delete sqlQuery;
+        sqlQuery=NULL;
     }
     return true;
 }
 
 char * QtDatabase::value(const int &value)
 {
-    if(queryList==NULL)
+    if(sqlQuery==NULL)
         return emptyString;
-    return queryList->value(value).toString().toUtf8().data();
+    return sqlQuery->value(value).toString().toUtf8().data();
 }

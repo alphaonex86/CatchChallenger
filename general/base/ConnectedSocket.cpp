@@ -74,6 +74,7 @@ ConnectedSocket::ConnectedSocket(EpollClient *socket) :
 #endif
     epollSocket(socket)
 {
+    //open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 #endif
