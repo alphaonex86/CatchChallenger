@@ -20,13 +20,14 @@ public:
     bool asyncRead(const char *query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const char *query);
     bool readyToRead();
+    void clear();
     char * errorMessage();
     bool next();
     char * value(const int &value);
     bool isConnected() const;
 private:
     QSqlDatabase *conn;
-    QSqlQuery *queryList;
+    QSqlQuery *sqlQuery;
     static char emptyString[1];
 };
 }

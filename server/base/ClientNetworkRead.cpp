@@ -1700,6 +1700,5 @@ void Client::fake_receive_data(const QByteArray &data)
 
 void Client::purgeReadBuffer()
 {
-    canStartReadData=true;
     parseIncommingData();
 }

@@ -33,6 +33,11 @@ bool EpollTimer::init()
     itimerspec new_value;
     new_value.it_value.tv_sec = now.tv_sec + 2;
     new_value.it_value.tv_nsec = now.tv_nsec;
+    if(new_value.it_value.tv_nsec>999999999)
+    {
+        new_value.it_value.tv_nsec-=1000000000;
+        new_value.it_value.tv_sec++;
+    }
     new_value.it_interval.tv_sec = 1;
     new_value.it_interval.tv_nsec = 0;
 

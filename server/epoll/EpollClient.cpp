@@ -69,13 +69,6 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
             return -1;
         }
     }
-    else if(count == 0)
-    {
-        /* End of file. The remote has closed the
-        connection. */
-        close();
-        return -1;
-    }
     return count;
 }
 

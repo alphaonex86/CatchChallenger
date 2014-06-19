@@ -46,8 +46,6 @@ public:
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
-
-    void startReadData();
 private:
     //status for the query
     bool is_logged;
@@ -60,6 +58,7 @@ private:
     quint8 lastQueryNumber;
 protected:
     virtual void socketDestroyed();
+    void parseIncommingData();
 
     void errorParsingLayer(const QString &error);
     void messageParsingLayer(const QString &message) const;
