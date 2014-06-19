@@ -9,6 +9,8 @@
 #include "GeneralVariable.h"
 #include "ConnectedSocket.h"
 
+#define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
+
 namespace CatchChallenger {
 
 class ProtocolParsing
@@ -64,10 +66,12 @@ class ProtocolParsingInputOutput : public ProtocolParsing
 public:
     ProtocolParsingInputOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
     friend class ProtocolParsing;
-    bool checkStringIntegrity(const QByteArray & data);
+    bool checkStringIntegrity(const char *data, const unsigned int &size);
+    bool checkStringIntegrity(const QByteArray &data);
     quint64 getRXSize() const;
 protected:
     void parseIncommingData();
+    static char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data) = 0;
@@ -79,11 +83,11 @@ protected:
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
     virtual void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
     // for data
-    bool canStartReadData;
     bool haveData;
     bool haveData_dataSize;
     bool is_reply;
     QByteArray data_size;
+    QByteArray header_cut;
     quint32 dataSize;
     QByteArray data;
     bool isClient;

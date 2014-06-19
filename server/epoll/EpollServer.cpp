@@ -34,6 +34,7 @@ EpollServer::~EpollServer()
 
 void EpollServer::preload_finish()
 {
+    BaseServer::preload_finish();
     ready=true;
 }
 
