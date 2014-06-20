@@ -16,7 +16,7 @@
 
 using namespace CatchChallenger;
 
-void Client::askLogin(const quint8 &query_id,const QByteArray &login_org,const QByteArray &pass_org)
+void Client::askLogin(const quint8 &query_id,const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_login.isEmpty())
@@ -38,10 +38,10 @@ void Client::askLogin(const quint8 &query_id,const QByteArray &login_org,const Q
     QByteArray login,pass;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(login_org.toHex());
+        hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
         login=hash.result();
         QCryptographicHash hash2(QCryptographicHash::Sha224);
-        hash2.addData(pass_org.toHex());
+        hash2.addData(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
         pass=hash2.result();
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
