@@ -10,7 +10,9 @@ SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/base/ChatParsing.cpp \
     $$PWD/base/QFakeSocket.cpp \
     $$PWD/base/QFakeServer.cpp \
-    $$PWD/base/ProtocolParsing.cpp \
+    $$PWD/base/ProtocolParsingGeneral.cpp \
+    $$PWD/base/ProtocolParsingInput.cpp \
+    $$PWD/base/ProtocolParsingOutput.cpp \
     $$PWD/base/MoveOnTheMap.cpp \
     $$PWD/base/Map_loader.cpp \
     $$PWD/base/CommonMap.cpp \

@@ -194,6 +194,7 @@ void BaseServer::preload_the_data()
     preload_the_visibility_algorithm();
     preload_the_city_capture();
     preload_zone();
+    preload_the_bytearray();
     qDebug() << QStringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
     timeDatapack.restart();
 
@@ -1392,6 +1393,19 @@ void BaseServer::preload_the_players()
     }
 }
 
+void BaseServer::preload_the_bytearray()
+{
+    Client::protocolReplyServerFull[0]=0x03;
+    Client::protocolReplyCompressionNone[0]=0x01;
+    Client::protocolReplyCompressionNone[1]=0x00;
+    Client::protocolReplyCompresssionZlib[0]=0x01;
+    Client::protocolReplyCompresssionZlib[1]=0x01;
+    Client::protocolReplyCompressionXz[0]=0x01;
+    Client::protocolReplyCompressionXz[1]=0x02;
+    Client::protocolReplyProtocolNotSupported[0]=0x02;
+    Client::loginLoginInProgress[0]=0x06;
+}
+
 void BaseServer::preload_the_visibility_algorithm()
 {
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
@@ -1691,6 +1705,59 @@ bool BaseServer::initialize_the_database()
                                      .arg(GlobalServerData::serverPrivateVariables.db_type_string)
                                      .arg(GlobalServerData::serverSettings.database.mysql.host));
         GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("mysql");
+        break;
+
+        case ServerSettings::Database::DatabaseType_SQLite:
+        if(!GlobalServerData::serverPrivateVariables.db.syncConnectSqlite(GlobalServerData::serverSettings.database.mysql.db.toLatin1()))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database.sqlite.file));
+        GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("sqlite");
+        break;
+        #endif
+
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        if(!GlobalServerData::serverPrivateVariables.db.syncConnectPostgresql(
+                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
+                    ))
+        #else
+        if(!GlobalServerData::serverPrivateVariables.db.syncConnect(
+                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
+                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
+                    ))
+        #endif
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(GlobalServerData::serverPrivateVariables.db_type_string)
+                                     .arg(GlobalServerData::serverSettings.database.mysql.host));
+        GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("postgresql");
+        break;
+    }
+    initialize_the_database_prepared_query();
+    return true;
+}
+
+void BaseServer::initialize_the_database_prepared_query()
+{
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        return;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case ServerSettings::Database::DatabaseType_Mysql:
 
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4);");
@@ -1735,15 +1802,6 @@ bool BaseServer::initialize_the_database()
         break;
 
         case ServerSettings::Database::DatabaseType_SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db.syncConnectSqlite(GlobalServerData::serverSettings.database.mysql.db.toLatin1()))
-        {
-            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
-            return false;
-        }
-        else
-            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database.sqlite.file));
-        GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("sqlite");
-
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);");
         GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2");
@@ -1788,31 +1846,6 @@ bool BaseServer::initialize_the_database()
         #endif
 
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(!GlobalServerData::serverPrivateVariables.db.syncConnectPostgresql(
-                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
-                    ))
-        #else
-        if(!GlobalServerData::serverPrivateVariables.db.syncConnect(
-                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
-                    ))
-        #endif
-        {
-            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
-            return false;
-        }
-        else
-            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
-                                     .arg(GlobalServerData::serverPrivateVariables.db_type_string)
-                                     .arg(GlobalServerData::serverSettings.database.mysql.host));
-        GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("postgresql");
-
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);");
         GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT %2");
@@ -1855,7 +1888,6 @@ bool BaseServer::initialize_the_database()
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
         break;
     }
-    return true;
 }
 
 void BaseServer::loadBotFile(const QString &mapfile,const QString &file)

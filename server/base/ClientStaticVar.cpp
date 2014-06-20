@@ -30,6 +30,15 @@ QString Client::text_commaspace=QLatin1Literal(", ");
 QString Client::text_unabletofoundtheconnectedplayertokick=QLatin1Literal("unable to found the connected player to kick");
 QString Client::text_unabletofoundthisrightslevel=QLatin1Literal("unable to found this rights level: ");
 
+QByteArray Client::protocolReplyServerFull;
+QByteArray Client::protocolReplyCompressionNone;
+QByteArray Client::protocolReplyCompresssionZlib;
+QByteArray Client::protocolReplyCompressionXz;
+QByteArray Client::protocolReplyProtocolNotSupported;
+QByteArray Client::loginLoginInProgress;
+
+const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER;
+
 QList<int> Client::generalChatDrop;
 int Client::generalChatDropTotalCache=0;
 int Client::generalChatDropNewValue=0;
