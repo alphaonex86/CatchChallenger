@@ -114,15 +114,14 @@ void Client::disconnectClient()
             socket->waitForDisconnected();*/
         socket=NULL;
     }
-    removeClientOnMap(map,true);
-    map=NULL;
 
-    tradeCanceled();
-    battleCanceled();
-    removeFromClan();
-
-    if(!character_loaded)
+    if(character_loaded)
     {
+        if(map!=NULL)
+            removeClientOnMap(map,true);
+        tradeCanceled();
+        battleCanceled();
+        removeFromClan();
         simplifiedIdList << public_and_private_informations.public_informations.simplifiedId;
         GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(character_id);
         playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
@@ -166,7 +165,10 @@ void Client::disconnectClient()
                 index++;
             }
         }
-        savePosition();
+        if(map!=NULL)
+            savePosition();
+        map=NULL;
+        character_loaded=false;
     }
 
     #ifndef EPOLLCATCHCHALLENGERSERVER

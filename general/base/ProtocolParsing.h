@@ -30,8 +30,8 @@ protected:
     ConnectedSocket * socket;
     /********************** static *********************/
     //connexion parameters
-    static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
     static QSet<quint8> mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
+    static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
     //if is a query
     static QSet<quint8> mainCode_IsQueryClientToServer;
     static quint8 replyCodeClientToServer;
@@ -71,6 +71,11 @@ public:
     quint64 getRXSize() const;
 protected:
     void parseIncommingData();
+    bool parseHeader(const quint32 &size,quint32 &cursor);
+    bool parseQueryNumber(const quint32 &size,quint32 &cursor);
+    bool parseDataSize(const quint32 &size,quint32 &cursor);
+    bool parseData(const quint32 &size,quint32 &cursor);
+    void parseDispatch();
     static char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 protected:
     //have message without reply
@@ -93,16 +98,14 @@ protected:
     bool isClient;
     //to parse the netwrok stream
     quint64 RXSize;
-    quint8 mainCodeType;
-    quint16 subCodeType;
-    quint8 queryNumber;
     bool have_subCodeType,need_subCodeType,need_query_number,have_query_number;
     // function
     void dataClear();
     //reply to the query
-    QHash<quint8,quint16> replySize;
-    QHash<quint8,quint8> reply_mainCodeType;
-    QHash<quint8,quint16> reply_subCodeType;
+    QHash<quint8,quint8> waitedReply_mainCodeType;
+    QHash<quint8,quint16> waitedReply_subCodeType;
+    QSet<quint8> replyOutputCompression;
+    QHash<quint8,quint16> replyOutputSize;
 private:
     void reset();
 public:
@@ -137,13 +140,18 @@ private:
     //temp data
     qint64 byteWriten;
     //reply to the query
-    QSet<quint8> replyCompression;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     QSet<quint8> queryReceived;
     #endif
+    // for data
+    quint32 mainCodeType;
+    quint32 subCodeType;
+    quint32 queryNumber;
+    static QByteArray lzmaCompress(QByteArray data);
+    static QByteArray lzmaUncompress(QByteArray data);
 public:
-    void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    void storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
+    void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
     //no control to be more fast
     bool internalSendRawSmallPacket(const QByteArray &data);

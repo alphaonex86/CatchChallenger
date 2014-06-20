@@ -31,6 +31,7 @@ public:
     ~BaseServer();
     void setSettings(const ServerSettings &settings);
     ServerSettings getSettings() const;
+    static void initialize_the_database_prepared_query();
 
     void load_clan_max_id();
     static void load_clan_max_id_static(void *object);
@@ -85,7 +86,8 @@ protected:
     void preload_the_skin();
     void preload_the_datapack();
     void preload_the_players();
-    void preload_the_visibility_algorithm();
+    void preload_the_bytearray();
+    virtual void preload_the_visibility_algorithm();
     void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
     virtual void preload_finish();
     void preload_the_plant_on_map();

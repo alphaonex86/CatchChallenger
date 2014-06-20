@@ -63,6 +63,13 @@ public:
     static QHash<QString,Client *> playerByPseudo;
     static QHash<quint32,Clan *> clanList;
     static QList<Client *> clientBroadCastList;
+    static QByteArray protocolReplyServerFull;
+    static QByteArray protocolReplyCompressionNone;
+    static QByteArray protocolReplyCompresssionZlib;
+    static QByteArray protocolReplyCompressionXz;
+    static QByteArray protocolReplyProtocolNotSupported;
+    static QByteArray loginLoginInProgress;
+    static const unsigned char protocolHeaderToMatch[5];
 protected:
     QByteArray rawPseudo;
 private:
@@ -224,7 +231,7 @@ private:
     void sendSystemMessage(const QString &text,const bool &important=false);
     //clan
     void clanChangeWithoutDb(const quint32 &clanId);
-    void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
+    void askLogin(const quint8 &query_id, const char *rawdata);
     static void askLogin_static(void *object);
     void askLogin_return();
     static void character_static(void *object);
@@ -515,7 +522,7 @@ private:
     };
     QList<PlantInWaiting> plant_list_in_waiting;
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
+    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const QByteArray & inputData);
     //have message without reply
     void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
     void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
