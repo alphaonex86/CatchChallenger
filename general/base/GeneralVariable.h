@@ -1,11 +1,14 @@
 #ifndef CATCHCHALLENGER_GENERALVARIABLE_H
 #define CATCHCHALLENGER_GENERALVARIABLE_H
 
-#define PROTOCOL_HEADER "catchchallenger-0.5.0.0"
+#define PROTOCOL_HEADER_VERSION 0x01
+#define PROTOCOL_HEADER {0x9c,0xd6,0x49,0x8d,PROTOCOL_HEADER_VERSION}
 #define CATCHCHALLENGER_VERSION "0.5.0.0"
 #define CATCHCHALLENGER_SERVER_LIST_URL "http://catchchallenger.first-world.info/server_list.xml"
 #define CATCHCHALLENGER_UPDATER_URL "http://catchchallenger.first-world.info/updater.txt"
 #define CATCHCHALLENGER_RSS_URL "http://catchchallenger.first-world.info/rss_global.xml"
+
+#define CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE 28
 
 #define CATCHCHALLENGER_EXTRA_CHECK
 
@@ -61,5 +64,24 @@
 #define DATAPACK_BASE_PATH_QUESTS "quests/"
 #define DATAPACK_BASE_PATH_CRAFTING "crafting/"
 #define DATAPACK_BASE_PATH_SHOP "shop/"
+
+#include <byteswap.h>
+#include <endian.h>
+#ifdef __BYTE_ORDER
+  #if __BYTE_ORDER == __BIG_ENDIAN //if both are not defined it is TRUE!
+    #define be16toh(a) a
+    #define be32toh(a) a
+    #define be64toh(a) a
+    #define htobe16(a) a
+    #define htobe32(a) a
+    #define htobe64(a) a
+  #elif __BYTE_ORDER == __LITTLE_ENDIAN
+  #elif __BYTE_ORDER == __PDP_ENDIAN
+  #else
+    #error "Endian determination failed"
+  #endif
+#else
+  #error "Endian determination failed"
+#endif
 
 #endif // GENERALVARIABLE_H

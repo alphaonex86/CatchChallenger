@@ -313,6 +313,7 @@ int main(int argc, char *argv[])
     epoll_event events[MAXEVENTS];
 
     server->loadAndFixSettings();
+    server->initialize_the_database_prepared_query();
     bool tcpCork;
     {
         const ServerSettings &formatedServerSettings=server->getSettings();

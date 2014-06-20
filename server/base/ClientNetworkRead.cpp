@@ -109,7 +109,7 @@ void Client::sendBattleRequest(const QByteArray &data)
     queryNumberList.removeFirst();
 }
 
-void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     if(stopIt)
         return;
@@ -122,107 +122,65 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &sub
         return;
     }
     otherPacketKickNewValue++;
-    QDataStream in(data);
-    in.setVersion(QDataStream::Qt_4_4);
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
     switch(mainCodeType)
     {
-        case 0x02:
-        switch(subCodeType)
-        {
-            case 0x0001:
-                if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                    return;
+        case 0x03:
+            if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
+            {
+                postReply(queryNumber,Client::protocolReplyServerFull);
+                errorOutput(Client::text_server_full);
+                return;
+            }
+            if(memcmp(data.constData(),Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
+            {
+                switch(ProtocolParsing::compressionType)
                 {
-                    QString protocol;
-                    in >> protocol;
-                    if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
-                    {
-                        out << (quint8)0x03;		//server full
-                        out << Client::text_server_full;
-                        postReply(queryNumber,outputData);
-                        errorOutput(Client::text_server_full);
-                        return;
-                    }
-                    if(protocol==PROTOCOL_HEADER)
-                    {
-                        out << (quint8)0x01;		//protocol supported
-                        switch(ProtocolParsing::compressionType)
-                        {
-                            case CompressionType_None:
-                                out << (quint8)0x00;
-                            break;
-                            case CompressionType_Zlib:
-                                out << (quint8)0x01;
-                            break;
-                            case CompressionType_Xz:
-                                out << (quint8)0x02;
-                            break;
-                            default:
-                                errorOutput("Compression selected wrong");
-                            return;
-                        }
-                        postReply(queryNumber,outputData);
-                        have_send_protocol=true;
-                        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-                        normalOutput(QStringLiteral("Protocol sended and replied"));
-                        #endif
-                    }
-                    else
-                    {
-                        out << (quint8)0x02;		//protocol not supported
-                        postReply(queryNumber,outputData);
-                        errorOutput("Wrong protocol");
-                        return;
-                    }
-                }
-            break;
-            case 0x0002:
-                if(!have_send_protocol)
-                {
-                    errorOutput("send login before the protocol");
+                    case CompressionType_None:
+                        postReply(queryNumber,Client::protocolReplyCompressionNone);
+                    break;
+                    case CompressionType_Zlib:
+                        postReply(queryNumber,Client::protocolReplyCompresssionZlib);
+                    break;
+                    case CompressionType_Xz:
+                        postReply(queryNumber,Client::protocolReplyCompressionXz);
+                    break;
+                    default:
+                        errorOutput("Compression selected wrong");
                     return;
                 }
-                if((data.size()-in.device()->pos())!=(64*2))
-                    parseError(QStringLiteral("wrong size with the main ident: %1, because %2 != 20").arg(mainCodeType).arg(data.size()-in.device()->pos()));
-                else if(is_logging_in_progess)
-                {
-                    out << (quint8)1;
-                    postReply(queryNumber,outputData);
-                    errorOutput("Loggin in progress");
-                }
-                else if(character_loaded)
-                {
-                    out << (quint8)1;
-                    postReply(queryNumber,outputData);
-                    errorOutput("Already logged");
-                }
-                else
-                {
-                    is_logging_in_progess=true;
-                    QByteArray data_extracted(data.right(data.size()-in.device()->pos()));
-                    const QByteArray &login=data_extracted.mid(0,64);
-                    data_extracted.remove(0,64);
-                    const QByteArray &hash=data_extracted;
-                    askLogin(queryNumber,login,hash);
-                    return;
-                }
-            break;
-            default:
-                parseError("wrong data before login with mainIdent: "+QString::number(mainCodeType)+", subIdent: "+QString::number(subCodeType));
-            break;
-        }
+                have_send_protocol=true;
+                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+                normalOutput(QStringLiteral("Protocol sended and replied"));
+                #endif
+            }
+            else
+            {
+                postReply(queryNumber,Client::protocolReplyProtocolNotSupported);
+                errorOutput("Wrong protocol");
+                return;
+            }
+        break;
+        case 0x04:
+            if(!have_send_protocol)
+            {
+                errorOutput("send login before the protocol");
+                return;
+            }
+            if(is_logging_in_progess)
+            {
+                postReply(queryNumber,Client::loginLoginInProgress);
+                errorOutput("Loggin already in progress");
+            }
+            else
+            {
+                is_logging_in_progess=true;
+                askLogin(queryNumber,data.constData());
+                return;
+            }
         break;
         default:
             parseError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
         break;
-    }
-    if((in.device()->size()-in.device()->pos())!=0)
-    {
-        parseError(QStringLiteral("remaining data: parseInputBeforeLogin(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-        return;
     }
 }
 
@@ -230,6 +188,11 @@ void Client::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
     if(stopIt)
         return;
+    if(account_id==0)
+    {
+        disconnectClient();
+        return;
+    }
     if(!character_loaded)
     {
         //wrong protocol
@@ -294,10 +257,8 @@ void Client::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QStringLiteral("remaining data: parsenormalOutput(%1,%2,%3): %4 %5")
+        parseError(QStringLiteral("remaining data: parseMessage(%1): %2 %3")
                    .arg(mainCodeType)
-                   .arg(subCodeType)
-                   .arg(queryNumber)
                    .arg(QString(data.mid(0,in.device()->pos()).toHex()))
                    .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                    );
@@ -309,6 +270,11 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
 {
     if(stopIt)
         return;
+    if(account_id==0)
+    {
+        disconnectClient();
+        return;
+    }
     if(!character_loaded)
     {
         //wrong protocol
@@ -948,10 +914,9 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QStringLiteral("remaining data: parsenormalOutput(%1,%2,%3): %4 %5")
+        parseError(QStringLiteral("remaining data: parsenormalOutput(%1,%2): %3 %4")
                    .arg(mainCodeType)
                    .arg(subCodeType)
-                   .arg(queryNumber)
                    .arg(QString(data.mid(0,in.device()->pos()).toHex()))
                    .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                    );
@@ -965,9 +930,23 @@ void Client::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,con
     if(stopIt)
         return;
     Q_UNUSED(data);
-    if(!character_loaded)
+    const bool goodQueryBeforeLoginLoaded=
+            mainCodeType==0x03 ||
+            mainCodeType==0x04
+            ;
+    if(account_id==0 || (!character_loaded && goodQueryBeforeLoginLoaded))
+    {
+        parseInputBeforeLogin(mainCodeType,queryNumber,data);
+        return;
+    }
+    if(account_id==0)
     {
         parseError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        return;
+    }
+    if(!character_loaded)
+    {
+        parseError(QStringLiteral("charaters is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     //do the work here
@@ -979,15 +958,20 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
 {
     if(stopIt)
         return;
+    if(account_id==0)
+    {
+        parseError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        return;
+    }
     const bool goodQueryBeforeCharacterLoaded=mainCodeType==0x02 &&
             (subCodeType==0x03 ||
              subCodeType==0x04 ||
              subCodeType==0x0C ||
              subCodeType==0x05
                 );
-    if(account_id==0 || (!character_loaded && !goodQueryBeforeCharacterLoaded))
+    if(!character_loaded && !goodQueryBeforeCharacterLoaded)
     {
-        parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
+        parseError(QStringLiteral("charaters is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
@@ -1552,6 +1536,11 @@ void Client::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber
     if(stopIt)
         return;
     Q_UNUSED(data);
+    if(account_id==0)
+    {
+        disconnectClient();
+        return;
+    }
     if(!character_loaded)
     {
         parseError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
@@ -1567,6 +1556,11 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCod
     if(stopIt)
         return;
     Q_UNUSED(data);
+    if(account_id==0)
+    {
+        disconnectClient();
+        return;
+    }
     if(!character_loaded)
     {
         parseError(QStringLiteral("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
@@ -1574,11 +1568,11 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCod
     }
     if(stopIt)
         return;
-    if(!character_loaded)
+    /*bugif(!character_loaded)
     {
         parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
         return;
-    }
+    }*/
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
