@@ -389,7 +389,7 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         return;
     }
     #endif
-    if(!GlobalServerData::serverPrivateVariables.skinList.isEmpty())
+    if(GlobalServerData::serverPrivateVariables.skinList.isEmpty())
     {
         qDebug() << QStringLiteral("Skin list is empty, unable to add charaters");
         QByteArray outputData;
@@ -675,7 +675,7 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
 {
     if(!GlobalServerData::serverPrivateVariables.db.next())
     {
-        characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
+        characterSelectionIsWrong(query_id,0x02,"Result return query to remove wrong");
         return;
     }
     bool ok;
@@ -1098,7 +1098,7 @@ void Client::dbQueryWrite(const QString &queryText)
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    normalOutput(QStringLiteral("Do mysql query: ")+queryText);
+    normalOutput(QStringLiteral("Do db write: ")+queryText);
     #endif
     GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toUtf8());
 }

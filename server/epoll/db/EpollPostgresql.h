@@ -22,7 +22,7 @@ public:
     bool asyncWrite(const char *query);
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
-    bool readyToRead();
+    bool epollEvent(const uint32_t &events);
     void clear();
     char * errorMessage();
     bool next();
