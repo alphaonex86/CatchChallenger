@@ -10,29 +10,29 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 
 --
--- Name: root; Type: SCHEMA; Schema: -; Owner: root
+-- Name: postgres; Type: SCHEMA; Schema: -; Owner: postgres
 --
 
-CREATE SCHEMA root;
+CREATE SCHEMA postgres;
 
 
-ALTER SCHEMA root OWNER TO root;
+ALTER SCHEMA postgres OWNER TO postgres;
 
 --
--- Name: SCHEMA root; Type: COMMENT; Schema: -; Owner: root
+-- Name: SCHEMA postgres; Type: COMMENT; Schema: -; Owner: postgres
 --
 
-COMMENT ON SCHEMA root IS 'catchchallenger MMORPG';
+COMMENT ON SCHEMA postgres IS 'catchchallenger MMORPG';
 
 
-SET search_path = root, pg_catalog;
+SET search_path = postgres, pg_catalog;
 
 SET default_tablespace = '';
 
 SET default_with_oids = false;
 
 --
--- Name: account; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: account; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE account (
@@ -44,10 +44,10 @@ CREATE TABLE account (
 );
 
 
-ALTER TABLE root.account OWNER TO root;
+ALTER TABLE postgres.account OWNER TO postgres;
 
 --
--- Name: account_register; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: account_register; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE account_register (
@@ -60,10 +60,10 @@ CREATE TABLE account_register (
 );
 
 
-ALTER TABLE root.account_register OWNER TO root;
+ALTER TABLE postgres.account_register OWNER TO postgres;
 
 --
--- Name: bot_already_beaten; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: bot_already_beaten; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE bot_already_beaten (
@@ -72,10 +72,10 @@ CREATE TABLE bot_already_beaten (
 );
 
 
-ALTER TABLE root.bot_already_beaten OWNER TO root;
+ALTER TABLE postgres.bot_already_beaten OWNER TO postgres;
 
 --
--- Name: character; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: character; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE "character" (
@@ -110,10 +110,10 @@ CREATE TABLE "character" (
 );
 
 
-ALTER TABLE root."character" OWNER TO root;
+ALTER TABLE postgres."character" OWNER TO postgres;
 
 --
--- Name: city; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: city; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE city (
@@ -122,10 +122,10 @@ CREATE TABLE city (
 );
 
 
-ALTER TABLE root.city OWNER TO root;
+ALTER TABLE postgres.city OWNER TO postgres;
 
 --
--- Name: clan; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: clan; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE clan (
@@ -136,10 +136,10 @@ CREATE TABLE clan (
 );
 
 
-ALTER TABLE root.clan OWNER TO root;
+ALTER TABLE postgres.clan OWNER TO postgres;
 
 --
--- Name: factory; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: factory; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE factory (
@@ -150,10 +150,10 @@ CREATE TABLE factory (
 );
 
 
-ALTER TABLE root.factory OWNER TO root;
+ALTER TABLE postgres.factory OWNER TO postgres;
 
 --
--- Name: item; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: item; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE item (
@@ -165,10 +165,10 @@ CREATE TABLE item (
 );
 
 
-ALTER TABLE root.item OWNER TO root;
+ALTER TABLE postgres.item OWNER TO postgres;
 
 --
--- Name: monster; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: monster; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE monster (
@@ -189,10 +189,10 @@ CREATE TABLE monster (
 );
 
 
-ALTER TABLE root.monster OWNER TO root;
+ALTER TABLE postgres.monster OWNER TO postgres;
 
 --
--- Name: monster_buff; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: monster_buff; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE monster_buff (
@@ -202,10 +202,10 @@ CREATE TABLE monster_buff (
 );
 
 
-ALTER TABLE root.monster_buff OWNER TO root;
+ALTER TABLE postgres.monster_buff OWNER TO postgres;
 
 --
--- Name: monster_skill; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: monster_skill; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE monster_skill (
@@ -216,10 +216,10 @@ CREATE TABLE monster_skill (
 );
 
 
-ALTER TABLE root.monster_skill OWNER TO root;
+ALTER TABLE postgres.monster_skill OWNER TO postgres;
 
 --
--- Name: plant; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: plant; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE plant (
@@ -233,10 +233,10 @@ CREATE TABLE plant (
 );
 
 
-ALTER TABLE root.plant OWNER TO root;
+ALTER TABLE postgres.plant OWNER TO postgres;
 
 --
--- Name: quest; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: quest; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE quest (
@@ -247,10 +247,10 @@ CREATE TABLE quest (
 );
 
 
-ALTER TABLE root.quest OWNER TO root;
+ALTER TABLE postgres.quest OWNER TO postgres;
 
 --
--- Name: recipe; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: recipe; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE recipe (
@@ -259,10 +259,10 @@ CREATE TABLE recipe (
 );
 
 
-ALTER TABLE root.recipe OWNER TO root;
+ALTER TABLE postgres.recipe OWNER TO postgres;
 
 --
--- Name: reputation; Type: TABLE; Schema: root; Owner: root; Tablespace: 
+-- Name: reputation; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE reputation (
@@ -273,10 +273,10 @@ CREATE TABLE reputation (
 );
 
 
-ALTER TABLE root.reputation OWNER TO root;
+ALTER TABLE postgres.reputation OWNER TO postgres;
 
 --
--- Name: account_login_key; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: account_login_key; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY account
@@ -284,7 +284,7 @@ ALTER TABLE ONLY account
 
 
 --
--- Name: account_pkey; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: account_pkey; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY account
@@ -292,7 +292,7 @@ ALTER TABLE ONLY account
 
 
 --
--- Name: account_register_login_key; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: account_register_login_key; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY account_register
@@ -300,7 +300,7 @@ ALTER TABLE ONLY account_register
 
 
 --
--- Name: account_register_pkey; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: account_register_pkey; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY account_register
@@ -308,7 +308,7 @@ ALTER TABLE ONLY account_register
 
 
 --
--- Name: character_pkey; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: character_pkey; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY "character"
@@ -316,7 +316,7 @@ ALTER TABLE ONLY "character"
 
 
 --
--- Name: city_pkey; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: city_pkey; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY city
@@ -324,7 +324,7 @@ ALTER TABLE ONLY city
 
 
 --
--- Name: clan_pkey; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: clan_pkey; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY clan
@@ -332,7 +332,7 @@ ALTER TABLE ONLY clan
 
 
 --
--- Name: factory_pkey; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: factory_pkey; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY factory
@@ -340,7 +340,7 @@ ALTER TABLE ONLY factory
 
 
 --
--- Name: plant_pkey; Type: CONSTRAINT; Schema: root; Owner: root; Tablespace: 
+-- Name: plant_pkey; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY plant
@@ -348,154 +348,154 @@ ALTER TABLE ONLY plant
 
 
 --
--- Name: bot_already_beaten_by_character; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: bot_already_beaten_by_character; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX bot_already_beaten_by_character ON bot_already_beaten USING btree ("character");
 
 
 --
--- Name: bot_already_beaten_unique; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: bot_already_beaten_unique; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX bot_already_beaten_unique ON bot_already_beaten USING btree ("character", botfight_id);
 
 
 --
--- Name: character_account; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: character_account; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX character_account ON "character" USING btree (account);
 
 
 --
--- Name: character_bypseudo; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: character_bypseudo; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX character_bypseudo ON "character" USING btree (pseudo);
 
 
 --
--- Name: character_bypseudoandclan; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: character_bypseudoandclan; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX character_bypseudoandclan ON "character" USING btree (pseudo, clan);
 
 
 --
--- Name: character_clan; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: character_clan; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX character_clan ON "character" USING btree (clan);
 
 
 --
--- Name: index_by_place; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: index_by_place; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX index_by_place ON item USING btree (place);
 
 
 --
--- Name: item_by_char; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: item_by_char; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX item_by_char ON item USING btree ("character");
 
 
 --
--- Name: item_uniqueindex; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: item_uniqueindex; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX item_uniqueindex ON item USING btree (item, "character", place);
 
 
 --
--- Name: monster_bychar; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: monster_bychar; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX monster_bychar ON monster USING btree ("character");
 
 
 --
--- Name: monster_byplace; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: monster_byplace; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX monster_byplace ON monster USING btree (place);
 
 
 --
--- Name: monster_unique; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: monster_unique; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX monster_unique ON monster USING btree (id);
 
 
 --
--- Name: monsterbuff_bymonster; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: monsterbuff_bymonster; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX monsterbuff_bymonster ON monster_buff USING btree (monster);
 
 
 --
--- Name: monsterbuff_bymonsterandbuff; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: monsterbuff_bymonsterandbuff; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX monsterbuff_bymonsterandbuff ON monster_buff USING btree (monster, buff);
 
 
 --
--- Name: monsterskill_bymonster; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: monsterskill_bymonster; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX monsterskill_bymonster ON monster_skill USING btree (monster);
 
 
 --
--- Name: monsterskill_unique; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: monsterskill_unique; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX monsterskill_unique ON monster_skill USING btree (monster, skill);
 
 
 --
--- Name: quest_bychar; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: quest_bychar; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX quest_bychar ON quest USING btree ("character");
 
 
 --
--- Name: quest_unique; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: quest_unique; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX quest_unique ON quest USING btree ("character", quest);
 
 
 --
--- Name: recipe_bychar; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: recipe_bychar; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX recipe_bychar ON recipe USING btree ("character");
 
 
 --
--- Name: recipe_unique; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: recipe_unique; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX recipe_unique ON recipe USING btree ("character", recipe);
 
 
 --
--- Name: reputation_bychar; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: reputation_bychar; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX reputation_bychar ON reputation USING btree ("character");
 
 
 --
--- Name: reputation_unique; Type: INDEX; Schema: root; Owner: root; Tablespace: 
+-- Name: reputation_unique; Type: INDEX; Schema: postgres; Owner: postgres; Tablespace: 
 --
 
 CREATE UNIQUE INDEX reputation_unique ON reputation USING btree ("character", type);

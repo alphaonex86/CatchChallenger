@@ -2469,7 +2469,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
             //Protocol initialization
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
             {
-                newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                 return;
             }
             quint8 returnCode;
@@ -2478,7 +2478,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                 {
-                    newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 quint8 compressionCode;
@@ -2495,7 +2495,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Xz;
                     break;
                     default:
-                        newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(queryNumber));
                     return;
                 }
 
@@ -2525,12 +2525,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
         {
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
                 return;
             }
             quint8 returnCode;
             in >> returnCode;
-            if(returnCode>=0x02 || returnCode<=0x05)
+            if(returnCode!=0x01)
             {
                 QString string;
                 if(returnCode==0x02)
@@ -2549,7 +2549,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 notLogged(string);
                 return;
             }
-            else if(returnCode==0x01)
+            else
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                 {
@@ -2733,13 +2733,13 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     in >> characterEntry.character_id;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                     {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
                     in >> characterEntry.pseudo;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                     {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
                     in >> characterEntry.skin;
@@ -2763,7 +2763,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     in >> characterEntry.last_connect;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                     {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
                     in >> characterEntry.map;
@@ -2772,11 +2772,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 }
                 is_logged=true;
                 logged(characterEntryList);
-            }
-            else
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("bad return code: %1, line: %2").arg(returnCode).arg(__LINE__));
-                return;
             }
         }
         break;
@@ -2787,8 +2782,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: parseFullReplyData(%1,%2,%3), line: %4, data: %5 %6")
-                   .arg(mainCodeType).arg(subCodeType).arg(queryNumber)
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: parseFullReplyData(%1,%2), line: %3, data: %4 %5")
+                   .arg(mainCodeType).arg(queryNumber)
                    .arg(__LINE__)
                    .arg(QString(data.mid(0,in.device()->pos()).toHex()))
                    .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
@@ -2844,11 +2839,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                 //get the character selection return
                 case 0x0005:
                 {
-                    if(in.device()->size()<=0)
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                        return;
-                    }
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
@@ -2861,11 +2851,11 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         QString string;
                         if(returnCode==0x02)
                             string=tr("Character not found");
-                        if(returnCode==0x03)
+                        else if(returnCode==0x03)
                             string=tr("Already logged");
-                        if(returnCode==0x04)
+                        else if(returnCode==0x04)
                             string=tr("Server internal problem");
-                        if(returnCode==0x05)
+                        else
                             string=tr("Unknown error: %1").arg(returnCode);
                         DebugClass::debugConsole("Selected character not found, reason: "+string);
                         notLogged(string);
@@ -2972,6 +2962,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the number of map, line: %1").arg(__LINE__));
                             return;
                         }
+                        /// \todo, change on login, why transmit it?
                         in >> number_of_map;
 
                         //recipes

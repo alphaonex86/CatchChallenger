@@ -1,9 +1,6 @@
 #include "ProtocolParsing.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../../server/base/Client.h"
-#endif
 
 using namespace CatchChallenger;
 
@@ -17,7 +14,8 @@ void ProtocolParsingInputOutput::parseIncommingData()
     {
         quint32 size;
         quint32 cursor=0;
-        if(header_cut.isEmpty())
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        if(!header_cut.isEmpty())
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
             memcpy(ProtocolParsingInputOutput::commonBuffer,header_cut.constData(),header_cut.size());
@@ -26,22 +24,36 @@ void ProtocolParsingInputOutput::parseIncommingData()
         }
         else
             size=socket->readData(ProtocolParsingInputOutput::commonBuffer,CATCHCHALLENGER_COMMONBUFFERSIZE);
+        #else
+        if(!header_cut.isEmpty())
+        {
+            const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
+            memcpy(ProtocolParsingInputOutput::commonBuffer,header_cut.constData(),header_cut.size());
+            size=socket->read(ProtocolParsingInputOutput::commonBuffer,size_to_get)+header_cut.size();
+            header_cut.resize(0);
+        }
+        else
+            size=socket->read(ProtocolParsingInputOutput::commonBuffer,CATCHCHALLENGER_COMMONBUFFERSIZE);
+        #endif
         if(size==0)
         {
-            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): size returned is 0!"));
+            //DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): size returned is 0!"));
             return;
         }
 
-        if(!parseHeader(size,cursor))
-            return;
-        if(!parseQueryNumber(size,cursor))
-            return;
-        if(!parseDataSize(size,cursor))
-            return;
-        if(!parseData(size,cursor))
-            return;
-        parseDispatch();
-        dataClear();
+        do
+        {
+            if(!parseHeader(size,cursor))
+                break;
+            if(!parseQueryNumber(size,cursor))
+                break;
+            if(!parseDataSize(size,cursor))
+                break;
+            if(!parseData(size,cursor))
+                break;
+            parseDispatch();
+            dataClear();
+        } while(cursor<size);
 
         if(size<CATCHCHALLENGER_COMMONBUFFERSIZE)
             return;
@@ -97,7 +109,6 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
             }
             else
             {
-
                 if(isClient)
                 {
                     //if is query with reply
@@ -155,35 +166,10 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                 DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): isClient"));
                 #endif
                 //if is query with reply
-                if(mainCode_IsQueryClientToServer.contains(mainCodeType))
-                {
-                    #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
-                    #endif
-                    need_query_number=true;
-                }
-
-                //check if have defined size
-                if(sizeMultipleCodePacketClientToServer.contains(mainCodeType))
-                {
-                    if(sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
-                    {
-                        //have fixed size
-                        dataSize=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType);
-                        haveData_dataSize=true;
-                    }
-                }
-            }
-            else
-            {
-                #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !isClient"));
-                #endif
-                //if is query with reply
                 if(mainCode_IsQueryServerToClient.contains(mainCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
                     #endif
                     need_query_number=true;
                 }
@@ -195,6 +181,31 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                     {
                         //have fixed size
                         dataSize=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType);
+                        haveData_dataSize=true;
+                    }
+                }
+            }
+            else
+            {
+                #ifdef PROTOCOLPARSINGDEBUG
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !isClient"));
+                #endif
+                //if is query with reply
+                if(mainCode_IsQueryClientToServer.contains(mainCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
+                    #endif
+                    need_query_number=true;
+                }
+
+                //check if have defined size
+                if(sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+                {
+                    if(sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                    {
+                        //have fixed size
+                        dataSize=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType);
                         haveData_dataSize=true;
                     }
                 }
@@ -695,8 +706,8 @@ void ProtocolParsingInputOutput::parseDispatch()
                 #endif
                 if(isClient)
                 {
-                    if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
-                        if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
+                    if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                        if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                             switch(compressionType)
                             {
                                 case CompressionType_Xz:
@@ -712,8 +723,8 @@ void ProtocolParsingInputOutput::parseDispatch()
                 }
                 else
                 {
-                    if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
-                        if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+                    if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                        if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                             switch(compressionType)
                             {
                                 case CompressionType_Xz:

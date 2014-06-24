@@ -69,11 +69,11 @@ void BaseWindow::newProfileFinished()
     ui->label_connecting_status->setText(tr("Creating your new character"));
 }
 
-void BaseWindow::newCharacterId(const quint32 &characterId)
+void BaseWindow::newCharacterId(const quint8 &returnCode, const quint32 &characterId)
 {
     CharacterEntry characterEntry=characterEntryListInWaiting.first();
     characterEntryListInWaiting.removeFirst();
-    if(characterId>0)
+    if(returnCode==0x00)
     {
         characterEntry.character_id=characterId;
         characterEntryList << characterEntry;
@@ -84,8 +84,10 @@ void BaseWindow::newCharacterId(const quint32 &characterId)
     /*    else
             ui->stackedWidget->setCurrentWidget(ui->page_character);*/
     }
+    else if(returnCode==0x01)
+        QMessageBox::warning(this,tr("Error"),tr("This pseudo is already taken"));
     else
-        QMessageBox::warning(this,tr("Error"),tr("Unable to create the character, try with another pseudo"));
+        QMessageBox::warning(this,tr("Error"),tr("Unable to create the character"));
 }
 
 void BaseWindow::updateCharacterList()

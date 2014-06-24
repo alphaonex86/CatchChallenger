@@ -145,12 +145,15 @@ void BaseWindow::disconnected(QString reason)
         return;
     haveShowDisconnectionReason=true;
     QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
+    newError("Disconnected",QStringLiteral("Disconnected by the reason: %1").arg(reason));
     resetAll();
 }
 
 void BaseWindow::notLogged(QString reason)
 {
     QMessageBox::information(this,tr("Unable to login"),tr("Unable to login: %1").arg(reason));
+    newError("Unable to login",QStringLiteral("Unable to login: %1").arg(reason));
+    resetAll();
 }
 
 void BaseWindow::logged(const QList<CharacterEntry> &characterEntryList)
@@ -427,7 +430,12 @@ void BaseWindow::updateConnectingStatus()
     }
     QStringList waitedData;
     if(haveDatapack && (!haveInventory || !havePlayerInformations))
-        waitedData << tr("Loading of the player informations");
+    {
+        if(!havePlayerInformations)
+            waitedData << tr("Loading of the player informations");
+        else
+            waitedData << tr("Loading of the inventory");
+    }
     if(!haveDatapack)
     {
         if(datapckFileSize==0)

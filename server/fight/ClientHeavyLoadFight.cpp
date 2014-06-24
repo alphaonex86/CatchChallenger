@@ -27,6 +27,7 @@ void Client::loadMonsters()
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadReputation();
+        return;
     }
 }
 
@@ -207,31 +208,37 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
     else if(index<(quint32)(public_and_private_informations.playerMonster.size()+public_and_private_informations.warehouse_playerMonster.size()))
         queryText=GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id.arg(public_and_private_informations.playerMonster.at(index-public_and_private_informations.playerMonster.size()).id);
     else
+    {
         loadPlayerMonsterSkills(0);
+        return;
+    }
     if(!queryText.isEmpty())
     {
         SelectIndexParam *selectIndexParam=new SelectIndexParam;
         selectIndexParam->index=index;
-        paramToPassToCallBack << selectIndexParam;
+
         if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterBuffs_static))
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             delete selectIndexParam;
-            paramToPassToCallBack.removeLast();
             loadPlayerMonsterSkills(0);
+            return;
         }
+        else
+            paramToPassToCallBack << selectIndexParam;
     }
 }
 
 void Client::loadPlayerMonsterBuffs_static(void *object)
 {
-    static_cast<Client *>(object)->loadPlayerMonsterBuffs_return();
+    SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
+    static_cast<Client *>(object)->loadPlayerMonsterBuffs_return(selectIndexParam->index);
+    delete selectIndexParam;
 }
 
-void Client::loadPlayerMonsterBuffs_return()
+void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
 {
-    SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
-    const quint32 &monsterId=public_and_private_informations.playerMonster.at(selectIndexParam->index).id;
+    const quint32 &monsterId=public_and_private_informations.playerMonster.at(index).id;
     QList<PlayerBuff> buffs;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db.next())
@@ -273,8 +280,7 @@ void Client::loadPlayerMonsterBuffs_return()
         if(ok)
             buffs << buff;
     }
-    loadPlayerMonsterBuffs(selectIndexParam->index+1);
-    delete selectIndexParam;
+    loadPlayerMonsterBuffs(index+1);
 }
 
 void Client::loadPlayerMonsterSkills(const quint32 &index)
@@ -293,31 +299,36 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
     else if(index<(quint32)(public_and_private_informations.playerMonster.size()+public_and_private_informations.warehouse_playerMonster.size()))
         queryText=GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id.arg(public_and_private_informations.playerMonster.at(index-public_and_private_informations.playerMonster.size()).id);
     else
+    {
         loadReputation();
+        return;
+    }
     if(!queryText.isEmpty())
     {
         SelectIndexParam *selectIndexParam=new SelectIndexParam;
         selectIndexParam->index=index;
-        paramToPassToCallBack << selectIndexParam;
-        if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterBuffs_static))
+        if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterSkills_static))
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             delete selectIndexParam;
-            paramToPassToCallBack.removeLast();
             loadReputation();
+            return;
         }
+        else
+            paramToPassToCallBack << selectIndexParam;
     }
 }
 
 void Client::loadPlayerMonsterSkills_static(void *object)
 {
-    static_cast<Client *>(object)->loadPlayerMonsterSkills_return();
+    SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
+    static_cast<Client *>(object)->loadPlayerMonsterSkills_return(selectIndexParam->index);
+    delete selectIndexParam;
 }
 
-void Client::loadPlayerMonsterSkills_return()
+void Client::loadPlayerMonsterSkills_return(const quint32 &index)
 {
-    SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
-    const quint32 &monsterId=public_and_private_informations.playerMonster.at(selectIndexParam->index).id;
+    const quint32 &monsterId=public_and_private_informations.playerMonster.at(index).id;
     QList<PlayerMonster::PlayerSkill> skills;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db.next())
@@ -365,8 +376,7 @@ void Client::loadPlayerMonsterSkills_return()
         if(ok)
             skills << skill;
     }
-    loadPlayerMonsterSkills(selectIndexParam->index+1);
-    delete selectIndexParam;
+    loadPlayerMonsterSkills(index+1);
 }
 
 void Client::generateRandomNumber()
@@ -413,6 +423,7 @@ void Client::loadBotAlreadyBeaten()
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loginIsRightFinalStep();
+        return;
     }
 }
 

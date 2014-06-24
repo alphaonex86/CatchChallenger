@@ -1,9 +1,6 @@
 #include "ProtocolParsing.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../../server/base/Client.h"
-#endif
 
 #include <lzma.h>
 
@@ -282,7 +279,13 @@ bool ProtocolParsingInputOutput::checkStringIntegrity(const char *data, const un
         errorParsingLayer("header size not suffisient");
         return false;
     }
-    const quint32 &stringSize=be32toh(*reinterpret_cast<const quint32 *>(data));
+    const quint32 &tempInt=*reinterpret_cast<const quint32 *>(data);
+    if(tempInt==4294967295)
+    {
+        //null string
+        return true;
+    }
+    const quint32 &stringSize=be32toh(tempInt);
     if(stringSize>65535)
     {
         errorParsingLayer(QStringLiteral("String size is wrong: %1").arg(stringSize));
