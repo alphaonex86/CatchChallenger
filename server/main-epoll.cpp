@@ -23,6 +23,7 @@
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 #include "../general/base/FacilityLib.h"
+#include "../general/base/GeneralVariable.h"
 
 #define MAXEVENTS 512
 
@@ -557,11 +558,19 @@ int main(int argc, char *argv[])
                     db->readyToRead();
                     if(!datapack_loaded)
                     {
-                        if(db->isConnected() && events[i].events & EPOLLIN)
+                        if(db->isConnected())
                         {
-                            server->preload_the_data();
-                            datapack_loaded=true;
+                            if(events[i].events & EPOLLIN)
+                            {
+                                std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
+                                server->preload_the_data();
+                                datapack_loaded=true;
+                            }
+                            else
+                                std::cerr << "datapack_loaded not loaded: but database have not the event EPOLLIN" << std::endl;
                         }
+                        else
+                            std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
                     }
                 }
                 break;
