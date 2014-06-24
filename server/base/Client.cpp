@@ -105,6 +105,7 @@ void Client::disconnectClient()
     if(account_id!=0)
         normalOutput("Disconnected client");
     #endif
+    GlobalServerData::serverPrivateVariables.db.clear();
     isConnected=false;
     if(socket!=NULL)
     {
