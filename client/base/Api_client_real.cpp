@@ -391,7 +391,7 @@ void Api_client_real::httpFinishedForDatapackList()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if(!reply->isFinished() || reply->error() || !redirectionTarget.isNull())
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply, try next"));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply, try next: %1").arg(reply->errorString()));
         reply->deleteLater();
         index_mirror++;
         if(index_mirror>=CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).size())

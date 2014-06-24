@@ -144,9 +144,9 @@ private:
     QSet<quint8> queryReceived;
     #endif
     // for data
-    quint32 mainCodeType;
+    quint8 mainCodeType;
     quint32 subCodeType;
-    quint32 queryNumber;
+    quint8 queryNumber;
     static QByteArray lzmaCompress(QByteArray data);
     static QByteArray lzmaUncompress(QByteArray data);
 public:

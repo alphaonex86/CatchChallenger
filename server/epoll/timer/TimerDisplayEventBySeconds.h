@@ -8,9 +8,13 @@ class TimerDisplayEventBySeconds : public EpollTimer
 public:
     TimerDisplayEventBySeconds();
     void exec();
-    void addCount();
+    void addServerCount();
+    void addClientCount();
+    void addDbCount();
+    void addTimerCount();
+    void addOtherCount();
 private:
-    int count;
+    int serverCount,clientCount,dbCount,timerCount,otherCount;
 };
 
 #endif // TIMERDISPLAYEVENTBYSECONDS_H

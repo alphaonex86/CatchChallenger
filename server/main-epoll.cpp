@@ -56,6 +56,7 @@ void send_settings()
     formatedServerNormalSettings.server_ip				= settings->value(QLatin1Literal("server-ip")).toString();
     formatedServerNormalSettings.proxy					= settings->value(QLatin1Literal("proxy")).toString();
     formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
+    formatedServerNormalSettings.useSsl					= settings->value(QLatin1Literal("useSsl")).toBool();
 
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
@@ -274,7 +275,9 @@ int main(int argc, char *argv[])
 
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     TimerDisplayEventBySeconds timerDisplayEventBySeconds;
+    #endif
     TimerPositionSync timerPositionSync;
     TimerSendInsertMoveRemove timerSendInsertMoveRemove;
     {
@@ -337,6 +340,26 @@ int main(int argc, char *argv[])
             settings->endGroup();
             return EXIT_FAILURE;
         }
+        if(formatedServerSettings.database.type!=CatchChallenger::ServerSettings::Database::DatabaseType_PostgreSQL)
+        {
+            settings->beginGroup(QLatin1Literal("db"));
+            qDebug() << "Only postgresql is supported for now:" << settings->value(QLatin1Literal("type")).toString();
+            settings->endGroup();
+            return EXIT_FAILURE;
+        }
+        #ifdef SERVERNOSSL
+        if(formatedServerNormalSettings.useSsl)
+        {
+            qDebug() << "Ssl connexion requested but server not compiled with ssl support!";
+            return EXIT_FAILURE;
+        }
+        #else
+        if(!formatedServerNormalSettings.useSsl)
+        {
+            qDebug() << "Clear connexion requested but server compiled with ssl support!";
+            return EXIT_FAILURE;
+        }
+        #endif
         if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
         {
             qDebug() << "Need use mirror http";
@@ -381,11 +404,13 @@ int main(int argc, char *argv[])
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
         for(i = 0; i < number_of_events; i++)
         {
-            timerDisplayEventBySeconds.addCount();
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
                 case BaseClassSwitch::Type::Server:
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    timerDisplayEventBySeconds.addServerCount();
+                    #endif
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -491,6 +516,9 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Client:
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    timerDisplayEventBySeconds.addClientCount();
+                    #endif
                     Client *client=static_cast<Client *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -515,10 +543,16 @@ int main(int argc, char *argv[])
                 }
                 break;
                 case BaseClassSwitch::Type::Timer:
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    timerDisplayEventBySeconds.addTimerCount();
+                    #endif
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                 break;
                 case BaseClassSwitch::Type::Database:
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    timerDisplayEventBySeconds.addDbCount();
+                    #endif
                     EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                     db->readyToRead();
                     if(!datapack_loaded)
@@ -532,6 +566,9 @@ int main(int argc, char *argv[])
                 }
                 break;
                 default:
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    timerDisplayEventBySeconds.addOtherCount();
+                    #endif
                     std::cerr << "unknown event" << std::endl;
                 break;
             }
