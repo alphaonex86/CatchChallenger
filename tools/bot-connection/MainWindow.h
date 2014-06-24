@@ -74,8 +74,9 @@ private slots:
     void sslErrors(const QList<QSslError> &errors);
     void on_characterSelect_clicked();
     void haveTheDatapack();
+    void ifMultipleConnexionStartCreation();
     void connectTimerSlot();
-    void newCharacterId(const quint32 &characterId);
+    void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
     void sslHandcheckIsFinished();
     void readForFirstHeader();
     void connectTheExternalSocket(CatchChallengerClient *client);
