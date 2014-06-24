@@ -245,7 +245,19 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         );
     }
     else
+    {
+        #ifdef DEBUG_MESSAGE_MAP
+        QStringList stringMapList;
+        QHashIterator<QString,CommonMap *> i(GlobalServerData::serverPrivateVariables.map_list);
+        while (i.hasNext()) {
+            i.next();
+            stringMapList << i.key();
+        }
+        loginIsWrong(query_id,0x04,QLatin1String("Map not found: ")+map+QString(", into: ")+stringMapList.join(", "));
+        #else
         loginIsWrong(query_id,0x04,QLatin1String("Map not found: ")+map);
+        #endif
+    }
 }
 
 void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,

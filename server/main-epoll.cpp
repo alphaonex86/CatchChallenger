@@ -555,7 +555,7 @@ int main(int argc, char *argv[])
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
                     EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
-                    db->readyToRead();
+                    db->epollEvent(events[i].events);
                     if(!datapack_loaded)
                     {
                         if(db->isConnected())

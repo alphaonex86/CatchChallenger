@@ -7,6 +7,8 @@
 #include <QNetworkProxy>
 #include <QMessageBox>
 
+#define CATCHCHALLENGER_BOTCONNECTION_VERSION "0.0.0.1"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -83,32 +85,26 @@ void MainWindow::disconnected()
     }
 }
 
-void MainWindow::tryLink()
+void MainWindow::tryLink(CatchChallengerClient * client)
 {
     numberOfBotConnected++;
     ui->numberOfBotConnected->setText(tr("Number of bot connected: %1").arg(numberOfBotConnected));
 
-    CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());
-    if(senderObject==NULL)
-        return;
-
     if(!ui->multipleConnexion->isChecked())
     {
-        connectedSocketToCatchChallengerClient[senderObject]->login=ui->login->text();
-        connectedSocketToCatchChallengerClient[senderObject]->api->startReadData();
-        connectedSocketToCatchChallengerClient[senderObject]->api->sendProtocol();
-        connectedSocketToCatchChallengerClient[senderObject]->api->tryLogin(ui->login->text(),ui->pass->text());
+        client->login=ui->login->text();
+        client->api->sendProtocol();
+        client->api->tryLogin(ui->login->text(),ui->pass->text());
     }
     else
     {
         QString login=ui->login->text();
         QString pass=ui->pass->text();
-        login.replace(QLatin1Literal("%NUMBER%"),QString::number(connectedSocketToCatchChallengerClient[senderObject]->number));
-        pass.replace(QLatin1Literal("%NUMBER%"),QString::number(connectedSocketToCatchChallengerClient[senderObject]->number));
-        connectedSocketToCatchChallengerClient[senderObject]->login=login;
-        connectedSocketToCatchChallengerClient[senderObject]->api->startReadData();
-        connectedSocketToCatchChallengerClient[senderObject]->api->sendProtocol();
-        connectedSocketToCatchChallengerClient[senderObject]->api->tryLogin(login,pass);
+        login.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
+        pass.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
+        client->login=login;
+        client->api->sendProtocol();
+        client->api->tryLogin(login,pass);
     }
 }
 
@@ -368,7 +364,7 @@ void MainWindow::connectTimerSlot()
     {
         const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
         if(diff<=(quint32)ui->maxDiffConnectedSelected->value())
-            createClient()->socket->connectToHost(ui->host->text(),ui->port->value());
+            createClient();
     }
     else
         connectTimer.stop();
@@ -473,7 +469,12 @@ void MainWindow::new_chat_text(const CatchChallenger::Chat_type &chat_type,const
         break;
         case CatchChallenger::Chat_type_pm:
         if(CommonSettings::commonSettings.chat_allow_private)
-            apiToCatchChallengerClient[senderObject]->api->sendPM(QStringLiteral("Hello %1, I'm few bit busy for now").arg(pseudo),pseudo);
+        {
+            if(text=="version")
+                apiToCatchChallengerClient[senderObject]->api->sendPM(QStringLiteral("Version %1").arg(CATCHCHALLENGER_BOTCONNECTION_VERSION),pseudo);
+            else
+                apiToCatchChallengerClient[senderObject]->api->sendPM(QStringLiteral("Hello %1, I'm few bit busy for now").arg(pseudo),pseudo);
+        }
         break;
         default:
         break;
@@ -516,27 +517,37 @@ void MainWindow::on_connect_clicked()
 
 
     //do only the first client to download the datapack
-    createClient()->socket->connectToHost(ui->host->text(),ui->port->value());
+    createClient();
 }
 
-MainWindow::CatchChallengerClient * MainWindow::createClient()
+void MainWindow::createClient()
 {
+    CatchChallengerClient * client=new CatchChallengerClient;
+
+    QSslSocket *sslSocket=new QSslSocket();
     QNetworkProxy proxy;
     if(!ui->proxy->text().isEmpty())
     {
         proxy.setType(QNetworkProxy::Socks5Proxy);
         proxy.setHostName(ui->proxy->text());
         proxy.setPort(ui->proxyport->value());
+        sslSocket->setProxy(proxy);
     }
 
-    CatchChallengerClient * client=new CatchChallengerClient;
-    client->sslSocket=new QSslSocket();
+    client->haveFirstHeader=false;
+    client->sslSocket=sslSocket;
+    sslSocketToCatchChallengerClient[client->sslSocket]=client;
+
+    connect(sslSocket,&QSslSocket::readyRead,this,&MainWindow::readForFirstHeader,Qt::DirectConnection);
+    connect(sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
+    sslSocket->connectToHost(ui->host->text(),ui->port->value());
+}
+
+void MainWindow::connectTheExternalSocket(CatchChallengerClient * client)
+{
     client->socket=new CatchChallenger::ConnectedSocket(client->sslSocket);
     client->api=new CatchChallenger::Api_client_real(client->socket,false);
-    client->sslSocket->ignoreSslErrors();
-    client->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
     client->api->setDatapackPath(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
-    connect(client->sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
     connect(client->api,&CatchChallenger::Api_client_real::insert_player,            this,&MainWindow::insert_player);
     connect(client->api,&CatchChallenger::Api_client_real::new_chat_text,            this,&MainWindow::new_chat_text,Qt::QueuedConnection);
     connect(client->api,&CatchChallenger::Api_client_real::haveCharacter,            this,&MainWindow::haveCharacter);
@@ -546,10 +557,8 @@ MainWindow::CatchChallengerClient * MainWindow::createClient()
     connect(client->api,&CatchChallenger::Api_client_real::newCharacterId,           this,&MainWindow::newCharacterId);
     connect(client->socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),                    this,&MainWindow::newSocketError);
     connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MainWindow::disconnected);
-    connect(client->socket,&CatchChallenger::ConnectedSocket::connected,             this,&MainWindow::tryLink,Qt::QueuedConnection);
     if(apiToCatchChallengerClient.isEmpty())
         connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,      this,&MainWindow::haveTheDatapack);
-    client->sslSocket->setProxy(proxy);
     client->haveShowDisconnectionReason=false;
     client->have_informations=false;
     client->number=number;
@@ -557,8 +566,7 @@ MainWindow::CatchChallengerClient * MainWindow::createClient()
     number++;
     apiToCatchChallengerClient[client->api]=client;
     connectedSocketToCatchChallengerClient[client->socket]=client;
-    sslSocketToCatchChallengerClient[client->sslSocket]=client;
-    return client;
+    tryLink(client);
 }
 
 void MainWindow::sslErrors(const QList<QSslError> &errors)
@@ -593,4 +601,36 @@ void MainWindow::on_characterSelect_clicked()
     }
     ui->characterSelect->setEnabled(false);
     ui->characterList->setEnabled(false);
+}
+
+void MainWindow::sslHandcheckIsFinished()
+{
+    QSslSocket *socket=qobject_cast<QSslSocket *>(sender());
+    if(socket==NULL)
+        return;
+    connectTheExternalSocket(sslSocketToCatchChallengerClient[socket]);
+}
+
+void MainWindow::readForFirstHeader()
+{
+    QSslSocket *socket=qobject_cast<QSslSocket *>(sender());
+    if(socket==NULL)
+        return;
+    CatchChallengerClient * client=sslSocketToCatchChallengerClient[socket];
+    if(client->haveFirstHeader)
+        return;
+    quint8 value;
+    if(socket->read((char*)&value,sizeof(value))==sizeof(value))
+    {
+        client->haveFirstHeader=true;
+        if(value==0x01)
+        {
+            socket->setPeerVerifyMode(QSslSocket::VerifyNone);
+            socket->ignoreSslErrors();
+            socket->startClientEncryption();
+            connect(socket,&QSslSocket::encrypted,this,&MainWindow::sslHandcheckIsFinished);
+        }
+        else
+            connectTheExternalSocket(client);
+    }
 }

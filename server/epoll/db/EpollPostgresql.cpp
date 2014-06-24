@@ -199,7 +199,7 @@ void EpollPostgresql::clear()
     tuleIndex=-1;
 }
 
-bool EpollPostgresql::readyToRead()
+bool EpollPostgresql::epollEvent(const uint32_t &events)
 {
     const ConnStatusType &connStatusType=PQstatus(conn);
     if(connStatusType!=CONNECTION_OK)
@@ -222,7 +222,7 @@ bool EpollPostgresql::readyToRead()
             {
                 started=false;
                 std::cerr << "Connexion not ok: CONNECTION_BAD" << std::endl;
-                return false;
+                //return false;
             }
             else if(connStatusType==CONNECTION_AUTH_OK)
                 std::cerr << "Connexion not ok: CONNECTION_AUTH_OK" << std::endl;
@@ -246,43 +246,48 @@ bool EpollPostgresql::readyToRead()
         }
     }
 
-    PQconsumeInput(conn);
-    PGnotify *notify;
-    while((notify = PQnotifies(conn)) != NULL)
+    if(events & EPOLLIN)
     {
-        std::cerr << "ASYNC NOTIFY of '" << notify->relname << "' received from backend PID " << notify->be_pid << std::endl;
-        PQfreemem(notify);
-    }
-    if(PQisBusy(conn)==0)
-    {
-        if(result!=NULL)
-            clear();
-        tuleIndex=-1;
-        ntuples=0;
-        result=PQgetResult(conn);
-        if(result!=NULL)
+        PQconsumeInput(conn);
+        PGnotify *notify;
+        while((notify = PQnotifies(conn)) != NULL)
         {
-            ntuples=PQntuples(result);
-            if(!queue.isEmpty())
-            {
-                CallBack callback=queue.first();
-                if(callback.method!=NULL)
-                    callback.method(callback.object);
-                queue.removeFirst();
-            }
+            std::cerr << "ASYNC NOTIFY of '" << notify->relname << "' received from backend PID " << notify->be_pid << std::endl;
+            PQfreemem(notify);
+        }
+        if(PQisBusy(conn)==0)
+        {
             if(result!=NULL)
                 clear();
-            if(!queriesList.isEmpty())
+            tuleIndex=-1;
+            ntuples=0;
+            result=PQgetResult(conn);
+            if(result!=NULL)
             {
-                int query_id=PQsendQuery(conn,queriesList.takeFirst().toUtf8());
-                if(query_id==0)
+                ntuples=PQntuples(result);
+                if(!queue.isEmpty())
                 {
-                    std::cerr << "query async send failed: " << errorMessage() << std::endl;
-                    return false;
+                    CallBack callback=queue.first();
+                    if(callback.method!=NULL)
+                        callback.method(callback.object);
+                    queue.removeFirst();
+                }
+                if(result!=NULL)
+                    clear();
+                if(!queriesList.isEmpty())
+                {
+                    int query_id=PQsendQuery(conn,queriesList.takeFirst().toUtf8());
+                    if(query_id==0)
+                    {
+                        std::cerr << "query async send failed: " << errorMessage() << std::endl;
+                        return false;
+                    }
                 }
             }
         }
     }
+    if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
+        started=false;
     return true;
 }
 

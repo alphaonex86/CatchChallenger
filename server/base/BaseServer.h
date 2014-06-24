@@ -50,7 +50,7 @@ protected:
     //remove all finished client
     void load_next_city_capture();
 protected:
-    void parseJustLoadedMap(const Map_to_send &,const QString &);
+    virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     void closeDB();
     //starting function
     void loadAndFixSettings();

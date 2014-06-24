@@ -179,6 +179,12 @@ void BaseServer::preload_the_data()
         QTime time;
         time.restart();
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
+        int index=0;
+        while(index<CommonDatapack::commonDatapack.profileList.size())
+        {
+            CommonDatapack::commonDatapack.profileList[index].map.remove(BaseServer::text_dottmx);
+            index++;
+        }
         qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
     }
     timeDatapack.restart();
@@ -1028,7 +1034,7 @@ void BaseServer::preload_the_map()
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
-    QStringList full_map_name;
+    QStringList map_name_to_do_id;
     QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
 
     //load the map
@@ -1047,7 +1053,9 @@ void BaseServer::preload_the_map()
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             DebugClass::debugConsole(QStringLiteral("load the map: %1").arg(fileName));
             #endif
-            full_map_name << fileName;
+            QString sortFileName=fileName;
+            sortFileName.remove(tmxRemove);
+            map_name_to_do_id << sortFileName;
             if(map_temp.tryLoadMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName))
             {
                 switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
@@ -1063,39 +1071,42 @@ void BaseServer::preload_the_map()
                         GlobalServerData::serverPrivateVariables.flat_map_list << new MapServer;
                     break;
                 }
-                GlobalServerData::serverPrivateVariables.map_list[fileName]=GlobalServerData::serverPrivateVariables.flat_map_list.last();
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]=GlobalServerData::serverPrivateVariables.flat_map_list.last();
 
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->width			= map_temp.map_to_send.width;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer	= map_temp.map_to_send.parsed_layer;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file		= fileName;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file.remove(tmxRemove);
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->width			= map_temp.map_to_send.width;
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->height			= map_temp.map_to_send.height;
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->parsed_layer	= map_temp.map_to_send.parsed_layer;
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->map_file		= sortFileName;
 
-                map_name << fileName;
+                map_name << sortFileName;
 
                 parseJustLoadedMap(map_temp.map_to_send,fileName);
 
                 Map_semi map_semi;
-                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list.value(fileName);
+                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list.value(sortFileName);
 
                 if(!map_temp.map_to_send.border.top.fileName.isEmpty())
                 {
                     map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.top.fileName.remove(BaseServer::text_dottmx);
                     map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
                 }
                 if(!map_temp.map_to_send.border.bottom.fileName.isEmpty())
                 {
                     map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.bottom.fileName.remove(BaseServer::text_dottmx);
                     map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
                 }
                 if(!map_temp.map_to_send.border.left.fileName.isEmpty())
                 {
                     map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.left.fileName.remove(BaseServer::text_dottmx);
                     map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
                 }
                 if(!map_temp.map_to_send.border.right.fileName.isEmpty())
                 {
                     map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.right.fileName.remove(BaseServer::text_dottmx);
                     map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
                 }
 
@@ -1104,6 +1115,7 @@ void BaseServer::preload_the_map()
                 while(sub_index<listsize)
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
+                    map_temp.map_to_send.teleport[sub_index].map.remove(BaseServer::text_dottmx);
                     sub_index++;
                 }
 
@@ -1116,7 +1128,7 @@ void BaseServer::preload_the_map()
         }
         index++;
     }
-    full_map_name.sort();
+    map_name_to_do_id.sort();
 
     //resolv the border map name into their pointer
     size=semi_loaded_map.size();
@@ -1154,10 +1166,12 @@ void BaseServer::preload_the_map()
         int sub_index=0;
         while(sub_index<semi_loaded_map.value(index).old_map.teleport.size())
         {
-            if(GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map))
+            QString teleportString=semi_loaded_map.value(index).old_map.teleport.at(sub_index).map;
+            teleportString.remove(BaseServer::text_dottmx);
+            if(GlobalServerData::serverPrivateVariables.map_list.contains(teleportString))
             {
-                if(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)->width
-                        && semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)->height)
+                if(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list.value(teleportString)->width
+                        && semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list.value(teleportString)->height)
                 {
                     int virtual_position=semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x+semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y*semi_loaded_map.value(index).map->width;
                     if(semi_loaded_map.value(index).map->teleporter.contains(virtual_position))
@@ -1166,7 +1180,7 @@ void BaseServer::preload_the_map()
                              .arg(semi_loaded_map.value(index).map->map_file)
                              .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                              .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                             .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                             .arg(teleportString)
                              .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
                              .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
                     }
@@ -1177,12 +1191,12 @@ void BaseServer::preload_the_map()
                                      .arg(semi_loaded_map.value(index).map->map_file)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                                     .arg(teleportString)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
                                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
                         #endif
                         CommonMap::Teleporter *teleporter=&semi_loaded_map[index].map->teleporter[virtual_position];
-                        teleporter->map=GlobalServerData::serverPrivateVariables.map_list.value(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map);
+                        teleporter->map=GlobalServerData::serverPrivateVariables.map_list.value(teleportString);
                         teleporter->x=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x;
                         teleporter->y=semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y;
                         teleporter->condition=semi_loaded_map.value(index).old_map.teleport.at(sub_index).condition;
@@ -1193,7 +1207,7 @@ void BaseServer::preload_the_map()
                          .arg(semi_loaded_map.value(index).map->map_file)
                          .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                          .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                         .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                         .arg(teleportString)
                          .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
                          .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
             }
@@ -1202,7 +1216,7 @@ void BaseServer::preload_the_map()
                      .arg(semi_loaded_map.value(index).map->map_file)
                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_x)
                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).source_y)
-                     .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).map)
+                     .arg(teleportString)
                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_x)
                      .arg(semi_loaded_map.value(index).old_map.teleport.at(sub_index).destination_y));
 
@@ -1341,14 +1355,14 @@ void BaseServer::preload_the_map()
         index++;
     }
 
-    size=full_map_name.size();
+    size=map_name_to_do_id.size();
     index=0;
     while(index<size)
     {
-        if(GlobalServerData::serverPrivateVariables.map_list.contains(full_map_name.at(index)))
+        if(GlobalServerData::serverPrivateVariables.map_list.contains(map_name_to_do_id.at(index)))
         {
-            GlobalServerData::serverPrivateVariables.map_list[full_map_name.at(index)]->id=index;
-            GlobalServerData::serverPrivateVariables.id_map_to_map[GlobalServerData::serverPrivateVariables.map_list[full_map_name.at(index)]->id]=full_map_name.at(index);
+            GlobalServerData::serverPrivateVariables.map_list[map_name_to_do_id.at(index)]->id=index;
+            GlobalServerData::serverPrivateVariables.id_map_to_map[GlobalServerData::serverPrivateVariables.map_list[map_name_to_do_id.at(index)]->id]=map_name_to_do_id.at(index);
         }
         index++;
     }

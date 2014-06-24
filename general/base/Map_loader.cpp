@@ -330,7 +330,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                 if(!prop.isNull())
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, prop.isNull()")
+                                    DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, !prop.isNull()")
                                                  .arg(type)
                                                  .arg(object_x)
                                                  .arg(object_y)
@@ -583,7 +583,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                 if(!prop.isNull())
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
-                                    DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, prop.isNull()")
+                                    DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3, !prop.isNull()")
                                                  .arg(type)
                                                  .arg(object_x)
                                                  .arg(object_y)
