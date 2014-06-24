@@ -72,6 +72,38 @@ public:
     static const unsigned char protocolHeaderToMatch[5];
 protected:
     QByteArray rawPseudo;
+
+    struct AddCharacterParam
+    {
+        quint8 query_id;
+        quint8 profileIndex;
+        QString pseudo;
+        QString skin;
+    };
+    struct RemoveCharacterParam
+    {
+        quint8 query_id;
+        quint32 characterId;
+    };
+    struct DeleteCharacterNow
+    {
+        quint32 characterId;
+    };
+    struct AskLoginParam
+    {
+        quint8 query_id;
+        QByteArray login;
+        QByteArray pass;
+    };
+    struct SelectCharacterParam
+    {
+        quint8 query_id;
+        quint32 characterId;
+    };
+    struct SelectIndexParam
+    {
+        quint32 index;
+    };
 private:
     //-------------------
     ConnectedSocket *socket;
@@ -233,12 +265,12 @@ private:
     void clanChangeWithoutDb(const quint32 &clanId);
     void askLogin(const quint8 &query_id, const char *rawdata);
     static void askLogin_static(void *object);
-    void askLogin_return();
+    void askLogin_return(AskLoginParam *askLoginParam);
     static void character_static(void *object);
-    void character_return();
+    void character_return(const quint8 &query_id);
     void deleteCharacterNow(const quint32 &characterId);
     static void deleteCharacterNow_static(void *object);
-    void deleteCharacterNow_return();
+    void deleteCharacterNow_return(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
     QHash<QString,quint32> datapack_file_list();
@@ -249,15 +281,15 @@ private:
     void sendCompressedFileContent();
     void dbQueryWrite(const QString &queryText);
     //character
-    void addCharacter(const quint8 &query_id, const quint8 &profileIndex,const QString &pseudo,const QString &skin);
+    void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const QString &skin);
     static void addCharacter_static(void *object);
-    void addCharacter_return();
+    void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const QString &skin);
     void removeCharacter(const quint8 &query_id, const quint32 &characterId);
     static void removeCharacter_static(void *object);
-    void removeCharacter_return();
+    void removeCharacter_return(const quint8 &query_id, const quint32 &characterId);
     void selectCharacter(const quint8 &query_id, const quint32 &characterId);
     static void selectCharacter_static(void *object);
-    void selectCharacter_return();
+    void selectCharacter_return(const quint8 &query_id, const quint32 &characterId);
 
     static void selectClan_static(void *object);
     void selectClan_return();
@@ -577,9 +609,9 @@ private:
     void loadBotAlreadyBeaten_return();
 
     static void loadPlayerMonsterBuffs_static(void *object);
-    void loadPlayerMonsterBuffs_return();
+    void loadPlayerMonsterBuffs_return(const quint32 &index);
     static void loadPlayerMonsterSkills_static(void *object);
-    void loadPlayerMonsterSkills_return();
+    void loadPlayerMonsterSkills_return(const quint32 &index);
 
     quint32 tryCapture(const quint32 &item);
     bool changeOfMonsterInFight(const quint32 &monsterId);
@@ -589,38 +621,6 @@ private:
 
     void generateRandomNumber();
     quint32 randomSeedsSize() const;
-
-    struct AddCharacterParam
-    {
-        quint8 query_id;
-        quint8 profileIndex;
-        QString pseudo;
-        QString skin;
-    };
-    struct RemoveCharacterParam
-    {
-        quint8 query_id;
-        quint32 characterId;
-    };
-    struct DeleteCharacterNow
-    {
-        quint32 characterId;
-    };
-    struct AskLoginParam
-    {
-        quint8 query_id;
-        QByteArray login;
-        QByteArray pass;
-    };
-    struct SelectCharacterParam
-    {
-        quint8 query_id;
-        quint32 characterId;
-    };
-    struct SelectIndexParam
-    {
-        quint32 index;
-    };
 protected:
     //normal management related
     void errorOutput(const QString &errorString);

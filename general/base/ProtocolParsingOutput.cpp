@@ -1,9 +1,6 @@
 #include "ProtocolParsing.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../../server/base/Client.h"
-#endif
 
 using namespace CatchChallenger;
 

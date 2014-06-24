@@ -22,6 +22,7 @@ void Client::loadRecipes()
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadMonsters();
+        return;
     }
 }
 
@@ -69,6 +70,7 @@ void Client::loadItems()
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadRecipes();
+        return;
     }
 }
 
@@ -155,7 +157,8 @@ void Client::sendInventory()
         out << (quint32)j.key();
         out << (quint32)j.value();
     }
-
     //send the items
     sendFullPacket(0xD0,0x0001,outputData);
+
+    normalOutput(QStringLiteral("Inventory send"));
 }

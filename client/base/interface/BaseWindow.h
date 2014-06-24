@@ -416,7 +416,7 @@ private slots:
     void on_audioVolume_valueChanged(int value);
     void newProfileFinished();
     void updateCharacterList();
-    void newCharacterId(const quint32 &characterId);
+    void newCharacterId(const quint8 &returnCode,const quint32 &characterId);
     void on_character_add_clicked();
     void on_character_back_clicked();
     void on_character_select_clicked();
