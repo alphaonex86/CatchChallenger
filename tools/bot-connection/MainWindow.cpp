@@ -283,8 +283,10 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
         if(!characterOnMap.contains(character_id))
         {
             characterOnMap << character_id;
-            qDebug() << "Select character:" << character_id;
-            apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id);
+            if(!apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id))
+                qDebug() << "Unable to do automatic character selection:" << character_id;
+            else
+                qDebug() << "Automatic select character:" << character_id;
         }
         return;
     }
@@ -335,7 +337,22 @@ void MainWindow::haveTheDatapack()
         }
         return;
     }
-    if(ui->multipleConnexion->isChecked())
+    ifMultipleConnexionStartCreation();
+    //the actual client
+    const quint32 &character_id=apiToCatchChallengerClient[senderObject]->charactersList.at(rand()%apiToCatchChallengerClient[senderObject]->charactersList.size()).character_id;
+    if(!characterOnMap.contains(character_id))
+    {
+        characterOnMap << character_id;
+        if(!apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id))
+            qDebug() << "Unable to select character after datpack loading:" << character_id;
+        else
+            qDebug() << "Select character after datpack loading:" << character_id;
+    }
+}
+
+void MainWindow::ifMultipleConnexionStartCreation()
+{
+    if(ui->multipleConnexion->isChecked() && !connectTimer.isActive())
     {
         connect(&connectTimer,&QTimer::timeout,this,&MainWindow::connectTimerSlot);
         connectTimer.start(1000/ui->connectBySeconds->value());
@@ -344,15 +361,6 @@ void MainWindow::haveTheDatapack()
         ui->characterSelect->setEnabled(false);
         ui->characterList->setEnabled(false);
         ui->groupBox_MultipleConnexion->setEnabled(false);
-
-        //the actual client
-        const quint32 &character_id=apiToCatchChallengerClient[senderObject]->charactersList.at(rand()%apiToCatchChallengerClient[senderObject]->charactersList.size()).character_id;
-        if(!characterOnMap.contains(character_id))
-        {
-            characterOnMap << character_id;
-            qDebug() << "Select character:" << character_id;
-            apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id);
-        }
 
         return;
     }
@@ -370,18 +378,35 @@ void MainWindow::connectTimerSlot()
         connectTimer.stop();
 }
 
-void MainWindow::newCharacterId(const quint32 &characterId)
+void MainWindow::newCharacterId(const quint8 &returnCode, const quint32 &characterId)
 {
+    if(returnCode!=0x00)
+    {
+        qDebug() << "new character not created, server have returned a failed: " << returnCode;
+        return;
+    }
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
+    {
+        qDebug() << apiToCatchChallengerClient[senderObject]->login << "new character is created but unable to locate the sender";
         return;
+    }
+    else
+        qDebug() << apiToCatchChallengerClient[senderObject]->login << "new character is created";
 
     if(!characterOnMap.contains(characterId))
     {
-        qDebug() << "Select new character created:" << characterId;
         characterOnMap << characterId;
-        apiToCatchChallengerClient[senderObject]->api->selectCharacter(characterId);
+        if(!apiToCatchChallengerClient[senderObject]->api->selectCharacter(characterId))
+            qDebug() << "Unable to select character after creation:" << characterId;
+        else
+        {
+            qDebug() << "Select new character created after creation:" << characterId;
+            ifMultipleConnexionStartCreation();
+        }
     }
+    else
+        qDebug() << apiToCatchChallengerClient[senderObject]->login << "new character is already on map";
 }
 
 void MainWindow::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
@@ -595,9 +620,13 @@ void MainWindow::on_characterSelect_clicked()
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
     while (i.hasNext()) {
         i.next();
-        qDebug() << "Select character:" << charId;
-        i.value()->api->selectCharacter(charId);
-        characterOnMap << charId;
+        if(!i.value()->api->selectCharacter(charId))
+            qDebug() << "Unable to manual select character:" << charId;
+        else
+        {
+            characterOnMap << charId;
+            qDebug() << "Manual select character:" << charId;
+        }
     }
     ui->characterSelect->setEnabled(false);
     ui->characterList->setEnabled(false);
