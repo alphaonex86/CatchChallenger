@@ -532,7 +532,7 @@ void MainWindow::readForFirstHeader()
     if(socket==NULL)
         return;
     quint8 value;
-    if(realSslSocket->read((char*)&value,sizeof(value))==sizeof(value))
+    if(socket->read((char*)&value,sizeof(value))==sizeof(value))
     {
         haveFirstHeader=true;
         if(value==0x01)

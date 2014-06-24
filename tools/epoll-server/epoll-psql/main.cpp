@@ -177,12 +177,12 @@ int main (int argc, char *argv[])
                         PQclear(result);
                     }
                     query_id=-1;
-                    /*query_id=PQsendQuery(conn, "SELECT id,password FROM account WHERE id=1;");
+                    query_id=PQsendQuery(conn, "SELECT id,password FROM account WHERE id=1;");
                     if(query_id==0)
                     {
                         std::cerr << "query repeat send failed" << std::endl;
                         query_id=-1;
-                    }*/
+                    }
                 }
               }
 

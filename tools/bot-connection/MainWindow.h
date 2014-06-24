@@ -41,6 +41,7 @@ private:
         quint16 number;
         QString login;
         bool selectedCharacter;
+        bool haveFirstHeader;
     };
     QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
     QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
@@ -60,7 +61,7 @@ public slots:
     void doText();
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
 private slots:
-    CatchChallengerClient * createClient();
+    void createClient();
     void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     void haveCharacter();
     void logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList);
@@ -68,13 +69,16 @@ private slots:
     void newError(QString error,QString detailedError);
     void newSocketError(QAbstractSocket::SocketError error);
     void disconnected();
-    void tryLink();
+    void tryLink(CatchChallengerClient *client);
     void on_connect_clicked();
     void sslErrors(const QList<QSslError> &errors);
     void on_characterSelect_clicked();
     void haveTheDatapack();
     void connectTimerSlot();
     void newCharacterId(const quint32 &characterId);
+    void sslHandcheckIsFinished();
+    void readForFirstHeader();
+    void connectTheExternalSocket(CatchChallengerClient *client);
 signals:
     void isDisconnected();
 private:
