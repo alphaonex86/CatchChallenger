@@ -27,12 +27,14 @@
 
 void noticeReceiver(void *arg, const PGresult *res)
 {
+    std::cerr << "noticeReceiver" << std::endl;
     (void)arg;
     (void)res;
 }
 
 void noticeProcessor(void *arg, const char *message)
 {
+    std::cerr << "noticeProcessor: " << message << std::endl;
     (void)arg;
     (void)message;
 }
@@ -53,7 +55,9 @@ int main (int argc, char *argv[])
     }
 
   //PGconn *conn=PQconnectStart("dbname=catchchallenger user=root");
-  PGconn *conn=PQconnectStart("host=localhost dbname=catchchallenger user=root");
+  PGconn *conn=PQconnectdb("host=localhost dbname=catchchallenger user=root");
+  std::cerr << "Protocol version:" << PQprotocolVersion(conn) << std::endl;
+  std::cerr << "Server version:" << PQserverVersion(conn) << std::endl;
   const ConnStatusType &connStatusType=PQstatus(conn);
   if(connStatusType==CONNECTION_BAD)
   {
@@ -84,6 +88,88 @@ int main (int argc, char *argv[])
 
     PQsetNoticeReceiver(conn,noticeReceiver,NULL);
     PQsetNoticeProcessor(conn,noticeProcessor,NULL);
+
+    {
+    const ConnStatusType &connStatusType=PQstatus(conn);
+    if(connStatusType!=CONNECTION_OK)
+    {
+        if(connStatusType==CONNECTION_MADE)
+          fprintf(stderr,"Connexion CONNECTION_MADE, Connected to server...\n");
+        else if(connStatusType==CONNECTION_STARTED)
+          fprintf(stderr,"Connexion CONNECTION_STARTED, Connecting...\n");
+        else
+            fprintf(stderr,"Connexion not ok: %d\n",connStatusType);
+    }
+    if(connStatusType!=CONNECTION_BAD)
+    {
+        const PostgresPollingStatusType &postgresPollingStatusType=PQconnectPoll(conn);
+        if(postgresPollingStatusType==PGRES_POLLING_FAILED)
+        {
+          fprintf(stderr,"Connexion status: PGRES_POLLING_FAILED, bye\n");
+          exit(1);
+        }
+        else if(postgresPollingStatusType==PGRES_POLLING_OK)
+          fprintf(stderr,"Connexion status: PGRES_POLLING_OK\n");
+        else if(postgresPollingStatusType==PGRES_POLLING_ACTIVE)
+          fprintf(stderr,"Connexion status: PGRES_POLLING_ACTIVE");
+        else if(postgresPollingStatusType==PGRES_POLLING_READING)
+          fprintf(stderr,"Connexion status: PGRES_POLLING_ACTIVE");
+        else if(postgresPollingStatusType==PGRES_POLLING_WRITING)
+          fprintf(stderr,"Connexion status: PGRES_POLLING_OK\n");
+        else
+            fprintf(stderr,"Connexion status: %d\n",postgresPollingStatusType);
+    }
+
+      std::cerr << "epoll_ctl, socket ready to read" << std::endl;
+      PQconsumeInput(conn);
+      PGnotify *notify;
+      while ((notify = PQnotifies(conn)) != NULL)
+      {
+          fprintf(stderr,
+                  "ASYNC NOTIFY of '%s' received from backend PID %d\n",
+                  notify->relname, notify->be_pid);
+          PQfreemem(notify);
+      }
+      if(PQisBusy(conn)==0)
+      {
+          PGresult *result;
+          while((result = PQgetResult(conn)) != NULL)
+          {
+              if (PQresultStatus(result) != PGRES_TUPLES_OK)
+              {
+                  fprintf(stderr, "FETCH ALL failed: %s", PQerrorMessage(conn));
+                  PQclear(result);
+              }
+              else
+              {
+                  int i;
+                  int nFields = PQnfields(result);
+                  for (i = 0; i < nFields; i++)
+                  {
+                      int ptype = PQftype(result, i);
+                      std::cout << PQfname(result, i);
+                  }
+                  std::cout << "\n------------\n";
+                  /* next, print out the rows */
+                  for (i = 0; i < PQntuples(result); i++)
+                  {
+                      for (int j = 0; j < nFields; j++)
+                          std::cout << PQgetvalue(result, i, j);
+                      std::cout << "\n";
+                  }
+                  fprintf(stderr,"PG have result");
+              }
+              PQclear(result);
+          }
+          int query_id=-1;
+          query_id=PQsendQuery(conn, "SELECT id,password FROM account WHERE id=1;");
+          if(query_id==0)
+          {
+              std::cerr << "query repeat send failed" << std::endl;
+              query_id=-1;
+          }
+      }
+    }
 
     int query_id=-1;
   /* The event loop */

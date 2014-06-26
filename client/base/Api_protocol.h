@@ -64,8 +64,18 @@ protected:
     void messageParsingLayer(const QString &message) const;
 protected:
     //have message without reply
+    virtual void parseMessage(const quint8 &mainCodeType,const char *data,const int &size);
+    virtual void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size);
+    //have query with reply
+    virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    virtual void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    //send reply
+    virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+
+    //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
-    virtual void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+    virtual void parseFullMessage(const quint8 &mainCodeType, const quint16 &subCodeType, const QByteArray &data);
     //have query with reply
     virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
     virtual void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
