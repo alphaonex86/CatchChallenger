@@ -8,7 +8,7 @@
 #include "../../base/DatabaseBase.h"
 #include "../BaseClassSwitch.h"
 
-#define CATCHCHALLENGER_MAXBDQUERIES 256
+#define CATCHCHALLENGER_MAXBDQUERIES 1024
 
 class EpollPostgresql : public BaseClassSwitch
 {
@@ -41,8 +41,10 @@ private:
     PGresult *result;
     QList<CallBack> queue;
     QList<QString> queriesList;
-    static char emptyString[1];
     bool started;
+    static char emptyString[1];
+    static EpollPostgresql::CallBack emptyCallback;
+    static EpollPostgresql::CallBack tempCallback;
 };
 
 #endif

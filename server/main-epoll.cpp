@@ -292,10 +292,12 @@ int main(int argc, char *argv[])
         if(!timerDdos.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000))
             return EXIT_FAILURE;
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         if(!timerDisplayEventBySeconds.start(1000))
             return EXIT_FAILURE;
     }
+    #endif
     {
         if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
             if(!timerPositionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000))
@@ -564,14 +566,9 @@ int main(int argc, char *argv[])
                     {
                         if(db->isConnected())
                         {
-                            if(events[i].events & EPOLLIN)
-                            {
-                                std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
-                                server->preload_the_data();
-                                datapack_loaded=true;
-                            }
-                            else
-                                std::cerr << "datapack_loaded not loaded: but database have not the event EPOLLIN" << std::endl;
+                            std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
+                            server->preload_the_data();
+                            datapack_loaded=true;
                         }
                         else
                             std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;

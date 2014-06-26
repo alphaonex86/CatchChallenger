@@ -10,22 +10,8 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 
 --
--- Name: postgres; Type: SCHEMA; Schema: -; Owner: postgres
---
-
-CREATE SCHEMA postgres;
-
-
-ALTER SCHEMA postgres OWNER TO postgres;
-
---
 -- Name: SCHEMA postgres; Type: COMMENT; Schema: -; Owner: postgres
 --
-
-COMMENT ON SCHEMA postgres IS 'catchchallenger MMORPG';
-
-
-SET search_path = postgres, pg_catalog;
 
 SET default_tablespace = '';
 
@@ -44,8 +30,6 @@ CREATE TABLE account (
 );
 
 
-ALTER TABLE postgres.account OWNER TO postgres;
-
 --
 -- Name: account_register; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
@@ -60,8 +44,6 @@ CREATE TABLE account_register (
 );
 
 
-ALTER TABLE postgres.account_register OWNER TO postgres;
-
 --
 -- Name: bot_already_beaten; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
@@ -71,8 +53,6 @@ CREATE TABLE bot_already_beaten (
     botfight_id integer
 );
 
-
-ALTER TABLE postgres.bot_already_beaten OWNER TO postgres;
 
 --
 -- Name: character; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
@@ -110,8 +90,6 @@ CREATE TABLE "character" (
 );
 
 
-ALTER TABLE postgres."character" OWNER TO postgres;
-
 --
 -- Name: city; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
@@ -121,8 +99,6 @@ CREATE TABLE city (
     clan integer
 );
 
-
-ALTER TABLE postgres.city OWNER TO postgres;
 
 --
 -- Name: clan; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
@@ -136,8 +112,6 @@ CREATE TABLE clan (
 );
 
 
-ALTER TABLE postgres.clan OWNER TO postgres;
-
 --
 -- Name: factory; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
@@ -149,8 +123,6 @@ CREATE TABLE factory (
     last_update integer
 );
 
-
-ALTER TABLE postgres.factory OWNER TO postgres;
 
 --
 -- Name: item; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
@@ -164,8 +136,6 @@ CREATE TABLE item (
     market_price bigint
 );
 
-
-ALTER TABLE postgres.item OWNER TO postgres;
 
 --
 -- Name: monster; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
@@ -189,8 +159,6 @@ CREATE TABLE monster (
 );
 
 
-ALTER TABLE postgres.monster OWNER TO postgres;
-
 --
 -- Name: monster_buff; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
@@ -201,8 +169,6 @@ CREATE TABLE monster_buff (
     level smallint
 );
 
-
-ALTER TABLE postgres.monster_buff OWNER TO postgres;
 
 --
 -- Name: monster_skill; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
@@ -215,8 +181,6 @@ CREATE TABLE monster_skill (
     endurance smallint
 );
 
-
-ALTER TABLE postgres.monster_skill OWNER TO postgres;
 
 --
 -- Name: plant; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
@@ -233,8 +197,6 @@ CREATE TABLE plant (
 );
 
 
-ALTER TABLE postgres.plant OWNER TO postgres;
-
 --
 -- Name: quest; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
@@ -247,8 +209,6 @@ CREATE TABLE quest (
 );
 
 
-ALTER TABLE postgres.quest OWNER TO postgres;
-
 --
 -- Name: recipe; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
 --
@@ -258,8 +218,6 @@ CREATE TABLE recipe (
     recipe smallint
 );
 
-
-ALTER TABLE postgres.recipe OWNER TO postgres;
 
 --
 -- Name: reputation; Type: TABLE; Schema: postgres; Owner: postgres; Tablespace: 
@@ -272,8 +230,6 @@ CREATE TABLE reputation (
     level smallint
 );
 
-
-ALTER TABLE postgres.reputation OWNER TO postgres;
 
 --
 -- Name: account_login_key; Type: CONSTRAINT; Schema: postgres; Owner: postgres; Tablespace: 

@@ -49,7 +49,11 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
                 out << (qint8)connected_players;
             else
                 out << (qint16)connected_players;
-            finalData=ProtocolParsingInputOutput::computeOutcommingData(false,0xC3,outputData);
+            finalData=ProtocolParsingInputOutput::computeOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            false,
+            #endif
+                    0xC3,outputData);
         }
 
         int index=0;

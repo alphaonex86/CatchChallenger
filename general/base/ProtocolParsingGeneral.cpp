@@ -7,6 +7,10 @@
 using namespace CatchChallenger;
 
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
+quint16 ProtocolParsingInputOutput::sizeHeaderNullquint16=0;
+#ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+char ProtocolParsingInputOutput::tempBigBuffer[CATCHCHALLENGER_BIGBUFFERSIZE];
+#endif
 
 QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
 //if is a query
@@ -131,6 +135,7 @@ QByteArray ProtocolParsingInputOutput::lzmaUncompress(QByteArray data)
         ret_xz = lzma_code (&strm, LZMA_FINISH);
 
         out_len = OUT_BUF_MAX - strm.avail_out;
+        /// \todo static buffer to prevent memory allocation and desallocation
         arr.append((char*)out_buf, out_len);
         out_buf[0] = 0;
     } while (strm.avail_out == 0);
@@ -164,8 +169,18 @@ void ProtocolParsing::initialiseTheVariable()
     sizeOnlyMainCodePacketClientToServer[0x03]=5;
     sizeOnlyMainCodePacketClientToServer[0x04]=28*2;
     sizeOnlyMainCodePacketClientToServer[0x61]=4;
+    sizeMultipleCodePacketClientToServer[0x02][0x0004]=4;
+    sizeMultipleCodePacketClientToServer[0x02][0x0005]=4;
     sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
     sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
+    sizeMultipleCodePacketClientToServer[0x10][0x0008]=4;
+    sizeMultipleCodePacketClientToServer[0x10][0x0009]=4;
+    sizeMultipleCodePacketClientToServer[0x10][0x000A]=4;
+    sizeMultipleCodePacketClientToServer[0x10][0x000B]=4*4;
+    sizeMultipleCodePacketClientToServer[0x10][0x000C]=4*4;
+    sizeMultipleCodePacketClientToServer[0x10][0x000D]=4;
+    sizeMultipleCodePacketClientToServer[0x10][0x000E]=4*4;
+    sizeMultipleCodePacketClientToServer[0x10][0x000F]=4*4;
     sizeMultipleCodePacketClientToServer[0x10][0x0010]=0;
     sizeMultipleCodePacketClientToServer[0x10][0x0013]=0;
     sizeMultipleCodePacketClientToServer[0x50][0x0002]=8;
@@ -241,7 +256,11 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
     }
 }
 
-ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
+ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket
+                                                       #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                                                       ,PacketModeTransmission packetModeTransmission
+                                                       #endif
+                                                       ) :
     ProtocolParsing(socket),
     // for data
     haveData(false),
@@ -255,7 +274,6 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket,
     need_query_number(false),
     have_query_number(false),
     TXSize(0),
-    byteWriten(0),
     mainCodeType(0),
     subCodeType(0),
     queryNumber(0)
@@ -264,7 +282,9 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket,
     //if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInputOutput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
     //    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
+    #endif
 }
 
 bool ProtocolParsingInputOutput::checkStringIntegrity(const QByteArray &data)

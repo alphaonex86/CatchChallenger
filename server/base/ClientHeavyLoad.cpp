@@ -786,11 +786,14 @@ QHash<QString,quint32> Client::datapack_file_list()
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void Client::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //do in network read to prevent DDOS
     if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
     {
         errorOutput("Can't use because mirror is defined");
         return;
     }
+    #endif
     tempDatapackListReplyArray.clear();
     tempDatapackListReplyTestCount=0;
     rawFiles.clear();
