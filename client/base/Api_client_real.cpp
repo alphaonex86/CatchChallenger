@@ -161,8 +161,6 @@ void Api_client_real::tryConnect(QString host,quint16 port)
 void Api_client_real::disconnected()
 {
     wait_datapack_content=false;
-    haveData=false;
-    dataClear();
     resetAll();
 }
 

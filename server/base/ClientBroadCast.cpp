@@ -14,7 +14,11 @@ void Client::sendSystemMessage(const QString &text,const bool &important)
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint8)important;
         out << text;
-        finalData=ProtocolParsingInputOutput::computeFullOutcommingData(false,0xC2,0x0005,outputData);
+        finalData=ProtocolParsingInputOutput::computeFullOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            false,
+            #endif
+                    0xC2,0x0005,outputData);
     }
 
     const int &size=clientBroadCastList.size();
@@ -143,7 +147,11 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
                     out2 << (quint8)Player_type_normal;
                 else
                     out2 << (quint8)this->public_and_private_informations.public_informations.type;
-                finalData=ProtocolParsingInputOutput::computeFullOutcommingData(false,0xC2,0x0005,outputData+rawPseudo+outputData2);
+                finalData=ProtocolParsingInputOutput::computeFullOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            false,
+            #endif
+                    0xC2,0x0005,outputData+rawPseudo+outputData2);
             }
 
             const int &size=playerWithSameClan.size();
@@ -184,7 +192,11 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
                 out2 << (quint8)Player_type_normal;
             else
                 out2 << (quint8)this->public_and_private_informations.public_informations.type;
-            finalData=ProtocolParsingInputOutput::computeFullOutcommingData(false,0xC2,0x0005,outputData+rawPseudo+outputData2);
+            finalData=ProtocolParsingInputOutput::computeFullOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            false,
+            #endif
+                    0xC2,0x0005,outputData+rawPseudo+outputData2);
         }
 
         const int &size=clientBroadCastList.size();

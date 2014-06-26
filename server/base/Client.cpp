@@ -9,7 +9,13 @@ using namespace CatchChallenger;
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
 Client::Client(ConnectedSocket *socket) :
-    ProtocolParsingInputOutput(socket,PacketModeTransmission_Server),
+    ProtocolParsingInputOutput(
+                socket
+
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        ,PacketModeTransmission_Server
+        #endif
+        ),
     socket(socket),
     account_id(0),
     number_of_character(0),
