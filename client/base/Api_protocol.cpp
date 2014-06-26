@@ -63,6 +63,12 @@ void Api_protocol::messageParsingLayer(const QString &message) const
 }
 
 //have message without reply
+void Api_protocol::parseMessage(const quint8 &mainCodeType,const char *data,const int &size)
+{
+    parseMessage(mainCodeType,QByteArray(data,size));
+}
+
+//have message without reply
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
     if(!is_logged)
@@ -826,6 +832,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                       );
         return;
     }
+}
+
+void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
+{
+    parseFullMessage(mainCodeType,subCodeType,QByteArray(data,size));
 }
 
 void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
@@ -2213,12 +2224,22 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
 }
 
 //have query with reply
+void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+{
+    parseQuery(mainCodeType,queryNumber,QByteArray(data,size));
+}
+
 void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(queryNumber);
     Q_UNUSED(data);
     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("have not query of this type, mainCodeType: %1, queryNumber: %2").arg(mainCodeType).arg(queryNumber));
+}
+
+void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+{
+    parseFullQuery(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
 }
 
 void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
@@ -2458,6 +2479,11 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subC
 }
 
 //send reply
+void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+{
+    parseReplyData(mainCodeType,queryNumber,QByteArray(data,size));
+}
+
 void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     QDataStream in(data);
@@ -2790,6 +2816,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                    );
         return;
     }
+}
+
+void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+{
+    parseFullReplyData(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
 }
 
 void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
@@ -5021,6 +5052,8 @@ void Api_protocol::resetAll()
 
     //to send trame
     lastQueryNumber=1;
+
+    ProtocolParsingInputOutput::reset();
 }
 
 QString Api_protocol::datapackPath() const
