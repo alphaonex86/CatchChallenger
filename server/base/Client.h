@@ -44,6 +44,7 @@ public:
 
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
+    void sendRawSmallPacket(const char *data,const int &size);
     void sendRawSmallPacket(const QByteArray &data);
 
     static QList<int> generalChatDrop;
@@ -63,12 +64,16 @@ public:
     static QHash<QString,Client *> playerByPseudo;
     static QHash<quint32,Clan *> clanList;
     static QList<Client *> clientBroadCastList;
-    static QByteArray protocolReplyServerFull;
-    static QByteArray protocolReplyCompressionNone;
-    static QByteArray protocolReplyCompresssionZlib;
-    static QByteArray protocolReplyCompressionXz;
-    static QByteArray protocolReplyProtocolNotSupported;
-    static QByteArray loginLoginInProgress;
+
+    static unsigned char protocolReplyProtocolNotSupported[3];
+    static unsigned char protocolReplyServerFull[3];
+    static unsigned char protocolReplyCompressionNone[3];
+    static unsigned char protocolReplyCompresssionZlib[3];
+    static unsigned char protocolReplyCompressionXz[3];
+
+    static unsigned char loginInProgressBuffer[4];
+    static unsigned char loginIsWrongBuffer[4];
+
     static const unsigned char protocolHeaderToMatch[5];
 protected:
     QByteArray rawPseudo;
@@ -535,7 +540,8 @@ private:
 
     void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data=QByteArray());
     //send reply
-    void postReply(const quint8 &queryNumber,const QByteArray &data=QByteArray());
+    void postReply(const quint8 &queryNumber,const QByteArray &data);
+    void postReply(const quint8 &queryNumber,const char *data,const int &size);
 
     void insertClientOnMap(CommonMap *map);
     void removeClientOnMap(CommonMap *map,const bool &withDestroy=false);
@@ -570,7 +576,6 @@ private:
     // ------------------------------
     bool sendFile(const QString &fileName, const quint64 &mtime);
 
-    bool loadTheRawUTF8String();
     void loginIsRight(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
     void loginIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
                       CommonMap* rescue_map, const /*COORD_TYPE*/ quint8 &rescue_x, const /*COORD_TYPE*/ quint8 &rescue_y, const Orientation &rescue_orientation,
@@ -622,6 +627,7 @@ private:
     void generateRandomNumber();
     quint32 randomSeedsSize() const;
 protected:
+    bool loadTheRawUTF8String();//virtual to load dynamic max to_send_move
     //normal management related
     void errorOutput(const QString &errorString);
     void kick();

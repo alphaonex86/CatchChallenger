@@ -19,6 +19,7 @@ public:
 
     //mostly less remove than don't remove
     QList<quint16> to_send_remove;
+    int to_send_remove_size;
     bool show;
     bool to_send_insert;
     bool send_drop_all;

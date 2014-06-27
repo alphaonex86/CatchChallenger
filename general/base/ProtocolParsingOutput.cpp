@@ -4,6 +4,8 @@
 
 using namespace CatchChallenger;
 
+memcpy( -> prevent NULL pointer
+
 void ProtocolParsingInputOutput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
     if(waitedReply_mainCodeType.contains(queryNumber))
@@ -147,19 +149,12 @@ void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,c
     waitedReply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingInputOutput::postReplyData(const quint8 &queryNumber, const QByteArray &data)
+bool ProtocolParsingInputOutput::postReplyData(const quint8 &queryNumber, const char *data,const int &size)
 {
-    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
-    const int &size=ProtocolParsingInputOutput::computeReplyData(ProtocolParsingInputOutput::tempBigBuffer,queryNumber,data);
-    if(size==0)
+    const int &newSize=ProtocolParsingInputOutput::computeReplyData(ProtocolParsingInputOutput::tempBigBufferForOutput,queryNumber,data,size);
+    if(newSize==0)
         return false;
-    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBuffer,size);
-    #else
-    const QByteArray &tempData(ProtocolParsingInputOutput::computeReplyData(queryNumber,data));
-    if(tempData.size()==0)
-        return false;
-    return internalPackOutcommingData(tempData);
-    #endif
+    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
 }
 
 QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data)
@@ -176,108 +171,58 @@ QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data
     }
 }
 
-bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
 {
-    const QByteArray &newData=computeFullOutcommingData(
+    const int &newSize=computeFullOutcommingData(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 isClient,
                 #endif
-                mainCodeType,subCodeType,data);
-    if(newData.isEmpty())
+                ProtocolParsingInputOutput::tempBigBufferForOutput,
+                mainCodeType,subCodeType,data,size);
+    if(newSize==0)
         return false;
-    return internalPackOutcommingData(newData);
+    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
 }
 
-bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
+bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size)
 {
-    const QByteArray &newData=computeOutcommingData(
+    const int &newSize=computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
             #endif
-            mainCodeType,data);
-    if(newData.isEmpty())
+            ProtocolParsingInputOutput::tempBigBufferForOutput,
+            mainCodeType,data,size);
+    if(newSize==0)
         return false;
-    return internalPackOutcommingData(newData);
+    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
 }
 
-bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
-    const QByteArray &newData=computeOutcommingQuery(
+    const int &newSize=computeOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
             #endif
-            mainCodeType,queryNumber,data);
-    if(newData.isEmpty())
+            ProtocolParsingInputOutput::tempBigBufferForOutput,
+            mainCodeType,queryNumber,data,size);
+    if(newSize==0)
         return false;
     newOutputQuery(mainCodeType,queryNumber);
-    return internalPackOutcommingData(newData);
+    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
 }
 
-bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
-    const QByteArray &newData=computeFullOutcommingQuery(
+    const int &newSize=computeFullOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
             #endif
-            mainCodeType,subCodeType,queryNumber,data);
-    if(newData.isEmpty())
+            ProtocolParsingInputOutput::tempBigBufferForOutput,
+            mainCodeType,subCodeType,queryNumber,data,size);
+    if(newSize==0)
         return false;
     newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
-    return internalPackOutcommingData(newData);
-}
-
-bool ProtocolParsingInputOutput::internalPackOutcommingData(QByteArray data)
-{
-    #ifdef PROTOCOLPARSINGDEBUG
-    DebugClass::debugConsole("internalPackOutcommingData(): start");
-    #endif
-    #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
-    #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(socket->openMode()|QIODevice::WriteOnly)
-    {
-    #endif
-        if(data.size()<=CATCHCHALLENGER_MAX_PACKET_SIZE)
-        {
-            TXSize+=data.size();
-            const int &byteWriten = socket->write(data);
-            if(Q_UNLIKELY(data.size()!=byteWriten))
-            {
-                DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                return false;
-            }
-            return true;
-        }
-        else
-        {
-            QByteArray dataToSend;
-            int byteWriten;
-            while(Q_LIKELY(!data.isEmpty()))
-            {
-                dataToSend=data.mid(0,CATCHCHALLENGER_MAX_PACKET_SIZE);
-                TXSize+=dataToSend.size();
-                byteWriten = socket->write(dataToSend);
-                if(Q_UNLIKELY(dataToSend.size()!=byteWriten))
-                {
-                    DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                    errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                    return false;
-                }
-                data.remove(0,dataToSend.size());
-            }
-            return true;
-        }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    }
-    else
-    {
-        DebugClass::debugConsole(QStringLiteral("Socket open in read only!"));
-        errorParsingLayer(QStringLiteral("Socket open in read only!"));
-        return false;
-    }
-    #endif
+    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
 }
 
 bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,const int &size)
@@ -340,35 +285,6 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
 }
 
 //no control to be more fast
-bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const QByteArray &data)
-{
-    #ifdef PROTOCOLPARSINGDEBUG
-    DebugClass::debugConsole("internalPackOutcommingData(): start");
-    #endif
-    #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
-    #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(data.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
-    {
-        DebugClass::debugConsole(QStringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
-        errorParsingLayer(QStringLiteral("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: %1").arg(data.size()));
-        return false;
-    }
-    #endif
-
-    TXSize+=data.size();
-    const int &byteWriten = socket->write(data);
-    if(Q_UNLIKELY(data.size()!=byteWriten))
-    {
-        DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        return false;
-    }
-    return true;
-}
-
-//no control to be more fast
 bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,const int &size)
 {
     #ifdef PROTOCOLPARSINGDEBUG
@@ -397,19 +313,6 @@ bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,con
     return true;
 }
 
-QByteArray ProtocolParsingInputOutput::encodeSize(const quint32 &size)
-{
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    if(size<=0xFF)
-        out << quint8(size);
-    else if(size<=0xFFFF)
-        out << quint8(0x00) << quint16(size);
-    else
-        out << quint16(0x0000) << quint32(size);
-    return block;
-}
-
 qint8 ProtocolParsingInputOutput::encodeSize(char *data,const quint32 &size)
 {
     if(size<=0xFF)
@@ -433,15 +336,14 @@ qint8 ProtocolParsingInputOutput::encodeSize(char *data,const quint32 &size)
     }
 }
 
-QByteArray ProtocolParsingInputOutput::computeOutcommingData(
+int ProtocolParsingInputOutput::computeOutcommingData(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
-        const quint8 &mainCodeType,const QByteArray &data)
+        char *buffer,
+        const quint8 &mainCodeType,const char *data,const int &size)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
+    buffer[0]=mainCodeType;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
@@ -454,7 +356,7 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
@@ -463,39 +365,41 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+1,size);
+            memcpy(buffer+1+newSize,data,size);
+            return 1+newSize+size;
         }
         else
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
+            if(size!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            return block+data;
+            memcpy(buffer+1,data,size);
+            return 1+size;
         }
     }
     else
@@ -509,7 +413,7 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
@@ -518,53 +422,54 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+1,size);
+            memcpy(buffer+1+newSize,data,size);
+            return 1+newSize+size;
         }
         else
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
+            if(size!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            return block+data;
+            memcpy(buffer+1,data,size);
+            return 1+size;
         }
     }
 }
 
-QByteArray ProtocolParsingInputOutput::computeOutcommingQuery(
+int ProtocolParsingInputOutput::computeOutcommingQuery(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
-        const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+        char *buffer,
+        const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
-    out << queryNumber;
+    buffer[0]=mainCodeType;
+    buffer[1]=queryNumber;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
@@ -577,7 +482,7 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
@@ -586,39 +491,41 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+2,size);
+            memcpy(buffer+2+newSize,data,size);
+            return 2+newSize+size;
         }
         else
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
+            if(size!=sizeOnlyMainCodePacketClientToServer.value(mainCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            return block+data;
+            memcpy(buffer+2,data,size);
+            return 2+size;
         }
     }
     else
@@ -632,7 +539,7 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
@@ -641,54 +548,56 @@ QByteArray ProtocolParsingInputOutput::computeOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+2,size);
+            memcpy(buffer+2+newSize,data,size);
+            return 2+newSize+size;
         }
         else
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
+            if(size!=sizeOnlyMainCodePacketServerToClient.value(mainCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            return block+data;
+            memcpy(buffer+2,data,size);
+            return 2+size;
         }
     }
 }
 
-QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
+int ProtocolParsingInputOutput::computeFullOutcommingQuery(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
-        const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+        char *buffer,
+        const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
-    out << subCodeType;
-    out << queryNumber;
+    buffer[0]=mainCodeType;
+    const quint16 &tempSubCodeType=htobe16(subCodeType);
+    memcpy(buffer+1,&tempSubCodeType,sizeof(subCodeType));
+    buffer[3]=queryNumber;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
@@ -701,7 +610,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
@@ -710,7 +619,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
@@ -733,18 +642,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         {
                             QByteArray compressedData(computeCompression(data));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(data.size()==0)
+                            if(size==0)
                             {
                                 DebugClass::debugConsole(
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                            return 4+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -752,18 +662,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+4,size);
+            memcpy(buffer+4+newSize,data,size);
+            return 4+newSize+size;
         }
         else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
         {
@@ -785,18 +696,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         {
                             QByteArray compressedData(computeCompression(data));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(data.size()==0)
+                            if(size==0)
                             {
                                 DebugClass::debugConsole(
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                            return 4+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -804,18 +716,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+4,size);
+            memcpy(buffer+4+newSize,data,size);
+            return 4+newSize+size;
         }
         else
         {
@@ -827,14 +740,14 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                                 QString::number(isClient)+
                                 #endif
                     QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-            if(data.size()!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
+            if(size!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
             return block+data;
@@ -851,7 +764,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
@@ -860,7 +773,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
@@ -883,18 +796,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         {
                             QByteArray compressedData(computeCompression(data));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(data.size()==0)
+                            if(size==0)
                             {
                                 DebugClass::debugConsole(
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                            return 4+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -902,18 +816,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+4,size);
+            memcpy(buffer+4+newSize,data,size);
+            return 4+newSize+size;
         }
         else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
         {
@@ -935,18 +850,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         {
                             QByteArray compressedData(computeCompression(data));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(data.size()==0)
+                            if(size==0)
                             {
                                 DebugClass::debugConsole(
                                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                            return 4+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -954,18 +870,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+4,size);
+            memcpy(buffer+4+newSize,data,size);
+            return 4+newSize+size;
         }
         else
         {
@@ -977,31 +894,32 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingQuery(
                                 QString::number(isClient)+
                                 #endif
                     QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-            if(data.size()!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
+            if(size!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            return block+data;
+            memcpy(buffer+4,data,size);
+            return 4+size;
         }
     }
 }
 
-QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
+int ProtocolParsingInputOutput::computeFullOutcommingData(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
-        const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+        char *buffer,
+        const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out << mainCodeType;
-    out << subCodeType;
+    buffer[0]=mainCodeType;
+    const quint16 &tempSubCodeType=htobe16(subCodeType);
+    memcpy(buffer+1,&tempSubCodeType,sizeof(subCodeType));
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
@@ -1014,7 +932,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
@@ -1023,7 +941,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
@@ -1053,11 +971,12 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                            return 3+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -1065,18 +984,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+3,size);
+            memcpy(buffer+3+newSize,data,size);
+            return 3+newSize+size;
         }
         else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
         {
@@ -1105,11 +1025,12 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                            return 3+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -1117,18 +1038,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+3,size);
+            memcpy(buffer+3+newSize,data,size);
+            return 3+newSize+size;
         }
         else
         {
@@ -1140,17 +1062,18 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                                 QString::number(isClient)+
                                 #endif
                     QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
-            if(data.size()!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
+            if(size!=sizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            return block+data;
+            memcpy(buffer+3,data,size);
+            return buffer+3+size;
         }
     }
     else
@@ -1164,7 +1087,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
@@ -1173,7 +1096,7 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" ProtocolParsingInputOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
-            return QByteArray();
+            return 0;
         }
         #endif
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
@@ -1203,11 +1126,12 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                            return 3+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -1215,18 +1139,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+3,size);
+            memcpy(buffer+3+newSize,data,size);
+            return 3+newSize+size;
         }
         else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
         {
@@ -1255,11 +1180,12 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                                             QString::number(isClient)+
                                             #endif
                                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                                return QByteArray();
+                                return 0;
                             }
                             #endif
-                            block+=encodeSize(compressedData.size());
-                            return block+compressedData;
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                            return 3+newSize+size;
                         }
                         break;
                         case CompressionType_None:
@@ -1267,18 +1193,19 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                     }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(data.size()==0)
+            if(size==0)
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            block+=encodeSize(data.size());
-            return block+data;
+            const int &newSize=encodeSize(buffer+3,size);
+            memcpy(buffer+3+newSize,data,size);
+            return 3+newSize+size;
         }
         else
         {
@@ -1290,30 +1217,28 @@ QByteArray ProtocolParsingInputOutput::computeFullOutcommingData(
                                 QString::number(isClient)+
                                 #endif
                     QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
-            if(data.size()!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
+            if(size!=sizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType))
             {
                 DebugClass::debugConsole(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             QString::number(isClient)+
                             #endif
                 QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
-                return QByteArray();
+                return 0;
             }
             #endif
-            return block+data;
+            memcpy(buffer+3,data,size);
+            return 3+size;
         }
     }
 }
 
-QByteArray ProtocolParsingInputOutput::computeReplyData(const quint8 &queryNumber, const QByteArray &data)
+bool ProtocolParsingInputOutput::removeFromQueryReceived(const quint8 &queryNumber)
 {
-    QByteArray tempData;
-    tempData.resize(16+data.size());
-    tempData.resize(computeReplyData(tempData.data(),queryNumber,data));
-    return data;
+    return queryReceived.remove(queryNumber);
 }
 
-int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer,const quint8 &queryNumber, const QByteArray &data)
+int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!queryReceived.contains(queryNumber))
@@ -1355,9 +1280,9 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer,const quint8 &
                 case CompressionType_Zlib:
                 default:
                 {
-                    const QByteArray &compressedData(computeCompression(data));
+                    const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(data.size()==0)
+                    if(compressedData.size()==0)
                     {
                         DebugClass::debugConsole(
                                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -1377,7 +1302,7 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer,const quint8 &
             }
         }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(data.size()==0)
+        if(size==0)
         {
             DebugClass::debugConsole(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -1388,9 +1313,9 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer,const quint8 &
         }
         #endif
         replyOutputCompression.remove(queryNumber);
-        const quint8 &fullSize=sizeof(quint8)*2+encodeSize(dataBuffer+sizeof(quint8)*2,data.size());
-        memcpy(dataBuffer+fullSize,data.constData(),data.size());
-        return fullSize+data.size();
+        const quint8 &fullSize=sizeof(quint8)*2+encodeSize(dataBuffer+sizeof(quint8)*2,size);
+        memcpy(dataBuffer+fullSize,data,size);
+        return fullSize+size;
     }
     else
     {
@@ -1403,7 +1328,7 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer,const quint8 &
                         #endif
             QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
         }
-        if(data.size()!=replyOutputSize.value(queryNumber))
+        if(size!=replyOutputSize.value(queryNumber))
         {
             DebugClass::debugConsole(
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -1414,7 +1339,7 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer,const quint8 &
         }
         #endif
         replyOutputSize.remove(queryNumber);
-        memcpy(dataBuffer+sizeof(quint8)*2,data.constData(),data.size());
-        return sizeof(quint8)*2+data.size();
+        memcpy(dataBuffer+sizeof(quint8)*2,data,size);
+        return sizeof(quint8)*2+size;
     }
 }

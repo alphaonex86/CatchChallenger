@@ -126,10 +126,12 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
     switch(mainCodeType)
     {
         case 0x03:
+            removeFromQueryReceived(queryNumber);
             if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
             {
-                postReply(queryNumber,Client::protocolReplyServerFull);
-                errorOutput(Client::text_server_full);
+                *(Client::protocolReplyServerFull+1)=queryNumber;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyServerFull),sizeof(Client::protocolReplyServerFull));
+                //errorOutput(Client::text_server_full);DDOS -> full the log
                 return;
             }
             if(memcmp(data,Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
@@ -137,13 +139,16 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
                 switch(ProtocolParsing::compressionType)
                 {
                     case CompressionType_None:
-                        postReply(queryNumber,Client::protocolReplyCompressionNone);
+                        *(Client::protocolReplyCompressionNone+1)=queryNumber;
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
                     case CompressionType_Zlib:
-                        postReply(queryNumber,Client::protocolReplyCompresssionZlib);
+                        *(Client::protocolReplyCompresssionZlib+1)=queryNumber;
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZlib),sizeof(Client::protocolReplyCompresssionZlib));
                     break;
                     case CompressionType_Xz:
-                        postReply(queryNumber,Client::protocolReplyCompressionXz);
+                        *(Client::protocolReplyCompressionXz+1)=queryNumber;
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionXz),sizeof(Client::protocolReplyCompressionXz));
                     break;
                     default:
                         errorOutput("Compression selected wrong");
@@ -156,7 +161,8 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
             }
             else
             {
-                postReply(queryNumber,Client::protocolReplyProtocolNotSupported);
+                *(Client::protocolReplyProtocolNotSupported+1)=queryNumber;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyProtocolNotSupported),sizeof(Client::protocolReplyProtocolNotSupported));
                 errorOutput("Wrong protocol");
                 return;
             }
@@ -169,7 +175,9 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
             }
             if(is_logging_in_progess)
             {
-                postReply(queryNumber,Client::loginLoginInProgress);
+                removeFromQueryReceived(queryNumber);
+                *(Client::loginInProgressBuffer+1)=queryNumber;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
                 errorOutput("Loggin already in progress");
             }
             else

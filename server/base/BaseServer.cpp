@@ -200,7 +200,6 @@ void BaseServer::preload_the_data()
     preload_the_visibility_algorithm();
     preload_the_city_capture();
     preload_zone();
-    preload_the_bytearray();
     qDebug() << QStringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
     timeDatapack.restart();
 
@@ -1405,19 +1404,6 @@ void BaseServer::preload_the_players()
         Client::simplifiedIdList << index;
         index++;
     }
-}
-
-void BaseServer::preload_the_bytearray()
-{
-    Client::protocolReplyServerFull[0]=0x03;
-    Client::protocolReplyCompressionNone[0]=0x01;
-    Client::protocolReplyCompressionNone[1]=0x00;
-    Client::protocolReplyCompresssionZlib[0]=0x01;
-    Client::protocolReplyCompresssionZlib[1]=0x01;
-    Client::protocolReplyCompressionXz[0]=0x01;
-    Client::protocolReplyCompressionXz[1]=0x02;
-    Client::protocolReplyProtocolNotSupported[0]=0x02;
-    Client::loginLoginInProgress[0]=0x06;
 }
 
 void BaseServer::preload_the_visibility_algorithm()
