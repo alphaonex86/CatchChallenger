@@ -30,11 +30,13 @@ void Client::sendLocalChatText(const QString &text)
             out2 << (quint8)Player_type_normal;
         else
             out2 << (quint8)this->public_and_private_informations.public_informations.type;
-        finalData=ProtocolParsingInputOutput::computeFullOutcommingData(
+        QByteArray replyData(outputData+rawPseudo+outputData2);
+        finalData.resize(16+outputData.size()+rawPseudo.size()+outputData2.size());
+        finalData.resize(ProtocolParsingInputOutput::computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    0xC2,0x0005,outputData+rawPseudo+outputData2);
+                    finalData.data(),0xC2,0x0005,replyData.constData(),replyData.size()));
     }
 
     const int &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
@@ -42,7 +44,7 @@ void Client::sendLocalChatText(const QString &text)
     while(index<size)
     {
         if(static_cast<MapServer *>(map)->clientsForBroadcast.at(index)!=this)
-            static_cast<MapServer *>(map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData);
+            static_cast<MapServer *>(map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
         index++;
     }
 }

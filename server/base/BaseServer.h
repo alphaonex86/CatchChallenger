@@ -86,7 +86,6 @@ protected:
     void preload_the_skin();
     void preload_the_datapack();
     void preload_the_players();
-    void preload_the_bytearray();
     virtual void preload_the_visibility_algorithm();
     void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
     virtual void preload_finish();

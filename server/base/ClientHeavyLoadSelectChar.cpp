@@ -609,11 +609,10 @@ void Client::selectClan_return()
 void Client::loginIsWrong(const quint8 &query_id, const quint8 &returnCode, const QString &debugMessage)
 {
     //network send
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << (quint8)returnCode;
-    postReply(query_id,outputData);
+    removeFromQueryReceived(query_id);
+    *(Client::loginIsWrongBuffer+1)=query_id;
+    *(Client::loginIsWrongBuffer+3)=returnCode;
+    internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
 
     //send to server to stop the connection
     errorOutput(debugMessage);
