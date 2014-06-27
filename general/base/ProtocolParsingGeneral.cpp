@@ -9,7 +9,7 @@ using namespace CatchChallenger;
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 quint16 ProtocolParsingInputOutput::sizeHeaderNullquint16=0;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
-char ProtocolParsingInputOutput::tempBigBuffer[CATCHCHALLENGER_BIGBUFFERSIZE];
+char ProtocolParsingInputOutput::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
 
 QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not

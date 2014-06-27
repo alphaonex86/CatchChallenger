@@ -240,11 +240,12 @@ void Client::seedValidated()
             }
             else
                 out << (quint16)(plantOnMap.mature_at-current_time);
-            finalData=ProtocolParsingInputOutput::computeOutcommingData(
+            finalData.resize(16+outputData.size());
+            finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    0xD1,outputData);
+                    finalData.data(),0xD1,outputData.constData(),outputData.size()));
         }
 
         quint16 index=0;
@@ -474,11 +475,12 @@ void Client::collectPlant(const quint8 &query_id)
                         out << (quint32)map->id;
                     out << plant.x;
                     out << plant.y;
-                    finalData=ProtocolParsingInputOutput::computeOutcommingData(
+                    finalData.resize(16+outputData.size());
+                    finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    0xD2,outputData);
+                    finalData.data(),0xD2,outputData.data(),outputData.size()));
                 }
 
                 {

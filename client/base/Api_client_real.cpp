@@ -355,7 +355,7 @@ void Api_client_real::sendDatapackContent()
             out << (quint64)info.st_mtime;
             index++;
         }
-        packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
+        packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
     {

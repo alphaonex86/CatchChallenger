@@ -125,47 +125,48 @@ public:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
     //send message without reply
-    bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
-    bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+    bool packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size);
+    bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size);
     //send query with reply
-    bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
     //send reply
-    bool postReplyData(const quint8 &queryNumber, const QByteArray &data);
+    bool postReplyData(const quint8 &queryNumber, const char *data,const int &size);
     quint64 getTXSize() const;
 
     //compute some packet
     //send message without reply
-    static QByteArray computeOutcommingData(
+    static int computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
-            const quint8 &mainCodeType,const QByteArray &data);
-    static QByteArray computeFullOutcommingData(
+            char *buffer,
+            const quint8 &mainCodeType,const char *data,const int &size);
+    static int computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
-            const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+            char *buffer,
+            const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size);
     //send query with reply
-    static QByteArray computeOutcommingQuery(
+    static int computeOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
-            const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    static QByteArray computeFullOutcommingQuery(
+            char *buffer,
+            const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    static int computeFullOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
-            const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+            char *buffer,
+            const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
     //send reply
-    QByteArray computeReplyData(const quint8 &queryNumber, const QByteArray &data);
-    int computeReplyData(char *dataBuffer, const quint8 &queryNumber, const QByteArray &data);
+    int computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size);
     //compression
     static QByteArray computeCompression(const QByteArray &data);
 private:
-    bool internalPackOutcommingData(QByteArray data);
     bool internalPackOutcommingData(const char *data,const int &size);
-    static QByteArray encodeSize(const quint32 &size);
     static qint8 encodeSize(char *data,const quint32 &size);
 
     quint64 TXSize;
@@ -181,14 +182,14 @@ private:
     static QByteArray lzmaUncompress(QByteArray data);
     static quint16 sizeHeaderNullquint16;
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
-    static char tempBigBuffer[CATCHCHALLENGER_BIGBUFFERSIZE];
+    static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     #endif
 public:
     void storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
     //no control to be more fast
-    bool internalSendRawSmallPacket(const QByteArray &data);
+    bool removeFromQueryReceived(const quint8 &queryNumber);
     bool internalSendRawSmallPacket(const char *data,const int &size);
 };
 
