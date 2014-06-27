@@ -10,13 +10,10 @@ CommonMap* MapVisibilityAlgorithm_Simple_StoreOnSender::old_map;
 CommonMap* MapVisibilityAlgorithm_Simple_StoreOnSender::new_map;
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::mapHaveChanged;
 
-//temp variable to move on the map
-map_management_movement MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient_tempMov;
-
 MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender(ConnectedSocket *socket) :
     Client(socket),
     to_send_insert(false),
-    to_send_reinsert(false)
+    haveNewMove(false)
 {
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     previousMovedUnitBlocked=0;
@@ -53,8 +50,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
             #endif
             //insert the new client
             to_send_insert=true;
-            to_send_reinsert=false;
-            to_send_move.clear();
+            haveNewMove=false;
             temp_map->to_send_remove.removeOne(public_and_private_informations.public_informations.simplifiedId);
             temp_map->to_send_insert=true;
         }
@@ -71,6 +67,8 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
 
 void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &movedUnit,const Direction &direction)
 {
+    Q_UNUSED(movedUnit);
+    Q_UNUSED(direction);
     Map_server_MapVisibility_Simple_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
     if(Q_UNLIKELY(mapHaveChanged))
     {
@@ -92,7 +90,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &moved
             return;
         #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
         //already into over move
-        if(to_send_reinsert)
+        if(haveNewMove)
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
             normalOutput(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, already into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
@@ -109,48 +107,10 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &moved
         //normal operation
         if(Q_LIKELY(temp_map->show))
         {
-            #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
-            //go into over move
-            if(Q_UNLIKELY(
-                        ((quint32)to_send_move.size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
-                        >=
-                            //size of on insert
-                            (quint32)GlobalServerData::serverPrivateVariables.sizeofInsertRequest+rawPseudo.size()
-                        ))
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-                normalOutput(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, go into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
-                #endif
-                to_send_move.clear();
-                to_send_reinsert=true;
-                return;
-            }
-            #endif
-            #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_STOP_MOVE
-            if(!to_send_move.isEmpty())
-            {
-                switch(to_send_move.last().direction)
-                {
-                    case Direction_look_at_top:
-                    case Direction_look_at_right:
-                    case Direction_look_at_bottom:
-                    case Direction_look_at_left:
-                        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-                        normalOutput(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, compressed move").arg(player_id).arg(to_send_move.value(player_id).last().movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
-                        #endif
-                        to_send_move.last().direction=direction;
-                    return;
-                    default:
-                    break;
-                }
-            }
-            #endif
+            haveNewMove=true;
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
             normalOutput(QStringLiteral("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(public_and_private_informations.public_informations.simplifiedId));
             #endif
-            moveClient_tempMov.movedUnit=movedUnit;
-            moveClient_tempMov.direction=direction;
-            to_send_move << moveClient_tempMov;
         }
         else //all client is dropped due to over load on the map
         {
@@ -162,8 +122,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::moveClient(const quint8 &moved
 void MapVisibilityAlgorithm_Simple_StoreOnSender::dropAllClients()
 {
     to_send_insert=false;
-    to_send_reinsert=false;
-    to_send_move.clear();
+    haveNewMove=false;
 
     Client::dropAllClients();
 }
@@ -210,8 +169,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
             to_send_insert=false;
         else
         {
-            to_send_reinsert=false;
-            to_send_move.clear();
+            haveNewMove=false;
             temp_map->to_send_remove << public_and_private_informations.public_informations.simplifiedId;
         }
     }
@@ -228,8 +186,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::extraStop()
     unloadFromTheMap();//product remove on the map
 
     to_send_insert=false;
-    to_send_reinsert=false;
-    to_send_move.clear();
+    haveNewMove=false;
 }
 
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::singleMove(const Direction &direction)
@@ -403,5 +360,5 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap 
         loadOnTheMap();
     }
     else
-        to_send_reinsert=true;
+        haveNewMove=true;
 }

@@ -32,6 +32,8 @@ private:
 
     //map move
     bool singleMove(const Direction &direction);
+    bool loadTheRawUTF8String();
+    int sizeOfOneSmallReinsert();
 
     static bool mapHaveChanged;
     static CommonMap*			old_map;
@@ -40,15 +42,10 @@ private:
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     quint8 previousMovedUnitBlocked;
     #endif
-
-    //temp variable to move on the map
-    static map_management_movement moveClient_tempMov;
-
 public:
     // stuff to send
     bool                                to_send_insert;
-    bool                    			to_send_reinsert;
-    QList<map_management_movement>      to_send_move;
+    bool                    			haveNewMove;
 public:
     //map slots, transmited by the current ClientNetworkRead
     void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);

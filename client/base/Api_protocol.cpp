@@ -2330,7 +2330,7 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subC
                     in >> event;
                     in >> event_value;
                     newEvent(event,event_value);
-                    postReplyData(queryNumber,QByteArray());
+                    postReplyData(queryNumber,NULL,0);
                 }
                 break;
                 default:
@@ -4342,7 +4342,7 @@ bool Api_protocol::sendProtocol()
     }
     have_send_protocol=true;
     QByteArray outputData(reinterpret_cast<char *>(const_cast<unsigned char *>(protocolHeaderToMatch)),sizeof(protocolHeaderToMatch));
-    packOutcommingQuery(0x03,queryNumber(),outputData);
+    packOutcommingQuery(0x03,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
@@ -4366,7 +4366,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
     hash2.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toLatin1());
     outputData+=hash2.result();
     const quint8 &query_number=queryNumber();
-    packOutcommingQuery(0x04,query_number,outputData);
+    packOutcommingQuery(0x04,query_number,outputData.constData(),outputData.size());
     return true;
 }
 
@@ -4383,7 +4383,7 @@ void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &di
     out.setVersion(QDataStream::Qt_4_4);
     out << moved_unit;
     out << directionInt;
-    packOutcommingData(0x40,outputData);
+    packOutcommingData(0x40,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::send_player_direction(const Direction &the_direction)
@@ -4403,7 +4403,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)chatType;
     out << text;
-    packFullOutcommingData(0x42,0x0003,outputData);
+    packFullOutcommingData(0x42,0x0003,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sendPM(const QString &text,const QString &pseudo)
@@ -4416,12 +4416,12 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
     out << (quint8)Chat_type_pm;
     out << text;
     out << pseudo;
-    packFullOutcommingData(0x42,0x003,outputData);
+    packFullOutcommingData(0x42,0x003,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::teleportDone()
 {
-    postReplyData(teleportList.first(),QByteArray());
+    postReplyData(teleportList.first(),NULL,0);
     teleportList.removeFirst();
 }
 
