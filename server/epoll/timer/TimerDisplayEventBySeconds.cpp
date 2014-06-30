@@ -18,10 +18,13 @@ void TimerDisplayEventBySeconds::exec()
 {
     if(timerCount<=1)
         timerCount=0;
-    if(serverCount==0 && clientCount==0 && dbCount==0 && timerCount==0 && otherCount==0)
+    if(serverCount==0 && clientCount==0 && dbCount==0 && /*timerCount==0 && */otherCount==0)
+    {
+        timerCount=0;
         return;
+    }
     char tempString[4096];
-    strcpy(tempString,"event by seconds:");
+    strcpy(tempString,"event by minutes:");
     if(serverCount>0)
     {
         strcat(tempString," server:");

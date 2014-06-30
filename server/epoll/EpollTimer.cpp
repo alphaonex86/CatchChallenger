@@ -23,16 +23,17 @@ BaseClassSwitch::Type EpollTimer::getType() const
 
 bool EpollTimer::start(const unsigned int &msec)
 {
+    /// \todo see for TFD_NONBLOCK
     if(tfd!=-1)
         return false;
-    if((tfd=::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
+    if((tfd=::timerfd_create(CLOCK_REALTIME,0)) < 0)
     {
         std::cerr << "Timer creation error" << std::endl;
         return false;
     }
 
     timespec now;
-    if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
+    if (clock_gettime(CLOCK_REALTIME, &now) == -1)
     {
         std::cerr << "clock_gettime error" << std::endl;
         return false;
@@ -68,7 +69,7 @@ bool EpollTimer::start(const unsigned int &msec)
         }
     }
 
-    const int &result=::timerfd_settime(tfd, 0, &new_value, NULL);
+    const int &result=::timerfd_settime(tfd, TFD_TIMER_ABSTIME, &new_value, NULL);
     if(result<0)
     {
         //settime error: 22: Invalid argument

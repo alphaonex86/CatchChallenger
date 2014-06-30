@@ -214,6 +214,7 @@ void ProtocolParsing::initialiseTheVariable()
     replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;
     replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
     replySizeMultipleCodePacketServerToClient[0x80][0x0001]=1;
+    replySizeOnlyMainCodePacketServerToClient[0x03]=1;
 
     compressionMultipleCodePacketServerToClient[0x02] << 0x000C;
     compressionMultipleCodePacketClientToServer[0xC2] << 0x0004;
