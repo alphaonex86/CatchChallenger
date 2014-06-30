@@ -85,7 +85,7 @@ protected:
     bool parseQueryNumber(const quint32 &size,quint32 &cursor);
     bool parseDataSize(const quint32 &size,quint32 &cursor);
     bool parseData(const quint32 &size,quint32 &cursor);
-    void parseDispatch(const char * data,const int &size);
+    bool parseDispatch(const char * data,const int &size);
     static char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 protected:
     //have message without reply
@@ -105,7 +105,7 @@ private:
     bool haveData_dataSize;
     bool is_reply;
     QByteArray dataToWithoutHeader;
-    QByteArray data_size;
+    quint8 data_size_size;
     QByteArray header_cut;
     quint32 dataSize;
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
