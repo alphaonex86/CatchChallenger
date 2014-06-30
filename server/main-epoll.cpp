@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        if(!timerDisplayEventBySeconds.start(1000))
+        if(!timerDisplayEventBySeconds.start(60*1000))
             return EXIT_FAILURE;
     }
     #endif

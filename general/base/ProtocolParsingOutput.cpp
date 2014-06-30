@@ -4,8 +4,6 @@
 
 using namespace CatchChallenger;
 
-memcpy( -> prevent NULL pointer
-
 void ProtocolParsingInputOutput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
     if(waitedReply_mainCodeType.contains(queryNumber))
@@ -40,7 +38,7 @@ void ProtocolParsingInputOutput::newOutputQuery(const quint8 &mainCodeType,const
         }
     }
     else
-    #else
+    #endif
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
@@ -65,7 +63,6 @@ void ProtocolParsingInputOutput::newOutputQuery(const quint8 &mainCodeType,const
             #endif
         }
     }
-    #endif
     #ifdef ProtocolParsingInputOutputDEBUG
     DebugClass::debugConsole(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -111,7 +108,7 @@ void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,c
         }
     }
     else
-    #else
+    #endif
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
@@ -137,7 +134,6 @@ void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,c
             #endif
         }
     }
-    #endif
     #ifdef ProtocolParsingInputOutputDEBUG
     DebugClass::debugConsole(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -151,10 +147,19 @@ void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,c
 
 bool ProtocolParsingInputOutput::postReplyData(const quint8 &queryNumber, const char *data,const int &size)
 {
+    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     const int &newSize=ProtocolParsingInputOutput::computeReplyData(ProtocolParsingInputOutput::tempBigBufferForOutput,queryNumber,data,size);
     if(newSize==0)
         return false;
     return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    #else
+    QByteArray bigBufferForOutput;
+    bigBufferForOutput.resize(16+size);
+    const int &newSize=ProtocolParsingInputOutput::computeReplyData(bigBufferForOutput.data(),queryNumber,data,size);
+    if(newSize==0)
+        return false;
+    return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
+    #endif
 }
 
 QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data)
@@ -168,11 +173,15 @@ QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data
         default:
             return qCompress(data,9);
         break;
+        case CompressionType_None:
+            return data;
+        break;
     }
 }
 
 bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
 {
+    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     const int &newSize=computeFullOutcommingData(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 isClient,
@@ -182,10 +191,24 @@ bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeTy
     if(newSize==0)
         return false;
     return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    #else
+    QByteArray bigBufferForOutput;
+    bigBufferForOutput.resize(16+size);
+    const int &newSize=computeFullOutcommingData(
+                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                isClient,
+                #endif
+                bigBufferForOutput.data(),
+                mainCodeType,subCodeType,data,size);
+    if(newSize==0)
+        return false;
+    return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
+    #endif
 }
 
 bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size)
 {
+    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     const int &newSize=computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
@@ -195,10 +218,24 @@ bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,c
     if(newSize==0)
         return false;
     return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    #else
+    QByteArray bigBufferForOutput;
+    bigBufferForOutput.resize(16+size);
+    const int &newSize=computeOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            isClient,
+            #endif
+            bigBufferForOutput.data(),
+            mainCodeType,data,size);
+    if(newSize==0)
+        return false;
+    return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
+    #endif
 }
 
 bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
+    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     const int &newSize=computeOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
@@ -209,10 +246,25 @@ bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,
         return false;
     newOutputQuery(mainCodeType,queryNumber);
     return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    #else
+    QByteArray bigBufferForOutput;
+    bigBufferForOutput.resize(16+size);
+    const int &newSize=computeOutcommingQuery(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            isClient,
+            #endif
+            bigBufferForOutput.data(),
+            mainCodeType,queryNumber,data,size);
+    if(newSize==0)
+        return false;
+    newOutputQuery(mainCodeType,queryNumber);
+    return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
+    #endif
 }
 
 bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
+    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     const int &newSize=computeFullOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
@@ -223,6 +275,20 @@ bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeT
         return false;
     newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
     return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    #else
+    QByteArray bigBufferForOutput;
+    bigBufferForOutput.resize(16+size);
+    const int &newSize=computeFullOutcommingQuery(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            isClient,
+            #endif
+            bigBufferForOutput.data(),
+            mainCodeType,subCodeType,queryNumber,data,size);
+    if(newSize==0)
+        return false;
+    newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
+    return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
+    #endif
 }
 
 bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,const int &size)
@@ -382,8 +448,13 @@ int ProtocolParsingInputOutput::computeOutcommingData(
             }
             #endif
             const int &newSize=encodeSize(buffer+1,size);
-            memcpy(buffer+1+newSize,data,size);
-            return 1+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+1+newSize,data,size);
+                return 1+newSize+size;
+            }
+            else
+                return 1+newSize;
         }
         else
         {
@@ -398,8 +469,13 @@ int ProtocolParsingInputOutput::computeOutcommingData(
                 return 0;
             }
             #endif
-            memcpy(buffer+1,data,size);
-            return 1+size;
+            if(size>0)
+            {
+                memcpy(buffer+1,data,size);
+                return 1+size;
+            }
+            else
+                return 1;
         }
     }
     else
@@ -439,8 +515,13 @@ int ProtocolParsingInputOutput::computeOutcommingData(
             }
             #endif
             const int &newSize=encodeSize(buffer+1,size);
-            memcpy(buffer+1+newSize,data,size);
-            return 1+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+1+newSize,data,size);
+                return 1+newSize+size;
+            }
+            else
+                return 1+newSize;
         }
         else
         {
@@ -455,8 +536,13 @@ int ProtocolParsingInputOutput::computeOutcommingData(
                 return 0;
             }
             #endif
-            memcpy(buffer+1,data,size);
-            return 1+size;
+            if(size>0)
+            {
+                memcpy(buffer+1,data,size);
+                return 1+size;
+            }
+            else
+                return 1;
         }
     }
 }
@@ -508,8 +594,13 @@ int ProtocolParsingInputOutput::computeOutcommingQuery(
             }
             #endif
             const int &newSize=encodeSize(buffer+2,size);
-            memcpy(buffer+2+newSize,data,size);
-            return 2+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize;
         }
         else
         {
@@ -524,8 +615,13 @@ int ProtocolParsingInputOutput::computeOutcommingQuery(
                 return 0;
             }
             #endif
-            memcpy(buffer+2,data,size);
-            return 2+size;
+            if(size>0)
+            {
+                memcpy(buffer+2,data,size);
+                return 2+size;
+            }
+            else
+                return 2;
         }
     }
     else
@@ -565,8 +661,13 @@ int ProtocolParsingInputOutput::computeOutcommingQuery(
             }
             #endif
             const int &newSize=encodeSize(buffer+2,size);
-            memcpy(buffer+2+newSize,data,size);
-            return 2+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
+            }
+            else
+                return 2+newSize;
         }
         else
         {
@@ -581,8 +682,13 @@ int ProtocolParsingInputOutput::computeOutcommingQuery(
                 return 0;
             }
             #endif
-            memcpy(buffer+2,data,size);
-            return 2+size;
+            if(size>0)
+            {
+                memcpy(buffer+2,data,size);
+                return 2+size;
+            }
+            else
+                return 2;
         }
     }
 }
@@ -640,7 +746,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -653,8 +759,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+4,compressedData.size());
-                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                            return 4+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                                return 4+newSize+compressedData.size();
+                            }
+                            else
+                                return 4+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -673,8 +784,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
             }
             #endif
             const int &newSize=encodeSize(buffer+4,size);
-            memcpy(buffer+4+newSize,data,size);
-            return 4+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+4+newSize,data,size);
+                return 4+newSize+size;
+            }
+            else
+                return 4+newSize;
         }
         else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
         {
@@ -694,7 +810,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -707,8 +823,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+4,compressedData.size());
-                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                            return 4+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                                return 4+newSize+compressedData.size();
+                            }
+                            else
+                                return 4+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -727,8 +848,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
             }
             #endif
             const int &newSize=encodeSize(buffer+4,size);
-            memcpy(buffer+4+newSize,data,size);
-            return 4+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+4+newSize,data,size);
+                return 4+newSize+size;
+            }
+            else
+                return 4+newSize;
         }
         else
         {
@@ -750,7 +876,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                 return 0;
             }
             #endif
-            return block+data;
+            if(size>0)
+            {
+                memcpy(buffer+4,data,size);
+                return 4+size;
+            }
+            else
+                return 4;
         }
     }
     else
@@ -794,7 +926,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -807,8 +939,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+4,compressedData.size());
-                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                            return 4+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                                return 4+newSize+compressedData.size();
+                            }
+                            else
+                                return 4+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -827,8 +964,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
             }
             #endif
             const int &newSize=encodeSize(buffer+4,size);
-            memcpy(buffer+4+newSize,data,size);
-            return 4+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+4+newSize,data,size);
+                return 4+newSize+size;
+            }
+            else
+                return 4+newSize;
         }
         else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
         {
@@ -848,7 +990,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -861,8 +1003,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+4,compressedData.size());
-                            memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                            return 4+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
+                                return 4+newSize+compressedData.size();
+                            }
+                            else
+                                return 4+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -881,8 +1028,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
             }
             #endif
             const int &newSize=encodeSize(buffer+4,size);
-            memcpy(buffer+4+newSize,data,size);
-            return 4+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+4+newSize,data,size);
+                return 4+newSize+size;
+            }
+            else
+                return 4+newSize;
         }
         else
         {
@@ -904,8 +1056,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
                 return 0;
             }
             #endif
-            memcpy(buffer+4,data,size);
-            return 4+size;
+            if(size>0)
+            {
+                memcpy(buffer+4,data,size);
+                return 4+size;
+            }
+            else
+                return 4;
         }
     }
 }
@@ -962,7 +1119,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -975,8 +1132,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                            return 3+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -995,8 +1157,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
             }
             #endif
             const int &newSize=encodeSize(buffer+3,size);
-            memcpy(buffer+3+newSize,data,size);
-            return 3+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize+size;
         }
         else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
         {
@@ -1016,7 +1183,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -1029,8 +1196,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                            return 3+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -1049,8 +1221,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
             }
             #endif
             const int &newSize=encodeSize(buffer+3,size);
-            memcpy(buffer+3+newSize,data,size);
-            return 3+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize;
         }
         else
         {
@@ -1072,8 +1249,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                 return 0;
             }
             #endif
-            memcpy(buffer+3,data,size);
-            return buffer+3+size;
+            if(size>0)
+            {
+                memcpy(buffer+3,data,size);
+                return 3+size;
+            }
+            else
+                return 3;
         }
     }
     else
@@ -1117,7 +1299,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -1130,8 +1312,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                            return 3+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -1150,8 +1337,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
             }
             #endif
             const int &newSize=encodeSize(buffer+3,size);
-            memcpy(buffer+3+newSize,data,size);
-            return 3+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize;
         }
         else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
         {
@@ -1171,7 +1363,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                         case CompressionType_Zlib:
                         default:
                         {
-                            QByteArray compressedData(computeCompression(data));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -1184,8 +1376,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                             }
                             #endif
                             const int &newSize=encodeSize(buffer+3,compressedData.size());
-                            memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                            return 3+newSize+size;
+                            if(compressedData.size()>0)
+                            {
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
+                            }
+                            else
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType_None:
@@ -1204,8 +1401,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
             }
             #endif
             const int &newSize=encodeSize(buffer+3,size);
-            memcpy(buffer+3+newSize,data,size);
-            return 3+newSize+size;
+            if(size>0)
+            {
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
+            }
+            else
+                return 3+newSize;
         }
         else
         {
@@ -1227,8 +1429,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
                 return 0;
             }
             #endif
-            memcpy(buffer+3,data,size);
-            return 3+size;
+            if(size>0)
+            {
+                memcpy(buffer+3,data,size);
+                return 3+size;
+            }
+            else
+                return 3;
         }
     }
 }
@@ -1293,8 +1500,14 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 
                     }
                     #endif
                     const quint8 &fullSize=sizeof(quint8)*2+encodeSize(dataBuffer+sizeof(quint8)*2,compressedData.size());
-                    memcpy(dataBuffer+fullSize,compressedData.constData(),compressedData.size());
-                    return fullSize+compressedData.size();
+                    if(compressedData.size()>0)
+                    {
+                        memcpy(dataBuffer+fullSize,compressedData.constData(),compressedData.size());
+                        QByteArray tempBuffer(dataBuffer,fullSize+compressedData.size());
+                        return fullSize+compressedData.size();
+                    }
+                    else
+                        return fullSize;
                 }
                 break;
                 case CompressionType_None:
@@ -1314,8 +1527,13 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 
         #endif
         replyOutputCompression.remove(queryNumber);
         const quint8 &fullSize=sizeof(quint8)*2+encodeSize(dataBuffer+sizeof(quint8)*2,size);
-        memcpy(dataBuffer+fullSize,data,size);
-        return fullSize+size;
+        if(size>0)
+        {
+            memcpy(dataBuffer+fullSize,data,size);
+            return fullSize+size;
+        }
+        else
+            return fullSize;
     }
     else
     {
@@ -1339,7 +1557,12 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 
         }
         #endif
         replyOutputSize.remove(queryNumber);
-        memcpy(dataBuffer+sizeof(quint8)*2,data,size);
-        return sizeof(quint8)*2+size;
+        if(size>0)
+        {
+            memcpy(dataBuffer+sizeof(quint8)*2,data,size);
+            return sizeof(quint8)*2+size;
+        }
+        else
+            return sizeof(quint8)*2;
     }
 }
