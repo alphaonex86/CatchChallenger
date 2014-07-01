@@ -12,7 +12,8 @@ public:
     bool start();
     void setInterval(const unsigned int &msec);
     void setSingleShot(const bool &singleShot);
-    virtual void exec();
+    virtual void exec() = 0;
+    void validateTheTimer();
 private:
     int tfd;
     unsigned int msec;

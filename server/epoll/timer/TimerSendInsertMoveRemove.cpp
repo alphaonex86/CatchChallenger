@@ -12,5 +12,4 @@ TimerSendInsertMoveRemove::TimerSendInsertMoveRemove()
 void TimerSendInsertMoveRemove::exec()
 {
     CatchChallenger::MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.generalPurgeBuffer();
-    EpollTimer::exec();
 }

@@ -12,5 +12,4 @@ TimerCityCapture::TimerCityCapture()
 void TimerCityCapture::exec()
 {
     CatchChallenger::Client::startTheCityCapture();
-    EpollTimer::exec();
 }

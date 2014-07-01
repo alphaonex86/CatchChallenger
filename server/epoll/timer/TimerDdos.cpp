@@ -16,5 +16,4 @@ void TimerDdos::exec()
     CatchChallenger::LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.doDDOSAction();
     CatchChallenger::BroadCastWithoutSender::broadCastWithoutSender.doDDOSAction();
     CatchChallenger::ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.doDDOSAction();
-    EpollTimer::exec();
 }

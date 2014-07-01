@@ -55,3 +55,8 @@ bool MapVisibilityAlgorithm_None::singleMove(const Direction &direction)
     Q_UNUSED(direction);
     return true;
 }
+
+quint16 MapVisibilityAlgorithm_None::getMaxVisiblePlayerAtSameTime()
+{
+    return 0;
+}
