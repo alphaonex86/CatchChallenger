@@ -1596,13 +1596,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                     tradeValidatedByTheServer();
                 }
                 break;
-                //random seeds as input
-                case 0x0009:
-                {
-                    random_seeds(data);
-                    return;//quit here because all data is always used
-                }
-                break;
                 default:
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("unknown subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                 return;
@@ -2111,6 +2104,18 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         index++;
                     }
                     battleAcceptedByOther(pseudo,skinId,stat,monsterPlace,publicPlayerMonster);
+                }
+                break;
+                //random seeds as input
+                case 0x0009:
+                {
+                    if(data.size()<128)
+                    {
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("have too less data for random seed with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    random_seeds(data);
+                    return;//quit here because all data is always used
                 }
                 break;
                 default:
