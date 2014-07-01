@@ -16,6 +16,7 @@ protected:
     void mapVisiblity_unloadFromTheMap();
     //map move
     bool singleMove(const Direction &direction);
+    quint16 getMaxVisiblePlayerAtSameTime();
 public:
     //map slots, transmited by the current ClientNetworkRead
     //void put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,Map_server_MapVisibility_simple *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);

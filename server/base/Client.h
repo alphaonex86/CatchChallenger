@@ -519,6 +519,7 @@ private:
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
     bool otherPlayerIsInRange(Client * otherPlayer);
 
+    virtual quint16 getMaxVisiblePlayerAtSameTime() = 0;
     bool getInTrade();
     void registerTradeRequest(Client * otherPlayerTrade);
     bool getIsFreezed();
