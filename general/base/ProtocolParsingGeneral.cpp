@@ -7,7 +7,7 @@
 using namespace CatchChallenger;
 
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
-quint16 ProtocolParsingInputOutput::sizeHeaderNullquint16=0;
+const quint16 ProtocolParsingInputOutput::sizeHeaderNullquint16=0;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
 char ProtocolParsingInputOutput::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
