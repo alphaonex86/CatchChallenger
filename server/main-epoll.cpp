@@ -554,6 +554,7 @@ int main(int argc, char *argv[])
                     timerDisplayEventBySeconds.addTimerCount();
                     #endif
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
+                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
                 break;
                 case BaseClassSwitch::Type::Database:
                 {
