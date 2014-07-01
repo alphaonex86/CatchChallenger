@@ -24,6 +24,7 @@ protected:
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
+    quint16 getMaxVisiblePlayerAtSameTime();
 private:
     static MapVisibilityAlgorithm_Simple_StoreOnSender *current_client;//static to drop down the memory
     //map load/unload and change

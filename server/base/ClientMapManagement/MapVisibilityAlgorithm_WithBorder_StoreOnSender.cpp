@@ -1030,3 +1030,8 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::teleportValidatedTo(Common
     else
         reinsertClientForOthersOnSameMap();
 }
+
+quint16 MapVisibilityAlgorithm_WithBorder_StoreOnSender::getMaxVisiblePlayerAtSameTime()
+{
+    return 0xFFFF;
+}
