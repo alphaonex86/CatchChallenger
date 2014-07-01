@@ -180,7 +180,7 @@ private:
     quint8 queryNumber;
     static QByteArray lzmaCompress(QByteArray data);
     static QByteArray lzmaUncompress(QByteArray data);
-    static quint16 sizeHeaderNullquint16;
+    static const quint16 sizeHeaderNullquint16;
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     #endif
