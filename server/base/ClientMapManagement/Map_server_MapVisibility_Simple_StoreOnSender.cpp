@@ -28,6 +28,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         }
         return;
     }
+    /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
     if(send_reinsert_all)
     {
         QByteArray purgeBuffer_outputData;
@@ -89,6 +90,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataOldClients[clients.size()];
     int clientsToSendDataSizeNewClients=0;
     int clientsToSendDataSizeOldClients=0;
+    /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
     if(to_send_insert)
     {
         int index=0;

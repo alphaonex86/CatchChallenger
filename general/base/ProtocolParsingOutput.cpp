@@ -390,14 +390,14 @@ qint8 ProtocolParsingInputOutput::encodeSize(char *data,const quint32 &size)
     {
         const quint16 &newSize=htobe16(size);
         memcpy(data,&ProtocolParsingInputOutput::sizeHeaderNullquint16,sizeof(quint8));
-        memcpy(data,&newSize,sizeof(newSize));
+        memcpy(data+sizeof(quint8),&newSize,sizeof(newSize));
         return sizeof(quint8)+sizeof(quint16);
     }
     else
     {
         const quint32 &newSize=htobe32(size);
         memcpy(data,&ProtocolParsingInputOutput::sizeHeaderNullquint16,sizeof(quint16));
-        memcpy(data,&newSize,sizeof(newSize));
+        memcpy(data+sizeof(quint16),&newSize,sizeof(newSize));
         return sizeof(quint16)+sizeof(quint32);
     }
 }
