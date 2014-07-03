@@ -14,6 +14,7 @@ protected:
     void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
+    void extraStop();
     //map move
     bool singleMove(const Direction &direction);
     quint16 getMaxVisiblePlayerAtSameTime();

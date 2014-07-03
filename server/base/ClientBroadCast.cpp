@@ -1,6 +1,7 @@
 #include "Client.h"
 #include "GlobalServerData.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/FacilityLib.h"
 
 using namespace CatchChallenger;
 
@@ -12,14 +13,27 @@ void Client::sendSystemMessage(const QString &text,const bool &important)
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
-        out << (quint8)important;
-        out << text;
+        if(important)
+            out << (quint8)0x08;
+        else
+            out << (quint8)0x07;
+        {
+            const QByteArray &tempText=text.toUtf8();
+            if(tempText.size()>255)
+            {
+                DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                return;
+            }
+            out << (quint8)tempText.size();
+            outputData+=tempText;
+            out.device()->seek(out.device()->pos()+tempText.size());
+        }
         finalData.resize(16+outputData.size());
-        finalData.resize(ProtocolParsingInputOutput::computeFullOutcommingData(
+        finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    finalData.data(),0xC2,0x0005,outputData.constData(),outputData.size()));
+                    finalData.data(),0xCA,outputData.constData(),outputData.size()));
     }
 
     const int &size=clientBroadCastList.size();
@@ -91,7 +105,17 @@ void Client::receiveChatText(const Chat_type &chatType,const QString &text,const
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)chatType;
-    out << text;
+    {
+        const QByteArray &tempText=text.toUtf8();
+        if(tempText.size()>255)
+        {
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            return;
+        }
+        out << (quint8)tempText.size();
+        outputData+=tempText;
+        out.device()->seek(out.device()->pos()+tempText.size());
+    }
 
     QByteArray outputData2;
     QDataStream out2(&outputData2, QIODevice::WriteOnly);
@@ -100,7 +124,7 @@ void Client::receiveChatText(const Chat_type &chatType,const QString &text,const
         out2 << (quint8)Player_type_normal;
     else
         out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
-    sendFullPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
+    sendPacket(0xCA,outputData+sender_informations->rawPseudo+outputData2);
 }
 
 void Client::receiveSystemText(const QString &text,const bool &important)
@@ -112,8 +136,18 @@ void Client::receiveSystemText(const QString &text,const bool &important)
         out << (quint8)Chat_type_system_important;
     else
         out << (quint8)Chat_type_system;
-    out << text;
-    sendFullPacket(0xC2,0x0005,outputData);
+    {
+        const QByteArray &tempText=text.toUtf8();
+        if(tempText.size()>255)
+        {
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            return;
+        }
+        out << (quint8)tempText.size();
+        outputData+=tempText;
+        out.device()->seek(out.device()->pos()+tempText.size());
+    }
+    sendPacket(0xCA,outputData);
 }
 
 void Client::sendChatText(const Chat_type &chatType,const QString &text)
@@ -139,7 +173,17 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
                 QDataStream out(&outputData, QIODevice::WriteOnly);
                 out.setVersion(QDataStream::Qt_4_4);
                 out << (quint8)chatType;
-                out << text;
+                {
+                    const QByteArray &tempText=text.toUtf8();
+                    if(tempText.size()>255)
+                    {
+                        DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                        return;
+                    }
+                    out << (quint8)tempText.size();
+                    outputData+=tempText;
+                    out.device()->seek(out.device()->pos()+tempText.size());
+                }
 
                 QByteArray outputData2;
                 QDataStream out2(&outputData2, QIODevice::WriteOnly);
@@ -150,11 +194,11 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
                     out2 << (quint8)this->public_and_private_informations.public_informations.type;
                 QByteArray tempBuffer(outputData+rawPseudo+outputData2);
                 finalData.resize(16+tempBuffer.size());
-                finalData.resize(ProtocolParsingInputOutput::computeFullOutcommingData(
+                finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    finalData.data(),0xC2,0x0005,tempBuffer.data(),tempBuffer.size()));
+                    finalData.data(),0xCA,tempBuffer.data(),tempBuffer.size()));
             }
 
             const int &size=playerWithSameClan.size();
@@ -186,7 +230,17 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);
             out << (quint8)chatType;
-            out << text;
+            {
+                const QByteArray &tempText=text.toUtf8();
+                if(tempText.size()>255)
+                {
+                    DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                    return;
+                }
+                out << (quint8)tempText.size();
+                outputData+=tempText;
+                out.device()->seek(out.device()->pos()+tempText.size());
+            }
 
             QByteArray outputData2;
             QDataStream out2(&outputData2, QIODevice::WriteOnly);
@@ -197,11 +251,11 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
                 out2 << (quint8)this->public_and_private_informations.public_informations.type;
             QByteArray tempBuffer(outputData+rawPseudo+outputData2);
             finalData.resize(16+tempBuffer.size());
-            finalData.resize(ProtocolParsingInputOutput::computeFullOutcommingData(
+            finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    finalData.data(),0xC2,0x0005,tempBuffer.constData(),tempBuffer.size()));
+                    finalData.data(),0xCA,tempBuffer.constData(),tempBuffer.size()));
         }
 
         const int &size=clientBroadCastList.size();

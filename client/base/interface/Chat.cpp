@@ -72,6 +72,9 @@ void Chat::on_pushButtonChat_toggled(bool checked)
 void Chat::lineEdit_chat_text_returnPressed()
 {
     QString text=ui->lineEdit_chat_text->text();
+    text.remove("\n");
+    text.remove("\r");
+    text.remove("\t");
     if(text.isEmpty())
         return;
     if(text.contains(QRegularExpression("^ +$")))

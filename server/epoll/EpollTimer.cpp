@@ -23,7 +23,6 @@ BaseClassSwitch::Type EpollTimer::getType() const
 
 bool EpollTimer::start(const unsigned int &msec)
 {
-    /// \todo see for TFD_NONBLOCK
     if(tfd!=-1)
         return false;
     if((tfd=::timerfd_create(CLOCK_REALTIME,TFD_NONBLOCK)) < 0)

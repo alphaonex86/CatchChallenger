@@ -14,7 +14,7 @@ class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public Client
 {
 public:
     explicit MapVisibilityAlgorithm_WithBorder_StoreOnSender(ConnectedSocket *socket);
-    virtual ~MapVisibilityAlgorithm_WithBorder_StoreOnSender();
+    ~MapVisibilityAlgorithm_WithBorder_StoreOnSender();
     void reinsertAllClient();
     void reinsertAllClientIncludingBorderClients();
     void reinsertCurrentPlayerOnlyTheBorderClients();

@@ -117,7 +117,7 @@ void MainWindow::doMove()
     while (i.hasNext()) {
         i.next();
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
-        if(i.value()->have_informations && i.value()->socket->isValid())
+        if(i.value()->api->getCaracterSelected() && i.value()->have_informations && i.value()->socket->isValid() && i.value()->socket->state()==QAbstractSocket::ConnectedState)
         {
             if(i.value()->direction==CatchChallenger::Direction_look_at_bottom)
             {
@@ -160,7 +160,7 @@ void MainWindow::doText()
     }
     CatchChallengerClient *client=clientList.at(rand()%clientList.size());
     //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
-    if(client->have_informations && ui->move->isChecked() && client->socket->isValid())
+    if(client->api->getCaracterSelected() && client->have_informations && ui->randomText->isChecked() && client->socket->isValid() && client->socket->state()==QAbstractSocket::ConnectedState)
     {
         if(CommonSettings::commonSettings.chat_allow_local && rand()%10==0)
         {

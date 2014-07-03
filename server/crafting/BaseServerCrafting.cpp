@@ -78,9 +78,7 @@ void BaseServer::preload_the_plant_on_map_return()
             }
             GlobalServerData::serverPrivateVariables.maxPlantId=id;
         }
-        QString map(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(!map.endsWith(BaseServer::text_dottmx))
-            map+=BaseServer::text_dottmx;
+        const QString &map(GlobalServerData::serverPrivateVariables.db.value(1));
         if(!GlobalServerData::serverPrivateVariables.map_list.contains(map))
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists: %1").arg(map));

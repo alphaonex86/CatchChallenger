@@ -19,7 +19,7 @@ BaseClassSwitch::Type Timer::getType()
 
 bool Timer::init()
 {
-    if((tfd=::timerfd_create(CLOCK_REALTIME,0)) < 0)
+    if((tfd=::timerfd_create(CLOCK_REALTIME,TFD_NONBLOCK)) < 0)
     {
         perror("timerfd create error");
         return false;

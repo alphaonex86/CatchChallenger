@@ -22,7 +22,7 @@ public:
     void doDDOSCompute();
     QList<Client *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
     QHash<QPair<quint8,quint8>,Orientation> rescue;
-    QList<int> localChatDrop;
+    int localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     int localChatDropTotalCache;
     int localChatDropNewValue;
 };

@@ -32,9 +32,10 @@ void LocalClientHandlerWithoutSender::doAllAction()
 void LocalClientHandlerWithoutSender::doDDOSAction()
 {
     int index=0;
-    while(index<GlobalServerData::serverPrivateVariables.flat_map_list.size())
+    const int &map_list_size=GlobalServerData::serverPrivateVariables.map_list.size();
+    while(index<map_list_size)
     {
-        static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list.at(index))->doDDOSCompute();
+        static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[index])->doDDOSCompute();
         index++;
     }
 }

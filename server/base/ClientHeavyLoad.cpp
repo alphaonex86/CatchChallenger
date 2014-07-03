@@ -712,7 +712,7 @@ void Client::loadLinkedData()
 
 bool Client::loadTheRawUTF8String()
 {
-    rawPseudo=FacilityLib::toUTF8(public_and_private_informations.public_informations.pseudo);
+    rawPseudo=FacilityLib::toUTF8WithHeader(public_and_private_informations.public_informations.pseudo);
     if(rawPseudo.isEmpty())
     {
         normalOutput(QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(public_and_private_informations.public_informations.pseudo));
@@ -888,7 +888,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
     }
     else
     {
-        QByteArray outputData(FacilityLib::toUTF8(CommonSettings::commonSettings.httpDatapackMirror));
+        QByteArray outputData(FacilityLib::toUTF8WithHeader(CommonSettings::commonSettings.httpDatapackMirror));
         if(outputData.size()>255 || outputData.isEmpty())
         {
             errorOutput(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
@@ -910,7 +910,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
             const quint32 &fileHttpListNameSize=fileToSendList.size();
             while(index<fileHttpListNameSize)
             {
-                const QByteArray &rawFileName=FacilityLib::toUTF8(fileToSendList.at(index).file);
+                const QByteArray &rawFileName=FacilityLib::toUTF8WithHeader(fileToSendList.at(index).file);
                 if(rawFileName.size()>255 || rawFileName.isEmpty())
                 {
                     errorOutput(QLatin1Literal("file path too big or not compatible with utf8"));
@@ -1039,7 +1039,7 @@ bool Client::sendFile(const QString &fileName,const quint64 &mtime)
 {
     if(fileName.size()>255 || fileName.isEmpty())
         return false;
-    const QByteArray &fileNameRaw=FacilityLib::toUTF8(fileName);
+    const QByteArray &fileNameRaw=FacilityLib::toUTF8WithHeader(fileName);
     if(fileNameRaw.size()>255 || fileNameRaw.isEmpty())
         return false;
     QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);

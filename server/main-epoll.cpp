@@ -543,10 +543,11 @@ int main(int argc, char *argv[])
                         if(!closed)
                             client->flush();
                     #endif
-                   /* if(events[i].events & EPOLLOUT)
+                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                    {
+                        client->disconnectClient();
                         delete client;//disconnected, remove the object
-                    else*/ if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
-                        delete client;//disconnected, remove the object
+                    }
                 }
                 break;
                 case BaseClassSwitch::Type::Timer:

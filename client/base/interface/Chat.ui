@@ -60,6 +60,7 @@
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
 padding:5px;
+color: rgb(0, 0, 0);
 }</string>
      </property>
      <property name="frameShape">

@@ -1,6 +1,7 @@
 #include "Client.h"
 #include "BroadCastWithoutSender.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/FacilityLib.h"
 #include "GlobalServerData.h"
 #include "MapServer.h"
 
@@ -21,7 +22,17 @@ void Client::sendLocalChatText(const QString &text)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint8)Chat_type_local;
-        out << text;
+        {
+            const QByteArray &tempText=text.toUtf8();
+            if(tempText.size()>255)
+            {
+                DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+                return;
+            }
+            out << (quint8)tempText.size();
+            outputData+=tempText;
+            out.device()->seek(out.device()->pos()+tempText.size());
+        }
 
         QByteArray outputData2;
         QDataStream out2(&outputData2, QIODevice::WriteOnly);
@@ -32,11 +43,11 @@ void Client::sendLocalChatText(const QString &text)
             out2 << (quint8)this->public_and_private_informations.public_informations.type;
         QByteArray replyData(outputData+rawPseudo+outputData2);
         finalData.resize(16+outputData.size()+rawPseudo.size()+outputData2.size());
-        finalData.resize(ProtocolParsingInputOutput::computeFullOutcommingData(
+        finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
-                    finalData.data(),0xC2,0x0005,replyData.constData(),replyData.size()));
+                    finalData.data(),0xCA,replyData.constData(),replyData.size()));
     }
 
     const int &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();

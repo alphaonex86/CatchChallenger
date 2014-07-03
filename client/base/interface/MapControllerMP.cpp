@@ -813,7 +813,8 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
 
     CatchChallenger::Player_public_informations informations=otherPlayerList.value(id).informations;
     /// \warning search by loop because otherPlayerList.value(id).current_map is the full path, DatapackClientLoader::datapackLoader.maps relative path
-    if(!all_map.contains(otherPlayerList.value(id).current_map))
+    const QString &tempCurrentMap=otherPlayerList.value(id).current_map;
+    if(!all_map.contains(tempCurrentMap))
     {
         qDebug() << "internal problem, revert map (" << otherPlayerList.value(id).current_map << ") index is wrong (" << DatapackClientLoader::datapackLoader.maps.join(";") << ")";
         DelayedReinsertSingle tempItem;
@@ -827,7 +828,7 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
         delayedActions << multiplex;
         return;
     }
-    quint32 mapId=(quint32)all_map.value(otherPlayerList.value(id).current_map)->logicalMap.id;
+    quint32 mapId=(quint32)all_map.value(tempCurrentMap)->logicalMap.id;
     if(mapId==0)
         qDebug() << QStringLiteral("supected NULL map then error");
     remove_player(id);

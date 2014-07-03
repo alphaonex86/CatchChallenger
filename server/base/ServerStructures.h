@@ -337,7 +337,7 @@ struct ServerPrivateVariables
 
     //map
     QHash<QString,CommonMap *> map_list;
-    QList<CommonMap *> flat_map_list;
+    CommonMap ** flat_map_list;
     QHash<quint32,QString> id_map_to_map;
     qint8 sizeofInsertRequest;
 

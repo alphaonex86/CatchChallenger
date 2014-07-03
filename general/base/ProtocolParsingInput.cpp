@@ -51,7 +51,6 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
 
         do
         {
-            qDebug() << QString(QByteArray(ProtocolParsingInputOutput::commonBuffer+cursor,size-cursor).toHex());
             if(!parseHeader(size,cursor))
                 break;
             if(!parseQueryNumber(size,cursor))

@@ -309,7 +309,7 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
             if(Q_UNLIKELY(size!=byteWriten))
             {
                 DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                disconnectClient();
                 return false;
             }
             TXSize+=size;
@@ -331,7 +331,7 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
                 if(Q_UNLIKELY(size_to_send!=byteWriten))
                 {
                     DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                    errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                    disconnectClient();
                     return false;
                 }
                 TXSize+=size_to_send;
@@ -344,7 +344,7 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
     else
     {
         DebugClass::debugConsole(QStringLiteral("Socket open in read only!"));
-        errorParsingLayer(QStringLiteral("Socket open in read only!"));
+        disconnectClient();
         return false;
     }
     #endif
@@ -373,7 +373,7 @@ bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,con
     if(Q_UNLIKELY(size!=byteWriten))
     {
         DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        errorParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        disconnectClient();
         return false;
     }
     return true;
@@ -1503,7 +1503,6 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 
                     if(compressedData.size()>0)
                     {
                         memcpy(dataBuffer+fullSize,compressedData.constData(),compressedData.size());
-                        QByteArray tempBuffer(dataBuffer,fullSize+compressedData.size());
                         return fullSize+compressedData.size();
                     }
                     else

@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../ClientVariable.h"
+#include "../interface/DatapackClientLoader.h"
 #include "../LanguagesSelect.h"
 
 QString MapVisualiserThread::text_blockedtext=QLatin1Literal("blockedtext");
@@ -160,6 +161,18 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     tempMapObject->logicalMap.border.top.map                        = NULL;
     tempMapObject->logicalMap.border.right.map                      = NULL;
     tempMapObject->logicalMap.border.left.map                       = NULL;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!DatapackClientLoader::datapackLoader.fullMapPathToId.contains(resolvedFileName))
+    {
+        mLastError=QStringLiteral("Map id unresolved %1").arg(resolvedFileName);
+        const QStringList &mapList=DatapackClientLoader::datapackLoader.fullMapPathToId.keys();
+        qDebug() << QStringLiteral("Map id unresolved %1 into %2").arg(resolvedFileName).arg(mapList.join(";"));
+        delete tempMapObject->tiledMap;
+        delete tempMapObject;
+        return NULL;
+    }
+    #endif
+    tempMapObject->logicalMap.id                                    = DatapackClientLoader::datapackLoader.fullMapPathToId.value(resolvedFileName);
 
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {
