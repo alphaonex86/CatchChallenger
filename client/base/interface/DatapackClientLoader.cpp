@@ -764,6 +764,14 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
     maps.sort();
+    const QString &basePath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP);
+    index=0;
+    while(index<maps.size())
+    {
+        mapToId[maps.at(index)]=index;
+        fullMapPathToId[QFileInfo(basePath+maps.at(index)).absoluteFilePath()]=index;
+        index++;
+    }
 
     qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(maps.size());
 }
@@ -779,6 +787,8 @@ void DatapackClientLoader::resetAll()
 {
     CatchChallenger::CommonDatapack::commonDatapack.unload();
     language.clear();
+    mapToId.clear();
+    fullMapPathToId.clear();
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknow-object.png"));
     datapackPath.clear();

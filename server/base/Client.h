@@ -77,6 +77,7 @@ public:
     static const unsigned char protocolHeaderToMatch[5];
 protected:
     QByteArray rawPseudo;
+    bool character_loaded;
 
     struct AddCharacterParam
     {
@@ -114,7 +115,6 @@ private:
     ConnectedSocket *socket;
     quint32 account_id;//0 if not logged
     quint8 number_of_character;
-    bool character_loaded;
     quint32 character_id;
     quint64 market_cash;
     bool isConnected;
@@ -145,13 +145,16 @@ private:
     bool have_send_protocol;
     bool is_logging_in_progess;
     bool stopIt;
-    QList<int> movePacketKick;
+    int movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    quint8 movePacketKickSize;
     int movePacketKickTotalCache;
     int movePacketKickNewValue;
-    QList<int> chatPacketKick;
+    int chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    quint8 chatPacketKickSize;
     int chatPacketKickTotalCache;
     int chatPacketKickNewValue;
-    QList<int> otherPacketKick;
+    int otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    quint8 otherPacketKickSize;
     int otherPacketKickTotalCache;
     int otherPacketKickNewValue;
     QList<PlayerOnMap> lastTeleportation;
@@ -309,17 +312,12 @@ private:
 
     //chat
     void sendLocalChatText(const QString &text);
-    //map move
-    bool singleMove(const Direction &direction);
-    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     //seed
     void seedValidated();
     void plantSeed(const quint8 &query_id,const quint8 &plant_id);
     void collectPlant(const quint8 &query_id);
 
     void createMemoryClan();
-    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     Direction lookToMove(const Direction &direction);
     //seed
     void useSeed(const quint8 &plant_id);
@@ -415,7 +413,6 @@ private:
     void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
 
-    void extraStop();
     static QString directionToStringToSave(const Direction &direction);
     static QString orientationToStringToSave(const Orientation &orientation);
     //quest
@@ -639,6 +636,12 @@ protected:
     //input/ouput layer
     void errorParsingLayer(const QString &error);
     void messageParsingLayer(const QString &message) const;
+    //map move
+    virtual bool singleMove(const Direction &direction);
+    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    virtual void extraStop() = 0;
 };
 }
 

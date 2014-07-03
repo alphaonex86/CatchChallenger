@@ -26,6 +26,7 @@ class Api_protocol : public QObject, public ProtocolParsingInputOutput, public M
 public:
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
+    void disconnectClient();
 
     //protocol command
     bool tryLogin(const QString &login,const QString &pass);
@@ -43,6 +44,9 @@ public:
 
     //to reset all
     void resetAll();
+
+    bool getIsLogged() const;
+    bool getCaracterSelected() const;
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;

@@ -158,7 +158,7 @@
                     </property>
                     <property name="styleSheet">
                      <string notr="true">background-image: url(:/images/light-white.png);
-border-image: url(:/images/empty.png);</string>
+border-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
                     </property>
                    </widget>
                   </item>
@@ -202,7 +202,7 @@ border-image: url(:/images/empty.png);</string>
                     </property>
                     <property name="styleSheet">
                      <string notr="true">background-image: url(:/images/light-white.png);
-border-image: url(:/images/empty.png);</string>
+border-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
                     </property>
                     <property name="echoMode">
                      <enum>QLineEdit::Password</enum>
@@ -361,7 +361,8 @@ padding: 0 5px;</string>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(220, 220, 240);
 border: 1px solid rgb(100, 150, 240);
-border-radius:5px;</string>
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
           </property>
           <property name="text">
            <string/>
@@ -376,7 +377,8 @@ border-radius:5px;</string>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(255, 255, 163);
 border: 1px solid rgb(255, 221, 50);
-border-radius:5px;</string>
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
           </property>
           <property name="openExternalLinks">
            <bool>true</bool>
