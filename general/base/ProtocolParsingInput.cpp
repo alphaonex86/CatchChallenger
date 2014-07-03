@@ -1072,6 +1072,7 @@ void ProtocolParsingInputOutput::dataClear()
 
 void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
     {
         DebugClass::debugConsole(
@@ -1082,6 +1083,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
         return;
     }
     queryReceived << queryNumber;
+    #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
     {
@@ -1172,6 +1174,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
 
 void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
     {
         errorParsingLayer(
@@ -1182,6 +1185,7 @@ QStringLiteral(" storeInputQuery(%1,%2,%3) query with same id previously say").a
         return;
     }
     queryReceived << queryNumber;
+    #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
     {

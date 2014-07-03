@@ -189,7 +189,9 @@ public:
     void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
     //no control to be more fast
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     bool removeFromQueryReceived(const quint8 &queryNumber);
+    #endif
     bool internalSendRawSmallPacket(const char *data,const int &size);
     virtual void disconnectClient() = 0;
 };

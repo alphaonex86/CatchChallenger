@@ -609,7 +609,9 @@ void Client::selectClan_return()
 void Client::loginIsWrong(const quint8 &query_id, const quint8 &returnCode, const QString &debugMessage)
 {
     //network send
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
+    #endif
     *(Client::loginIsWrongBuffer+1)=query_id;
     *(Client::loginIsWrongBuffer+3)=returnCode;
     internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));

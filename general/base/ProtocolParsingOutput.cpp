@@ -1440,10 +1440,12 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
     }
 }
 
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
 bool ProtocolParsingInputOutput::removeFromQueryReceived(const quint8 &queryNumber)
 {
     return queryReceived.remove(queryNumber);
 }
+#endif
 
 int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size)
 {
@@ -1458,8 +1460,8 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 
         return 0;
     }
     else
-    #endif
         queryReceived.remove(queryNumber);
+    #endif
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
