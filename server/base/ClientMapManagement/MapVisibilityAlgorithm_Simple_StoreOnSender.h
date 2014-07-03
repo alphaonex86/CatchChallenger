@@ -12,7 +12,7 @@ class MapVisibilityAlgorithm_Simple_StoreOnSender : public Client
 {
 public:
     explicit MapVisibilityAlgorithm_Simple_StoreOnSender(ConnectedSocket *socket);
-    virtual ~MapVisibilityAlgorithm_Simple_StoreOnSender();
+    ~MapVisibilityAlgorithm_Simple_StoreOnSender();
     void reinsertAllClient();
     //drop all clients
     void dropAllClients();

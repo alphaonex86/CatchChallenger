@@ -156,8 +156,8 @@ void ProtocolParsing::initialiseTheVariable()
     compressionType=CompressionType_Zlib;
 
     //def query without the sub code
-    mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xD1 << 0xD2;
-    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41 << 0x61 << 0x03 << 0x04;
+    mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
+    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x43 << 0x41 << 0x61 << 0x03 << 0x04;
 
     //define the size of direct query
     {

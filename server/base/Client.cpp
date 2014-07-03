@@ -16,10 +16,10 @@ Client::Client(ConnectedSocket *socket) :
         ,PacketModeTransmission_Server
         #endif
         ),
+    character_loaded(false),
     socket(socket),
     account_id(0),
     number_of_character(0),
-    character_loaded(false),
     character_id(0),
     market_cash(0),
     isConnected(true),
@@ -50,13 +50,16 @@ Client::Client(ConnectedSocket *socket) :
 {
     public_and_private_informations.repel_step=0;
     {
-        //int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
-        int index=0;
+        /* \warning don't work!
+        memset(movePacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
+        memset(chatPacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
+        memset(otherPacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);*/
+        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
         {
-            movePacketKick << 0;
-            chatPacketKick << 0;
-            otherPacketKick << 0;
+            movePacketKick[index]=0;
+            chatPacketKick[index]=0;
+            otherPacketKick[index]=0;
             index++;
         }
     }
@@ -74,7 +77,6 @@ Client::Client(ConnectedSocket *socket) :
 //need be call after isReadyToDelete() emited
 Client::~Client()
 {
-    disconnectClient();
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif
@@ -103,7 +105,6 @@ void Client::connectionError(QAbstractSocket::SocketError error)
     }
 }
 
-
 /// \warning called in one other thread!!!
 void Client::disconnectClient()
 {
@@ -126,6 +127,7 @@ void Client::disconnectClient()
     {
         if(map!=NULL)
             removeClientOnMap(map,true);
+        extraStop();
         tradeCanceled();
         battleCanceled();
         removeFromClan();

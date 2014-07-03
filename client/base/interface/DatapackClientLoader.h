@@ -119,6 +119,8 @@ public:
     QHash<QString,VisualCategory> visualCategories;
     QString language;
     QStringList maps,skins;
+    QHash<QString,quint32> mapToId;
+    QHash<QString,quint32> fullMapPathToId;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();
