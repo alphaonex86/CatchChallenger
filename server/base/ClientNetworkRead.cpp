@@ -162,7 +162,9 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
     switch(mainCodeType)
     {
         case 0x03:
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             removeFromQueryReceived(queryNumber);
+            #endif
             if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
             {
                 *(Client::protocolReplyServerFull+1)=queryNumber;
@@ -211,7 +213,9 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
             }
             if(is_logging_in_progess)
             {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
+                #endif
                 *(Client::loginInProgressBuffer+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
                 errorOutput("Loggin already in progress");
