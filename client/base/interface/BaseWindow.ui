@@ -29,6 +29,9 @@
    <iconset resource="../resources/client-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <property name="spacing">
     <number>0</number>
@@ -50,7 +53,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -285,6 +288,7 @@ background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 r
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
 padding:5px;
+color: rgb(0, 0, 0);
 }</string>
              </property>
             </widget>
@@ -378,7 +382,7 @@ border-radius: 5px;
                    </size>
                   </property>
                   <property name="styleSheet">
-                   <string notr="true">padding-left:22px;</string>
+                   <string notr="true">padding-left:22px;color: rgb(0, 0, 0);</string>
                   </property>
                  </widget>
                 </item>
@@ -440,6 +444,9 @@ border-image: url(:/images/empty.png);
               </item>
               <item>
                <widget class="QLabel" name="IG_dialog_text">
+                <property name="styleSheet">
+                 <string notr="true">color: rgb(0, 0, 0);</string>
+                </property>
                 <property name="textFormat">
                  <enum>Qt::RichText</enum>
                 </property>
@@ -514,6 +521,7 @@ border-image: url(:/images/empty.png);
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
 padding:5px;
+color: rgb(0, 0, 0);
 }</string>
              </property>
             </widget>
@@ -555,6 +563,7 @@ padding:5px;
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
 padding:5px;
+color: rgb(0, 0, 0);
 }</string>
              </property>
             </widget>
@@ -915,7 +924,8 @@ background-image: url(:/images/empty.png);</string>
                 <widget class="QLabel" name="label_interface_number_of_player">
                  <property name="styleSheet">
                   <string notr="true">border: 0px;
-background-image: url(:/images/empty.png);</string>
+background-image: url(:/images/empty.png);
+color: rgb(0, 0, 0);</string>
                  </property>
                  <property name="text">
                   <string notr="true">?/?</string>
@@ -979,7 +989,7 @@ border-radius: 5px;
 }</string>
              </property>
              <property name="currentIndex">
-              <number>0</number>
+              <number>4</number>
              </property>
              <widget class="QWidget" name="tabWidgetTrainerCardPage1">
               <property name="styleSheet">
@@ -1012,6 +1022,9 @@ border-radius: 5px;
                    <width>415</width>
                    <height>174</height>
                   </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">color: rgb(0, 0, 0);</string>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
                   <item>
@@ -1260,6 +1273,9 @@ border-radius: 5px;
               <layout class="QHBoxLayout" name="horizontalLayout_29">
                <item>
                 <widget class="QLabel" name="labelReputation">
+                 <property name="styleSheet">
+                  <string notr="true">color: rgb(0, 0, 0);</string>
+                 </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                  </property>
@@ -1287,7 +1303,7 @@ border-radius: 5px;
                  <item>
                   <widget class="QTextBrowser" name="questDetails">
                    <property name="styleSheet">
-                    <string notr="true">background-image: url(:/images/empty.png);</string>
+                    <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::NoFrame</enum>
@@ -1343,7 +1359,7 @@ border-radius: 5px;
                <item>
                 <widget class="QTextBrowser" name="finishedQuests">
                  <property name="styleSheet">
-                  <string notr="true">background-image: url(:/images/empty.png);</string>
+                  <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::NoFrame</enum>
@@ -1400,13 +1416,20 @@ border-radius: 5px;
                     </item>
                     <item>
                      <widget class="QLabel" name="label_4">
+                      <property name="styleSheet">
+                       <string notr="true">color: rgb(0, 0, 0);</string>
+                      </property>
                       <property name="text">
                        <string>Name:</string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QLabel" name="clanName"/>
+                     <widget class="QLabel" name="clanName">
+                      <property name="styleSheet">
+                       <string notr="true">color: rgb(0, 0, 0);</string>
+                      </property>
+                     </widget>
                     </item>
                     <item>
                      <spacer name="horizontalSpacer_45">
@@ -1724,7 +1747,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Inventory</string>
@@ -1755,6 +1778,9 @@ border-image: url(:/images/empty.png);
               <height>51</height>
              </rect>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
+            </property>
             <property name="text">
              <string>Select an object</string>
             </property>
@@ -1775,7 +1801,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -1841,6 +1867,9 @@ border-image: url(:/images/empty.png);
               <weight>75</weight>
               <bold>true</bold>
              </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
            </widget>
            <widget class="QFrame" name="frame_3">
@@ -1991,7 +2020,8 @@ padding-bottom:3px;
        </widget>
        <widget class="QWidget" name="page_options">
         <property name="styleSheet">
-         <string notr="true">#page_options{background-image: url(:/images/background.jpg);}</string>
+         <string notr="true">#page_options{background-image: url(:/images/background.jpg);}
+</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_13">
          <item>
@@ -1999,7 +2029,7 @@ padding-bottom:3px;
            <item row="0" column="0">
             <widget class="QGroupBox" name="groupBox_Options_Displayer">
              <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);</string>
+              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
              </property>
              <property name="title">
               <string>Display</string>
@@ -2081,7 +2111,7 @@ padding-bottom:3px;
            <item row="0" column="1">
             <widget class="QGroupBox" name="groupBox_Options_Multiplayer">
              <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);</string>
+              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
              </property>
              <property name="title">
               <string>Multiplayer</string>
@@ -2135,7 +2165,7 @@ padding-bottom:3px;
            <item row="1" column="0">
             <widget class="QGroupBox" name="groupBox">
              <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);</string>
+              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
              </property>
              <property name="title">
               <string>Sound</string>
@@ -2227,7 +2257,7 @@ padding-bottom:3px;
            <item row="1" column="1">
             <widget class="QGroupBox" name="groupBox_2">
              <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);</string>
+              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
              </property>
              <property name="title">
               <string>Informations</string>
@@ -2439,6 +2469,10 @@ border-image: url(:/images/empty.png);
             <bold>false</bold>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">
+color: rgb(0, 0, 0);</string>
+          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
           </property>
@@ -2463,6 +2497,9 @@ border-image: url(:/images/empty.png);
             <width>300</width>
             <height>150</height>
            </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(0, 0, 0);</string>
           </property>
           <property name="wordWrap">
            <bool>true</bool>
@@ -2675,6 +2712,9 @@ padding-bottom:3px;
             <height>21</height>
            </rect>
           </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(0, 0, 0);</string>
+          </property>
          </widget>
         </widget>
         <widget class="QFrame" name="framePlantsRight">
@@ -2715,6 +2755,9 @@ padding-bottom:3px;
             <pointsize>13</pointsize>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(0, 0, 0);</string>
+          </property>
           <property name="text">
            <string>Plants</string>
           </property>
@@ -2732,7 +2775,7 @@ padding-bottom:3px;
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-image: url(:/images/empty.png);</string>
+           <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -2842,6 +2885,9 @@ border-image: url(:/images/empty.png);
             <height>91</height>
            </rect>
           </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(0, 0, 0);</string>
+          </property>
           <property name="textFormat">
            <enum>Qt::RichText</enum>
           </property>
@@ -2858,6 +2904,9 @@ border-image: url(:/images/empty.png);
             <height>16</height>
            </rect>
           </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(0, 0, 0);</string>
+          </property>
           <property name="text">
            <string>Material(s):</string>
           </property>
@@ -2872,7 +2921,8 @@ border-image: url(:/images/empty.png);
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-image: url(:/images/empty.png);</string>
+           <string notr="true">background-image: url(:/images/empty.png);
+color: rgb(0, 0, 0);</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -2967,7 +3017,8 @@ padding-bottom:3px;
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-image: url(:/images/empty.png);</string>
+           <string notr="true">background-image: url(:/images/empty.png);
+color: rgb(0, 0, 0);</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -2995,6 +3046,9 @@ padding-bottom:3px;
            <font>
             <pointsize>13</pointsize>
            </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(0, 0, 0);</string>
           </property>
           <property name="text">
            <string>Crafting</string>
@@ -3089,7 +3143,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Shop</string>
@@ -3119,6 +3173,9 @@ border-image: url(:/images/empty.png);
               <width>611</width>
               <height>61</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Select an object</string>
@@ -3154,6 +3211,9 @@ border-image: url(:/images/empty.png);
               <width>521</width>
               <height>16</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string/>
@@ -3203,7 +3263,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -3606,6 +3666,9 @@ padding:6px 14px 6px 6px;
             <layout class="QHBoxLayout" name="horizontalLayout_25">
              <item>
               <widget class="QLabel" name="labelFightTopName">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string notr="true">Name</string>
                </property>
@@ -3672,6 +3735,9 @@ padding:6px 14px 6px 6px;
              </item>
              <item>
               <widget class="QLabel" name="labelFightTopLevel">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string notr="true">Level 100</string>
                </property>
@@ -3683,6 +3749,9 @@ padding:6px 14px 6px 6px;
             <layout class="QHBoxLayout" name="horizontalLayout_24">
              <item>
               <widget class="QLabel" name="label_18">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string>HP</string>
                </property>
@@ -3757,6 +3826,9 @@ padding:6px 6px 6px 14px;
             <layout class="QHBoxLayout" name="horizontalLayout_28">
              <item>
               <widget class="QLabel" name="labelFightBottomName">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string notr="true">Name</string>
                </property>
@@ -3823,6 +3895,9 @@ padding:6px 6px 6px 14px;
              </item>
              <item>
               <widget class="QLabel" name="labelFightBottomLevel">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string notr="true">Level 100</string>
                </property>
@@ -3834,6 +3909,9 @@ padding:6px 6px 6px 14px;
             <layout class="QHBoxLayout" name="horizontalLayout_27">
              <item>
               <widget class="QLabel" name="label_21">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string>HP</string>
                </property>
@@ -3860,6 +3938,9 @@ padding:6px 6px 6px 14px;
              </item>
              <item>
               <widget class="QLabel" name="labelFightBottomHP">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string notr="true">?/?</string>
                </property>
@@ -3871,6 +3952,9 @@ padding:6px 6px 6px 14px;
             <layout class="QHBoxLayout" name="horizontalLayout_26">
              <item>
               <widget class="QLabel" name="label_23">
+               <property name="styleSheet">
+                <string notr="true">color: rgb(0, 0, 0);</string>
+               </property>
                <property name="text">
                 <string>Exp</string>
                </property>
@@ -4493,7 +4577,8 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);
+color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Learn</string>
@@ -4510,6 +4595,9 @@ border-image: url(:/images/empty.png);
               <width>661</width>
               <height>81</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Select attack to learn</string>
@@ -4598,7 +4686,7 @@ padding-bottom:3px;
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -4612,6 +4700,9 @@ padding-bottom:3px;
               <width>57</width>
               <height>14</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Sp: %1</string>
@@ -4681,6 +4772,9 @@ padding-bottom:3px;
           <layout class="QHBoxLayout" name="horizontalLayout_38">
            <item>
             <widget class="QLabel" name="warehousePlayerPseudo">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
              <property name="text">
               <string notr="true">Pseudo</string>
              </property>
@@ -4691,6 +4785,9 @@ padding-bottom:3px;
            </item>
            <item>
             <widget class="QLabel" name="warehouseBotPseudo">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
              <property name="text">
               <string>Warehouse</string>
              </property>
@@ -4728,6 +4825,9 @@ padding-bottom:3px;
            </item>
            <item>
             <widget class="QLabel" name="warehousePlayerCash">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
              <property name="text">
               <string>Cash: 0</string>
              </property>
@@ -4799,6 +4899,9 @@ padding-bottom:3px;
            </item>
            <item>
             <widget class="QLabel" name="warehousePlayerStoredCash">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
              <property name="text">
               <string>Cash: 0</string>
              </property>
@@ -5154,6 +5257,9 @@ border-image: url(:/images/empty.png);
            </item>
            <item>
             <widget class="QLabel" name="zonecaptureWaitText">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
              <property name="text">
               <string>You are waiting to capture %1</string>
              </property>
@@ -5161,6 +5267,9 @@ border-image: url(:/images/empty.png);
            </item>
            <item>
             <widget class="QLabel" name="zonecaptureWaitTime">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
              <property name="text">
               <string>Remaining time: %1</string>
              </property>
@@ -5260,7 +5369,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Resources</string>
@@ -5296,7 +5405,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Products</string>
@@ -5461,7 +5570,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -5489,7 +5598,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -5516,6 +5625,9 @@ border-image: url(:/images/empty.png);
               <height>20</height>
              </rect>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
+            </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
@@ -5528,6 +5640,9 @@ border-image: url(:/images/empty.png);
               <width>111</width>
               <height>171</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
@@ -5637,7 +5752,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Name</string>
@@ -5659,6 +5774,9 @@ border-image: url(:/images/empty.png);
              <font>
               <pointsize>16</pointsize>
              </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Level: 100</string>
@@ -5702,7 +5820,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -5717,6 +5835,9 @@ border-image: url(:/images/empty.png);
               <height>16</height>
              </rect>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
+            </property>
             <property name="text">
              <string notr="true">Heal: 22/26</string>
             </property>
@@ -5729,6 +5850,9 @@ border-image: url(:/images/empty.png);
               <width>171</width>
               <height>16</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Attack: 12</string>
@@ -5743,6 +5867,9 @@ border-image: url(:/images/empty.png);
               <height>16</height>
              </rect>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
+            </property>
             <property name="text">
              <string notr="true">Special attack: 12</string>
             </property>
@@ -5755,6 +5882,9 @@ border-image: url(:/images/empty.png);
               <width>131</width>
               <height>16</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Speed: 23</string>
@@ -5769,6 +5899,9 @@ border-image: url(:/images/empty.png);
               <height>16</height>
              </rect>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
+            </property>
             <property name="text">
              <string notr="true">Defense: 13</string>
             </property>
@@ -5781,6 +5914,9 @@ border-image: url(:/images/empty.png);
               <width>201</width>
               <height>16</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Special defense: 15</string>
@@ -5795,6 +5931,9 @@ border-image: url(:/images/empty.png);
               <height>16</height>
              </rect>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
+            </property>
             <property name="text">
              <string notr="true">Experience point: </string>
             </property>
@@ -5807,6 +5946,9 @@ border-image: url(:/images/empty.png);
               <width>211</width>
               <height>16</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Skill point: 54</string>
@@ -5877,6 +6019,9 @@ border-image: url(:/images/empty.png);
               <height>81</height>
              </rect>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
+            </property>
             <property name="text">
              <string notr="true">Type: </string>
             </property>
@@ -5892,6 +6037,9 @@ border-image: url(:/images/empty.png);
               <width>551</width>
               <height>33</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
@@ -5919,7 +6067,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -5993,7 +6141,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Object</string>
@@ -6029,7 +6177,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Monster</string>
@@ -6065,7 +6213,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);</string>
+             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Own</string>
@@ -6134,7 +6282,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6153,7 +6301,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6172,7 +6320,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6191,7 +6339,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);</string>
+             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="iconSize">
              <size>

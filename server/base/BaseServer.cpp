@@ -75,6 +75,7 @@ BaseServer::BaseServer() :
 
     ProtocolParsing::compressionType                                = ProtocolParsing::CompressionType_Zlib;
 
+    GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=0;
     GlobalServerData::serverPrivateVariables.connected_players      = 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -141,6 +142,8 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
     GlobalServerData::serverSettings.city.capture.minute                        = 0;
+    GlobalServerData::serverPrivateVariables.flat_map_list                      = NULL;
+
 
     initAll();
 
@@ -153,6 +156,11 @@ BaseServer::~BaseServer()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
     closeDB();
+    if(GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
+    {
+        delete GlobalServerData::serverPrivateVariables.flat_map_list;
+        GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
+    }
 }
 
 void BaseServer::closeDB()
@@ -1043,6 +1051,7 @@ void BaseServer::preload_the_map()
     QString tmxRemove(".tmx");
     QRegularExpression mapFilter(QLatin1String("\\.tmx$"));
     QRegularExpression mapExclude(QLatin1String("[\"']"));
+    QList<CommonMap *> flat_map_list_temp;
     while(index<size)
     {
         QString fileName=returnList.at(index);
@@ -1060,17 +1069,17 @@ void BaseServer::preload_the_map()
                 switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithmSelection_Simple:
-                        GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_Simple_StoreOnSender;
+                        flat_map_list_temp << new Map_server_MapVisibility_Simple_StoreOnSender;
                     break;
                     case MapVisibilityAlgorithmSelection_WithBorder:
-                        GlobalServerData::serverPrivateVariables.flat_map_list << new Map_server_MapVisibility_WithBorder_StoreOnSender;
+                        flat_map_list_temp << new Map_server_MapVisibility_WithBorder_StoreOnSender;
                     break;
                     case MapVisibilityAlgorithmSelection_None:
                     default:
-                        GlobalServerData::serverPrivateVariables.flat_map_list << new MapServer;
+                        flat_map_list_temp << new MapServer;
                     break;
                 }
-                GlobalServerData::serverPrivateVariables.map_list[sortFileName]=GlobalServerData::serverPrivateVariables.flat_map_list.last();
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]=flat_map_list_temp.last();
 
                 GlobalServerData::serverPrivateVariables.map_list[sortFileName]->width			= map_temp.map_to_send.width;
                 GlobalServerData::serverPrivateVariables.map_list[sortFileName]->height			= map_temp.map_to_send.height;
@@ -1127,6 +1136,16 @@ void BaseServer::preload_the_map()
         }
         index++;
     }
+    {
+        GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*flat_map_list_temp.size()));
+        int index=0;
+        while(index<flat_map_list_temp.size())
+        {
+            GlobalServerData::serverPrivateVariables.flat_map_list[index]=flat_map_list_temp.at(index);
+            index++;
+        }
+    }
+
     map_name_to_do_id.sort();
 
     //resolv the border map name into their pointer
@@ -2044,7 +2063,11 @@ void BaseServer::unload_the_map()
         i++;
     }
     GlobalServerData::serverPrivateVariables.map_list.clear();
-    GlobalServerData::serverPrivateVariables.flat_map_list.clear();
+    if(GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
+    {
+        delete GlobalServerData::serverPrivateVariables.flat_map_list;
+        GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
+    }
     botIdLoaded.clear();
 }
 

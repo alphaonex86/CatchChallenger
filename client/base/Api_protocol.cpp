@@ -42,6 +42,14 @@ Api_protocol::~Api_protocol()
 {
 }
 
+void Api_protocol::disconnectClient()
+{
+    if(socket!=NULL)
+        socket->disconnect();
+    is_logged=false;
+    character_selected=false;
+}
+
 void Api_protocol::socketDestroyed()
 {
     socket=NULL;
@@ -682,6 +690,88 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 
         }
         break;
+        //chat as input
+        case 0xCA:
+        {
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                return;
+            }
+            quint8 chat_type_int;
+            in >> chat_type_int;
+            if(chat_type_int<1 || chat_type_int>8)
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong chat type with main ident: %1, chat_type_int: %2, line: %3").arg(mainCodeType).arg(chat_type_int).arg(__LINE__));
+                return;
+            }
+            Chat_type chat_type=(Chat_type)chat_type_int;
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                return;
+            }
+            quint8 textSize;
+            in >> textSize;
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, pseudoSize: %2, data: %3, line: %4")
+                              .arg(mainCodeType)
+                              .arg(textSize)
+                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                              .arg(__LINE__)
+                              );
+                return;
+            }
+            QByteArray rawText=data.mid(in.device()->pos(),textSize);
+            const QString &text=QString::fromUtf8(rawText.data(),rawText.size());
+            in.device()->seek(in.device()->pos()+rawText.size());
+            if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
+                new_system_text(chat_type,text);
+            else
+            {
+                quint8 pseudoSize;
+                in >> pseudoSize;
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, pseudoSize: %2, data: %3, line: %4")
+                                  .arg(mainCodeType)
+                                  .arg(pseudoSize)
+                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                  .arg(__LINE__)
+                                  );
+                    return;
+                }
+                QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                in.device()->seek(in.device()->pos()+rawText.size());
+                if(pseudo.isEmpty())
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, rawText.data(): %2, rawText.size(): %3, line: %4")
+                                  .arg(mainCodeType)
+                                  .arg(QString(rawText.toHex()))
+                                  .arg(rawText.size())
+                                  .arg(__LINE__)
+                                  );
+                    return;
+                }
+                quint8 player_type_int;
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                    return;
+                }
+                in >> player_type_int;
+                Player_type player_type=(Player_type)player_type_int;
+                if(player_type!=Player_type_normal && player_type!=Player_type_premium && player_type!=Player_type_gm && player_type!=Player_type_dev)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong player type with main ident: %1, player_type_int: %2, line: %3").arg(mainCodeType).arg(player_type_int).arg(__LINE__));
+                    return;
+                }
+                new_chat_text(chat_type,text,pseudo,player_type);
+            }
+        }
+        break;
         //Insert plant on map
         case 0xD1:
         {
@@ -920,77 +1010,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         index++;
                     }
                     return;//no remaining data, because all remaing is used as file data
-                }
-                break;
-                //chat as input
-                case 0x0005:
-                {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    quint8 chat_type_int;
-                    in >> chat_type_int;
-                    if(chat_type_int<1 || chat_type_int>8)
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong chat type with main ident: %1, subCodeType: %2, chat_type_int: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(chat_type_int).arg(__LINE__));
-                        return;
-                    }
-                    Chat_type chat_type=(Chat_type)chat_type_int;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    QString text;
-                    in >> text;
-                    if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
-                        new_system_text(chat_type,text);
-                    else
-                    {
-                        quint8 pseudoSize;
-                        in >> pseudoSize;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                          .arg(mainCodeType)
-                                          .arg(subCodeType)
-                                          .arg(pseudoSize)
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                          .arg(__LINE__)
-                                          );
-                            return;
-                        }
-                        QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
-                        QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                        in.device()->seek(in.device()->pos()+rawText.size());
-                        if(pseudo.isEmpty())
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
-                                          .arg(mainCodeType)
-                                          .arg(subCodeType)
-                                          .arg(QString(rawText.toHex()))
-                                          .arg(rawText.size())
-                                          .arg(__LINE__)
-                                          );
-                            return;
-                        }
-                        quint8 player_type_int;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                            return;
-                        }
-                        in >> player_type_int;
-                        Player_type player_type=(Player_type)player_type_int;
-                        if(player_type!=Player_type_normal && player_type!=Player_type_premium && player_type!=Player_type_gm && player_type!=Player_type_dev)
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong player type with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(player_type_int).arg(__LINE__));
-                            return;
-                        }
-                        new_chat_text(chat_type,text,pseudo,player_type);
-                    }
                 }
                 break;
                 //kicked/ban and reason
@@ -3014,13 +3033,13 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         }
 
                         //monsters
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster list size, line: %1").arg(__LINE__));
                             return;
                         }
                         quint8 gender;
-                        quint32 monster_list_size;
+                        quint8 monster_list_size;
                         in >> monster_list_size;
                         index=0;
                         quint32 sub_size,sub_index;
@@ -3155,7 +3174,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             index++;
                         }
                         //monsters
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster list size, line: %1").arg(__LINE__));
                             return;
@@ -4367,6 +4386,16 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
 
 void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &direction)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     quint8 directionInt=static_cast<quint8>(direction);
     if(directionInt<1 || directionInt>8)
     {
@@ -4378,16 +4407,36 @@ void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &di
     out.setVersion(QDataStream::Qt_4_4);
     out << moved_unit;
     out << directionInt;
-    packOutcommingData(0x40,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x40,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::send_player_direction(const Direction &the_direction)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     newDirection(the_direction);
 }
 
 void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_aliance && chatType!=Chat_type_system && chatType!=Chat_type_system_important)
     {
         DebugClass::debugConsole("chatType wrong: "+QString::number(chatType));
@@ -4397,131 +4446,276 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)chatType;
-    out << text;
-    packFullOutcommingData(0x42,0x0003,outputData.constData(),outputData.size());
+    {
+        const QByteArray &tempText=text.toUtf8();
+        if(tempText.size()>255)
+        {
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            return;
+        }
+        out << (quint8)tempText.size();
+        outputData+=tempText;
+        out.device()->seek(out.device()->pos()+tempText.size());
+    }
+    is_logged=character_selected=packOutcommingData(0x43,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sendPM(const QString &text,const QString &pseudo)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(this->player_informations.public_informations.pseudo==pseudo)
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)Chat_type_pm;
-    out << text;
-    out << pseudo;
-    packFullOutcommingData(0x42,0x003,outputData.constData(),outputData.size());
+    {
+        const QByteArray &tempText=text.toUtf8();
+        if(tempText.size()>255)
+        {
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            return;
+        }
+        out << (quint8)tempText.size();
+        outputData+=tempText;
+        out.device()->seek(out.device()->pos()+tempText.size());
+    }
+    {
+        const QByteArray &tempText=pseudo.toUtf8();
+        if(tempText.size()>255)
+        {
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            return;
+        }
+        out << (quint8)tempText.size();
+        outputData+=tempText;
+        out.device()->seek(out.device()->pos()+tempText.size());
+    }
+    is_logged=character_selected=packOutcommingData(0x43,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::teleportDone()
 {
-    postReplyData(teleportList.first(),NULL,0);
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
+    is_logged=character_selected=postReplyData(teleportList.first(),NULL,0);
     teleportList.removeFirst();
 }
 
 bool Api_protocol::addCharacter(const quint8 &profileIndex, const QString &pseudo, const QString &skin)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return false;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)profileIndex;
     out << pseudo;
     out << skin;
-    packFullOutcommingQuery(0x02,0x0003,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=packFullOutcommingQuery(0x02,0x0003,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
 bool Api_protocol::removeCharacter(const quint32 &characterId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return false;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << characterId;
-    packFullOutcommingQuery(0x02,0x0004,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=packFullOutcommingQuery(0x02,0x0004,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
 bool Api_protocol::selectCharacter(const quint32 &characterId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return false;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << characterId;
-    packFullOutcommingQuery(0x02,0x0005,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=packFullOutcommingQuery(0x02,0x0005,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
 void Api_protocol::useSeed(const quint8 &plant_id)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     outputData[0]=plant_id;
-    packFullOutcommingQuery(0x10,0x0006,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0006,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::monsterMoveUp(const quint8 &number)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << number;
-    packFullOutcommingData(0x60,0x0008,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x60,0x0008,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::confirmEvolution(const quint32 &monterId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)monterId;
-    packFullOutcommingData(0x60,0x000A,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x60,0x000A,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::monsterMoveDown(const quint8 &number)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
     out << number;
-    packFullOutcommingData(0x60,0x0008,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x60,0x0008,outputData.constData(),outputData.size());
 }
 
 //inventory
 void Api_protocol::destroyObject(const quint32 &object, const quint32 &quantity)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << object;
     out << quantity;
-    packFullOutcommingData(0x50,0x0002,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x50,0x0002,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::useObject(const quint32 &object)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << object;
-    packFullOutcommingQuery(0x10,0x0009,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0009,queryNumber(),outputData.constData(),outputData.size());
     lastObjectUsed << object;
 }
 
 void Api_protocol::useObjectOnMonster(const quint32 &object,const quint32 &monster)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << object;
     out << monster;
-    packFullOutcommingData(0x60,0x000B,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x60,0x000B,outputData.constData(),outputData.size());
 }
 
 
 void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4551,20 +4745,40 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,
         index++;
     }
 
-    packFullOutcommingData(0x50,0x0006,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x50,0x0006,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::getShopList(const quint32 &shopId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)shopId;
-    packFullOutcommingQuery(0x10,0x000A,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000A,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4572,11 +4786,21 @@ void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const
     out << (quint32)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
-    packFullOutcommingQuery(0x10,0x000B,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000B,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4584,20 +4808,40 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
     out << (quint32)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
-    packFullOutcommingQuery(0x10,0x000C,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000C,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::getFactoryList(const quint32 &factoryId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)factoryId;
-    packFullOutcommingQuery(0x10,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyFactoryProduct(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4605,11 +4849,21 @@ void Api_protocol::buyFactoryProduct(const quint32 &factoryId,const quint32 &obj
     out << (quint32)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
-    packFullOutcommingQuery(0x10,0x000E,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000E,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sellFactoryResource(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4617,142 +4871,302 @@ void Api_protocol::sellFactoryResource(const quint32 &factoryId,const quint32 &o
     out << (quint32)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
-    packFullOutcommingQuery(0x10,0x000F,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x000F,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::tryEscape()
 {
-    packFullOutcommingData(0x60,0x0002,NULL,0);
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
+    is_logged=character_selected=packFullOutcommingData(0x60,0x0002,NULL,0);
 }
 
 void Api_protocol::heal()
 {
-    packFullOutcommingData(0x60,0x0006,NULL,0);
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
+    is_logged=character_selected=packFullOutcommingData(0x60,0x0006,NULL,0);
 }
 
 void Api_protocol::requestFight(const quint32 &fightId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)fightId;
-    packFullOutcommingData(0x60,0x0007,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x60,0x0007,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::changeOfMonsterInFight(const quint32 &monsterId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)monsterId;
-    packFullOutcommingData(0x60,0x0009,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x60,0x0009,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::useSkill(const quint32 &skill)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)skill;
-    packOutcommingData(0x61,outputData.constData(),outputData.size());
+    is_logged=character_selected=packOutcommingData(0x61,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::learnSkill(const quint32 &monsterId,const quint32 &skill)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)monsterId;
     out << (quint32)skill;
-    packFullOutcommingData(0x60,0x0004,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x60,0x0004,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::startQuest(const quint32 &questId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    packFullOutcommingData(0x6a,0x0001,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x6a,0x0001,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::finishQuest(const quint32 &questId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    packFullOutcommingData(0x6a,0x0002,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x6a,0x0002,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::cancelQuest(const quint32 &questId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    packFullOutcommingData(0x6a,0x0003,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x6a,0x0003,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::nextQuestStep(const quint32 &questId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    packFullOutcommingData(0x6a,0x0004,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x6a,0x0004,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::createClan(const QString &name)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << name;
-    packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::leaveClan()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
-    packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::dissolveClan()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x03;
-    packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteClan(const QString &pseudo)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x04;
     out << pseudo;
-    packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::ejectClan(const QString &pseudo)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x05;
     out << pseudo;
-    packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteAccept(const bool &accept)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4760,11 +5174,21 @@ void Api_protocol::inviteAccept(const bool &accept)
         out << (quint8)0x01;
     else
         out << (quint8)0x02;
-    packFullOutcommingData(0x42,0x0004,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x42,0x0004,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::waitingForCityCapture(const bool &cancel)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4772,38 +5196,78 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
         out << (quint8)0x00;
     else
         out << (quint8)0x01;
-    packFullOutcommingData(0x6a,0x0005,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x6a,0x0005,outputData.constData(),outputData.size());
 }
 
 //market
 void Api_protocol::getMarketList()
 {
-    packFullOutcommingQuery(0x10,0x0010,queryNumber(),NULL,0);
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0010,queryNumber(),NULL,0);
 }
 
 void Api_protocol::buyMarketObject(const quint32 &marketObjectId, const quint32 &quantity)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << marketObjectId;
     out << quantity;
-    packFullOutcommingQuery(0x10,0x0011,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0011,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyMarketMonster(const quint32 &monsterId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
     out << monsterId;
-    packFullOutcommingQuery(0x10,0x0011,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0011,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4811,59 +5275,119 @@ void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quanti
     out << objectId;
     out << quantity;
     out << price;
-    packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &price)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
     out << monsterId;
     out << price;
-    packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::recoverMarketCash()
 {
-    packFullOutcommingQuery(0x10,0x0013,queryNumber(),NULL,0);
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0013,queryNumber(),NULL,0);
 }
 
 void Api_protocol::withdrawMarketObject(const quint32 &objectId,const quint32 &quantity)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << objectId;
     out << quantity;
-    packFullOutcommingQuery(0x10,0x0014,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0014,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::withdrawMarketMonster(const quint32 &monsterId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
     out << monsterId;
-    packFullOutcommingQuery(0x10,0x0014,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0014,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::collectMaturePlant()
 {
-    packFullOutcommingQuery(0x10,0x0007,queryNumber(),NULL,0);
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0007,queryNumber(),NULL,0);
 }
 
 //crafting
 void Api_protocol::useRecipe(const quint32 &recipeId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)recipeId;
-    packFullOutcommingQuery(0x10,0x0008,queryNumber(),outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingQuery(0x10,0x0008,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addRecipe(const quint32 &recipeId)
@@ -4873,6 +5397,16 @@ void Api_protocol::addRecipe(const quint32 &recipeId)
 
 void Api_protocol::battleRefused()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(battleRequestId.isEmpty())
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("no battle request to refuse"));
@@ -4882,12 +5416,22 @@ void Api_protocol::battleRefused()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
-    postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
+    is_logged=character_selected=postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
     battleRequestId.removeFirst();
 }
 
 void Api_protocol::battleAccepted()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(battleRequestId.isEmpty())
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("no battle request to accept"));
@@ -4897,13 +5441,23 @@ void Api_protocol::battleAccepted()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
-    postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
+    is_logged=character_selected=postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
     battleRequestId.removeFirst();
 }
 
 //trade
 void Api_protocol::tradeRefused()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(tradeRequestId.isEmpty())
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("no trade request to refuse"));
@@ -4913,12 +5467,22 @@ void Api_protocol::tradeRefused()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
-    postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
+    is_logged=character_selected=postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
     tradeRequestId.removeFirst();
 }
 
 void Api_protocol::tradeAccepted()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(tradeRequestId.isEmpty())
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("no trade request to accept"));
@@ -4928,34 +5492,64 @@ void Api_protocol::tradeAccepted()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
-    postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
+    is_logged=character_selected=postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
     tradeRequestId.removeFirst();
     isInTrade=true;
 }
 
 void Api_protocol::tradeCanceled()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(!isInTrade)
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("in not in trade"));
         return;
     }
     isInTrade=false;
-    packFullOutcommingData(0x50,0x0005,NULL,0);
+    is_logged=character_selected=packFullOutcommingData(0x50,0x0005,NULL,0);
 }
 
 void Api_protocol::tradeFinish()
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(!isInTrade)
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("in not in trade"));
         return;
     }
-    packFullOutcommingData(0x50,0x0004,NULL,0);
+    is_logged=character_selected=packFullOutcommingData(0x50,0x0004,NULL,0);
 }
 
 void Api_protocol::addTradeCash(const quint64 &cash)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(cash==0)
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("can't send 0 for the cash"));
@@ -4971,11 +5565,21 @@ void Api_protocol::addTradeCash(const quint64 &cash)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << cash;
-    packFullOutcommingData(0x50,0x0003,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x50,0x0003,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addObject(const quint32 &item,const quint32 &quantity)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(quantity==0)
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("can't send a quantity of 0"));
@@ -4992,11 +5596,21 @@ void Api_protocol::addObject(const quint32 &item,const quint32 &quantity)
     out << (quint8)0x02;
     out << item;
     out << quantity;
-    packFullOutcommingData(0x50,0x0003,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x50,0x0003,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addMonster(const quint32 &monsterId)
 {
+    if(!is_logged)
+    {
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return;
+    }
+    if(!character_selected)
+    {
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        return;
+    }
     if(!isInTrade)
     {
         newError(QStringLiteral("Internal problem"),QStringLiteral("no in trade to send monster"));
@@ -5007,7 +5621,7 @@ void Api_protocol::addMonster(const quint32 &monsterId)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x03;
     out << monsterId;
-    packFullOutcommingData(0x50,0x0003,outputData.constData(),outputData.size());
+    is_logged=character_selected=packFullOutcommingData(0x50,0x0003,outputData.constData(),outputData.size());
 }
 
 //to reset all
@@ -5062,4 +5676,14 @@ void Api_protocol::setDatapackPath(const QString &datapack_path)
         mDatapack=datapack_path;
     else
         mDatapack=datapack_path+QLatin1Literal("/");
+}
+
+bool Api_protocol::getIsLogged() const
+{
+    return is_logged;
+}
+
+bool Api_protocol::getCaracterSelected() const
+{
+    return character_selected;
 }

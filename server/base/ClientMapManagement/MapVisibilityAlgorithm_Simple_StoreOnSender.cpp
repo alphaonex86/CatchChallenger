@@ -22,6 +22,7 @@ MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_Store
 
 MapVisibilityAlgorithm_Simple_StoreOnSender::~MapVisibilityAlgorithm_Simple_StoreOnSender()
 {
+    extraStop();
 }
 
 void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
@@ -182,7 +183,8 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::mapVisiblity_unloadFromTheMap(
 
 void MapVisibilityAlgorithm_Simple_StoreOnSender::extraStop()
 {
-    MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.allClient.removeOne(this);
+    if(!character_loaded)
+        return;
     unloadFromTheMap();//product remove on the map
 
     to_send_insert=false;
@@ -239,8 +241,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::unloadFromTheMap()
 //map slots, transmited by the current ClientNetworkRead
 void MapVisibilityAlgorithm_Simple_StoreOnSender::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
-    MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.allClient << static_cast<void*>(this);
-    MapBasicMove::put_on_the_map(map,x,y,orientation);
+    Client::put_on_the_map(map,x,y,orientation);
     loadOnTheMap();
 }
 
@@ -253,7 +254,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
     {
         if(previousMovedUnit==0)
         {
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
             {
                 previousMovedUnitBlocked=0;
                 return false;
@@ -274,7 +275,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
     {
         case Direction_move_at_top:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_top && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -285,7 +286,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
         break;
         case Direction_move_at_right:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_right && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -296,7 +297,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
         break;
         case Direction_move_at_bottom:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_bottom && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -307,7 +308,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
         break;
         case Direction_move_at_left:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_left && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -321,7 +322,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
         case Direction_move_at_bottom:
         case Direction_move_at_left:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
         break;
         default:
@@ -331,7 +332,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &pr
     }
     #else
     //move the player on the server map
-    if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+    if(!Client::moveThePlayer(previousMovedUnit,direction))
         return false;
     #endif
     //send the move to the other client
@@ -345,7 +346,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap 
     normalOutput(QStringLiteral("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: %1").arg(mapChange));
     if(mapChange)
         unloadFromTheMap();
-    MapBasicMove::teleportValidatedTo(map,x,y,orientation);
+    Client::teleportValidatedTo(map,x,y,orientation);
     if(mapChange)
     {
         if(this->map->map_file==map->map_file)

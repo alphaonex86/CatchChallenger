@@ -39,6 +39,7 @@ MapVisibilityAlgorithm_WithBorder_StoreOnSender::MapVisibilityAlgorithm_WithBord
 
 MapVisibilityAlgorithm_WithBorder_StoreOnSender::~MapVisibilityAlgorithm_WithBorder_StoreOnSender()
 {
+    extraStop();
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
@@ -908,7 +909,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::unloadFromTheMap()
 //map slots, transmited by the current ClientNetworkRead
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
-    MapBasicMove::put_on_the_map(map,x,y,orientation);
+    Client::put_on_the_map(map,x,y,orientation);
     loadOnTheMap();
 }
 
@@ -921,7 +922,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveThePlayer(const quint8
     {
         if(previousMovedUnit==0)
         {
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
             {
                 previousMovedUnitBlocked=0;
                 return false;
@@ -942,7 +943,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveThePlayer(const quint8
     {
         case Direction_move_at_top:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_top && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -953,7 +954,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveThePlayer(const quint8
         break;
         case Direction_move_at_right:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_right && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -964,7 +965,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveThePlayer(const quint8
         break;
         case Direction_move_at_bottom:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_bottom && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -975,7 +976,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveThePlayer(const quint8
         break;
         case Direction_move_at_left:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
             if(direction==Direction_look_at_left && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
             {
@@ -989,7 +990,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveThePlayer(const quint8
         case Direction_move_at_bottom:
         case Direction_move_at_left:
             //move the player on the server map
-            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            if(!Client::moveThePlayer(previousMovedUnit,direction))
                 return false;
         break;
         default:
@@ -999,7 +1000,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveThePlayer(const quint8
     }
     #else
     //move the player on the server map
-    if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+    if(!Client::moveThePlayer(previousMovedUnit,direction))
         return false;
     #endif
     //send the move to the other client
@@ -1013,7 +1014,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::teleportValidatedTo(Common
     normalOutput(QStringLiteral("MapVisibilityAlgorithm_WithBorder_StoreOnSender::teleportValidatedTo() with mapChange: %1").arg(mapChange));
     if(mapChange)
         unloadFromTheMap();
-    MapBasicMove::teleportValidatedTo(map,x,y,orientation);
+    Client::teleportValidatedTo(map,x,y,orientation);
     if(mapChange)
     {
         if(this->map->map_file==map->map_file)

@@ -191,6 +191,7 @@ protected:
     //no control to be more fast
     bool removeFromQueryReceived(const quint8 &queryNumber);
     bool internalSendRawSmallPacket(const char *data,const int &size);
+    virtual void disconnectClient() = 0;
 };
 
 }

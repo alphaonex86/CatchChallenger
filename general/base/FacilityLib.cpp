@@ -16,7 +16,7 @@ QString FacilityLib::text_unknown=QLatin1Literal("unknown");
 QString FacilityLib::text_clan=QLatin1Literal("clan");
 QString FacilityLib::text_dotcomma=QLatin1Literal(";");
 
-QByteArray FacilityLib::toUTF8(const QString &text)
+QByteArray FacilityLib::toUTF8WithHeader(const QString &text)
 {
     if(text.isEmpty() || text.size()>255)
         return UTF8EmptyData;

@@ -443,8 +443,6 @@ void Client::collectPlant(const quint8 &query_id)
                     public_and_private_informations.public_informations.type==Player_type_dev
                     )
             {
-                QString map_file=map->map_file;
-                map_file.remove(Client::text_dottmx);
                 //remove plant from db
                 switch(GlobalServerData::serverSettings.database.type)
                 {

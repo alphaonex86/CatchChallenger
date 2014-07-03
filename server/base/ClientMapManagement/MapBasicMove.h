@@ -18,7 +18,7 @@ class MapBasicMove
 {
 public:
     explicit MapBasicMove();
-    ~MapBasicMove();
+    virtual ~MapBasicMove();
     //info linked
 
     CommonMap *map;
@@ -31,13 +31,13 @@ public:
     COORD_TYPE getY() const;
 public:
     //map slots, transmited by the current ClientNetworkRead
-    void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
-    void teleportValidatedTo(CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
+    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    virtual void teleportValidatedTo(CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation);
 protected:
     //normal management related
-    void errorOutput(const QString &errorString);
-    void normalOutput(const QString &message) const;
+    virtual void errorOutput(const QString &errorString);
+    virtual void normalOutput(const QString &message) const;
     virtual bool singleMove(const Direction &direction) = 0;
 };
 }

@@ -55,7 +55,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 }
                 else
                 {
-                    buffer[0]=(quint16)htobe16((quint16)real_move_count);
+                    *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)real_move_count);
                     bufferCursor+=sizeof(quint16);
                 }
                 index_subindex=0;
@@ -71,7 +71,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                         }
                         else
                         {
-                            buffer[bufferCursor]=(quint16)htobe16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
+                            *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
                             bufferCursor+=sizeof(quint16);
                         }
                         buffer[bufferCursor]=(quint8)client.to_send_move_size;
@@ -142,7 +142,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                     }
                     else
                     {
-                        buffer[0]=(quint16)htobe16((quint16)real_move_count);
+                        *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)real_move_count);
                         bufferCursor+=sizeof(quint16);
                     }
                     index_subindex=0;
@@ -158,7 +158,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                             }
                             else
                             {
-                                buffer[bufferCursor]=(quint16)htobe16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
+                                *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
                                 bufferCursor+=sizeof(quint16);
                             }
                             buffer[bufferCursor]=(quint8)client.to_send_move_size;

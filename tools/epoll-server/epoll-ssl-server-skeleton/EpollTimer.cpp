@@ -18,7 +18,7 @@ BaseClassSwitch::Type EpollTimer::getType() const
 
 bool EpollTimer::init()
 {
-    if((tfd=::timerfd_create(CLOCK_REALTIME,0)) < 0)
+    if((tfd=::timerfd_create(CLOCK_REALTIME,TFD_NONBLOCK)) < 0)
     {
         std::cerr << "Timer creation error" << std::endl;
         return false;

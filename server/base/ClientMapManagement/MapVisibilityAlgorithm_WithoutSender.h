@@ -10,7 +10,6 @@ public:
     explicit MapVisibilityAlgorithm_WithoutSender();
     ~MapVisibilityAlgorithm_WithoutSender();
     static MapVisibilityAlgorithm_WithoutSender mapVisibilityAlgorithm_WithoutSender;
-    QList<void*> allClient;
 public:
     void generalPurgeBuffer();
 };

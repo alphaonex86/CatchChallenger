@@ -498,7 +498,7 @@ void Client::loginIsRightFinalStep()
     //send monster
     index=0;
     size=public_and_private_informations.playerMonster.size();
-    out << (quint32)size;
+    out << (quint8)size;
     while(index<size)
     {
         QByteArray data=FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.at(index));
@@ -508,7 +508,7 @@ void Client::loginIsRightFinalStep()
     }
     index=0;
     size=public_and_private_informations.warehouse_playerMonster.size();
-    out << (quint32)size;
+    out << (quint8)size;
     while(index<size)
     {
         QByteArray data=FacilityLib::privateMonsterToBinary(public_and_private_informations.warehouse_playerMonster.at(index));

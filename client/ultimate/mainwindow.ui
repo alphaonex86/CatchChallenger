@@ -43,7 +43,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -141,7 +141,8 @@
           <property name="styleSheet">
            <string notr="true">background-color: rgb(220, 220, 240);
 border: 1px solid rgb(100, 150, 240);
-border-radius:5px;</string>
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
           </property>
           <property name="text">
            <string/>
@@ -156,7 +157,8 @@ border-radius:5px;</string>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(255, 255, 163);
 border: 1px solid rgb(255, 221, 50);
-border-radius:5px;</string>
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
           </property>
           <property name="openExternalLinks">
            <bool>true</bool>
@@ -332,7 +334,8 @@ QLabel { padding:2px; }</string>
                   <property name="styleSheet">
                    <string notr="true">background-color: rgb(255, 255, 163);
 border: 1px solid rgb(255, 221, 50);
-border-radius:5px;</string>
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
                   </property>
                   <property name="text">
                    <string>Loading the servers list...</string>
@@ -848,7 +851,7 @@ QLabel { padding:2px; }</string>
                      </size>
                     </property>
                     <property name="styleSheet">
-                     <string notr="true">background-image: url(:/images/light-white.png);
+                     <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);
 border-image: url(:/images/empty.png);</string>
                     </property>
                    </widget>
@@ -893,7 +896,8 @@ border-image: url(:/images/empty.png);</string>
                     </property>
                     <property name="styleSheet">
                      <string notr="true">background-image: url(:/images/light-white.png);
-border-image: url(:/images/empty.png);</string>
+border-image: url(:/images/empty.png);
+color: rgb(0, 0, 0);</string>
                     </property>
                     <property name="echoMode">
                      <enum>QLineEdit::Password</enum>

@@ -22,10 +22,10 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
         case MapVisibilityAlgorithmSelection_Simple:
         {
             int index=0;
-            const int &list_size=GlobalServerData::serverPrivateVariables.flat_map_list.size();
+            const int &list_size=GlobalServerData::serverPrivateVariables.map_list.size();
             while(index<list_size)
             {
-                static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(GlobalServerData::serverPrivateVariables.flat_map_list.at(index))->purgeBuffer();
+                static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(GlobalServerData::serverPrivateVariables.flat_map_list[index])->purgeBuffer();
                 index++;
             }
         }

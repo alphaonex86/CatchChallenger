@@ -11,12 +11,24 @@ void Client::doDDOSCompute()
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(index<0)
+                qDebug() << "index out of range <0, movePacketKick";
+            if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+                qDebug() << "index out of range >, movePacketKick";
+            if(movePacketKick[index]>GlobalServerData::serverSettings.ddos.kickLimitMove*2)
+                qDebug() << "index out of range in array for index " << movePacketKick[index] << ", movePacketKick";
+            #endif
             movePacketKick[index]=movePacketKick[index+1];
             movePacketKickTotalCache+=movePacketKick[index];
             index++;
         }
         movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=movePacketKickNewValue;
         movePacketKickTotalCache+=movePacketKickNewValue;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(movePacketKickTotalCache>GlobalServerData::serverSettings.ddos.kickLimitMove*2)
+            qDebug() << "bug in DDOS calculation count";
+        #endif
         movePacketKickNewValue=0;
     }
     {
@@ -24,12 +36,24 @@ void Client::doDDOSCompute()
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(index<0)
+                qDebug() << "index out of range <0, chatPacketKick";
+            if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+                qDebug() << "index out of range >, chatPacketKick";
+            if(chatPacketKick[index]>GlobalServerData::serverSettings.ddos.kickLimitChat*2)
+                qDebug() << "index out of range in array for index " << chatPacketKick[index] << ", chatPacketKick";
+            #endif
             chatPacketKick[index]=chatPacketKick[index+1];
             chatPacketKickTotalCache+=chatPacketKick[index];
             index++;
         }
         chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=chatPacketKickNewValue;
         chatPacketKickTotalCache+=chatPacketKickNewValue;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(chatPacketKickTotalCache>GlobalServerData::serverSettings.ddos.kickLimitChat*2)
+            qDebug() << "bug in DDOS calculation count";
+        #endif
         chatPacketKickNewValue=0;
     }
     {
@@ -37,12 +61,24 @@ void Client::doDDOSCompute()
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(index<0)
+                qDebug() << "index out of range <0, otherPacketKick";
+            if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+                qDebug() << "index out of range >, otherPacketKick";
+            if(otherPacketKick[index]>GlobalServerData::serverSettings.ddos.kickLimitOther*2)
+                qDebug() << "index out of range in array for index " << otherPacketKick[index] << ", chatPacketKick";
+            #endif
             otherPacketKick[index]=otherPacketKick[index+1];
             otherPacketKickTotalCache+=otherPacketKick[index];
             index++;
         }
         otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=otherPacketKickNewValue;
         otherPacketKickTotalCache+=otherPacketKickNewValue;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(otherPacketKickTotalCache>GlobalServerData::serverSettings.ddos.kickLimitOther*2)
+            qDebug() << "bug in DDOS calculation count";
+        #endif
         otherPacketKickNewValue=0;
     }
 }
@@ -241,6 +277,229 @@ void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int 
             return;
         }
         break;
+        //Chat
+        case 0x43:
+        {
+            QByteArray newData(data,size);
+            QDataStream in(newData);
+            in.setVersion(QDataStream::Qt_4_4);
+            if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
+            {
+                errorOutput("Too many chat in sort time, check DDOS limit");
+                return;
+            }
+            chatPacketKickNewValue++;
+            if(size<((int)sizeof(quint8)))
+            {
+                parseError("wrong remaining size for chat");
+                return;
+            }
+            quint8 chatType;
+            in >> chatType;
+            if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
+            {
+                parseError("chat type error: "+QString::number(chatType));
+                return;
+            }
+            if(chatType==Chat_type_pm)
+            {
+                if(CommonSettings::commonSettings.chat_allow_private)
+                {
+                    QString text;
+                    {
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError("wrong utf8 to QString size in PM for text size");
+                            return;
+                        }
+                        quint8 textSize;
+                        in >> textSize;
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                        {
+                            parseError("wrong utf8 to QString size in PM for text");
+                            return;
+                        }
+                        QByteArray rawText=newData.mid(in.device()->pos(),textSize);
+                        text=QString::fromUtf8(rawText.data(),rawText.size());
+                        in.device()->seek(in.device()->pos()+rawText.size());
+                    }
+                    QString pseudo;
+                    {
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError("wrong utf8 to QString size in PM for pseudo");
+                            return;
+                        }
+                        quint8 pseudoSize;
+                        in >> pseudoSize;
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                        {
+                            parseError("wrong utf8 to QString size in PM for pseudo");
+                            return;
+                        }
+                        QByteArray rawText=newData.mid(in.device()->pos(),pseudoSize);
+                        pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                        in.device()->seek(in.device()->pos()+rawText.size());
+                    }
+
+                    normalOutput(Client::text_slashpmspace+pseudo+Client::text_space+text);
+                    sendPM(text,pseudo);
+                }
+                else
+                {
+                    parseError("can't send pm because is disabled: "+QString::number(chatType));
+                    return;
+                }
+            }
+            else
+            {
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError("wrong utf8 to QString header size");
+                    return;
+                }
+                quint8 textSize;
+                in >> textSize;
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                {
+                    parseError("wrong utf8 to QString size");
+                    return;
+                }
+                QByteArray rawText=newData.mid(in.device()->pos(),textSize);
+                QString text=QString::fromUtf8(rawText.data(),rawText.size());
+                in.device()->seek(in.device()->pos()+rawText.size());
+
+                if(!text.startsWith(Client::text_slash))
+                {
+                    if(chatType==Chat_type_local)
+                    {
+                        if(CommonSettings::commonSettings.chat_allow_local)
+                            sendLocalChatText(text);
+                        else
+                        {
+                            parseError("can't send chat local because is disabled: "+QString::number(chatType));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        if(CommonSettings::commonSettings.chat_allow_clan || CommonSettings::commonSettings.chat_allow_all)
+                            sendChatText((Chat_type)chatType,text);
+                        else
+                        {
+                            parseError("can't send chat other because is disabled: "+QString::number(chatType));
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    if(text.contains(commandRegExp))
+                    {
+                        //isolate the main command (the first word)
+                        QString command=text;
+                        command.replace(commandRegExp,Client::text_regexresult1);
+
+                        //isolate the arguements
+                        if(text.contains(commandRegExp))
+                        {
+                            text.replace(commandRegExp,Client::text_regexresult2);
+                            text.replace(isolateTheMainCommand,Client::text_regexresult1);
+                        }
+                        else
+                            text=QString();
+
+                        //the normal player command
+                        {
+                            if(command==Client::text_playernumber)
+                            {
+                                sendBroadCastCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                                return;
+                            }
+                            else if(command==Client::text_playerlist)
+                            {
+                                sendBroadCastCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+" "+text);
+                                return;
+                            }
+                            else if(command==Client::text_trade)
+                            {
+                                sendHandlerCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                                return;
+                            }
+                            else if(command==Client::text_battle)
+                            {
+                                sendHandlerCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                                return;
+                            }
+                        }
+                        //the admin command
+                        if(public_and_private_informations.public_informations.type==Player_type_gm || public_and_private_informations.public_informations.type==Player_type_dev)
+                        {
+                            if(command==Client::text_give)
+                            {
+                                sendHandlerCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else if(command==Client::text_setevent)
+                            {
+                                sendHandlerCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else if(command==Client::text_take)
+                            {
+                                sendHandlerCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else if(command==Client::text_tp)
+                            {
+                                sendHandlerCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else if(command==Client::text_kick)
+                            {
+                                sendBroadCastCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else if(command==Client::text_chat)
+                            {
+                                sendBroadCastCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else if(command==Client::text_setrights)
+                            {
+                                sendBroadCastCommand(command,text);
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else if(command==Client::text_stop || command==Client::text_restart)
+                            {
+                                #ifndef EPOLLCATCHCHALLENGERSERVER
+                                BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
+                                #endif
+                                normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            }
+                            else
+                            {
+                                normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                                receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                            }
+                        }
+                        else
+                        {
+                            normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                            receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                        }
+                    }
+                    else
+                        normalOutput(Client::text_commands_seem_not_right+text);
+                }
+            }
+            return;
+        }
+        break;
         case 0x61:
         {
             if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
@@ -306,199 +565,6 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
         case 0x42:
         switch(subCodeType)
         {
-            //Chat
-            case 0x0003:
-            {
-                QByteArray data(rawData,size);
-                QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
-                if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
-                {
-                    errorOutput("Too many chat in sort time, check DDOS limit");
-                    return;
-                }
-                chatPacketKickNewValue++;
-                if(size<((int)sizeof(quint8)))
-                {
-                    parseError("wrong remaining size for chat");
-                    return;
-                }
-                quint8 chatType;
-                in >> chatType;
-                if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
-                {
-                    parseError("chat type error: "+QString::number(chatType));
-                    return;
-                }
-                if(chatType==Chat_type_pm)
-                {
-                    if(CommonSettings::commonSettings.chat_allow_private)
-                    {
-                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                            return;
-                        QString text;
-                        in >> text;
-                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                            return;
-                        QString pseudo;
-                        in >> pseudo;
-                        normalOutput(Client::text_slashpmspace+pseudo+Client::text_space+text);
-                        sendPM(text,pseudo);
-                    }
-                    else
-                    {
-                        parseError("can't send pm because is disabled: "+QString::number(chatType));
-                        return;
-                    }
-                }
-                else
-                {
-                    if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                        return;
-                    QString text;
-                    in >> text;
-
-                    if(!text.startsWith(Client::text_slash))
-                    {
-                        if(chatType==Chat_type_local)
-                        {
-                            if(CommonSettings::commonSettings.chat_allow_local)
-                                sendLocalChatText(text);
-                            else
-                            {
-                                parseError("can't send chat local because is disabled: "+QString::number(chatType));
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            if(CommonSettings::commonSettings.chat_allow_clan || CommonSettings::commonSettings.chat_allow_all)
-                                sendChatText((Chat_type)chatType,text);
-                            else
-                            {
-                                parseError("can't send chat other because is disabled: "+QString::number(chatType));
-                                return;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(text.contains(commandRegExp))
-                        {
-                            //isolate the main command (the first word)
-                            QString command=text;
-                            command.replace(commandRegExp,Client::text_regexresult1);
-
-                            //isolate the arguements
-                            if(text.contains(commandRegExp))
-                            {
-                                text.replace(commandRegExp,Client::text_regexresult2);
-                                text.replace(isolateTheMainCommand,Client::text_regexresult1);
-                            }
-                            else
-                                text=QString();
-
-                            //the normal player command
-                            {
-                                if(command==Client::text_playernumber)
-                                {
-                                    sendBroadCastCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                    return;
-                                }
-                                else if(command==Client::text_playerlist)
-                                {
-                                    sendBroadCastCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+" "+text);
-                                    return;
-                                }
-                                else if(command==Client::text_trade)
-                                {
-                                    sendHandlerCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                    return;
-                                }
-                                else if(command==Client::text_battle)
-                                {
-                                    sendHandlerCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                    return;
-                                }
-                            }
-                            //the admin command
-                            if(public_and_private_informations.public_informations.type==Player_type_gm || public_and_private_informations.public_informations.type==Player_type_dev)
-                            {
-                                if(command==Client::text_give)
-                                {
-                                    sendHandlerCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else if(command==Client::text_setevent)
-                                {
-                                    sendHandlerCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else if(command==Client::text_take)
-                                {
-                                    sendHandlerCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else if(command==Client::text_tp)
-                                {
-                                    sendHandlerCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else if(command==Client::text_kick)
-                                {
-                                    sendBroadCastCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else if(command==Client::text_chat)
-                                {
-                                    sendBroadCastCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else if(command==Client::text_setrights)
-                                {
-                                    sendBroadCastCommand(command,text);
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else if(command==Client::text_stop || command==Client::text_restart)
-                                {
-                                    #ifndef EPOLLCATCHCHALLENGERSERVER
-                                    BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                                    #endif
-                                    normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
-                                }
-                                else
-                                {
-                                    normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                                    receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                                }
-                            }
-                            else
-                            {
-                                normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                                receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                            }
-                        }
-                        else
-                            normalOutput(Client::text_commands_seem_not_right+text);
-                    }
-                }
-                if((in.device()->size()-in.device()->pos())!=0)
-                {
-                    parseError(QStringLiteral("remaining data: parsenormalOutput(%1,%2): %3 %4")
-                               .arg(mainCodeType)
-                               .arg(subCodeType)
-                               .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                               .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
-                               );
-                    return;
-                }
-                return;
-            }
-            break;
             //Clan invite accept
             case 0x0004:
             {

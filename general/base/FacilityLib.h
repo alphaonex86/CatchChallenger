@@ -14,7 +14,7 @@ namespace CatchChallenger {
 class FacilityLib
 {
 public:
-    static QByteArray toUTF8(const QString &text);
+    static QByteArray toUTF8WithHeader(const QString &text);
     static QStringList listFolder(const QString& folder,const QString& suffix=QStringLiteral(""));
     static QString randomPassword(const QString& string,const quint8& length);
     static QStringList skinIdList(const QString& skinPath);

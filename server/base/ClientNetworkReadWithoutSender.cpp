@@ -1,4 +1,5 @@
 #include "ClientNetworkReadWithoutSender.h"
+#include "GlobalServerData.h"
 #include "Client.h"
 
 using namespace CatchChallenger;
@@ -7,11 +8,14 @@ ClientNetworkReadWithoutSender ClientNetworkReadWithoutSender::clientNetworkRead
 
 void ClientNetworkReadWithoutSender::doDDOSAction()
 {
-    const int &size=Client::clientBroadCastList.size();
-    int index=0;
-    while(index<size)
+    if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>0)
     {
-        Client::clientBroadCastList.at(index)->doDDOSCompute();
-        index++;
+        const int &size=Client::clientBroadCastList.size();
+        int index=0;
+        while(index<size)
+        {
+            Client::clientBroadCastList.at(index)->doDDOSCompute();
+            index++;
+        }
     }
 }
