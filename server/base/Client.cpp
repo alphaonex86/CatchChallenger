@@ -54,14 +54,24 @@ Client::Client(ConnectedSocket *socket) :
         memset(movePacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
         memset(chatPacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
         memset(otherPacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);*/
-        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
+               0x00,
+               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
+        memset(chatPacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
+               0x00,
+               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
+        memset(otherPacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
+               0x00,
+               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
+
+        /*int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
         while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
         {
             movePacketKick[index]=0;
             chatPacketKick[index]=0;
             otherPacketKick[index]=0;
             index++;
-        }
+        }*/
     }
     queryNumberList.reserve(256);
     {

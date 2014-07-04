@@ -148,6 +148,14 @@ void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,c
 bool ProtocolParsingInputOutput::postReplyData(const quint8 &queryNumber, const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
+        return false;
+    }
+    #endif
+
     const int &newSize=ProtocolParsingInputOutput::computeReplyData(ProtocolParsingInputOutput::tempBigBufferForOutput,queryNumber,data,size);
     if(newSize==0)
         return false;
@@ -182,6 +190,14 @@ QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data
 bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
+        return false;
+    }
+    #endif
+
     const int &newSize=computeFullOutcommingData(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 isClient,
@@ -209,6 +225,14 @@ bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeTy
 bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
+        return false;
+    }
+    #endif
+
     const int &newSize=computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
@@ -236,6 +260,14 @@ bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,c
 bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
+        return false;
+    }
+    #endif
+
     const int &newSize=computeOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
@@ -265,6 +297,14 @@ bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,
 bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
+    {
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
+        return false;
+    }
+    #endif
+
     const int &newSize=computeFullOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
@@ -293,6 +333,13 @@ bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeT
 
 bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,const int &size)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size<=0)
+    {
+        qDebug() << QString("ProtocolParsingInputOutput::internalPackOutcommingData size is null").arg(__LINE__);
+        return false;
+    }
+    #endif
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole("internalPackOutcommingData(): start");
     #endif
@@ -353,6 +400,13 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
 //no control to be more fast
 bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,const int &size)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size<=0)
+    {
+        qDebug() << QString("ProtocolParsingInputOutput::internalSendRawSmallPacket size is null").arg(__LINE__);
+        return false;
+    }
+    #endif
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole("internalPackOutcommingData(): start");
     #endif

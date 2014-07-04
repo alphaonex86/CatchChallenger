@@ -145,18 +145,18 @@ private:
     bool have_send_protocol;
     bool is_logging_in_progess;
     bool stopIt;
-    int movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    quint8 movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     quint8 movePacketKickSize;
-    int movePacketKickTotalCache;
-    int movePacketKickNewValue;
-    int chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    quint8 movePacketKickTotalCache;
+    quint8 movePacketKickNewValue;
+    quint8 chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     quint8 chatPacketKickSize;
-    int chatPacketKickTotalCache;
-    int chatPacketKickNewValue;
-    int otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    quint8 chatPacketKickTotalCache;
+    quint8 chatPacketKickNewValue;
+    quint8 otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     quint8 otherPacketKickSize;
-    int otherPacketKickTotalCache;
-    int otherPacketKickNewValue;
+    quint8 otherPacketKickTotalCache;
+    quint8 otherPacketKickNewValue;
     QList<PlayerOnMap> lastTeleportation;
     QList<quint8> queryNumberList;
 

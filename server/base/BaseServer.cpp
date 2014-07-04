@@ -2176,7 +2176,7 @@ void BaseServer::loadAndFixSettings()
         {
             const QString &mirror=mirrorList.at(index);
             if(!mirror.contains(httpMatch))
-                qDebug() << "Mirror wrong: " << mirror.toLocal8Bit();
+            {}//qDebug() << "Mirror wrong: " << mirror.toLocal8Bit(); -> single player
             else
             {
                 if(mirror.endsWith("/"))
