@@ -40,7 +40,15 @@ void BaseWindow::on_warehouseWithdrawItem_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredInventory->selectedItems();
     if(itemList.size()!=1)
+    {
+        if(ui->warehousePlayerStoredInventory->count()==1)
+        {
+            on_warehousePlayerStoredInventory_itemActivated(ui->warehousePlayerStoredInventory->item(0));
+            return;
+        }
+        QMessageBox::warning(this,tr("Error"),tr("Select an item to transfer!"));
         return;
+    }
     on_warehousePlayerStoredInventory_itemActivated(itemList.first());
 }
 
@@ -48,7 +56,15 @@ void BaseWindow::on_warehouseDepositItem_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerInventory->selectedItems();
     if(itemList.size()!=1)
+    {
+        if(ui->warehousePlayerInventory->count()==1)
+        {
+            on_warehousePlayerInventory_itemActivated(ui->warehousePlayerInventory->item(0));
+            return;
+        }
+        QMessageBox::warning(this,tr("Error"),tr("Select an item to transfer!"));
         return;
+    }
     on_warehousePlayerInventory_itemActivated(itemList.first());
 }
 
@@ -56,7 +72,15 @@ void BaseWindow::on_warehouseWithdrawMonster_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredMonster->selectedItems();
     if(itemList.size()!=1)
+    {
+        if(ui->warehousePlayerStoredMonster->count()==1)
+        {
+            on_warehousePlayerStoredMonster_itemActivated(ui->warehousePlayerStoredMonster->item(0));
+            return;
+        }
+        QMessageBox::warning(this,tr("Error"),tr("Select an monster to transfer!"));
         return;
+    }
     on_warehousePlayerStoredMonster_itemActivated(itemList.first());
 }
 
@@ -64,7 +88,15 @@ void BaseWindow::on_warehouseDepositMonster_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerMonster->selectedItems();
     if(itemList.size()!=1)
+    {
+        if(ui->warehousePlayerMonster->count()==1)
+        {
+            on_warehousePlayerMonster_itemActivated(ui->warehousePlayerMonster->item(0));
+            return;
+        }
+        QMessageBox::warning(this,tr("Error"),tr("Select an monster to transfer!"));
         return;
+    }
     on_warehousePlayerMonster_itemActivated(itemList.first());
 }
 
@@ -76,6 +108,11 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
         quantity+=items.value(id);
     if(change_warehouse_items.contains(id))
         quantity+=change_warehouse_items.value(id);
+    if(quantity==0)
+    {
+        error("Error with item quantity into warehousePlayerInventory");
+        return;
+    }
     bool ok=true;
     int i;
     if(quantity==1)
@@ -97,11 +134,15 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
 {
     quint32 quantity=0;
     quint32 id=item->data(99).toUInt();
-    if(items.contains(id))
-        quantity+=items.value(id);
+    if(warehouse_items.contains(id))
+        quantity+=warehouse_items.value(id);
     if(change_warehouse_items.contains(id))
-        if(change_warehouse_items.value(id)<0)
-            quantity-=change_warehouse_items.value(id);
+        quantity-=change_warehouse_items.value(id);
+    if(quantity==0)
+    {
+        error("Error with item quantity into warehousePlayerStoredInventory");
+        return;
+    }
     bool ok=true;
     int i;
     if(quantity==1)

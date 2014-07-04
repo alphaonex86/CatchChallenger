@@ -902,7 +902,7 @@ void BaseWindow::updateTheWareHouseContent()
         }
     }
 
-    qDebug() << QStringLiteral("ui->warehousePlayerInventory icon size").arg(ui->warehousePlayerInventory->iconSize().width()).arg(ui->warehousePlayerInventory->iconSize().height());
+    qDebug() << QStringLiteral("ui->warehousePlayerInventory icon size: %1x%2").arg(ui->warehousePlayerInventory->iconSize().width()).arg(ui->warehousePlayerInventory->iconSize().height());
 
     //inventory warehouse
     {
@@ -928,10 +928,13 @@ void BaseWindow::updateTheWareHouseContent()
     ui->warehousePlayerCash->setText(tr("Cash: %1").arg(cash+temp_warehouse_cash));
     ui->warehousePlayerStoredCash->setText(tr("Cash: %1").arg(warehouse_cash-temp_warehouse_cash));
 
+    //do before because the dispatch put into random of it
+    ui->warehousePlayerStoredMonster->clear();
+    ui->warehousePlayerMonster->clear();
+
     //monster
     {
         const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
-        ui->warehousePlayerMonster->clear();
         int index=0;
         int size=playerMonster.size();
         while(index<size)
@@ -947,7 +950,7 @@ void BaseWindow::updateTheWareHouseContent()
                 item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
                 item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
                 item->setData(99,monster.id);
-                if(!monster_to_deposit.contains(monster.id))
+                if(!monster_to_deposit.contains(monster.id) || monster_to_withdraw.contains(monster.id))
                     ui->warehousePlayerMonster->addItem(item);
                 else
                     ui->warehousePlayerStoredMonster->addItem(item);
@@ -958,7 +961,6 @@ void BaseWindow::updateTheWareHouseContent()
 
     //monster warehouse
     {
-        ui->warehousePlayerStoredMonster->clear();
         int index=0;
         int size=warehouse_playerMonster.size();
         while(index<size)
@@ -974,7 +976,7 @@ void BaseWindow::updateTheWareHouseContent()
                 item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
                 item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
                 item->setData(99,monster.id);
-                if(!monster_to_withdraw.contains(monster.id))
+                if(!monster_to_withdraw.contains(monster.id) || monster_to_deposit.contains(monster.id))
                     ui->warehousePlayerStoredMonster->addItem(item);
                 else
                     ui->warehousePlayerMonster->addItem(item);
