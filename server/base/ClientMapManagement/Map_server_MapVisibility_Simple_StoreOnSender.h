@@ -7,6 +7,10 @@
 #include <QSet>
 #include <QList>
 
+#ifndef CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER
+#define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER 128*1024
+#endif
+
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnSender;
 
@@ -24,6 +28,10 @@ public:
     bool to_send_insert;
     bool send_drop_all;
     bool send_reinsert_all;
+
+    static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataNewClients[65535];
+    static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataOldClients[65535];
+    static char buffer[CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER];
 };
 }
 

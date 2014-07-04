@@ -83,7 +83,7 @@ void Client::loadMonsters_return()
             playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db.value(4)).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.level>=monster.level_to_xp.size())
+                if(playerMonster.level>monster.level_to_xp.size())
                 {
                     normalOutput(QStringLiteral("monster level: %1 greater than loaded level %2").arg(playerMonster.level).arg(monster.level_to_xp.size()));
                     ok=false;

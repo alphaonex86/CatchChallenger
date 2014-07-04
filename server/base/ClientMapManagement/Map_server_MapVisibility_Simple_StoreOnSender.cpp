@@ -3,6 +3,10 @@
 
 using namespace CatchChallenger;
 
+MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataNewClients[65535];
+MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataOldClients[65535];
+char Map_server_MapVisibility_Simple_StoreOnSender::buffer[CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER];
+
 Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender() :
     show(true),
     to_send_insert(false),
@@ -26,6 +30,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         send_drop_all=false;
         return;
     }
+    if(!show)
+        return;
     /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
     if(send_reinsert_all)
     {
@@ -87,8 +93,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 
     if(clients.size()<=1 && to_send_remove.isEmpty())
         return;
-    MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataNewClients[clients.size()];
-    MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataOldClients[clients.size()];
     int clientsToSendDataSizeNewClients=0;
     int clientsToSendDataSizeOldClients=0;
     /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
@@ -172,37 +176,50 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     {
         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
         {
-            char buffer[sizeof(quint8)+to_send_remove.size()*sizeof(quint8)];
-            buffer[0]=(quint8)to_send_remove.size();
-            int index_subindex=0;
-            while(index_subindex<to_send_remove.size())
+            if((sizeof(quint8)+to_send_remove.size()*sizeof(quint8))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                buffer[sizeof(quint8)+index_subindex*sizeof(quint8)]=(quint8)to_send_remove.at(index_subindex);
-                index_subindex++;
+                char buffer[sizeof(quint8)+to_send_remove.size()*sizeof(quint8)];
+                buffer[0]=(quint8)to_send_remove.size();
+                int index_subindex=0;
+                while(index_subindex<to_send_remove.size())
+                {
+                    buffer[sizeof(quint8)+index_subindex*sizeof(quint8)]=(quint8)to_send_remove.at(index_subindex);
+                    index_subindex++;
+                }
+                index_subindex=0;
+                while(index_subindex<clientsToSendDataSizeOldClients)
+                {
+                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(buffer));
+                    index_subindex++;
+                }
             }
-            index_subindex=0;
-            while(index_subindex<clientsToSendDataSizeOldClients)
-            {
-                clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(buffer));
-                index_subindex++;
-            }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            else
+                qDebug() << "Out of buffer for map management" << __LINE__;
+            #endif
         }
         else
         {
-            char buffer[sizeof(quint16)+to_send_remove.size()*sizeof(quint16)];
-            *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)to_send_remove.size());
-            int index_subindex=0;
-            while(index_subindex<to_send_remove.size())
+            if((sizeof(quint16)+to_send_remove.size()*sizeof(quint16))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                *reinterpret_cast<quint16 *>(buffer+sizeof(quint16)+index_subindex*sizeof(quint16))=(quint16)htobe16((quint16)to_send_remove.at(index_subindex));
-                index_subindex++;
+                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)to_send_remove.size());
+                int index_subindex=0;
+                while(index_subindex<to_send_remove.size())
+                {
+                    *reinterpret_cast<quint16 *>(buffer+sizeof(quint16)+index_subindex*sizeof(quint16))=(quint16)htobe16((quint16)to_send_remove.at(index_subindex));
+                    index_subindex++;
+                }
+                index_subindex=0;
+                while(index_subindex<clientsToSendDataSizeOldClients)
+                {
+                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(buffer));
+                    index_subindex++;
+                }
             }
-            index_subindex=0;
-            while(index_subindex<clientsToSendDataSizeOldClients)
-            {
-                clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(buffer));
-                index_subindex++;
-            }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            else
+                qDebug() << "Out of buffer for map management" << __LINE__;
+            #endif
         }
     }
 
@@ -217,7 +234,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 
             real_reinsert_count=0;
             index_subindex=0;
-            char *buffer;
+            int bufferSizeToHave;
             while(index_subindex<clientsToSendDataSizeOldClients)
             {
                 if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
@@ -225,60 +242,66 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex++;
             }
             if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                buffer=new char[sizeof(quint8)+real_reinsert_count*(sizeof(quint8)+sizeof(quint8)*3)];
+                bufferSizeToHave=sizeof(quint8)+real_reinsert_count*(sizeof(quint8)+sizeof(quint8)*3);
             else
-                buffer=new char[sizeof(quint16)+real_reinsert_count*(sizeof(quint16)+sizeof(quint8)*3)];
-            if(real_reinsert_count>0)
+                bufferSizeToHave=sizeof(quint16)+real_reinsert_count*(sizeof(quint16)+sizeof(quint8)*3);
+            if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                int bufferCursor;
-                //////////////////////////// insert //////////////////////////
-                if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                if(real_reinsert_count>0)
                 {
-                    buffer[0]=(quint8)real_reinsert_count;
-                    bufferCursor=sizeof(quint8);
-                }
-                else
-                {
-                    *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)real_reinsert_count);
-                    bufferCursor=sizeof(quint16);
-                }
-                index_subindex=0;
-                if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                    while(index_subindex<clientsToSendDataSizeOldClients)
+                    int bufferCursor;
+                    //////////////////////////// insert //////////////////////////
+                    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                     {
-                        if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
-                        {
-                            buffer[bufferCursor]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                            bufferCursor+=sizeof(quint8);
-                            buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                            buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                            buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                            bufferCursor+=sizeof(quint8)*3;
-                        }
-                        index_subindex++;
+                        buffer[0]=(quint8)real_reinsert_count;
+                        bufferCursor=sizeof(quint8);
                     }
-                else
-                    while(index_subindex<clientsToSendDataSizeOldClients)
+                    else
                     {
-                        if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
-                        {
-                            *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                            bufferCursor+=sizeof(quint16);
-                            buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                            buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                            buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                            bufferCursor+=sizeof(quint8)*3;
-                        }
-                        index_subindex++;
+                        *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)real_reinsert_count);
+                        bufferCursor=sizeof(quint16);
                     }
-                int index=0;
-                while(index<clientsToSendDataSizeOldClients)
-                {
-                    clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
-                    index++;
+                    index_subindex=0;
+                    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                        while(index_subindex<clientsToSendDataSizeOldClients)
+                        {
+                            if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                            {
+                                buffer[bufferCursor]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                bufferCursor+=sizeof(quint8);
+                                buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                bufferCursor+=sizeof(quint8)*3;
+                            }
+                            index_subindex++;
+                        }
+                    else
+                        while(index_subindex<clientsToSendDataSizeOldClients)
+                        {
+                            if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                            {
+                                *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                bufferCursor+=sizeof(quint16);
+                                buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                bufferCursor+=sizeof(quint8)*3;
+                            }
+                            index_subindex++;
+                        }
+                    int index=0;
+                    while(index<clientsToSendDataSizeOldClients)
+                    {
+                        clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
+                        index++;
+                    }
                 }
             }
-            delete buffer;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            else
+                qDebug() << "Out of buffer for map management" << __LINE__;
+            #endif
         }
         else
         {
@@ -287,12 +310,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             int index_subindex=0;
             int bufferCursor;
             int bufferBaseCursor;
+            int bufferSizeToHave;
             if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                 bufferBaseCursor=sizeof(quint8);
             else
                 bufferBaseCursor=sizeof(quint16);
 
-            char *buffer;
             while(index_subindex<clientsToSendDataSizeOldClients)
             {
                 if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
@@ -302,58 +325,63 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             if(real_reinsert_count>0)
             {
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
-                    buffer=new char[sizeof(quint8)+clientsToSendDataSizeOldClients*(sizeof(quint8)+sizeof(quint8)*3)];
+                    bufferSizeToHave=sizeof(quint8)+clientsToSendDataSizeOldClients*(sizeof(quint8)+sizeof(quint8)*3);
                 else
-                    buffer=new char[sizeof(quint16)+clientsToSendDataSizeOldClients*(sizeof(quint16)+sizeof(quint8)*3)];
-
-                int index=0;
-                while(index<clientsToSendDataSizeOldClients)
+                    bufferSizeToHave=sizeof(quint16)+clientsToSendDataSizeOldClients*(sizeof(quint16)+sizeof(quint8)*3);
+                if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
                 {
-                    int temp_reinsert=real_reinsert_count;
-                    if(clientsToSendDataOldClients[index]->haveNewMove)
-                        temp_reinsert--;
-                    bufferCursor=bufferBaseCursor;
-                    if(temp_reinsert>0)
+                    int index=0;
+                    while(index<clientsToSendDataSizeOldClients)
                     {
-                        index_subindex=0;
-                        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                        int temp_reinsert=real_reinsert_count;
+                        if(clientsToSendDataOldClients[index]->haveNewMove)
+                            temp_reinsert--;
+                        bufferCursor=bufferBaseCursor;
+                        if(temp_reinsert>0)
                         {
-                            buffer[0]=(quint8)temp_reinsert;
-                            while(index_subindex<clientsToSendDataSizeOldClients)
+                            index_subindex=0;
+                            if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                             {
-                                if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                                buffer[0]=(quint8)temp_reinsert;
+                                while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
-                                    buffer[bufferCursor]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                    buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                    buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                    buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                    bufferCursor+=sizeof(quint8)*3;
+                                    if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                                    {
+                                        buffer[bufferCursor]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                        buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                        buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                        buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        bufferCursor+=sizeof(quint8)*3;
+                                    }
+                                    index_subindex++;
                                 }
-                                index_subindex++;
                             }
-                        }
-                        else
-                        {
-                            *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)temp_reinsert);
-                            while(index_subindex<clientsToSendDataSizeOldClients)
+                            else
                             {
-                                if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)temp_reinsert);
+                                while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
-                                    *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                    buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                    buffer[bufferCursor+3]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                    buffer[bufferCursor+4]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                    bufferCursor+=sizeof(quint16)+sizeof(quint8)*3;
+                                    if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                                    {
+                                        *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                        buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                        buffer[bufferCursor+3]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                        buffer[bufferCursor+4]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        bufferCursor+=sizeof(quint16)+sizeof(quint8)*3;
+                                    }
+                                    index_subindex++;
                                 }
-                                index_subindex++;
                             }
+                            clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
                         }
-                        clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
+                        index++;
                     }
-                    index++;
                 }
-                delete buffer;
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            else
+                qDebug() << "Out of buffer for map management" << __LINE__;
+            #endif
         }
     }
     //purge
