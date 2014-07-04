@@ -528,7 +528,7 @@ private:
 
     //player items
     QHash<quint32,quint32> warehouse_items;
-    QHash<quint32,qint32> change_warehouse_items;
+    QHash<quint32,qint32> change_warehouse_items;//negative = deposite, positive = withdraw
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
     QHash<quint32,QListWidgetItem *> items_to_graphical;
