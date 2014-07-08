@@ -99,55 +99,65 @@ void Client::loadMonsters_return()
         }
         if(ok)
         {
-            playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
-            if(!ok)
-                normalOutput(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+            if(CommonSettings::commonSettings.useSP)
+            {
+                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
+                if(!ok)
+                    normalOutput(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+            }
+            else
+                playerMonster.sp=0;
         }
+        int sp_offset;
+        if(CommonSettings::commonSettings.useSP)
+            sp_offset=0;
+        else
+            sp_offset=-1;
         if(ok)
         {
-            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toUInt(&ok);
+            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db.value(6+sp_offset)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
                     normalOutput(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
             }
             else
-                normalOutput(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(6)));
+                normalOutput(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(6+sp_offset)));
         }
         if(ok)
         {
-            if(QString(GlobalServerData::serverPrivateVariables.db.value(7))==Client::text_male)
+            if(QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset))==Client::text_male)
                 playerMonster.gender=Gender_Male;
-            else if(QString(GlobalServerData::serverPrivateVariables.db.value(7))==Client::text_female)
+            else if(QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset))==Client::text_female)
                 playerMonster.gender=Gender_Female;
-            else if(QString(GlobalServerData::serverPrivateVariables.db.value(7))==Client::text_unknown)
+            else if(QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset))==Client::text_unknown)
                 playerMonster.gender=Gender_Unknown;
             else
             {
                 playerMonster.gender=Gender_Unknown;
-                normalOutput(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7)));
+                normalOutput(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)));
                 ok=false;
             }
         }
         if(ok)
         {
-            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8)).toUInt(&ok);
+            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)).toUInt(&ok);
             if(!ok)
-                normalOutput(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8)));
+                normalOutput(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)));
         }
         if(ok)
         {
-            if(QString(GlobalServerData::serverPrivateVariables.db.value(9))==Client::text_warehouse)
+            if(QString(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset))==Client::text_warehouse)
                 warehouse=true;
             else
             {
-                if(QString(GlobalServerData::serverPrivateVariables.db.value(9))==Client::text_wear)
+                if(QString(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset))==Client::text_wear)
                     warehouse=false;
-                else if(QString(GlobalServerData::serverPrivateVariables.db.value(9))==Client::text_market)
+                else if(QString(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset))==Client::text_market)
                     continue;
                 else
                 {
-                    normalOutput(QStringLiteral("unknow wear type: %1 for monster %2").arg(GlobalServerData::serverPrivateVariables.db.value(9)).arg(playerMonster.id));
+                    normalOutput(QStringLiteral("unknow wear type: %1 for monster %2").arg(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset)).arg(playerMonster.id));
                     continue;
                 }
             }
@@ -238,8 +248,12 @@ void Client::loadPlayerMonsterBuffs_static(void *object)
 
 void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
 {
-    const quint32 &monsterId=public_and_private_informations.playerMonster.at(index).id;
-    QList<PlayerBuff> buffs;
+    PlayerMonster *playerMonster;
+    if(index<(quint32)public_and_private_informations.playerMonster.size())
+        playerMonster=&public_and_private_informations.playerMonster[index];
+    else
+        playerMonster=&public_and_private_informations.warehouse_playerMonster[index-public_and_private_informations.playerMonster.size()];
+    const quint32 &monsterId=playerMonster->id;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
@@ -278,7 +292,7 @@ void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
             }
         }
         if(ok)
-            buffs << buff;
+            playerMonster->buffs << buff;
     }
     loadPlayerMonsterBuffs(index+1);
 }
@@ -328,8 +342,11 @@ void Client::loadPlayerMonsterSkills_static(void *object)
 
 void Client::loadPlayerMonsterSkills_return(const quint32 &index)
 {
-    const quint32 &monsterId=public_and_private_informations.playerMonster.at(index).id;
-    QList<PlayerMonster::PlayerSkill> skills;
+    PlayerMonster *playerMonster;
+    if(index<(quint32)public_and_private_informations.playerMonster.size())
+        playerMonster=&public_and_private_informations.playerMonster[index];
+    else
+        playerMonster=&public_and_private_informations.warehouse_playerMonster[index-public_and_private_informations.playerMonster.size()];
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
@@ -340,7 +357,7 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
             if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
             {
                 ok=false;
-                normalOutput(QStringLiteral("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
+                normalOutput(QStringLiteral("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(playerMonster->id));
             }
         }
         else
@@ -353,7 +370,7 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
                 if(skill.level>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.size())
                 {
                     ok=false;
-                    normalOutput(QStringLiteral("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
+                    normalOutput(QStringLiteral("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(playerMonster->id).arg(skill.level));
                 }
             }
             else
@@ -367,14 +384,14 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
                 if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance)
                 {
                     skill.endurance=CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance;
-                    normalOutput(QStringLiteral("skill %1 for monsterId: %2 have too hight endurance, lowered to: %3").arg(skill.skill).arg(monsterId).arg(skill.endurance));
+                    normalOutput(QStringLiteral("skill %1 for monsterId: %2 have too hight endurance, lowered to: %3").arg(skill.skill).arg(playerMonster->id).arg(skill.endurance));
                 }
             }
             else
                 normalOutput(QStringLiteral("skill endurance: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
         }
         if(ok)
-            skills << skill;
+            playerMonster->skills << skill;
     }
     loadPlayerMonsterSkills(index+1);
 }

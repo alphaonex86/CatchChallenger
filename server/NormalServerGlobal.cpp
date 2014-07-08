@@ -13,6 +13,10 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("server-ip"),QString());
     if(!settings->contains(QLatin1Literal("pvp")))
         settings->setValue(QLatin1Literal("pvp"),true);
+    if(!settings->contains(QLatin1Literal("useSP")))
+        settings->setValue(QLatin1Literal("useSP"),true);
+    if(!settings->contains(QLatin1Literal("autoLearn")))
+        settings->setValue(QLatin1Literal("autoLearn"),false);
     if(!settings->contains(QLatin1Literal("server-port")))
         settings->setValue(QLatin1Literal("server-port"),42489);
     if(!settings->contains(QLatin1Literal("sendPlayerNumber")))
@@ -109,13 +113,13 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
 
     settings->beginGroup(QLatin1Literal("rates"));
     if(!settings->contains(QLatin1Literal("xp_normal")))
-        settings->setValue(QLatin1Literal("xp_normal"),0.1);
+        settings->setValue(QLatin1Literal("xp_normal"),1.0);
     if(!settings->contains(QLatin1Literal("gold_normal")))
         settings->setValue(QLatin1Literal("gold_normal"),1.0);
     if(!settings->contains(QLatin1Literal("drop_normal")))
         settings->setValue(QLatin1Literal("drop_normal"),1.0);
     if(!settings->contains(QLatin1Literal("xp_pow_normal")))
-        settings->setValue(QLatin1Literal("xp_pow_normal"),1.6);
+        settings->setValue(QLatin1Literal("xp_pow_normal"),1.0);
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("chat"));

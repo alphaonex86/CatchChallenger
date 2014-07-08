@@ -23,11 +23,11 @@ void ProtocolParsingInputOutput::parseIncommingData()
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
             memcpy(ProtocolParsingInputOutput::commonBuffer,header_cut.constData(),header_cut.size());
-            size=socket->readData(ProtocolParsingInputOutput::commonBuffer,size_to_get)+header_cut.size();
+            size=epollSocket.read(ProtocolParsingInputOutput::commonBuffer,size_to_get)+header_cut.size();
             header_cut.resize(0);
         }
         else
-            size=socket->readData(ProtocolParsingInputOutput::commonBuffer,CATCHCHALLENGER_COMMONBUFFERSIZE);
+            size=epollSocket.read(ProtocolParsingInputOutput::commonBuffer,CATCHCHALLENGER_COMMONBUFFERSIZE);
         #else
         if(!header_cut.isEmpty())
         {
@@ -38,6 +38,8 @@ void ProtocolParsingInputOutput::parseIncommingData()
         }
         else
             size=socket->read(ProtocolParsingInputOutput::commonBuffer,CATCHCHALLENGER_COMMONBUFFERSIZE);
+        QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
+        //qDebug() << tempDataToDebug.toHex();
         #endif
         if(size==0)
         {
@@ -53,10 +55,31 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
         {
             if(!parseHeader(size,cursor))
                 break;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(cursor==0)
+            {
+                qDebug() << "Critical bug";
+                abort();
+            }
+            #endif
             if(!parseQueryNumber(size,cursor))
                 break;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(cursor==0)
+            {
+                qDebug() << "Critical bug";
+                abort();
+            }
+            #endif
             if(!parseDataSize(size,cursor))
                 break;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(cursor==0)
+            {
+                qDebug() << "Critical bug";
+                abort();
+            }
+            #endif
             if(!parseData(size,cursor))
                 break;
             //parseDispatch(); do into above function
@@ -608,6 +631,13 @@ bool ProtocolParsingInputOutput::parseData(const quint32 &size,quint32 &cursor)
         if(dataSize<=(size-cursor))
         {
             RXSize+=dataSize;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(cursor==0)
+            {
+                qDebug() << "Critical bug";
+                abort();
+            }
+            #endif
             const bool &returnVal=parseDispatch(ProtocolParsingInputOutput::commonBuffer+cursor,dataSize);
             cursor+=dataSize;
             #ifdef PROTOCOLPARSINGDEBUG

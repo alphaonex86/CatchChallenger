@@ -317,18 +317,76 @@ void BaseWindow::load_monsters()
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
         {
             Monster::Stat stat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster),monster.level);
+
             QListWidgetItem *item=new QListWidgetItem();
-            item->setText(tr("%1, level: %2\nHP: %3/%4")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
-                    .arg(monster.level)
-                    .arg(monster.hp)
-                    .arg(stat.hp)
-                    );
             item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
             if(!DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).thumb.isNull())
                 item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).thumb);
             else
                 item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
+
+            if(waitedObjectType==ObjectType_MonsterToLearn)
+            {
+                QHash<quint32,quint8> skillToDisplay;
+                int sub_index=0;
+                while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size())
+                {
+                    Monster::AttackToLearn learn=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.at(sub_index);
+                    if(learn.learnAtLevel<=monster.level)
+                    {
+                        int sub_index2=0;
+                        while(sub_index2<monster.skills.size())
+                        {
+                            const PlayerMonster::PlayerSkill &skill=monster.skills.at(sub_index2);
+                            if(skill.skill==learn.learnSkill)
+                                break;
+                            sub_index2++;
+                        }
+                        if(
+                                //if skill not found
+                                (sub_index2==monster.skills.size() && learn.learnSkillLevel==1)
+                                ||
+                                //if skill already found and need level up
+                                (sub_index2<monster.skills.size() && (monster.skills.value(sub_index2).level+1)==learn.learnSkillLevel)
+                        )
+                        {
+                            if(skillToDisplay.contains(learn.learnSkill))
+                            {
+                                if(skillToDisplay.value(learn.learnSkill)>learn.learnSkillLevel)
+                                    skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
+                            }
+                            else
+                                skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
+                        }
+                    }
+                    sub_index++;
+                }
+                if(skillToDisplay.isEmpty())
+                    item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
+                            .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
+                            .arg(monster.level)
+                            .arg(monster.hp)
+                            .arg(stat.hp)
+                            .arg(tr("No skill to learn"))
+                            );
+                else
+                    item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
+                            .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
+                            .arg(monster.level)
+                            .arg(monster.hp)
+                            .arg(stat.hp)
+                            .arg(tr("%n skill(s) to learn","",skillToDisplay.size()))
+                            );
+            }
+            else
+            {
+                item->setText(tr("%1, level: %2\nHP: %3/%4")
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
+                        .arg(monster.level)
+                        .arg(monster.hp)
+                        .arg(stat.hp)
+                        );
+            }
             ui->monsterList->addItem(item);
             monsters_items_graphical[item]=monster.id;
         }
@@ -2646,7 +2704,13 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
         {
             PlayerMonster monster=playerMonster.at(index);
             ui->learnMonster->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front.scaled(160,160));
-            ui->learnSP->setText(tr("SP: %1").arg(monster.sp));
+            if(CommonSettings::commonSettings.useSP)
+            {
+                ui->learnSP->setVisible(true);
+                ui->learnSP->setText(tr("SP: %1").arg(monster.sp));
+            }
+            else
+                ui->learnSP->setVisible(false);
             int sub_index=0;
             while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size())
             {
@@ -2684,17 +2748,35 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
             while (i.hasNext()) {
                 i.next();
                 QListWidgetItem *item=new QListWidgetItem();
-                if(i.value()>1)
-                    item->setText(tr("%1\nSP cost: %2")
-                                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
-                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
-                            );
+                const quint32 &level=i.value();
+                if(CommonSettings::commonSettings.useSP)
+                {
+                    if(level<=1)
+                        item->setText(tr("%1\nSP cost: %2")
+                                    .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
+                                    .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
+                                );
+                    else
+                        item->setText(tr("%1 level %2\nSP cost: %3")
+                                    .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
+                                    .arg(level)
+                                    .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
+                                );
+                }
                 else
-                    item->setText(tr("%1 level %2\nSP cost: %3")
-                                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
-                                .arg(i.value())
-                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
-                            );
+                {
+                    if(level<=1)
+                        item->setText(tr("%1")
+                                    .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
+                                    .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
+                                );
+                    else
+                        item->setText(tr("%1 level %2")
+                                    .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
+                                    .arg(level)
+                                    .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
+                                );
+                }
                 if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn>monster.sp)
                 {
                     item->setFont(MissingQuantity);

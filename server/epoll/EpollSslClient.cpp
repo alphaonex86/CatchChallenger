@@ -15,7 +15,7 @@ using namespace CatchChallenger;
 
 char EpollSslClient::rawbuf[4096];
 
-EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx,const bool &tcpCork) :
+EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     #ifndef SERVERNOBUFFER
     bufferSizeClearToOutput(0),
     #endif
@@ -51,14 +51,6 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx,const bool &tcpCork)
         break;
         default:
         break;
-    }
-
-    if(tcpCork)
-    {
-        //set cork for CatchChallener because don't have real time part
-        int state = 1;
-        if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-            std::cerr << "Unable to apply tcp cork" << std::endl;
     }
 }
 

@@ -77,7 +77,6 @@ protected:
     static QString text_fightid;
     static QString text_bot;
     static QString text_slashtrainerpng;
-    static QString text_DATAPACK_BASE_PATH_SKINBOT;
     static QString text_DATAPACK_BASE_PATH_SKIN;
 };
 

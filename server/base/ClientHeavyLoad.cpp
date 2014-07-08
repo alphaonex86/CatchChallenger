@@ -168,6 +168,8 @@ void Client::character_return(const quint8 &query_id)
     out << (quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick;
     out << (quint8)CommonSettings::commonSettings.forceClientToSendAtMapChange;
     out << (quint8)CommonSettings::commonSettings.forcedSpeed;
+    out << (quint8)CommonSettings::commonSettings.useSP;
+    out << (quint8)CommonSettings::commonSettings.autoLearn;
     out << (quint8)CommonSettings::commonSettings.dontSendPseudo;
     out << (quint8)CommonSettings::commonSettings.max_character;
     out << (quint8)CommonSettings::commonSettings.min_character;

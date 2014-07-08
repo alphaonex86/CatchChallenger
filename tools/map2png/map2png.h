@@ -96,7 +96,6 @@ public:
     static QString text_bot;
     static QString text_skin;
     static QString text_fightertrainer;
-    static QString text_bottrainer;
     static QString text_lookAt;
     static QString text_empty;
     static QString text_top;

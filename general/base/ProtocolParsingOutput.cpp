@@ -346,16 +346,24 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
     message(QStringLiteral("Sended packet size: %1: %2").arg(size).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket->openMode()|QIODevice::WriteOnly)
     {
     #endif
         if(size<=CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
-            int byteWriten = socket->write(data,size);
+            #ifdef EPOLLCATCHCHALLENGERSERVER
+            const int &byteWriten = epollSocket.write(data,size);
+            #else
+            const int &byteWriten = socket->write(data,size);
+            #endif
             if(Q_UNLIKELY(size!=byteWriten))
             {
+                #ifdef EPOLLCATCHCHALLENGERSERVER
+                DebugClass::debugConsole(QStringLiteral("All the bytes have not be written byteWriten: %1").arg(byteWriten));
+                #else
                 DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                #endif
                 disconnectClient();
                 return false;
             }
@@ -374,10 +382,18 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
                     size_to_send=remaining_size;
                 else
                     size_to_send=CATCHCHALLENGER_MAX_PACKET_SIZE;
+                #ifdef EPOLLCATCHCHALLENGERSERVER
+                byteWriten = epollSocket.write(data+cursor,size_to_send);
+                #else
                 byteWriten = socket->write(data+cursor,size_to_send);
+                #endif
                 if(Q_UNLIKELY(size_to_send!=byteWriten))
                 {
+                    #ifdef EPOLLCATCHCHALLENGERSERVER
+                    DebugClass::debugConsole(QStringLiteral("All the bytes have not be written byteWriten: %1").arg(byteWriten));
+                    #else
                     DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+                    #endif
                     disconnectClient();
                     return false;
                 }
@@ -386,7 +402,7 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
             }
             return true;
         }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     }
     else
     {
@@ -423,10 +439,18 @@ bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,con
     #endif
 
     TXSize+=size;
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    const int &byteWriten = epollSocket.write(data,size);
+    #else
     const int &byteWriten = socket->write(data,size);
+    #endif
     if(Q_UNLIKELY(size!=byteWriten))
     {
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        DebugClass::debugConsole(QStringLiteral("All the bytes have not be written byteWriten: %1").arg(byteWriten));
+        #else
         DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        #endif
         disconnectClient();
         return false;
     }
@@ -1521,9 +1545,8 @@ int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 
     if(isClient)
         memcpy(dataBuffer,&replyCodeClientToServer,sizeof(quint8));
     else
-    #else
-        memcpy(dataBuffer,&replyCodeServerToClient,sizeof(quint8));
     #endif
+        memcpy(dataBuffer,&replyCodeServerToClient,sizeof(quint8));
     memcpy(dataBuffer+sizeof(quint8),&queryNumber,sizeof(quint8));
 
     if(!replyOutputSize.contains(queryNumber))

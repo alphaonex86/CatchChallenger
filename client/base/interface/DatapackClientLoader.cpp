@@ -756,24 +756,32 @@ void DatapackClientLoader::parseMaps()
     int index=0;
     QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
     QRegularExpression mapExclude(QLatin1String("[\"']"));
+    QHash<QString,QString> sortToFull;
+    QStringList tempMapList;
     while(index<size)
     {
-        QString fileName=returnList.at(index);
+        const QString &fileName=returnList.at(index);
+        QString sortFileName=fileName;
         if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
-            maps << fileName;
+        {
+            sortFileName.remove(mapFilter);
+            sortToFull[sortFileName]=fileName;
+            tempMapList << sortFileName;
+        }
         index++;
     }
-    maps.sort();
+    tempMapList.sort();
     const QString &basePath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP);
     index=0;
-    while(index<maps.size())
+    while(index<tempMapList.size())
     {
-        mapToId[maps.at(index)]=index;
-        fullMapPathToId[QFileInfo(basePath+maps.at(index)).absoluteFilePath()]=index;
+        mapToId[sortToFull.value(tempMapList.at(index))]=index;
+        fullMapPathToId[QFileInfo(basePath+sortToFull.value(tempMapList.at(index))).absoluteFilePath()]=index;
+        maps << sortToFull.value(tempMapList.at(index));
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(maps.size());
+    qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(tempMapList.size());
 }
 
 void DatapackClientLoader::parseSkins()

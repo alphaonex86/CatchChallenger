@@ -16,17 +16,34 @@
 #include "../VariableServer.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "../epoll/BaseClassSwitch.h"
+#else
+#include <QObject>
 #endif
 
 namespace CatchChallenger {
 class Client :
         #ifdef EPOLLCATCHCHALLENGERSERVER
         public BaseClassSwitch,
+        #else
+        public QObject,
         #endif
         public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement
 {
+#ifndef EPOLLCATCHCHALLENGERSERVER
+    Q_OBJECT
+#endif
 public:
-    explicit Client(ConnectedSocket *socket);
+    explicit Client(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        );
     virtual ~Client();
     #ifdef EPOLLCATCHCHALLENGERSERVER
     BaseClassSwitch::Type getType() const;
@@ -112,12 +129,13 @@ protected:
     };
 private:
     //-------------------
-    ConnectedSocket *socket;
     quint32 account_id;//0 if not logged
     quint8 number_of_character;
     quint32 character_id;
     quint64 market_cash;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isConnected;
+    #endif
     quint16 randomIndex,randomSize;
 
     PlayerOnMap map_entry;
@@ -254,7 +272,9 @@ private:
     static QString text_to;
 
     //socket related
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     void connectionError(QAbstractSocket::SocketError);
+    #endif
 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     /// \warning it need be complete protocol trame
