@@ -6,7 +6,9 @@
 
 using namespace CatchChallenger;
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
+#endif
 const quint16 ProtocolParsingInputOutput::sizeHeaderNullquint16=0;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
 char ProtocolParsingInputOutput::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
@@ -143,8 +145,26 @@ QByteArray ProtocolParsingInputOutput::lzmaUncompress(QByteArray data)
     return arr;
 }
 
-ProtocolParsing::ProtocolParsing(ConnectedSocket * socket) :
+ProtocolParsing::ProtocolParsing(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        ) :
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifndef SERVERNOSSL
+            epollSslClient(infd,*ctx)
+        #else
+            epollSocket(infd)
+        #endif
+    #else
     socket(socket)
+    #endif
 {
 }
 
@@ -234,6 +254,7 @@ void ProtocolParsing::initialiseTheVariable()
     ProtocolParsing::replyCodeClientToServer=0x41;
 
     //register meta type
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
     qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
     qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
@@ -241,6 +262,7 @@ void ProtocolParsing::initialiseTheVariable()
     qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
     qRegisterMetaType<QList<CharacterEntry> >("QList<CharacterEntry>");
     qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
+    #endif
 }
 
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
@@ -257,12 +279,29 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
     }
 }
 
-ProtocolParsingInputOutput::ProtocolParsingInputOutput(ConnectedSocket * socket
-                                                       #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                                                       ,PacketModeTransmission packetModeTransmission
-                                                       #endif
-                                                       ) :
+ProtocolParsingInputOutput::ProtocolParsingInputOutput(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        ,PacketModeTransmission packetModeTransmission
+        #endif
+        ) :
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifndef SERVERNOSSL
+            ProtocolParsing(infd,ctx),
+        #else
+            ProtocolParsing(infd),
+        #endif
+    #else
     ProtocolParsing(socket),
+    #endif
     // for data
     haveData(false),
     haveData_dataSize(0),

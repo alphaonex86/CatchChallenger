@@ -10,8 +10,28 @@ CommonMap* MapVisibilityAlgorithm_Simple_StoreOnSender::old_map;
 CommonMap* MapVisibilityAlgorithm_Simple_StoreOnSender::new_map;
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::mapHaveChanged;
 
-MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender(ConnectedSocket *socket) :
-    Client(socket),
+MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        ) :
+    Client(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                infd,ctx
+            #else
+                infd
+            #endif
+        #else
+        socket
+        #endif
+        ),
     to_send_insert(false),
     haveNewMove(false)
 {

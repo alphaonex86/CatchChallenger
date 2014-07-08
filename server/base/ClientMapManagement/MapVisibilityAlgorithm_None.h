@@ -7,7 +7,17 @@ namespace CatchChallenger {
 class MapVisibilityAlgorithm_None : public Client
 {
 public:
-    explicit MapVisibilityAlgorithm_None(ConnectedSocket *socket);
+    explicit MapVisibilityAlgorithm_None(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        );
 protected:
     //add clients linked
     void insertClient();

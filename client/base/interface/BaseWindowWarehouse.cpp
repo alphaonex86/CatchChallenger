@@ -250,9 +250,10 @@ void BaseWindow::on_warehouseValidate_clicked()
         CatchChallenger::Api_client_real::client->wareHouseStore(temp_warehouse_cash,change_warehouse_items_list,monster_to_withdraw,monster_to_deposit);
     }
     //validate the change here
-    cash+=temp_warehouse_cash;
-    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
-    ui->tradePlayerCash->setMaximum(this->cash);
+    if(temp_warehouse_cash>0)
+        addCash(temp_warehouse_cash);
+    else
+        removeCash(-temp_warehouse_cash);
     warehouse_cash-=temp_warehouse_cash;
     {
         QHash<quint32,qint32>::const_iterator i = change_warehouse_items.constBegin();
@@ -308,7 +309,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         {
             const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
             int sub_index=0;
-            while(sub_index<warehouse_playerMonster.size())
+            while(sub_index<playerMonster.size())
             {
                 if(playerMonster.at(sub_index).id==monster_to_deposit.at(index))
                 {

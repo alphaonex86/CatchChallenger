@@ -9,15 +9,39 @@
 
 using namespace CatchChallenger;
 
-void QtServer::preload_the_city_capture()
+QtServer::QtServer()
 {
-    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&QtServer::load_next_city_capture,Qt::QueuedConnection);
-    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,&Client::startTheCityCapture);
+    qRegisterMetaType<QSqlDatabase>("QSqlDatabase");
+    qRegisterMetaType<QSqlQuery>("QSqlQuery");
     connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,this,&QtServer::send_insert_move_remove,Qt::QueuedConnection);
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
         connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,this,&QtServer::positionSync,Qt::QueuedConnection);
     connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection);
+    connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection);
+}
+
+QtServer::~QtServer()
+{
+    QSetIterator<Client *> i(client_list);
+    while (i.hasNext())
+    {
+        Client *client=i.next();
+        client->disconnectClient();
+        delete client;
+    }
+    client_list.clear();
+}
+
+void QtServer::preload_the_city_capture()
+{
+    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&QtServer::load_next_city_capture,Qt::QueuedConnection);
+    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,&Client::startTheCityCapture);
     BaseServer::preload_the_city_capture();
+}
+
+void QtServer::preload_finish()
+{
+    emit is_started(true);
 }
 
 void QtServer::start()
@@ -61,14 +85,14 @@ void QtServer::ddosTimer()
 
 void QtServer::removeOneClient()
 {
-/*    Client *client=qobject_cast<Client *>(QObject::sender());
+    Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
     {
         DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
         return;
     }
     client_list.remove(client);
-    delete client;*/
+    delete client;
 }
 
 /////////////////////////////////////// player related //////////////////////////////////////
@@ -86,13 +110,13 @@ void QtServer::newConnection()
             {
                 default:
                 case MapVisibilityAlgorithmSelection_Simple:
-                    connect_the_last_client(new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(socket)));
+                    connect_the_last_client(new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(socket)),socket);
                 break;
                 case MapVisibilityAlgorithmSelection_WithBorder:
-                    connect_the_last_client(new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(socket)));
+                    connect_the_last_client(new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(socket)),socket);
                 break;
                 case MapVisibilityAlgorithmSelection_None:
-                    connect_the_last_client(new MapVisibilityAlgorithm_None(new ConnectedSocket(socket)));
+                    connect_the_last_client(new MapVisibilityAlgorithm_None(new ConnectedSocket(socket)),socket);
                 break;
             }
         }
@@ -102,8 +126,10 @@ void QtServer::newConnection()
 }
 #endif
 
-void QtServer::connect_the_last_client(Client * client)
+void QtServer::connect_the_last_client(Client * client,QIODevice *socket)
 {
+    connect(socket,&QIODevice::readyRead,client,&Client::parseIncommingData,Qt::QueuedConnection);
+    connect(client,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection);
     client_list << client;
 }
 
@@ -147,8 +173,8 @@ void QtServer::stop_internal_server()
     stat=InDown;
 
     QSetIterator<Client *> i(client_list);
-     while (i.hasNext())
-         i.next()->disconnectClient();
+    while (i.hasNext())
+        i.next()->disconnectClient();
     QFakeServer::server.disconnectedSocket();
     QFakeServer::server.close();
 

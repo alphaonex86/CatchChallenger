@@ -119,6 +119,8 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x04,QLatin1String("Not free id to login"));
         return;
     }
+
+    public_and_private_informations.public_informations.pseudo=QString(GlobalServerData::serverPrivateVariables.db.value(1));
     if(!loadTheRawUTF8String())
     {
         if(GlobalServerData::serverSettings.anonymous)
@@ -127,6 +129,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
             characterSelectionIsWrong(query_id,0x04,QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(public_and_private_informations.public_informations.pseudo));
         return;
     }
+
     if(GlobalServerData::serverSettings.anonymous)
         normalOutput(QStringLiteral("Charater id is logged: %1").arg(characterId));
     else
@@ -136,7 +139,6 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
 
-    public_and_private_informations.public_informations.pseudo=QString(GlobalServerData::serverPrivateVariables.db.value(1));
     const QString &skinString=QString(GlobalServerData::serverPrivateVariables.db.value(2));
     if(GlobalServerData::serverPrivateVariables.skinList.contains(skinString))
         public_and_private_informations.public_informations.skinId=GlobalServerData::serverPrivateVariables.skinList.value(skinString);
