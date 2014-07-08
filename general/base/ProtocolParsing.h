@@ -7,7 +7,15 @@
 
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
+#ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifndef SERVERNOSSL
+        #include "../../server/epoll/EpollSslClient.h"
+    #else
+        #include "../../server/epoll/EpollClient.h"
+    #endif
+#else
 #include "ConnectedSocket.h"
+#endif
 
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
 
@@ -30,11 +38,29 @@ public:
         CompressionType_Xz
     };
     static CompressionType compressionType;
-    ProtocolParsing(ConnectedSocket * socket);
+    ProtocolParsing(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        );
     static void initialiseTheVariable();
     static void setMaxPlayers(const quint16 &maxPlayers);
 protected:
-    ConnectedSocket * socket;
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifndef SERVERNOSSL
+            EpollSslClient epollSocket;
+        #else
+            EpollClient epollSocket;
+        #endif
+    #else
+        ConnectedSocket *socket;
+    #endif
     /********************** static *********************/
     //connexion parameters
     static QSet<quint8> mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
@@ -71,7 +97,16 @@ private:
 class ProtocolParsingInputOutput : public ProtocolParsing
 {
 public:
-    ProtocolParsingInputOutput(ConnectedSocket * socket
+    ProtocolParsingInputOutput(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
                                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                                ,PacketModeTransmission packetModeTransmission
                                #endif
@@ -87,7 +122,11 @@ protected:
     bool parseDataSize(const quint32 &size,quint32 &cursor);
     bool parseData(const quint32 &size,quint32 &cursor);
     bool parseDispatch(const char * data,const int &size);
+    #ifdef EPOLLCATCHCHALLENGERSERVER
     static char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
+    #else
+    char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
+    #endif
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const char *data,const int &size) = 0;

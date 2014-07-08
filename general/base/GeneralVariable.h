@@ -49,7 +49,7 @@
 #define DATAPACK_BASE_PATH_MAP "map/"
 #define DATAPACK_BASE_PATH_ZONE "map/zone/"
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
-#define DATAPACK_BASE_PATH_SKINBOT "skin/bot/"
+#define DATAPACK_BASE_PATH_SKINBASE "skin/"
 #define DATAPACK_BASE_PATH_ANIMATION "animation/"
 #define DATAPACK_BASE_PATH_ITEM "items/"
 #define DATAPACK_BASE_PATH_INDUSTRIES "industries/"

@@ -978,8 +978,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
                 if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
                     qDebug() << QStringLiteral("Unable to apply tcp cork under linux");
             }
-            else
-                qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");
+            /*else
+                qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");*/
         }
         #endif
     }

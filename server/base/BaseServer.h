@@ -28,7 +28,7 @@ class BaseServer
 {
 public:
     explicit BaseServer();
-    ~BaseServer();
+    virtual ~BaseServer();
     void setSettings(const ServerSettings &settings);
     ServerSettings getSettings() const;
     static void initialize_the_database_prepared_query();
@@ -142,7 +142,6 @@ protected:
     //FakeServer server;//wrong, create another object, here need use the global static object
 
     //to keep client list, QSet because it will have lot of more disconnecion than server closing
-    QSet<Client *> client_list;
     bool dataLoaded;
 
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;

@@ -9,20 +9,23 @@ class QtServer : public QObject, public BaseServer
 {
     Q_OBJECT
 public:
+    QtServer();
+    virtual ~QtServer();
     void preload_the_city_capture();
     void removeOneClient();
     void newConnection();
-    void connect_the_last_client(Client * client);
+    void connect_the_last_client(Client * client, QIODevice *socket);
     void load_next_city_capture();
     void send_insert_move_remove();
     void positionSync();
     void ddosTimer();
-    void start();
+    virtual void start();
     bool isListen();
     bool isStopped();
     void stop();
     bool check_if_now_stopped();//return true if can be stopped
     void stop_internal_server();
+    void preload_finish();
 signals:
     void try_initAll() const;
     void try_stop_server() const;
@@ -30,6 +33,8 @@ signals:
     //stat
     void is_started(const bool &) const;
     void error(const QString &error) const;
+private:
+    QSet<Client *> client_list;
 };
 }
 

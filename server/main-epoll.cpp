@@ -1,5 +1,7 @@
 #include <iostream>
+#include <netinet/tcp.h>
 #include <netdb.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <cstring>
 
@@ -46,7 +48,8 @@ void send_settings()
     CommonSettings::commonSettings.max_character					= settings->value(QLatin1Literal("max_character")).toUInt();
     CommonSettings::commonSettings.max_pseudo_size					= settings->value(QLatin1Literal("max_pseudo_size")).toUInt();
     CommonSettings::commonSettings.character_delete_time			= settings->value(QLatin1Literal("character_delete_time")).toUInt();
-
+    CommonSettings::commonSettings.useSP                            = settings->value(QLatin1Literal("useSP")).toBool();
+    CommonSettings::commonSettings.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettings::commonSettings.useSP;
     CommonSettings::commonSettings.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();
     CommonSettings::commonSettings.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
     CommonSettings::commonSettings.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
@@ -473,9 +476,9 @@ int main(int argc, char *argv[])
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
                         #ifndef SERVERNOSSL
-                        EpollSslClient *epollClient=new EpollSslClient(infd,server->getCtx(),tcpCork);
+                        EpollSslClient *epollClient=new EpollSslClient(infd,server->getCtx());
                         #else
-                        EpollClient *epollClient=new EpollClient(infd,tcpCork);
+                        EpollClient *epollClient=new EpollClient(infd);
                         #endif
                         numberOfConnectedClient++;
 
@@ -487,23 +490,31 @@ int main(int argc, char *argv[])
                         }
                         else
                         {
+                            if(tcpCork)
+                            {
+                                //set cork for CatchChallener because don't have real time part
+                                int state = 1;
+                                if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                                    std::cerr << "Unable to apply tcp cork" << std::endl;
+                            }
+
                             Client *client;
                             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                             {
                                 case MapVisibilityAlgorithmSelection_Simple:
-                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(epollClient));
+                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender(infd);
                                 break;
                                 case MapVisibilityAlgorithmSelection_WithBorder:
-                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(epollClient));
+                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender(infd);
                                 break;
                                 default:
                                 case MapVisibilityAlgorithmSelection_None:
-                                    client=new MapVisibilityAlgorithm_None(new ConnectedSocket(epollClient));
+                                    client=new MapVisibilityAlgorithm_None(infd);
                                 break;
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLET | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLRDHUP;
+                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {

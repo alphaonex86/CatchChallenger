@@ -16,7 +16,6 @@ QString MapController::text_fight=QLatin1Literal("fight");
 QString MapController::text_fightid=QLatin1Literal("fightid");
 QString MapController::text_bot=QLatin1Literal("bot");
 QString MapController::text_slashtrainerpng=QLatin1Literal("/trainer.png");
-QString MapController::text_DATAPACK_BASE_PATH_SKINBOT=QLatin1Literal(DATAPACK_BASE_PATH_SKINBOT);
 QString MapController::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
 
 #define IMAGEOVERSIZEWITDH 800*2*2
@@ -157,7 +156,18 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     botDisplay->tileset=new Tiled::Tileset(MapController::text_bot,16,24);
     QString skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
     if(!QFile(skinPath).exists())
-        skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKINBOT+MapController::text_slash+skin+MapController::text_slashtrainerpng;
+    {
+        QDir folderList(QStringLiteral("%1/skin/").arg(datapackPath));
+        const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
+        int entryListIndex=0;
+        while(entryListIndex<entryList.size())
+        {
+            skinPath=datapackPath+DATAPACK_BASE_PATH_SKINBASE+entryList.at(entryListIndex)+MapController::text_slash+skin+MapController::text_slashtrainerpng;
+            if(QFile(skinPath).exists())
+                break;
+            entryListIndex++;
+        }
+    }
     if(!QFile(skinPath).exists())
     {
         qDebug() << "Unable the load the bot tileset (not found):" << skinPath;

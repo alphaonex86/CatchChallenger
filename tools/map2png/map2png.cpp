@@ -48,7 +48,6 @@ QString Map2Png::text_Object=QLatin1Literal("Object");
 QString Map2Png::text_bot=QLatin1Literal("bot");
 QString Map2Png::text_skin=QLatin1Literal("skin");
 QString Map2Png::text_fightertrainer=QStringLiteral("%2/skin/fighter/%1/trainer.png");
-QString Map2Png::text_bottrainer=QStringLiteral("%2/skin/bot/%1/trainer.png");
 QString Map2Png::text_lookAt=QLatin1Literal("lookAt");
 QString Map2Png::text_empty;
 QString Map2Png::text_top=QLatin1Literal("top");
@@ -315,9 +314,19 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                             tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
                         else
                         {
-                            tilesetPath=Map2Png::text_bottrainer.arg(objects.at(index2)->property(Map2Png::text_skin)).arg(baseDatapack);
-                            if(QFile(tilesetPath).exists())
-                                tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
+                            QDir folderList(QStringLiteral("%1/skin/").arg(baseDatapack));
+                            const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
+                            int entryListIndex=0;
+                            while(entryListIndex<entryList.size())
+                            {
+                                tilesetPath=QStringLiteral("%1/skin/%2/%3/trainer.png").arg(baseDatapack).arg(entryList.at(entryListIndex)).arg(objects.at(index2)->property(Map2Png::text_skin));
+                                if(QFile(tilesetPath).exists())
+                                {
+                                    tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
+                                    break;
+                                }
+                                entryListIndex++;
+                            }
                         }
                         if(tileset!=NULL)
                         {

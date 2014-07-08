@@ -14,6 +14,8 @@ QtDatabase::QtDatabase() :
     conn(NULL),
     sqlQuery(NULL)
 {
+    connect(this,&QtDatabase::sendQuery,&dbThread,&QtDatabaseThread::receiveQuery,Qt::QueuedConnection);
+    connect(&dbThread,&QtDatabaseThread::sendReply,this,&QtDatabase::receiveReply,Qt::QueuedConnection);
 }
 
 QtDatabase::~QtDatabase()
@@ -46,11 +48,6 @@ bool QtDatabase::syncConnect(const char * host, const char * dbname, const char 
         conn=NULL;
         return false;
     }
-    if(conn!=NULL)
-    {
-        std::cerr << "pg not connected" << std::endl;
-        return false;
-    }
     return true;
 }
 
@@ -68,13 +65,9 @@ bool QtDatabase::syncConnectSqlite(const char * file)
     conn->setDatabaseName(file);
     if(!conn->open())
     {
+        lastErrorMessage=(conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
         delete conn;
         conn=NULL;
-        return false;
-    }
-    if(conn!=NULL)
-    {
-        std::cerr << "pg not connected" << std::endl;
         return false;
     }
     return true;
@@ -92,13 +85,9 @@ bool QtDatabase::syncConnectPostgresql(const char * host, const char * dbname, c
     conn->setPassword(password);
     if(!conn->open())
     {
+        lastErrorMessage=(conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
         delete conn;
         conn=NULL;
-        return false;
-    }
-    if(conn!=NULL)
-    {
-        std::cerr << "pg not connected" << std::endl;
         return false;
     }
     return true;
@@ -120,21 +109,51 @@ bool QtDatabase::asyncRead(const char *query,void * returnObject, CallBackDataba
 {
     if(conn==NULL)
     {
-        std::cerr << "pg not connected" << std::endl;
+        std::cerr << "db not connected" << std::endl;
         return false;
     }
-    if(query!=NULL)
-        delete query;
-    sqlQuery=new QSqlQuery(*conn);
-    if(!sqlQuery->exec(query))
+    CallBack tempCallback;
+    tempCallback.object=returnObject;
+    tempCallback.method=method;
+    if(queue.size()>0)
     {
-        qDebug() << QString(sqlQuery->lastQuery()+": "+sqlQuery->lastError().text());
-        return false;
+        if(queue.size()>=CATCHCHALLENGER_MAXBDQUERIES)
+        {
+            std::cerr << "db queue full" << std::endl;
+            return false;
+        }
+        queue << tempCallback;
+        queriesList << QString::fromUtf8(query);
+        return true;
     }
-    method(returnObject);
-    delete query;
-    query=NULL;
+    emit sendQuery(query,*conn);
+    queue << tempCallback;
     return true;
+}
+
+void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
+{
+    if(sqlQuery!=NULL)
+    {
+        delete sqlQuery;
+        sqlQuery=NULL;
+    }
+    sqlQuery=new QSqlQuery(queryReturn);
+    if(!queue.isEmpty())
+    {
+        CallBack callback=queue.first();
+        if(callback.method!=NULL)
+            callback.method(callback.object);
+        queue.removeFirst();
+    }
+    if(sqlQuery!=NULL)
+    {
+        delete sqlQuery;
+        sqlQuery=NULL;
+    }
+    clear();
+    if(!queriesList.isEmpty())
+        emit sendQuery(queriesList.takeFirst(),*conn);
 }
 
 bool QtDatabase::asyncWrite(const char *query)
@@ -147,6 +166,7 @@ bool QtDatabase::asyncWrite(const char *query)
     QSqlQuery writeQuery(*conn);
     if(!writeQuery.exec(query))
     {
+        lastErrorMessage=(conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
         qDebug() << QString(writeQuery.lastQuery()+": "+writeQuery.lastError().text());
         return false;
     }
@@ -162,9 +182,12 @@ void QtDatabase::clear()
     }
 }
 
-char *QtDatabase::errorMessage()
+const char *QtDatabase::errorMessage() const
 {
-    return (conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
+    if(conn==NULL)
+        return lastErrorMessage.toLatin1().constData();
+    else
+        return (conn->lastError().driverText()+QString(": ")+conn->lastError().databaseText()).toUtf8().data();
 }
 
 bool QtDatabase::next()
@@ -177,13 +200,35 @@ bool QtDatabase::next()
     {
         delete sqlQuery;
         sqlQuery=NULL;
+        return false;
     }
     return true;
 }
 
-char * QtDatabase::value(const int &value)
+const char * QtDatabase::value(const int &value)
 {
     if(sqlQuery==NULL)
         return emptyString;
-    return sqlQuery->value(value).toString().toUtf8().data();
+    const QString &string(sqlQuery->value(value).toString());
+    valueReturnedData=string.toUtf8();
+    valueReturnedData[valueReturnedData.size()]='\0';
+    return valueReturnedData.constData();
+}
+
+QtDatabaseThread::QtDatabaseThread()
+{
+    moveToThread(this);
+    setObjectName("Db thread");
+    start();
+}
+
+void QtDatabaseThread::receiveQuery(const QString &query,const QSqlDatabase &db)
+{
+    QSqlQuery queryReturn(db);
+    if(!queryReturn.exec(query))
+    {
+        //lastErrorMessage=(db.lastError().driverText()+QString(": ")+db.lastError().databaseText()).toUtf8().data();
+        qDebug() << QString(queryReturn.lastQuery()+": "+queryReturn.lastError().text());
+    }
+    emit sendReply(queryReturn);
 }

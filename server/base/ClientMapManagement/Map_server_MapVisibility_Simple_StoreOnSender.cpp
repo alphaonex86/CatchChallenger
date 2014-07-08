@@ -160,6 +160,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             index++;
         }
+        to_send_insert=false;//of map, not client
     }
     else
     {
@@ -195,7 +196,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                qDebug() << "Out of buffer for map management" << __LINE__;
+                qDebug() << "Out of buffer for map management to send remove" << __LINE__;
             #endif
         }
         else
@@ -218,7 +219,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                qDebug() << "Out of buffer for map management" << __LINE__;
+                qDebug() << "Out of buffer for map management to send remove on 16bits" << __LINE__;
             #endif
         }
     }
@@ -300,7 +301,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                qDebug() << "Out of buffer for map management" << __LINE__;
+                qDebug() << "Out of buffer for map management to send reinsert" << __LINE__ << "bufferSizeToHave" << bufferSizeToHave << "CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER" << CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER;
             #endif
         }
         else
@@ -377,11 +378,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         index++;
                     }
                 }
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                else
+                    qDebug() << "Out of buffer for map management to send reinsert en 16bits" << __LINE__ << "bufferSizeToHave" << bufferSizeToHave << "CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER" << CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER;
+                #endif
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            else
-                qDebug() << "Out of buffer for map management" << __LINE__;
-            #endif
         }
     }
     //purge

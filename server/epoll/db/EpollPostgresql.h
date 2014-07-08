@@ -24,9 +24,9 @@ public:
     static void noticeProcessor(void *arg, const char *message);
     bool epollEvent(const uint32_t &events);
     void clear();
-    char * errorMessage();
+    const char * errorMessage() const;
     bool next();
-    char * value(const int &value);
+    char * value(const int &value) const;
     bool isConnected() const;
 
     struct CallBack

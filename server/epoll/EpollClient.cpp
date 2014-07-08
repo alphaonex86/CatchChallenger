@@ -14,7 +14,7 @@
 
 using namespace CatchChallenger;
 
-EpollClient::EpollClient(const int &infd,const bool &tcpCork) :
+EpollClient::EpollClient(const int &infd) :
     #ifndef SERVERNOBUFFER
     bufferSize(0),
     #endif
@@ -23,13 +23,6 @@ EpollClient::EpollClient(const int &infd,const bool &tcpCork) :
     #ifndef SERVERNOBUFFER
     memset(buffer,0,4096);
     #endif
-    if(tcpCork)
-    {
-        //set cork for CatchChallener because don't have real time part
-        int state = 1;
-        if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-            std::cerr << "Unable to apply tcp cork" << std::endl;
-    }
 }
 
 EpollClient::~EpollClient()
@@ -72,7 +65,7 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
     return count;
 }
 
-ssize_t EpollClient::write(char *buffer,const size_t &bufferSize)
+ssize_t EpollClient::write(const char *buffer, const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;

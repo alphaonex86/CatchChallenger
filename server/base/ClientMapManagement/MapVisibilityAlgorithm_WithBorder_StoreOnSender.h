@@ -13,7 +13,17 @@ namespace CatchChallenger {
 class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public Client
 {
 public:
-    explicit MapVisibilityAlgorithm_WithBorder_StoreOnSender(ConnectedSocket *socket);
+    explicit MapVisibilityAlgorithm_WithBorder_StoreOnSender(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        );
     ~MapVisibilityAlgorithm_WithBorder_StoreOnSender();
     void reinsertAllClient();
     void reinsertAllClientIncludingBorderClients();

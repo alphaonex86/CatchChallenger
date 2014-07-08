@@ -12,11 +12,11 @@ namespace CatchChallenger {
 class EpollClient : public BaseClassSwitch
 {
 public:
-    EpollClient(const int &infd,const bool &tcpCork);
+    EpollClient(const int &infd);
     ~EpollClient();
     void close();
     ssize_t read(char *buffer,const size_t &bufferSize);
-    ssize_t write(char *buffer,const size_t &bufferSize);
+    ssize_t write(const char *buffer,const size_t &bufferSize);
     void flush();
     Type getType() const;
     bool isValid() const;
