@@ -34,7 +34,8 @@ void ProcessControler::send_settings()
     CommonSettings::commonSettings.max_character					= settings->value(QLatin1Literal("max_character")).toUInt();
     CommonSettings::commonSettings.max_pseudo_size					= settings->value(QLatin1Literal("max_pseudo_size")).toUInt();
     CommonSettings::commonSettings.character_delete_time			= settings->value(QLatin1Literal("character_delete_time")).toUInt();
-
+    CommonSettings::commonSettings.useSP                            = settings->value(QLatin1Literal("useSP")).toBool();
+    CommonSettings::commonSettings.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettings::commonSettings.useSP;
     CommonSettings::commonSettings.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();
     CommonSettings::commonSettings.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
     CommonSettings::commonSettings.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
@@ -160,7 +161,6 @@ void ProcessControler::send_settings()
         settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
         formatedServerSettings.mapVisibility.simple.max				= settings->value(QLatin1Literal("Max")).toUInt();
         formatedServerSettings.mapVisibility.simple.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
-        formatedServerSettings.mapVisibility.simple.storeOnSender   = settings->value(QLatin1Literal("StoreOnSender")).toBool();
         formatedServerSettings.mapVisibility.simple.reemit          = settings->value(QLatin1Literal("Reemit")).toBool();
         settings->endGroup();
     }
@@ -171,7 +171,6 @@ void ProcessControler::send_settings()
         formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= settings->value(QLatin1Literal("ReshowWithBorder")).toUInt();
         formatedServerSettings.mapVisibility.withBorder.max				= settings->value(QLatin1Literal("Max")).toUInt();
         formatedServerSettings.mapVisibility.withBorder.reshow			= settings->value(QLatin1Literal("Reshow")).toUInt();
-        formatedServerSettings.mapVisibility.withBorder.storeOnSender	= settings->value(QLatin1Literal("StoreOnSender")).toBool();
         settings->endGroup();
     }
 

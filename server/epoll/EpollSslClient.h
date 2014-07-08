@@ -12,7 +12,7 @@ namespace CatchChallenger {
 class EpollSslClient : public BaseClassSwitch
 {
 public:
-    EpollSslClient(const int &infd, SSL_CTX *ctx, const bool &tcpCork);
+    EpollSslClient(const int &infd, SSL_CTX *ctx);
     ~EpollSslClient();
     #ifndef SERVERNOBUFFER
     static void staticInit();

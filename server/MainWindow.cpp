@@ -292,6 +292,8 @@ void MainWindow::load_settings()
     ui->tolerantMode->setChecked(settings->value(QLatin1Literal("tolerantMode")).toBool());
     ui->forceClientToSendAtMapChange->setChecked(settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool());
     ui->useSsl->setChecked(settings->value(QLatin1Literal("useSsl")).toBool());
+    ui->autoLearn->setChecked(settings->value(QLatin1Literal("autoLearn")).toBool());
+    ui->useSP->setChecked(settings->value(QLatin1Literal("useSP")).toBool());
     if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("none"))
         ui->compression->setCurrentIndex(0);
     else if(settings->value(QLatin1Literal("compression")).toString()==QLatin1Literal("xz"))
@@ -582,6 +584,8 @@ void MainWindow::send_settings()
     formatedServerSettings.dontSendPlayerType                       = ui->dontSendPlayerType->isChecked();
     CommonSettings::commonSettings.dontSendPseudo					= ui->dontSendPseudo->isChecked();
     CommonSettings::commonSettings.forceClientToSendAtMapChange		= ui->forceClientToSendAtMapChange->isChecked();
+    CommonSettings::commonSettings.useSP                            = ui->useSP->isChecked();
+    CommonSettings::commonSettings.autoLearn                        = ui->autoLearn->isChecked() && !ui->useSP->isChecked();
 
     //the listen
     formatedServerNormalSettings.server_port			= ui->server_port->value();
@@ -1242,4 +1246,14 @@ void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleReemit_toggled(
 void CatchChallenger::MainWindow::on_useSsl_toggled(bool checked)
 {
     settings->setValue(QLatin1Literal("useSsl"),checked);
+}
+
+void CatchChallenger::MainWindow::on_useSP_toggled(bool checked)
+{
+    settings->setValue(QLatin1Literal("useSP"),checked);
+}
+
+void CatchChallenger::MainWindow::on_autoLearn_toggled(bool checked)
+{
+    settings->setValue(QLatin1Literal("autoLearn"),checked);
 }

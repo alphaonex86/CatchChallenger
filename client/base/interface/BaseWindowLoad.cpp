@@ -620,15 +620,22 @@ QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) con
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }
+    QDir folderList(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKINBASE);
+    const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
+    int entryListIndex=0;
+    while(entryListIndex<entryList.size())
     {
-        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKINBOT+skinName+QStringLiteral("/%1.png").arg(type));
-        if(pnfFile.exists())
-            return pnfFile.absoluteFilePath();
-    }
-    {
-        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKINBOT+skinName+QStringLiteral("/%1.gif").arg(type));
-        if(gifFile.exists())
-            return gifFile.absoluteFilePath();
+        {
+            QFileInfo pnfFile(QStringLiteral("%1/skin/%2/%3/trainer.png").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName));
+            if(pnfFile.exists())
+                return pnfFile.absoluteFilePath();
+        }
+        {
+            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/trainer.gif").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName));
+            if(gifFile.exists())
+                return gifFile.absoluteFilePath();
+        }
+        entryListIndex++;
     }
     return QString();
 }

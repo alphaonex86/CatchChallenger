@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>6</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -246,38 +246,38 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
+        <item row="7" column="0">
          <widget class="QLabel" name="label_8">
           <property name="text">
            <string>Min character</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
+        <item row="7" column="1">
          <widget class="QSpinBox" name="min_character"/>
         </item>
-        <item row="6" column="0">
+        <item row="8" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
            <string>Max character</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
+        <item row="8" column="1">
          <widget class="QSpinBox" name="max_character">
           <property name="value">
            <number>3</number>
           </property>
          </widget>
         </item>
-        <item row="8" column="0">
+        <item row="10" column="0">
          <widget class="QLabel" name="label_11">
           <property name="text">
            <string>Max pseudo size</string>
           </property>
          </widget>
         </item>
-        <item row="8" column="1">
+        <item row="10" column="1">
          <widget class="QSpinBox" name="max_pseudo_size">
           <property name="minimum">
            <number>1</number>
@@ -287,14 +287,14 @@
           </property>
          </widget>
         </item>
-        <item row="10" column="0">
+        <item row="12" column="0">
          <widget class="QLabel" name="label_12">
           <property name="text">
            <string>Character delete time</string>
           </property>
          </widget>
         </item>
-        <item row="10" column="1">
+        <item row="12" column="1">
          <widget class="QSpinBox" name="character_delete_time">
           <property name="suffix">
            <string> hour(s)</string>
@@ -310,28 +310,28 @@
           </property>
          </widget>
         </item>
-        <item row="12" column="1">
+        <item row="14" column="1">
          <widget class="QCheckBox" name="anonymous">
           <property name="text">
            <string>Anonymous</string>
           </property>
          </widget>
         </item>
-        <item row="13" column="1">
+        <item row="15" column="1">
          <widget class="QCheckBox" name="automatic_account_creation">
           <property name="text">
            <string>Automatic account creation</string>
           </property>
          </widget>
         </item>
-        <item row="14" column="0">
+        <item row="16" column="0">
          <widget class="QLabel" name="label_31">
           <property name="text">
            <string>Server message</string>
           </property>
          </widget>
         </item>
-        <item row="14" column="1">
+        <item row="16" column="1">
          <widget class="QPlainTextEdit" name="server_message">
           <property name="maximumSize">
            <size>
@@ -341,21 +341,21 @@
           </property>
          </widget>
         </item>
-        <item row="15" column="1">
+        <item row="17" column="1">
          <widget class="QCheckBox" name="dontSendPlayerType">
           <property name="text">
            <string>Don't send the player type</string>
           </property>
          </widget>
         </item>
-        <item row="16" column="0">
+        <item row="18" column="0">
          <widget class="QLabel" name="label_32">
           <property name="text">
            <string>Proxy</string>
           </property>
          </widget>
         </item>
-        <item row="16" column="1">
+        <item row="18" column="1">
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
            <widget class="QLineEdit" name="proxy">
@@ -392,10 +392,24 @@
           </item>
          </layout>
         </item>
-        <item row="11" column="1">
+        <item row="13" column="1">
          <widget class="QCheckBox" name="useSsl">
           <property name="text">
            <string>Use ssl</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QCheckBox" name="useSP">
+          <property name="text">
+           <string>Use SP</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QCheckBox" name="autoLearn">
+          <property name="text">
+           <string>Auto-learn</string>
           </property>
          </widget>
         </item>
@@ -1536,5 +1550,22 @@
  <resources>
   <include location="all-server-resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>useSP</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>autoLearn</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>191</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>193</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

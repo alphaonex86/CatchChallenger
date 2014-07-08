@@ -13,6 +13,8 @@ public:
     quint8 max_pseudo_size;
     quint32 character_delete_time;//in seconds
     quint8 forcedSpeed;
+    bool useSP;
+    bool autoLearn;
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
     int waitBeforeConnectAfterKick;

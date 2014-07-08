@@ -359,14 +359,14 @@ void NormalServer::newConnection()
             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
                 case MapVisibilityAlgorithmSelection_Simple:
-                    connect_the_last_client(new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(socket)));
+                    connect_the_last_client(new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(socket)),socket);
                 break;
                 case MapVisibilityAlgorithmSelection_WithBorder:
-                    connect_the_last_client(new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(socket)));
+                    connect_the_last_client(new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(socket)),socket);
                 break;
                 default:
                 case MapVisibilityAlgorithmSelection_None:
-                    connect_the_last_client(new MapVisibilityAlgorithm_None(new ConnectedSocket(socket)));
+                    connect_the_last_client(new MapVisibilityAlgorithm_None(new ConnectedSocket(socket)),socket);
                 break;
             }
         }
@@ -419,7 +419,7 @@ void NormalServer::newConnection()
                             client=new MapVisibilityAlgorithm_None(new ConnectedSocket(socket));
                         break;
                     }
-                    connect_the_last_client(client);
+                    connect_the_last_client(client,socket);
                     //connect(client,&Client::kicked,this,&NormalServer::kicked,Qt::QueuedConnection);
                 }
                 else

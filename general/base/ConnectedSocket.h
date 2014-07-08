@@ -8,35 +8,23 @@
 #include <QHostAddress>
 #include <QByteArray>
 
-#include "QFakeSocket.h"
+#ifndef EPOLLCATCHCHALLENGERSERVER
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
-    #ifndef SERVERNOSSL
-        #include "../../server/epoll/EpollSslClient.h"
-    #else
-        #include "../../server/epoll/EpollClient.h"
-    #endif
-#endif
+#include "QFakeSocket.h"
 
 namespace CatchChallenger {
 
 class ConnectedSocket : public QIODevice
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
-    #endif
 public:
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     explicit ConnectedSocket(QFakeSocket *socket);
     explicit ConnectedSocket(QSslSocket *socket);
     explicit ConnectedSocket(QTcpSocket *socket);
-    #endif
     ~ConnectedSocket();
     void	abort();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     void	connectToHost(const QString & hostName,quint16 port);
     void	connectToHost(const QHostAddress & address,quint16 port);
-    #endif
     void	disconnectFromHost();
     QAbstractSocket::SocketError error() const;
     bool	flush();
@@ -55,28 +43,14 @@ public:
     qint64	readData(char * data, qint64 maxSize);
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
-            EpollSslClient *epollSocket;
-            explicit ConnectedSocket(EpollSslClient *socket);
-        #else
-            EpollClient *epollSocket;
-            explicit ConnectedSocket(EpollClient *socket);
-        #endif
-    #else
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
     QTcpSocket *tcpSocket;
-    #endif
 protected:
     bool	isSequential() const;
     bool canReadLine() const;
     QList<QSslError> sslErrors() const;
-#ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
-#else
-public:
-#endif
     void	connected();
     void	disconnected();
     void	error(QAbstractSocket::SocketError socketError);
@@ -88,5 +62,6 @@ private:
     //void startHandshake();
 };
 }
+#endif
 
 #endif

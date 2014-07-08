@@ -8,21 +8,39 @@ using namespace CatchChallenger;
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
-Client::Client(ConnectedSocket *socket) :
+Client::Client(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        ) :
     ProtocolParsingInputOutput(
-                socket
-
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                infd,ctx
+            #else
+                infd
+            #endif
+        #else
+        socket
+        #endif
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         ,PacketModeTransmission_Server
         #endif
         ),
     character_loaded(false),
-    socket(socket),
     account_id(0),
     number_of_character(0),
     character_id(0),
     market_cash(0),
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected(true),
+    #endif
     randomIndex(0),
     randomSize(0),
     connected_players(0),
@@ -90,11 +108,13 @@ Client::~Client()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(socket!=NULL)
     {
         delete socket;
         socket=NULL;
     }
+    #endif
 }
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -104,6 +124,7 @@ BaseClassSwitch::Type Client::getType() const
 }
 #endif
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 /// \brief new error at connexion
 void Client::connectionError(QAbstractSocket::SocketError error)
 {
@@ -114,6 +135,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
         socket->disconnectFromHost();
     }
 }
+#endif
 
 /// \warning called in one other thread!!!
 void Client::disconnectClient()
@@ -123,6 +145,7 @@ void Client::disconnectClient()
         normalOutput("Disconnected client");
     #endif
     GlobalServerData::serverPrivateVariables.db.clear();
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected=false;
     if(socket!=NULL)
     {
@@ -132,6 +155,7 @@ void Client::disconnectClient()
             socket->waitForDisconnected();*/
         socket=NULL;
     }
+    #endif
 
     if(character_loaded)
     {
@@ -160,15 +184,25 @@ void Client::disconnectClient()
             while(index<size)
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster
-                             .arg(playerMonster.id)
-                             .arg(character_id)
-                             .arg(playerMonster.hp)
-                             .arg(playerMonster.remaining_xp)
-                             .arg(playerMonster.level)
-                             .arg(playerMonster.sp)
-                             .arg(index+1)
-                             );
+                if(CommonSettings::commonSettings.useSP)
+                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster
+                                 .arg(playerMonster.id)
+                                 .arg(character_id)
+                                 .arg(playerMonster.hp)
+                                 .arg(playerMonster.remaining_xp)
+                                 .arg(playerMonster.level)
+                                 .arg(playerMonster.sp)
+                                 .arg(index+1)
+                                 );
+                else
+                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster
+                                 .arg(playerMonster.id)
+                                 .arg(character_id)
+                                 .arg(playerMonster.hp)
+                                 .arg(playerMonster.remaining_xp)
+                                 .arg(playerMonster.level)
+                                 .arg(index+1)
+                                 );
                 int sub_index=0;
                 const int &sub_size=playerMonster.skills.size();
                 while(sub_index<sub_size)
@@ -233,6 +267,7 @@ void Client::normalOutput(const QString &message) const
     }
     else
     {
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         QString ip;
         if(socket==NULL)
             ip="unknown";
@@ -246,6 +281,9 @@ void Client::normalOutput(const QString &message) const
             else
                 ip=QStringLiteral("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
         }
+        #else
+        QString ip(QStringLiteral("[IP]:[PORT]"));
+        #endif
         if(GlobalServerData::serverSettings.anonymous)
         {
             QCryptographicHash hash(QCryptographicHash::Sha1);

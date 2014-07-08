@@ -7,6 +7,7 @@ using namespace CatchChallenger;
 InternalServer::InternalServer() :
     QtServer()
 {
+    connect(this,&QtServer::need_be_started,this,&InternalServer::start_internal_server,Qt::QueuedConnection);
 }
 
 /** call only when the server is down
@@ -46,7 +47,6 @@ void InternalServer::start_internal_server()
     }
     preload_the_data();
     stat=Up;
-    emit is_started(true);
     return;
 }
 

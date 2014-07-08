@@ -158,14 +158,15 @@ void Client::savePosition()
         break;
     }
     dbQueryWrite(updateMapPositionQuery);
-    const QList<PlayerMonster> &playerMonsterList=getPlayerMonster();
+/* do at moveDownMonster and moveUpMonster
+ *     const QList<PlayerMonster> &playerMonsterList=getPlayerMonster();
     int index=0;
     while(index<playerMonsterList.size())
     {
         const PlayerMonster &playerMonster=playerMonsterList.at(index);
-        saveMonsterPosition(index+1,playerMonster.id);
+        saveMonsterPosition(playerMonster.id,index+1);
         index++;
-    }
+    }*/
 }
 
 /* why do that's here?
@@ -930,30 +931,30 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint3
             {
                 if(public_and_private_informations.warehouse_playerMonster.at(sub_index).id==withdrawMonsters.at(index))
                 {
-                    public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster.at(sub_index);
-                    public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
                     switch(GlobalServerData::serverSettings.database.type)
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
                             dbQueryWrite(QStringLiteral("UPDATE `monster` SET `place`='wear',`position`=%2 WHERE `id`=%1;")
                                         .arg(withdrawMonsters.at(index))
-                                        .arg(public_and_private_informations.playerMonster.size()+1)
+                                        .arg(public_and_private_informations.playerMonster.size()+2)
                                         );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
                             dbQueryWrite(QStringLiteral("UPDATE monster SET place='wear',position=%2 WHERE id=%1;")
                                         .arg(withdrawMonsters.at(index))
-                                        .arg(public_and_private_informations.playerMonster.size()+1)
+                                        .arg(public_and_private_informations.playerMonster.size()+2)
                                         );
                         break;
                         case ServerSettings::Database::DatabaseType_PostgreSQL:
                             dbQueryWrite(QStringLiteral("UPDATE monster SET place='wear',position=%2 WHERE id=%1;")
                                         .arg(withdrawMonsters.at(index))
-                                        .arg(public_and_private_informations.playerMonster.size()+1)
+                                        .arg(public_and_private_informations.playerMonster.size()+2)
                                         );
                         break;
                     }
+                    public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster.at(sub_index);
+                    public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
                     break;
                 }
                 sub_index++;
@@ -970,32 +971,30 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint3
             {
                 if(public_and_private_informations.playerMonster.at(sub_index).id==depositeMonsters.at(index))
                 {
-                    public_and_private_informations.warehouse_playerMonster << public_and_private_informations.playerMonster.at(sub_index);
-                    public_and_private_informations.playerMonster.removeAt(sub_index);
-                    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
-                        saveMonsterStat(public_and_private_informations.playerMonster.last());
                     switch(GlobalServerData::serverSettings.database.type)
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
                             dbQueryWrite(QStringLiteral("UPDATE `monster` SET `place`='warehouse',`position`=%2 WHERE `id`=%1;")
-                                        .arg(withdrawMonsters.at(index))
-                                        .arg(public_and_private_informations.warehouse_playerMonster.size()+1)
+                                        .arg(depositeMonsters.at(index))
+                                        .arg(public_and_private_informations.warehouse_playerMonster.size()+2)
                                         );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
                             dbQueryWrite(QStringLiteral("UPDATE monster SET place='warehouse',position=%2 WHERE id=%1;")
-                                        .arg(withdrawMonsters.at(index))
-                                        .arg(public_and_private_informations.warehouse_playerMonster.size()+1)
+                                        .arg(depositeMonsters.at(index))
+                                        .arg(public_and_private_informations.warehouse_playerMonster.size()+2)
                                         );
                         break;
                         case ServerSettings::Database::DatabaseType_PostgreSQL:
                             dbQueryWrite(QStringLiteral("UPDATE monster SET place='warehouse',position=%2 WHERE id=%1;")
-                                        .arg(withdrawMonsters.at(index))
-                                        .arg(public_and_private_informations.warehouse_playerMonster.size()+1)
+                                        .arg(depositeMonsters.at(index))
+                                        .arg(public_and_private_informations.warehouse_playerMonster.size()+2)
                                         );
                         break;
                     }
+                    public_and_private_informations.warehouse_playerMonster << public_and_private_informations.playerMonster.at(sub_index);
+                    public_and_private_informations.playerMonster.removeAt(sub_index);
                     break;
                 }
                 sub_index++;
@@ -1003,7 +1002,9 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint3
             index++;
         }
     }
-
+    if(!depositeMonsters.isEmpty() || !withdrawMonsters.isEmpty())
+        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
+            saveMonsterStat(public_and_private_informations.playerMonster.last());
 }
 
 bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)

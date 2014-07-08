@@ -37,8 +37,7 @@ SOURCES += \
     $$PWD/fight/LocalClientHandlerFight.cpp \
     $$PWD/fight/BaseServerFight.cpp \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
-    $$PWD/fight/ClientHeavyLoadFight.cpp \
-    $$PWD/base/QtDatabase.cpp
+    $$PWD/fight/ClientHeavyLoadFight.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
@@ -69,8 +68,7 @@ HEADERS += \
     $$PWD/crafting/MapServerCrafting.h \
     $$PWD/fight/ServerStructuresFight.h \
     $$PWD/fight/BaseServerFight.h \
-    $$PWD/base/DatabaseBase.h \
-    $$PWD/base/QtDatabase.h
+    $$PWD/base/DatabaseBase.h
 
 RESOURCES += \
     $$PWD/all-server-resources.qrc

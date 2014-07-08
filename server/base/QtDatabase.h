@@ -3,12 +3,29 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QSqlError>
+#include <QThread>
+#include <QObject>
+
+#define CATCHCHALLENGER_MAXBDQUERIES 255
 
 #include "DatabaseBase.h"
 
 namespace CatchChallenger {
-class QtDatabase
+
+class QtDatabaseThread : public QThread
 {
+    Q_OBJECT
+public:
+    QtDatabaseThread();
+    void receiveQuery(const QString &query, const QSqlDatabase &db);
+signals:
+    void sendReply(const QSqlQuery &queryReturn);
+};
+
+class QtDatabase : public QObject
+{
+    Q_OBJECT
 public:
     QtDatabase();
     ~QtDatabase();
@@ -21,15 +38,30 @@ public:
     bool asyncWrite(const char *query);
     bool readyToRead();
     void clear();
-    char * errorMessage();
+    const char * errorMessage() const;
     bool next();
-    char * value(const int &value);
+    const char * value(const int &value);
     bool isConnected() const;
+    void receiveReply(const QSqlQuery &queryReturn);
+
+    struct CallBack
+    {
+        void *object;
+        CallBackDatabase method;
+    };
+    QtDatabaseThread dbThread;
+signals:
+    void sendQuery(const QString &query, const QSqlDatabase &db);
 private:
     QSqlDatabase *conn;
     QSqlQuery *sqlQuery;
     static char emptyString[1];
+    QString lastErrorMessage;
+    QList<CallBack> queue;
+    QList<QString> queriesList;
+    QByteArray valueReturnedData;
 };
+
 }
 
 #endif

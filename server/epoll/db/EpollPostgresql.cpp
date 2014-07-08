@@ -290,7 +290,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
     return true;
 }
 
-char *EpollPostgresql::errorMessage()
+const char *EpollPostgresql::errorMessage() const
 {
     return PQerrorMessage(conn);
 }
@@ -311,7 +311,7 @@ bool EpollPostgresql::next()
     }
 }
 
-char * EpollPostgresql::value(const int &value)
+char * EpollPostgresql::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0)
         return emptyString;

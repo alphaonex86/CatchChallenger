@@ -391,16 +391,29 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     Monster::Stat monsterStat=getStat(monsterDef,playerMonster.level);
     playerMonster.hp=monsterStat.hp;
     index=monsterDef.learn.size()-1;
+    QHash<quint32,quint8> learnedSkill;
     while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
     {
+        //monsterDef.learn.at(index).learnAtLevel -> need be sorted at load
         if(monsterDef.learn.at(index).learnAtLevel<=playerMonster.level)
         {
-            PlayerMonster::PlayerSkill temp;
-            temp.level=monsterDef.learn.at(index).learnSkillLevel;
-            temp.skill=monsterDef.learn.at(index).learnSkill;
-            temp.endurance=CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
-            playerMonster.skills << temp;
+            if(learnedSkill.contains(monsterDef.learn.at(index).learnSkill))
+            {
+                const int &skillIndex=learnedSkill.value(monsterDef.learn.at(index).learnSkill);
+                playerMonster.skills[skillIndex].level=monsterDef.learn.at(index).learnSkillLevel;
+            }
+            else
+            {
+                PlayerMonster::PlayerSkill temp;
+                temp.level=monsterDef.learn.at(index).learnSkillLevel;
+                temp.skill=monsterDef.learn.at(index).learnSkill;
+                temp.endurance=CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
+                learnedSkill[temp.skill]=playerMonster.skills.size();
+                playerMonster.skills << temp;
+            }
         }
+        else
+            break;
         index--;
     }
     *ok=true;
