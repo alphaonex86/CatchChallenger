@@ -1,5 +1,6 @@
 #include "CommonFightEngine.h"
 #include "../base/CommonDatapack.h"
+#include "../base/CommonSettings.h"
 #include "../base/GeneralVariable.h"
 
 #include <QtMath>
@@ -168,10 +169,13 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId, const quint32 &skil
                             errorFightEngine(QStringLiteral("Skill level to learn not found learnSkill()"));
                             return false;
                         }
-                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
-                        if(sp>monster.sp)
-                            return false;
-                        public_and_private_informations.playerMonster[index].sp-=sp;
+                        if(CommonSettings::commonSettings.useSP)
+                        {
+                            const quint32 &sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
+                            if(sp>monster.sp)
+                                return false;
+                            public_and_private_informations.playerMonster[index].sp-=sp;
+                        }
                         if(learn.learnSkillLevel==1)
                         {
                             PlayerMonster::PlayerSkill temp;

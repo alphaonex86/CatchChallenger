@@ -173,6 +173,7 @@ void ProtocolParsing::initialiseTheVariable()
 {
     if(!mainCodeWithoutSubCodeTypeClientToServer.isEmpty())
         return;
+
     compressionType=CompressionType_Zlib;
 
     //def query without the sub code

@@ -1222,20 +1222,6 @@ void MainWindow::on_linux_socket_cork_toggled(bool checked)
     #endif
 }
 
-void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleStoreOnSender_toggled(bool checked)
-{
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));
-    settings->setValue(QLatin1Literal("StoreOnSender"),checked);
-    settings->endGroup();
-}
-
-void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmWithBorderStoreOnSender_toggled(bool checked)
-{
-    settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-WithBorder"));
-    settings->setValue(QLatin1Literal("StoreOnSender"),checked);
-    settings->endGroup();
-}
-
 void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleReemit_toggled(bool checked)
 {
     settings->beginGroup(QLatin1Literal("MapVisibilityAlgorithm-Simple"));

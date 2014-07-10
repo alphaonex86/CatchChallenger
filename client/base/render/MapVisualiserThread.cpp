@@ -171,7 +171,6 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         delete tempMapObject;
         return NULL;
     }
-    qDebug() << DatapackClientLoader::datapackLoader.maps.join("\n");
     #endif
     tempMapObject->logicalMap.id                                    = DatapackClientLoader::datapackLoader.fullMapPathToId.value(resolvedFileName);
 

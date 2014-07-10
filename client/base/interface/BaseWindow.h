@@ -116,6 +116,9 @@ public:
     };
 protected:
     void changeEvent(QEvent *e);
+    static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
+    static QFile debugFile;
+    static quint8 debugFileStatus;
 public slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void selectObject(const ObjectType &objectType);
@@ -426,6 +429,9 @@ private slots:
     void on_forceZoom_toggled(bool checked);
     void on_zoom_valueChanged(int value);
     void changeDeviceIndex(int device);
+    void lastReplyTime(const quint32 &time);
+    void detectSlowDown();
+    void updateTheTurtle();
 protected slots:
     //datapack
     void datapackParsed();
@@ -627,6 +633,11 @@ private:
     static QString text_lang;
     static QString text_en;
     static QString text_text;
+
+    QTimer checkQueryTime;
+    int lastReplyTimeValue;
+    QTime lastReplyTimeSince;
+    quint32 worseQueryTime;
 signals:
     void newError(QString error,QString detailedError);
     //datapack

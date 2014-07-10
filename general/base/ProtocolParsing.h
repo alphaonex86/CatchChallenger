@@ -141,6 +141,9 @@ protected:
     virtual void reset();
 private:
     // for data
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    static int parseIncommingDataCount;
+    #endif
     bool haveData;
     bool haveData_dataSize;
     bool is_reply;

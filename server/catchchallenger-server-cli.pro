@@ -7,7 +7,6 @@ QT       -= gui widgets
 
 TARGET = catchchallenger-server-cli
 CONFIG   += console
-CONFIG   -= app_bundle
 
 SOURCES += ProcessControler.cpp \
     main-cli.cpp

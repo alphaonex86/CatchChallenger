@@ -693,7 +693,12 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                         {
                                             if(evolutionItem.isElement())
                                             {
-                                                if(evolutionItem.hasAttribute(FightLoader::text_type) && (evolutionItem.hasAttribute(FightLoader::text_level) || evolutionItem.attribute(FightLoader::text_type)==FightLoader::text_trade) && evolutionItem.hasAttribute(FightLoader::text_evolveTo))
+                                                if(evolutionItem.hasAttribute(FightLoader::text_type) && (
+                                                       evolutionItem.hasAttribute(FightLoader::text_level) ||
+                                                       (evolutionItem.attribute(FightLoader::text_type)==FightLoader::text_trade && evolutionItem.hasAttribute(FightLoader::text_evolveTo)) ||
+                                                       (evolutionItem.attribute(FightLoader::text_type)==FightLoader::text_item && evolutionItem.hasAttribute(FightLoader::text_item))
+                                                       )
+                                                   )
                                                 {
                                                     ok=true;
                                                     Monster::Evolution evolutionVar;
@@ -701,7 +706,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                                     if(typeText!=FightLoader::text_trade)
                                                     {
                                                         if(typeText==FightLoader::text_item)
-                                                            evolutionVar.level=evolutionItem.attribute(FightLoader::text_level).toUInt(&ok);
+                                                            evolutionVar.level=evolutionItem.attribute(FightLoader::text_item).toUInt(&ok);
                                                         else
                                                             evolutionVar.level=evolutionItem.attribute(FightLoader::text_level).toInt(&ok);
                                                         if(!ok)

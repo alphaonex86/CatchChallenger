@@ -21,8 +21,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&moveTimer,&QTimer::timeout,this,&MainWindow::doMove);
     connect(&moveTimer,&QTimer::timeout,this,&MainWindow::doText);
+    connect(&moveTimer,&QTimer::timeout,this,&MainWindow::detectSlowDown);
     moveTimer.start(1000);
     textTimer.start(1000);
+    slowDownTimer.start(200);
     number=1;
     numberOfBotConnected=0;
     numberOfSelectedCharacter=0;
@@ -83,6 +85,11 @@ void MainWindow::disconnected()
         numberOfSelectedCharacter--;
         ui->numberOfSelectedCharacter->setText(tr("Selected character: %1").arg(numberOfSelectedCharacter));
     }
+}
+
+void MainWindow::lastReplyTime(const quint32 &time)
+{
+    ui->labelLastReplyTime->setText(tr("Last reply time: %1ms").arg(time));
 }
 
 void MainWindow::tryLink(CatchChallengerClient * client)
@@ -199,6 +206,26 @@ void MainWindow::doText()
             }
         }
     }
+}
+
+void MainWindow::detectSlowDown()
+{
+    quint32 queryCount=0;
+    quint32 worseTime=0;
+    QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
+    while (i.hasNext()) {
+        i.next();
+        const QMap<quint8,QTime> &values=i.key()->getQuerySendTimeList();
+        queryCount+=values.size();
+        QMapIterator<quint8,QTime> i(values);
+        while (i.hasNext()) {
+            i.next();
+            const quint32 &time=i.value().elapsed();
+            if(time>worseTime)
+                worseTime=time;
+        }
+    }
+    ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
@@ -580,6 +607,7 @@ void MainWindow::connectTheExternalSocket(CatchChallengerClient * client)
     connect(client->api,&CatchChallenger::Api_client_real::have_current_player_info, this,&MainWindow::have_current_player_info);
     connect(client->api,&CatchChallenger::Api_client_real::newError,                 this,&MainWindow::newError);
     connect(client->api,&CatchChallenger::Api_client_real::newCharacterId,           this,&MainWindow::newCharacterId);
+    connect(client->api,&CatchChallenger::Api_client_real::lastReplyTime,            this,&MainWindow::lastReplyTime);
     connect(client->socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),                    this,&MainWindow::newSocketError);
     connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MainWindow::disconnected);
     if(apiToCatchChallengerClient.isEmpty())
