@@ -68,9 +68,11 @@ private:
     QString getMapName(const QString &file);
     QString getMapZone(const QString &file);
     QString getZoneName(const QString &zone);
+    bool versionIsNewer(const QString &version);
     QList<ListEntryEnvolued *> savegame;
     QHash<ListEntryEnvolued *,QString> savegamePathList;
     QHash<ListEntryEnvolued *,bool> savegameWithMetaData;
+    QMultiHash<QString,QString> savegameUpdate;
     ListEntryEnvolued * selectedSavegame;
     bool datapackPathExists;
     bool standAlone;

@@ -17,6 +17,9 @@ SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString
     QMainWindow(parent),
     ui(new Ui::SoloWindow)
 {
+    savegameUpdate.insert("0.4","ALTER TABLE plant ADD id INT;");
+    savegameUpdate.insert("0.4","CREATE UNIQUE INDEX \"plant_primarykey\" on plant (id ASC);");
+
     ui->setupUi(this);
     /*socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket);
@@ -272,43 +275,78 @@ void SoloWindow::updateSavegameList()
                 {
                     if(metaData.contains(QStringLiteral("title")) && metaData.contains(QStringLiteral("location")) && metaData.contains(QStringLiteral("time_played")) && metaData.contains(QStringLiteral("pass")))
                     {
-                        int time_played_number=metaData.value("time_played").toUInt(&ok);
-                        QString time_played;
-                        if(!ok || time_played_number>3600*24*365*50)
-                            time_played="Time player: bug";
-                        else
-                            time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLib::timeToString(time_played_number));
-                        //load the map name
-                        QString mapName;
-                        QString map=metaData.value(QStringLiteral("location")).toString();
-                        if(!map.isEmpty())
+                        //update process
+                        if(!metaData.contains("savegame_version"))
+                            metaData.setValue("savegame_version","0.4");
+                        const QString &version=metaData.value("savegame_version").toString();
+
+                        if(version==CATCHCHALLENGER_SAVEGAME_VERSION || savegameUpdate.contains(version))
                         {
-                            map.replace(QStringLiteral(".tmx"),QStringLiteral(".xml"));
-                            if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map).isFile())
-                                mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map);
-                            if(mapName.isEmpty())
+                            if(version!=CATCHCHALLENGER_SAVEGAME_VERSION)
                             {
-                                QString tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+metaData.value(QStringLiteral("location")).toString();
-                                if(QFileInfo(tmxFile).isFile())
+                                QSqlDatabase conn = QSqlDatabase::addDatabase("QSQLITE","savegameupdate");
+                                conn.setDatabaseName(savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
+                                if(conn.open())
                                 {
-                                    QString zone=getMapZone(tmxFile);
-                                    //try load the zone
-                                    if(!zone.isEmpty())
-                                        mapName=getZoneName(zone);
+                                    const QStringList &values=savegameUpdate.values(version);
+                                    int index=0;
+                                    while(index<values.size())
+                                    {
+                                        QSqlQuery query(conn);
+                                        if(!query.exec(values.at(index)))
+                                            qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
+                                        index++;
+                                    }
+                                    conn.close();
+                                }
+                                else
+                                    qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText();
+                                QSqlDatabase::removeDatabase("savegameupdate");
+                            }
+                            metaData.setValue("savegame_version",CATCHCHALLENGER_SAVEGAME_VERSION);
+                            int time_played_number=metaData.value("time_played").toUInt(&ok);
+                            QString time_played;
+                            if(!ok || time_played_number>3600*24*365*50)
+                                time_played="Time player: bug";
+                            else
+                                time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLib::timeToString(time_played_number));
+                            //load the map name
+                            QString mapName;
+                            QString map=metaData.value(QStringLiteral("location")).toString();
+                            if(!map.isEmpty())
+                            {
+                                map.replace(QStringLiteral(".tmx"),QStringLiteral(".xml"));
+                                if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map).isFile())
+                                    mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map);
+                                if(mapName.isEmpty())
+                                {
+                                    QString tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+metaData.value(QStringLiteral("location")).toString();
+                                    if(QFileInfo(tmxFile).isFile())
+                                    {
+                                        QString zone=getMapZone(tmxFile);
+                                        //try load the zone
+                                        if(!zone.isEmpty())
+                                            mapName=getZoneName(zone);
+                                    }
                                 }
                             }
-                        }
-                        QString lastLine;
-                        if(mapName.isEmpty())
-                            lastLine=time_played;
-                        else
-                            lastLine=QStringLiteral("%1 (%2)").arg(mapName).arg(time_played);
+                            QString lastLine;
+                            if(mapName.isEmpty())
+                                lastLine=time_played;
+                            else
+                                lastLine=QStringLiteral("%1 (%2)").arg(mapName).arg(time_played);
 
-                        newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
-                                          .arg(metaData.value("title").toString())
-                                          .arg(dateString)
-                                          .arg(lastLine)
-                                          );
+                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
+                                              .arg(metaData.value("title").toString())
+                                              .arg(dateString)
+                                              .arg(lastLine)
+                                              );
+                        }
+                        else
+                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br />Version not compatible (%2)</span>")
+                                              .arg(metaData.value("title").toString())
+                                              .arg(version)
+                                              );
                     }
                     else if(metaData.contains("title"))
                         newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span></span>")
@@ -486,6 +524,9 @@ QString SoloWindow::getZoneName(const QString &zone)
 
 void SoloWindow::on_SaveGame_Delete_clicked()
 {
+    if(QMessageBox::question(this,tr("Remove"),tr("Are you sure remove this savegame?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)!=QMessageBox::Yes)
+        return;
+
     if(selectedSavegame==NULL)
         return;
 

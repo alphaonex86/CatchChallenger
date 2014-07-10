@@ -4,8 +4,20 @@
 
 using namespace CatchChallenger;
 
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+int ProtocolParsingInputOutput::parseIncommingDataCount=0;
+#endif
+
 void ProtocolParsingInputOutput::parseIncommingData()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(ProtocolParsingInputOutput::parseIncommingDataCount>0)
+    {
+        qDebug() << "Multiple client ont same section";
+        abort();
+    }
+    ProtocolParsingInputOutput::parseIncommingDataCount++;
+    #endif
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -38,7 +50,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
         }
         else
             size=socket->read(ProtocolParsingInputOutput::commonBuffer,CATCHCHALLENGER_COMMONBUFFERSIZE);
-        QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
+        //QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
         //qDebug() << tempDataToDebug.toHex();
         #endif
         if(size==0)
@@ -48,46 +60,74 @@ void ProtocolParsingInputOutput::parseIncommingData()
 QString::number(isClient)+
 #endif
 QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            ProtocolParsingInputOutput::parseIncommingDataCount--;
+            #endif
             return;
         }
 
         do
         {
             if(!parseHeader(size,cursor))
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                qDebug() << "Break due to need more in header";
+                #endif
                 break;
+            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(cursor==0)
+            if(cursor==0 && !haveData)
             {
                 qDebug() << "Critical bug";
                 abort();
             }
             #endif
             if(!parseQueryNumber(size,cursor))
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                qDebug() << "Break due to need more in query number";
+                #endif
                 break;
+            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(cursor==0)
+            if(cursor==0 && !haveData)
             {
                 qDebug() << "Critical bug";
                 abort();
             }
             #endif
             if(!parseDataSize(size,cursor))
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                qDebug() << "Break due to need more in parse data size";
+                #endif
                 break;
+            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(cursor==0)
+            if(cursor==0 && !haveData)
             {
                 qDebug() << "Critical bug";
                 abort();
             }
             #endif
             if(!parseData(size,cursor))
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                qDebug() << "Break due to need more in parse data";
+                #endif
                 break;
+            }
             //parseDispatch(); do into above function
             dataClear();
         } while(cursor<size);
 
         if(size<CATCHCHALLENGER_COMMONBUFFERSIZE)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            ProtocolParsingInputOutput::parseIncommingDataCount--;
+            #endif
             return;
+        }
     }
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole(
@@ -95,6 +135,9 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
                 QString::number(isClient)+
                 #endif
     QStringLiteral(" parseIncommingData(): finish parse the input"));
+    #endif
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    ProtocolParsingInputOutput::parseIncommingDataCount--;
     #endif
 }
 
@@ -106,6 +149,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
             return false;
         mainCodeType=*(ProtocolParsingInputOutput::commonBuffer+cursor);
         cursor+=sizeof(quint8);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(cursor==0)
+        {
+            qDebug() << "Critical bug";
+            abort();
+        }
+        #endif
         #ifdef PROTOCOLPARSINGDEBUG
         DebugClass::debugConsole(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -128,6 +178,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
         /// \todo remplace by char*
         data_size_size=0;
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(cursor==0 && !haveData)
+    {
+        qDebug() << "Critical bug";
+        abort();
+    }
+    #endif
 
     if(!have_subCodeType)
     {
@@ -166,6 +223,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                 is_reply=true;
                 need_query_number=true;
                 //the size with be resolved later
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(cursor==0 && !haveData)
+                {
+                    qDebug() << "Critical bug";
+                    abort();
+                }
+                #endif
             }
             else
             {
@@ -192,6 +256,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                         dataSize=sizeOnlyMainCodePacketServerToClient.value(mainCodeType);
                         haveData_dataSize=true;
                     }
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(cursor==0 && !haveData)
+                    {
+                        qDebug() << "Critical bug";
+                        abort();
+                    }
+                    #endif
                 }
                 else
                 #endif
@@ -207,6 +278,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                         dataSize=sizeOnlyMainCodePacketClientToServer.value(mainCodeType);
                         haveData_dataSize=true;
                     }
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(cursor==0 && !haveData)
+                    {
+                        qDebug() << "Critical bug";
+                        abort();
+                    }
+                    #endif
                 }
             }
         }
@@ -228,6 +306,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
             }
             subCodeType=be16toh(*reinterpret_cast<quint16 *>(ProtocolParsingInputOutput::commonBuffer+cursor));
             cursor+=sizeof(quint16);
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(cursor==0 && !haveData)
+            {
+                qDebug() << "Critical bug";
+                abort();
+            }
+            #endif
 
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             if(isClient)
@@ -262,6 +347,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                         haveData_dataSize=true;
                     }
                 }
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(cursor==0 && !haveData)
+                {
+                    qDebug() << "Critical bug";
+                    abort();
+                }
+                #endif
             }
             else
             #endif
@@ -296,6 +388,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                         haveData_dataSize=true;
                     }
                 }
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(cursor==0 && !haveData)
+                {
+                    qDebug() << "Critical bug";
+                    abort();
+                }
+                #endif
             }
         }
 
@@ -309,6 +408,13 @@ bool ProtocolParsingInputOutput::parseHeader(const quint32 &size,quint32 &cursor
                     QString::number(isClient)+
                     #endif
         QStringLiteral(" parseIncommingData(): have_subCodeType"));
+    #endif
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(cursor==0 && !haveData)
+    {
+        qDebug() << "Critical bug";
+        abort();
+    }
     #endif
     return true;
 }
@@ -632,7 +738,7 @@ bool ProtocolParsingInputOutput::parseData(const quint32 &size,quint32 &cursor)
         {
             RXSize+=dataSize;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(cursor==0)
+            if(cursor==0 && !haveData)
             {
                 qDebug() << "Critical bug";
                 abort();

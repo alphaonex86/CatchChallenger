@@ -549,7 +549,8 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                     {
                         if(CommonSettings::commonSettings.useSP)
                         {
-                            const quint32 &sp=CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel).sp_to_learn;
+                            const Skill &skillStructure=CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill);
+                            const quint32 &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
                             if(sp>monster.sp)
                             {
                                 errorOutput(QStringLiteral("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));

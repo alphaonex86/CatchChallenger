@@ -6,6 +6,13 @@ using namespace CatchChallenger;
 
 void Client::doDDOSCompute()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue<0 || GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    {
+        qDebug() << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue out of range:" << GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        return;
+    }
+    #endif
     {
         movePacketKickTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
@@ -13,11 +20,20 @@ void Client::doDDOSCompute()
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(index<0)
-                qDebug() << "index out of range <0, movePacketKick";
+            {
+                errorOutput("index out of range <0, movePacketKick");
+                return;
+            }
             if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
-                qDebug() << "index out of range >, movePacketKick";
+            {
+                errorOutput("index out of range >, movePacketKick");
+                return;
+            }
             if(movePacketKick[index]>GlobalServerData::serverSettings.ddos.kickLimitMove*2)
-                qDebug() << "index out of range in array for index " << movePacketKick[index] << ", movePacketKick";
+            {
+                errorOutput(QString("index out of range in array for index %1, movePacketKick").arg(movePacketKick[index]));
+                return;
+            }
             #endif
             movePacketKick[index]=movePacketKick[index+1];
             movePacketKickTotalCache+=movePacketKick[index];
@@ -27,7 +43,10 @@ void Client::doDDOSCompute()
         movePacketKickTotalCache+=movePacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(movePacketKickTotalCache>GlobalServerData::serverSettings.ddos.kickLimitMove*2)
-            qDebug() << "bug in DDOS calculation count";
+        {
+            errorOutput("bug in DDOS calculation count");
+            return;
+        }
         #endif
         movePacketKickNewValue=0;
     }
@@ -818,7 +837,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                 //Learn skill
                 case 0x0004:
                 {
-                    if(size!=((int)sizeof(quint32)))
+                    if(size!=((int)sizeof(quint32)*2))
                     {
                         parseError("wrong remaining size for learn skill");
                         return;

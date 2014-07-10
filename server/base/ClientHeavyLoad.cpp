@@ -867,6 +867,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         out << (quint32)datapckFileSize;
         sendFullPacket(0xC2,0x000C,outputData);
     }
+    qSort(fileToSendList);
     if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
     {
         //validate, remove or update the file actualy on the client
@@ -928,6 +929,13 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         }
         purgeDatapackListReply(query_id);
     }
+}
+
+bool CatchChallenger::operator<(const CatchChallenger::FileToSend &fileToSend1,const CatchChallenger::FileToSend &fileToSend2)
+{
+    if(fileToSend1.file<fileToSend2.file)
+        return false;
+    return true;
 }
 
 void Client::addDatapackListReply(const bool &fileRemove)

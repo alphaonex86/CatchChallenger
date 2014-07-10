@@ -2774,6 +2774,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
 {
     switch(action)
     {
+        //create
         case 0x01:
         {
             if(public_and_private_informations.clan>0)
@@ -2791,47 +2792,30 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
                 errorOutput(QStringLiteral("You have not the right to create clan"));
                 return;
             }
-            GlobalServerData::serverPrivateVariables.maxClanId++;
-            public_and_private_informations.clan=GlobalServerData::serverPrivateVariables.maxClanId;
-            createMemoryClan();
-            clan->name=text;
-            public_and_private_informations.clan_leader=true;
-            //send the network reply
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
-            out << (quint8)0x01;
-            out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
-            postReply(query_id,outputData);
-            //add into db
-            switch(GlobalServerData::serverSettings.database.type)
+            ClanActionParam *clanActionParam=new ClanActionParam();
+            clanActionParam->query_id=query_id;
+            clanActionParam->action=action;
+            clanActionParam->text=text;
+
+            const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
+            if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addClan_static))
             {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);")
-                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                             .arg(SqlFunction::quoteSqlVariable(text))
-                             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
-                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                             .arg(SqlFunction::quoteSqlVariable(text))
-                             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
-                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                             .arg(SqlFunction::quoteSqlVariable(text))
-                             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
-                             );
-                break;
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+
+                QByteArray outputData;
+                QDataStream out(&outputData, QIODevice::WriteOnly);
+                out.setVersion(QDataStream::Qt_4_4);
+                out << (quint8)0x02;
+                postReply(query_id,outputData);
+                delete clanActionParam;
+                return;
             }
-            insertIntoAClan(GlobalServerData::serverPrivateVariables.maxClanId);
+            else
+                paramToPassToCallBack << clanActionParam;
+            return;
         }
         break;
+        //leave
         case 0x02:
         {
             if(public_and_private_informations.clan==0)
@@ -2874,6 +2858,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             }
         }
         break;
+        //dissolve
         case 0x03:
         {
             if(public_and_private_informations.clan==0)
@@ -2981,6 +2966,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             }
         }
         break;
+        //invite
         case 0x04:
         {
             if(public_and_private_informations.clan==0)
@@ -3020,6 +3006,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             postReply(query_id,outputData);
         }
         break;
+        //eject
         case 0x05:
         {
             if(public_and_private_informations.clan==0)
@@ -3091,6 +3078,67 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             errorOutput(QStringLiteral("Action on the clan not found"));
         return;
     }
+}
+
+void Client::addClan_static(void *object)
+{
+    ClanActionParam *clanActionParam=static_cast<ClanActionParam *>(paramToPassToCallBack.takeFirst());
+    static_cast<Client *>(object)->addClan_return(clanActionParam->query_id,clanActionParam->action,clanActionParam->text);
+    delete clanActionParam;
+    GlobalServerData::serverPrivateVariables.db.clear();
+}
+
+void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QString &text)
+{
+    Q_UNUSED(action);
+    if(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)0x02;
+        postReply(query_id,outputData);
+        return;
+    }
+    GlobalServerData::serverPrivateVariables.maxClanId++;
+    public_and_private_informations.clan=GlobalServerData::serverPrivateVariables.maxClanId;
+    createMemoryClan();
+    clan->name=text;
+    public_and_private_informations.clan_leader=true;
+    //send the network reply
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
+    postReply(query_id,outputData);
+    //add into db
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            dbQueryWrite(QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);")
+                     .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                     .arg(SqlFunction::quoteSqlVariable(text))
+                     .arg(QDateTime::currentMSecsSinceEpoch()/1000)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            dbQueryWrite(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
+                     .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                     .arg(SqlFunction::quoteSqlVariable(text))
+                     .arg(QDateTime::currentMSecsSinceEpoch()/1000)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            dbQueryWrite(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
+                     .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                     .arg(SqlFunction::quoteSqlVariable(text))
+                     .arg(QDateTime::currentMSecsSinceEpoch()/1000)
+                     );
+        break;
+    }
+    insertIntoAClan(GlobalServerData::serverPrivateVariables.maxClanId);
 }
 
 quint32 Client::getPlayerId() const

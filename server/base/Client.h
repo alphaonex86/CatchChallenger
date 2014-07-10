@@ -103,6 +103,12 @@ protected:
         QString pseudo;
         QString skin;
     };
+    struct ClanActionParam
+    {
+        quint8 query_id;
+        quint8 action;
+        QString text;
+    };
     struct RemoveCharacterParam
     {
         quint8 query_id;
@@ -406,6 +412,8 @@ private:
     Client * getLocalClientHandlerFight();
     //clan
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text);
+    void addClan_return(const quint8 &query_id, const quint8 &action, const QString &text);
+    static void addClan_static(void *object);
     void haveClanInfo(const quint32 &clanId, const QString &clanName, const quint64 &cash);
     void sendClanInfo();
     void clanInvite(const bool &accept);

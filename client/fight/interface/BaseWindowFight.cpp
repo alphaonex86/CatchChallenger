@@ -110,7 +110,13 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
             ui->monsterDetailsStatXpBar->setMaximum(monsterGeneralInfo.level_to_xp.at(monster.level-1));
             ui->monsterDetailsStatAttackSpe->setText(tr("Special attack: %1").arg(stat.special_attack));
             ui->monsterDetailsStatDefenseSpe->setText(tr("Special defense: %1").arg(stat.special_defense));
-            ui->monsterDetailsStatSp->setText(tr("Skill point: %1").arg(monster.sp));
+            if(CommonSettings::commonSettings.useSP)
+            {
+                ui->monsterDetailsStatSp->setVisible(true);
+                ui->monsterDetailsStatSp->setText(tr("Skill point: %1").arg(monster.sp));
+            }
+            else
+                ui->monsterDetailsStatSp->setVisible(false);
             //skill
             ui->monsterDetailsSkills->clear();
             int index=0;
@@ -325,7 +331,7 @@ void BaseWindow::load_monsters()
             else
                 item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
 
-            if(waitedObjectType==ObjectType_MonsterToLearn)
+            if(waitedObjectType==ObjectType_MonsterToLearn && inSelection)
             {
                 QHash<quint32,quint8> skillToDisplay;
                 int sub_index=0;
@@ -2640,7 +2646,8 @@ void BaseWindow::tradeAddTradeMonster(const CatchChallenger::PlayerMonster &mons
 
 void BaseWindow::on_learnQuit_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    selectObject(ObjectType_MonsterToLearn);
+    //ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 void BaseWindow::on_learnValidate_clicked()
@@ -2711,6 +2718,9 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
             }
             else
                 ui->learnSP->setVisible(false);
+            #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+            ui->learnInfo->setText(tr("<b>%1</b><br />Level %2").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name).arg(monster.level));
+            #endif
             int sub_index=0;
             while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size())
             {
@@ -2768,16 +2778,14 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
                     if(level<=1)
                         item->setText(tr("%1")
                                     .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
-                                    .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
                                 );
                     else
                         item->setText(tr("%1 level %2")
                                     .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(i.key()).name)
                                     .arg(level)
-                                    .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn)
                                 );
                 }
-                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn>monster.sp)
+                if(CommonSettings::commonSettings.useSP && CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(i.key()).level.value(i.value()-1).sp_to_learn>monster.sp)
                 {
                     item->setFont(MissingQuantity);
                     item->setForeground(QBrush(QColor(200,20,20)));

@@ -36,6 +36,8 @@ QString BaseWindow::text_type=QLatin1Literal("type");
 QString BaseWindow::text_lang=QLatin1Literal("lang");
 QString BaseWindow::text_en=QLatin1Literal("en");
 QString BaseWindow::text_text=QLatin1Literal("text");
+QFile BaseWindow::debugFile;
+quint8 BaseWindow::debugFileStatus=0;
 
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)
@@ -79,7 +81,8 @@ BaseWindow::BaseWindow() :
         }
     }
 
-
+    checkQueryTime.start(200);
+    connect(&checkQueryTime,&QTimer::timeout,   this,&BaseWindow::detectSlowDown);
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
 
@@ -170,6 +173,7 @@ BaseWindow::BaseWindow() :
     /// \todo able to cancel quest
     ui->cancelQuest->hide();
     loadSoundSettings();
+    qInstallMessageHandler(&BaseWindow::customMessageHandler);
 }
 
 BaseWindow::~BaseWindow()
@@ -179,6 +183,7 @@ BaseWindow::~BaseWindow()
         craftingAnimationObject->deleteLater();
         craftingAnimationObject=NULL;
     }*/
+    debugFile.flush();
     if(newProfile!=NULL)
     {
         delete newProfile;
@@ -203,10 +208,11 @@ void BaseWindow::connectAllSignals()
 {
     MapController::mapController->connectAllSignals();
 
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::lastReplyTime,      this,&BaseWindow::lastReplyTime,    Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newError,           this,&BaseWindow::newError,            Qt::QueuedConnection);
-    //connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,            this,&BaseWindow::message,          Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newError,           this,&BaseWindow::newError,         Qt::QueuedConnection);
+    //connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,          this,&BaseWindow::message,          Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::notLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::logged,             this,&BaseWindow::logged,           Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection);
@@ -545,7 +551,9 @@ void BaseWindow::selectObject(const ObjectType &objectType)
 void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const quint32 &quantity)
 {
     inSelection=false;
-    switch(waitedObjectType)
+    ObjectType tempWaitedObjectType=waitedObjectType;
+    waitedObjectType=ObjectType_All;
+    switch(tempWaitedObjectType)
     {
         case ObjectType_ItemEvolutionOnMonster:
         case ObjectType_ItemLearnOnMonster:
@@ -722,6 +730,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         {
             ui->stackedWidget->setCurrentWidget(ui->page_map);
             ui->inventoryUse->setText(tr("Select"));
+            load_monsters();
             if(!ok)
                 return;
             ui->stackedWidget->setCurrentWidget(ui->page_learn);
@@ -738,11 +747,11 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         {
             ui->inventoryUse->setText(tr("Select"));
             ui->stackedWidget->setCurrentWidget(ui->page_battle);
+            load_monsters();
             if(!ok)
                 return;
             if(!ClientFightEngine::fightEngine.changeOfMonsterInFight(itemId))
                 return;
-            load_monsters();
             CatchChallenger::Api_client_real::client->changeOfMonsterInFight(itemId);
             PlayerMonster * playerMonster=ClientFightEngine::fightEngine.getCurrentMonster();
             resetPosition(true,false,true);
@@ -768,6 +777,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         {
             ui->inventoryUse->setText(tr("Select"));
             ui->stackedWidget->setCurrentWidget(ui->page_market);
+            load_monsters();
             if(!ok)
                 break;
             QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
@@ -800,12 +810,12 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 }
                 index++;
             }
-            load_monsters();
         }
         break;
         case ObjectType_MonsterToTrade:
         {
             ui->inventoryUse->setText(tr("Select"));
+            load_monsters();
             if(waitedObjectType==ObjectType_MonsterToLearn)
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_learn);
@@ -844,7 +854,6 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 }
                 index++;
             }
-            load_monsters();
         }
         break;
         case ObjectType_Seed:
@@ -3176,4 +3185,68 @@ void BaseWindow::changeDeviceIndex(int device)
         Options::options.setDeviceIndex(device);
         soundEngine.setOutputDeviceName(outputDeviceNames.at(device));
     }*/
+}
+
+void BaseWindow::lastReplyTime(const quint32 &time)
+{
+    ui->labelLastReplyTime->setText(tr("Last reply time: %1ms").arg(time));
+    if(lastReplyTimeValue<=TIMEINMSTOBESLOW || lastReplyTimeSince.elapsed()>TIMETOSHOWTHETURTLE)
+    {
+        lastReplyTimeValue=time;
+        lastReplyTimeSince.restart();
+    }
+    else
+    {
+        if(time>TIMEINMSTOBESLOW)
+        {
+            lastReplyTimeValue=time;
+            lastReplyTimeSince.restart();
+        }
+    }
+    updateTheTurtle();
+}
+
+void BaseWindow::detectSlowDown()
+{
+    if(CatchChallenger::Api_client_real::client==NULL)
+        return;
+    quint32 queryCount=0;
+    worseQueryTime=0;
+    const QMap<quint8,QTime> &values=CatchChallenger::Api_client_real::client->getQuerySendTimeList();
+    queryCount+=values.size();
+    QMapIterator<quint8,QTime> i(values);
+    while (i.hasNext()) {
+        i.next();
+        const quint32 &time=i.value().elapsed();
+        if(time>worseQueryTime)
+            worseQueryTime=time;
+    }
+    if(queryCount>0)
+        ui->labelQueryList->setText(tr("Running query: %1, query with worse time: %2ms").arg(queryCount).arg(worseQueryTime));
+    else
+        ui->labelQueryList->setText(tr("No query running"));
+    updateTheTurtle();
+}
+
+void BaseWindow::updateTheTurtle()
+{
+    if(lastReplyTimeValue>TIMEINMSTOBESLOW && lastReplyTimeSince.elapsed()<TIMETOSHOWTHETURTLE)
+    {
+        if(ui->labelSlow->isVisible())
+            return;
+        ui->labelSlow->setToolTip(tr("The last query was slow"));
+        ui->labelSlow->show();
+        return;
+    }
+    if(worseQueryTime>TIMEINMSTOBESLOW)
+    {
+        if(ui->labelSlow->isVisible())
+            return;
+        ui->labelSlow->setToolTip(tr("Remain query in suspend"));
+        ui->labelSlow->show();
+        return;
+    }
+    if(!ui->labelSlow->isVisible())
+        return;
+    ui->labelSlow->hide();
 }

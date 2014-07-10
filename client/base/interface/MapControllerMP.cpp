@@ -204,7 +204,6 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             return;
         }
 
-        qDebug() << DatapackClientLoader::datapackLoader.maps.join("\n");
         loadPlayerMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(mapId),x,y);
         setSpeed(player.speed);
     }

@@ -83,13 +83,13 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     public_and_private_informations.clan=QString(GlobalServerData::serverPrivateVariables.db.value(8)).toUInt(&ok);
     if(!ok)
     {
-        normalOutput(QStringLiteral("clan id is not an number, clan disabled"));
+        //normalOutput(QStringLiteral("clan id is not an number, clan disabled"));
         public_and_private_informations.clan=0;//no clan
     }
     public_and_private_informations.clan_leader=(QString(GlobalServerData::serverPrivateVariables.db.value(20)).toUInt(&ok)==1);
     if(!ok)
     {
-        normalOutput(QStringLiteral("clan_leader id is not an number, clan_leader disabled"));
+        //normalOutput(QStringLiteral("clan_leader id is not an number, clan_leader disabled"));
         public_and_private_informations.clan_leader=false;//no clan
     }
 
