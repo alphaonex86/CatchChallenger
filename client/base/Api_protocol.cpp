@@ -56,6 +56,11 @@ void Api_protocol::socketDestroyed()
     socket=NULL;
 }
 
+QMap<quint8,QTime> Api_protocol::getQuerySendTimeList() const
+{
+    return querySendTime;
+}
+
 void Api_protocol::parseIncommingData()
 {
     ProtocolParsingInputOutput::parseIncommingData();
@@ -2511,6 +2516,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
 
 void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(querySendTime.contains(queryNumber))
+    {
+        lastReplyTime(querySendTime.value(queryNumber).elapsed());
+        querySendTime.remove(queryNumber);
+    }
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
     switch(mainCodeType)
@@ -2852,6 +2862,11 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
 
 void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(querySendTime.contains(queryNumber))
+    {
+        lastReplyTime(querySendTime.value(queryNumber).elapsed());
+        querySendTime.remove(queryNumber);
+    }
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
     switch(mainCodeType)
@@ -4357,6 +4372,7 @@ quint8 Api_protocol::queryNumber()
 {
     if(lastQueryNumber>=254)
         lastQueryNumber=1;
+    querySendTime[lastQueryNumber].start();
     return lastQueryNumber++;
 }
 

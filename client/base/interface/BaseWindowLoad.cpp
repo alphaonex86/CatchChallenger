@@ -14,16 +14,28 @@
 #include <QMessageBox>
 #include <QQmlContext>
 #include <vlc/vlc.h>
+#include <iostream>
+#include <QStandardPaths>
 
 using namespace CatchChallenger;
 
 void BaseWindow::resetAll()
 {
+    #ifndef CATCHCHALLENGER_VERSION_ULTIMATE
+    ui->labelLastReplyTime->hide();
+    ui->labelQueryList->hide();
+    #else
+    ui->labelLastReplyTime->setText(tr("Last reply time: ?"));
+    ui->labelQueryList->setText(tr("Running query: ? Query with worse time: ?"));
+    #endif
+    ui->labelSlow->hide();
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     Chat::chat->resetAll();
     MapController::mapController->resetAll();
+    lastReplyTimeValue=-1;
+    worseQueryTime=0;
     haveDatapack=false;
     characterSelected=false;
     havePlayerInformations=false;
@@ -1088,4 +1100,48 @@ void BaseWindow::evolutionCanceled()
     }
     idMonsterEvolution=0;
     checkEvolution();
+}
+
+void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    Q_UNUSED(context);
+
+    //QString dt = QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss");
+    //QString txt = QString("[%1] ").arg(dt);
+    QString txt;
+
+    switch (type)
+    {
+        case QtDebugMsg:
+            txt = QStringLiteral("%1\n").arg(msg);
+        break;
+        case QtWarningMsg:
+            txt = QStringLiteral("[Warning] %1\n").arg(msg);
+        break;
+        case QtCriticalMsg:
+            txt = QStringLiteral("[Critical] %1\n").arg(msg);
+        break;
+        case QtFatalMsg:
+            txt = QStringLiteral("[Fatal] %1\n").arg(msg);
+            abort();
+        break;
+    }
+
+    if(BaseWindow::debugFileStatus==0)
+    {
+        if(!debugFile.isOpen())
+        {
+            debugFile.setFileName(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/LogFile.log");
+            if(!debugFile.open(QIODevice::WriteOnly))
+            {
+                BaseWindow::debugFileStatus=2;
+                return;
+            }
+            debugFile.resize(0);
+        }
+        BaseWindow::debugFileStatus=1;
+    }
+    debugFile.write(txt.toUtf8());
+    debugFile.flush();
+    std::cout << static_cast<const char *>(txt.toLocal8Bit().constData());
 }

@@ -14,6 +14,8 @@
 
 #define TIMETODISPLAY_TIP 8000
 #define TIMETODISPLAY_GAIN 8000
+#define TIMEINMSTOBESLOW 500 /* 500ms => 100ms due to tcp cork on client, 100ms due to tcp cork on server, 300ms of internet latency */
+#define TIMETOSHOWTHETURTLE 15*1000
 
 #define CATCHCHALLENGER_CLIENT_MAP_CACHE_TIMEOUT 15*60
 #define CATCHCHALLENGER_CLIENT_MAP_CACHE_SIZE 70

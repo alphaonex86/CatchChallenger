@@ -51,6 +51,7 @@ private:
     QSettings settings;
     QTimer moveTimer;
     QTimer textTimer;
+    QTimer slowDownTimer;
     QFileInfoList skinsList;
     quint16 number;
     QSet<quint32> characterOnMap;
@@ -59,6 +60,7 @@ private:
 public slots:
     void doMove();
     void doText();
+    void detectSlowDown();
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
 private slots:
     void createClient();
@@ -69,6 +71,7 @@ private slots:
     void newError(QString error,QString detailedError);
     void newSocketError(QAbstractSocket::SocketError error);
     void disconnected();
+    void lastReplyTime(const quint32 &time);
     void tryLink(CatchChallengerClient *client);
     void on_connect_clicked();
     void sslErrors(const QList<QSslError> &errors);

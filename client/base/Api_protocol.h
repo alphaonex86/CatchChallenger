@@ -47,6 +47,7 @@ public:
 
     bool getIsLogged() const;
     bool getCaracterSelected() const;
+    QMap<quint8,QTime> getQuerySendTimeList() const;
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
@@ -101,6 +102,7 @@ protected:
     //to send trame
     quint8 queryNumber();
     static QSet<QString> extensionAllowed;
+    QMap<quint8,QTime> querySendTime;
 
     //inventory
     QList<quint32> lastObjectUsed;
@@ -120,6 +122,7 @@ protected:
 signals:
     void newError(const QString &error,const QString &detailedError) const;
     void message(const QString &message) const;
+    void lastReplyTime(const quint32 &time) const;
 
     //protocol/connection info
     void disconnected(const QString &reason) const;

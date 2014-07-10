@@ -833,6 +833,25 @@ background-image: url(:/images/light-white.png);
              </widget>
             </item>
             <item>
+             <widget class="QLabel" name="labelSlow">
+              <property name="minimumSize">
+               <size>
+                <width>24</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>24</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="pixmap">
+               <pixmap resource="../resources/client-resources-multi.qrc">:/images/multi/slow.png</pixmap>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QToolButton" name="toolButton_interface_quit">
               <property name="minimumSize">
                <size>
@@ -2324,6 +2343,20 @@ padding-bottom:3px;
                  </widget>
                 </item>
                </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="labelLastReplyTime">
+                <property name="text">
+                 <string>Last reply time: ?</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="labelQueryList">
+                <property name="text">
+                 <string>Running query: ? Query with worse time: ?</string>
+                </property>
+               </widget>
               </item>
               <item>
                <spacer name="verticalSpacer_12">
@@ -4708,6 +4741,22 @@ padding-bottom:3px;
              <string notr="true">Sp: %1</string>
             </property>
            </widget>
+           <widget class="QLabel" name="learnInfo">
+            <property name="geometry">
+             <rect>
+              <x>16</x>
+              <y>340</y>
+              <width>191</width>
+              <height>61</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignHCenter|Qt::AlignTop</set>
+            </property>
+           </widget>
           </widget>
          </item>
         </layout>
@@ -6498,6 +6547,7 @@ padding-bottom:3px;
  <resources>
   <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
   <connection>
