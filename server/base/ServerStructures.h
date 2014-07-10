@@ -273,6 +273,7 @@ struct ServerPrivateVariables
     QString db_query_delete_recipes;
     QString db_query_delete_reputation;
 
+    QString db_query_select_clan_by_name;
     QString db_query_select_character_by_pseudo;
     QString db_query_insert_monster;
     QString db_query_insert_monster_skill;
@@ -371,6 +372,7 @@ struct ServerPrivateVariables
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);
+bool operator<(const CatchChallenger::FileToSend &fileToSend1,const CatchChallenger::FileToSend &fileToSend2);
 }
 
 #endif // STRUCTURES_SERVER_H

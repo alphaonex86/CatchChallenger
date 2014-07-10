@@ -5,6 +5,8 @@ QT       -= gui widgets
 
 #QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
 #QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
+QMAKE_CFLAGS += -fstack-check -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops
+QMAKE_CXXFLAGS += -fstack-check -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops
 
 DEFINES += SERVERNOBUFFER
 DEFINES += SERVERNOSSL
@@ -18,7 +20,6 @@ CONFIG += c++11
 
 TARGET = catchchallenger-server-cli-epoll
 CONFIG   += console
-CONFIG   -= app_bundle
 
 TEMPLATE = app
 

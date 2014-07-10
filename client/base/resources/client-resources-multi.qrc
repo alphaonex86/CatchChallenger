@@ -17,6 +17,7 @@
         <file>images/chat/developer.png</file>
         <file>images/chat/premium.png</file>
         <file>images/interface/top.png</file>
+        <file>images/multi/slow.png</file>
         <file>other/default_server_list.xml</file>
     </qresource>
 </RCC>

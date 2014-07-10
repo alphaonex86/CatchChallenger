@@ -44,3 +44,5 @@ HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/CommonSettings.h
 
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
+mac:INCLUDEPATH += /usr/local/include/
+mac:LIBS += -L/usr/local/lib/
