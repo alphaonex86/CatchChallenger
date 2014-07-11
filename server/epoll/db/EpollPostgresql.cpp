@@ -7,8 +7,8 @@
 #include "../Epoll.h"
 
 char EpollPostgresql::emptyString[]={'\0'};
-EpollPostgresql::CallBack EpollPostgresql::emptyCallback;
-EpollPostgresql::CallBack EpollPostgresql::tempCallback;
+CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
+CatchChallenger::DatabaseBase::CallBack EpollPostgresql::tempCallback;
 
 void EpollPostgresql::noticeReceiver(void *arg, const PGresult *res)
 {
@@ -134,12 +134,12 @@ void EpollPostgresql::syncDisconnect()
     PQfinish(conn);
 }
 
-bool EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackDatabase method)
+CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackDatabase method)
 {
     if(conn==NULL)
     {
         std::cerr << "pg not connected" << std::endl;
-        return false;
+        return NULL;
     }
     tempCallback.object=returnObject;
     tempCallback.method=method;
@@ -148,20 +148,20 @@ bool EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackD
         if(queue.size()>=CATCHCHALLENGER_MAXBDQUERIES)
         {
             std::cerr << "pg queue full" << std::endl;
-            return false;
+            return NULL;
         }
         queue << tempCallback;
         queriesList << QString::fromUtf8(query);
-        return true;
+        return &queue.last();
     }
     const int &query_id=PQsendQuery(conn,query);
     if(query_id==0)
     {
         std::cerr << "query send failed: " << errorMessage() << std::endl;
-        return false;
+        return NULL;
     }
     queue << tempCallback;
-    return true;
+    return &queue.last();
 }
 
 bool EpollPostgresql::asyncWrite(const char *query)

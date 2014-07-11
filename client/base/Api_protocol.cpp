@@ -2552,7 +2552,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(queryNumber));
                     return;
                 }
-
+                if(data.size()!=(sizeof(quint8)+CATCHCHALLENGER_TOKENSIZE))
+                {
+                    newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(queryNumber));
+                    return;
+                }
+                token=data.right(CATCHCHALLENGER_TOKENSIZE);
                 have_receive_protocol=true;
                 protocol_is_good();
             }
@@ -2594,6 +2599,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     string=tr("Can't create character and don't have character");
                 else if(returnCode==0x06)
                     string=tr("Login already in progress");
+                else if(returnCode==0x07)
+                {
+                    tryCreate();
+                    return;
+                }
                 else
                     string=tr("Unknown error %1").arg(returnCode);
                 DebugClass::debugConsole("is not logged, reason: "+string);
@@ -2838,6 +2848,41 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
             }
         }
         break;
+        //Account creation
+        case 0x05:
+        {
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
+                return;
+            }
+            quint8 returnCode;
+            in >> returnCode;
+            if(returnCode!=0x01)
+            {
+                QString string;
+                if(returnCode==0x02)
+                    string=tr("Login already used");
+                else if(returnCode==0x03)
+                    string=tr("Not created");
+                else
+                    string=tr("Unknown error %1").arg(returnCode);
+                DebugClass::debugConsole("is not logged, reason: "+string);
+                notLogged(string);
+                return;
+            }
+            else
+            {
+                QByteArray outputData;
+                //reemit the login try
+                outputData+=loginHash;
+                QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
+                hashAndToken.addData(passHash+token);
+                outputData+=hashAndToken.result();
+                const quint8 &query_number=Api_protocol::queryNumber();
+                packOutcommingQuery(0x04,query_number,outputData.constData(),outputData.size());
+            }
+        }
         default:
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("unknown sort ident reply code: %1, line: %2").arg(mainCodeType).arg(__LINE__));
             return;
@@ -4401,15 +4446,49 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
         newError(QStringLiteral("Internal problem"),QStringLiteral("Is already logged"));
         return false;
     }
+    if(token.isEmpty())
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Token empty"));
+        return false;
+    }
     QByteArray outputData;
-    QCryptographicHash hash(QCryptographicHash::Sha224);
-    hash.addData((login+/*salt*/"RtR3bm9Z1DFMfAC3").toLatin1());
-    outputData+=hash.result();
-    QCryptographicHash hash2(QCryptographicHash::Sha224);
-    hash2.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toLatin1());
-    outputData+=hash2.result();
+    {
+        QCryptographicHash hashLogin(QCryptographicHash::Sha224);
+        hashLogin.addData((login+/*salt*/"RtR3bm9Z1DFMfAC3").toLatin1());
+        loginHash=hashLogin.result();
+        outputData+=loginHash;
+    }
+    {
+        QCryptographicHash hashPass(QCryptographicHash::Sha224);
+        hashPass.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toLatin1());
+        passHash=hashPass.result();
+
+        QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
+        hashAndToken.addData(passHash+token);
+        outputData+=hashAndToken.result();
+    }
     const quint8 &query_number=queryNumber();
     packOutcommingQuery(0x04,query_number,outputData.constData(),outputData.size());
+    return true;
+}
+
+bool Api_protocol::tryCreate()
+{
+    if(!have_send_protocol)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Have not send the protocol"));
+        return false;
+    }
+    if(is_logged)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Is already logged"));
+        return false;
+    }
+    QByteArray outputData;
+    outputData+=loginHash;
+    outputData+=passHash;
+    const quint8 &query_number=queryNumber();
+    packOutcommingQuery(0x05,query_number,outputData.constData(),outputData.size());
     return true;
 }
 
@@ -5657,6 +5736,7 @@ void Api_protocol::addMonster(const quint32 &monsterId)
 void Api_protocol::resetAll()
 {
     //status for the query
+    token.clear();
     is_logged=false;
     character_selected=false;
     have_send_protocol=false;

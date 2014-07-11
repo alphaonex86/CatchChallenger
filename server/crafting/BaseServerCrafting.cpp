@@ -36,7 +36,7 @@ void BaseServer::preload_the_plant_on_map()
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_the_plant_on_map_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_the_plant_on_map_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         load_clan_max_id();

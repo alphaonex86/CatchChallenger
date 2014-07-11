@@ -30,15 +30,16 @@ function compil {
         echo "try rsync"
         ssh ${SSHUSER}@${IPMAC} "mkdir /Users/${SSHUSER}/Desktop/CatchChallenger/"
         ssh root@${IPMAC} "chown -f -R ${SSHUSER} /Users/${SSHUSER}/Desktop/CatchChallenger/"
-        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/server/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug* --exclude=*.qm
-        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/general/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/general/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug* --exclude=*.qm
-        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/client/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug* --exclude=*.qm
+        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/server/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug*
+        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/general/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/general/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug*
+        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/client/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug*
 
         echo "try qmake"
         BASEAPPNAME="catchchallenger-${TARGET}.app"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/qmake *.pro -spec macx-g++ -config release"
         echo "try make"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/usr/bin/make -j 3 > /dev/null"
+        exit;
         RETURN_CODE=$?
         if [ $? -ne 0 ]
         then
@@ -99,9 +100,9 @@ function compilserver {
         echo "try rsync"
         ssh ${SSHUSER}@${IPMAC} "mkdir /Users/${SSHUSER}/Desktop/CatchChallenger/"
         ssh root@${IPMAC} "chown -f -R ${SSHUSER} /Users/${SSHUSER}/Desktop/CatchChallenger/"
-        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/server/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug* --exclude=*.qm
-        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/general/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/general/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug* --exclude=*.qm
-        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/client/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug* --exclude=*.qm
+        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/server/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug*
+        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/general/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/general/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug*
+        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/client/ ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/ --exclude=*.pro.user* --exclude=*Qt5-Debug --exclude=*build-* --exclude=*build-Desktop* --exclude=*Desktop-Debug*
 
         echo "try qmake"
         BASEAPPNAME="catchchallenger-${TARGET}.app"
@@ -131,8 +132,8 @@ function compilserver {
     fi
 }
 
-compilserver "server-cli"
-compilserver "server-gui"
 compil "single-player"
 compil "ultimate"
 compil "single-server"
+compilserver "server-cli"
+compilserver "server-gui"

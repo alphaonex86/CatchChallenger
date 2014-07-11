@@ -41,7 +41,7 @@ void BaseServer::load_monsters_max_id()
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         abort();//stop because can't do the first db access

@@ -32,6 +32,7 @@
 #define DEBUG_MESSAGE_FIGHT_LOAD
 //*/
 
+#define CATCHCHALLENGER_TOKENSIZE 16//can't be more than 250 due to server conception, and useless, with 8bytes, at 2 billions connexion rate, it's 300years to crack
 #define CATCHCHALLENGER_MONSTER_LEVEL_MAX 100
 #define CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER 6
 #define CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER 5

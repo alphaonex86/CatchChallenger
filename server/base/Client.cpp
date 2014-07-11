@@ -115,6 +115,14 @@ Client::~Client()
         socket=NULL;
     }
     #endif
+    {
+        int index=0;
+        while(index<callbackRegistred.size())
+        {
+            callbackRegistred.at(index)->method=NULL;
+            index++;
+        }
+    }
 }
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -156,6 +164,20 @@ void Client::disconnectClient()
         socket=NULL;
     }
     #endif
+    {
+        quint32 index=0;
+        while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+        {
+            const TokenLink &tokenLink=GlobalServerData::serverPrivateVariables.tokenForAuth[index];
+            if(tokenLink.client==this)
+            {
+                GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
+                memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
+                break;
+            }
+            index++;
+        }
+    }
 
     if(character_loaded)
     {

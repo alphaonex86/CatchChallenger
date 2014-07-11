@@ -10,7 +10,7 @@
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollPostgresql : public BaseClassSwitch
+class EpollPostgresql : public BaseClassSwitch, public CatchChallenger::DatabaseBase
 {
 public:
     EpollPostgresql();
@@ -18,7 +18,7 @@ public:
     Type getType() const;
     bool syncConnect(const char * host, const char * dbname, const char * user, const char * password);
     void syncDisconnect();
-    bool asyncRead(const char *query,void * returnObject,CallBackDatabase method);
+    CallBack * asyncRead(const char *query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const char *query);
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
@@ -28,12 +28,6 @@ public:
     bool next();
     char * value(const int &value) const;
     bool isConnected() const;
-
-    struct CallBack
-    {
-        void *object;
-        CallBackDatabase method;
-    };
 private:
     PGconn *conn;
     int tuleIndex;
@@ -43,8 +37,8 @@ private:
     QList<QString> queriesList;
     bool started;
     static char emptyString[1];
-    static EpollPostgresql::CallBack emptyCallback;
-    static EpollPostgresql::CallBack tempCallback;
+    static CallBack emptyCallback;
+    static CallBack tempCallback;
 };
 
 #endif
