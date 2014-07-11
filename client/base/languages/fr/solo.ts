@@ -39,58 +39,68 @@
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="60"/>
+        <location filename="../../solo/SoloWindow.cpp" line="63"/>
         <source>Game name</source>
         <translation>Nom du jeu</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="60"/>
+        <location filename="../../solo/SoloWindow.cpp" line="63"/>
         <source>Give the game name</source>
         <translation>Donnez le nom du jeu</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="65"/>
-        <location filename="../../solo/SoloWindow.cpp" line="75"/>
-        <location filename="../../solo/SoloWindow.cpp" line="85"/>
-        <location filename="../../solo/SoloWindow.cpp" line="92"/>
-        <location filename="../../solo/SoloWindow.cpp" line="102"/>
-        <location filename="../../solo/SoloWindow.cpp" line="109"/>
-        <location filename="../../solo/SoloWindow.cpp" line="141"/>
-        <location filename="../../solo/SoloWindow.cpp" line="494"/>
-        <location filename="../../solo/SoloWindow.cpp" line="512"/>
-        <location filename="../../solo/SoloWindow.cpp" line="537"/>
-        <location filename="../../solo/SoloWindow.cpp" line="543"/>
-        <location filename="../../solo/SoloWindow.cpp" line="549"/>
+        <location filename="../../solo/SoloWindow.cpp" line="68"/>
+        <location filename="../../solo/SoloWindow.cpp" line="78"/>
+        <location filename="../../solo/SoloWindow.cpp" line="88"/>
+        <location filename="../../solo/SoloWindow.cpp" line="95"/>
+        <location filename="../../solo/SoloWindow.cpp" line="105"/>
+        <location filename="../../solo/SoloWindow.cpp" line="112"/>
+        <location filename="../../solo/SoloWindow.cpp" line="144"/>
+        <location filename="../../solo/SoloWindow.cpp" line="535"/>
+        <location filename="../../solo/SoloWindow.cpp" line="553"/>
+        <location filename="../../solo/SoloWindow.cpp" line="578"/>
+        <location filename="../../solo/SoloWindow.cpp" line="584"/>
+        <location filename="../../solo/SoloWindow.cpp" line="590"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="65"/>
+        <location filename="../../solo/SoloWindow.cpp" line="68"/>
         <source>The game name can&apos;t be empty</source>
         <translation>Le nom du jeu ne peu être vide</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="228"/>
+        <location filename="../../solo/SoloWindow.cpp" line="231"/>
         <source>No datapack!</source>
         <translation>Pas de datapack!</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="319"/>
+        <location filename="../../solo/SoloWindow.cpp" line="357"/>
         <source>Unknown title</source>
         <translation>Titre inconnu</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="515"/>
+        <location filename="../../solo/SoloWindow.cpp" line="527"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../solo/SoloWindow.cpp" line="527"/>
+        <source>Are you sure remove this savegame?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../solo/SoloWindow.cpp" line="556"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="515"/>
+        <location filename="../../solo/SoloWindow.cpp" line="556"/>
         <source>Write the new name</source>
         <translation>Écrire le nouveau nom</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="553"/>
+        <location filename="../../solo/SoloWindow.cpp" line="594"/>
         <source>Copy of %1</source>
         <translation>Copie de %1</translation>
     </message>

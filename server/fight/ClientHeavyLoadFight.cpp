@@ -23,12 +23,15 @@ void Client::loadMonsters()
     }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id.arg(character_id);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadMonsters_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadMonsters_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadReputation();
         return;
     }
+    else
+        callbackRegistred << callback;
 }
 
 void Client::loadMonsters_static(void *object)
@@ -38,6 +41,7 @@ void Client::loadMonsters_static(void *object)
 
 void Client::loadMonsters_return()
 {
+    callbackRegistred.removeFirst();
     bool warehouse;
     bool ok;
     Monster monster;
@@ -227,7 +231,8 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
         SelectIndexParam *selectIndexParam=new SelectIndexParam;
         selectIndexParam->index=index;
 
-        if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterBuffs_static))
+        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterBuffs_static);
+        if(callback==NULL)
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             delete selectIndexParam;
@@ -235,7 +240,10 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
             return;
         }
         else
+        {
+            callbackRegistred << callback;
             paramToPassToCallBack << selectIndexParam;
+        }
     }
 }
 
@@ -248,6 +256,7 @@ void Client::loadPlayerMonsterBuffs_static(void *object)
 
 void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
 {
+    callbackRegistred.removeFirst();
     PlayerMonster *playerMonster;
     if(index<(quint32)public_and_private_informations.playerMonster.size())
         playerMonster=&public_and_private_informations.playerMonster[index];
@@ -321,7 +330,8 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
     {
         SelectIndexParam *selectIndexParam=new SelectIndexParam;
         selectIndexParam->index=index;
-        if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterSkills_static))
+        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterSkills_static);
+        if(callback==NULL)
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             delete selectIndexParam;
@@ -329,7 +339,10 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
             return;
         }
         else
+        {
+            callbackRegistred << callback;
             paramToPassToCallBack << selectIndexParam;
+        }
     }
 }
 
@@ -342,6 +355,7 @@ void Client::loadPlayerMonsterSkills_static(void *object)
 
 void Client::loadPlayerMonsterSkills_return(const quint32 &index)
 {
+    callbackRegistred.removeFirst();
     PlayerMonster *playerMonster;
     if(index<(quint32)public_and_private_informations.playerMonster.size())
         playerMonster=&public_and_private_informations.playerMonster[index];
@@ -436,12 +450,15 @@ void Client::loadBotAlreadyBeaten()
     }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten.arg(character_id);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadBotAlreadyBeaten_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadBotAlreadyBeaten_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loginIsRightFinalStep();
         return;
     }
+    else
+        callbackRegistred << callback;
 }
 
 void Client::loadBotAlreadyBeaten_static(void *object)
@@ -451,6 +468,7 @@ void Client::loadBotAlreadyBeaten_static(void *object)
 
 void Client::loadBotAlreadyBeaten_return()
 {
+    callbackRegistred.removeFirst();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db.next())

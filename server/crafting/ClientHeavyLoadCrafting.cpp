@@ -18,12 +18,15 @@ void Client::loadRecipes()
     }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id.arg(character_id);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadRecipes_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadRecipes_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadMonsters();
         return;
     }
+    else
+        callbackRegistred << callback;
 }
 
 void Client::loadRecipes_static(void *object)
@@ -33,6 +36,7 @@ void Client::loadRecipes_static(void *object)
 
 void Client::loadRecipes_return()
 {
+    callbackRegistred.removeFirst();
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
@@ -66,12 +70,15 @@ void Client::loadItems()
     }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id.arg(character_id);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItems_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItems_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadRecipes();
         return;
     }
+    else
+        callbackRegistred << callback;
 }
 
 void Client::loadItems_static(void *object)
@@ -81,6 +88,7 @@ void Client::loadItems_static(void *object)
 
 void Client::loadItems_return()
 {
+    callbackRegistred.removeFirst();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db.next())

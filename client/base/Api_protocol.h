@@ -30,6 +30,7 @@ public:
 
     //protocol command
     bool tryLogin(const QString &login,const QString &pass);
+    bool tryCreate();
     bool sendProtocol();
 
     //get the stored data
@@ -119,6 +120,9 @@ protected:
     //battle
     QList<quint32> battleRequestId;
     bool isInBattle;
+    QByteArray token;
+    QByteArray passHash;
+    QByteArray loginHash;
 signals:
     void newError(const QString &error,const QString &detailedError) const;
     void message(const QString &message) const;

@@ -188,29 +188,68 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
             {
                 *(Client::protocolReplyServerFull+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyServerFull),sizeof(Client::protocolReplyServerFull));
+                disconnectClient();
                 //errorOutput(Client::text_server_full);DDOS -> full the log
+                return;
+            }
+            //if lot of un logged connection, remove the first
+            if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
+            {
+                Client *client=static_cast<Client *>(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client);
+                client->disconnectClient();
+                delete client;
+                GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
+                memmove(GlobalServerData::serverPrivateVariables.tokenForAuth,GlobalServerData::serverPrivateVariables.tokenForAuth+sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuthSize*sizeof(TokenLink));
                 return;
             }
             if(memcmp(data,Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
             {
+                TokenLink *token=&GlobalServerData::serverPrivateVariables.tokenForAuth[GlobalServerData::serverPrivateVariables.tokenForAuthSize];
+                {
+                    token->client=this;
+                    #ifdef Q_OS_LINUX
+                    if(GlobalServerData::serverPrivateVariables.fpRandomFile==NULL)
+                    {
+                        int index=0;
+                        while(index<CATCHCHALLENGER_TOKENSIZE)
+                        {
+                            token->value[index]=rand()%256;
+                            index++;
+                        }
+                    }
+                    else
+                        fread(token->value,CATCHCHALLENGER_TOKENSIZE,1,GlobalServerData::serverPrivateVariables.fpRandomFile);
+                    #else
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_TOKENSIZE)
+                    {
+                        token->value[index]=rand()%256;
+                        index++;
+                    }
+                    #endif
+                }
                 switch(ProtocolParsing::compressionType)
                 {
                     case CompressionType_None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
+                        memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
                     case CompressionType_Zlib:
                         *(Client::protocolReplyCompresssionZlib+1)=queryNumber;
+                        memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZlib),sizeof(Client::protocolReplyCompresssionZlib));
                     break;
                     case CompressionType_Xz:
                         *(Client::protocolReplyCompressionXz+1)=queryNumber;
+                        memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionXz),sizeof(Client::protocolReplyCompressionXz));
                     break;
                     default:
                         errorOutput("Compression selected wrong");
                     return;
                 }
+                GlobalServerData::serverPrivateVariables.tokenForAuthSize++;
                 have_send_protocol=true;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                 normalOutput(QStringLiteral("Protocol sended and replied"));
@@ -244,6 +283,40 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
                 is_logging_in_progess=true;
                 askLogin(queryNumber,data);
                 return;
+            }
+        break;
+        case 0x05:
+            if(!have_send_protocol)
+            {
+                errorOutput("send login before the protocol");
+                return;
+            }
+            if(is_logging_in_progess)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                removeFromQueryReceived(queryNumber);
+                #endif
+                *(Client::loginInProgressBuffer+1)=queryNumber;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
+                errorOutput("Loggin already in progress");
+            }
+            else
+            {
+                if(GlobalServerData::serverSettings.automatic_account_creation)
+                {
+                    is_logging_in_progess=true;
+                    createAccount(queryNumber,data);
+                    return;
+                }
+                else
+                {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    removeFromQueryReceived(queryNumber);
+                    #endif
+                    *(Client::loginInProgressBuffer+1)=queryNumber;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
+                    errorOutput("Account creation not premited");
+                }
             }
         break;
         default:

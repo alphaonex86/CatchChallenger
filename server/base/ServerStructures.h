@@ -22,6 +22,8 @@
 #include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
 #include "../../general/base/CommonSettings.h"
+#include "../../general/base/GeneralVariable.h"
+#include "../VariableServer.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "epoll/timer/TimerCityCapture.h"
 #include "epoll/timer/TimerDdos.h"
@@ -239,6 +241,12 @@ struct CaptureCityValidated
     QHash<quint32,quint16> clanSize;
 };
 
+struct TokenLink
+{
+    void * client;
+    char value[CATCHCHALLENGER_TOKENSIZE];
+};
+
 struct ServerPrivateVariables
 {
     //bd
@@ -343,7 +351,12 @@ struct ServerPrivateVariables
     qint8 sizeofInsertRequest;
 
     //connection
+    #ifdef Q_OS_LINUX
+    FILE *fpRandomFile;
+    #endif
     quint16 connected_players;
+    TokenLink tokenForAuth[CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION];
+    quint32 tokenForAuthSize;
     PlayerUpdater player_updater;
     QSet<quint32> connected_players_id_list;
     QStringList server_message;

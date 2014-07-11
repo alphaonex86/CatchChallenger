@@ -2798,7 +2798,8 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             clanActionParam->text=text;
 
             const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
-            if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addClan_static))
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addClan_static);
+            if(callback==NULL)
             {
                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
 
@@ -2811,7 +2812,10 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
                 return;
             }
             else
+            {
                 paramToPassToCallBack << clanActionParam;
+                callbackRegistred << callback;
+            }
             return;
         }
         break;
@@ -3090,6 +3094,7 @@ void Client::addClan_static(void *object)
 
 void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QString &text)
 {
+    callbackRegistred.removeFirst();
     Q_UNUSED(action);
     if(GlobalServerData::serverPrivateVariables.db.next())
     {

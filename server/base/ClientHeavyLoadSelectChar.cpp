@@ -47,7 +47,8 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
     selectCharacterParam->characterId=characterId;
 
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_character_by_id.arg(characterId);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::selectCharacter_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::selectCharacter_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         characterSelectionIsWrong(query_id,0x02,queryText+QLatin1String(": ")+GlobalServerData::serverPrivateVariables.db.errorMessage());
@@ -55,7 +56,10 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
         return;
     }
     else
+    {
         paramToPassToCallBack << selectCharacterParam;
+        callbackRegistred << callback;
+    }
 }
 
 void Client::selectCharacter_static(void *object)
@@ -73,6 +77,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17),
     warehouse_cash(18),allow(19),clan_leader(20),market_cash(21),
     time_to_delete(22),*/
+    callbackRegistred.removeFirst();
     if(!GlobalServerData::serverPrivateVariables.db.next())
     {
         characterSelectionIsWrong(query_id,0x02,QLatin1String("Result return query wrong"));
@@ -419,12 +424,15 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
             normalOutput(QStringLiteral("First client of the clan: %1, get the info").arg(public_and_private_informations.clan));
             //do the query
             const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_clan.arg(public_and_private_informations.clan);
-            if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::selectClan_static))
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::selectClan_static);
+            if(callback==NULL)
             {
                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
                 loginIsRightAfterClan();
                 return;
             }
+            else
+                callbackRegistred << callback;
         }
     }
     else
@@ -588,6 +596,7 @@ void Client::selectClan_static(void *object)
 
 void Client::selectClan_return()
 {
+    callbackRegistred.removeFirst();
     //parse the result
     if(GlobalServerData::serverPrivateVariables.db.next())
     {

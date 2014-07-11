@@ -35,29 +35,30 @@ void Client::askLogin(const quint8 &query_id,const char *rawdata)
         return;
     }
     #endif
-    QByteArray login,pass;
+    QByteArray login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
         login=hash.result();
-        QCryptographicHash hash2(QCryptographicHash::Sha224);
-        hash2.addData(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
-        pass=hash2.result();
     }
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
-    askLoginParam->pass=pass;
+    askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_login.arg(QString(login.toHex()));
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::askLogin_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::askLogin_static);
+    if(callback==NULL)
     {
         loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
         delete askLoginParam;
         return;
     }
     else
+    {
         paramToPassToCallBack << askLoginParam;
+        callbackRegistred << callback;
+    }
 }
 
 void Client::askLogin_static(void *object)
@@ -65,19 +66,30 @@ void Client::askLogin_static(void *object)
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
     static_cast<Client *>(object)->askLogin_return(askLoginParam);
     GlobalServerData::serverPrivateVariables.db.clear();
+    //delete askLoginParam; -> not here because need reuse later
 }
 
 void Client::askLogin_return(AskLoginParam *askLoginParam)
 {
+    callbackRegistred.removeFirst();
     {
         bool ok;
         if(!GlobalServerData::serverPrivateVariables.db.next())
         {
             if(GlobalServerData::serverSettings.automatic_account_creation)
             {
-                GlobalServerData::serverPrivateVariables.maxAccountId++;
+                //network send
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                removeFromQueryReceived(askLoginParam->query_id);
+                #endif
+                *(Client::loginIsWrongBuffer+1)=(quint8)askLoginParam->query_id;
+                *(Client::loginIsWrongBuffer+3)=(quint8)0x07;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
+                delete askLoginParam;
+                return;
+/*                GlobalServerData::serverPrivateVariables.maxAccountId++;
                 account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
-                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_login.arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()));
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_login.arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()));*/
             }
             else
             {
@@ -91,7 +103,33 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
-            if(QString(askLoginParam->pass.toHex())!=QString(GlobalServerData::serverPrivateVariables.db.value(1)))
+            QByteArray hashedToken;
+            {
+                quint32 index=0;
+                while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                {
+                    const TokenLink &tokenLink=GlobalServerData::serverPrivateVariables.tokenForAuth[index];
+                    if(tokenLink.client==this)
+                    {
+                        const QString &secretToken(GlobalServerData::serverPrivateVariables.db.value(1));
+                        const QByteArray &secretTokenBinary=QByteArray::fromHex(secretToken.toLatin1());
+                        QCryptographicHash hash(QCryptographicHash::Sha224);
+                        hash.addData(secretTokenBinary);
+                        hash.addData(tokenLink.value,CATCHCHALLENGER_TOKENSIZE);
+                        hashedToken=hash.result();
+                        GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
+                        memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
+                        break;
+                    }
+                    index++;
+                }
+                if(index==GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                {
+                    loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("No temp auth token found"));
+                    return;
+                }
+            }
+            if(hashedToken!=QByteArray::fromHex(GlobalServerData::serverPrivateVariables.db.value(1)))
             {
                 loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Password wrong: %1 for the login: %2").arg(QString(askLoginParam->pass.toHex())).arg(QString(askLoginParam->login.toHex())));
                 delete askLoginParam;
@@ -111,7 +149,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         }
     }
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_characters.arg(account_id).arg(CommonSettings::commonSettings.max_character);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::character_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::character_static);
+    if(callback==NULL)
     {
         account_id=0;
         loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
@@ -119,7 +158,90 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         return;
     }
     else
+    {
         paramToPassToCallBack << askLoginParam;
+        callbackRegistred << callback;
+    }
+}
+
+void Client::createAccount(const quint8 &query_id, const char *rawdata)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_login.isEmpty())
+    {
+        errorOutput(QStringLiteral("createAccount() Query login is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_insert_login.isEmpty())
+    {
+        errorOutput(QStringLiteral("createAccount() Query inset login is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_query_characters.isEmpty())
+    {
+        errorOutput(QStringLiteral("createAccount() Query characters is empty, bug"));
+        return;
+    }
+    if(GlobalServerData::serverSettings.automatic_account_creation)
+    {
+        errorOutput(QStringLiteral("createAccount() Creation account not premited"));
+        return;
+    }
+    #endif
+    QByteArray login,pass;
+    {
+        QCryptographicHash hash(QCryptographicHash::Sha224);
+        hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+        login=hash.result();
+    }
+    AskLoginParam *askLoginParam=new AskLoginParam;
+    askLoginParam->query_id=query_id;
+    askLoginParam->login=login;
+    askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
+
+    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_login.arg(QString(login.toHex()));
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::createAccount_static);
+    if(callback==NULL)
+    {
+        is_logging_in_progess=false;
+        loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+        delete askLoginParam;
+        return;
+    }
+    else
+    {
+        paramToPassToCallBack << askLoginParam;
+        callbackRegistred << callback;
+    }
+}
+
+void Client::createAccount_static(void *object)
+{
+    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
+    static_cast<Client *>(object)->createAccount_return(askLoginParam);
+    GlobalServerData::serverPrivateVariables.db.clear();
+    delete askLoginParam;
+}
+
+void Client::createAccount_return(AskLoginParam *askLoginParam)
+{
+    callbackRegistred.removeFirst();
+    if(!GlobalServerData::serverPrivateVariables.db.next())
+    {
+        //network send
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        removeFromQueryReceived(askLoginParam->query_id);
+        #endif
+        GlobalServerData::serverPrivateVariables.maxAccountId++;
+        account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_login.arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()));
+        //send the network reply
+        QByteArray outputData;
+        outputData[0x00]=0x01;
+        postReply(askLoginParam->query_id,outputData);
+    }
+    else
+        loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("Login already used: %1").arg(QString(askLoginParam->login.toHex())));
 }
 
 void Client::character_static(void *object)
@@ -131,6 +253,7 @@ void Client::character_static(void *object)
 
 void Client::character_return(const quint8 &query_id)
 {
+    callbackRegistred.removeFirst();
     //send signals into the server
     normalOutput(QStringLiteral("Logged the account %1").arg(account_id));
     //send the network reply
@@ -323,14 +446,18 @@ void Client::deleteCharacterNow(const quint32 &characterId)
     deleteCharacterNow->characterId=characterId;
 
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_monster_by_character_id.arg(characterId);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::deleteCharacterNow_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::deleteCharacterNow_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         delete deleteCharacterNow;
         return;
     }
     else
+    {
         paramToPassToCallBack << deleteCharacterNow;
+        callbackRegistred << callback;
+    }
 }
 
 void Client::deleteCharacterNow_static(void *object)
@@ -342,6 +469,7 @@ void Client::deleteCharacterNow_static(void *object)
 
 void Client::deleteCharacterNow_return(const quint32 &characterId)
 {
+    callbackRegistred.removeFirst();
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
@@ -435,7 +563,8 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
     addCharacterParam->skin=skin;
 
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo.arg(SqlFunction::quoteSqlVariable(pseudo));
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addCharacter_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addCharacter_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
 
@@ -449,7 +578,10 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         return;
     }
     else
+    {
         paramToPassToCallBack << addCharacterParam;
+        callbackRegistred << callback;
+    }
 }
 
 void Client::addCharacter_static(void *object)
@@ -462,6 +594,7 @@ void Client::addCharacter_static(void *object)
 
 void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const QString &skin)
 {
+    callbackRegistred.removeFirst();
     if(GlobalServerData::serverPrivateVariables.db.next())
     {
         QByteArray outputData;
@@ -650,7 +783,8 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
     removeCharacterParam->characterId=characterId;
 
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id.arg(characterId);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::removeCharacter_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::removeCharacter_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         QByteArray outputData;
@@ -662,7 +796,10 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
         return;
     }
     else
+    {
+        callbackRegistred << callback;
         paramToPassToCallBack << removeCharacterParam;
+    }
 }
 
 void Client::removeCharacter_static(void *object)
@@ -1126,12 +1263,15 @@ void Client::loadReputation()
     }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id.arg(character_id);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadReputation_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadReputation_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadQuests();
         return;
     }
+    else
+        callbackRegistred << callback;
 }
 
 void Client::loadReputation_static(void *object)
@@ -1141,6 +1281,7 @@ void Client::loadReputation_static(void *object)
 
 void Client::loadReputation_return()
 {
+    callbackRegistred.removeFirst();
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db.next())
@@ -1226,12 +1367,15 @@ void Client::loadQuests()
     }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id.arg(character_id);
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadQuests_static))
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadQuests_static);
+    if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadBotAlreadyBeaten();
         return;
     }
+    else
+        callbackRegistred << callback;
 }
 
 void Client::loadQuests_static(void *object)
@@ -1241,6 +1385,7 @@ void Client::loadQuests_static(void *object)
 
 void Client::loadQuests_return()
 {
+    callbackRegistred.removeFirst();
     //do the query
     bool ok,ok2;
     //parse the result

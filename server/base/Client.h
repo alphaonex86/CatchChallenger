@@ -82,11 +82,11 @@ public:
     static QHash<quint32,Clan *> clanList;
     static QList<Client *> clientBroadCastList;
 
-    static unsigned char protocolReplyProtocolNotSupported[3];
-    static unsigned char protocolReplyServerFull[3];
-    static unsigned char protocolReplyCompressionNone[3];
-    static unsigned char protocolReplyCompresssionZlib[3];
-    static unsigned char protocolReplyCompressionXz[3];
+    static unsigned char protocolReplyProtocolNotSupported[4];
+    static unsigned char protocolReplyServerFull[4];
+    static unsigned char protocolReplyCompressionNone[4+CATCHCHALLENGER_TOKENSIZE];
+    static unsigned char protocolReplyCompresssionZlib[4+CATCHCHALLENGER_TOKENSIZE];
+    static unsigned char protocolReplyCompressionXz[4+CATCHCHALLENGER_TOKENSIZE];
 
     static unsigned char loginInProgressBuffer[4];
     static unsigned char loginIsWrongBuffer[4];
@@ -95,6 +95,7 @@ public:
 protected:
     QByteArray rawPseudo;
     bool character_loaded;
+    QList<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
     struct AddCharacterParam
     {
@@ -298,6 +299,9 @@ private:
     //clan
     void clanChangeWithoutDb(const quint32 &clanId);
     void askLogin(const quint8 &query_id, const char *rawdata);
+    void createAccount(const quint8 &query_id, const char *rawdata);
+    static void createAccount_static(void *object);
+    void createAccount_return(AskLoginParam *askLoginParam);
     static void askLogin_static(void *object);
     void askLogin_return(AskLoginParam *askLoginParam);
     static void character_static(void *object);

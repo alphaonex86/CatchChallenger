@@ -1123,7 +1123,7 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
         break;
         case QtFatalMsg:
             txt = QStringLiteral("[Fatal] %1\n").arg(msg);
-            abort();
+            std::cout << static_cast<const char *>(txt.toLocal8Bit().constData());
         break;
     }
 
