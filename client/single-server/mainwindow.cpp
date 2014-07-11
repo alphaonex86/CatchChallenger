@@ -337,7 +337,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         }
         /*socket will do that's if(realSocket!=NULL)
         {
-            delete realSocket;
+            realSocket->deleteLater;
             realSocket=NULL;
         }*/
         resetAll();

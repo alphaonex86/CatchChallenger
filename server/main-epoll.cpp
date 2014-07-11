@@ -182,6 +182,43 @@ void send_settings()
         settings->endGroup();
     }
 
+    {
+        settings->beginGroup(QLatin1Literal("programmedEvent"));
+            const QStringList &tempListType=settings->childGroups();
+            int indexType=0;
+            while(indexType<tempListType.size())
+            {
+                const QString &type=tempListType.at(indexType);
+                settings->beginGroup(type);
+                    const QStringList &tempList=settings->childGroups();
+                    int index=0;
+                    while(index<tempList.size())
+                    {
+                        const QString &groupName=tempList.at(index);
+                        settings->beginGroup(groupName);
+                        if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
+                        {
+                            ServerSettings::ProgrammedEvent event;
+                            event.value=settings->value(QLatin1Literal("value")).toString();
+                            bool ok;
+                            event.cycle=settings->value(QLatin1Literal("cycle")).toUInt(&ok);
+                            if(!ok)
+                                event.cycle=0;
+                            event.offset=settings->value(QLatin1Literal("offset")).toUInt(&ok);
+                            if(!ok)
+                                event.offset=0;
+                            if(event.cycle>0)
+                                formatedServerSettings.programmedEventList[type][groupName]=event;
+                        }
+                        settings->endGroup();
+                        index++;
+                    }
+                settings->endGroup();
+                indexType++;
+            }
+        settings->endGroup();
+    }
+
     settings->beginGroup(QLatin1Literal("city"));
     if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("week"))
         formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_week;

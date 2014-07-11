@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QTime>
+#include <QListWidgetItem>
 
 #include "NormalServer.h"
 #include "base/GlobalServerData.h"
@@ -42,6 +43,8 @@ private:
     QTimer check_latency;
     QTime time_latency;
     quint16 internal_currentLatency;
+    QList<Event> events;
+    QHash<QString,QHash<QString,ServerSettings::ProgrammedEvent> > programmedEventList;
     QString sizeToString(double size);
     QString adaptString(float size);
 private slots:
@@ -121,6 +124,11 @@ private slots:
     void on_useSsl_toggled(bool checked);
     void on_useSP_toggled(bool checked);
     void on_autoLearn_toggled(bool checked);
+    void on_programmedEventType_currentIndexChanged(int index);
+    void on_programmedEventList_itemActivated(QListWidgetItem *item);
+    void on_programmedEventAdd_clicked();
+    void on_programmedEventEdit_clicked();
+    void on_programmedEventRemove_clicked();
 signals:
     void record_latency();
 };

@@ -1112,6 +1112,7 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
 
     switch (type)
     {
+        default:
         case QtDebugMsg:
             txt = QStringLiteral("%1\n").arg(msg);
         break;
@@ -1123,9 +1124,10 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
         break;
         case QtFatalMsg:
             txt = QStringLiteral("[Fatal] %1\n").arg(msg);
-            std::cout << static_cast<const char *>(txt.toLocal8Bit().constData());
+            std::cout << txt.toUtf8().data();
         break;
     }
+    std::cout << msg.toUtf8().data() << std::endl;
 
     if(BaseWindow::debugFileStatus==0)
     {
@@ -1135,6 +1137,7 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
             if(!debugFile.open(QIODevice::WriteOnly))
             {
                 BaseWindow::debugFileStatus=2;
+                std::cout << static_cast<const char *>(msg.toLocal8Bit().constData()) << std::endl;
                 return;
             }
             debugFile.resize(0);
@@ -1143,5 +1146,4 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
     }
     debugFile.write(txt.toUtf8());
     debugFile.flush();
-    std::cout << static_cast<const char *>(txt.toLocal8Bit().constData());
 }

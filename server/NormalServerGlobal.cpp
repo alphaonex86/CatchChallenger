@@ -133,6 +133,31 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("allow-clan"),true);
     settings->endGroup();
 
+    if(!settings->contains(QLatin1Literal("programmedEventFirstInit")))
+    {
+        settings->setValue(QLatin1Literal("programmedEventFirstInit"),true);
+        settings->beginGroup(QLatin1Literal("programmedEvent"));
+            settings->beginGroup(QLatin1Literal("day"));
+                settings->beginGroup(QLatin1Literal("day"));
+                if(!settings->contains(QLatin1Literal("value")))
+                    settings->setValue(QLatin1Literal("value"),"day");
+                if(!settings->contains(QLatin1Literal("cycle")))
+                    settings->setValue(QLatin1Literal("cycle"),"60");
+                if(!settings->contains(QLatin1Literal("offset")))
+                    settings->setValue(QLatin1Literal("offset"),"0");
+                settings->endGroup();
+                settings->beginGroup(QLatin1Literal("night"));
+                if(!settings->contains(QLatin1Literal("value")))
+                    settings->setValue(QLatin1Literal("value"),"night");
+                if(!settings->contains(QLatin1Literal("cycle")))
+                    settings->setValue(QLatin1Literal("cycle"),"60");
+                if(!settings->contains(QLatin1Literal("offset")))
+                    settings->setValue(QLatin1Literal("offset"),"30");
+                settings->endGroup();
+            settings->endGroup();
+        settings->endGroup();
+    }
+
     settings->beginGroup(QLatin1Literal("db"));
     if(!settings->contains(QLatin1Literal("type")))
         settings->setValue(QLatin1Literal("type"),QLatin1Literal("mysql"));

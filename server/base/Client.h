@@ -58,6 +58,7 @@ public:
     QByteArray getRawPseudo() const;
     void parseIncommingData();
     static void startTheCityCapture();
+    static void setEvent(const quint8 &event, const quint8 &new_value);
 
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
@@ -373,7 +374,6 @@ private:
     bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const quint32 &monsterId);
     void sendHandlerCommand(const QString &command,const QString &extraText);
-    void setEvent(const quint8 &event, const quint8 &new_value);
     void addEventInQueue(const quint8 &event, const quint8 &event_value, const QDateTime &currentDateTime);
     void removeFirstEventInQueue();
     //inventory
