@@ -1,7 +1,9 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "../general/base/DatapackGeneralLoader.h"
 
 #include <QFileDialog>
+#include <QInputDialog>
 
 using namespace CatchChallenger;
 
@@ -33,6 +35,15 @@ MainWindow::MainWindow(QWidget *parent) :
     internal_currentLatency=0;
     load_settings();
     updateDbGroupbox();
+    {
+        events=DatapackGeneralLoader::loadEvents(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/player/event.xml"));
+        int index=0;
+        while(index<events.size())
+        {
+            ui->programmedEventType->addItem(events.at(index).name);
+            index++;
+        }
+    }
 }
 
 MainWindow::~MainWindow()
@@ -340,6 +351,44 @@ void MainWindow::load_settings()
         }
     }
     {
+        settings->beginGroup(QLatin1Literal("programmedEvent"));
+            const QStringList &tempListType=settings->childGroups();
+            int indexType=0;
+            while(indexType<tempListType.size())
+            {
+                const QString &type=tempListType.at(indexType);
+                settings->beginGroup(type);
+                    const QStringList &tempList=settings->childGroups();
+                    int index=0;
+                    while(index<tempList.size())
+                    {
+                        const QString &groupName=tempList.at(index);
+                        settings->beginGroup(groupName);
+                        if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
+                        {
+                            ServerSettings::ProgrammedEvent event;
+                            event.value=settings->value(QLatin1Literal("value")).toString();
+                            bool ok;
+                            event.cycle=settings->value(QLatin1Literal("cycle")).toUInt(&ok);
+                            if(!ok)
+                                event.cycle=0;
+                            event.offset=settings->value(QLatin1Literal("offset")).toUInt(&ok);
+                            if(!ok)
+                                event.offset=0;
+                            if(event.cycle>0)
+                                programmedEventList[type][groupName]=event;
+                        }
+                        settings->endGroup();
+                        index++;
+                    }
+                settings->endGroup();
+                indexType++;
+            }
+        settings->endGroup();
+        if(ui->programmedEventType->count()>0)
+            on_programmedEventType_currentIndexChanged(0);
+    }
+    {
         #ifdef Q_OS_LINUX
         bool tcpCork=true;
         settings->beginGroup(QLatin1Literal("Linux"));
@@ -616,6 +665,7 @@ void MainWindow::send_settings()
     formatedServerSettings.ddos.dropGlobalChatMessageGeneral=ui->DDOSdropGlobalChatMessageGeneral->value();
     formatedServerSettings.ddos.dropGlobalChatMessageLocalClan=ui->DDOSdropGlobalChatMessageLocalClan->value();
     formatedServerSettings.ddos.dropGlobalChatMessagePrivate=ui->DDOSdropGlobalChatMessagePrivate->value();
+    formatedServerSettings.programmedEventList=programmedEventList;
 
     //fight
     formatedServerSettings.pvp			= ui->pvp->isChecked();
@@ -1242,4 +1292,139 @@ void CatchChallenger::MainWindow::on_useSP_toggled(bool checked)
 void CatchChallenger::MainWindow::on_autoLearn_toggled(bool checked)
 {
     settings->setValue(QLatin1Literal("autoLearn"),checked);
+}
+
+void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int index)
+{
+    Q_UNUSED(index);
+    ui->programmedEventList->clear();
+    const QString &selectedEvent=ui->programmedEventType->currentText();
+    if(selectedEvent.isEmpty())
+        return;
+    if(programmedEventList.contains(selectedEvent))
+    {
+        const QHash<QString,ServerSettings::ProgrammedEvent> &list=programmedEventList.value(selectedEvent);
+        QHashIterator<QString,ServerSettings::ProgrammedEvent> i(list);
+        while (i.hasNext()) {
+            i.next();
+            QListWidgetItem *listWidgetItem=new QListWidgetItem(
+                        tr("%1\nCycle: %2mins, offset: %3mins\nValue: %4")
+                        .arg(i.key())
+                        .arg(i.value().cycle)
+                        .arg(i.value().offset)
+                        .arg(i.value().value)
+                        );
+            listWidgetItem->setData(99,i.key());
+            ui->programmedEventList->addItem(listWidgetItem);
+        }
+    }
+}
+
+void CatchChallenger::MainWindow::on_programmedEventList_itemActivated(QListWidgetItem *item)
+{
+    Q_UNUSED(item);
+    on_programmedEventEdit_clicked();
+}
+
+void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
+{
+    const QString &selectedEvent=ui->programmedEventType->currentText();
+    if(selectedEvent.isEmpty())
+        return;
+    ServerSettings::ProgrammedEvent programmedEvent;
+    bool ok;
+    const QString &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,QString(),&ok);
+    if(!ok)
+        return;
+    if(programmedEventList.value(selectedEvent).contains(name))
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Entry already name"));
+        return;
+    }
+    programmedEvent.cycle=QInputDialog::getInt(this,tr("Name"),tr("Name:"),60,1,60*24,1,&ok);
+    if(!ok)
+        return;
+    programmedEvent.offset=QInputDialog::getInt(this,tr("Name"),tr("Name:"),0,1,60*24,1,&ok);
+    if(!ok)
+        return;
+    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,QString(),&ok);
+    if(!ok)
+        return;
+    programmedEventList[selectedEvent][name]=programmedEvent;
+    settings->beginGroup(QLatin1Literal("programmedEvent"));
+        settings->beginGroup(selectedEvent);
+            settings->beginGroup(name);
+                settings->setValue(QLatin1Literal("value"),programmedEvent.value);
+                settings->setValue(QLatin1Literal("cycle"),programmedEvent.cycle);
+                settings->setValue(QLatin1Literal("offset"),programmedEvent.offset);
+            settings->endGroup();
+        settings->endGroup();
+    settings->endGroup();
+    on_programmedEventType_currentIndexChanged(0);
+}
+
+void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &selectedEvent=ui->programmedEventType->currentText();
+    if(selectedEvent.isEmpty())
+        return;
+    ServerSettings::ProgrammedEvent programmedEvent;
+    bool ok;
+    const QString &oldName=selectedItems.first()->data(99).toString();
+    const QString &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,oldName,&ok);
+    if(!ok)
+        return;
+    if(programmedEventList.value(selectedEvent).contains(name))
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Entry already name"));
+        return;
+    }
+    programmedEvent.cycle=QInputDialog::getInt(this,tr("Name"),tr("Name:"),60,1,60*24,1,&ok);
+    if(!ok)
+        return;
+    programmedEvent.offset=QInputDialog::getInt(this,tr("Name"),tr("Name:"),0,1,60*24,1,&ok);
+    if(!ok)
+        return;
+    programmedEvent.value=QInputDialog::getText(this,tr("Value"),tr("Value:"),QLineEdit::Normal,QString(),&ok);
+    if(!ok)
+        return;
+    if(oldName!=name)
+        programmedEventList[selectedEvent].remove(oldName);
+    programmedEventList[selectedEvent][name]=programmedEvent;
+    settings->beginGroup(QLatin1Literal("programmedEvent"));
+        settings->beginGroup(selectedEvent);
+            settings->beginGroup(oldName);
+                settings->remove("");
+            settings->endGroup();
+            settings->beginGroup(name);
+                settings->setValue(QLatin1Literal("value"),programmedEvent.value);
+                settings->setValue(QLatin1Literal("cycle"),programmedEvent.cycle);
+                settings->setValue(QLatin1Literal("offset"),programmedEvent.offset);
+            settings->endGroup();
+        settings->endGroup();
+    settings->endGroup();
+    on_programmedEventType_currentIndexChanged(0);
+}
+
+void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->programmedEventList->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &selectedEvent=ui->programmedEventType->currentText();
+    if(selectedEvent.isEmpty())
+        return;
+    const QString &name=selectedItems.first()->data(99).toString();
+    programmedEventList[selectedEvent].remove(name);
+    settings->beginGroup(QLatin1Literal("programmedEvent"));
+        settings->beginGroup(selectedEvent);
+            settings->beginGroup(name);
+                settings->remove("");
+            settings->endGroup();
+        settings->endGroup();
+    settings->endGroup();
+    on_programmedEventType_currentIndexChanged(0);
 }

@@ -454,63 +454,74 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2563"/>
+        <location filename="../../../Api_protocol.cpp" line="2569"/>
         <source>Protocol not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2565"/>
+        <location filename="../../../Api_protocol.cpp" line="2571"/>
         <source>Server full</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2567"/>
-        <location filename="../../../Api_protocol.cpp" line="2598"/>
+        <location filename="../../../Api_protocol.cpp" line="2573"/>
+        <location filename="../../../Api_protocol.cpp" line="2609"/>
+        <location filename="../../../Api_protocol.cpp" line="2870"/>
         <source>Unknown error %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2588"/>
+        <location filename="../../../Api_protocol.cpp" line="2594"/>
         <source>Bad login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2590"/>
+        <location filename="../../../Api_protocol.cpp" line="2596"/>
         <source>Wrong login/pass</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2592"/>
+        <location filename="../../../Api_protocol.cpp" line="2598"/>
         <source>Server internal error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2594"/>
+        <location filename="../../../Api_protocol.cpp" line="2600"/>
         <source>Can&apos;t create character and don&apos;t have character</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2596"/>
+        <location filename="../../../Api_protocol.cpp" line="2602"/>
         <source>Login already in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2926"/>
+        <location filename="../../../Api_protocol.cpp" line="2866"/>
+        <source>Login already used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../Api_protocol.cpp" line="2868"/>
+        <source>Not created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../Api_protocol.cpp" line="2972"/>
         <source>Character not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2928"/>
+        <location filename="../../../Api_protocol.cpp" line="2974"/>
         <source>Already logged</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2930"/>
+        <location filename="../../../Api_protocol.cpp" line="2976"/>
         <source>Server internal problem</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2932"/>
+        <location filename="../../../Api_protocol.cpp" line="2978"/>
         <source>Unknown error: %1</source>
         <translation type="unfinished"></translation>
     </message>

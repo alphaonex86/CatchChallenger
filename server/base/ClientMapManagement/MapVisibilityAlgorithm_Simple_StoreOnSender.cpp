@@ -7,7 +7,6 @@ using namespace CatchChallenger;
 
 //temp variable for purge buffer
 CommonMap* MapVisibilityAlgorithm_Simple_StoreOnSender::old_map;
-CommonMap* MapVisibilityAlgorithm_Simple_StoreOnSender::new_map;
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::mapHaveChanged;
 
 MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender(
@@ -213,20 +212,18 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::extraStop()
 
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::singleMove(const Direction &direction)
 {
-    if(!MoveOnTheMap::canGoTo(direction,*map,x,y,false))//check of colision disabled because do into LocalClientHandler
-        return false;
     old_map=map;
-    new_map=map;
-    MoveOnTheMap::move(direction,&new_map,&x,&y);
-    if(old_map!=new_map)
+    if(!Client::singleMove(direction))//check of colision disabled because do into LocalClientHandler
+        return false;
+    if(old_map!=map)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("singleMove() have change from old map: %1, to the new map: %2").arg(old_map->map_file).arg(new_map->map_file));
+        normalOutput(QStringLiteral("singleMove() have change from old map: %1, to the new map: %2").arg(old_map->map_file).arg(map->map_file));
         #endif
         mapHaveChanged=true;
         map=old_map;
         unloadFromTheMap();
-        map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(new_map);
+        map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
         loadOnTheMap();
     }
     return true;

@@ -76,8 +76,7 @@ void MapVisibilityAlgorithm_None::purgeBuffer()
 
 bool MapVisibilityAlgorithm_None::singleMove(const Direction &direction)
 {
-    Q_UNUSED(direction);
-    return true;
+    return Client::singleMove(direction);
 }
 
 quint16 MapVisibilityAlgorithm_None::getMaxVisiblePlayerAtSameTime()
