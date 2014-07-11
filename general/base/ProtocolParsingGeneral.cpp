@@ -178,7 +178,7 @@ void ProtocolParsing::initialiseTheVariable()
 
     //def query without the sub code
     mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
-    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x43 << 0x41 << 0x61 << 0x03 << 0x04;
+    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x43 << 0x41 << 0x61 << 0x03 << 0x04 << 0x05;
 
     //define the size of direct query
     {
@@ -188,7 +188,8 @@ void ProtocolParsing::initialiseTheVariable()
     sizeOnlyMainCodePacketServerToClient[0xC4]=0;
     sizeOnlyMainCodePacketClientToServer[0x40]=2;
     sizeOnlyMainCodePacketClientToServer[0x03]=5;
-    sizeOnlyMainCodePacketClientToServer[0x04]=28*2;
+    sizeOnlyMainCodePacketClientToServer[0x04]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
+    sizeOnlyMainCodePacketClientToServer[0x05]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
     sizeOnlyMainCodePacketClientToServer[0x61]=4;
     sizeMultipleCodePacketClientToServer[0x02][0x0004]=4;
     sizeMultipleCodePacketClientToServer[0x02][0x0005]=4;
@@ -235,7 +236,6 @@ void ProtocolParsing::initialiseTheVariable()
     replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;
     replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
     replySizeMultipleCodePacketServerToClient[0x80][0x0001]=1;
-    replySizeOnlyMainCodePacketServerToClient[0x03]=1;
 
     compressionMultipleCodePacketServerToClient[0x02] << 0x000C;
     compressionMultipleCodePacketClientToServer[0xC2] << 0x0004;

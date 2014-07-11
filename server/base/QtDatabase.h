@@ -13,7 +13,7 @@
 
 namespace CatchChallenger {
 
-class QtDatabaseThread : public QThread
+class QtDatabaseThread : public QThread, public CatchChallenger::DatabaseBase
 {
     Q_OBJECT
 public:

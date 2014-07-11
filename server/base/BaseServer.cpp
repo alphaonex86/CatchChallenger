@@ -81,6 +81,9 @@ BaseServer::BaseServer() :
     #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.timer_city_capture     = NULL;
     #endif
+    #ifdef Q_OS_LINUX
+    GlobalServerData::serverPrivateVariables.fpRandomFile           = NULL;
+    #endif
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
@@ -243,6 +246,14 @@ void BaseServer::preload_the_events()
 
 void BaseServer::preload_the_randomData()
 {
+    #ifdef Q_OS_LINUX
+    if(GlobalServerData::serverPrivateVariables.fpRandomFile!=NULL)
+        fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
+    GlobalServerData::serverPrivateVariables.fpRandomFile = fopen("/dev/urandom","r");
+    if(GlobalServerData::serverPrivateVariables.fpRandomFile==NULL)
+        qDebug() << "Unable to open /dev/urandom to have trusted number generator";
+    #endif
+    GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
     GlobalServerData::serverPrivateVariables.randomData.clear();
     QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
     randomDataStream.setVersion(QDataStream::Qt_4_4);
@@ -389,7 +400,7 @@ void BaseServer::preload_zone_sql()
                 queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
             break;
         }
-        if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static))
+        if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static)==NULL)
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             abort();//stop because can't do the first db access
@@ -455,7 +466,7 @@ void BaseServer::preload_industries()
             queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         preload_market_monsters();
@@ -620,7 +631,7 @@ void BaseServer::preload_market_monsters()
             queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster WHERE place='market' ORDER BY position ASC");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         preload_market_items();
@@ -788,7 +799,7 @@ void BaseServer::preload_market_items()
             queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item WHERE place='market'");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         if(GlobalServerData::serverSettings.automatic_account_creation)
@@ -876,7 +887,7 @@ void BaseServer::loadMonsterBuffs(const quint32 &index)
         break;
     }
 
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterBuffs_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterBuffs_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         loadMonsterSkills(0);
@@ -957,7 +968,7 @@ void BaseServer::loadMonsterSkills(const quint32 &index)
             queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(index);
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterSkills_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterSkills_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         preload_market_items();
@@ -2147,6 +2158,10 @@ void BaseServer::unload_the_players()
 
 void BaseServer::unload_the_randomData()
 {
+    #ifdef Q_OS_LINUX
+    fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
+    #endif
+    GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
     GlobalServerData::serverPrivateVariables.randomData.clear();
 }
 
@@ -2410,7 +2425,7 @@ void BaseServer::load_clan_max_id()
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_clan_max_id_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_clan_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         preload_industries();
@@ -2455,7 +2470,7 @@ void BaseServer::load_account_max_id()
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_account_max_id_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_account_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         if(CommonSettings::commonSettings.max_character)
@@ -2506,7 +2521,7 @@ void BaseServer::load_character_max_id()
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static))
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         preload_finish();

@@ -10,6 +10,7 @@
 //this next header is needed to change file time/date under gcc
 #include <utime.h>
 #include <sys/stat.h>
+#include <iostream>
 #endif
 
 #ifdef Q_OS_LINUX
@@ -1054,10 +1055,12 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
 
 void MainWindow::newError(QString error,QString detailedError)
 {
-    qDebug() << detailedError.toLocal8Bit();
+    std::cout << detailedError.toLocal8Bit().constData() << std::endl;
     if(CatchChallenger::Api_client_real::client!=NULL)
+    {
         CatchChallenger::Api_client_real::client->tryDisconnect();
-    QMessageBox::critical(this,tr("Error"),error);
+        QMessageBox::critical(this,tr("Error"),error);
+    }
 }
 
 void MainWindow::haveNewError()
