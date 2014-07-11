@@ -311,7 +311,7 @@ bool EpollPostgresql::next()
     }
 }
 
-char * EpollPostgresql::value(const int &value) const
+const char *EpollPostgresql::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0)
         return emptyString;

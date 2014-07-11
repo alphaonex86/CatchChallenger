@@ -993,7 +993,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         }
         if(socket!=NULL)
         {
-            delete socket;
+            socket->deleteLater();
             socket=NULL;
         }
         /*socket will do that's if(realSocket!=NULL)
@@ -1517,6 +1517,19 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database.sqlite.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
     formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
+
+    {
+        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
+        event.cycle=60;
+        event.offset=0;
+        event.value="day";
+    }
+    {
+        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["night"];
+        event.cycle=60;
+        event.offset=30;
+        event.value="night";
+    }
 
     internalServer->setSettings(formatedServerSettings);
 }

@@ -60,11 +60,11 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
 ConnectedSocket::~ConnectedSocket()
 {
     if(sslSocket!=NULL)
-        delete sslSocket;
+        sslSocket->deleteLater();
     if(tcpSocket!=NULL)
-        delete tcpSocket;
+        tcpSocket->deleteLater();
     if(fakeSocket!=NULL)
-        delete fakeSocket;
+        fakeSocket->deleteLater();
 }
 
 QList<QSslError> ConnectedSocket::sslErrors() const

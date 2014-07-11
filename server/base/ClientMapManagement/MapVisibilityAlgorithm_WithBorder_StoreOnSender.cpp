@@ -22,7 +22,6 @@ QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender
 QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator MapVisibilityAlgorithm_WithBorder_StoreOnSender::i_remove;
 QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator MapVisibilityAlgorithm_WithBorder_StoreOnSender::i_remove_end;
 CommonMap* MapVisibilityAlgorithm_WithBorder_StoreOnSender::old_map;
-CommonMap* MapVisibilityAlgorithm_WithBorder_StoreOnSender::new_map;
 bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::mapHaveChanged;
 
 //temp variable to move on the map
@@ -881,20 +880,18 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
 
 bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::singleMove(const Direction &direction)
 {
-    if(!MoveOnTheMap::canGoTo(direction,*map,x,y,false))//check of colision disabled because do into LocalClientHandler
-        return false;
     old_map=map;
-    new_map=map;
-    MoveOnTheMap::move(direction,&new_map,&x,&y);
-    if(old_map!=new_map)
+    if(!Client::singleMove(direction))//check of colision disabled because do into LocalClientHandler
+        return false;
+    if(old_map!=map)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("singleMove() have change from old map: %1, to the new map: %2").arg(old_map->map_file).arg(new_map->map_file));
+        normalOutput(QStringLiteral("singleMove() have change from old map: %1, to the new map: %2").arg(old_map->map_file).arg(map->map_file));
         #endif
         mapHaveChanged=true;
         map=old_map;
         unloadFromTheMap();
-        map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(new_map);
+        map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map);
         loadOnTheMap();
     }
     return true;

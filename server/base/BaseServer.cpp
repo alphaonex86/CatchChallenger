@@ -15,6 +15,7 @@
 #include <QByteArray>
 #include <QDateTime>
 #include <QTime>
+#include <time.h>
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
 #endif
@@ -241,6 +242,39 @@ void BaseServer::preload_the_events()
     {
         GlobalServerData::serverPrivateVariables.events << 0;
         index++;
+    }
+    {
+        QHashIterator<QString,QHash<QString,ServerSettings::ProgrammedEvent> > i(GlobalServerData::serverSettings.programmedEventList);
+        while (i.hasNext()) {
+            i.next();
+            int index=0;
+            while(index<CommonDatapack::commonDatapack.events.size())
+            {
+                const Event &event=CommonDatapack::commonDatapack.events.at(index);
+                if(event.name==i.key())
+                {
+                    QHashIterator<QString,ServerSettings::ProgrammedEvent> j(i.value());
+                    while (j.hasNext()) {
+                        j.next();
+                        const int &sub_index=event.values.indexOf(j.value().value);
+                        if(sub_index!=-1)
+                        {
+                            #ifdef EPOLLCATCHCHALLENGERSERVER
+                            GlobalServerData::serverPrivateVariables.timerEvents << new TimerEvents(index,sub_index);
+                            #else
+                            GlobalServerData::serverPrivateVariables.timerEvents << new QTimer(index,sub_index);
+                            #endif
+                        }
+                        else
+                            GlobalServerData::serverSettings.programmedEventList[i.key()].remove(i.key());
+                    }
+                    break;
+                }
+                index++;
+            }
+            if(index==CommonDatapack::commonDatapack.events.size())
+                GlobalServerData::serverSettings.programmedEventList.remove(i.key());
+        }
     }
 }
 
@@ -2144,6 +2178,13 @@ void BaseServer::unload_the_ddos()
 void BaseServer::unload_the_events()
 {
     GlobalServerData::serverPrivateVariables.events.clear();
+    int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.timerEvents.size())
+    {
+        delete GlobalServerData::serverPrivateVariables.timerEvents.at(index);
+        index++;
+    }
+    GlobalServerData::serverPrivateVariables.timerEvents.clear();
 }
 
 void BaseServer::unload_the_datapack()

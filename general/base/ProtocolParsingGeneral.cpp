@@ -247,7 +247,7 @@ void ProtocolParsing::initialiseTheVariable()
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x0005;
 
     //main code for query with reply
-    ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x03 << 0x04 << 0x10 << 0x20 << 0x30;//replySizeMultipleCodePacketServerToClient
+    ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x03 << 0x04 << 0x05 << 0x10 << 0x20 << 0x30;//replySizeMultipleCodePacketServerToClient
     ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x80 << 0x90 << 0xA0;//replySizeMultipleCodePacketClientToServer
 
     //reply code

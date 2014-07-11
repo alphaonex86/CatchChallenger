@@ -221,7 +221,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
                         fread(token->value,CATCHCHALLENGER_TOKENSIZE,1,GlobalServerData::serverPrivateVariables.fpRandomFile);
                     #else
                     int index=0;
-                    while(index<CATCHCHALLENGER_SERVER_TOKENSIZE)
+                    while(index<CATCHCHALLENGER_TOKENSIZE)
                     {
                         token->value[index]=rand()%256;
                         index++;
@@ -237,12 +237,12 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
                     break;
                     case CompressionType_Zlib:
                         *(Client::protocolReplyCompresssionZlib+1)=queryNumber;
-                        memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(Client::protocolReplyCompresssionZlib+4,token->value,CATCHCHALLENGER_TOKENSIZE);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZlib),sizeof(Client::protocolReplyCompresssionZlib));
                     break;
                     case CompressionType_Xz:
                         *(Client::protocolReplyCompressionXz+1)=queryNumber;
-                        memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(Client::protocolReplyCompressionXz+4,token->value,CATCHCHALLENGER_TOKENSIZE);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionXz),sizeof(Client::protocolReplyCompressionXz));
                     break;
                     default:

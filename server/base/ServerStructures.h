@@ -29,6 +29,7 @@
 #include "epoll/timer/TimerDdos.h"
 #include "epoll/timer/TimerPositionSync.h"
 #include "epoll/timer/TimerSendInsertMoveRemove.h"
+#include "epoll/timer/TimerEvents.h"
 #include "epoll/db/EpollPostgresql.h"
 #else
 #include "QtDatabase.h"
@@ -197,6 +198,14 @@ struct ServerSettings
 
     //city
     City city;
+
+    struct ProgrammedEvent
+    {
+        QString value;
+        quint16 cycle;//mins
+        quint16 offset;//mins
+    };
+    QHash<QString,QHash<QString,ProgrammedEvent> > programmedEventList;
 };
 
 struct CityStatus
@@ -252,8 +261,10 @@ struct ServerPrivateVariables
     //bd
     #ifdef EPOLLCATCHCHALLENGERSERVER
     EpollPostgresql db;
+    QList<TimerEvents *> timerEvents;
     #else
     QtDatabase db;
+    QList<QTimer *> timerEvents;
     #endif
     QString db_type_string;
 

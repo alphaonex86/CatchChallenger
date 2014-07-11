@@ -86,6 +86,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 *(Client::loginIsWrongBuffer+3)=(quint8)0x07;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
                 delete askLoginParam;
+                is_logging_in_progess=false;
                 return;
 /*                GlobalServerData::serverPrivateVariables.maxAccountId++;
                 account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
@@ -105,6 +106,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         {
             QByteArray hashedToken;
             {
+                bool found=false;
                 quint32 index=0;
                 while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
                 {
@@ -119,17 +121,18 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         hashedToken=hash.result();
                         GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
                         memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
+                        found=true;
                         break;
                     }
                     index++;
                 }
-                if(index==GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                if(!found)
                 {
                     loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("No temp auth token found"));
                     return;
                 }
             }
-            if(hashedToken!=QByteArray::fromHex(GlobalServerData::serverPrivateVariables.db.value(1)))
+            if(hashedToken!=askLoginParam->pass)
             {
                 loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Password wrong: %1 for the login: %2").arg(QString(askLoginParam->pass.toHex())).arg(QString(askLoginParam->login.toHex())));
                 delete askLoginParam;
@@ -182,7 +185,7 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
         errorOutput(QStringLiteral("createAccount() Query characters is empty, bug"));
         return;
     }
-    if(GlobalServerData::serverSettings.automatic_account_creation)
+    if(!GlobalServerData::serverSettings.automatic_account_creation)
     {
         errorOutput(QStringLiteral("createAccount() Creation account not premited"));
         return;
@@ -230,7 +233,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     {
         //network send
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        removeFromQueryReceived(askLoginParam->query_id);
+        //removeFromQueryReceived(askLoginParam->query_id);//->only if use fast path
         #endif
         GlobalServerData::serverPrivateVariables.maxAccountId++;
         account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
@@ -239,6 +242,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         QByteArray outputData;
         outputData[0x00]=0x01;
         postReply(askLoginParam->query_id,outputData);
+        is_logging_in_progess=false;
     }
     else
         loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("Login already used: %1").arg(QString(askLoginParam->login.toHex())));

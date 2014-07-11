@@ -48,7 +48,6 @@ private:
 
     static bool mapHaveChanged;
     static CommonMap*			old_map;
-    static CommonMap*			new_map;
 
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     quint8 previousMovedUnitBlocked;
