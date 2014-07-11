@@ -86,6 +86,19 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
     formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
 
+    {
+        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
+        event.cycle=60;
+        event.offset=0;
+        event.value="day";
+    }
+    {
+        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["night"];
+        event.cycle=60;
+        event.offset=30;
+        event.value="night";
+    }
+
     internalServer->setSettings(formatedServerSettings);
 }
 

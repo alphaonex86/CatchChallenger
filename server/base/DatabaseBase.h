@@ -18,7 +18,7 @@ class DatabaseBase
         virtual bool asyncWrite(const char *query) = 0;
         virtual const char * errorMessage() const = 0;
         virtual bool next() = 0;
-        virtual char * value(const int &value) const = 0;
+        virtual const char * value(const int &value) const = 0;
         virtual bool isConnected() const = 0;
 };
 }

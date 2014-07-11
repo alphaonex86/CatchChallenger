@@ -9,6 +9,7 @@
 using namespace CatchChallenger;
 
 char QtDatabase::emptyString[]={'\0'};
+QByteArray QtDatabase::valueReturnedData;
 
 QtDatabase::QtDatabase() :
     conn(NULL),
@@ -105,12 +106,12 @@ void QtDatabase::syncDisconnect()
     conn=NULL;
 }
 
-bool QtDatabase::asyncRead(const char *query,void * returnObject, CallBackDatabase method)
+DatabaseBase::CallBack *QtDatabase::asyncRead(const char *query,void * returnObject, CallBackDatabase method)
 {
     if(conn==NULL)
     {
         std::cerr << "db not connected" << std::endl;
-        return false;
+        return NULL;
     }
     CallBack tempCallback;
     tempCallback.object=returnObject;
@@ -120,15 +121,15 @@ bool QtDatabase::asyncRead(const char *query,void * returnObject, CallBackDataba
         if(queue.size()>=CATCHCHALLENGER_MAXBDQUERIES)
         {
             std::cerr << "db queue full" << std::endl;
-            return false;
+            return NULL;
         }
         queue << tempCallback;
         queriesList << QString::fromUtf8(query);
-        return true;
+        return &queue.last();
     }
     emit sendQuery(query,*conn);
     queue << tempCallback;
-    return true;
+    return &queue.last();
 }
 
 void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
@@ -205,7 +206,7 @@ bool QtDatabase::next()
     return true;
 }
 
-const char * QtDatabase::value(const int &value)
+const char * QtDatabase::value(const int &value) const
 {
     if(sqlQuery==NULL)
         return emptyString;

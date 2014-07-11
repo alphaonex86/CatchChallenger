@@ -2560,6 +2560,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 token=data.right(CATCHCHALLENGER_TOKENSIZE);
                 have_receive_protocol=true;
                 protocol_is_good();
+                return;
             }
             else
             {
@@ -4464,7 +4465,8 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
         passHash=hashPass.result();
 
         QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
-        hashAndToken.addData(passHash+token);
+        hashAndToken.addData(passHash);
+        hashAndToken.addData(token);
         outputData+=hashAndToken.result();
     }
     const quint8 &query_number=queryNumber();

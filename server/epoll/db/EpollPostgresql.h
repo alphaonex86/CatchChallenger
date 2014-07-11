@@ -26,7 +26,7 @@ public:
     void clear();
     const char * errorMessage() const;
     bool next();
-    char * value(const int &value) const;
+    const char * value(const int &value) const;
     bool isConnected() const;
 private:
     PGconn *conn;
