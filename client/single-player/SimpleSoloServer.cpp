@@ -129,6 +129,8 @@ void SimpleSoloServer::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
+        if(internalServer!=NULL)
+            internalServer->stop();
         resetAll();
     }
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)

@@ -129,7 +129,7 @@ void BaseWindow::load_plant_inventory()
     ui->listPlantList->clear();
     plants_items_graphical.clear();
     plants_items_to_graphical.clear();
-    QHashIterator<quint32,quint32> i(items);
+    QHashIterator<quint16,quint32> i(items);
     while (i.hasNext()) {
         i.next();
         if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
@@ -162,7 +162,7 @@ void BaseWindow::load_crafting_inventory()
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-    QSetIterator<quint32> i(informations.recipes);
+    QSetIterator<quint16> i(informations.recipes);
     while (i.hasNext())
     {
         quint32 recipe=i.next();

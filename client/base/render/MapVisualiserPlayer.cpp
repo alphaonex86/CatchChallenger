@@ -497,7 +497,7 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(QHash<quint32,quint32> *items,QHash<quint32, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events)
+void MapVisualiserPlayer::setInformations(QHash<quint16,quint32> *items,QHash<quint16, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events)
 {
     this->events=events;
     this->items=items;

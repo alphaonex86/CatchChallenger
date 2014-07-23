@@ -64,6 +64,7 @@ BaseWindow::BaseWindow() :
     qQuickViewContainer=NULL;
     Chat::chat=new Chat(ui->page_map);
     escape=false;
+    multiplayer=false;
     movie=NULL;
     newProfile=NULL;
     lastStepUsed=0;
@@ -412,7 +413,7 @@ void BaseWindow::tradeAddTradeObject(const quint32 &item,const quint32 &quantity
     else
         tradeOtherObjects[item]=quantity;
     ui->tradeOtherItems->clear();
-    QHashIterator<quint32,quint32> i(tradeOtherObjects);
+    QHashIterator<quint16,quint32> i(tradeOtherObjects);
     while (i.hasNext()) {
         i.next();
         ui->tradeOtherItems->addItem(itemToGraphic(i.key(),i.value()));
@@ -422,7 +423,7 @@ void BaseWindow::tradeAddTradeObject(const quint32 &item,const quint32 &quantity
 void BaseWindow::tradeUpdateCurrentObject()
 {
     ui->tradePlayerItems->clear();
-    QHashIterator<quint32,quint32> i(tradeCurrentObjects);
+    QHashIterator<quint16,quint32> i(tradeCurrentObjects);
     while (i.hasNext()) {
         i.next();
         ui->tradePlayerItems->addItem(itemToGraphic(i.key(),i.value()));
@@ -452,7 +453,7 @@ QString BaseWindow::lastLocation() const
     return MapController::mapController->lastLocation();
 }
 
-QHash<quint32, PlayerQuest> BaseWindow::getQuests() const
+QHash<quint16, PlayerQuest> BaseWindow::getQuests() const
 {
     return quests;
 }
@@ -928,22 +929,22 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
     waitedObjectType=ObjectType_All;
 }
 
-void BaseWindow::add_to_inventory_slot(const QHash<quint32,quint32> &items)
+void BaseWindow::add_to_inventory_slot(const QHash<quint16,quint32> &items)
 {
     add_to_inventory(items);
 }
 
 void BaseWindow::add_to_inventory(const quint32 &item,const quint32 &quantity,const bool &showGain)
 {
-    QList<QPair<quint32,quint32> > items;
-    items << QPair<quint32,quint32>(item,quantity);
+    QList<QPair<quint16,quint32> > items;
+    items << QPair<quint16,quint32>(item,quantity);
     add_to_inventory(items,showGain);
 }
 
-void BaseWindow::add_to_inventory(const QList<QPair<quint32,quint32> > &items,const bool &showGain)
+void BaseWindow::add_to_inventory(const QList<QPair<quint16,quint32> > &items,const bool &showGain)
 {
     int index=0;
-    QHash<quint32,quint32> tempHash;
+    QHash<quint16,quint32> tempHash;
     while(index<items.size())
     {
         tempHash[items.at(index).first]=items.at(index).second;
@@ -952,7 +953,7 @@ void BaseWindow::add_to_inventory(const QList<QPair<quint32,quint32> > &items,co
     add_to_inventory(tempHash,showGain);
 }
 
-void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool &showGain)
+void BaseWindow::add_to_inventory(const QHash<quint16,quint32> &items,const bool &showGain)
 {
     if(items.empty())
         return;
@@ -960,7 +961,7 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool
     {
         QString html=tr("You have obtained: ");
         QStringList objects;
-        QHashIterator<quint32,quint32> i(items);
+        QHashIterator<quint16,quint32> i(items);
         while (i.hasNext()) {
             i.next();
 
@@ -1003,7 +1004,7 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool
     else
     {
         //add without show
-        QHashIterator<quint32,quint32> i(items);
+        QHashIterator<quint16,quint32> i(items);
         while (i.hasNext()) {
             i.next();
             //add really to the list
@@ -1021,19 +1022,19 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool
 
 void BaseWindow::remove_to_inventory(const quint32 &itemId,const quint32 &quantity)
 {
-    QHash<quint32,quint32> items;
+    QHash<quint16,quint32> items;
     items[itemId]=quantity;
     remove_to_inventory(items);
 }
 
-void BaseWindow::remove_to_inventory_slot(const QHash<quint32,quint32> &items)
+void BaseWindow::remove_to_inventory_slot(const QHash<quint16,quint32> &items)
 {
     remove_to_inventory(items);
 }
 
-void BaseWindow::remove_to_inventory(const QHash<quint32,quint32> &items)
+void BaseWindow::remove_to_inventory(const QHash<quint16,quint32> &items)
 {
-    QHashIterator<quint32,quint32> i(items);
+    QHashIterator<quint16,quint32> i(items);
     while (i.hasNext()) {
         i.next();
 
@@ -1747,7 +1748,7 @@ void BaseWindow::appendReputationRewards(const QList<ReputationRewards> &reputat
     while(index<reputationList.size())
     {
         const ReputationRewards &reputationRewards=reputationList.at(index);
-        appendReputationPoint(reputationRewards.type,reputationRewards.point);
+        appendReputationPoint(CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name,reputationRewards.point);
         index++;
     }
     show_reputation();
@@ -1759,9 +1760,9 @@ bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> 
     while(index<reputationList.size())
     {
         const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
-        if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputation.type))
+        if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputation.reputationId))
         {
-            const PlayerReputation &playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(reputation.type);
+            const PlayerReputation &playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(reputation.reputationId);
             if(!reputation.positif)
             {
                 if(-reputation.level<playerReputation.level)
@@ -1782,7 +1783,7 @@ bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> 
         else
             if(!reputation.positif)//default level is 0, but required level is negative
             {
-                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(reputation.type));
+                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).name));
                 return false;
             }
         index++;
@@ -1811,7 +1812,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
-        QHash<quint32,quint32> items;
+        QHash<quint16,quint32> items;
         items[item.item]=item.quantity;
         remove_to_inventory(items);
         index++;
@@ -1827,7 +1828,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         index=0;
         while(index<quest.rewards.reputation.size())
         {
-            appendReputationPoint(quest.rewards.reputation.value(index).type,quest.rewards.reputation.value(index).point);
+            appendReputationPoint(CommonDatapack::commonDatapack.reputation.at(quest.rewards.reputation.value(index).reputationId).name,quest.rewards.reputation.value(index).point);
             index++;
         }
         show_reputation();
@@ -1846,14 +1847,15 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
 {
     if(point==0)
         return;
-    if(!CatchChallenger::CommonDatapack::commonDatapack.reputation.contains(type))
+    if(!DatapackClientLoader::datapackLoader.reputationNameToId.contains(type))
     {
         emit error(QStringLiteral("Unknow reputation: %1").arg(type));
         return;
     }
+    const quint16 &reputatioId=DatapackClientLoader::datapackLoader.reputationNameToId.value(type);
     PlayerReputation playerReputation;
-    if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(type))
-        playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(type);
+    if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputatioId))
+        playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation.value(reputatioId);
     else
     {
         playerReputation.point=0;
@@ -1863,10 +1865,13 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
     emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
     PlayerReputation oldPlayerReputation=playerReputation;
-    playerReputation=FacilityLib::appendReputationPoint(playerReputation,point,type);
+    FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.reputation.at(reputatioId));
     if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
         return;
-    CatchChallenger::Api_client_real::client->player_informations.reputation[type]=playerReputation;
+    if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(reputatioId))
+        CatchChallenger::Api_client_real::client->player_informations.reputation[reputatioId]=playerReputation;
+    else
+        CatchChallenger::Api_client_real::client->player_informations.reputation.insert(reputatioId,playerReputation);
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QStringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
@@ -1930,7 +1935,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
                 }
                 else
                 {
-                    QList<quint32> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    QList<quint16> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
                     if(bots.contains(botId))
                         return true;//in progress
                     else
@@ -1941,13 +1946,13 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         index++;
     }
     //do the started quest here
-    QHashIterator<quint32, PlayerQuest> i(quests);
+    QHashIterator<quint16, PlayerQuest> i(quests);
     while (i.hasNext()) {
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(i.key());
-            QList<quint32> bots=currentQuest.steps.at(i.value().step-1).bots;
+            QList<quint16> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
                 return true;//in progress, but not the starting bot
             else
@@ -2022,7 +2027,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
                 }
                 else
                 {
-                    QList<quint32> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
+                    QList<quint16> bots=currentQuest.steps.at(quests.value(questId).step-1).bots;
                     if(bots.contains(botId))
                     {
                         oneEntry.first=questId;
@@ -2043,13 +2048,13 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
         index++;
     }
     //do the started quest here
-    QHashIterator<quint32, PlayerQuest> i(quests);
+    QHashIterator<quint16, PlayerQuest> i(quests);
     while (i.hasNext()) {
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(i.key());
-            QList<quint32> bots=currentQuest.steps.at(i.value().step-1).bots;
+            QList<quint16> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
             {
                 //in progress, but not the starting bot
@@ -3230,6 +3235,13 @@ void BaseWindow::detectSlowDown()
 
 void BaseWindow::updateTheTurtle()
 {
+    if(!multiplayer)
+    {
+        if(!ui->labelSlow->isVisible())
+            return;
+        ui->labelSlow->hide();
+        return;
+    }
     if(lastReplyTimeValue>TIMEINMSTOBESLOW && lastReplyTimeSince.elapsed()<TIMETOSHOWTHETURTLE)
     {
         if(ui->labelSlow->isVisible())

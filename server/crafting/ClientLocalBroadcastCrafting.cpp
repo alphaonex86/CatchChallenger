@@ -92,7 +92,7 @@ void Client::plantSeed(const quint8 &query_id,const quint8 &plant_id)
     //check if is dirt
     if(!MoveOnTheMap::isDirt(*map,x,y))
     {
-        errorOutput("Try pu seed out of the dirt");
+        errorOutput("Try put seed out of the dirt");
         return;
     }
     //check if is free
@@ -190,8 +190,8 @@ void Client::seedValidated()
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
-                     .arg(map_file)
                      .arg(plantOnMap.id)
+                     .arg(map_file)
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)
@@ -417,7 +417,7 @@ void Client::collectPlant(const quint8 &query_id)
     //check if is dirt
     if(!MoveOnTheMap::isDirt(*map,x,y))
     {
-        errorOutput("Try pu seed out of the dirt");
+        errorOutput("Try collect plant out of the dirt");
         return;
     }
     //check if is free

@@ -57,11 +57,11 @@ void BaseWindow::newProfileFinished()
     characterEntry.character_id=0;
     characterEntry.delete_time_left=0;
     characterEntry.last_connect=QDateTime::currentMSecsSinceEpoch()/1000;
-    characterEntry.map=profile.map;
+    characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo();
-    characterEntry.skin=nameGame.skin();
-    CatchChallenger::Api_client_real::client->addCharacter(profileIndex,characterEntry.pseudo,characterEntry.skin);
+    characterEntry.skinId=nameGame.skinId();
+    CatchChallenger::Api_client_real::client->addCharacter(profileIndex,characterEntry.pseudo,characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
     if((characterEntryListInWaiting.size()+characterEntryList.size())>=CommonSettings::commonSettings.max_character)
         ui->character_add->setEnabled(false);
@@ -104,7 +104,7 @@ void BaseWindow::updateCharacterList()
         if(characterEntry.delete_time_left>0)
             text+="\n"+tr("%1 to be deleted").arg(FacilityLib::timeToString(characterEntry.delete_time_left));
         item->setText(text);
-        item->setIcon(QIcon(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+characterEntry.skin+"/front.png"));
+        item->setIcon(QIcon(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
         ui->characterEntryList->addItem(item);
         index++;
     }

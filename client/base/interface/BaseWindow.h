@@ -47,7 +47,7 @@ public:
     void serverIsLoading();
     void serverIsReady();
     QString lastLocation() const;
-    QHash<quint32, PlayerQuest> getQuests() const;
+    QHash<quint16, PlayerQuest> getQuests() const;
     quint8 getActualBotId() const;
     bool haveNextStepQuestRequirements(const Quest &quest) const;
     bool haveStartQuestRequirement(const Quest &quest) const;
@@ -157,13 +157,13 @@ private slots:
     void logged(const QList<CharacterEntry> &characterEntryList);
     void updatePlayerImage();
     void have_current_player_info();
-    void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
+    void have_inventory(const QHash<quint16,quint32> &items,const QHash<quint16,quint32> &warehouse_items);
     void add_to_inventory(const quint32 &item,const quint32 &quantity=1,const bool &showGain=true);
-    void add_to_inventory(const QList<QPair<quint32,quint32> > &items,const bool &showGain=true);
-    void add_to_inventory(const QHash<quint32,quint32> &items, const bool &showGain=true);
-    void add_to_inventory_slot(const QHash<quint32,quint32> &items);
-    void remove_to_inventory(const QHash<quint32,quint32> &items);
-    void remove_to_inventory_slot(const QHash<quint32,quint32> &items);
+    void add_to_inventory(const QList<QPair<quint16,quint32> > &items,const bool &showGain=true);
+    void add_to_inventory(const QHash<quint16,quint32> &items, const bool &showGain=true);
+    void add_to_inventory_slot(const QHash<quint16,quint32> &items);
+    void remove_to_inventory(const QHash<quint16,quint32> &items);
+    void remove_to_inventory_slot(const QHash<quint16,quint32> &items);
     void remove_to_inventory(const quint32 &itemId,const quint32 &quantity=1);
     void load_inventory();
     void load_plant_inventory();
@@ -523,7 +523,7 @@ private:
     bool marketBuyInSuspend;
     //market put
     quint32 marketPutCashInSuspend;
-    QList<QPair<quint32,quint32> > marketPutObjectInSuspendList;
+    QList<QPair<quint16,quint32> > marketPutObjectInSuspendList;
     QList<CatchChallenger::PlayerMonster> marketPutMonsterList;
     QList<quint8> marketPutMonsterPlaceList;
     bool marketPutInSuspend;
@@ -533,9 +533,8 @@ private:
     QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
-    QHash<quint32,quint32> warehouse_items;
-    QHash<quint32,qint32> change_warehouse_items;//negative = deposite, positive = withdraw
-    QHash<quint32,quint32> items;
+    QHash<quint16,qint32> change_warehouse_items;//negative = deposite, positive = withdraw
+    QHash<quint16,quint32> items,warehouse_items;
     QHash<QListWidgetItem *,quint32> items_graphical;
     QHash<quint32,QListWidgetItem *> items_to_graphical;
     QHash<QListWidgetItem *,quint32> shop_items_graphical;
@@ -608,7 +607,7 @@ private:
 
     //trade
     TradeOtherStat tradeOtherStat;
-    QHash<quint32,quint32> tradeOtherObjects,tradeCurrentObjects;
+    QHash<quint16,quint32> tradeOtherObjects,tradeCurrentObjects;
     QList<CatchChallenger::PlayerMonster> tradeEvolutionMonsters,tradeOtherMonsters,tradeCurrentMonsters;
 
     //learn
@@ -616,8 +615,8 @@ private:
 
     //quest
     bool isInQuest;
-    quint32 questId;
-    QHash<quint32, PlayerQuest> quests;
+    quint16 questId;
+    QHash<quint16, PlayerQuest> quests;
 
     //battle
     BattleStep battleStep;
@@ -638,6 +637,7 @@ private:
     int lastReplyTimeValue;
     QTime lastReplyTimeSince;
     quint32 worseQueryTime;
+    bool multiplayer;
 signals:
     void newError(QString error,QString detailedError);
     //datapack

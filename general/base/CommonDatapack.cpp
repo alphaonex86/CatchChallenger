@@ -45,6 +45,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseProfileList();
     parseMonstersCollision();
     parseLayersOptions();
+    parseSkins();
     isParsed=true;
 }
 
@@ -53,6 +54,12 @@ void CommonDatapack::parseTypes()
 {
     types=FightLoader::loadTypes(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("type.xml"));
     qDebug() << QStringLiteral("%1 type(s) loaded").arg(types.size());
+}
+
+void CommonDatapack::parseSkins()
+{
+    skins=DatapackGeneralLoader::loadSkins(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN));
+    qDebug() << QStringLiteral("%1 skin(s) loaded").arg(skins.size());
 }
 
 void CommonDatapack::parseItems()
@@ -72,7 +79,7 @@ void CommonDatapack::parseIndustries()
 
 void CommonDatapack::parseCraftingRecipes()
 {
-    QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_CRAFTING)+QStringLiteral("recipes.xml"),items.item);
+    QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_CRAFTING)+QStringLiteral("recipes.xml"),items.item);
     crafingRecipes=multipleVariables.first;
     itemToCrafingRecipes=multipleVariables.second;
     qDebug() << QStringLiteral("%1 crafting recipe(s) loaded").arg(crafingRecipes.size());
@@ -182,6 +189,7 @@ void CommonDatapack::unload()
     xmlLoadedFile.clear();
     teleportConditionsUnparsed.clear();
     monstersCollision.clear();
+    skins.clear();
     isParsed=false;
 }
 

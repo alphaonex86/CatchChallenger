@@ -16,11 +16,6 @@ void Client::loadMonsters()
         errorOutput(QStringLiteral("loadMonsters() Query is empty, bug"));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.db_query_update_monster_place_wearhouse.isEmpty())
-    {
-        errorOutput(QStringLiteral("loadMonsters() Query monster place is empty, bug"));
-        return;
-    }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadMonsters_static);
@@ -130,12 +125,18 @@ void Client::loadMonsters_return()
         }
         if(ok)
         {
-            if(QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset))==Client::text_male)
-                playerMonster.gender=Gender_Male;
-            else if(QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset))==Client::text_female)
-                playerMonster.gender=Gender_Female;
-            else if(QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset))==Client::text_unknown)
-                playerMonster.gender=Gender_Unknown;
+            const quint32 &genderInt=QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)).toUInt(&ok);
+            if(!ok)
+            {
+                if(genderInt>=1 && genderInt<=3)
+                    playerMonster.gender=static_cast<Gender>(genderInt);
+                else
+                {
+                    playerMonster.gender=Gender_Unknown;
+                    normalOutput(QStringLiteral("unknown monster gender, out of range: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)));
+                    ok=false;
+                }
+            }
             else
             {
                 playerMonster.gender=Gender_Unknown;
@@ -148,6 +149,12 @@ void Client::loadMonsters_return()
             playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)).toUInt(&ok);
             if(!ok)
                 normalOutput(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)));
+        }
+        if(ok)
+        {
+            playerMonster.character_origin=QString(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset)).toUInt(&ok);
+            if(!ok)
+                normalOutput(QStringLiteral("monster character_origin: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset)));
         }
         if(ok)
         {

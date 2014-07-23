@@ -12,11 +12,12 @@ class NewGame : public QDialog
     Q_OBJECT
 
 public:
-    explicit NewGame(const QString &skinPath, const QStringList &forcedSkin, QWidget *parent = 0);
+    explicit NewGame(const QString &skinPath, const QList<quint8> &forcedSkin, QWidget *parent = 0);
     ~NewGame();
     bool haveTheInformation();
     QString pseudo();
     QString skin();
+    quint32 skinId();
     bool haveSkin();
     void updateSkin();
 private slots:
@@ -26,11 +27,12 @@ private slots:
     void on_nextSkin_clicked();
     void on_previousSkin_clicked();
 private:
-    QStringList forcedSkin;
+    QList<quint8> forcedSkin;
     Ui::NewGame *ui;
     bool ok;
     bool skinLoaded;
     QStringList skinList;
+    QList<quint8> skinListId;
     int currentSkin;
     QString skinPath;
     bool okCanBeEnabled();

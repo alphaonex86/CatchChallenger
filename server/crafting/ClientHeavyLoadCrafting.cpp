@@ -63,11 +63,6 @@ void Client::loadItems()
         errorOutput(QStringLiteral("loadItems() Query is empty, bug"));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.db_query_delete_item_by_charater_item_place.isEmpty())
-    {
-        errorOutput(QStringLiteral("loadItems() Query remove is empty, bug"));
-        return;
-    }
     #endif
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItems_static);
@@ -151,18 +146,18 @@ void Client::sendInventory()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
 
-    out << (quint32)public_and_private_informations.items.size();
-    QHashIterator<quint32,quint32> i(public_and_private_informations.items);
+    out << (quint16)public_and_private_informations.items.size();
+    QHashIterator<quint16,quint32> i(public_and_private_informations.items);
     while (i.hasNext()) {
         i.next();
-        out << (quint32)i.key();
+        out << (quint16)i.key();
         out << (quint32)i.value();
     }
-    out << (quint32)public_and_private_informations.warehouse_items.size();
-    QHashIterator<quint32,quint32> j(public_and_private_informations.warehouse_items);
+    out << (quint16)public_and_private_informations.warehouse_items.size();
+    QHashIterator<quint16,quint32> j(public_and_private_informations.warehouse_items);
     while (j.hasNext()) {
         j.next();
-        out << (quint32)j.key();
+        out << (quint16)j.key();
         out << (quint32)j.value();
     }
     //send the items

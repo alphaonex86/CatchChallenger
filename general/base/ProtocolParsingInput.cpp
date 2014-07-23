@@ -504,9 +504,9 @@ bool ProtocolParsingInputOutput::parseQueryNumber(const quint32 &size,quint32 &c
                     else
                     #endif
                     {
-                        if(replySizeMultipleCodePacketServerToClient.contains(mainCodeType))
+                        if(replySizeMultipleCodePacketClientToServer.contains(mainCodeType))
                         {
-                            if(replySizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
+                            if(replySizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                             {
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
@@ -515,7 +515,7 @@ bool ProtocolParsingInputOutput::parseQueryNumber(const quint32 &size,quint32 &c
                                     return false;
                                 }
                                 #endif
-                                dataSize=replySizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType);
+                                dataSize=replySizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType);
                                 haveData_dataSize=true;
                             }
                         }
