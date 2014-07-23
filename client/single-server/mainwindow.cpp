@@ -4,6 +4,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/InternetUpdater.h"
+#include "../base/Audio.h"
 #include "../../general/base/CommonSettings.h"
 #include <QNetworkProxy>
 #include <QStandardPaths>
@@ -125,6 +126,55 @@ MainWindow::MainWindow(QWidget *parent) :
     stateChanged(QAbstractSocket::UnconnectedState);
 
     setWindowTitle(QStringLiteral("CatchChallenger - ")+server_name);
+
+    vlcPlayer=NULL;
+    if(Audio::audio.vlcInstance!=NULL)
+    {
+        if(QFile(QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).exists())
+        {
+            // Create a new Media
+            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, (QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).toUtf8().constData());
+            if(vlcMedia!=NULL)
+            {
+                // Create a new libvlc player
+                vlcPlayer = libvlc_media_player_new_from_media(vlcMedia);
+                if(vlcPlayer!=NULL)
+                {
+                    // Get event manager for the player instance
+                    libvlc_event_manager_t *manager = libvlc_media_player_event_manager(vlcPlayer);
+                    // Attach the event handler to the media player error's events
+                    libvlc_event_attach(manager,libvlc_MediaPlayerEncounteredError,MainWindow::vlcevent,this);
+                    // Release the media
+                    libvlc_media_release(vlcMedia);
+                    libvlc_media_add_option(vlcMedia, "input-repeat=-1");
+                    // And start playback
+                    libvlc_media_player_play(vlcPlayer);
+                }
+                else
+                {
+                    qDebug() << "problem with vlc media player";
+                    const char * string=libvlc_errmsg();
+                    if(string!=NULL)
+                        qDebug() << string;
+                }
+            }
+            else
+            {
+                qDebug() << "problem with vlc media";
+                const char * string=libvlc_errmsg();
+                if(string!=NULL)
+                    qDebug() << string;
+            }
+        }
+    }
+    else
+    {
+        qDebug() << "no vlc instance";
+        const char * string=libvlc_errmsg();
+        if(string!=NULL)
+            qDebug() << string;
+    }
+    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
 }
 
 MainWindow::~MainWindow()
@@ -544,5 +594,31 @@ void MainWindow::readForFirstHeader()
         }
         else
             connectTheExternalSocket();
+    }
+}
+
+void MainWindow::gameIsLoaded()
+{
+    if(vlcPlayer!=NULL)
+        libvlc_media_player_stop(vlcPlayer);
+}
+
+void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
+{
+    qDebug() << "vlc event";
+    Q_UNUSED(ptr);
+    switch(event->type)
+    {
+        case libvlc_MediaPlayerEncounteredError:
+        {
+            const char * string=libvlc_errmsg();
+            if(string==NULL)
+                qDebug() << "vlc error";
+            else
+                qDebug() << string;
+        }
+        break;
+        default:
+        break;
     }
 }

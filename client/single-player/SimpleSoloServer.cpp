@@ -2,36 +2,85 @@
 #include "ui_SimpleSoloServer.h"
 #include <QStandardPaths>
 
-SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::SimpleSoloServer)
 {
     ui->setupUi(this);
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),true);
-    connect(solowindow,&SoloWindow::play,this,&SimpleSoloServer::play);
+    connect(solowindow,&SoloWindow::play,this,&MainWindow::play);
 
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
     internalServer=new CatchChallenger::InternalServer();
-    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&SimpleSoloServer::is_started,Qt::QueuedConnection);
-    connect(internalServer,&CatchChallenger::InternalServer::error,this,&SimpleSoloServer::serverError,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&SimpleSoloServer::protocol_is_good);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&SimpleSoloServer::disconnected);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&SimpleSoloServer::message);
-    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&SimpleSoloServer::stateChanged);
+    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
+    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
-    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&SimpleSoloServer::newError,Qt::QueuedConnection);
+    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
     CatchChallenger::BaseWindow::baseWindow->setMinimumSize(800,600);
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->addWidget(solowindow);
     ui->stackedWidget->setCurrentWidget(solowindow);
     //solowindow->show();
     setWindowTitle(QStringLiteral("CatchChallenger"));
+
+    vlcPlayer=NULL;
+    if(Audio::audio.vlcInstance!=NULL)
+    {
+        if(QFile(QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).exists())
+        {
+            // Create a new Media
+            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, (QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).toUtf8().constData());
+            if(vlcMedia!=NULL)
+            {
+                // Create a new libvlc player
+                vlcPlayer = libvlc_media_player_new_from_media(vlcMedia);
+                if(vlcPlayer!=NULL)
+                {
+                    // Get event manager for the player instance
+                    libvlc_event_manager_t *manager = libvlc_media_player_event_manager(vlcPlayer);
+                    // Attach the event handler to the media player error's events
+                    libvlc_event_attach(manager,libvlc_MediaPlayerEncounteredError,MainWindow::vlcevent,this);
+                    // Release the media
+                    libvlc_media_release(vlcMedia);
+                    libvlc_media_add_option(vlcMedia, "input-repeat=-1");
+                    // And start playback
+                    libvlc_media_player_play(vlcPlayer);
+                }
+                else
+                {
+                    qDebug() << "problem with vlc media player";
+                    const char * string=libvlc_errmsg();
+                    if(string!=NULL)
+                        qDebug() << string;
+                }
+            }
+            else
+            {
+                qDebug() << "problem with vlc media";
+                const char * string=libvlc_errmsg();
+                if(string!=NULL)
+                    qDebug() << string;
+            }
+        }
+    }
+    else
+    {
+        qDebug() << "no vlc instance";
+        const char * string=libvlc_errmsg();
+        if(string!=NULL)
+            qDebug() << string;
+    }
+    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
 }
 
-SimpleSoloServer::~SimpleSoloServer()
+MainWindow::~MainWindow()
 {
     if(internalServer!=NULL)
     {
@@ -48,7 +97,7 @@ SimpleSoloServer::~SimpleSoloServer()
     CatchChallenger::BaseWindow::baseWindow=NULL;
 }
 
-void SimpleSoloServer::play(const QString &savegamesPath)
+void MainWindow::play(const QString &savegamesPath)
 {
     sendSettings(internalServer,savegamesPath);
     internalServer->start();
@@ -67,7 +116,7 @@ void SimpleSoloServer::play(const QString &savegamesPath)
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
 }
 
-void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
+void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
 {
     CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
@@ -102,25 +151,25 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
     internalServer->setSettings(formatedServerSettings);
 }
 
-void SimpleSoloServer::protocol_is_good()
+void MainWindow::protocol_is_good()
 {
     CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
     CatchChallenger::Api_client_real::client->tryLogin(QStringLiteral("admin"),pass);
 }
 
-void SimpleSoloServer::disconnected(QString reason)
+void MainWindow::disconnected(QString reason)
 {
     QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
     haveShowDisconnectionReason=true;
     resetAll();
 }
 
-void SimpleSoloServer::message(QString message)
+void MainWindow::message(QString message)
 {
     qDebug() << message;
 }
 
-void SimpleSoloServer::stateChanged(QAbstractSocket::SocketState socketState)
+void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
     {
@@ -141,13 +190,13 @@ void SimpleSoloServer::stateChanged(QAbstractSocket::SocketState socketState)
     }
 }
 
-void SimpleSoloServer::serverError(const QString &error)
+void MainWindow::serverError(const QString &error)
 {
     QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
     resetAll();
 }
 
-void SimpleSoloServer::is_started(bool started)
+void MainWindow::is_started(bool started)
 {
     if(!started)
     {
@@ -163,7 +212,7 @@ void SimpleSoloServer::is_started(bool started)
     }
 }
 
-void SimpleSoloServer::saveTime()
+void MainWindow::saveTime()
 {
     if(internalServer==NULL)
         return;
@@ -200,7 +249,7 @@ void SimpleSoloServer::saveTime()
     }
 }
 
-void SimpleSoloServer::resetAll()
+void MainWindow::resetAll()
 {
     if(CatchChallenger::Api_client_real::client!=NULL)
         CatchChallenger::Api_client_real::client->resetAll();
@@ -210,7 +259,7 @@ void SimpleSoloServer::resetAll()
     saveTime();
 }
 
-void SimpleSoloServer::newError(QString error,QString detailedError)
+void MainWindow::newError(QString error,QString detailedError)
 {
     qDebug() << detailedError.toLocal8Bit();
     if(CatchChallenger::Api_client_real::client!=NULL)
@@ -218,7 +267,7 @@ void SimpleSoloServer::newError(QString error,QString detailedError)
     QMessageBox::critical(this,tr("Error"),error);
 }
 
-void SimpleSoloServer::closeEvent(QCloseEvent *event)
+void MainWindow::closeEvent(QCloseEvent *event)
 {
     event->ignore();
     hide();
@@ -240,4 +289,30 @@ void SimpleSoloServer::closeEvent(QCloseEvent *event)
     }
     else
         QCoreApplication::quit();
+}
+
+void MainWindow::gameIsLoaded()
+{
+    if(vlcPlayer!=NULL)
+        libvlc_media_player_stop(vlcPlayer);
+}
+
+void MainWindow::vlcevent(const libvlc_event_t *event, void *ptr)
+{
+    qDebug() << "vlc event";
+    Q_UNUSED(ptr);
+    switch(event->type)
+    {
+        case libvlc_MediaPlayerEncounteredError:
+        {
+            const char * string=libvlc_errmsg();
+            if(string==NULL)
+                qDebug() << "vlc error";
+            else
+                qDebug() << string;
+        }
+        break;
+        default:
+        break;
+    }
 }

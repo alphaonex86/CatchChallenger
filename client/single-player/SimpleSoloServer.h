@@ -2,18 +2,21 @@
 #define SIMPLESOLOSERVER_H
 
 #include <QMainWindow>
+#include <vlc/vlc.h>
+#include <vlc/libvlc_structures.h>
 #include "../base/solo/SoloWindow.h"
+#include "../base/Audio.h"
 
 namespace Ui {
 class SimpleSoloServer;
 }
 
-class SimpleSoloServer : public QMainWindow
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit SimpleSoloServer(QWidget *parent = 0);
-    ~SimpleSoloServer();
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
 public slots:
     void play(const QString &savegamesPath);
     void sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath);
@@ -27,6 +30,8 @@ public slots:
     void resetAll();
     void newError(QString error,QString detailedError);
     void closeEvent(QCloseEvent *event);
+    void gameIsLoaded();
+    static void vlcevent(const libvlc_event_t *event, void *ptr);
 private:
     Ui::SimpleSoloServer *ui;
     SoloWindow *solowindow;
@@ -37,6 +42,7 @@ private:
     CatchChallenger::InternalServer * internalServer;
     QString pass;
     bool haveShowDisconnectionReason;
+    libvlc_media_player_t *vlcPlayer;
 };
 
 #endif // SIMPLESOLOSERVER_H

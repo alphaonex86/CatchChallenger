@@ -182,7 +182,9 @@ void Client::disconnectClient()
         playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
         playerById.remove(character_id);
         leaveTheCityCapture();
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000));
+        const quint32 &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
+        if(addTime>5)
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(character_id).arg(addTime));
         //save the monster
         if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && isInFight())
             saveCurrentMonsterStat();
