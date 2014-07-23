@@ -8,6 +8,8 @@
 #include <QTimer>
 #include <QSslError>
 #include <QSslSocket>
+#include <vlc/vlc.h>
+#include <vlc/libvlc_structures.h>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -53,6 +55,8 @@ private slots:
     void updateTheOkButton();
     void sslHandcheckIsFinished();
     void readForFirstHeader();
+    void gameIsLoaded();
+    static void vlcevent(const libvlc_event_t *event, void *ptr);
 private:
     QSslSocket *realSslSocket;
     Ui::MainWindow *ui;
@@ -74,6 +78,7 @@ private:
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
     bool haveFirstHeader;
+    libvlc_media_player_t *vlcPlayer;
 
     QString server_name;
     QString server_dns_or_ip;

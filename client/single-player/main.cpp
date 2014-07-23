@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setApplicationName("client-single-player");
     a.setOrganizationName("CatchChallenger");
-    
+
     LocalListener localListener;
     const QStringList &arguments=QCoreApplication::arguments();
     if(arguments.size()==2 && arguments.last()=="quit")
@@ -21,9 +21,9 @@ int main(int argc, char *argv[])
         if(!localListener.tryListen())
             return 0;
     }
-    
+
     LanguagesSelect::languagesSelect=new LanguagesSelect();
-    SimpleSoloServer w;
+    MainWindow w;
     w.show();
     return a.exec();
 }
