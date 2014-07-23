@@ -222,9 +222,9 @@ QList<Type> FightLoader::loadTypes(const QString &file)
     return types;
 }
 
-QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHash<quint32, Skill> &monsterSkills,const QList<Type> &types,const QHash<quint32, Item> &items)
+QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHash<quint16, Skill> &monsterSkills,const QList<Type> &types,const QHash<quint16, Item> &items)
 {
-    QHash<quint32,Monster> monsters;
+    QHash<quint16,Monster> monsters;
     QDir dir(folder);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
@@ -809,7 +809,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
             item = item.nextSiblingElement(FightLoader::text_monster);
         }
         //check the evolveTo
-        QHash<quint32,Monster>::iterator i = monsters.begin();
+        QHash<quint16,Monster>::iterator i = monsters.begin();
         while (i != monsters.end()) {
             int index=0;
             bool evolutionByLevel=false,evolutionByTrade=false;
@@ -867,11 +867,11 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &folder, const QHa
     return monsters;
 }
 
-QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > FightLoader::loadMonsterEvolutionItems(const QHash<quint32,Monster> &monsters)
+QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > FightLoader::loadMonsterEvolutionItems(const QHash<quint16,Monster> &monsters)
 {
-    QHash<quint32, QHash<quint32,quint32> > evolutionItem;
-    QHash<quint32,Monster>::const_iterator i = monsters.constBegin();
-    QHash<quint32,Monster>::const_iterator iEnd = monsters.constEnd();
+    QHash<quint16, QHash<quint16,quint16> > evolutionItem;
+    QHash<quint16,Monster>::const_iterator i = monsters.constBegin();
+    QHash<quint16,Monster>::const_iterator iEnd = monsters.constEnd();
     while (i != iEnd) {
         int index=0;
         while(index<i.value().evolutions.size())
@@ -885,14 +885,14 @@ QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > FightLoad
     return evolutionItem;
 }
 
-QHash<quint32/*item*/, QSet<quint32/*monster*/> > FightLoader::loadMonsterItemToLearn(const QHash<quint32,Monster> &monsters,const QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > &evolutionItem)
+QHash<quint16/*item*/, QSet<quint16/*monster*/> > FightLoader::loadMonsterItemToLearn(const QHash<quint16,Monster> &monsters,const QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > &evolutionItem)
 {
-    QHash<quint32/*item*/, QSet<quint32/*monster*/> > learnItem;
-    QHash<quint32,Monster>::const_iterator i = monsters.constBegin();
-    QHash<quint32,Monster>::const_iterator iEnd = monsters.constEnd();
+    QHash<quint16/*item*/, QSet<quint16/*monster*/> > learnItem;
+    QHash<quint16,Monster>::const_iterator i = monsters.constBegin();
+    QHash<quint16,Monster>::const_iterator iEnd = monsters.constEnd();
     while (i != iEnd) {
-        QHash<quint32/*item*/,Monster::AttackToLearnByItem/*skill*/>::const_iterator j = i.value().learnByItem.constBegin();
-        QHash<quint32/*item*/,Monster::AttackToLearnByItem/*skill*/>::const_iterator jEnd = i.value().learnByItem.constEnd();
+        QHash<quint16/*item*/,Monster::AttackToLearnByItem/*skill*/>::const_iterator j = i.value().learnByItem.constBegin();
+        QHash<quint16/*item*/,Monster::AttackToLearnByItem/*skill*/>::const_iterator jEnd = i.value().learnByItem.constEnd();
         while (j != jEnd) {
             if(!evolutionItem.contains(j.key()))
                 learnItem[j.key()] << i.key();
@@ -905,7 +905,7 @@ QHash<quint32/*item*/, QSet<quint32/*monster*/> > FightLoader::loadMonsterItemTo
     return learnItem;
 }
 
-QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint32 &monsterId,const quint8 &level, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills)
+QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint16 &monsterId,const quint8 &level, const QHash<quint16,Monster> &monsters, const QHash<quint16, Skill> &monsterSkills)
 {
     QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
     QList<CatchChallenger::Monster::AttackToLearn> attack=monsters.value(monsterId).learn;
@@ -930,9 +930,9 @@ QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint32 &
     return skills;
 }
 
-QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills, const QHash<quint32, Item> &items)
+QHash<quint16,BotFight> FightLoader::loadFight(const QString &folder, const QHash<quint16,Monster> &monsters, const QHash<quint16, Skill> &monsterSkills, const QHash<quint16, Item> &items)
 {
-    QHash<quint32,BotFight> botFightList;
+    QHash<quint16,BotFight> botFightList;
     QDir dir(folder);
     QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
@@ -1163,9 +1163,9 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
     return botFightList;
 }
 
-QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &folder, const QHash<quint32, Buff> &monsterBuffs, const QList<Type> &types)
+QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const QHash<quint8, Buff> &monsterBuffs, const QList<Type> &types)
 {
-    QHash<quint32,Skill> monsterSkills;
+    QHash<quint16,Skill> monsterSkills;
     QDir dir(folder);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
@@ -1526,9 +1526,9 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
     return monsterSkills;
 }
 
-QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &folder)
+QHash<quint8,Buff> FightLoader::loadMonsterBuff(const QString &folder)
 {
-    QHash<quint32,Buff> monsterBuffs;
+    QHash<quint8,Buff> monsterBuffs;
     QDir dir(folder);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;

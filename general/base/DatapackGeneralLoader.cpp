@@ -97,12 +97,12 @@ QString DatapackGeneralLoader::text_layers=QLatin1String("layers");
 QString DatapackGeneralLoader::text_events=QLatin1String("events");
 QString DatapackGeneralLoader::text_event=QLatin1String("event");
 
-QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
+QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
     QRegExp excludeFilterRegex(QLatin1String("[\"']"));
     QRegExp typeRegex(QLatin1String("^[a-z]{1,32}$"));
     QDomDocument domDocument;
-    QHash<QString, Reputation> reputation;
+    QList<Reputation> reputation;
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
@@ -248,8 +248,11 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                     const QString &type=item.attribute(DatapackGeneralLoader::text_type);
                     if(!type.contains(excludeFilterRegex))
                     {
-                        reputation[type].reputation_positive=point_list_positive;
-                        reputation[type].reputation_negative=point_list_negative;
+                        Reputation reputationTemp;
+                        reputationTemp.name=type;
+                        reputationTemp.reputation_positive=point_list_positive;
+                        reputationTemp.reputation_negative=point_list_negative;
+                        reputation << reputationTemp;
                     }
                 }
             }
@@ -264,10 +267,10 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
     return reputation;
 }
 
-QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
+QHash<quint16, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
 {
     bool ok;
-    QHash<quint32, Quest> quests;
+    QHash<quint16, Quest> quests;
     //open and quick check the file
     QFileInfoList entryList=QDir(folder).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
@@ -306,6 +309,15 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
 
 QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
 {
+    QHash<QString,int> reputationNameToId;
+    {
+        int index=0;
+        while(index<CommonDatapack::commonDatapack.reputation.size())
+        {
+            reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            index++;
+        }
+    }
     CatchChallenger::Quest quest;
     quest.id=0;
     QDomDocument domDocument;
@@ -340,7 +352,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
 
     //load the content
     bool ok;
-    QList<quint32> defaultBots;
+    QList<quint16> defaultBots;
     quest.id=0;
     quest.repeatable=false;
     if(root.hasAttribute(DatapackGeneralLoader::text_repeatable))
@@ -352,7 +364,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
         int index=0;
         while(index<tempStringList.size())
         {
-            quint32 tempInt=tempStringList.at(index).toUInt(&ok);
+            quint16 tempInt=tempStringList.at(index).toUShort(&ok);
             if(ok)
                 defaultBots << tempInt;
             index++;
@@ -374,7 +386,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     {
                         if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_type) && requirementsItem.hasAttribute(DatapackGeneralLoader::text_level))
                         {
-                            if(CommonDatapack::commonDatapack.reputation.contains(requirementsItem.attribute(DatapackGeneralLoader::text_type)))
+                            if(reputationNameToId.contains(requirementsItem.attribute(DatapackGeneralLoader::text_type)))
                             {
                                 QString stringLevel=requirementsItem.attribute(DatapackGeneralLoader::text_level);
                                 bool positif=!stringLevel.startsWith(DatapackGeneralLoader::text_less);
@@ -386,7 +398,7 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                                     CatchChallenger::ReputationRequirements reputation;
                                     reputation.level=level;
                                     reputation.positif=positif;
-                                    reputation.type=requirementsItem.attribute(DatapackGeneralLoader::text_type);
+                                    reputation.reputationId=reputationNameToId.value(requirementsItem.attribute(DatapackGeneralLoader::text_type));
                                     quest.requirements.reputation << reputation;
                                 }
                                 else
@@ -447,13 +459,18 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                     {
                         if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
                         {
-                            const qint32 &point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
-                            if(ok)
+                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
                             {
-                                CatchChallenger::ReputationRewards reputation;
-                                reputation.point=point;
-                                reputation.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
-                                quest.rewards.reputation << reputation;
+                                const qint32 &point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                if(ok)
+                                {
+                                    CatchChallenger::ReputationRewards reputation;
+                                    reputation.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
+                                    reputation.point=point;
+                                    quest.rewards.reputation << reputation;
+                                }
+                                else
+                                    qDebug() << QStringLiteral("Unable to open the file: %1, quest rewards point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
                             }
                             else
                                 qDebug() << QStringLiteral("Unable to open the file: %1, quest rewards point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
@@ -671,6 +688,15 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
 
 QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
 {
+    QHash<QString,int> reputationNameToId;
+    {
+        int index=0;
+        while(index<CommonDatapack::commonDatapack.reputation.size())
+        {
+            reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            index++;
+        }
+    }
     QHash<quint8, Plant> plants;
     QDomDocument domDocument;
     //open and quick check the file
@@ -735,7 +761,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     {
                                         if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
                                         {
-                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
                                             {
                                                 ReputationRequirements reputationRequirements;
                                                 QString stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
@@ -745,7 +771,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                                 reputationRequirements.level=stringLevel.toUShort(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
                                                     plant.requirements.reputation << reputationRequirements;
                                                 }
                                             }
@@ -772,13 +798,13 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                     {
                                         if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
                                         {
-                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
                                             {
                                                 ReputationRewards reputationRewards;
                                                 reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
                                                     plant.rewards.reputation << reputationRewards;
                                                 }
                                             }
@@ -948,10 +974,19 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
     return plants;
 }
 
-QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoader::loadCraftingRecipes(const QString &file,const QHash<quint32, Item> &items)
+QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> > DatapackGeneralLoader::loadCraftingRecipes(const QString &file,const QHash<quint16, Item> &items)
 {
-    QHash<quint32,CrafingRecipe> crafingRecipes;
-    QHash<quint32,quint32> itemToCrafingRecipes;
+    QHash<QString,int> reputationNameToId;
+    {
+        int index=0;
+        while(index<CommonDatapack::commonDatapack.reputation.size())
+        {
+            reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            index++;
+        }
+    }
+    QHash<quint16,CrafingRecipe> crafingRecipes;
+    QHash<quint16,quint16> itemToCrafingRecipes;
     QDomDocument domDocument;
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
@@ -962,7 +997,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
         if(!craftingRecipesFile.open(QIODevice::ReadOnly))
         {
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, error: %2").arg(file).arg(craftingRecipesFile.errorString());
-            return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
+            return QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> >(crafingRecipes,itemToCrafingRecipes);
         }
         const QByteArray &xmlContent=craftingRecipesFile.readAll();
         craftingRecipesFile.close();
@@ -972,7 +1007,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
-            return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
+            return QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> >(crafingRecipes,itemToCrafingRecipes);
         }
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
@@ -980,7 +1015,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
     if(root.tagName()!=DatapackGeneralLoader::text_recipes)
     {
         qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, \"recipes\" root balise not found for the xml file").arg(file);
-        return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
+        return QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> >(crafingRecipes,itemToCrafingRecipes);
     }
 
     //load the content
@@ -1045,7 +1080,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                                     {
                                         if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
                                         {
-                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
                                             {
                                                 ReputationRequirements reputationRequirements;
                                                 QString stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
@@ -1055,7 +1090,7 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                                                 reputationRequirements.level=stringLevel.toUShort(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
                                                     recipe.requirements.reputation << reputationRequirements;
                                                 }
                                             }
@@ -1082,13 +1117,13 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                                     {
                                         if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
                                         {
-                                            if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                            if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
                                             {
                                                 ReputationRewards reputationRewards;
                                                 reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                    reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
                                                     recipe.rewards.reputation << reputationRewards;
                                                 }
                                             }
@@ -1236,12 +1271,12 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
         recipeItem = recipeItem.nextSiblingElement(DatapackGeneralLoader::text_recipe);
     }
-    return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
+    return QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> >(crafingRecipes,itemToCrafingRecipes);
 }
 
-QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &folder,const QHash<quint32, Item> &items)
+QHash<quint16,Industry> DatapackGeneralLoader::loadIndustries(const QString &folder,const QHash<quint16, Item> &items)
 {
-    QHash<quint32,Industry> industries;
+    QHash<quint16,Industry> industries;
     QDir dir(folder);
     const QFileInfoList &fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
@@ -1500,9 +1535,18 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
     return industries;
 }
 
-QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries)
+QHash<quint16,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QString &file,const QHash<quint16,Industry> &industries)
 {
-    QHash<quint32,IndustryLink> industriesLink;
+    QHash<QString,int> reputationNameToId;
+    {
+        int index=0;
+        while(index<CommonDatapack::commonDatapack.reputation.size())
+        {
+            reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            index++;
+        }
+    }
+    QHash<quint16,IndustryLink> industriesLink;
     QDomDocument domDocument;
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
@@ -1564,7 +1608,7 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
                                             {
                                                 if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_level))
                                                 {
-                                                    if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                                    if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
                                                     {
                                                         ReputationRequirements reputationRequirements;
                                                         QString stringLevel=reputationItem.attribute(DatapackGeneralLoader::text_level);
@@ -1574,7 +1618,7 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
                                                         reputationRequirements.level=stringLevel.toUShort(&ok);
                                                         if(ok)
                                                         {
-                                                            reputationRequirements.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                            reputationRequirements.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
                                                             industryLink->requirements.reputation << reputationRequirements;
                                                         }
                                                     }
@@ -1601,13 +1645,13 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
                                             {
                                                 if(reputationItem.hasAttribute(DatapackGeneralLoader::text_type) && reputationItem.hasAttribute(DatapackGeneralLoader::text_point))
                                                 {
-                                                    if(CommonDatapack::commonDatapack.reputation.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
+                                                    if(reputationNameToId.contains(reputationItem.attribute(DatapackGeneralLoader::text_type)))
                                                     {
                                                         ReputationRewards reputationRewards;
                                                         reputationRewards.point=reputationItem.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
                                                         if(ok)
                                                         {
-                                                            reputationRewards.type=reputationItem.attribute(DatapackGeneralLoader::text_type);
+                                                            reputationRewards.reputationId=reputationNameToId.value(reputationItem.attribute(DatapackGeneralLoader::text_type));
                                                             industryLink->rewards.reputation << reputationRewards;
                                                         }
                                                     }
@@ -1642,7 +1686,7 @@ QHash<quint32,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
     return industriesLink;
 }
 
-ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quint32,Buff> &monsterBuffs)
+ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quint8,Buff> &monsterBuffs)
 {
     ItemFull items;
     QDir dir(folder);
@@ -1942,8 +1986,31 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
     return items;
 }
 
-QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint32, Item> &items,const QHash<quint32,Monster> &monsters,const QHash<QString, Reputation> &reputations)
+QList<QString> DatapackGeneralLoader::loadSkins(const QString &folder)
 {
+    return FacilityLib::skinIdList(folder);
+}
+
+QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations)
+{
+    QHash<QString,int> reputationNameToId;
+    {
+        int index=0;
+        while(index<CommonDatapack::commonDatapack.reputation.size())
+        {
+            reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            index++;
+        }
+    }
+    QHash<QString,quint8> skinNameToId;
+    {
+        int index=0;
+        while(index<CommonDatapack::commonDatapack.skins.size())
+        {
+            skinNameToId[CommonDatapack::commonDatapack.skins.at(index)]=index;
+            index++;
+        }
+    }
     QPair<QList<QDomElement>, QList<Profile> > returnVar;
     QDomDocument domDocument;
     //open and quick check the file
@@ -2019,7 +2086,18 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
             if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
             {
-                profile.forcedskin=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
+                const QStringList &forcedskinList=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
+                {
+                    int index=0;
+                    while(index<forcedskinList.size())
+                    {
+                        if(skinNameToId.contains(forcedskinList.at(index)))
+                            profile.forcedskin << skinNameToId.value(forcedskinList.at(index));
+                        else
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(forcedskinList.at(index)));
+                        index++;
+                    }
+                }
                 int index=0;
                 while(index<profile.forcedskin.size())
                 {
@@ -2099,19 +2177,19 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 Profile::Reputation reputationTemp;
                 if(reputationElement.isElement() && reputationElement.hasAttribute(DatapackGeneralLoader::text_type) && reputationElement.hasAttribute(DatapackGeneralLoader::text_level))
                 {
-                    reputationTemp.type=reputationElement.attribute(DatapackGeneralLoader::text_type);
                     reputationTemp.level=reputationElement.attribute(DatapackGeneralLoader::text_level).toShort(&ok);
                     if(!ok)
                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     if(ok)
                     {
-                        if(!reputations.contains(reputationTemp.type))
+                        if(!reputationNameToId.contains(reputationElement.attribute(DatapackGeneralLoader::text_type)))
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationTemp.type));
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
                             ok=false;
                         }
                         if(ok)
                         {
+                            reputationTemp.reputationId=reputationNameToId.value(reputationElement.attribute(DatapackGeneralLoader::text_type));
                             if(reputationTemp.level==0)
                             {
                                 CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is useless if level 0: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
@@ -2119,17 +2197,17 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                             }
                             else if(reputationTemp.level<0)
                             {
-                                if((-reputationTemp.level)>reputations.value(reputationTemp.type).reputation_negative.size())
+                                if((-reputationTemp.level)>reputations.value(reputationTemp.reputationId).reputation_negative.size())
                                 {
-                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationTemp.type));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
                                     ok=false;
                                 }
                             }
                             else// if(reputationTemp.level>0)
                             {
-                                if((reputationTemp.level)>=reputations.value(reputationTemp.type).reputation_positive.size())
+                                if((reputationTemp.level)>=reputations.value(reputationTemp.reputationId).reputation_positive.size())
                                 {
-                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationTemp.type));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
                                     ok=false;
                                 }
                             }
@@ -2205,7 +2283,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
     return returnVar;
 }
 
-QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items,const QList<Event> &events)
+QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QString &file, const QHash<quint16, Item> &items,const QList<Event> &events)
 {
     QHash<QString,quint8> eventStringToId;
     QHash<QString,QHash<QString,quint8> > eventValueStringToId;

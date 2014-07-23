@@ -27,6 +27,7 @@ void BaseServer::load_monsters_max_id()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL city loaded").arg(GlobalServerData::serverPrivateVariables.cityStatusList.size()));
 
+    GlobalServerData::serverPrivateVariables.maxMonsterId=1;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -45,8 +46,7 @@ void BaseServer::load_monsters_max_id()
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         abort();//stop because can't do the first db access
-        plant_on_the_map=0;
-        preload_the_plant_on_map();
+        load_monsters_warehouse_max_id();
     }
     return;
 }
@@ -58,26 +58,124 @@ void BaseServer::load_monsters_max_id_static(void *object)
 
 void BaseServer::load_monsters_max_id_return()
 {
-    GlobalServerData::serverPrivateVariables.maxMonsterId=0;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
-        GlobalServerData::serverPrivateVariables.maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
-            GlobalServerData::serverPrivateVariables.maxMonsterId=0;
             continue;
         }
+        else
+            if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
+                GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
+    }
+    load_monsters_warehouse_max_id();
+}
+
+void BaseServer::load_monsters_warehouse_max_id()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QLatin1String("SELECT `id` FROM `monster_warehouse` ORDER BY `id` DESC LIMIT 0,1;");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 0,1;");
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 1;");
+        break;
+    }
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_warehouse_max_id_static)==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        abort();//stop because can't do the first db access
+        load_monsters_market_max_id();
+    }
+    return;
+}
+
+void BaseServer::load_monsters_warehouse_max_id_static(void *object)
+{
+    static_cast<BaseServer *>(object)->load_monsters_warehouse_max_id_return();
+}
+
+void BaseServer::load_monsters_warehouse_max_id_return()
+{
+    while(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        bool ok;
+        const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
+            continue;
+        }
+        else
+            if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
+                GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
+    }
+    load_monsters_market_max_id();
+}
+
+void BaseServer::load_monsters_market_max_id()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QLatin1String("SELECT `id` FROM `monster_market` ORDER BY `id` DESC LIMIT 0,1;");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 0,1;");
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 1;");
+        break;
+    }
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_market_max_id_static)==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        abort();//stop because can't do the first db access
+        plant_on_the_map=0;
+        preload_the_plant_on_map();
+    }
+    return;
+}
+
+void BaseServer::load_monsters_market_max_id_static(void *object)
+{
+    static_cast<BaseServer *>(object)->load_monsters_market_max_id_return();
+}
+
+void BaseServer::load_monsters_market_max_id_return()
+{
+    while(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        bool ok;
+        const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
+            continue;
+        }
+        else
+            if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
+                GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
     }
     plant_on_the_map=0;
     preload_the_plant_on_map();
 }
 
-QHash<quint32,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHash<quint32,Item> items,const QHash<quint32,Monster> &monsters)
+QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters)
 {
     QDomDocument domDocument;
-    QMultiHash<quint32,MonsterDrops> monsterDrops;
+    QMultiHash<quint16,MonsterDrops> monsterDrops;
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
@@ -117,7 +215,7 @@ QHash<quint32,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
         {
             if(item.hasAttribute(BaseServer::text_id))
             {
-                const quint32 &id=item.attribute(BaseServer::text_id).toUInt(&ok);
+                const quint16 &id=item.attribute(BaseServer::text_id).toUShort(&ok);
                 if(!ok)
                     DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else if(!monsters.contains(id))

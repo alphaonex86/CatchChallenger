@@ -26,7 +26,7 @@ bool Client::tryEscape()
     }
 }
 
-quint32 Client::tryCapture(const quint32 &item)
+quint32 Client::tryCapture(const quint16 &item)
 {
     quint32 captureSuccessId=CommonFightEngine::tryCapture(item);
     if(captureSuccessId!=0)//if success
@@ -1249,14 +1249,14 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
     }
     QString place;
     if(toStorage)
-        place="'warehouse'";
+        place="monster_warehouse";
     else
-        place="'wear'";
+        place="monster";
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`) VALUES(%1,%2);")
+            dbQueryWrite(QStringLiteral("INSERT INTO `%3`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2);")
                          .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
                               .arg(monster_id)
                               .arg(newMonster.hp)
@@ -1266,18 +1266,18 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                               .arg(newMonster.remaining_xp)
                               .arg(newMonster.sp)
                               .arg(newMonster.catched_with)
-                              .arg(FacilityLib::genderToString(newMonster.gender))
+                              .arg((quint8)newMonster.gender)
                               )
-                         .arg(QStringLiteral("%1,%2,%3,%4")
+                         .arg(QStringLiteral("%1,%2,%3")
                               .arg(newMonster.egg_step)
                               .arg(character_id)
-                              .arg(place)
                               .arg(position)
                               )
+                         .arg(place)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,place,position) VALUES(%1,%2);")
+            dbQueryWrite(QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
                          .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
                               .arg(monster_id)
                               .arg(newMonster.hp)
@@ -1287,18 +1287,18 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                               .arg(newMonster.remaining_xp)
                               .arg(newMonster.sp)
                               .arg(newMonster.catched_with)
-                              .arg(FacilityLib::genderToString(newMonster.gender))
+                              .arg((quint8)newMonster.gender)
                               )
-                         .arg(QStringLiteral("%1,%2,%3,%4")
+                         .arg(QStringLiteral("%1,%2,%3")
                               .arg(newMonster.egg_step)
                               .arg(character_id)
-                              .arg(place)
                               .arg(position)
                               )
+                         .arg(place)
                          );
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,place,position) VALUES(%1,%2);")
+            dbQueryWrite(QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
                          .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
                               .arg(monster_id)
                               .arg(newMonster.hp)
@@ -1308,14 +1308,14 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                               .arg(newMonster.remaining_xp)
                               .arg(newMonster.sp)
                               .arg(newMonster.catched_with)
-                              .arg(FacilityLib::genderToString(newMonster.gender))
+                              .arg((quint8)newMonster.gender)
                               )
-                         .arg(QStringLiteral("%1,%2,%3,%4")
+                         .arg(QStringLiteral("%1,%2,%3")
                               .arg(newMonster.egg_step)
                               .arg(character_id)
-                              .arg(place)
                               .arg(position)
                               )
+                         .arg(place)
                          );
         break;
     }

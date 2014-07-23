@@ -1020,13 +1020,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                 case 0x0001:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint32)))
+                    if(size!=((int)sizeof(quint16)))
                     {
                         parseError("wrong remaining size for quest start");
                         return;
                     }
                     #endif
-                    const quint32 &questId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const quint16 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Start,questId);
                     return;
                 }
@@ -1035,13 +1035,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                 case 0x0002:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint32)))
+                    if(size!=((int)sizeof(quint16)))
                     {
                         parseError("wrong remaining size for quest finish");
                         return;
                     }
                     #endif
-                    const quint32 &questId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const quint16 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Finish,questId);
                     return;
                 }
@@ -1050,13 +1050,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                 case 0x0003:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint32)))
+                    if(size!=((int)sizeof(quint16)))
                     {
                         parseError("wrong remaining size for quest cancel");
                         return;
                     }
                     #endif
-                    const quint32 &questId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const quint16 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Cancel,questId);
                     return;
                 }
@@ -1065,13 +1065,13 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                 case 0x0004:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(size!=((int)sizeof(quint32)))
+                    if(size!=((int)sizeof(quint16)))
                     {
                         parseError("wrong remaining size for quest next step");
                         return;
                     }
                     #endif
-                    const quint32 &questId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const quint32 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_NextStep,questId);
                     return;
                 }
@@ -1180,7 +1180,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                 in.setVersion(QDataStream::Qt_4_4);
                 quint8 profileIndex;
                 QString pseudo;
-                QString skin;
+                quint8 skinId;
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -1193,13 +1193,13 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 in >> pseudo;
-                if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                     return;
                 }
-                in >> skin;
-                addCharacter(queryNumber,profileIndex,pseudo,skin);
+                in >> skinId;
+                addCharacter(queryNumber,profileIndex,pseudo,skinId);
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
                     parseError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")

@@ -106,7 +106,7 @@ void BaseWindow::marketBuy(const bool &success)
     }
     else
     {
-        QHash<quint32,quint32> items;
+        QHash<quint16,quint32> items;
         items[marketBuyObjectList.first().first]=marketBuyObjectList.first().second;
         add_to_inventory(items);
         marketBuyObjectList.removeFirst();
