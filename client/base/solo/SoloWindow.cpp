@@ -17,9 +17,6 @@ SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString
     QMainWindow(parent),
     ui(new Ui::SoloWindow)
 {
-    savegameUpdate.insert("0.4","ALTER TABLE plant ADD id INT;");
-    savegameUpdate.insert("0.4","CREATE UNIQUE INDEX \"plant_primarykey\" on plant (id ASC);");
-
     ui->setupUi(this);
     /*socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket);
@@ -131,6 +128,7 @@ void SoloWindow::on_SaveGame_New_clicked()
                 metaData.setValue(QStringLiteral("location"),QStringLiteral(""));
                 metaData.setValue(QStringLiteral("time_played"),0);
                 metaData.setValue(QStringLiteral("pass"),pass);
+                metaData.setValue(QStringLiteral("savegame_version"),CATCHCHALLENGER_SAVEGAME_VERSION);
                 settingOk=true;
             }
             else
@@ -280,15 +278,17 @@ void SoloWindow::updateSavegameList()
                             metaData.setValue("savegame_version","0.4");
                         const QString &version=metaData.value("savegame_version").toString();
 
-                        if(version==CATCHCHALLENGER_SAVEGAME_VERSION || savegameUpdate.contains(version))
+                        if(version!=CATCHCHALLENGER_SAVEGAME_VERSION)
                         {
-                            if(version!=CATCHCHALLENGER_SAVEGAME_VERSION)
+                            if(version==QStringLiteral("0.4"))
                             {
+                                QStringList values;
+                                values << "ALTER TABLE plant ADD id INT;";
+                                values << "CREATE UNIQUE INDEX \"plant_primarykey\" on plant (id ASC);";
                                 QSqlDatabase conn = QSqlDatabase::addDatabase("QSQLITE","savegameupdate");
                                 conn.setDatabaseName(savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
                                 if(conn.open())
                                 {
-                                    const QStringList &values=savegameUpdate.values(version);
                                     int index=0;
                                     while(index<values.size())
                                     {
@@ -297,56 +297,72 @@ void SoloWindow::updateSavegameList()
                                             qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
                                         index++;
                                     }
+                                    QSqlQuery query(conn);
+                                    if(!query.exec(QStringLiteral("SELECT map,x,y FROM plant")))
+                                        qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
+                                    else
+                                    {
+                                        int index=0;
+                                        while(query.next())
+                                        {
+                                            QSqlQuery queryUpdate(conn);
+                                            if(!queryUpdate.exec(QStringLiteral("UPDATE character SET id=%1 WHERE map='%2',x=%3,y=%4 FROM plant").arg(index).arg(query.value(0).toString()).arg(query.value(1).toUInt()).arg(query.value(2).toUInt())))
+                                                qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
+                                            index++;
+                                        }
+                                    }
                                     conn.close();
                                 }
                                 else
                                     qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText();
                                 QSqlDatabase::removeDatabase("savegameupdate");
+                                metaData.setValue("savegame_version",CATCHCHALLENGER_SAVEGAME_VERSION);
                             }
-                            metaData.setValue("savegame_version",CATCHCHALLENGER_SAVEGAME_VERSION);
-                            int time_played_number=metaData.value("time_played").toUInt(&ok);
-                            QString time_played;
-                            if(!ok || time_played_number>3600*24*365*50)
-                                time_played="Time player: bug";
                             else
-                                time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLib::timeToString(time_played_number));
-                            //load the map name
-                            QString mapName;
-                            QString map=metaData.value(QStringLiteral("location")).toString();
-                            if(!map.isEmpty())
                             {
-                                map.replace(QStringLiteral(".tmx"),QStringLiteral(".xml"));
-                                if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map).isFile())
-                                    mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map);
-                                if(mapName.isEmpty())
+                                newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br />Version not compatible (%2)</span>")
+                                                  .arg(metaData.value("title").toString())
+                                                  .arg(version)
+                                                  );
+                            }
+                        }
+                        int time_played_number=metaData.value("time_played").toUInt(&ok);
+                        QString time_played;
+                        if(!ok || time_played_number>3600*24*365*50)
+                            time_played="Time player: bug";
+                        else
+                            time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLib::timeToString(time_played_number));
+                        //load the map name
+                        QString mapName;
+                        QString map=metaData.value(QStringLiteral("location")).toString();
+                        if(!map.isEmpty())
+                        {
+                            map.replace(QStringLiteral(".tmx"),QStringLiteral(".xml"));
+                            if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map).isFile())
+                                mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map);
+                            if(mapName.isEmpty())
+                            {
+                                QString tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+metaData.value(QStringLiteral("location")).toString();
+                                if(QFileInfo(tmxFile).isFile())
                                 {
-                                    QString tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+metaData.value(QStringLiteral("location")).toString();
-                                    if(QFileInfo(tmxFile).isFile())
-                                    {
-                                        QString zone=getMapZone(tmxFile);
-                                        //try load the zone
-                                        if(!zone.isEmpty())
-                                            mapName=getZoneName(zone);
-                                    }
+                                    QString zone=getMapZone(tmxFile);
+                                    //try load the zone
+                                    if(!zone.isEmpty())
+                                        mapName=getZoneName(zone);
                                 }
                             }
-                            QString lastLine;
-                            if(mapName.isEmpty())
-                                lastLine=time_played;
-                            else
-                                lastLine=QStringLiteral("%1 (%2)").arg(mapName).arg(time_played);
-
-                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
-                                              .arg(metaData.value("title").toString())
-                                              .arg(dateString)
-                                              .arg(lastLine)
-                                              );
                         }
+                        QString lastLine;
+                        if(mapName.isEmpty())
+                            lastLine=time_played;
                         else
-                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br />Version not compatible (%2)</span>")
-                                              .arg(metaData.value("title").toString())
-                                              .arg(version)
-                                              );
+                            lastLine=QStringLiteral("%1 (%2)").arg(mapName).arg(time_played);
+
+                        newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
+                                          .arg(metaData.value("title").toString())
+                                          .arg(dateString)
+                                          .arg(lastLine)
+                                          );
                     }
                     else if(metaData.contains("title"))
                         newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span></span>")

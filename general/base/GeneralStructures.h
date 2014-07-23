@@ -55,7 +55,8 @@ enum CompressionType
 
 enum ActionAllow
 {
-    ActionAllow_Clan
+    ActionAllow_Nothing=0x00,
+    ActionAllow_Clan=0x01
 };
 
 enum Direction
@@ -96,22 +97,30 @@ enum Plant_collect
     Plant_collect_impossible=0x04
 };
 
+struct Reputation
+{
+    QList<qint32> reputation_positive,reputation_negative;
+    /*server only*/
+    int reverse_database_id;
+    QString name;
+};
+
 struct ReputationRewards
 {
-    QString type;
+    quint8 reputationId;
     qint32 point;
 };
 
 struct ReputationRequirements
 {
-    QString type;
+    quint8 reputationId;
     quint8 level;
     bool positif;
 };
 
 struct Plant
 {
-    quint32 itemUsed;
+    quint16 itemUsed;
     quint32 fruits_seconds;
     //float quantity;//splited into 2 integer
     quint16 fix_quantity;
@@ -157,13 +166,13 @@ struct MonsterItemEffectOutOfFight
 
 struct ItemFull
 {
-    QMultiHash<quint32, MonsterItemEffect> monsterItemEffect;
-    QMultiHash<quint32, MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight;
-    QHash<quint32/*item*/, QHash<quint32/*monster*/,quint32/*evolveTo*/> > evolutionItem;
-    QHash<quint32/*item*/, QSet<quint32/*monster*/> > itemToLearn;
-    QHash<quint32, quint32> repel;
-    QHash<quint32, Item> item;
-    QHash<quint32, Trap> trap;
+    QMultiHash<quint16, MonsterItemEffect> monsterItemEffect;
+    QMultiHash<quint16, MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight;
+    QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > evolutionItem;
+    QHash<quint16/*item*/, QSet<quint16/*monster*/> > itemToLearn;
+    QHash<quint16, quint32> repel;
+    QHash<quint16, Item> item;
+    QHash<quint16, Trap> trap;
 };
 
 struct LayersOptions
@@ -192,12 +201,12 @@ struct Industry
     quint32 cycletobefull;
     struct Resource
     {
-        quint32 item;
+        quint16 item;
         quint32 quantity;
     };
     struct Product
     {
-        quint32 item;
+        quint16 item;
         quint32 quantity;
     };
     QList<Resource> resources;
@@ -270,7 +279,7 @@ enum Gender
 };
 struct PlayerBuff
 {
-    quint32 buff;
+    quint8 buff;
     quint8 level;
     quint8 remainingNumberOfTurn;
 };
@@ -278,10 +287,10 @@ struct PlayerBuff
 class PublicPlayerMonster
 {
     public:
-    quint32 monster;
+    quint16 monster;
     quint8 level;
     quint32 hp;
-    quint32 catched_with;
+    quint16 catched_with;
     Gender gender;
     QList<PlayerBuff> buffs;
 };
@@ -291,7 +300,7 @@ class PlayerMonster : public PublicPlayerMonster
     public:
     struct PlayerSkill
     {
-        quint32 skill;
+        quint16 skill;
         quint8 level;
         quint8 endurance;
     };
@@ -301,6 +310,7 @@ class PlayerMonster : public PublicPlayerMonster
     //in form of list to get random into the list
     QList<PlayerSkill> skills;
     quint32 id;//id into the db
+    quint32 character_origin;
 };
 
 struct PlayerQuest
@@ -315,24 +325,19 @@ struct PlayerReputation
     qint32 point;
 };
 
-struct Reputation
-{
-    QList<qint32> reputation_positive,reputation_negative;
-};
-
 struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
     quint64 cash,warehouse_cash;
-    QHash<quint32,quint32> items,warehouse_items;
+    QHash<quint16,quint32> items,warehouse_items;
     //crafting
-    QSet<quint32> recipes;
-    QHash<QString,PlayerReputation> reputation;
+    QSet<quint16> recipes;
+    QMap<quint8,PlayerReputation> reputation;
     //fight
-    QSet<quint32> bot_already_beaten;
+    QSet<quint16> bot_already_beaten;
     /// \todo put out of here to have mutalised engine
     QList<PlayerMonster> playerMonster,warehouse_playerMonster;
-    QHash<quint32, PlayerQuest> quests;
+    QHash<quint16, PlayerQuest> quests;
     CLAN_ID_TYPE clan;
     bool clan_leader;
     QSet<ActionAllow> allow;
@@ -350,11 +355,11 @@ struct CharacterEntry
 {
     quint32 character_id;
     QString pseudo;
-    QString skin;
+    quint8 skinId;
     quint32 delete_time_left;
     quint32 played_time;
     quint32 last_connect;
-    QString map;
+    quint32 mapId;
 };
 
 /* mpa related */
@@ -489,13 +494,13 @@ struct Map_to_send
 
 struct CrafingRecipe
 {
-    quint32 itemToLearn;
-    quint32 doItemId;
+    quint16 itemToLearn;
+    quint16 doItemId;
     quint16 quantity;
     quint8 success;//0-100
     struct Material
     {
-        quint32 item;
+        quint16 item;
         quint32 quantity;
     };
     QList<Material> materials;
@@ -514,7 +519,7 @@ struct CrafingRecipe
 struct Shop
 {
     QList<quint32> prices;
-    QList<quint32> items;
+    QList<quint16> items;
 };
 
 enum QuantityType
@@ -578,7 +583,7 @@ struct Skill
     };
     struct BuffEffect
     {
-        quint32 buff;
+        quint8 buff;
         ApplyOn on;
         quint8 level;
     };
@@ -670,22 +675,22 @@ struct Monster
     struct AttackToLearn
     {
         quint8 learnAtLevel;
-        quint32 learnSkill;
+        quint16 learnSkill;
         quint8 learnSkillLevel;
     };
     struct AttackToLearnByItem
     {
-        quint32 learnSkill;
+        quint16 learnSkill;
         quint8 learnSkillLevel;
     };
     QList<AttackToLearn> learn;
-    QHash<quint32/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
+    QHash<quint16/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
     QList<Evolution> evolutions;
 };
 
 struct ItemToSellOrBuy
 {
-    quint32 object;
+    quint16 object;
     quint32 price;
     quint32 quantity;
 };
@@ -694,12 +699,12 @@ struct Quest
 {
     struct Item
     {
-        quint32 item;
+        quint16 item;
         quint32 quantity;
     };
     struct ItemMonster
     {
-        quint32 item;
+        quint16 item;
         QList<quint32> monsters;
         quint8 rate;
     };
@@ -723,7 +728,7 @@ struct Quest
     {
         QList<ItemMonster> itemsMonster;
         StepRequirements requirements;
-        QList<quint32> bots;
+        QList<quint16> bots;
     };
 
     quint32 id;
@@ -813,13 +818,13 @@ struct Profile
 {
     struct Reputation
     {
-        QString type;
+        quint8 reputationId;
         qint8 level;
         qint32 point;
     };
     struct Monster
     {
-        quint32 id;
+        quint16 id;
         qint8 level;
         qint32 captured_with;
     };
@@ -830,7 +835,8 @@ struct Profile
     };
     QString map;
     quint8 x,y;
-    QStringList forcedskin;
+    QStringList forcedskinTemp;
+    QList<quint8> forcedskin;
     quint64 cash;
     QList<Monster> monsters;
     QList<Reputation> reputation;
@@ -846,7 +852,7 @@ enum MonstersCollisionType
 struct MonstersCollision
 {
     MonstersCollisionType type;
-    quint32 item;
+    quint16 item;
     QString tile;
     QString layer;
     QStringList monsterTypeList;

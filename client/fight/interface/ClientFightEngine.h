@@ -24,7 +24,7 @@ public:
     };
     static ClientFightEngine fightEngine;
     virtual void resetAll();
-    bool isInFight() const;
+    virtual bool isInFight() const;
     void errorFightEngine(const QString &error);
     void messageFightEngine(const QString &message) const;
     //current fight
@@ -33,7 +33,7 @@ public:
     QList<quint8> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
     QList<quint32> otherMonsterAttack;
     QList<PlayerMonster> playerMonster_catchInProgress;
-    void fightFinished();
+    virtual void fightFinished();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
     bool addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);

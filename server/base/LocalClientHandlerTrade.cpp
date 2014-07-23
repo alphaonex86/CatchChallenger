@@ -208,7 +208,7 @@ void Client::tradeAddTradeCash(const quint64 &cash)
     otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
 }
 
-void Client::tradeAddTradeObject(const quint32 &item,const quint32 &quantity)
+void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
 {
     if(!tradeIsValidated)
     {

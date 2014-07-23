@@ -312,6 +312,7 @@ void Client::character_return(const quint8 &query_id)
     out << (quint8)CommonSettings::commonSettings.chat_allow_clan;
     out << (quint8)CommonSettings::commonSettings.factoryPriceChange;
     out << CommonSettings::commonSettings.httpDatapackMirror;
+    out << (quint32)GlobalServerData::serverPrivateVariables.map_list.size();
 
     {
         const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
@@ -350,9 +351,43 @@ void Client::character_return(const quint8 &query_id)
                     else
                         characterEntry.delete_time_left=time_to_delete-current_time;
                     characterEntry.pseudo=GlobalServerData::serverPrivateVariables.db.value(1);
-                    characterEntry.skin=GlobalServerData::serverPrivateVariables.db.value(2);
-                    characterEntry.map=GlobalServerData::serverPrivateVariables.db.value(6);
-                    characterEntryList << characterEntry;
+                    const quint32 &skinIdTemp=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+                    if(!ok)
+                    {
+                        normalOutput(QStringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                        characterEntry.skinId=0;
+                        ok=true;
+                    }
+                    else
+                    {
+                        if(skinIdTemp>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_skin.size())
+                        {
+                            normalOutput(QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                            characterEntry.skinId=0;
+                            ok=true;
+                        }
+                        else
+                            characterEntry.skinId=GlobalServerData::serverPrivateVariables.dictionary_skin.at(skinIdTemp);
+                    }
+                    if(ok)
+                    {
+                        characterEntry.mapId=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toUInt(&ok);
+                        if(!ok)
+                            normalOutput(QStringLiteral("character return map is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                        else
+                        {
+                            if(characterEntry.mapId>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+                            {
+                                normalOutput(QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                                characterEntry.mapId=0;
+                                ok=true;
+                            }
+                            else
+                                characterEntry.mapId=GlobalServerData::serverPrivateVariables.dictionary_map.at(characterEntry.mapId)->id;
+                        }
+                        if(ok)
+                            characterEntryList << characterEntry;
+                    }
                 }
             }
             else
@@ -375,11 +410,16 @@ void Client::character_return(const quint8 &query_id)
             const CharacterEntry &characterEntry=characterEntryList.at(index);
             out << (quint32)characterEntry.character_id;
             out << characterEntry.pseudo;
-            out << characterEntry.skin;
+            out << (quint8)characterEntry.skinId;
             out << (quint32)characterEntry.delete_time_left;
             out << (quint32)characterEntry.played_time;
             out << (quint32)characterEntry.last_connect;
-            out << characterEntry.map;
+            if(GlobalServerData::serverPrivateVariables.map_list.size()>65535)
+                out << (quint32)characterEntry.mapId;
+            else if(GlobalServerData::serverPrivateVariables.map_list.size()>255)
+                out << (quint16)characterEntry.mapId;
+            else
+                out << (quint8)characterEntry.mapId;
             index++;
         }
     }
@@ -487,14 +527,19 @@ void Client::deleteCharacterNow_return(const quint32 &characterId)
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_character.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item_market.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_market.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_plant.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_quest.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_reputation.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_allow.arg(characterId));
 }
 
-void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const QString &skin)
+void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo.isEmpty())
@@ -544,27 +589,32 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         errorOutput(QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
         return;
     }
+    if(!GlobalServerData::serverPrivateVariables.serverProfileList.at(profileIndex).valid)
+    {
+        errorOutput(QStringLiteral("profile index: %1 profil not valid").arg(profileIndex));
+        return;
+    }
     if(pseudo.size()>CommonSettings::commonSettings.max_pseudo_size)
     {
         errorOutput(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettings::commonSettings.max_pseudo_size));
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
-    if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skin))
+    if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skinId))
     {
-        errorOutput(QStringLiteral("skin provided: %1 is not into profile forced skin list: %2").arg(skin).arg(profile.forcedskin.join(";")));
+        errorOutput(QStringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
         return;
     }
-    if(!GlobalServerData::serverPrivateVariables.skinList.contains(skin))
+    if(skinId>=GlobalServerData::serverPrivateVariables.skinList.size())
     {
-        errorOutput(QStringLiteral("skin provided: %1 is not into skin listed").arg(skin));
+        errorOutput(QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
         return;
     }
     AddCharacterParam *addCharacterParam=new AddCharacterParam();
     addCharacterParam->query_id=query_id;
     addCharacterParam->profileIndex=profileIndex;
     addCharacterParam->pseudo=pseudo;
-    addCharacterParam->skin=skin;
+    addCharacterParam->skinId=skinId;
 
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo.arg(SqlFunction::quoteSqlVariable(pseudo));
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addCharacter_static);
@@ -591,12 +641,12 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
 void Client::addCharacter_static(void *object)
 {
     AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.takeFirst());
-    static_cast<Client *>(object)->addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skin);
+    static_cast<Client *>(object)->addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skinId);
     delete addCharacterParam;
     GlobalServerData::serverPrivateVariables.db.clear();
 }
 
-void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const QString &skin)
+void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
 {
     callbackRegistred.removeFirst();
     if(GlobalServerData::serverPrivateVariables.db.next())
@@ -610,6 +660,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    const ServerProfile &serverProfile=GlobalServerData::serverPrivateVariables.serverProfileList.at(profileIndex);
 
     number_of_character++;
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
@@ -617,65 +668,20 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     const quint32 &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
     int index=0;
     int monster_position=1;
-    {
-        const QString &mapQuery=Client::single_quote+profile.map+QLatin1String("',")+QString::number(profile.x)+QLatin1String(",")+QString::number(profile.y)+QLatin1String(",'bottom'");
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(")+
-                        QString::number(characterId)+QLatin1String(",")+
-                        QString::number(account_id)+QLatin1String(",'")+
-                        SqlFunction::quoteSqlVariable(pseudo)+QLatin1String("','")+
-                        skin+QLatin1String("',")+//skin verificated above
-                        mapQuery+QLatin1String(",'normal',0,")+
-                        QString::number(profile.cash)+QLatin1String(",")+
-                        mapQuery+QLatin1String(",")+
-                        mapQuery+QLatin1String(",0,")+
-                        QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,'',0,0,0,0,")+
-                        QString::number(profileIndex)+QLatin1String(");"));
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,allow,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(")+
-                        QString::number(characterId)+QLatin1String(",")+
-                        QString::number(account_id)+QLatin1String(",'")+
-                        SqlFunction::quoteSqlVariable(pseudo)+QLatin1String("','")+
-                        skin+QLatin1String("',")+//skin verificated above
-                        mapQuery+QLatin1String(",'normal',0,")+
-                        QString::number(profile.cash)+QLatin1String(",")+
-                        mapQuery+QLatin1String(",")+
-                        mapQuery+QLatin1String(",0,")+
-                        QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,'',0,0,0,0,")+
-                        QString::number(profileIndex)+QLatin1String(");"));
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,allow,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(")+
-                        QString::number(characterId)+QLatin1String(",")+
-                        QString::number(account_id)+QLatin1String(",'")+
-                        SqlFunction::quoteSqlVariable(pseudo)+QLatin1String("','")+
-                        skin+QLatin1String("',")+//skin verificated above
-                        mapQuery+QLatin1String(",'normal',0,")+
-                        QString::number(profile.cash)+QLatin1String(",")+
-                        mapQuery+QLatin1String(",")+
-                        mapQuery+QLatin1String(",0,")+
-                        QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,'',false,0,0,0,")+
-                        QString::number(profileIndex)+QLatin1String(");"));
-            break;
-        }
-    }
+    dbQueryWrite(serverProfile.preparedQuery.at(0)+QString::number(characterId)+serverProfile.preparedQuery.at(1)+QString::number(account_id)+serverProfile.preparedQuery.at(2)+pseudo+serverProfile.preparedQuery.at(3)+QString::number(skinId)+serverProfile.preparedQuery.at(4));
     while(index<profile.monsters.size())
     {
         const quint32 &monsterId=profile.monsters.at(index).id;
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monsterId))
         {
             const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monsterId);
-            QString gender=Client::text_unknown;
+            quint32 gender=Gender_Unknown;
             if(monster.ratio_gender!=-1)
             {
                 if(rand()%101<monster.ratio_gender)
-                    gender=Client::text_female;
+                    gender=Gender_Female;
                 else
-                    gender=Client::text_male;
+                    gender=Gender_Male;
             }
             CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profile.monsters.at(index).level);
             QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
@@ -742,7 +748,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     {
         dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_reputation
            .arg(characterId)
-           .arg(profile.reputation.at(index).type)
+           .arg(CommonDatapack::commonDatapack.reputation.at(profile.reputation.at(index).reputationId).reverse_database_id)
            .arg(profile.reputation.at(index).point)
            .arg(profile.reputation.at(index).level)
                 );
@@ -850,7 +856,7 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
 //load linked data (like item, quests, ...)
 void Client::loadLinkedData()
 {
-    loadItems();
+    loadPlayerAllow();
 }
 
 bool Client::loadTheRawUTF8String()
@@ -1290,73 +1296,85 @@ void Client::loadReputation_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
-        const QString &type=QString(GlobalServerData::serverPrivateVariables.db.value(0));
+        const int &type=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(!ok)
+        {
+            normalOutput(QStringLiteral("reputation type is not a number, skip: %1").arg(type));
+            continue;
+        }
         qint32 point=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toInt(&ok);
         if(!ok)
         {
-            normalOutput(QStringLiteral("point is not a number, skip: %1").arg(type));
+            normalOutput(QStringLiteral("reputation point is not a number, skip: %1").arg(type));
             continue;
         }
         const qint32 &level=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toInt(&ok);
         if(!ok)
         {
-            normalOutput(QStringLiteral("level is not a number, skip: %1").arg(type));
+            normalOutput(QStringLiteral("reputation level is not a number, skip: %1").arg(type));
             continue;
         }
         if(level<-100 || level>100)
         {
-            normalOutput(QStringLiteral("level is <100 or >100, skip: %1").arg(type));
+            normalOutput(QStringLiteral("reputation level is <100 or >100, skip: %1").arg(type));
             continue;
         }
-        if(!CommonDatapack::commonDatapack.reputation.contains(type))
+        if(type>=GlobalServerData::serverPrivateVariables.dictionary_reputation.size())
         {
             normalOutput(QStringLiteral("The reputation: %1 don't exist").arg(type));
             continue;
         }
+        if(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)==-1)
+        {
+            normalOutput(QStringLiteral("The reputation: %1 not resolved").arg(type));
+            continue;
+        }
         if(level>=0)
         {
-            if(level>=CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size())
+            if(level>=CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_positive.size())
             {
-                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size()));
+                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_positive.size()));
                 continue;
             }
         }
         else
         {
-            if((-level)>CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size())
+            if((-level)>CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_negative.size())
             {
-                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size()));
+                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_negative.size()));
                 continue;
             }
         }
         if(point>0)
         {
-            if(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.size()==(level+1))//start at level 0 in positive
+            if(CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_positive.size()==(level+1))//start at level 0 in positive
             {
                 normalOutput(QStringLiteral("The reputation level is already at max, drop point"));
                 point=0;
             }
-            if(point>=CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(level+1))//start at level 0 in positive
+            if(point>=CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_positive.at(level+1))//start at level 0 in positive
             {
-                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_positive.at(level)));
+                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_positive.at(level)));
                 continue;
             }
         }
         else if(point<0)
         {
-            if(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.size()==-level)//start at level -1 in negative
+            if(CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_negative.size()==-level)//start at level -1 in negative
             {
                 normalOutput(QStringLiteral("The reputation level is already at min, drop point"));
                 point=0;
             }
-            if(point<CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(-level))//start at level -1 in negative
+            if(point<CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_negative.at(-level))//start at level -1 in negative
             {
-                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.value(type).reputation_negative.at(level)));
+                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type)).reputation_negative.at(level)));
                 continue;
             }
         }
-        public_and_private_informations.reputation[type].level=level;
-        public_and_private_informations.reputation[type].point=point;
+        PlayerReputation playerReputation;
+        playerReputation.level=level;
+        playerReputation.point=point;
+        public_and_private_informations.reputation.insert(GlobalServerData::serverPrivateVariables.dictionary_reputation.value(type),playerReputation);
     }
     loadQuests();
 }

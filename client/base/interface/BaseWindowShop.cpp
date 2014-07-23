@@ -152,7 +152,7 @@ void BaseWindow::displaySellList()
     itemsIntoTheShop.clear();
     shop_items_graphical.clear();
     shop_items_to_graphical.clear();
-    QHashIterator<quint32,quint32> i(items);
+    QHashIterator<quint16,quint32> i(items);
     while (i.hasNext()) {
         i.next();
         if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))

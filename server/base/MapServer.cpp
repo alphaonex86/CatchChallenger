@@ -4,11 +4,12 @@
 
 using namespace CatchChallenger;
 
-MapServer::MapServer()
+MapServer::MapServer() :
+    localChatDropTotalCache(0),
+    localChatDropNewValue(0),
+    reverse_db_id(0)
 {
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
-    localChatDropTotalCache=0;
-    localChatDropNewValue=0;
 }
 
 void MapServer::doDDOSCompute()

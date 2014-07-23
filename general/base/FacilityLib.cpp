@@ -194,36 +194,6 @@ QString FacilityLib::genderToString(const Gender &gender)
     return FacilityLib::text_unknown;
 }
 
-QString FacilityLib::allowToString(const QSet<ActionAllow> &allowList)
-{
-    QStringList allowString;
-    QSetIterator<ActionAllow> i(allowList);
-    while (i.hasNext())
-        switch(i.next())
-        {
-            case ActionAllow_Clan:
-                allowString << FacilityLib::text_clan;
-            break;
-            default:
-            break;
-        }
-    return allowString.join(FacilityLib::text_dotcomma);
-}
-
-QSet<ActionAllow> FacilityLib::StringToAllow(const QString &string)
-{
-    QSet<ActionAllow> allowList;
-    const QStringList &allowStringList=string.split(FacilityLib::text_dotcomma);
-    int index=0;
-    while(index<allowStringList.size())
-    {
-        if(allowStringList.at(index)==FacilityLib::text_clan)
-            allowList << ActionAllow_Clan;
-        index++;
-    }
-    return allowList;
-}
-
 QDateTime FacilityLib::nextCaptureTime(const City &city)
 {
     QDateTime nextCityCapture=QDateTime::currentDateTime();
@@ -256,29 +226,29 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     out.setVersion(QDataStream::Qt_4_4);
 
     out << (quint32)monster.id;
-    out << (quint32)monster.monster;
+    out << (quint16)monster.monster;
     out << (quint8)monster.level;
     out << (quint32)monster.remaining_xp;
     out << (quint32)monster.hp;
     out << (quint32)monster.sp;
-    out << (quint32)monster.catched_with;
+    out << (quint16)monster.catched_with;
     out << (quint8)monster.gender;
     out << (quint32)monster.egg_step;
     int sub_index=0;
     int sub_size=monster.buffs.size();
-    out << (quint32)sub_size;
+    out << (quint8)sub_size;
     while(sub_index<sub_size)
     {
-        out << (quint32)monster.buffs.at(sub_index).buff;
+        out << (quint8)monster.buffs.at(sub_index).buff;
         out << (quint8)monster.buffs.at(sub_index).level;
         sub_index++;
     }
     sub_index=0;
     sub_size=monster.skills.size();
-    out << (quint32)sub_size;
+    out << (quint8)sub_size;
     while(sub_index<sub_size)
     {
-        out << (quint32)monster.skills.at(sub_index).skill;
+        out << (quint16)monster.skills.at(sub_index).skill;
         out << (quint8)monster.skills.at(sub_index).level;
         out << (quint8)monster.skills.at(sub_index).endurance;
         sub_index++;
@@ -444,83 +414,81 @@ QString FacilityLib::timeToString(const quint32 &time)
 }
 
 //reputation
-PlayerReputation FacilityLib::appendReputationPoint(PlayerReputation playerReputation,const qint32 &point,const QString &type)
+void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const qint32 &point,const Reputation &reputation)
 {
     if(point==0)
-        return playerReputation;
-    playerReputation.point+=point;
+        return;
+    playerReputation->point+=point;
     do
     {
-        const Reputation &reputation=CommonDatapack::commonDatapack.reputation.value(type);
         //at the limit
         if(reputation.reputation_negative.isEmpty())
         {
-            if(playerReputation.point<0)
+            if(playerReputation->point<0)
             {
-                playerReputation.point=0;
-                playerReputation.level=0;
+                playerReputation->point=0;
+                playerReputation->level=0;
                 break;
             }
         }
         else
         {
-            if(playerReputation.level<=(-reputation.reputation_negative.size()))
+            if(playerReputation->level<=(-reputation.reputation_negative.size()))
             {
-                playerReputation.point=0;
-                playerReputation.level=(-reputation.reputation_negative.size());
+                playerReputation->point=0;
+                playerReputation->level=(-reputation.reputation_negative.size());
                 break;
             }
         }
         if(reputation.reputation_positive.isEmpty())
         {
-            if(playerReputation.point>0)
+            if(playerReputation->point>0)
             {
-                playerReputation.point=0;
-                playerReputation.level=0;
+                playerReputation->point=0;
+                playerReputation->level=0;
                 break;
             }
         }
         else
         {
-            if(playerReputation.level<=(reputation.reputation_negative.size()-1))
+            if(playerReputation->level<=(reputation.reputation_negative.size()-1))
             {
-                playerReputation.point=0;
-                playerReputation.level=(reputation.reputation_negative.size()-1);
+                playerReputation->point=0;
+                playerReputation->level=(reputation.reputation_negative.size()-1);
                 break;
             }
         }
         //lost point in level
-        if(playerReputation.level<0 && playerReputation.point>0)
+        if(playerReputation->level<0 && playerReputation->point>0)
         {
-            playerReputation.level++;
-            playerReputation.point+=reputation.reputation_negative.at(-playerReputation.level);
+            playerReputation->level++;
+            playerReputation->point+=reputation.reputation_negative.at(-playerReputation->level);
             continue;
         }
-        if(playerReputation.level>0 && playerReputation.point<0)
+        if(playerReputation->level>0 && playerReputation->point<0)
         {
-            playerReputation.level--;
-            playerReputation.point+=reputation.reputation_negative.at(playerReputation.level);
+            playerReputation->level--;
+            playerReputation->point+=reputation.reputation_negative.at(playerReputation->level);
             continue;
         }
         //gain point in level
-        if(playerReputation.level<=0 && playerReputation.point<0 && !reputation.reputation_negative.isEmpty())
+        if(playerReputation->level<=0 && playerReputation->point<0 && !reputation.reputation_negative.isEmpty())
         {
-            if(playerReputation.point<reputation.reputation_negative.at(-playerReputation.level))
+            if(playerReputation->point<reputation.reputation_negative.at(-playerReputation->level))
             {
-                playerReputation.point-=reputation.reputation_negative.at(-playerReputation.level);
-                playerReputation.level--;
+                playerReputation->point-=reputation.reputation_negative.at(-playerReputation->level);
+                playerReputation->level--;
                 continue;
             }
         }
-        if(playerReputation.level>=0 && playerReputation.point>0 && !reputation.reputation_positive.isEmpty())
+        if(playerReputation->level>=0 && playerReputation->point>0 && !reputation.reputation_positive.isEmpty())
         {
-            if(playerReputation.point<reputation.reputation_positive.at(playerReputation.level))
+            if(playerReputation->point<reputation.reputation_positive.at(playerReputation->level))
             {
-                playerReputation.point-=reputation.reputation_positive.at(playerReputation.level);
-                playerReputation.level++;
+                playerReputation->point-=reputation.reputation_positive.at(playerReputation->level);
+                playerReputation->level++;
                 continue;
             }
         }
     } while(false);
-    return playerReputation;
 }

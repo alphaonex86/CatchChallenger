@@ -65,8 +65,9 @@ void MapVisibilityAlgorithm_None::extraStop()
 
 bool MapVisibilityAlgorithm_None::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
-    Q_UNUSED(previousMovedUnit);
-    Q_UNUSED(direction);
+    //real move to save the possition
+    if(!Client::moveThePlayer(previousMovedUnit,direction))
+        return false;
     return true;
 }
 

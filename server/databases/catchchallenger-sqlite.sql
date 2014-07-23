@@ -43,11 +43,19 @@ CREATE TABLE bot_already_beaten (
 CREATE TABLE item (
     "item" INTEGER,
     "character" INTEGER,
+    "quantity" INTEGER
+);
+CREATE TABLE item_warehouse (
+    "item" INTEGER,
+    "character" INTEGER,
+    "quantity" INTEGER
+);
+CREATE TABLE item_market (
+    "item" INTEGER,
+    "character" INTEGER,
     "quantity" INTEGER,
-    "place" TEXT,
     "market_price" INTEGER
 );
-CREATE INDEX "item_place" on item (place ASC);
 CREATE TABLE quest (
     "character" INTEGER,
     "quest" INTEGER,
@@ -60,7 +68,7 @@ CREATE TABLE "recipe" (
 );
 CREATE TABLE reputation (
     "character" INTEGER,
-    "type" TEXT,
+    "type" INTEGER,
     "point" INTEGER,
     "level" INTEGER
 );
@@ -73,34 +81,58 @@ CREATE TABLE monster (
     "xp" INTEGER,
     "sp" INTEGER,
     "captured_with" INTEGER,
-    "gender" TEXT,
+    "gender" INTEGER,
     "egg_step" INTEGER,
     "character_origin" INTEGER,
-    "place" TEXT,
-    "position" INTEGER,
+    "position" INTEGER
+);
+CREATE TABLE monster_warehouse (
+    "id" INTEGER,
+    "hp" INTEGER,
+    "character" INTEGER,
+    "monster" INTEGER,
+    "level" INTEGER,
+    "xp" INTEGER,
+    "sp" INTEGER,
+    "captured_with" INTEGER,
+    "gender" INTEGER,
+    "egg_step" INTEGER,
+    "character_origin" INTEGER,
+    "position" INTEGER
+);
+CREATE TABLE monster_market (
+    "id" INTEGER,
+    "hp" INTEGER,
+    "character" INTEGER,
+    "monster" INTEGER,
+    "level" INTEGER,
+    "xp" INTEGER,
+    "sp" INTEGER,
+    "captured_with" INTEGER,
+    "gender" INTEGER,
+    "egg_step" INTEGER,
+    "character_origin" INTEGER,
     "market_price" INTEGER
 );
 CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
-CREATE INDEX "monster_place" on monster (place ASC);
 CREATE TABLE character (
     "id" INTEGER,
     "pseudo" TEXT NOT NULL,
-    "skin" TEXT NOT NULL,
+    "skin" INTEGER,
     "x" INTEGER,
     "y" INTEGER,
-    "orientation" TEXT NOT NULL,
-    "map" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
+    "orientation" INTEGER,
+    "map" INTEGER,
+    "type" INTEGER,
     "clan" INTEGER,
-    "rescue_map" TEXT,
+    "rescue_map" INTEGER,
     "rescue_x" INTEGER,
     "rescue_y" INTEGER,
-    "rescue_orientation" TEXT,
-    "unvalidated_rescue_map" TEXT,
+    "rescue_orientation" INTEGER,
+    "unvalidated_rescue_map" INTEGER,
     "unvalidated_rescue_x" INTEGER,
     "unvalidated_rescue_y" INTEGER,
-    "unvalidated_rescue_orientation" TEXT,
-    "allow" TEXT,
+    "unvalidated_rescue_orientation" INTEGER,
     "clan_leader" INTEGER,
     "date" INTEGER,
     "account" INTEGER,
@@ -117,7 +149,7 @@ CREATE INDEX "byclan" on "character" (clan ASC);
 CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
 CREATE INDEX "player_link_account" on "character" (account ASC);
 CREATE TABLE plant (
-    "map" TEXT,
+    "map" INTEGER,
     "x" INTEGER,
     "y" INTEGER,
     "plant" INTEGER,
@@ -125,3 +157,24 @@ CREATE TABLE plant (
     "plant_timestamps" INTEGER
 , "id" INTEGER);
 CREATE UNIQUE INDEX "plant_primarykey" on plant (id ASC);
+
+CREATE TABLE dictionary_allow (
+    "id" INTEGER,
+    "allow" TEXT
+);
+CREATE TABLE dictionary_map (
+    "id" INTEGER,
+    "map" TEXT
+);
+CREATE TABLE dictionary_reputation (
+    "id" INTEGER,
+    "reputation" TEXT
+);
+CREATE TABLE dictionary_skin (
+    "id" INTEGER,
+    "skin" TEXT
+);
+CREATE TABLE character_allow (
+    "character" INTEGER,
+    "allow" INTEGER
+);
