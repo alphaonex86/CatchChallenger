@@ -47,7 +47,6 @@ private:
     int sizeOfOneSmallReinsert();
 
     static bool mapHaveChanged;
-    static CommonMap*			old_map;
 
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     quint8 previousMovedUnitBlocked;

@@ -260,7 +260,7 @@ bool Client::nextStepQuest(const Quest &quest)
         index=0;
         while(index<quest.rewards.reputation.size())
         {
-            appendReputationPoint(quest.rewards.reputation.value(index).type,quest.rewards.reputation.value(index).point);
+            appendReputationPoint(quest.rewards.reputation.value(index).reputationId,quest.rewards.reputation.value(index).point);
             index++;
         }
         index=0;

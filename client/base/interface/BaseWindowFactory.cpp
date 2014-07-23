@@ -136,7 +136,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice)
 {
     const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
-    QHash<quint32,quint32> items;
+    QHash<quint16,quint32> items;
     switch(stat)
     {
         case BuyStat_Done:

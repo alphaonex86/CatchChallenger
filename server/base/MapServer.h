@@ -20,11 +20,14 @@ class MapServer : public CommonMap, public MapServerCrafting
 public:
     MapServer();
     void doDDOSCompute();
-    QList<Client *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
     QHash<QPair<quint8,quint8>,Orientation> rescue;
     int localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     int localChatDropTotalCache;
     int localChatDropNewValue;
+    int reverse_db_id;
+
+    //at last to improve the other variable cache
+    QList<Client *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
 };
 
 class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer

@@ -991,6 +991,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
+        if(internalServer!=NULL)
+            internalServer->stop();
         if(socket!=NULL)
         {
             socket->deleteLater();

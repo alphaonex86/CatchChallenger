@@ -24,7 +24,11 @@ QtDatabase::~QtDatabase()
     if(sqlQuery!=NULL)
         delete sqlQuery;
     if(conn!=NULL)
+    {
+        conn->close();
         delete conn;
+        conn=NULL;
+    }
 }
 
 bool QtDatabase::isConnected() const

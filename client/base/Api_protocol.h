@@ -171,9 +171,9 @@ signals:
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) const;
-    void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items) const;
-    void add_to_inventory(const QHash<quint32,quint32> &items) const;
-    void remove_to_inventory(const QHash<quint32,quint32> &items) const;
+    void have_inventory(const QHash<quint16,quint32> &items,const QHash<quint16,quint32> &warehouse_items) const;
+    void add_to_inventory(const QHash<quint16,quint32> &items) const;
+    void remove_to_inventory(const QHash<quint16,quint32> &items) const;
 
     //datapack
     void haveTheDatapack() const;
@@ -242,7 +242,7 @@ public:
     void teleportDone();
 
     //character
-    bool addCharacter(const quint8 &profileIndex,const QString &pseudo,const QString &skin);
+    bool addCharacter(const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     bool removeCharacter(const quint32 &characterId);
     bool selectCharacter(const quint32 &characterId);
 
@@ -296,10 +296,10 @@ public:
     void confirmEvolution(const quint32 &monterId);
 
     //quest
-    void startQuest(const quint32 &questId);
-    void finishQuest(const quint32 &questId);
-    void cancelQuest(const quint32 &questId);
-    void nextQuestStep(const quint32 &questId);
+    void startQuest(const quint16 &questId);
+    void finishQuest(const quint16 &questId);
+    void cancelQuest(const quint16 &questId);
+    void nextQuestStep(const quint16 &questId);
 
     //clan
     void createClan(const QString &name);

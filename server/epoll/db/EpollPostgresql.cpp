@@ -263,7 +263,14 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
             result=PQgetResult(conn);
             if(result!=NULL)
             {
-                ntuples=PQntuples(result);
+                const ExecStatusType &execStatusType=PQresultStatus(result);
+                if(execStatusType!=PGRES_TUPLES_OK && execStatusType!=PGRES_COMMAND_OK)
+                {
+                    std::cerr << "Query to database failed: " << errorMessage() << std::endl;
+                    tuleIndex=0;
+                }
+                else
+                    ntuples=PQntuples(result);
                 if(!queue.isEmpty())
                 {
                     CallBack callback=queue.first();

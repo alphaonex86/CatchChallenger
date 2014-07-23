@@ -86,6 +86,7 @@ protected:
     void preload_the_skin();
     void preload_the_datapack();
     void preload_the_players();
+    void preload_profile();
     virtual void preload_the_visibility_algorithm();
     void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
     virtual void preload_finish();
@@ -97,7 +98,13 @@ protected:
     void load_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    QHash<quint32,MonsterDrops> loadMonsterDrop(const QString &file, QHash<quint32,Item> items,const QHash<quint32,Monster> &monsters);
+    void load_monsters_warehouse_max_id();
+    static void load_monsters_warehouse_max_id_static(void *object);
+    void load_monsters_warehouse_max_id_return();
+    void load_monsters_market_max_id();
+    static void load_monsters_market_max_id_static(void *object);
+    void load_monsters_market_max_id_return();
+    QHash<quint16,MonsterDrops> loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters);
 
     static void preload_zone_static(void *object);
     void preload_zone_init();
@@ -109,6 +116,19 @@ protected:
     void preload_market_items_return();
     static void preload_market_monsters_static(void *object);
     void preload_market_monsters_return();
+
+    void preload_dictionary_allow();
+    static void preload_dictionary_allow_static(void *object);
+    void preload_dictionary_allow_return();
+    void preload_dictionary_map();
+    static void preload_dictionary_map_static(void *object);
+    void preload_dictionary_map_return();
+    void preload_dictionary_reputation();
+    static void preload_dictionary_reputation_static(void *object);
+    void preload_dictionary_reputation_return();
+    void preload_dictionary_skin();
+    static void preload_dictionary_skin_static(void *object);
+    void preload_dictionary_skin_return();
 
     void unload_industries();
     void unload_zone();
@@ -128,6 +148,8 @@ protected:
     void unload_shop();
     void unload_monsters_drops();
     void unload_the_randomData();
+    void unload_dictionary();
+    void unload_profile();
 
     void loadMonsterBuffs(const quint32 &index);
     static void loadMonsterBuffs_static(void *object);

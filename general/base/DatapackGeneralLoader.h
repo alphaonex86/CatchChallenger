@@ -13,16 +13,17 @@ namespace CatchChallenger {
 class DatapackGeneralLoader
 {
 public:
-    static QHash<QString, Reputation> loadReputation(const QString &file);
-    static QHash<quint32, Quest> loadQuests(const QString &folder);
+    static QList<QString> loadSkins(const QString &folder);
+    static QList<Reputation> loadReputation(const QString &file);
+    static QHash<quint16, Quest> loadQuests(const QString &folder);
     static QPair<bool,Quest> loadSingleQuest(const QString &file);
     static QHash<quint8,Plant> loadPlants(const QString &file);
-    static QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > loadCraftingRecipes(const QString &file, const QHash<quint32, Item> &items);
-    static ItemFull loadItems(const QString &folder, const QHash<quint32, Buff> &monsterBuffs);
-    static QHash<quint32,Industry> loadIndustries(const QString &folder,const QHash<quint32, Item> &items);
-    static QHash<quint32,IndustryLink> loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries);
-    static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint32, Item> &items,const QHash<quint32,Monster> &monsters,const QHash<QString, Reputation> &reputations);
-    static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint32, Item> &items, const QList<Event> &events);
+    static QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> > loadCraftingRecipes(const QString &file, const QHash<quint16, Item> &items);
+    static ItemFull loadItems(const QString &folder, const QHash<quint8, Buff> &monsterBuffs);
+    static QHash<quint16,Industry> loadIndustries(const QString &folder,const QHash<quint16, Item> &items);
+    static QHash<quint16,IndustryLink> loadIndustriesLink(const QString &file,const QHash<quint16,Industry> &industries);
+    static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations);
+    static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint16, Item> &items, const QList<Event> &events);
     static LayersOptions loadLayersOptions(const QString &file);
     static QList<Event> loadEvents(const QString &file);
 protected:

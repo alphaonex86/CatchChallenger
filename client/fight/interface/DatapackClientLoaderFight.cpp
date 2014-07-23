@@ -292,7 +292,7 @@ void DatapackClientLoader::parseMonstersExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_monster);
         }
 
-        QHashIterator<quint32,CatchChallenger::Monster> i(CatchChallenger::CommonDatapack::commonDatapack.monsters);
+        QHashIterator<quint16,CatchChallenger::Monster> i(CatchChallenger::CommonDatapack::commonDatapack.monsters);
         while(i.hasNext())
         {
             i.next();
@@ -591,7 +591,7 @@ void DatapackClientLoader::parseBuffExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_buff);
         }
 
-        QHashIterator<quint32,CatchChallenger::Buff> i(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs);
+        QHashIterator<quint8,CatchChallenger::Buff> i(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs);
         while(i.hasNext())
         {
             i.next();
@@ -774,7 +774,7 @@ void DatapackClientLoader::parseSkillsExtra()
             item = item.nextSiblingElement(DatapackClientLoader::text_skill);
         }
 
-        QHashIterator<quint32,CatchChallenger::Skill> i(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills);
+        QHashIterator<quint16,CatchChallenger::Skill> i(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills);
         while(i.hasNext())
         {
             i.next();
@@ -951,7 +951,7 @@ void DatapackClientLoader::parseBotFightsExtra()
         }
     }
 
-    QHashIterator<quint32,CatchChallenger::BotFight> i(CatchChallenger::CommonDatapack::commonDatapack.botFights);
+    QHashIterator<quint16,CatchChallenger::BotFight> i(CatchChallenger::CommonDatapack::commonDatapack.botFights);
     while(i.hasNext())
     {
         i.next();

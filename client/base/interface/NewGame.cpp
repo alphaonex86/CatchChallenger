@@ -1,6 +1,7 @@
 #include "NewGame.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonSettings.h"
+#include "../../general/base/CommonDatapack.h"
 #include "ui_NewGame.h"
 
 #include <QDir>
@@ -8,7 +9,7 @@
 #include <QMessageBox>
 #include <QDebug>
 
-NewGame::NewGame(const QString &skinPath,const QStringList &forcedSkin,QWidget *parent) :
+NewGame::NewGame(const QString &skinPath,const QList<quint8> &forcedSkin,QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewGame)
 {
@@ -16,17 +17,16 @@ NewGame::NewGame(const QString &skinPath,const QStringList &forcedSkin,QWidget *
     this->forcedSkin=forcedSkin;
     ok=false;
     this->skinPath=skinPath;
-    QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int index=0;
-    while(index<entryList.size())
+    while(index<CatchChallenger::CommonDatapack::commonDatapack.skins.size())
     {
-        if(entryList.at(index).isDir())
+        if(forcedSkin.empty() || forcedSkin.contains(index))
         {
-            if(forcedSkin.empty() || forcedSkin.contains(entryList.at(index).fileName()))
+            const QString &currentPath=skinPath+CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
+            if(QFile::exists(currentPath+"/back.png") && QFile::exists(currentPath+"/front.png") && QFile::exists(currentPath+"/trainer.png"))
             {
-                QString currentPath=skinPath+entryList.at(index).fileName();
-                if(QFile::exists(currentPath+"/back.png") && QFile::exists(currentPath+"/front.png") && QFile::exists(currentPath+"/trainer.png"))
-                    skinList << entryList.at(index).fileName();
+                skinList << CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
+                skinListId << index;
             }
         }
         index++;
@@ -91,6 +91,11 @@ QString NewGame::pseudo()
 QString NewGame::skin()
 {
     return skinList.at(currentSkin);
+}
+
+quint32 NewGame::skinId()
+{
+    return skinListId.at(currentSkin);
 }
 
 bool NewGame::haveSkin()

@@ -6,7 +6,6 @@
 using namespace CatchChallenger;
 
 //temp variable for purge buffer
-CommonMap* MapVisibilityAlgorithm_Simple_StoreOnSender::old_map;
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::mapHaveChanged;
 
 MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender(
@@ -65,6 +64,20 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
         }
         else//why else dropped?
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(this->x>=this->map->width)
+            {
+                qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+                abort();
+                return;
+            }
+            if(this->y>=this->map->height)
+            {
+                qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+                abort();
+                return;
+            }
+            #endif
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
             normalOutput(QStringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
             #endif
@@ -212,7 +225,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::extraStop()
 
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::singleMove(const Direction &direction)
 {
-    old_map=map;
+    CommonMap *old_map=map;
     if(!Client::singleMove(direction))//check of colision disabled because do into LocalClientHandler
         return false;
     if(old_map!=map)
@@ -221,9 +234,10 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::singleMove(const Direction &di
         normalOutput(QStringLiteral("singleMove() have change from old map: %1, to the new map: %2").arg(old_map->map_file).arg(map->map_file));
         #endif
         mapHaveChanged=true;
+        CommonMap *new_map=map;
         map=old_map;
         unloadFromTheMap();
-        map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
+        map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(new_map);
         loadOnTheMap();
     }
     return true;
@@ -265,93 +279,9 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::put_on_the_map(CommonMap *map,
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
     mapHaveChanged=false;
-    //do on server part, because the client send when is blocked to sync the position
-    #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
-    if(previousMovedUnitBlocked>0)
-    {
-        if(previousMovedUnit==0)
-        {
-            if(!Client::moveThePlayer(previousMovedUnit,direction))
-            {
-                previousMovedUnitBlocked=0;
-                return false;
-            }
-            //send the move to the other client
-            moveClient(previousMovedUnitBlocked,direction);
-            previousMovedUnitBlocked=0;
-            return true;
-        }
-        else
-        {
-            error(QStringLiteral("previousMovedUnitBlocked>0 but previousMovedUnit!=0"));
-            return false;
-        }
-    }
-    Direction temp_last_direction=last_direction;
-    switch(last_direction)
-    {
-        case Direction_move_at_top:
-            //move the player on the server map
-            if(!Client::moveThePlayer(previousMovedUnit,direction))
-                return false;
-            if(direction==Direction_look_at_top && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
-            {
-                //blocked into the wall
-                previousMovedUnitBlocked=previousMovedUnit;
-                return true;
-            }
-        break;
-        case Direction_move_at_right:
-            //move the player on the server map
-            if(!Client::moveThePlayer(previousMovedUnit,direction))
-                return false;
-            if(direction==Direction_look_at_right && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
-            {
-                //blocked into the wall
-                previousMovedUnitBlocked=previousMovedUnit;
-                return true;
-            }
-        break;
-        case Direction_move_at_bottom:
-            //move the player on the server map
-            if(!Client::moveThePlayer(previousMovedUnit,direction))
-                return false;
-            if(direction==Direction_look_at_bottom && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
-            {
-                //blocked into the wall
-                previousMovedUnitBlocked=previousMovedUnit;
-                return true;
-            }
-        break;
-        case Direction_move_at_left:
-            //move the player on the server map
-            if(!Client::moveThePlayer(previousMovedUnit,direction))
-                return false;
-            if(direction==Direction_look_at_left && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
-            {
-                //blocked into the wall
-                previousMovedUnitBlocked=previousMovedUnit;
-                return true;
-            }
-        break;
-        case Direction_move_at_top:
-        case Direction_move_at_right:
-        case Direction_move_at_bottom:
-        case Direction_move_at_left:
-            //move the player on the server map
-            if(!Client::moveThePlayer(previousMovedUnit,direction))
-                return false;
-        break;
-        default:
-            error(QStringLiteral("moveThePlayer(): direction not managed"));
-            return false;
-        break;
-    }
-    #else
     //move the player on the server map
     if(!Client::moveThePlayer(previousMovedUnit,direction))
         return false;
-    #endif
     //send the move to the other client
     moveClient(previousMovedUnit,direction);
     return true;

@@ -28,18 +28,18 @@ public:
     void unload();
     void parseDatapack(const QString &datapackPath);
 public:
-    QHash<quint32,BotFight> botFights;
+    QHash<quint16,BotFight> botFights;
     QHash<quint8,Plant> plants;
-    QHash<quint32,CrafingRecipe> crafingRecipes;
-    QHash<quint32,quint32> itemToCrafingRecipes;
-    QHash<QString,Reputation> reputation;
-    QHash<quint32,Quest> quests;
-    QHash<quint32,Monster> monsters;
-    QHash<quint32,Skill> monsterSkills;
-    QHash<quint32,Buff> monsterBuffs;
+    QHash<quint16,CrafingRecipe> crafingRecipes;
+    QHash<quint16,quint16> itemToCrafingRecipes;
+    QList<Reputation> reputation;
+    QHash<quint16,Quest> quests;
+    QHash<quint16,Monster> monsters;
+    QHash<quint16,Skill> monsterSkills;
+    QHash<quint8,Buff> monsterBuffs;
     ItemFull items;
-    QHash<quint32,Industry> industries;
-    QHash<quint32,IndustryLink> industriesLink;
+    QHash<quint16,Industry> industries;
+    QHash<quint16,IndustryLink> industriesLink;
     QList<Profile> profileList;
     QList<Type> types;
     QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
@@ -47,6 +47,7 @@ public:
     QList<MonstersCollision> monstersCollision;
     LayersOptions layersOptions;
     QList<Event> events;
+    QList<QString> skins;
 private:
     QMutex inProgress;
     bool isParsed;
@@ -69,6 +70,7 @@ private:
     void parseProfileList();
     void parseMonstersCollision();
     void parseLayersOptions();
+    void parseSkins();
 };
 }
 

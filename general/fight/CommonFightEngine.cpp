@@ -2119,7 +2119,7 @@ void CommonFightEngine::startTheFight()
 }
 
 //return true if now have wild monter to fight
-bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const QHash<quint32,quint32> &items,const QList<quint8> &events)
+bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const QHash<quint16,quint32> &items,const QList<quint8> &events)
 {
     bool ok;
     if(isInFight())

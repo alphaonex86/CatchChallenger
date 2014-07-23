@@ -12,17 +12,17 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
     quests=NULL;
 }
 
-void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint32> &botAlreadyBeaten)
+void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint16> &botAlreadyBeaten)
 {
     this->botAlreadyBeaten=botAlreadyBeaten;
 }
 
-void MapVisualiserPlayerWithFight::addBeatenBotFight(const quint32 &botFightId)
+void MapVisualiserPlayerWithFight::addBeatenBotFight(const quint16 &botFightId)
 {
     botAlreadyBeaten << botFightId;
 }
 
-bool MapVisualiserPlayerWithFight::haveBeatBot(const quint32 &botFightId) const
+bool MapVisualiserPlayerWithFight::haveBeatBot(const quint16 &botFightId) const
 {
     return botAlreadyBeaten.contains(botFightId);
 }

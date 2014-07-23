@@ -289,6 +289,14 @@ void DatapackClientLoader::parseVisualCategory()
 
 void DatapackClientLoader::parseReputationExtra()
 {
+    {
+        int index=0;
+        while(index<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+        {
+            reputationNameToId[CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            index++;
+        }
+    }
     QDomDocument domDocument;
     //open and quick check the file
     const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("reputation.xml");
@@ -533,15 +541,19 @@ void DatapackClientLoader::parseReputationExtra()
             qDebug() << (QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement(DatapackClientLoader::text_reputation);
     }
-    QHash<QString, CatchChallenger::Reputation>::const_iterator i = CatchChallenger::CommonDatapack::commonDatapack.reputation.constBegin();
-    while (i != CatchChallenger::CommonDatapack::commonDatapack.reputation.constEnd()) {
-        if(!reputationExtra.contains(i.key()))
-            reputationExtra[i.key()].name=tr("Unknown");
-        while(reputationExtra[i.key()].reputation_negative.size()<i.value().reputation_negative.size())
-            reputationExtra[i.key()].reputation_negative << tr("Unknown");
-        while(reputationExtra[i.key()].reputation_positive.size()<i.value().reputation_positive.size())
-            reputationExtra[i.key()].reputation_positive << tr("Unknown");
-        ++i;
+    {
+        int index=0;
+        while(index<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+        {
+            const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index);
+            if(!reputationExtra.contains(reputation.name))
+                reputationExtra[reputation.name].name=tr("Unknown");
+            while(reputationExtra[reputation.name].reputation_negative.size()<reputation.reputation_negative.size())
+                reputationExtra[reputation.name].reputation_negative << tr("Unknown");
+            while(reputationExtra[reputation.name].reputation_positive.size()<reputation.reputation_positive.size())
+                reputationExtra[reputation.name].reputation_positive << tr("Unknown");
+            index++;
+        }
     }
 
     qDebug() << QStringLiteral("%1 reputation(s) extra loaded").arg(reputationExtra.size());
@@ -1217,10 +1229,10 @@ void DatapackClientLoader::parseAudioAmbiance()
 
 void DatapackClientLoader::parseQuestsLink()
 {
-    QHashIterator<quint32,CatchChallenger::Quest> i(CatchChallenger::CommonDatapack::commonDatapack.quests);
+    QHashIterator<quint16,CatchChallenger::Quest> i(CatchChallenger::CommonDatapack::commonDatapack.quests);
     while(i.hasNext()) {
         i.next();
-        QList<quint32> bots=i.value().steps.first().bots;
+        QList<quint16> bots=i.value().steps.first().bots;
         int index=0;
         while(index<bots.size())
         {

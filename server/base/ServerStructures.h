@@ -32,6 +32,7 @@
 #include "epoll/timer/TimerEvents.h"
 #include "epoll/db/EpollPostgresql.h"
 #else
+#include "QtTimerEvents.h"
 #include "QtDatabase.h"
 #endif
 
@@ -43,6 +44,7 @@ class ClientMapManagement;
 class PlayerUpdater;
 class Map_server_MapVisibility_Simple_StoreOnReceiver;
 class Client;
+class MapServer;
 
 struct Map_player_info
 {
@@ -245,8 +247,8 @@ struct CaptureCityValidated
 {
     QList<Client *> players;
     QList<Client *> playersInFight;
-    QList<quint32> bots;
-    QList<quint32> botsInFight;
+    QList<quint16> bots;
+    QList<quint16> botsInFight;
     QHash<quint32,quint16> clanSize;
 };
 
@@ -254,6 +256,12 @@ struct TokenLink
 {
     void * client;
     char value[CATCHCHALLENGER_TOKENSIZE];
+};
+
+struct ServerProfile
+{
+    QStringList preparedQuery;
+    bool valid;
 };
 
 struct ServerPrivateVariables
@@ -264,11 +272,12 @@ struct ServerPrivateVariables
     QList<TimerEvents *> timerEvents;
     #else
     QtDatabase db;
-    QList<QTimer *> timerEvents;
+    QList<QtTimerEvents *> timerEvents;
     #endif
     QString db_type_string;
 
     //query
+    QString db_query_select_allow;
     QString db_query_login;
     QString db_query_insert_login;
     QString db_query_characters;
@@ -286,11 +295,16 @@ struct ServerPrivateVariables
     QString db_query_delete_bot_already_beaten;
     QString db_query_delete_character;
     QString db_query_delete_item;
+    QString db_query_delete_item_warehouse;
+    QString db_query_delete_item_market;
     QString db_query_delete_monster;
+    QString db_query_delete_monster_warehouse;
+    QString db_query_delete_monster_market;
     QString db_query_delete_plant;
     QString db_query_delete_quest;
     QString db_query_delete_recipes;
     QString db_query_delete_reputation;
+    QString db_query_delete_allow;
 
     QString db_query_select_clan_by_name;
     QString db_query_select_character_by_pseudo;
@@ -304,12 +318,12 @@ struct ServerPrivateVariables
     QString db_query_select_quest_by_id;
     QString db_query_select_recipes_by_player_id;
     QString db_query_select_items_by_player_id;
-    QString db_query_delete_item_by_charater_item_place;
     QString db_query_select_monsters_by_player_id;
     QString db_query_select_monstersSkill_by_id;
     QString db_query_select_monstersBuff_by_id;
     QString db_query_select_bot_beaten;
-    QString db_query_update_monster_place_wearhouse;
+
+    QList<ServerProfile> serverProfileList;
 
     //datapack
     QString datapack_mapPath;
@@ -318,10 +332,10 @@ struct ServerPrivateVariables
     QHash<quint32,Shop> shops;
 
     //fight
-    QMultiHash<quint32,MonsterDrops> monsterDrops;
+    QMultiHash<quint16,MonsterDrops> monsterDrops;
     quint32 maxMonsterId;
     QMutex monsterIdMutex;
-    QHash<QString,QList<quint32> > captureFightIdList;
+    QHash<QString,QList<quint16> > captureFightIdList;
     QHash<QString,CityStatus> cityStatusList;
     QHash<quint32,QString> cityStatusListReverse;
     QSet<quint32> tradedMonster;
@@ -351,9 +365,6 @@ struct ServerPrivateVariables
     quint32 maxCharacterId;
     QDateTime time_city_capture;
     QHash<quint32,Clan *> clanList;
-
-    //datapack
-    QHash<QString,quint8> skinList;
 
     //map
     QHash<QString,CommonMap *> map_list;
@@ -393,6 +404,15 @@ struct ServerPrivateVariables
     {
         quint32 a,b,c,d;
     };
+
+    QList<ActionAllow> dictionary_allow;
+    QList<quint8> dictionary_allow_reverse;
+    QList<CommonMap *> dictionary_map;
+    QList<int> dictionary_reputation;//negative == not found
+    QList<quint8> dictionary_skin;
+    QList<quint32> dictionary_skin_reverse;
+    //datapack
+    QHash<QString,quint8> skinList;
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);

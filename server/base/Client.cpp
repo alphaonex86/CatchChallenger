@@ -68,10 +68,6 @@ Client::Client(
 {
     public_and_private_informations.repel_step=0;
     {
-        /* \warning don't work!
-        memset(movePacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
-        memset(chatPacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
-        memset(otherPacketKick,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);*/
         memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
                0x00,
                GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
@@ -81,15 +77,6 @@ Client::Client(
         memset(otherPacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
                0x00,
                GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
-
-        /*int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
-        while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
-        {
-            movePacketKick[index]=0;
-            chatPacketKick[index]=0;
-            otherPacketKick[index]=0;
-            index++;
-        }*/
     }
     queryNumberList.reserve(256);
     {

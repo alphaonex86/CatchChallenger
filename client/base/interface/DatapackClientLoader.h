@@ -106,6 +106,7 @@ public:
     QHash<quint32,MonsterExtra::Skill> monsterSkillsExtra;
     QHash<quint32,ItemExtra> itemsExtra;
     QHash<QString,ReputationExtra> reputationExtra;
+    QHash<QString,int> reputationNameToId;
     QHash<quint32,quint8> itemToPlants;
     QHash<quint8,PlantExtra> plantExtra;
     QHash<quint32,QuestExtra> questsExtra;

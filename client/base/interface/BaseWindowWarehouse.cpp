@@ -242,7 +242,7 @@ void BaseWindow::on_warehouseValidate_clicked()
 {
     {
         QList<QPair<quint32,qint32> > change_warehouse_items_list;
-        QHash<quint32,qint32>::const_iterator i = change_warehouse_items.constBegin();
+        QHash<quint16,qint32>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
             change_warehouse_items_list << QPair<quint32,qint32>(i.key(),i.value());
             ++i;
@@ -256,7 +256,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         removeCash(-temp_warehouse_cash);
     warehouse_cash-=temp_warehouse_cash;
     {
-        QHash<quint32,qint32>::const_iterator i = change_warehouse_items.constBegin();
+        QHash<quint16,qint32>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
             if(i.value()>0)
             {

@@ -18,6 +18,7 @@ QtServer::QtServer()
         connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,this,&QtServer::positionSync,Qt::QueuedConnection);
     connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection);
     connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection);
+    connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server);
 }
 
 QtServer::~QtServer()
@@ -174,7 +175,12 @@ void QtServer::stop_internal_server()
 
     QSetIterator<Client *> i(client_list);
     while (i.hasNext())
-        i.next()->disconnectClient();
+    {
+        Client * client=i.next();
+        client->disconnectClient();
+        delete client;
+    }
+    client_list.clear();
     QFakeServer::server.disconnectedSocket();
     QFakeServer::server.close();
 

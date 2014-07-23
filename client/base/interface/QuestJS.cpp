@@ -10,7 +10,7 @@ Quest::Quest(const quint32 &quest) :
 
 int Quest::currentQuestStep() const
 {
-    QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return 0;
     else
@@ -19,7 +19,7 @@ int Quest::currentQuestStep() const
 
 int Quest::currentBot() const
 {
-    QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return 0;
     else
@@ -28,7 +28,7 @@ int Quest::currentBot() const
 
 bool Quest::finishOneTime() const
 {
-    QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return false;
     else
@@ -37,7 +37,7 @@ bool Quest::finishOneTime() const
 
 bool Quest::haveQuestStepRequirements() const
 {
-    QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    QHash<quint16, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
         return false;
     else

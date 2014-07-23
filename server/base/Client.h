@@ -103,7 +103,7 @@ protected:
         quint8 query_id;
         quint8 profileIndex;
         QString pseudo;
-        QString skin;
+        quint8 skinId;
     };
     struct ClanActionParam
     {
@@ -320,9 +320,9 @@ private:
     void sendCompressedFileContent();
     void dbQueryWrite(const QString &queryText);
     //character
-    void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const QString &skin);
+    void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     static void addCharacter_static(void *object);
-    void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const QString &skin);
+    void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     void removeCharacter(const quint8 &query_id, const quint32 &characterId);
     static void removeCharacter_static(void *object);
     void removeCharacter_return(const quint8 &query_id, const quint32 &characterId);
@@ -355,12 +355,12 @@ private:
     //crafting
     void useRecipe(const quint8 &query_id,const quint32 &recipe_id);
     //inventory
-    void addObjectAndSend(const quint32 &item,const quint32 &quantity=1);
-    void addObject(const quint32 &item,const quint32 &quantity=1);
-    void saveObjectRetention(const quint32 &item);
-    quint32 removeObject(const quint32 &item,const quint32 &quantity=1);
-    void sendRemoveObject(const quint32 &item,const quint32 &quantity=1);
-    quint32 objectQuantity(const quint32 &item);
+    void addObjectAndSend(const quint16 &item,const quint32 &quantity=1);
+    void addObject(const quint16 &item,const quint32 &quantity=1);
+    void saveObjectRetention(const quint16 &item);
+    quint32 removeObject(const quint16 &item,const quint32 &quantity=1);
+    void sendRemoveObject(const quint16 &item,const quint32 &quantity=1);
+    quint32 objectQuantity(const quint16 &item);
     bool addMarketCashWithoutSave(const quint64 &cash);
     void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);
@@ -368,8 +368,8 @@ private:
     void removeWarehouseCash(const quint64 &cash);
     void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
     bool wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
-    void addWarehouseObject(const quint32 &item,const quint32 &quantity=1);
-    quint32 removeWarehouseObject(const quint32 &item,const quint32 &quantity=1);
+    void addWarehouseObject(const quint16 &item,const quint32 &quantity=1);
+    quint32 removeWarehouseObject(const quint16 &item,const quint32 &quantity=1);
 
     bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const quint32 &monsterId);
@@ -377,9 +377,9 @@ private:
     void addEventInQueue(const quint8 &event, const quint8 &event_value, const QDateTime &currentDateTime);
     void removeFirstEventInQueue();
     //inventory
-    void destroyObject(const quint32 &itemId,const quint32 &quantity);
-    void useObject(const quint8 &query_id,const quint32 &itemId);
-    bool useObjectOnMonster(const quint32 &object,const quint32 &monster);
+    void destroyObject(const quint16 &itemId,const quint32 &quantity);
+    void useObject(const quint8 &query_id,const quint16 &itemId);
+    bool useObjectOnMonster(const quint16 &object, const quint32 &monster);
     //teleportation
     void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     //shop
@@ -396,20 +396,19 @@ private:
     void tradeAccepted();
     void tradeFinished();
     void tradeAddTradeCash(const quint64 &cash);
-    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
+    void tradeAddTradeObject(const quint16 &item,const quint32 &quantity);
     void tradeAddTradeMonster(const quint32 &monsterId);
     //quest
     void newQuestAction(const QuestAction &action,const quint32 &questId);
     void appendAllow(const ActionAllow &allow);
     void removeAllow(const ActionAllow &allow);
-    void updateAllow();
     //reputation
-    void appendReputationPoint(const QString &type,const qint32 &point);
+    void appendReputationPoint(const quint8 &reputationId, const qint32 &point);
     void appendReputationRewards(const QList<ReputationRewards> &reputationList);
     //battle
     void battleCanceled();
     void battleAccepted();
-    bool tryEscape();
+    virtual bool tryEscape();
     void heal();
     void requestFight(const quint32 &fightId);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
@@ -615,7 +614,6 @@ private:
                       const QVariant &rescue_map,const QVariant &rescue_x,const QVariant &rescue_y,const QVariant &rescue_orientation,
                       const QVariant &unvalidated_rescue_map,const QVariant &unvalidated_rescue_x,const QVariant &unvalidated_rescue_y,const QVariant &unvalidated_rescue_orientation
                       );
-    void loginIsRightAfterClan();
     void loginIsRightFinalStep();
     void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
     void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
@@ -629,6 +627,7 @@ private:
     void loadBotAlreadyBeaten();
     void loadPlayerMonsterBuffs(const quint32 &index);
     void loadPlayerMonsterSkills(const quint32 &index);
+    void loadPlayerAllow();
 
     static void loadItems_static(void *object);
     void loadItems_return();
@@ -642,13 +641,15 @@ private:
     void loadQuests_return();
     static void loadBotAlreadyBeaten_static(void *object);
     void loadBotAlreadyBeaten_return();
+    static void loadPlayerAllow_static(void *object);
+    void loadPlayerAllow_return();
 
     static void loadPlayerMonsterBuffs_static(void *object);
     void loadPlayerMonsterBuffs_return(const quint32 &index);
     static void loadPlayerMonsterSkills_static(void *object);
     void loadPlayerMonsterSkills_return(const quint32 &index);
 
-    quint32 tryCapture(const quint32 &item);
+    quint32 tryCapture(const quint16 &item);
     bool changeOfMonsterInFight(const quint32 &monsterId);
     void confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster);
 
