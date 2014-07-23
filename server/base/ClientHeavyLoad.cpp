@@ -668,7 +668,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     const quint32 &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
     int index=0;
     int monster_position=1;
-    dbQueryWrite(serverProfile.preparedQuery.at(0)+QString::number(characterId)+serverProfile.preparedQuery.at(1)+QString::number(account_id)+serverProfile.preparedQuery.at(2)+pseudo+serverProfile.preparedQuery.at(3)+QString::number(skinId)+serverProfile.preparedQuery.at(4));
+    dbQueryWrite(serverProfile.preparedQuery.at(0)+QString::number(characterId)+serverProfile.preparedQuery.at(1)+QString::number(account_id)+serverProfile.preparedQuery.at(2)+pseudo+serverProfile.preparedQuery.at(3)+QString::number(GlobalServerData::serverPrivateVariables.dictionary_skin_reverse.at(skinId))+serverProfile.preparedQuery.at(4));
     while(index<profile.monsters.size())
     {
         const quint32 &monsterId=profile.monsters.at(index).id;

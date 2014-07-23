@@ -91,38 +91,41 @@ MainWindow::MainWindow(QWidget *parent) :
     vlcPlayer=NULL;
     if(Audio::audio.vlcInstance!=NULL)
     {
-        // Create a new Media
-        libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, (QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).toUtf8().constData());
-        if(vlcMedia!=NULL)
+        if(QFile(QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).exists())
         {
-            // Create a new libvlc player
-            vlcPlayer = libvlc_media_player_new_from_media(vlcMedia);
-            if(vlcPlayer!=NULL)
+            // Create a new Media
+            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, (QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).toUtf8().constData());
+            if(vlcMedia!=NULL)
             {
-                // Get event manager for the player instance
-                libvlc_event_manager_t *manager = libvlc_media_player_event_manager(vlcPlayer);
-                // Attach the event handler to the media player error's events
-                libvlc_event_attach(manager,libvlc_MediaPlayerEncounteredError,MainWindow::vlcevent,this);
-                // Release the media
-                libvlc_media_release(vlcMedia);
-                libvlc_media_add_option(vlcMedia, "input-repeat=-1");
-                // And start playback
-                libvlc_media_player_play(vlcPlayer);
+                // Create a new libvlc player
+                vlcPlayer = libvlc_media_player_new_from_media(vlcMedia);
+                if(vlcPlayer!=NULL)
+                {
+                    // Get event manager for the player instance
+                    libvlc_event_manager_t *manager = libvlc_media_player_event_manager(vlcPlayer);
+                    // Attach the event handler to the media player error's events
+                    libvlc_event_attach(manager,libvlc_MediaPlayerEncounteredError,MainWindow::vlcevent,this);
+                    // Release the media
+                    libvlc_media_release(vlcMedia);
+                    libvlc_media_add_option(vlcMedia, "input-repeat=-1");
+                    // And start playback
+                    libvlc_media_player_play(vlcPlayer);
+                }
+                else
+                {
+                    qDebug() << "problem with vlc media player";
+                    const char * string=libvlc_errmsg();
+                    if(string!=NULL)
+                        qDebug() << string;
+                }
             }
             else
             {
-                qDebug() << "problem with vlc media player";
+                qDebug() << "problem with vlc media";
                 const char * string=libvlc_errmsg();
                 if(string!=NULL)
                     qDebug() << string;
             }
-        }
-        else
-        {
-            qDebug() << "problem with vlc media";
-            const char * string=libvlc_errmsg();
-            if(string!=NULL)
-                qDebug() << string;
         }
     }
     else

@@ -28,6 +28,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     if(isParsed)
         return;
     this->datapackPath=datapackPath;
+    parseSkins();
     parseReputation();
     parseBuff();
     parseTypes();
@@ -45,7 +46,6 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseProfileList();
     parseMonstersCollision();
     parseLayersOptions();
-    parseSkins();
     isParsed=true;
 }
 
