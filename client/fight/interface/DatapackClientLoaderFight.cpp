@@ -66,7 +66,7 @@ void DatapackClientLoader::parseMonstersExtra()
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_monsters)
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+            //CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"monsters\" root balise not found for the xml file").arg(file));
             file_index++;
             continue;
         }
@@ -344,7 +344,7 @@ void DatapackClientLoader::parseTypesExtra()
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=DatapackClientLoader::text_types)
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"list\" root balise not found for the xml file").arg(file);
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"types\" root balise not found for the xml file").arg(file);
         return;
     }
 
@@ -465,7 +465,7 @@ void DatapackClientLoader::parseBuffExtra()
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_buffs)
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"buffs\" root balise not found for the xml file").arg(file));
             file_index++;
             continue;
         }
@@ -597,7 +597,7 @@ void DatapackClientLoader::parseBuffExtra()
             i.next();
             if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(i.key()))
             {
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i.key()));
                 DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
                 monsterBuffExtraEntry.name=tr("Unknown");
                 monsterBuffExtraEntry.description=tr("Unknown");
@@ -657,7 +657,7 @@ void DatapackClientLoader::parseSkillsExtra()
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_skills)
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"skills\" root balise not found for the xml file").arg(file));
             file_index++;
             continue;
         }
@@ -679,7 +679,7 @@ void DatapackClientLoader::parseSkillsExtra()
                     else
                     {
                         if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(id))
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster skill list into skill extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        {}//CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster skill list into skill extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         else
                         {
                             DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
@@ -780,7 +780,7 @@ void DatapackClientLoader::parseSkillsExtra()
             i.next();
             if(!monsterSkillsExtra.contains(i.key()))
             {
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster skill extra for id: %1").arg(i.key()));
                 DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
                 monsterSkillExtraEntry.name=tr("Unknown");
                 monsterSkillExtraEntry.description=tr("Unknown");
@@ -833,7 +833,7 @@ void DatapackClientLoader::parseBotFightsExtra()
             QDomElement root = domDocument.documentElement();
             if(root.tagName()!=DatapackClientLoader::text_fights)
             {
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file").arg(file));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file: %2!=%3").arg(file).arg(root.tagName()).arg(DatapackClientLoader::text_fights));
                 index_file++;
                 continue;
             }
@@ -957,7 +957,7 @@ void DatapackClientLoader::parseBotFightsExtra()
         i.next();
         if(!botFightsExtra.contains(i.key()))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into bot fight extra for id: %1").arg(i.key()));
             BotFightExtra botFightExtra;
             botFightExtra.start=tr("Ready for the fight?");
             botFightExtra.win=tr("You are so strong for me!");

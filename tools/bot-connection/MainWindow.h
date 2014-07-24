@@ -40,6 +40,7 @@ private:
         QList<CatchChallenger::CharacterEntry> charactersList;
         quint16 number;
         QString login;
+        QString pass;
         bool selectedCharacter;
         bool haveFirstHeader;
     };
@@ -73,6 +74,7 @@ private slots:
     void disconnected();
     void lastReplyTime(const quint32 &time);
     void tryLink(CatchChallengerClient *client);
+    void protocol_is_good();
     void on_connect_clicked();
     void sslErrors(const QList<QSslError> &errors);
     void on_characterSelect_clicked();

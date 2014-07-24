@@ -203,13 +203,10 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     }
     Orientation orentation;
     const quint32 &orientationInt=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
-    if(!ok)
+    if(ok)
     {
         if(orientationInt>=1 && orientationInt<=4)
-        {
             orentation=static_cast<Orientation>(orientationInt);
-            normalOutput(QStringLiteral("Wrong orientation corrected with bottom"));
-        }
         else
         {
             orentation=Orientation_bottom;
@@ -219,7 +216,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     else
     {
         orentation=Orientation_bottom;
-        normalOutput(QStringLiteral("Wrong orientation (not number) corrected with bottom"));
+        normalOutput(QStringLiteral("Wrong orientation (not number) corrected with bottom: %1").arg(QString(GlobalServerData::serverPrivateVariables.db.value(5))));
     }
     //all is rights
     const quint32 &map_database_id=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toUInt(&ok);
@@ -322,9 +319,23 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(!GlobalServerData::serverPrivateVariables.map_list.contains(rescue_map.toString()))
+    const quint32 &rescue_map_id=rescue_map.toUInt(&ok);
+    if(!ok)
     {
-        normalOutput(QStringLiteral("rescue map ,not found"));
+        normalOutput(QStringLiteral("rescue id is not a number"));
+        loginIsRight(query_id,characterId,map,x,y,orientation);
+        return;
+    }
+    if(rescue_map_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+    {
+        normalOutput(QStringLiteral("rescue map, not found"));
+        loginIsRight(query_id,characterId,map,x,y,orientation);
+        return;
+    }
+    CommonMap *rescue_map_final=GlobalServerData::serverPrivateVariables.dictionary_map.at(rescue_map_id);
+    if(rescue_map_final==NULL)
+    {
+        normalOutput(QStringLiteral("rescue map not resolved"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -342,13 +353,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->width)
+    if(rescue_new_x>=rescue_map_final->width)
     {
         normalOutput(QStringLiteral("rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->height)
+    if(rescue_new_y>=rescue_map_final->height)
     {
         normalOutput(QStringLiteral("rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -356,13 +367,10 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
     }
     const quint32 &orientationInt=rescue_orientation.toUInt(&ok);
     Orientation rescue_new_orientation;
-    if(!ok)
+    if(ok)
     {
         if(orientationInt>=1 && orientationInt<=4)
-        {
             rescue_new_orientation=static_cast<Orientation>(orientationInt);
-            normalOutput(QStringLiteral("Wrong rescue orientation corrected with bottom"));
-        }
         else
         {
             rescue_new_orientation=Orientation_bottom;
@@ -374,9 +382,23 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         rescue_new_orientation=Orientation_bottom;
         normalOutput(QStringLiteral("Wrong rescue orientation (not number) corrected with bottom"));
     }
-    if(!GlobalServerData::serverPrivateVariables.map_list.contains(unvalidated_rescue_map.toString()))
+    const quint32 &unvalidated_rescue_map_id=unvalidated_rescue_map.toUInt(&ok);
+    if(!ok)
     {
-        normalOutput(QStringLiteral("unvalidated rescue map ,not found"));
+        normalOutput(QStringLiteral("unvalidated rescue id is not a number"));
+        loginIsRight(query_id,characterId,map,x,y,orientation);
+        return;
+    }
+    if(unvalidated_rescue_map_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+    {
+        normalOutput(QStringLiteral("unvalidated rescue map, not found"));
+        loginIsRight(query_id,characterId,map,x,y,orientation);
+        return;
+    }
+    CommonMap *unvalidated_rescue_map_final=GlobalServerData::serverPrivateVariables.dictionary_map.at(unvalidated_rescue_map_id);
+    if(unvalidated_rescue_map_final==NULL)
+    {
+        normalOutput(QStringLiteral("unvalidated rescue map not resolved"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -394,13 +416,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->width)
+    if(unvalidated_rescue_new_x>=unvalidated_rescue_map_final->width)
     {
         normalOutput(QStringLiteral("unvalidated rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString())->height)
+    if(unvalidated_rescue_new_y>=unvalidated_rescue_map_final->height)
     {
         normalOutput(QStringLiteral("unvalidated rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -408,13 +430,10 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
     }
     Orientation unvalidated_rescue_new_orientation;
     const quint32 &unvalidated_orientationInt=unvalidated_rescue_orientation.toUInt(&ok);
-    if(!ok)
+    if(ok)
     {
         if(unvalidated_orientationInt>=1 && unvalidated_orientationInt<=4)
-        {
             unvalidated_rescue_new_orientation=static_cast<Orientation>(unvalidated_orientationInt);
-            normalOutput(QStringLiteral("Wrong unvalidated orientation corrected with bottom"));
-        }
         else
         {
             unvalidated_rescue_new_orientation=Orientation_bottom;
@@ -427,8 +446,8 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         normalOutput(QStringLiteral("Wrong unvalidated orientation (not number) corrected with bottom"));
     }
     loginIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,
-                                 GlobalServerData::serverPrivateVariables.map_list.value(rescue_map.toString()),rescue_new_x,rescue_new_y,rescue_new_orientation,
-                                 GlobalServerData::serverPrivateVariables.map_list.value(unvalidated_rescue_map.toString()),unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
+                                 rescue_map_final,rescue_new_x,rescue_new_y,rescue_new_orientation,
+                                 unvalidated_rescue_map_final,unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
             );
 }
 

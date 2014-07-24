@@ -19,56 +19,56 @@
 
 DatapackClientLoader DatapackClientLoader::datapackLoader;
 
-QString DatapackClientLoader::text_list=QLatin1Literal("list");
-QString DatapackClientLoader::text_reputation=QLatin1Literal("reputation");
-QString DatapackClientLoader::text_type=QLatin1Literal("type");
-QString DatapackClientLoader::text_name=QLatin1Literal("name");
-QString DatapackClientLoader::text_en=QLatin1Literal("en");
-QString DatapackClientLoader::text_lang=QLatin1Literal("lang");
-QString DatapackClientLoader::text_level=QLatin1Literal("level");
-QString DatapackClientLoader::text_point=QLatin1Literal("point");
-QString DatapackClientLoader::text_text=QLatin1Literal("text");
-QString DatapackClientLoader::text_id=QLatin1Literal("id");
-QString DatapackClientLoader::text_image=QLatin1Literal("image");
-QString DatapackClientLoader::text_description=QLatin1Literal("description");
-QString DatapackClientLoader::text_item=QLatin1Literal("item");
-QString DatapackClientLoader::text_slashdefinitiondotxml=QLatin1Literal("/definition.xml");
-QString DatapackClientLoader::text_quest=QLatin1Literal("quest");
-QString DatapackClientLoader::text_rewards=QLatin1Literal("rewards");
-QString DatapackClientLoader::text_show=QLatin1Literal("show");
-QString DatapackClientLoader::text_autostep=QLatin1Literal("autostep");
-QString DatapackClientLoader::text_yes=QLatin1Literal("yes");
-QString DatapackClientLoader::text_true=QLatin1Literal("true");
-QString DatapackClientLoader::text_step=QLatin1Literal("step");
-QString DatapackClientLoader::text_bot=QLatin1Literal("bot");
-QString DatapackClientLoader::text_dotcomma=QLatin1Literal(";");
-QString DatapackClientLoader::text_client_logic=QLatin1Literal("client_logic");
-QString DatapackClientLoader::text_map=QLatin1Literal("map");
-QString DatapackClientLoader::text_items=QLatin1Literal("items");
-QString DatapackClientLoader::text_zone=QLatin1Literal("zone");
+const QString DatapackClientLoader::text_list=QLatin1Literal("list");
+const QString DatapackClientLoader::text_reputation=QLatin1Literal("reputation");
+const QString DatapackClientLoader::text_type=QLatin1Literal("type");
+const QString DatapackClientLoader::text_name=QLatin1Literal("name");
+const QString DatapackClientLoader::text_en=QLatin1Literal("en");
+const QString DatapackClientLoader::text_lang=QLatin1Literal("lang");
+const QString DatapackClientLoader::text_level=QLatin1Literal("level");
+const QString DatapackClientLoader::text_point=QLatin1Literal("point");
+const QString DatapackClientLoader::text_text=QLatin1Literal("text");
+const QString DatapackClientLoader::text_id=QLatin1Literal("id");
+const QString DatapackClientLoader::text_image=QLatin1Literal("image");
+const QString DatapackClientLoader::text_description=QLatin1Literal("description");
+const QString DatapackClientLoader::text_item=QLatin1Literal("item");
+const QString DatapackClientLoader::text_slashdefinitiondotxml=QLatin1Literal("/definition.xml");
+const QString DatapackClientLoader::text_quest=QLatin1Literal("quest");
+const QString DatapackClientLoader::text_rewards=QLatin1Literal("rewards");
+const QString DatapackClientLoader::text_show=QLatin1Literal("show");
+const QString DatapackClientLoader::text_autostep=QLatin1Literal("autostep");
+const QString DatapackClientLoader::text_yes=QLatin1Literal("yes");
+const QString DatapackClientLoader::text_true=QLatin1Literal("true");
+const QString DatapackClientLoader::text_step=QLatin1Literal("step");
+const QString DatapackClientLoader::text_bot=QLatin1Literal("bot");
+const QString DatapackClientLoader::text_dotcomma=QLatin1Literal(";");
+const QString DatapackClientLoader::text_client_logic=QLatin1Literal("client_logic");
+const QString DatapackClientLoader::text_map=QLatin1Literal("map");
+const QString DatapackClientLoader::text_items=QLatin1Literal("items");
+const QString DatapackClientLoader::text_zone=QLatin1Literal("zone");
 
-QString DatapackClientLoader::text_monster=QLatin1Literal("monster");
-QString DatapackClientLoader::text_monsters=QLatin1Literal("monsters");
-QString DatapackClientLoader::text_kind=QLatin1Literal("kind");
-QString DatapackClientLoader::text_habitat=QLatin1Literal("habitat");
-QString DatapackClientLoader::text_slash=QLatin1Literal("/");
-QString DatapackClientLoader::text_types=QLatin1Literal("types");
-QString DatapackClientLoader::text_buff=QLatin1Literal("buff");
-QString DatapackClientLoader::text_skill=QLatin1Literal("skill");
-QString DatapackClientLoader::text_buffs=QLatin1Literal("buffs");
-QString DatapackClientLoader::text_skills=QLatin1Literal("skills");
-QString DatapackClientLoader::text_fight=QLatin1Literal("buff");
-QString DatapackClientLoader::text_fights=QLatin1Literal("skill");
-QString DatapackClientLoader::text_start=QLatin1Literal("start");
-QString DatapackClientLoader::text_win=QLatin1Literal("win");
-QString DatapackClientLoader::text_dotxml=QLatin1Literal(".xml");
-QString DatapackClientLoader::text_dottsx=QLatin1Literal(".tsx");
-QString DatapackClientLoader::text_visual=QLatin1Literal("visual");
-QString DatapackClientLoader::text_category=QLatin1Literal("category");
-QString DatapackClientLoader::text_alpha=QLatin1Literal("alpha");
-QString DatapackClientLoader::text_color=QLatin1Literal("color");
-QString DatapackClientLoader::text_event=QLatin1Literal("event");
-QString DatapackClientLoader::text_value=QLatin1Literal("value");
+const QString DatapackClientLoader::text_monster=QLatin1Literal("monster");
+const QString DatapackClientLoader::text_monsters=QLatin1Literal("monsters");
+const QString DatapackClientLoader::text_kind=QLatin1Literal("kind");
+const QString DatapackClientLoader::text_habitat=QLatin1Literal("habitat");
+const QString DatapackClientLoader::text_slash=QLatin1Literal("/");
+const QString DatapackClientLoader::text_types=QLatin1Literal("types");
+const QString DatapackClientLoader::text_buff=QLatin1Literal("buff");
+const QString DatapackClientLoader::text_skill=QLatin1Literal("skill");
+const QString DatapackClientLoader::text_buffs=QLatin1Literal("buffs");
+const QString DatapackClientLoader::text_skills=QLatin1Literal("skills");
+const QString DatapackClientLoader::text_fight=QLatin1Literal("fight");
+const QString DatapackClientLoader::text_fights=QLatin1Literal("fights");
+const QString DatapackClientLoader::text_start=QLatin1Literal("start");
+const QString DatapackClientLoader::text_win=QLatin1Literal("win");
+const QString DatapackClientLoader::text_dotxml=QLatin1Literal(".xml");
+const QString DatapackClientLoader::text_dottsx=QLatin1Literal(".tsx");
+const QString DatapackClientLoader::text_visual=QLatin1Literal("visual");
+const QString DatapackClientLoader::text_category=QLatin1Literal("category");
+const QString DatapackClientLoader::text_alpha=QLatin1Literal("alpha");
+const QString DatapackClientLoader::text_color=QLatin1Literal("color");
+const QString DatapackClientLoader::text_event=QLatin1Literal("event");
+const QString DatapackClientLoader::text_value=QLatin1Literal("value");
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -611,7 +611,7 @@ void DatapackClientLoader::parseItemsExtra()
         const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackClientLoader::text_items)
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
+            //qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
             file_index++;
             continue;
         }
@@ -1014,13 +1014,15 @@ void DatapackClientLoader::parseQuestsExtra()
                                     {
                                         if(!stepItem.hasAttribute(DatapackClientLoader::text_lang) || stepItem.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                             steps[id]=stepItem.text();
-                                        else
-                                            qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
+                                        /*else can be into another lang
+                                            qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber());*/
                                     }
                                     else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
+                                        qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber());
                                     stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
                                 }
+                                if(!steps.contains(id))
+                                    steps[id]=tr("No text");
                             }
                         }
                         else
@@ -1138,13 +1140,15 @@ void DatapackClientLoader::parseQuestsText()
                                 {
                                     if(!text.hasAttribute(DatapackClientLoader::text_lang) || text.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         client_logic_texts[id]=text.text();
-                                    else
-                                        qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
+                                    /*else can be another language than english
+                                        qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(text.tagName()).arg(text.lineNumber());*/
                                 }
                                 else
-                                    qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
+                                    qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(text.tagName()).arg(text.lineNumber());
                                 text = text.nextSiblingElement(DatapackClientLoader::text_text);
                             }
+                            if(!client_logic_texts.contains(id))
+                                client_logic_texts[id]=tr("No text");
                         }
                     }
                     else

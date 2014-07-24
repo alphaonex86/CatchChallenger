@@ -23,50 +23,50 @@
 using namespace CatchChallenger;
 
 QRegularExpression BaseServer::regexXmlFile=QRegularExpression(QLatin1String("^[a-zA-Z0-9\\- _]+\\.xml$"));
-QString BaseServer::text_dotxml=QLatin1String(".xml");
-QString BaseServer::text_zone=QLatin1String("zone");
-QString BaseServer::text_capture=QLatin1String("capture");
-QString BaseServer::text_fightId=QLatin1String("fightId");
-QString BaseServer::text_dotcomma=QLatin1String(";");
-QString BaseServer::text_male=QLatin1String("male");
-QString BaseServer::text_female=QLatin1String("female");
-QString BaseServer::text_unknown=QLatin1String("unknown");
-QString BaseServer::text_slash=QLatin1String("slash");
-QString BaseServer::text_antislash=QLatin1String("antislash");
-QString BaseServer::text_type=QLatin1String("type");
-QString BaseServer::text_shop=QLatin1String("shop");
-QString BaseServer::text_learn=QLatin1String("learn");
-QString BaseServer::text_heal=QLatin1String("heal");
-QString BaseServer::text_market=QLatin1String("market");
-QString BaseServer::text_zonecapture=QLatin1String("zonecapture");
-QString BaseServer::text_fight=QLatin1String("fight");
-QString BaseServer::text_fightid=QLatin1String("fightid");
-QString BaseServer::text_lookAt=QLatin1String("lookAt");
-QString BaseServer::text_left=QLatin1String("left");
-QString BaseServer::text_right=QLatin1String("right");
-QString BaseServer::text_top=QLatin1String("top");
-QString BaseServer::text_bottom=QLatin1String("bottom");
-QString BaseServer::text_bots=QLatin1String("bots");
-QString BaseServer::text_bot=QLatin1String("bot");
-QString BaseServer::text_id=QLatin1String("id");
-QString BaseServer::text_name=QLatin1String("name");
-QString BaseServer::text_step=QLatin1String("step");
-QString BaseServer::text_arrow=QLatin1String("->");
-QString BaseServer::text_dottmx=QLatin1Literal(".tmx");
-QString BaseServer::text_shops=QLatin1Literal("shops");
-QString BaseServer::text_product=QLatin1Literal("product");
-QString BaseServer::text_itemId=QLatin1Literal("itemId");
-QString BaseServer::text_overridePrice=QLatin1Literal("overridePrice");
-QString BaseServer::text_list=QLatin1Literal("list");
-QString BaseServer::text_monster=QLatin1Literal("monster");
-QString BaseServer::text_monsters=QLatin1Literal("monsters");
-QString BaseServer::text_drops=QLatin1Literal("drops");
-QString BaseServer::text_drop=QLatin1Literal("drop");
-QString BaseServer::text_item=QLatin1Literal("item");
-QString BaseServer::text_quantity_min=QLatin1Literal("quantity_min");
-QString BaseServer::text_quantity_max=QLatin1Literal("quantity_max");
-QString BaseServer::text_luck=QLatin1Literal("luck");
-QString BaseServer::text_percent=QLatin1Literal("percent");
+const QString BaseServer::text_dotxml=QLatin1String(".xml");
+const QString BaseServer::text_zone=QLatin1String("zone");
+const QString BaseServer::text_capture=QLatin1String("capture");
+const QString BaseServer::text_fightId=QLatin1String("fightId");
+const QString BaseServer::text_dotcomma=QLatin1String(";");
+const QString BaseServer::text_male=QLatin1String("male");
+const QString BaseServer::text_female=QLatin1String("female");
+const QString BaseServer::text_unknown=QLatin1String("unknown");
+const QString BaseServer::text_slash=QLatin1String("slash");
+const QString BaseServer::text_antislash=QLatin1String("antislash");
+const QString BaseServer::text_type=QLatin1String("type");
+const QString BaseServer::text_shop=QLatin1String("shop");
+const QString BaseServer::text_learn=QLatin1String("learn");
+const QString BaseServer::text_heal=QLatin1String("heal");
+const QString BaseServer::text_market=QLatin1String("market");
+const QString BaseServer::text_zonecapture=QLatin1String("zonecapture");
+const QString BaseServer::text_fight=QLatin1String("fight");
+const QString BaseServer::text_fightid=QLatin1String("fightid");
+const QString BaseServer::text_lookAt=QLatin1String("lookAt");
+const QString BaseServer::text_left=QLatin1String("left");
+const QString BaseServer::text_right=QLatin1String("right");
+const QString BaseServer::text_top=QLatin1String("top");
+const QString BaseServer::text_bottom=QLatin1String("bottom");
+const QString BaseServer::text_bots=QLatin1String("bots");
+const QString BaseServer::text_bot=QLatin1String("bot");
+const QString BaseServer::text_id=QLatin1String("id");
+const QString BaseServer::text_name=QLatin1String("name");
+const QString BaseServer::text_step=QLatin1String("step");
+const QString BaseServer::text_arrow=QLatin1String("->");
+const QString BaseServer::text_dottmx=QLatin1Literal(".tmx");
+const QString BaseServer::text_shops=QLatin1Literal("shops");
+const QString BaseServer::text_product=QLatin1Literal("product");
+const QString BaseServer::text_itemId=QLatin1Literal("itemId");
+const QString BaseServer::text_overridePrice=QLatin1Literal("overridePrice");
+const QString BaseServer::text_list=QLatin1Literal("list");
+const QString BaseServer::text_monster=QLatin1Literal("monster");
+const QString BaseServer::text_monsters=QLatin1Literal("monsters");
+const QString BaseServer::text_drops=QLatin1Literal("drops");
+const QString BaseServer::text_drop=QLatin1Literal("drop");
+const QString BaseServer::text_item=QLatin1Literal("item");
+const QString BaseServer::text_quantity_min=QLatin1Literal("quantity_min");
+const QString BaseServer::text_quantity_max=QLatin1Literal("quantity_max");
+const QString BaseServer::text_luck=QLatin1Literal("luck");
+const QString BaseServer::text_percent=QLatin1Literal("percent");
 
 BaseServer::BaseServer() :
     stat(Down),
@@ -479,7 +479,7 @@ void BaseServer::preload_dictionary_allow_static(void *object)
 void BaseServer::preload_dictionary_allow_return()
 {
     GlobalServerData::serverPrivateVariables.dictionary_allow_reverse << 0x00 << 0x00;
-    bool haveAllowClan;
+    bool haveAllowClan=false;
     QString allowClan(QStringLiteral("clan"));
     int lastId=0;
     while(GlobalServerData::serverPrivateVariables.db.next())
@@ -2317,10 +2317,17 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id=QStringLiteral("SELECT `quest`,`finish_one_time`,`step` FROM `quest` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id=QStringLiteral("SELECT `recipe` FROM `recipe` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id=QStringLiteral("SELECT `item`,`quantity` FROM `item` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT `item`,`quantity` FROM `item_warehouse` WHERE `character`=%1");
         if(CommonSettings::commonSettings.useSP)
+        {
             GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
+        }
         else
+        {
             GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
+        }
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1");
@@ -2375,10 +2382,17 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id=QStringLiteral("SELECT quest,finish_one_time,step FROM quest WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id=QStringLiteral("SELECT recipe FROM recipe WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id=QStringLiteral("SELECT item,quantity FROM item WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT item,quantity FROM item_warehouse WHERE character=%1");
         if(CommonSettings::commonSettings.useSP)
+        {
             GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+        }
         else
+        {
             GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+        }
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
@@ -2433,10 +2447,17 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_quest_by_id=QStringLiteral("SELECT quest,finish_one_time,step FROM quest WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id=QStringLiteral("SELECT recipe FROM recipe WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id=QStringLiteral("SELECT item,quantity FROM item WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT item,quantity FROM item_warehouse WHERE character=%1");
         if(CommonSettings::commonSettings.useSP)
+        {
             GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+        }
         else
+        {
             GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+        }
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
