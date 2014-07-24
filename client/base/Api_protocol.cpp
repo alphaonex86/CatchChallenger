@@ -2927,7 +2927,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: parseFullReplyData(%1,%2), line: %3, data: %4 %5")
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: parseReplyData(%1,%2), line: %3, data: %4 %5")
                    .arg(mainCodeType).arg(queryNumber)
                    .arg(__LINE__)
                    .arg(QString(data.mid(0,in.device()->pos()).toHex()))
@@ -3128,7 +3128,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         in >> player_informations.warehouse_cash;
 
                         //recipes
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the recipe list size, line: %1").arg(__LINE__));
                             return;
@@ -3139,7 +3139,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         quint32 index=0;
                         while(index<recipe_list_size)
                         {
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                             {
                                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player local recipe, line: %1").arg(__LINE__));
                                 return;
@@ -3232,7 +3232,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             }
                             in >> monster.egg_step;
 
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                             {
                                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the buff monsters, line: %1").arg(__LINE__));
                                 return;
@@ -3445,9 +3445,9 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         in >> sub_size8;
                         while(index<sub_size8)
                         {
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(qint8))
                             {
-                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong reputation code: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                                 return;
                             }
                             in >> type;
@@ -3475,8 +3475,9 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         PlayerQuest playerQuest;
                         quint16 playerQuestId;
                         index=0;
-                        in >> sub_size8;
-                        while(index<sub_size8)
+                        quint16 sub_size16;
+                        in >> sub_size16;
+                        while(index<sub_size16)
                         {
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(qint16))
                             {
@@ -3510,7 +3511,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(__LINE__));
                             return;
                         }
-                        quint16 bot_already_beaten,sub_size16;
+                        quint16 bot_already_beaten;
                         index=0;
                         in >> sub_size16;
                         while(index<sub_size16)
@@ -4681,6 +4682,17 @@ bool Api_protocol::addCharacter(const quint8 &profileIndex, const QString &pseud
     if(!is_logged)
     {
         DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        return false;
+    }
+    if(skinId>=CommonDatapack::commonDatapack.skins.size())
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
+        return false;
+    }
+    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skinId))
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
         return false;
     }
     QByteArray outputData;
