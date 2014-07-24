@@ -64,7 +64,15 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
 
 void Client::selectCharacter_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(selectCharacterParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->selectCharacter_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
     delete selectCharacterParam;
     GlobalServerData::serverPrivateVariables.db.clear();

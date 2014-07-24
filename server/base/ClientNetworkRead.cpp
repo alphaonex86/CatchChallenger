@@ -200,7 +200,19 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
                 delete client;
                 GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
                 if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
-                    memmove(GlobalServerData::serverPrivateVariables.tokenForAuth,GlobalServerData::serverPrivateVariables.tokenForAuth+sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuthSize*sizeof(TokenLink));
+                {
+                    quint32 index=0;
+                    while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                    {
+                        GlobalServerData::serverPrivateVariables.tokenForAuth[index]=GlobalServerData::serverPrivateVariables.tokenForAuth[index+1];
+                        index++;
+                    }
+                    //don't work:memmove(GlobalServerData::serverPrivateVariables.tokenForAuth,GlobalServerData::serverPrivateVariables.tokenForAuth+sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuthSize*sizeof(TokenLink));
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client==NULL)
+                        abort();
+                    #endif
+                }
                 return;
             }
             if(memcmp(data,Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
