@@ -160,7 +160,18 @@ void Client::disconnectClient()
             {
                 GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
                 if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
-                    memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
+                {
+                    while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                    {
+                        GlobalServerData::serverPrivateVariables.tokenForAuth[index]=GlobalServerData::serverPrivateVariables.tokenForAuth[index+1];
+                        index++;
+                    }
+                    //don't work:memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(GlobalServerData::serverPrivateVariables.tokenForAuthSize-index));
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client==NULL)
+                        abort();
+                    #endif
+                }
                 break;
             }
             index++;

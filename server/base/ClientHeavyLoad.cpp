@@ -63,7 +63,15 @@ void Client::askLogin(const quint8 &query_id,const char *rawdata)
 
 void Client::askLogin_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(askLoginParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->askLogin_return(askLoginParam);
     GlobalServerData::serverPrivateVariables.db.clear();
     //delete askLoginParam; -> not here because need reuse later
@@ -121,7 +129,18 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         hashedToken=hash.result();
                         GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
                         if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
-                            memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
+                        {
+                            while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                            {
+                                GlobalServerData::serverPrivateVariables.tokenForAuth[index]=GlobalServerData::serverPrivateVariables.tokenForAuth[index+1];
+                                index++;
+                            }
+                            //don't work:memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(GlobalServerData::serverPrivateVariables.tokenForAuthSize-index));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client==NULL)
+                                abort();
+                            #endif
+                        }
                         found=true;
                         break;
                     }
@@ -221,7 +240,15 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
 
 void Client::createAccount_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(askLoginParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->createAccount_return(askLoginParam);
     GlobalServerData::serverPrivateVariables.db.clear();
     delete askLoginParam;
@@ -251,7 +278,15 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
 
 void Client::character_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(askLoginParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->character_return(askLoginParam->query_id);
     delete askLoginParam;
 }
@@ -507,7 +542,15 @@ void Client::deleteCharacterNow(const quint32 &characterId)
 
 void Client::deleteCharacterNow_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     DeleteCharacterNow *deleteCharacterNow=static_cast<DeleteCharacterNow *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(deleteCharacterNow==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->deleteCharacterNow_return(deleteCharacterNow->characterId);
     delete deleteCharacterNow;
 }
@@ -641,7 +684,15 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
 
 void Client::addCharacter_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(addCharacterParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skinId);
     delete addCharacterParam;
     GlobalServerData::serverPrivateVariables.db.clear();
@@ -815,7 +866,15 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
 
 void Client::removeCharacter_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     RemoveCharacterParam *removeCharacterParam=static_cast<RemoveCharacterParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(removeCharacterParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->removeCharacter_return(removeCharacterParam->query_id,removeCharacterParam->characterId);
     delete removeCharacterParam;
     GlobalServerData::serverPrivateVariables.db.clear();
