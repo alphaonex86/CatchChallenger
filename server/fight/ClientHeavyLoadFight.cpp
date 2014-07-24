@@ -387,6 +387,10 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
     {
         SelectIndexParam *selectIndexParam=new SelectIndexParam;
         selectIndexParam->index=index;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(index>(quint32)(public_and_private_informations.playerMonster.size()+public_and_private_informations.warehouse_playerMonster.size()))
+            abort();
+        #endif
 
         CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterBuffs_static);
         if(callback==NULL)
@@ -406,13 +410,25 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
 
 void Client::loadPlayerMonsterBuffs_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(selectIndexParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->loadPlayerMonsterBuffs_return(selectIndexParam->index);
     delete selectIndexParam;
 }
 
 void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(index>(quint32)(public_and_private_informations.playerMonster.size()+public_and_private_informations.warehouse_playerMonster.size()))
+        abort();
+    #endif
     callbackRegistred.removeFirst();
     PlayerMonster *playerMonster;
     if(index<(quint32)public_and_private_informations.playerMonster.size())
@@ -505,7 +521,15 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
 
 void Client::loadPlayerMonsterSkills_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+        abort();
+    #endif
     SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(selectIndexParam==NULL)
+        abort();
+    #endif
     static_cast<Client *>(object)->loadPlayerMonsterSkills_return(selectIndexParam->index);
     delete selectIndexParam;
 }
