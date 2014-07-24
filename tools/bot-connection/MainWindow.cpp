@@ -235,7 +235,14 @@ void MainWindow::detectSlowDown()
                 worseTime=time;
         }
     }
-    ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
+    if(worseTime>3600*1000)
+        ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2h").arg(queryCount).arg(worseTime/(3600*1000)));
+    else if(worseTime>2*60*1000)
+        ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2min").arg(queryCount).arg(worseTime/(60*1000)));
+    else if(worseTime>5*1000)
+        ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2s").arg(queryCount).arg(worseTime/(1000)));
+    else
+        ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
