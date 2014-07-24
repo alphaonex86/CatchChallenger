@@ -159,7 +159,8 @@ void Client::disconnectClient()
             if(tokenLink.client==this)
             {
                 GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
-                memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
+                if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
+                    memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
                 break;
             }
             index++;

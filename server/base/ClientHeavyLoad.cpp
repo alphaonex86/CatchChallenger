@@ -120,7 +120,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         hash.addData(tokenLink.value,CATCHCHALLENGER_TOKENSIZE);
                         hashedToken=hash.result();
                         GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
-                        memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
+                        if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
+                            memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*GlobalServerData::serverPrivateVariables.tokenForAuthSize);
                         found=true;
                         break;
                     }
@@ -599,15 +600,15 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         errorOutput(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettings::commonSettings.max_pseudo_size));
         return;
     }
+    if(skinId>=GlobalServerData::serverPrivateVariables.skinList.size())
+    {
+        errorOutput(QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
+        return;
+    }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
     if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skinId))
     {
         errorOutput(QStringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
-        return;
-    }
-    if(skinId>=GlobalServerData::serverPrivateVariables.skinList.size())
-    {
-        errorOutput(QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
         return;
     }
     AddCharacterParam *addCharacterParam=new AddCharacterParam();

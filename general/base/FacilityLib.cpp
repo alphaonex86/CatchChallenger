@@ -245,7 +245,7 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     }
     sub_index=0;
     sub_size=monster.skills.size();
-    out << (quint8)sub_size;
+    out << (quint16)sub_size;
     while(sub_index<sub_size)
     {
         out << (quint16)monster.skills.at(sub_index).skill;

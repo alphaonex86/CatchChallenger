@@ -7,7 +7,7 @@
 #include <QNetworkProxy>
 #include <QMessageBox>
 
-#define CATCHCHALLENGER_BOTCONNECTION_VERSION "0.0.0.1"
+#define CATCHCHALLENGER_BOTCONNECTION_VERSION "0.0.0.2"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -105,14 +105,24 @@ void MainWindow::tryLink(CatchChallengerClient * client)
     }
     else
     {
+        connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
         QString login=ui->login->text();
         QString pass=ui->pass->text();
         login.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
         pass.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
         client->login=login;
+        client->pass=login;
         client->api->sendProtocol();
-        client->api->tryLogin(login,pass);
     }
+}
+
+void MainWindow::protocol_is_good()
+{
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
+    if(senderObject==NULL)
+        return;
+
+    senderObject->tryLogin(apiToCatchChallengerClient.value(senderObject)->login,apiToCatchChallengerClient.value(senderObject)->pass);
 }
 
 void MainWindow::doMove()
@@ -294,13 +304,13 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
             qDebug() << apiToCatchChallengerClient[senderObject]->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
             QString pseudo="bot"+CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettings::commonSettings.max_pseudo_size-3);
-            QString skin;
+            quint32 skinId;
             const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
             if(!profile.forcedskin.isEmpty())
-                skin=profile.forcedskin.at(rand()%profile.forcedskin.size());
+                skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
             else
-                skin=skinsList.at(rand()%skinsList.size()).fileName();
-            apiToCatchChallengerClient[senderObject]->api->addCharacter(profileIndex,pseudo,skin);
+                skinId=rand()%skinsList.size();
+            apiToCatchChallengerClient[senderObject]->api->addCharacter(profileIndex,pseudo,skinId);
         }
         return;
     }
@@ -354,13 +364,13 @@ void MainWindow::haveTheDatapack()
             ui->characterList->setEnabled(false);
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
             QString pseudo="bot"+CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettings::commonSettings.max_pseudo_size-3);
-            QString skin;
+            quint32 skinId;
             const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
             if(!profile.forcedskin.isEmpty())
-                skin=profile.forcedskin.at(rand()%profile.forcedskin.size());
+                skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
             else
-                skin=skinsList.at(rand()%skinsList.size()).fileName();
-            apiToCatchChallengerClient[senderObject]->api->addCharacter(profileIndex,pseudo,skin);
+                skinId=rand()%skinsList.size();
+            apiToCatchChallengerClient[senderObject]->api->addCharacter(profileIndex,pseudo,skinId);
         }
         return;
     }

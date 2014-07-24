@@ -69,7 +69,7 @@ void Client::loadItems()
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        loadRecipes();
+        loadItemsWarehouse();
         return;
     }
     else
@@ -100,26 +100,66 @@ void Client::loadItems_return()
             normalOutput(QLatin1String("quantity is not a number, skip"));
             continue;
         }
-        const QString &warehouseString(GlobalServerData::serverPrivateVariables.db.value(2));
-        if(warehouseString.isEmpty())
+        if(quantity==0)
         {
-            normalOutput(QLatin1String("item warehouse is not a number, skip"));
+            normalOutput(QStringLiteral("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }
-        bool warehouse;
-        if(warehouseString==Client::text_warehouse)
-            warehouse=true;
-        else
+        if(!CommonDatapack::commonDatapack.items.item.contains(id))
         {
-            if(warehouseString==Client::text_wear)
-                warehouse=false;
-            else if(warehouseString==Client::text_market)
-                continue;
-            else
-            {
-                normalOutput(QStringLiteral("unknow wear type: %1 for item %2 and player %3").arg(warehouseString).arg(id).arg(character_id));
-                continue;
-            }
+            normalOutput(QStringLiteral("The item %1 is ignored because it's not into the items list").arg(id));
+            continue;
+        }
+        public_and_private_informations.items[id]=quantity;
+    }
+    loadItemsWarehouse();
+}
+
+void Client::loadItemsWarehouse()
+{
+    //do the query
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id.isEmpty())
+    {
+        errorOutput(QStringLiteral("loadItems() Query is empty, bug"));
+        return;
+    }
+    #endif
+    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id.arg(character_id);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItemsWarehouse_static);
+    if(callback==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        loadRecipes();
+        return;
+    }
+    else
+        callbackRegistred << callback;
+}
+
+void Client::loadItemsWarehouse_static(void *object)
+{
+    static_cast<Client *>(object)->loadItemsWarehouse_return();
+}
+
+void Client::loadItemsWarehouse_return()
+{
+    callbackRegistred.removeFirst();
+    bool ok;
+    //parse the result
+    while(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(!ok)
+        {
+            normalOutput(QLatin1String("item id is not a number, skip"));
+            continue;
+        }
+        const quint32 &quantity=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+        if(!ok)
+        {
+            normalOutput(QLatin1String("quantity is not a number, skip"));
+            continue;
         }
         if(quantity==0)
         {
@@ -131,10 +171,7 @@ void Client::loadItems_return()
             normalOutput(QStringLiteral("The item %1 is ignored because it's not into the items list").arg(id));
             continue;
         }
-        if(!warehouse)
-            public_and_private_informations.items[id]=quantity;
-        else
-            public_and_private_informations.warehouse_items[id]=quantity;
+        public_and_private_informations.warehouse_items[id]=quantity;
     }
     loadRecipes();
 }

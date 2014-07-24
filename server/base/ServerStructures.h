@@ -318,7 +318,9 @@ struct ServerPrivateVariables
     QString db_query_select_quest_by_id;
     QString db_query_select_recipes_by_player_id;
     QString db_query_select_items_by_player_id;
+    QString db_query_select_items_warehouse_by_player_id;
     QString db_query_select_monsters_by_player_id;
+    QString db_query_select_monsters_warehouse_by_player_id;
     QString db_query_select_monstersSkill_by_id;
     QString db_query_select_monstersBuff_by_id;
     QString db_query_select_bot_beaten;

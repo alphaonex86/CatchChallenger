@@ -17,71 +17,71 @@
 
 using namespace CatchChallenger;
 
-QString Map_loader::text_map=QLatin1Literal("map");
-QString Map_loader::text_width=QLatin1Literal("width");
-QString Map_loader::text_height=QLatin1Literal("height");
-QString Map_loader::text_properties=QLatin1Literal("properties");
-QString Map_loader::text_property=QLatin1Literal("property");
-QString Map_loader::text_name=QLatin1Literal("name");
-QString Map_loader::text_value=QLatin1Literal("value");
-QString Map_loader::text_objectgroup=QLatin1Literal("objectgroup");
-QString Map_loader::text_Moving=QLatin1Literal("Moving");
-QString Map_loader::text_object=QLatin1Literal("object");
-QString Map_loader::text_x=QLatin1Literal("x");
-QString Map_loader::text_y=QLatin1Literal("y");
-QString Map_loader::text_type=QLatin1Literal("type");
-QString Map_loader::text_borderleft=QLatin1Literal("border-left");
-QString Map_loader::text_borderright=QLatin1Literal("border-right");
-QString Map_loader::text_bordertop=QLatin1Literal("border-top");
-QString Map_loader::text_borderbottom=QLatin1Literal("border-bottom");
-QString Map_loader::text_teleport_on_push=QLatin1Literal("teleport on push");
-QString Map_loader::text_teleport_on_it=QLatin1Literal("teleport on it");
-QString Map_loader::text_door=QLatin1Literal("door");
-QString Map_loader::text_condition_file=QLatin1Literal("condition-file");
-QString Map_loader::text_condition_id=QLatin1Literal("condition-id");
-QString Map_loader::text_rescue=QLatin1Literal("rescue");
-QString Map_loader::text_bot_spawn=QLatin1Literal("bot spawn");
-QString Map_loader::text_Object=QLatin1Literal("Object");
-QString Map_loader::text_bot=QLatin1Literal("bot");
-QString Map_loader::text_skin=QLatin1Literal("skin");
-QString Map_loader::text_lookAt=QLatin1Literal("lookAt");
-QString Map_loader::text_bottom=QLatin1Literal("bottom");
-QString Map_loader::text_file=QLatin1Literal("file");
-QString Map_loader::text_id=QLatin1Literal("id");
-QString Map_loader::text_layer=QLatin1Literal("layer");
-QString Map_loader::text_encoding=QLatin1Literal("encoding");
-QString Map_loader::text_compression=QLatin1Literal("compression");
-QString Map_loader::text_base64=QLatin1Literal("base64");
-QString Map_loader::text_Walkable=QLatin1Literal("Walkable");
-QString Map_loader::text_Collisions=QLatin1Literal("Collisions");
-QString Map_loader::text_Water=QLatin1Literal("Water");
-QString Map_loader::text_Grass=QLatin1Literal("Grass");
-QString Map_loader::text_Dirt=QLatin1Literal("Dirt");
-QString Map_loader::text_LedgesRight=QLatin1Literal("LedgesRight");
-QString Map_loader::text_LedgesLeft=QLatin1Literal("LedgesLeft");
-QString Map_loader::text_LedgesBottom=QLatin1Literal("LedgesBottom");
-QString Map_loader::text_LedgesDown=QLatin1Literal("LedgesDown");
-QString Map_loader::text_LedgesTop=QLatin1Literal("LedgesTop");
-QString Map_loader::text_LedgesUp=QLatin1Literal("LedgesUp");
-QString Map_loader::text_grass=QLatin1Literal("grass");
-QString Map_loader::text_monster=QLatin1Literal("monster");
-QString Map_loader::text_minLevel=QLatin1Literal("minLevel");
-QString Map_loader::text_maxLevel=QLatin1Literal("maxLevel");
-QString Map_loader::text_level=QLatin1Literal("level");
-QString Map_loader::text_luck=QLatin1Literal("luck");
-QString Map_loader::text_water=QLatin1Literal("water");
-QString Map_loader::text_cave=QLatin1Literal("cave");
-QString Map_loader::text_condition=QLatin1Literal("condition");
-QString Map_loader::text_quest=QLatin1Literal("quest");
-QString Map_loader::text_item=QLatin1Literal("item");
-QString Map_loader::text_fightBot=QLatin1Literal("fightBot");
-QString Map_loader::text_clan=QLatin1Literal("clan");
-QString Map_loader::text_dottmx=QLatin1Literal(".tmx");
-QString Map_loader::text_dotxml=QLatin1Literal(".xml");
-QString Map_loader::text_slash=QLatin1Literal("/");
-QString Map_loader::text_percent=QLatin1Literal("%");
-QString Map_loader::text_data=QLatin1Literal("data");
-QString Map_loader::text_dotcomma=QLatin1Literal(";");
+const QString Map_loader::text_map=QLatin1Literal("map");
+const QString Map_loader::text_width=QLatin1Literal("width");
+const QString Map_loader::text_height=QLatin1Literal("height");
+const QString Map_loader::text_properties=QLatin1Literal("properties");
+const QString Map_loader::text_property=QLatin1Literal("property");
+const QString Map_loader::text_name=QLatin1Literal("name");
+const QString Map_loader::text_value=QLatin1Literal("value");
+const QString Map_loader::text_objectgroup=QLatin1Literal("objectgroup");
+const QString Map_loader::text_Moving=QLatin1Literal("Moving");
+const QString Map_loader::text_object=QLatin1Literal("object");
+const QString Map_loader::text_x=QLatin1Literal("x");
+const QString Map_loader::text_y=QLatin1Literal("y");
+const QString Map_loader::text_type=QLatin1Literal("type");
+const QString Map_loader::text_borderleft=QLatin1Literal("border-left");
+const QString Map_loader::text_borderright=QLatin1Literal("border-right");
+const QString Map_loader::text_bordertop=QLatin1Literal("border-top");
+const QString Map_loader::text_borderbottom=QLatin1Literal("border-bottom");
+const QString Map_loader::text_teleport_on_push=QLatin1Literal("teleport on push");
+const QString Map_loader::text_teleport_on_it=QLatin1Literal("teleport on it");
+const QString Map_loader::text_door=QLatin1Literal("door");
+const QString Map_loader::text_condition_file=QLatin1Literal("condition-file");
+const QString Map_loader::text_condition_id=QLatin1Literal("condition-id");
+const QString Map_loader::text_rescue=QLatin1Literal("rescue");
+const QString Map_loader::text_bot_spawn=QLatin1Literal("bot spawn");
+const QString Map_loader::text_Object=QLatin1Literal("Object");
+const QString Map_loader::text_bot=QLatin1Literal("bot");
+const QString Map_loader::text_skin=QLatin1Literal("skin");
+const QString Map_loader::text_lookAt=QLatin1Literal("lookAt");
+const QString Map_loader::text_bottom=QLatin1Literal("bottom");
+const QString Map_loader::text_file=QLatin1Literal("file");
+const QString Map_loader::text_id=QLatin1Literal("id");
+const QString Map_loader::text_layer=QLatin1Literal("layer");
+const QString Map_loader::text_encoding=QLatin1Literal("encoding");
+const QString Map_loader::text_compression=QLatin1Literal("compression");
+const QString Map_loader::text_base64=QLatin1Literal("base64");
+const QString Map_loader::text_Walkable=QLatin1Literal("Walkable");
+const QString Map_loader::text_Collisions=QLatin1Literal("Collisions");
+const QString Map_loader::text_Water=QLatin1Literal("Water");
+const QString Map_loader::text_Grass=QLatin1Literal("Grass");
+const QString Map_loader::text_Dirt=QLatin1Literal("Dirt");
+const QString Map_loader::text_LedgesRight=QLatin1Literal("LedgesRight");
+const QString Map_loader::text_LedgesLeft=QLatin1Literal("LedgesLeft");
+const QString Map_loader::text_LedgesBottom=QLatin1Literal("LedgesBottom");
+const QString Map_loader::text_LedgesDown=QLatin1Literal("LedgesDown");
+const QString Map_loader::text_LedgesTop=QLatin1Literal("LedgesTop");
+const QString Map_loader::text_LedgesUp=QLatin1Literal("LedgesUp");
+const QString Map_loader::text_grass=QLatin1Literal("grass");
+const QString Map_loader::text_monster=QLatin1Literal("monster");
+const QString Map_loader::text_minLevel=QLatin1Literal("minLevel");
+const QString Map_loader::text_maxLevel=QLatin1Literal("maxLevel");
+const QString Map_loader::text_level=QLatin1Literal("level");
+const QString Map_loader::text_luck=QLatin1Literal("luck");
+const QString Map_loader::text_water=QLatin1Literal("water");
+const QString Map_loader::text_cave=QLatin1Literal("cave");
+const QString Map_loader::text_condition=QLatin1Literal("condition");
+const QString Map_loader::text_quest=QLatin1Literal("quest");
+const QString Map_loader::text_item=QLatin1Literal("item");
+const QString Map_loader::text_fightBot=QLatin1Literal("fightBot");
+const QString Map_loader::text_clan=QLatin1Literal("clan");
+const QString Map_loader::text_dottmx=QLatin1Literal(".tmx");
+const QString Map_loader::text_dotxml=QLatin1Literal(".xml");
+const QString Map_loader::text_slash=QLatin1Literal("/");
+const QString Map_loader::text_percent=QLatin1Literal("%");
+const QString Map_loader::text_data=QLatin1Literal("data");
+const QString Map_loader::text_dotcomma=QLatin1Literal(";");
 
 /// \todo put at walkable the tp on push
 
@@ -1076,7 +1076,16 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                 else if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==zoneId)
                                 {}//ignore, same zone
                                 else
-                                    DebugClass::debugConsole(QStringLiteral("Have already monster at %1,%2 for %3").arg(x).arg(y).arg(fileName));
+                                {
+                                    DebugClass::debugConsole(QStringLiteral("Have already monster at %1,%2 for %3, actual zone: %4 (%5), new zone: %6 (%7)")
+                                             .arg(x).arg(y).arg(fileName)
+                                             .arg(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
+                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer)
+                                             .arg(zoneId)
+                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer)
+                                            );
+                                    this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
+                                }
                             }
                             y++;
                         }
