@@ -6,6 +6,11 @@
 #include <iostream>
 #include <fcntl.h>
 
+#ifdef Q_OS_LINUX
+#include <netinet/tcp.h>
+#include <netdb.h>
+#endif
+
 using namespace CatchChallenger;
 
 ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
@@ -169,6 +174,32 @@ bool ConnectedSocket::isValid() const
     else if(tcpSocket!=NULL)
         return tcpSocket->isValid();
     return false;
+}
+
+void ConnectedSocket::setTcpCork(const bool &cork)
+{
+    #ifdef Q_OS_LINUX
+    if(sslSocket!=NULL)
+    {
+        const int &infd=sslSocket->socketDescriptor();
+        if(infd!=-1)
+        {
+            int state = cork;
+            if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                std::cerr << "Unable to apply tcp cork" << std::endl;
+        }
+    }
+    if(tcpSocket!=NULL)
+    {
+        const int &infd=tcpSocket->socketDescriptor();
+        if(infd!=-1)
+        {
+            int state = cork;
+            if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                std::cerr << "Unable to apply tcp cork" << std::endl;
+        }
+    }
+    #endif
 }
 
 QHostAddress ConnectedSocket::localAddress() const

@@ -1,4 +1,5 @@
 #include "MapItem.h"
+#include "PreparedLayer.h"
 #include "../ClientVariable.h"
 
 #include <QGraphicsPixmapItem>
@@ -9,7 +10,7 @@
 #include <QLabel>
 
 MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
-    : QGraphicsItem(parent)
+    : QGraphicsObject(parent)
 {
     setFlag(QGraphicsItem::ItemHasNoContents);
     //setCacheMode(QGraphicsItem::ItemCoordinateCache);just change direction without move do bug
@@ -17,7 +18,7 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     cache=useCache;
 }
 
-void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
+void MapItem::addMap(MapVisualiserThread::Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
     if(displayed_layer.contains(map))
     {
@@ -65,7 +66,8 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
                     temp->setPixmap(tempPixmap);
                     temp->show();
                     #endif
-                    graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
+                    graphicsItem=new PreparedLayer(tempMapObject,tempPixmap,this);
+                    connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap);
                     graphicsItem->setZValue(index-1);
                     displayed_layer.insert(map,graphicsItem);
                     image=QImage();
@@ -96,7 +98,8 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
             temp->setPixmap(tempPixmap);
             temp->show();
             #endif
-            graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
+            graphicsItem=new PreparedLayer(tempMapObject,tempPixmap,this);
+            connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap);
             graphicsItem->setZValue(index);
             displayed_layer.insert(map,graphicsItem);
         }

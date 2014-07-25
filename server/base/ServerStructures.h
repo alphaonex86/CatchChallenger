@@ -97,12 +97,6 @@ struct NormalServerSettings
     QString proxy;
     quint16 proxy_port;
     bool useSsl;
-
-    struct LinuxSettings
-    {
-        bool tcpCork;
-    };
-    LinuxSettings linuxSettings;
 };
 
 struct ServerSettings

@@ -55,7 +55,9 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/ExtraSocket.cpp \
     $$PWD/LocalListener.cpp \
     $$PWD/Audio.cpp \
-    $$PWD/interface/MapDoor.cpp
+    $$PWD/interface/MapDoor.cpp \
+    $$PWD/render/PreparedLayer.cpp \
+    ../base/render/MapMark.cpp
 
 HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/Api_client_real.h \
@@ -95,7 +97,9 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/LocalListener.h \
     $$PWD/DisplayStructures.h \
     $$PWD/Audio.h \
-    $$PWD/interface/MapDoor.h
+    $$PWD/interface/MapDoor.h \
+    $$PWD/render/PreparedLayer.h \
+    ../base/render/MapMark.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

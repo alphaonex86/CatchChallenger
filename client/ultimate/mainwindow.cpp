@@ -972,20 +972,6 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     {
         if(realSslSocket==NULL)
             CatchChallenger::Api_client_real::client->sendProtocol();
-        #ifdef Q_OS_LINUX
-        if(realSslSocket!=NULL)
-        {
-            const qintptr &socketDescriptor=realSslSocket->socketDescriptor();
-            if(socketDescriptor!=-1)
-            {
-                int state = 1;
-                if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                    qDebug() << QStringLiteral("Unable to apply tcp cork under linux");
-            }
-            /*else
-                qDebug() << QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux");*/
-        }
-        #endif
     }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
