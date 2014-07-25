@@ -58,6 +58,9 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
     else
     {
         paramToPassToCallBack << selectCharacterParam;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        paramToPassToCallBackType << QStringLiteral("SelectCharacterParam");
+        #endif
         callbackRegistred << callback;
     }
 }
@@ -66,7 +69,10 @@ void Client::selectCharacter_static(void *object)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
+    {
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
         abort();
+    }
     #endif
     SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.takeFirst());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -80,6 +86,13 @@ void Client::selectCharacter_static(void *object)
 
 void Client::selectCharacter_return(const quint8 &query_id,const quint32 &characterId)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("SelectCharacterParam"))
+    {
+        qDebug() << "is not SelectCharacterParam" << __LINE__;
+        abort();
+    }
+    #endif
     /*account(0),pseudo(1),skin(2),x(3),y(4),orientation(5),map(6),type(7),clan(8),cash(9),
     rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13),unvalidated_rescue_map(14),
     unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17),

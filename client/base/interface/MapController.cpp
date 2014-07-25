@@ -153,6 +153,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 
     CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)];
     botDisplay->mapObject=new Tiled::MapObject();
+    botDisplay->mapObject->setName("botDisplay");
     botDisplay->tileset=new Tiled::Tileset(MapController::text_bot,16,24);
     QString skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
     if(!QFile(skinPath).exists())
@@ -203,6 +204,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         if(parsedMap->logicalMap.shops.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("Shops");
             botDisplay->flags << flag;
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(2);
@@ -215,6 +217,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         if(parsedMap->logicalMap.learn.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("Learn");
             botDisplay->flags << flag;
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(3);
@@ -227,6 +230,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         /*if(parsedMap->logicalMap.clan.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("Clan");
             botDisplay->flags << flag;
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(7);
@@ -251,6 +255,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         if(parsedMap->logicalMap.market.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("Market");
             botDisplay->flags << flag;
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(4);
@@ -263,6 +268,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         if(parsedMap->logicalMap.zonecapture.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("Zonecapture");
             botDisplay->flags << flag;
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(6);
@@ -275,6 +281,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         /*if(parsedMap->logicalMap.industry.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("Industry");
             botDisplay->flags << flag;
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(8);
@@ -287,6 +294,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         /* asked by tgjklmda if(parsedMap->logicalMap.botsFight.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("botsFight");
             botDisplay->flags << flag;
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(5);

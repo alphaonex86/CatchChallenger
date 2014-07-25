@@ -29,6 +29,7 @@ public:
     QAbstractSocket::SocketError error() const;
     bool	flush();
     bool	isValid() const;
+    void    setTcpCork(const bool &cork);
     QHostAddress localAddress() const;
     quint16	localPort() const;
     QHostAddress peerAddress() const;

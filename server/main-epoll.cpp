@@ -68,7 +68,7 @@ void send_settings()
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
-    formatedServerNormalSettings.linuxSettings.tcpCork	= settings->value(QLatin1Literal("tcpCork")).toBool();
+    CommonSettings::commonSettings.tcpCork	= settings->value(QLatin1Literal("tcpCork")).toBool();
     settings->endGroup();
     #endif
 
@@ -364,7 +364,7 @@ int main(int argc, char *argv[])
     {
         const ServerSettings &formatedServerSettings=server->getSettings();
         const NormalServerSettings &formatedServerNormalSettings=server->getNormalSettings();
-        tcpCork=formatedServerNormalSettings.linuxSettings.tcpCork;
+        tcpCork=CommonSettings::commonSettings.tcpCork;
 
         if(!formatedServerNormalSettings.proxy.isEmpty())
         {
@@ -512,19 +512,11 @@ int main(int argc, char *argv[])
 
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
-                        #ifndef SERVERNOSSL
-                        EpollSslClient *epollClient=new EpollSslClient(infd,server->getCtx());
-                        #else
-                        EpollClient *epollClient=new EpollClient(infd);
-                        #endif
                         numberOfConnectedClient++;
 
                         int s = EpollSocket::make_non_blocking(infd);
                         if(s == -1)
-                        {
                             std::cerr << "unable to make to socket non blocking" << std::endl;
-                            delete epollClient;
-                        }
                         else
                         {
                             if(tcpCork)
