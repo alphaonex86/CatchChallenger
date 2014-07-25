@@ -3014,6 +3014,9 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             else
             {
                 paramToPassToCallBack << clanActionParam;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                paramToPassToCallBackType << QStringLiteral("ClanActionParam");
+                #endif
                 callbackRegistred << callback;
             }
             return;
@@ -3286,6 +3289,13 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
 
 void Client::addClan_static(void *object)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+    {
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        abort();
+    }
+    #endif
     ClanActionParam *clanActionParam=static_cast<ClanActionParam *>(paramToPassToCallBack.takeFirst());
     static_cast<Client *>(object)->addClan_return(clanActionParam->query_id,clanActionParam->action,clanActionParam->text);
     delete clanActionParam;
@@ -3294,6 +3304,13 @@ void Client::addClan_static(void *object)
 
 void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QString &text)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("ClanActionParam"))
+    {
+        qDebug() << "is not ClanActionParam" << __LINE__;
+        abort();
+    }
+    #endif
     callbackRegistred.removeFirst();
     Q_UNUSED(action);
     if(GlobalServerData::serverPrivateVariables.db.next())

@@ -50,5 +50,7 @@
         <file>images/background.jpg</file>
         <file>images/interface/player/background.jpg</file>
         <file>images/inventory/background.jpg</file>
+        <file>images/map/marker.png</file>
+        <file>images/map/block.png</file>
     </qresource>
 </RCC>
