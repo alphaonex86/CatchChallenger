@@ -59,11 +59,13 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     animationTileset=new Tiled::Tileset(QLatin1Literal("animation"),16,16);
     nextCurrentObject=new Tiled::MapObject();
     grassCurrentObject=new Tiled::MapObject();
+    grassCurrentObject->setName("grassCurrentObject");
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
 
     defaultTileset=QLatin1Literal("trainer");
     playerMapObject = new Tiled::MapObject();
+    grassCurrentObject->setName("playerMapObject");
 
     lastTileset=defaultTileset;
     playerTileset = new Tiled::Tileset(QLatin1Literal("player"),16,24);

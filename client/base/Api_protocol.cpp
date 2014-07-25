@@ -2684,10 +2684,19 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 in >> CommonSettings::commonSettings.forcedSpeed;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the forcedSpeed, line: %1").arg(__LINE__));
                     return;
                 }
                 in >> CommonSettings::commonSettings.useSP;
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the tcpCork, line: %1").arg(__LINE__));
+                    return;
+                }
+                in >> CommonSettings::commonSettings.tcpCork;
+                {
+                    socket->setTcpCork(CommonSettings::commonSettings.tcpCork);
+                }
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));

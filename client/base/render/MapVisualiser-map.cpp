@@ -124,7 +124,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
     {
         //display a new map now visible
         if(!mapItem->haveMap(tempMapObject->tiledMap))
-            mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
+            mapItem->addMap(tempMapObject,tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->relative_x_pixel,tempMapObject->relative_y_pixel);
         emit mapDisplayed(tempMapObject->logicalMap.map_file);
         //display the bot

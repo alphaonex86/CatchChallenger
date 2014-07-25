@@ -165,6 +165,9 @@ private:
 
     qint32 connected_players;//it's th last number of connected player send
     static QList<void *> paramToPassToCallBack;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    static QStringList paramToPassToCallBackType;
+    #endif
     static QList<quint8> selectCharacterQueryId;
 
     // for status

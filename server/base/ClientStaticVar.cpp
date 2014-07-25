@@ -53,6 +53,7 @@ int Client::privateChatDropNewValue=0;
 QList<quint16> Client::marketObjectIdList;
 
 QList<void *> Client::paramToPassToCallBack;
+QStringList Client::paramToPassToCallBackType;
 QList<quint8> Client::selectCharacterQueryId;
 
 QList<quint16> Client::simplifiedIdList;

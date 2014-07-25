@@ -10,6 +10,7 @@
 #include "../../tiled/tiled_orthogonalrenderer.h"
 #include "../../tiled/tiled_tilelayer.h"
 #include "../../tiled/tiled_tileset.h"
+#include "MapVisualiserThread.h"
 
 #ifndef MAPITEM_H
 #define MAPITEM_H
@@ -26,12 +27,14 @@
 #include <QPair>
 #include <QMultiMap>
 #include <QHash>
+#include <QGraphicsObject>
 
-class MapItem : public QGraphicsItem
+class MapItem : public QGraphicsObject
 {
+    Q_OBJECT
 public:
     MapItem(QGraphicsItem *parent = 0,const bool &useCache=true);
-    void addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex);
+    void addMap(MapVisualiserThread::Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex);
     bool haveMap(Tiled::Map *map);
     void removeMap(Tiled::Map *map);
     void setMapPosition(Tiled::Map *map, qint16 x, qint16 y);
@@ -40,6 +43,8 @@ public:
 private:
     QMultiMap<Tiled::Map *,QGraphicsItem *> displayed_layer;
     bool cache;
+signals:
+    void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);
 };
 
 #endif

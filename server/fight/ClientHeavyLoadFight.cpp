@@ -404,6 +404,9 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
         {
             callbackRegistred << callback;
             paramToPassToCallBack << selectIndexParam;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            paramToPassToCallBackType << QStringLiteral("SelectIndexParam");
+            #endif
         }
     }
 }
@@ -412,7 +415,10 @@ void Client::loadPlayerMonsterBuffs_static(void *object)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
+    {
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
         abort();
+    }
     #endif
     SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -425,6 +431,13 @@ void Client::loadPlayerMonsterBuffs_static(void *object)
 
 void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("SelectIndexParam"))
+    {
+        qDebug() << "is not SelectIndexParam" << __LINE__;
+        abort();
+    }
+    #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>(quint32)(public_and_private_informations.playerMonster.size()+public_and_private_informations.warehouse_playerMonster.size()))
         abort();
@@ -515,6 +528,9 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
         {
             callbackRegistred << callback;
             paramToPassToCallBack << selectIndexParam;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            paramToPassToCallBackType << QStringLiteral("SelectIndexParam");
+            #endif
         }
     }
 }
@@ -523,7 +539,10 @@ void Client::loadPlayerMonsterSkills_static(void *object)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
+    {
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
         abort();
+    }
     #endif
     SelectIndexParam *selectIndexParam=static_cast<SelectIndexParam *>(paramToPassToCallBack.takeFirst());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -536,6 +555,13 @@ void Client::loadPlayerMonsterSkills_static(void *object)
 
 void Client::loadPlayerMonsterSkills_return(const quint32 &index)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("SelectIndexParam"))
+    {
+        qDebug() << "is not SelectIndexParam" << __LINE__;
+        abort();
+    }
+    #endif
     callbackRegistred.removeFirst();
     PlayerMonster *playerMonster;
     if(index<(quint32)public_and_private_informations.playerMonster.size())

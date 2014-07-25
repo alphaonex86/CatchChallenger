@@ -23,7 +23,7 @@ EpollServer::EpollServer()
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
     #ifdef Q_OS_LINUX
-    normalServerSettings.linuxSettings.tcpCork                      = true;
+    CommonSettings::commonSettings.tcpCork                      = true;
     #endif
 }
 

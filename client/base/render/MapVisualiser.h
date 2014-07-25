@@ -4,6 +4,7 @@
 #include "MapItem.h"
 #include "MapObjectItem.h"
 #include "ObjectGroupItem.h"
+#include "MapMark.h"
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/CommonMap.h"
@@ -43,6 +44,7 @@ public:
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
     void setOpenGl(const bool &OpenGL);
+    void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);
 
     MapVisualiserThread::Map_full * getMap(QString map);
 
@@ -54,7 +56,7 @@ protected:
     QGraphicsScene *mScene;
     MapItem* mapItem;
 
-    Tiled::Tileset * tagTileset;
+    Tiled::Tileset * markPathFinding;
     int tagTilesetIndex;
 
     bool debugTags;
@@ -71,6 +73,7 @@ protected:
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
+    MapMark *mark;
 
     MapVisualiserThread mapVisualiserThread;
     QStringList asyncMap;

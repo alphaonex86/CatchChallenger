@@ -245,6 +245,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             if(!image.isNull())
             {
                 tempPlayer.playerMapObject = new Tiled::MapObject();
+                tempPlayer.playerMapObject->setName("Other player");
                 tempPlayer.playerTileset = new Tiled::Tileset(skinFolderList.at(player.skinId),16,24);
                 tempPlayer.playerTileset->loadFromImage(image,datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng);
             }
@@ -325,6 +326,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             if(!pix.isNull())
             {
                 tempPlayer.labelMapObject = new Tiled::MapObject();
+                tempPlayer.labelMapObject->setName("labelMapObject");
                 tempPlayer.labelTileset = new Tiled::Tileset(QString(),pix.width(),pix.height());
                 tempPlayer.labelTileset->addTile(pix);
                 Tiled::Cell cell=tempPlayer.labelMapObject->cell();

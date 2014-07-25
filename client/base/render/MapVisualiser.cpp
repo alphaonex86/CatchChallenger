@@ -11,11 +11,13 @@
 #include <QMessageBox>
 #include <QGLFormat>
 #include <QGLWidget>
+#include <QLabel>
 
 #include "../../general/base/MoveOnTheMap.h"
 
 MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    mScene(new QGraphicsScene(this))
+    mScene(new QGraphicsScene(this)),
+    mark(NULL)
 {
     qRegisterMetaType<MapVisualiserThread::Map_full *>("MapVisualiserThread::Map_full *");
 
@@ -43,6 +45,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     mShowFPS=false;
 
     mapItem=new MapItem(NULL,useCache);
+    connect(mapItem,&MapItem::eventOnMap,this,&MapVisualiser::eventOnMap);
 
     grass=NULL;
     grassOver=NULL;
@@ -50,9 +53,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setScene(mScene);
 /*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setDragMode(QGraphicsView::ScrollHandDrag);*/
-    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing
-                         | QGraphicsView::DontSavePainterState
-                         );
+    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing | QGraphicsView::DontSavePainterState);
     setBackgroundBrush(Qt::black);
     setFrameStyle(0);
 
@@ -63,10 +64,14 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setOpenGl(OpenGL);
 
     tagTilesetIndex=0;
-    tagTileset = new Tiled::Tileset(QStringLiteral("tags"),16,16);
-    tagTileset->loadFromImage(QImage(QStringLiteral(":/tags.png")),QStringLiteral(":/tags.png"));
-    mapVisualiserThread.tagTilesetIndex=tagTilesetIndex;
-    mapVisualiserThread.tagTileset=tagTileset;
+    markPathFinding=new Tiled::Tileset(QStringLiteral("mark path finding"),16,24);
+    {
+        QImage image(QStringLiteral(":/images/map/marker.png"));
+        if(image.isNull())
+            qDebug() << "Unable to load the image for marker because is null";
+        else if(!markPathFinding->loadFromImage(image,QStringLiteral(":/images/map/marker.png")))
+            qDebug() << "Unable to load the image for marker";
+    }
 
     mScene->addItem(mapItem);
     //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
@@ -87,6 +92,8 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
 
 MapVisualiser::~MapVisualiser()
 {
+    if(mark!=NULL)
+        delete mark;
     //remove the not used map
     /// \todo re-enable this
     /*QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
@@ -97,7 +104,6 @@ MapVisualiser::~MapVisualiser()
 
     //delete mapItem;
     //delete playerMapObject;
-    delete tagTileset;
 }
 
 void MapVisualiser::setOpenGl(const bool &OpenGL)
@@ -178,5 +184,37 @@ void MapVisualiser::setTargetFPS(int targetFPS)
         waitRenderTime=1000.0/(float)targetFPS;
         if(waitRenderTime<1)
             waitRenderTime=1;
+    }
+}
+
+void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y)
+{
+    if(event==CatchChallenger::MapEvent_SimpleClick)
+    {
+        if(mark!=NULL)
+            delete mark;
+        Tiled::MapObject *mapObject=new Tiled::MapObject();
+        mapObject->setName("Mark for path finding");
+        Tiled::Cell cell=mapObject->cell();
+        cell.tile=markPathFinding->tileAt(0);
+        if(cell.tile==NULL)
+            qDebug() << "Tile NULL before map mark contructor";
+        mapObject->setCell(cell);
+        mapObject->setPosition(QPointF(x,y+1));
+        mark=new MapMark(mapObject);
+        ObjectGroupItem::objectGroupLink.value(tempMapObject->objectGroup)->addObject(mapObject);
+        const QList<Tiled::MapObject*> &objects=tempMapObject->objectGroup->objects();
+        int index=0;
+        while(index<objects.size())
+        {
+            qDebug() << "MapVisualiser::eventOnMap"
+                     << objects.at(index)->name()
+                     << objects.at(index)->x()
+                     << objects.at(index)->y()
+                     << objects.at(index)->type()
+                     << objects.at(index)->width()
+                     << objects.at(index)->height();
+            index++;
+        }
     }
 }
