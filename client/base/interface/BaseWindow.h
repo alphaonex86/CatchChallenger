@@ -278,6 +278,7 @@ private slots:
     void finalFightTextQuit();
     void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     void doNextAction();
+    void pageChanged();
     void displayAttack();
     bool displayFirstAttackText(bool firstText);
     void displayText(const QString &text);
