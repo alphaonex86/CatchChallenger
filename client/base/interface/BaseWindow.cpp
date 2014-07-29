@@ -136,6 +136,8 @@ BaseWindow::BaseWindow() :
     connect(&displayExpTimer,               &QTimer::timeout,                       this,&BaseWindow::displayExperienceGain);
     connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap);
     connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
+    connect(ui->stackedWidget,              &QStackedWidget::currentChanged,        this,&BaseWindow::pageChanged);
+
 
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::error);

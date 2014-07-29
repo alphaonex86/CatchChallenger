@@ -476,12 +476,21 @@ void Client::character_return(const quint8 &query_id)
                         {
                             if(characterEntry.mapId>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
                             {
-                                normalOutput(QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                                normalOutput(QStringLiteral("character return map id out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
                                 characterEntry.mapId=0;
-                                ok=true;
+                                ok=false;
                             }
                             else
-                                characterEntry.mapId=GlobalServerData::serverPrivateVariables.dictionary_map.at(characterEntry.mapId)->id;
+                            {
+                                if(GlobalServerData::serverPrivateVariables.dictionary_map.at(characterEntry.mapId)==NULL)
+                                {
+                                    normalOutput(QStringLiteral("character return map id not resolved: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                                    characterEntry.mapId=0;
+                                    ok=false;
+                                }
+                                else
+                                    characterEntry.mapId=GlobalServerData::serverPrivateVariables.dictionary_map.at(characterEntry.mapId)->id;
+                            }
                         }
                         if(ok)
                             characterEntryList << characterEntry;
