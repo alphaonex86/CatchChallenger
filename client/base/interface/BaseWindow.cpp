@@ -549,7 +549,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
     }
 }
 
-void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const quint32 &quantity)
+void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const quint32 &quantity)
 {
     inSelection=false;
     ObjectType tempWaitedObjectType=waitedObjectType;
@@ -628,6 +628,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 {
                     showTip(tr("Using %1 on %2").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monsterUniqueId).name));
                     CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
+                    load_monsters();
                 }
                 else
                 {
@@ -692,7 +693,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             CatchChallenger::Api_client_real::client->putMarketObject(itemId,quantity,getPrice.price());
             marketPutCashInSuspend=getPrice.price();
             remove_to_inventory(itemId,quantity);
-            QPair<quint32,quint32> pair;
+            QPair<quint16,quint32> pair;
             pair.first=itemId;
             pair.second=quantity;
             marketPutObjectInSuspendList << pair;
@@ -906,6 +907,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         {
             ui->inventoryUse->setText(tr("Select"));
             ui->stackedWidget->setCurrentWidget(ui->page_battle);
+            load_inventory();
             if(!ok)
                 break;
             if(!items.contains(itemId))
@@ -919,7 +921,16 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 break;
             }
             remove_to_inventory(itemId);
-            useTrap(itemId);
+            if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.contains(itemId))
+                useTrap(itemId);
+            else if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(itemId))
+            {
+                const quint32 &monsterUniqueId=ClientFightEngine::fightEngine.getCurrentMonster()->monster;
+                CatchChallenger::Api_client_real::client->useObjectOnMonster(itemId,monsterUniqueId);
+                ClientFightEngine::fightEngine.useObjectOnMonster(itemId,monsterUniqueId);
+            }
+            else
+                error("Select a buggy object");
         }
         break;
         default:

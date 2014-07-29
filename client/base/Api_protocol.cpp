@@ -1382,19 +1382,19 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         //item
                         case 0x02:
                         {
-                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint16)))
                             {
                                 parseError(QStringLiteral("Procotol wrong or corrupted"),"wrong remaining size for trade add item id");
                                 return;
                             }
-                            quint32 item;
+                            quint16 item;
                             in >> item;
-                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint16)))
                             {
                                 parseError(QStringLiteral("Procotol wrong or corrupted"),"wrong remaining size for trade add item quantity");
                                 return;
                             }
-                            quint32 quantity;
+                            quint16 quantity;
                             in >> quantity;
                             tradeAddTradeObject(item,quantity);
                         }
@@ -1926,7 +1926,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                                         return;
                                     break;
                                 }
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                                 {
                                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                                     return;
@@ -1936,7 +1936,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                                 while(index<buffListSize)
                                 {
                                     PlayerBuff buff;
-                                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                                     {
                                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                                         return;
@@ -1963,7 +1963,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                                 }
                                 in >> tempuint;
                                 tempAttackReturn.on_current_monster=(tempuint!=0x00);
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)))
                                 {
                                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                                     return;
@@ -2106,7 +2106,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                             return;
                         break;
                     }
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
@@ -2116,7 +2116,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                     while(index<buffListSize)
                     {
                         PlayerBuff buff;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                             return;
@@ -3525,7 +3525,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         in >> sub_size16;
                         while(index<sub_size16)
                         {
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                             {
                                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                                 return;
@@ -3648,7 +3648,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                 //Use object
                 case 0x0009:
                 {
-                    quint32 item=lastObjectUsed.first();
+                    quint16 item=lastObjectUsed.first();
                     lastObjectUsed.removeFirst();
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
@@ -3687,18 +3687,18 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                 //Get shop list
                 case 0x000A:
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    quint32 shopListSize;
+                    quint16 shopListSize;
                     in >> shopListSize;
                     quint32 index=0;
                     QList<ItemToSellOrBuy> items;
                     while(index<shopListSize)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*3))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*2+sizeof(quint16)))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                             return;
@@ -3797,14 +3797,14 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    quint32 shopListSize;
+                    quint16 shopListSize;
                     quint32 index;
                     in >> shopListSize;
                     index=0;
                     QList<ItemToSellOrBuy> resources;
                     while(index<shopListSize)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*3))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*2+sizeof(quint16)))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                             return;
@@ -3816,7 +3816,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         resources << item;
                         index++;
                     }
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
@@ -3826,7 +3826,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     QList<ItemToSellOrBuy> products;
                     while(index<shopListSize)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*3))
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*2+sizeof(quint16)))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                             return;
@@ -4821,7 +4821,7 @@ void Api_protocol::monsterMoveDown(const quint8 &number)
 }
 
 //inventory
-void Api_protocol::destroyObject(const quint32 &object, const quint32 &quantity)
+void Api_protocol::destroyObject(const quint16 &object, const quint32 &quantity)
 {
     if(!is_logged)
     {
@@ -4841,7 +4841,7 @@ void Api_protocol::destroyObject(const quint32 &object, const quint32 &quantity)
     is_logged=character_selected=packFullOutcommingData(0x50,0x0002,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::useObject(const quint32 &object)
+void Api_protocol::useObject(const quint16 &object)
 {
     if(!is_logged)
     {
@@ -4861,7 +4861,7 @@ void Api_protocol::useObject(const quint32 &object)
     lastObjectUsed << object;
 }
 
-void Api_protocol::useObjectOnMonster(const quint32 &object,const quint32 &monster)
+void Api_protocol::useObjectOnMonster(const quint16 &object,const quint32 &monster)
 {
     if(!is_logged)
     {
@@ -4882,7 +4882,7 @@ void Api_protocol::useObjectOnMonster(const quint32 &object,const quint32 &monst
 }
 
 
-void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint16,qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
 {
     if(!is_logged)
     {
@@ -4899,11 +4899,11 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,
     out.setVersion(QDataStream::Qt_4_4);
     out << cash;
 
-    out << (quint32)items.size();
+    out << (quint16)items.size();
     int index=0;
     while(index<items.size())
     {
-        out << (quint32)items.at(index).first;
+        out << (quint16)items.at(index).first;
         out << (qint32)items.at(index).second;
         index++;
     }
@@ -4941,7 +4941,7 @@ void Api_protocol::getShopList(const quint32 &shopId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)shopId;
+    out << (quint16)shopId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000A,queryNumber(),outputData.constData(),outputData.size());
 }
 
@@ -4960,8 +4960,8 @@ void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)shopId;
-    out << (quint32)objectId;
+    out << (quint16)shopId;
+    out << (quint16)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000B,queryNumber(),outputData.constData(),outputData.size());
@@ -4982,14 +4982,14 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)shopId;
-    out << (quint32)objectId;
+    out << (quint16)shopId;
+    out << (quint16)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000C,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::getFactoryList(const quint32 &factoryId)
+void Api_protocol::getFactoryList(const quint16 &factoryId)
 {
     if(!is_logged)
     {
@@ -5004,11 +5004,11 @@ void Api_protocol::getFactoryList(const quint32 &factoryId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)factoryId;
+    out << (quint16)factoryId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000D,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::buyFactoryProduct(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::buyFactoryProduct(const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
 {
     if(!is_logged)
     {
@@ -5023,14 +5023,14 @@ void Api_protocol::buyFactoryProduct(const quint32 &factoryId,const quint32 &obj
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)factoryId;
-    out << (quint32)objectId;
+    out << (quint16)factoryId;
+    out << (quint16)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000E,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::sellFactoryResource(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::sellFactoryResource(const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
 {
     if(!is_logged)
     {
@@ -5045,8 +5045,8 @@ void Api_protocol::sellFactoryResource(const quint32 &factoryId,const quint32 &o
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)factoryId;
-    out << (quint32)objectId;
+    out << (quint16)factoryId;
+    out << (quint16)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x000F,queryNumber(),outputData.constData(),outputData.size());
@@ -5097,7 +5097,7 @@ void Api_protocol::requestFight(const quint32 &fightId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)fightId;
+    out << (quint16)fightId;
     is_logged=character_selected=packFullOutcommingData(0x60,0x0007,outputData.constData(),outputData.size());
 }
 
@@ -5120,7 +5120,7 @@ void Api_protocol::changeOfMonsterInFight(const quint32 &monsterId)
     is_logged=character_selected=packFullOutcommingData(0x60,0x0009,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::useSkill(const quint32 &skill)
+void Api_protocol::useSkill(const quint16 &skill)
 {
     if(!is_logged)
     {
@@ -5135,11 +5135,11 @@ void Api_protocol::useSkill(const quint32 &skill)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)skill;
+    out << (quint16)skill;
     is_logged=character_selected=packOutcommingData(0x61,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::learnSkill(const quint32 &monsterId,const quint32 &skill)
+void Api_protocol::learnSkill(const quint32 &monsterId,const quint16 &skill)
 {
     if(!is_logged)
     {
@@ -5155,7 +5155,7 @@ void Api_protocol::learnSkill(const quint32 &monsterId,const quint32 &skill)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)monsterId;
-    out << (quint32)skill;
+    out << (quint16)skill;
     is_logged=character_selected=packFullOutcommingData(0x60,0x0004,outputData.constData(),outputData.size());
 }
 
@@ -5549,7 +5549,7 @@ void Api_protocol::collectMaturePlant()
 }
 
 //crafting
-void Api_protocol::useRecipe(const quint32 &recipeId)
+void Api_protocol::useRecipe(const quint16 &recipeId)
 {
     if(!is_logged)
     {
@@ -5564,11 +5564,11 @@ void Api_protocol::useRecipe(const quint32 &recipeId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)recipeId;
+    out << (quint16)recipeId;
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x0008,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::addRecipe(const quint32 &recipeId)
+void Api_protocol::addRecipe(const quint16 &recipeId)
 {
     player_informations.recipes << recipeId;
 }
@@ -5746,7 +5746,7 @@ void Api_protocol::addTradeCash(const quint64 &cash)
     is_logged=character_selected=packFullOutcommingData(0x50,0x0003,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::addObject(const quint32 &item,const quint32 &quantity)
+void Api_protocol::addObject(const quint16 &item, const quint32 &quantity)
 {
     if(!is_logged)
     {

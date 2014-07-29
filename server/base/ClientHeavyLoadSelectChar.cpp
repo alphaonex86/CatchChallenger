@@ -60,6 +60,7 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
         paramToPassToCallBack << selectCharacterParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("SelectCharacterParam");
+        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -67,10 +68,17 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
 
 void Client::selectCharacter_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->selectCharacter_object();
+    GlobalServerData::serverPrivateVariables.db.clear();
+}
+
+void Client::selectCharacter_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -79,7 +87,7 @@ void Client::selectCharacter_static(void *object)
     if(selectCharacterParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->selectCharacter_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
+    selectCharacter_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
     delete selectCharacterParam;
     GlobalServerData::serverPrivateVariables.db.clear();
 }
@@ -89,7 +97,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("SelectCharacterParam"))
     {
-        qDebug() << "is not SelectCharacterParam" << __LINE__;
+        qDebug() << "is not SelectCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -688,7 +696,8 @@ void Client::loginIsRightFinalStep()
 
 void Client::selectClan_static(void *object)
 {
-    static_cast<Client *>(object)->selectClan_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->selectClan_return();
     GlobalServerData::serverPrivateVariables.db.clear();
 }
 
@@ -749,7 +758,8 @@ void Client::loadPlayerAllow()
 
 void Client::loadPlayerAllow_static(void *object)
 {
-    static_cast<Client *>(object)->loadPlayerAllow_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadPlayerAllow_return();
 }
 
 void Client::loadPlayerAllow_return()

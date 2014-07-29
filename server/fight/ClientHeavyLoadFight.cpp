@@ -31,7 +31,8 @@ void Client::loadMonsters()
 
 void Client::loadMonsters_static(void *object)
 {
-    static_cast<Client *>(object)->loadMonsters_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadMonsters_return();
 }
 
 void Client::loadMonsters_return()
@@ -206,7 +207,8 @@ void Client::loadMonstersWarehouse()
 
 void Client::loadMonstersWarehouse_static(void *object)
 {
-    static_cast<Client *>(object)->loadMonstersWarehouse_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadMonstersWarehouse_return();
 }
 
 void Client::loadMonstersWarehouse_return()
@@ -406,6 +408,7 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
             paramToPassToCallBack << selectIndexParam;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             paramToPassToCallBackType << QStringLiteral("SelectIndexParam");
+            qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
             #endif
         }
     }
@@ -413,10 +416,16 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
 
 void Client::loadPlayerMonsterBuffs_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadPlayerMonsterBuffs_object();
+}
+
+void Client::loadPlayerMonsterBuffs_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -425,7 +434,7 @@ void Client::loadPlayerMonsterBuffs_static(void *object)
     if(selectIndexParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->loadPlayerMonsterBuffs_return(selectIndexParam->index);
+    loadPlayerMonsterBuffs_return(selectIndexParam->index);
     delete selectIndexParam;
 }
 
@@ -434,7 +443,7 @@ void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("SelectIndexParam"))
     {
-        qDebug() << "is not SelectIndexParam" << __LINE__;
+        qDebug() << "is not SelectIndexParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -530,6 +539,7 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
             paramToPassToCallBack << selectIndexParam;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             paramToPassToCallBackType << QStringLiteral("SelectIndexParam");
+            qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
             #endif
         }
     }
@@ -537,10 +547,16 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
 
 void Client::loadPlayerMonsterSkills_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadPlayerMonsterSkills_object();
+}
+
+void Client::loadPlayerMonsterSkills_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -549,7 +565,7 @@ void Client::loadPlayerMonsterSkills_static(void *object)
     if(selectIndexParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->loadPlayerMonsterSkills_return(selectIndexParam->index);
+    loadPlayerMonsterSkills_return(selectIndexParam->index);
     delete selectIndexParam;
 }
 
@@ -558,7 +574,7 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("SelectIndexParam"))
     {
-        qDebug() << "is not SelectIndexParam" << __LINE__;
+        qDebug() << "is not SelectIndexParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -670,7 +686,8 @@ void Client::loadBotAlreadyBeaten()
 
 void Client::loadBotAlreadyBeaten_static(void *object)
 {
-    static_cast<Client *>(object)->loadBotAlreadyBeaten_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadBotAlreadyBeaten_return();
 }
 
 void Client::loadBotAlreadyBeaten_return()

@@ -23,6 +23,8 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<QList<QPair<quint8,CatchChallenger::Direction> > >("QList<QPair<quint8,CatchChallenger::Direction> >");
+    qRegisterMetaType<QList<MapVisualiserThread::Map_full> >("QList<MapVisualiserThread::Map_full>");
+    qRegisterMetaType<QList<QPair<CatchChallenger::Direction,quint8> > >("QList<QPair<CatchChallenger::Direction,quint8> >");
 
     playerpseudofont=QFont("Arial");
     playerpseudofont.setPixelSize(14);
@@ -35,6 +37,12 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
 
 MapControllerMP::~MapControllerMP()
 {
+    int index=0;
+    while(index<pathFindingList.size())
+    {
+        delete pathFindingList.at(index);
+        index++;
+    }
 }
 
 void MapControllerMP::connectAllSignals()
@@ -1526,4 +1534,53 @@ void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
             ++i;
     }
     MapVisualiser::destroyMap(map);
+}
+
+void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y)
+{
+    if(event==CatchChallenger::MapEvent_SimpleClick)
+    {
+        MapVisualiser::eventOnMap(event,tempMapObject,x,y);
+        if(!pathFindingList.isEmpty())
+            pathFindingList.last()->cancel();
+        PathFinding *pathFinding=new PathFinding;
+        pathFindingList << pathFinding;
+        QList<MapVisualiserThread::Map_full> mapList;
+        QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+        while (i != all_map.constEnd()) {
+            if(i.value()->displayed)
+                mapList << *i.value();
+            ++i;
+        }
+        pathFindingList.last()->searchPath(mapList);
+    }
+}
+
+void MapControllerMP::pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8>> path)
+{
+    PathFinding *pathFinding=qobject_cast<PathFinding *>(QObject::sender());
+    if(pathFinding==NULL)
+        return;
+    int index=0;
+    while(index<pathFindingList.size())
+    {
+        if(pathFinding==pathFindingList.at(index))
+        {
+            delete pathFinding;
+            pathFindingList.removeAt(index);
+            if(index==pathFindingList.size() && !path.isEmpty())
+            {
+                //take care of the returned data
+            }
+            return;
+        }
+        index++;
+    }
+}
+
+void MapControllerMP::keyPressParse()
+{
+    if(!pathFindingList.isEmpty())
+        pathFindingList.last()->cancel();
+    MapVisualiserPlayerWithFight::keyPressParse();
 }

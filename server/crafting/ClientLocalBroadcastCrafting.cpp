@@ -173,14 +173,14 @@ void Client::seedValidated()
     plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds;
     plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
-    const QString &map_file=plant_list_in_waiting.first().map->map_file;
+    const quint32 &map_database_id=static_cast<MapServer *>(plant_list_in_waiting.first().map)->reverse_db_id;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+            dbQueryWrite(QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,%2,%3,%4,%5,%6,%7);")
                          .arg(plantOnMap.id)
-                         .arg(map_file)
+                         .arg(map_database_id)
                          .arg(plantOnMap.x)
                          .arg(plantOnMap.y)
                          .arg(plantOnMap.plant)
@@ -189,9 +189,9 @@ void Client::seedValidated()
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);")
                      .arg(plantOnMap.id)
-                     .arg(map_file)
+                     .arg(map_database_id)
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)
@@ -200,9 +200,9 @@ void Client::seedValidated()
                      );
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,'%2',%3,%4,%5,%6,%7);")
+            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);")
                      .arg(plantOnMap.id)
-                     .arg(map_file)
+                     .arg(map_database_id)
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)

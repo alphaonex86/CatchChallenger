@@ -57,7 +57,8 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/Audio.cpp \
     $$PWD/interface/MapDoor.cpp \
     $$PWD/render/PreparedLayer.cpp \
-    ../base/render/MapMark.cpp
+    $$PWD/render/MapMark.cpp \
+    $$PWD/interface/PathFinding.cpp
 
 HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/Api_client_real.h \
@@ -99,7 +100,8 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/Audio.h \
     $$PWD/interface/MapDoor.h \
     $$PWD/render/PreparedLayer.h \
-    ../base/render/MapMark.h
+    $$PWD/render/MapMark.h \
+    $$PWD/interface/PathFinding.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
