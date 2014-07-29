@@ -106,7 +106,7 @@ Client::~Client()
         int index=0;
         while(index<callbackRegistred.size())
         {
-            callbackRegistred.at(index)->method=NULL;
+            callbackRegistred.at(index)->object=NULL;
             index++;
         }
     }

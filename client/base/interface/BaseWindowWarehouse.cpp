@@ -241,10 +241,10 @@ void BaseWindow::on_toolButton_quit_warehouse_clicked()
 void BaseWindow::on_warehouseValidate_clicked()
 {
     {
-        QList<QPair<quint32,qint32> > change_warehouse_items_list;
+        QList<QPair<quint16,qint32> > change_warehouse_items_list;
         QHash<quint16,qint32>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
-            change_warehouse_items_list << QPair<quint32,qint32>(i.key(),i.value());
+            change_warehouse_items_list << QPair<quint16,qint32>(i.key(),i.value());
             ++i;
         }
         CatchChallenger::Api_client_real::client->wareHouseStore(temp_warehouse_cash,change_warehouse_items_list,monster_to_withdraw,monster_to_deposit);
