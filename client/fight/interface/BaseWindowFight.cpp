@@ -1680,6 +1680,12 @@ void BaseWindow::doNextAction()
     return;
 }
 
+void BaseWindow::pageChanged()
+{
+    if(ui->stackedWidget->currentWidget()==ui->page_map)
+        MapController::mapController->setFocus();
+}
+
 bool BaseWindow::displayFirstAttackText(bool firstText)
 {
     PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
