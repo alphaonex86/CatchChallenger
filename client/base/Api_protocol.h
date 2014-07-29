@@ -250,8 +250,8 @@ public:
     void useSeed(const quint8 &plant_id);
     void collectMaturePlant();
     //crafting
-    void useRecipe(const quint32 &recipeId);
-    void addRecipe(const quint32 &recipeId);
+    void useRecipe(const quint16 &recipeId);
+    void addRecipe(const quint16 &recipeId);
 
     //trade
     void tradeRefused();
@@ -259,7 +259,7 @@ public:
     void tradeCanceled();
     void tradeFinish();
     void addTradeCash(const quint64 &cash);
-    void addObject(const quint32 &item,const quint32 &quantity);
+    void addObject(const quint16 &item,const quint32 &quantity);
     void addMonster(const quint32 &monsterId);
 
     //battle
@@ -267,10 +267,10 @@ public:
     void battleAccepted();
 
     //inventory
-    void destroyObject(const quint32 &object,const quint32 &quantity=1);
-    void useObject(const quint32 &object);
-    void useObjectOnMonster(const quint32 &object,const quint32 &monster);
-    void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
+    void destroyObject(const quint16 &object,const quint32 &quantity=1);
+    void useObject(const quint16 &object);
+    void useObjectOnMonster(const quint16 &object,const quint32 &monster);
+    void wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
 
     //shop
     void getShopList(const quint32 &shopId);
@@ -278,19 +278,19 @@ public:
     void sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
 
     //factory
-    void getFactoryList(const quint32 &factoryId);
-    void buyFactoryProduct(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellFactoryResource(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void getFactoryList(const quint16 &factoryId);
+    void buyFactoryProduct(const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellFactoryResource(const quint16 &factoryId, const quint16 &objectId, const quint32 &quantity, const quint32 &price);
 
     //fight
     void tryEscape();
-    void useSkill(const quint32 &skill);
+    void useSkill(const quint16 &skill);
     void heal();
     void requestFight(const quint32 &fightId);
     void changeOfMonsterInFight(const quint32 &monsterId);
 
     //monster
-    void learnSkill(const quint32 &monsterId,const quint32 &skill);
+    void learnSkill(const quint32 &monsterId, const quint16 &skill);
     void monsterMoveDown(const quint8 &number);
     void monsterMoveUp(const quint8 &number);
     void confirmEvolution(const quint32 &monterId);

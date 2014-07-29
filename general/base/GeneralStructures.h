@@ -606,7 +606,7 @@ struct Skill
         AttackReturnCase attackReturnCase;
         //normal attack
         bool success;
-        quint32 attack;
+        quint16 attack;
         QList<BuffEffect> addBuffEffectMonster,removeBuffEffectMonster;
         QList<LifeEffectReturn> lifeEffectMonster;
         QList<LifeEffectReturn> buffLifeEffectMonster;
@@ -615,7 +615,7 @@ struct Skill
         PublicPlayerMonster publicPlayerMonster;
         //use objet on monster if item!=0
         bool on_current_monster;
-        quint32 item;
+        quint16 item;
     };
     struct Buff
     {

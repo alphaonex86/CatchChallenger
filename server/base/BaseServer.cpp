@@ -622,11 +622,14 @@ void BaseServer::preload_dictionary_map_return()
             static_cast<MapServer *>(i.value())->reverse_db_id=lastId;
         }
     }
-    preload_dictionary_reputation();
+    plant_on_the_map=0;
+    preload_the_plant_on_map();
 }
 
 void BaseServer::preload_dictionary_reputation()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL plant on map").arg(plant_on_the_map));
+
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -819,7 +822,7 @@ void BaseServer::preload_dictionary_skin_return()
             GlobalServerData::serverPrivateVariables.dictionary_skin_reverse[i.value()]=lastId;
         }
     }
-    preload_finish();
+    preload_profile();
 }
 
 void BaseServer::preload_profile()
@@ -882,6 +885,7 @@ void BaseServer::preload_profile()
         GlobalServerData::serverPrivateVariables.serverProfileList << serverProfile;
         index++;
     }
+    preload_finish();
 }
 
 void BaseServer::preload_zone()
@@ -2166,8 +2170,6 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
 
 void BaseServer::preload_finish()
 {
-    preload_profile();
-
     DebugClass::debugConsole(QStringLiteral("%1 SQL market item").arg(GlobalServerData::serverPrivateVariables.marketItemList.size()));
     qDebug() << QStringLiteral("Loaded the server SQL datapack into %1ms").arg(timeDatapack.elapsed());
 }
@@ -2942,8 +2944,6 @@ void BaseServer::loadAndFixSettings()
 
 void BaseServer::load_clan_max_id()
 {
-    DebugClass::debugConsole(QStringLiteral("%1 SQL plant on map").arg(plant_on_the_map));
-
     GlobalServerData::serverPrivateVariables.maxClanId=0;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)

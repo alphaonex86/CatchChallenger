@@ -16,6 +16,9 @@ class PreparedLayer : public QObject, public QGraphicsPixmapItem
 public:
     explicit PreparedLayer(MapVisualiserThread::Map_full * tempMapObject,QGraphicsItem *parent = 0);
     explicit PreparedLayer(MapVisualiserThread::Map_full * tempMapObject,const QPixmap &pixmap, QGraphicsItem *parent = 0);
+    void hoverMoveEvent(QGraphicsSceneMouseEvent * event);
+    void hoverEnterEvent(QGraphicsSceneMouseEvent * event);
+    void hoverLeaveEvent(QGraphicsSceneMouseEvent * event);
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event);
     void mousePressEvent(QGraphicsSceneMouseEvent * event);
     void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);

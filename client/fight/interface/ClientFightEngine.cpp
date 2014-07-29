@@ -224,6 +224,11 @@ bool ClientFightEngine::internalTryEscape()
 
 void ClientFightEngine::tryCatchClient(const quint32 &item)
 {
+    if(wildMonsters.isEmpty())
+    {
+        error("Try catch when not with wild");
+        return;
+    }
     emit message("ClientFightEngine::tryCapture(): emit tryCapture()");
     CatchChallenger::Api_client_real::client->useObject(item);
     PlayerMonster newMonster;

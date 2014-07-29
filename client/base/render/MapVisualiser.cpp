@@ -203,18 +203,7 @@ void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThre
         mapObject->setPosition(QPointF(x,y+1));
         mark=new MapMark(mapObject);
         ObjectGroupItem::objectGroupLink.value(tempMapObject->objectGroup)->addObject(mapObject);
-        const QList<Tiled::MapObject*> &objects=tempMapObject->objectGroup->objects();
-        int index=0;
-        while(index<objects.size())
-        {
-            qDebug() << "MapVisualiser::eventOnMap"
-                     << objects.at(index)->name()
-                     << objects.at(index)->x()
-                     << objects.at(index)->y()
-                     << objects.at(index)->type()
-                     << objects.at(index)->width()
-                     << objects.at(index)->height();
-            index++;
-        }
+        if(MapObjectItem::objectLink.contains(mapObject))
+            MapObjectItem::objectLink.value(mapObject)->setZValue(9999);
     }
 }

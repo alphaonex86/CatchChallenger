@@ -142,8 +142,7 @@ void BaseServer::load_monsters_market_max_id()
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         abort();//stop because can't do the first db access
-        plant_on_the_map=0;
-        preload_the_plant_on_map();
+        load_clan_max_id();
     }
     return;
 }
@@ -168,8 +167,7 @@ void BaseServer::load_monsters_market_max_id_return()
             if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
                 GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
     }
-    plant_on_the_map=0;
-    preload_the_plant_on_map();
+    load_clan_max_id();
 }
 
 QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters)

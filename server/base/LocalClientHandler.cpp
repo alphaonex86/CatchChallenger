@@ -226,10 +226,10 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     if(public_and_private_informations.clan>0)
         sendClanInfo();
 
-    CommonFightEngine::updateCanDoFight();
-    if(CommonFightEngine::getAbleToFight())
+    updateCanDoFight();
+    if(getAbleToFight())
         botFightCollision(map,x,y);
-    else if(CommonFightEngine::haveMonsters())
+    else if(haveMonsters())
         checkLoose();
 
     int index=0;
@@ -339,7 +339,7 @@ bool Client::singleMove(const Direction &direction)
     }
     #endif
 
-    if(CommonFightEngine::isInFight())//check if is in fight
+    if(isInFight())//check if is in fight
     {
         errorOutput(QStringLiteral("error: try move when is in fight"));
         return false;
@@ -448,7 +448,7 @@ bool Client::singleMove(const Direction &direction)
                 index++;
             }
         }
-        if(CommonFightEngine::generateWildFightIfCollision(map,x,y,public_and_private_informations.items,mergedEvents))
+        if(generateWildFightIfCollision(map,x,y,public_and_private_informations.items,mergedEvents))
         {
             normalOutput(QStringLiteral("Client::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
             return true;
@@ -482,7 +482,7 @@ void Client::addObjectAndSend(const quint16 &item,const quint32 &quantity)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)1;
+    out << (quint16)1;
     out << (quint16)item;
     out << (quint32)quantity;
     sendFullPacket(0xD0,0x0002,outputData);
@@ -950,7 +950,7 @@ void Client::removeWarehouseCash(const quint64 &cash)
     }
 }
 
-void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
 {
     if(!wareHouseStoreCheck(cash,items,withdrawMonsters,depositeMonsters))
         return;
@@ -958,7 +958,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint3
         int index=0;
         while(index<items.size())
         {
-            const QPair<quint32, qint32> &item=items.at(index);
+            const QPair<quint16, qint32> &item=items.at(index);
             if(item.second>0)
             {
                 removeWarehouseObject(item.first,item.second);
@@ -1184,7 +1184,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint3
             saveMonsterStat(public_and_private_informations.playerMonster.last());
 }
 
-bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
 {
     //check all
     if((cash>0 && (qint64)public_and_private_informations.warehouse_cash<cash) || (cash<0 && (qint64)public_and_private_informations.cash<-cash))
@@ -1196,7 +1196,7 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint32, 
         int index=0;
         while(index<items.size())
         {
-            const QPair<quint32, qint32> &item=items.at(index);
+            const QPair<quint16, qint32> &item=items.at(index);
             if(item.second>0)
             {
                 if(!public_and_private_informations.warehouse_items.contains(item.first))
@@ -1524,7 +1524,7 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
             receiveSystemText(QStringLiteral("The other player can't fight"));
             return;
         }
-        if(!CommonFightEngine::getAbleToFight())
+        if(!getAbleToFight())
         {
             receiveSystemText(QStringLiteral("You can't fight"));
             return;
@@ -1534,7 +1534,7 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
             receiveSystemText(QStringLiteral("The other player is in fight"));
             return;
         }
-        if(CommonFightEngine::isInFight())
+        if(isInFight())
         {
             receiveSystemText(QStringLiteral("You are in fight"));
             return;
@@ -1598,7 +1598,7 @@ void Client::removeFirstEventInQueue()
         oldEvents.time=QDateTime::currentDateTime();
 }
 
-bool Client::learnSkill(const quint32 &monsterId,const quint32 &skill)
+bool Client::learnSkill(const quint32 &monsterId, const quint16 &skill)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("learnSkill(%1,%2)").arg(monsterId).arg(skill));
@@ -1767,17 +1767,17 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
     //use trap into fight
     else if(CommonDatapack::commonDatapack.items.trap.contains(itemId))
     {
-        if(!CommonFightEngine::isInFight())
+        if(!isInFight())
         {
             errorOutput(QStringLiteral("is not in fight to use trap: %1").arg(itemId));
             return;
         }
-        if(!CommonFightEngine::isInFightWithWild())
+        if(!isInFightWithWild())
         {
             errorOutput(QStringLiteral("is not in fight with wild to use trap: %1").arg(itemId));
             return;
         }
-        const quint32 &maxMonsterId=CommonFightEngine::tryCapture(itemId);
+        const quint32 &maxMonsterId=tryCapture(itemId);
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1846,7 +1846,7 @@ Direction Client::lookToMove(const Direction &direction)
     }
 }
 
-void Client::getShopList(const quint32 &query_id,const quint32 &shopId)
+void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
@@ -1940,18 +1940,18 @@ void Client::getShopList(const quint32 &query_id,const quint32 &shopId)
     {
         if(shop.prices.at(index)>0)
         {
-            out2 << (quint32)shop.items.at(index);
+            out2 << (quint16)shop.items.at(index);
             out2 << (quint32)shop.prices.at(index);
             out2 << (quint32)0;
             objectCount++;
         }
         index++;
     }
-    out << objectCount;
+    out << (quint16)objectCount;
     postReply(query_id,outputData+outputData2);
 }
 
-void Client::buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
@@ -2081,7 +2081,7 @@ void Client::buyObject(const quint32 &query_id,const quint32 &shopId,const quint
     postReply(query_id,outputData);
 }
 
-void Client::sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
@@ -2291,9 +2291,9 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
 }
 
-void Client::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
+void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
 {
-    if(CommonFightEngine::isInFight())
+    if(isInFight())
     {
         errorOutput(QStringLiteral("Try do inventory action when is in fight"));
         return;
@@ -2316,17 +2316,17 @@ void Client::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
         out << (quint32)0;
-        out << (quint32)industry.resources.size();
+        out << (quint16)industry.resources.size();
         int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            out << (quint32)resource.item;
+            out << (quint16)resource.item;
             out << (quint32)CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
             out << (quint32)resource.quantity*industry.cycletobefull;
             index++;
         }
-        out << (quint32)0x00000000;//no product do
+        out << (quint16)0x0000;//no product do
     }
     else
     {
@@ -2350,7 +2350,7 @@ void Client::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
                 count_item++;
             index++;
         }
-        out << (quint32)count_item;
+        out << (quint16)count_item;
         index=0;
         while(index<industry.resources.size())
         {
@@ -2358,7 +2358,7 @@ void Client::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
             const quint32 &quantityInStock=industryStatus.resources.value(resource.item);
             if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
-                out << (quint32)resource.item;
+                out << (quint16)resource.item;
                 out << (quint32)FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry);
                 out << (quint32)resource.quantity*industry.cycletobefull-quantityInStock;
             }
@@ -2375,7 +2375,7 @@ void Client::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
                 count_item++;
             index++;
         }
-        out << (quint32)count_item;
+        out << (quint16)count_item;
         index=0;
         while(index<industry.products.size())
         {
@@ -2383,7 +2383,7 @@ void Client::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
             const quint32 &quantityInStock=industryStatus.products.value(product.item);
             if(quantityInStock>0)
             {
-                out << (quint32)product.item;
+                out << (quint16)product.item;
                 out << (quint32)FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
                 out << (quint32)quantityInStock;
             }
@@ -2393,9 +2393,9 @@ void Client::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
     postReply(query_id,outputData);
 }
 
-void Client::buyFactoryProduct(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
 {
-    if(CommonFightEngine::isInFight())
+    if(isInFight())
     {
         errorOutput(QStringLiteral("Try do inventory action when is in fight"));
         return;
@@ -2492,9 +2492,9 @@ void Client::buyFactoryProduct(const quint32 &query_id,const quint32 &factoryId,
     postReply(query_id,outputData);
 }
 
-void Client::sellFactoryResource(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
 {
-    if(CommonFightEngine::isInFight())
+    if(isInFight())
     {
         errorOutput(QStringLiteral("Try do inventory action when is in fight"));
         return;
@@ -2713,7 +2713,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
             temp.level=0;
             isNewReputation=true;
             public_and_private_informations.reputation.insert(reputationId,temp);
-            playerReputation=&public_and_private_informations.reputation.last();
+            playerReputation=&public_and_private_informations.reputation[reputationId];
         }
     }
 
@@ -2790,7 +2790,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
 
 void Client::heal()
 {
-    if(CommonFightEngine::isInFight())
+    if(isInFight())
     {
         errorOutput(QStringLiteral("Try do heal action when is in fight"));
         return;
@@ -2864,13 +2864,13 @@ void Client::heal()
         }
     }
     //send the shop items (no taxes from now)
-    CommonFightEngine::healAllMonsters();
+    healAllMonsters();
     rescue=unvalidated_rescue;
 }
 
-void Client::requestFight(const quint32 &fightId)
+void Client::requestFight(const quint16 &fightId)
 {
-    if(CommonFightEngine::isInFight())
+    if(isInFight())
     {
         errorOutput(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(static_cast<MapServer *>(map)->map_file).arg(x).arg(y));
         return;
@@ -3016,6 +3016,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
                 paramToPassToCallBack << clanActionParam;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 paramToPassToCallBackType << QStringLiteral("ClanActionParam");
+                qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
                 #endif
                 callbackRegistred << callback;
             }
@@ -3289,17 +3290,23 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
 
 void Client::addClan_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->addClan_object();
+    GlobalServerData::serverPrivateVariables.db.clear();
+}
+
+void Client::addClan_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
     ClanActionParam *clanActionParam=static_cast<ClanActionParam *>(paramToPassToCallBack.takeFirst());
-    static_cast<Client *>(object)->addClan_return(clanActionParam->query_id,clanActionParam->action,clanActionParam->text);
+    addClan_return(clanActionParam->query_id,clanActionParam->action,clanActionParam->text);
     delete clanActionParam;
-    GlobalServerData::serverPrivateVariables.db.clear();
 }
 
 void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QString &text)
@@ -3307,7 +3314,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("ClanActionParam"))
     {
-        qDebug() << "is not ClanActionParam" << __LINE__;
+        qDebug() << "is not ClanActionParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -3540,7 +3547,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
             errorOutput(QStringLiteral("Try capture city when is already into that's"));
             return;
         }
-        if(CommonFightEngine::isInFight())
+        if(isInFight())
         {
             errorOutput(QStringLiteral("Try capture city when is in fight"));
             return;
@@ -4040,14 +4047,14 @@ void Client::previousCityCaptureNotFinished()
 void Client::moveMonster(const bool &up,const quint8 &number)
 {
     if(up)
-        CommonFightEngine::moveUpMonster(number-1);
+        moveUpMonster(number-1);
     else
-        CommonFightEngine::moveDownMonster(number-1);
+        moveDownMonster(number-1);
 }
 
 void Client::getMarketList(const quint32 &query_id)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;
@@ -4135,7 +4142,7 @@ void Client::getMarketList(const quint32 &query_id)
 
 void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;
@@ -4265,7 +4272,7 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
 
 void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;
@@ -4318,7 +4325,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
                                  );
                 break;
             }
-            CommonFightEngine::addPlayerMonster(marketPlayerMonster.monster);
+            addPlayerMonster(marketPlayerMonster.monster);
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
@@ -4343,7 +4350,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
                                      QStringLiteral("%1,%2,%3")
                                      .arg(marketPlayerMonster.monster.egg_step)
                                      .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(CommonFightEngine::getPlayerMonster().size())
+                                     .arg(getPlayerMonster().size())
                                      )
                                  );
                 break;
@@ -4368,7 +4375,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
                                      QStringLiteral("%1,%2,%3")
                                      .arg(marketPlayerMonster.monster.egg_step)
                                      .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(CommonFightEngine::getPlayerMonster().size())
+                                     .arg(getPlayerMonster().size())
                                      )
                                  );
                 break;
@@ -4393,7 +4400,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
                                      QStringLiteral("%1,%2,%3")
                                      .arg(marketPlayerMonster.monster.egg_step)
                                      .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(CommonFightEngine::getPlayerMonster().size())
+                                     .arg(getPlayerMonster().size())
                                      )
                                  );
                 break;
@@ -4410,7 +4417,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 
 void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;
@@ -4524,7 +4531,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
 
 void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;
@@ -4538,7 +4545,7 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
         const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
         if(playerMonster.id==monsterId)
         {
-            if(!CommonFightEngine::remainMonstersToFight(monsterId))
+            if(!remainMonstersToFight(monsterId))
             {
                 normalOutput(QStringLiteral("You can't put in market this msonter because you will be without monster to fight"));
                 out << (quint8)0x02;
@@ -4669,7 +4676,7 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
 
 void Client::recoverMarketCash(const quint32 &query_id)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;
@@ -4707,7 +4714,7 @@ void Client::recoverMarketCash(const quint32 &query_id)
 
 void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;
@@ -4810,7 +4817,7 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
 
 void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
-    if(getInTrade() || CommonFightEngine::isInFight())
+    if(getInTrade() || isInFight())
     {
         errorOutput(QStringLiteral("You can't use the market in trade/fight"));
         return;

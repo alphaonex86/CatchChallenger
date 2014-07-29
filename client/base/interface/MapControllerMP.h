@@ -3,6 +3,7 @@
 
 #include "../../fight/interface/MapVisualiserPlayerWithFight.h"
 #include "../Api_protocol.h"
+#include "PathFinding.h"
 
 #include <QString>
 #include <QList>
@@ -61,6 +62,7 @@ private:
         CatchChallenger::Direction presumed_direction;
         QTimer *oneStepMore;
     };
+    QList<PathFinding *> pathFindingList;
     QHash<quint16,OtherPlayer> otherPlayerList;
     QHash<QTimer *,quint16> otherPlayerListByTimer;
     QHash<QString,quint16> mapUsedByOtherPlayer;
@@ -140,6 +142,7 @@ private slots:
     void moveOtherPlayerStepSlot();
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
+    void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
 protected slots:
     virtual void finalPlayerStep();
@@ -147,6 +150,10 @@ protected slots:
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
+    void pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8>> path);
+    virtual void keyPressParse();
+signals:
+    void searchPath(QList<MapVisualiserThread::Map_full> mapList);
 };
 
 #endif // CATCHCHALLENGER_MAPCONTROLLERMP_H

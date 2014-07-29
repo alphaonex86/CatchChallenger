@@ -164,9 +164,9 @@ private:
     OldEvents oldEvents;
 
     qint32 connected_players;//it's th last number of connected player send
-    static QList<void *> paramToPassToCallBack;
+    QList<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    static QStringList paramToPassToCallBackType;
+    QStringList paramToPassToCallBackType;
     #endif
     static QList<quint8> selectCharacterQueryId;
 
@@ -305,13 +305,17 @@ private:
     void askLogin(const quint8 &query_id, const char *rawdata);
     void createAccount(const quint8 &query_id, const char *rawdata);
     static void createAccount_static(void *object);
+    void createAccount_object();
     void createAccount_return(AskLoginParam *askLoginParam);
     static void askLogin_static(void *object);
+    void askLogin_object();
     void askLogin_return(AskLoginParam *askLoginParam);
     static void character_static(void *object);
+    void character_object();
     void character_return(const quint8 &query_id);
     void deleteCharacterNow(const quint32 &characterId);
     static void deleteCharacterNow_static(void *object);
+    void deleteCharacterNow_object();
     void deleteCharacterNow_return(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
@@ -325,15 +329,19 @@ private:
     //character
     void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     static void addCharacter_static(void *object);
+    void addCharacter_object();
     void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     void removeCharacter(const quint8 &query_id, const quint32 &characterId);
     static void removeCharacter_static(void *object);
+    void removeCharacter_object();
     void removeCharacter_return(const quint8 &query_id, const quint32 &characterId);
     void selectCharacter(const quint8 &query_id, const quint32 &characterId);
     static void selectCharacter_static(void *object);
+    void selectCharacter_object();
     void selectCharacter_return(const quint8 &query_id, const quint32 &characterId);
 
     static void selectClan_static(void *object);
+    void selectClan_object();
     void selectClan_return();
 
     void fake_receive_data(const QByteArray &data);
@@ -369,8 +377,8 @@ private:
     void removeCash(const quint64 &cash);
     void addWarehouseCash(const quint64 &cash,const bool &forceSave=false);
     void removeWarehouseCash(const quint64 &cash);
-    void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
-    bool wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
+    void wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
+    bool wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
     void addWarehouseObject(const quint16 &item,const quint32 &quantity=1);
     quint32 removeWarehouseObject(const quint16 &item,const quint32 &quantity=1);
 
@@ -386,14 +394,14 @@ private:
     //teleportation
     void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     //shop
-    void getShopList(const quint32 &query_id,const quint32 &shopId);
-    void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void getShopList(const quint8 &query_id, const quint16 &shopId);
+    void buyObject(const quint8 &query_id, const quint16 &shopId, const quint16 &objectId, const quint32 &quantity, const quint32 &price);
+    void sellObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
     //factory
     void saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &industryStatus,const Industry &industry);
-    void getFactoryList(const quint32 &query_id,const quint32 &factoryId);
-    void buyFactoryProduct(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellFactoryResource(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void getFactoryList(const quint8 &query_id, const quint16 &factoryId);
+    void buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellFactoryResource(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price);
     //trade
     void tradeCanceled();
     void tradeAccepted();
@@ -413,12 +421,13 @@ private:
     void battleAccepted();
     virtual bool tryEscape();
     void heal();
-    void requestFight(const quint32 &fightId);
-    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+    void requestFight(const quint16 &fightId);
+    bool learnSkill(const quint32 &monsterId,const quint16 &skill);
     Client * getLocalClientHandlerFight();
     //clan
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text);
     void addClan_return(const quint8 &query_id, const quint8 &action, const QString &text);
+    void addClan_object();
     static void addClan_static(void *object);
     void haveClanInfo(const quint32 &clanId, const QString &clanName, const quint64 &cash);
     void sendClanInfo();
@@ -654,8 +663,10 @@ private:
     void loadPlayerAllow_return();
 
     static void loadPlayerMonsterBuffs_static(void *object);
+    void loadPlayerMonsterBuffs_object();
     void loadPlayerMonsterBuffs_return(const quint32 &index);
     static void loadPlayerMonsterSkills_static(void *object);
+    void loadPlayerMonsterSkills_object();
     void loadPlayerMonsterSkills_return(const quint32 &index);
 
     quint32 tryCapture(const quint16 &item);

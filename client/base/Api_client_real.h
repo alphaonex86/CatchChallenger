@@ -1,6 +1,8 @@
 #ifndef CATCHCHALLENGER_API_CLIENT_REAL_H
 #define CATCHCHALLENGER_API_CLIENT_REAL_H
 
+#include "../../general/base/GeneralVariable.h"
+
 #include <QObject>
 #include <QString>
 #include <QCoreApplication>
@@ -19,7 +21,6 @@
 
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/base/GeneralVariable.h"
 #include "ClientStructures.h"
 #include "Api_protocol.h"
 
