@@ -1804,20 +1804,24 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
-        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
-        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster!=NULL)
+        {
+            const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorOutput(QStringLiteral("hpChange() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
+        }
         if(otherMonster!=NULL)
+        {
+            const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(otherMonster->hp>otherMonsterStat.hp)
             {
                 errorOutput(QStringLiteral("hpChange() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
+        }
     }
     #endif
     CommonFightEngine::hpChange(currentMonster,newHpValue);
@@ -1825,20 +1829,24 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
-        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
-        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
         if(currentMonster!=NULL)
+        {
+            const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorOutput(QStringLiteral("hpChange() after The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
+        }
         if(otherMonster!=NULL)
+        {
+            const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
             if(otherMonster->hp>otherMonsterStat.hp)
             {
                 errorOutput(QStringLiteral("hpChange() after The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
+        }
     }
     #endif
     switch(GlobalServerData::serverSettings.database.type)

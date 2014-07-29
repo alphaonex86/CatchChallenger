@@ -598,12 +598,14 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     {
         CatchChallenger::FacilityLib::rmpath(destinationPath);
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: metadata.conf)"));
+        updateSavegameList();
         return;
     }
     if(!QFile::copy(savegamesPath+QStringLiteral("catchchallenger.db.sqlite"),destinationPath+QStringLiteral("catchchallenger.db.sqlite")))
     {
         CatchChallenger::FacilityLib::rmpath(destinationPath);
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: catchchallenger.db.sqlite)"));
+        updateSavegameList();
         return;
     }
     QSettings metaData(destinationPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);

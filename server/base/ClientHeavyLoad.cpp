@@ -59,6 +59,7 @@ void Client::askLogin(const quint8 &query_id,const char *rawdata)
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AskLoginParam");
+        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -66,10 +67,18 @@ void Client::askLogin(const quint8 &query_id,const char *rawdata)
 
 void Client::askLogin_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->askLogin_object();
+    GlobalServerData::serverPrivateVariables.db.clear();
+    //delete askLoginParam; -> not here because need reuse later
+}
+
+void Client::askLogin_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -78,8 +87,7 @@ void Client::askLogin_static(void *object)
     if(askLoginParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->askLogin_return(askLoginParam);
-    GlobalServerData::serverPrivateVariables.db.clear();
+    askLogin_return(askLoginParam);
     //delete askLoginParam; -> not here because need reuse later
 }
 
@@ -88,7 +96,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))
     {
-        qDebug() << "is not AskLoginParam" << __LINE__;
+        qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -197,7 +205,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     {
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << "AskLoginParam";
+        paramToPassToCallBackType << QStringLiteral("AskLoginParam");
+        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -251,7 +260,8 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
     {
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << "AskLoginParam";
+        paramToPassToCallBackType << QStringLiteral("AskLoginParam");
+        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -259,10 +269,17 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
 
 void Client::createAccount_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->createAccount_object();
+    GlobalServerData::serverPrivateVariables.db.clear();
+}
+
+void Client::createAccount_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -271,17 +288,16 @@ void Client::createAccount_static(void *object)
     if(askLoginParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->createAccount_return(askLoginParam);
-    GlobalServerData::serverPrivateVariables.db.clear();
+    createAccount_return(askLoginParam);
     delete askLoginParam;
 }
 
 void Client::createAccount_return(AskLoginParam *askLoginParam)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!="AskLoginParam")
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))
     {
-        qDebug() << "is not AskLoginParam" << __LINE__;
+        qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -307,10 +323,16 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
 
 void Client::character_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->character_object();
+}
+
+void Client::character_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -319,16 +341,16 @@ void Client::character_static(void *object)
     if(askLoginParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->character_return(askLoginParam->query_id);
+    character_return(askLoginParam->query_id);
     delete askLoginParam;
 }
 
 void Client::character_return(const quint8 &query_id)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!="AskLoginParam")
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))
     {
-        qDebug() << "is not AskLoginParam" << __LINE__;
+        qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -578,6 +600,7 @@ void Client::deleteCharacterNow(const quint32 &characterId)
         paramToPassToCallBack << deleteCharacterNow;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("DeleteCharacterNow");
+        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -585,10 +608,17 @@ void Client::deleteCharacterNow(const quint32 &characterId)
 
 void Client::deleteCharacterNow_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->deleteCharacterNow_object();
+    GlobalServerData::serverPrivateVariables.db.clear();
+}
+
+void Client::deleteCharacterNow_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -597,7 +627,7 @@ void Client::deleteCharacterNow_static(void *object)
     if(deleteCharacterNow==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->deleteCharacterNow_return(deleteCharacterNow->characterId);
+    deleteCharacterNow_return(deleteCharacterNow->characterId);
     delete deleteCharacterNow;
 }
 
@@ -606,7 +636,7 @@ void Client::deleteCharacterNow_return(const quint32 &characterId)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("DeleteCharacterNow"))
     {
-        qDebug() << "is not DeleteCharacterNow" << __LINE__;
+        qDebug() << "is not DeleteCharacterNow" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -733,6 +763,7 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         paramToPassToCallBack << addCharacterParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AddCharacterParam");
+        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -740,10 +771,17 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
 
 void Client::addCharacter_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->addCharacter_object();
+    GlobalServerData::serverPrivateVariables.db.clear();
+}
+
+void Client::addCharacter_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -752,7 +790,7 @@ void Client::addCharacter_static(void *object)
     if(addCharacterParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skinId);
+    addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skinId);
     delete addCharacterParam;
     GlobalServerData::serverPrivateVariables.db.clear();
 }
@@ -762,7 +800,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AddCharacterParam"))
     {
-        qDebug() << "is not AddCharacterParam" << __LINE__;
+        qDebug() << "is not AddCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -929,16 +967,24 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
         paramToPassToCallBack << removeCharacterParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("RemoveCharacterParam");
+        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
     }
 }
 
 void Client::removeCharacter_static(void *object)
 {
+    if(object!=NULL)
+        static_cast<Client *>(object)->removeCharacter_object();
+    GlobalServerData::serverPrivateVariables.db.clear();
+}
+
+void Client::removeCharacter_object()
+{
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
     {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __LINE__;
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -947,9 +993,8 @@ void Client::removeCharacter_static(void *object)
     if(removeCharacterParam==NULL)
         abort();
     #endif
-    static_cast<Client *>(object)->removeCharacter_return(removeCharacterParam->query_id,removeCharacterParam->characterId);
+    removeCharacter_return(removeCharacterParam->query_id,removeCharacterParam->characterId);
     delete removeCharacterParam;
-    GlobalServerData::serverPrivateVariables.db.clear();
 }
 
 void Client::removeCharacter_return(const quint8 &query_id,const quint32 &characterId)
@@ -957,7 +1002,7 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("RemoveCharacterParam"))
     {
-        qDebug() << "is not RemoveCharacterParam" << __LINE__;
+        qDebug() << "is not RemoveCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
     }
     #endif
@@ -1425,7 +1470,8 @@ void Client::loadReputation()
 
 void Client::loadReputation_static(void *object)
 {
-    static_cast<Client *>(object)->loadReputation_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadReputation_return();
 }
 
 void Client::loadReputation_return()
@@ -1541,7 +1587,8 @@ void Client::loadQuests()
 
 void Client::loadQuests_static(void *object)
 {
-    static_cast<Client *>(object)->loadQuests_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadQuests_return();
 }
 
 void Client::loadQuests_return()
@@ -1577,7 +1624,8 @@ void Client::loadQuests_return()
             continue;
         }
         public_and_private_informations.quests[id]=playerQuest;
-        addQuestStepDrop(id,playerQuest.step);
+        if(playerQuest.step>0)
+            addQuestStepDrop(id,playerQuest.step);
     }
     loadBotAlreadyBeaten();
 }

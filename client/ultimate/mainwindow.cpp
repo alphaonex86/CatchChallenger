@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    qDebug() << "QStandardPaths::writableLocation(QStandardPaths::DataLocation)" << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     serverMode=ServerMode_None;
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");

@@ -309,9 +309,12 @@ void BaseWindow::load_inventory()
                         show=true;
                 break;
                 case ObjectType_UseInFight:
-                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
-                        if(CommonDatapack::commonDatapack.items.trap.contains(i.key()))
-                            show=true;
+                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.contains(i.key()))
+                        show=true;
+                    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(i.key()))
+                        show=true;
+                    else
+                        show=false;
                 break;
                 default:
                 qDebug() << "waitedObjectType is unknow into load_inventory()";
@@ -625,9 +628,9 @@ QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
 QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) const
 {
     {
-        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
-        if(pnfFile.exists())
-            return pnfFile.absoluteFilePath();
+        QFileInfo pngFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
+        if(pngFile.exists())
+            return pngFile.absoluteFilePath();
     }
     {
         QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
@@ -640,12 +643,12 @@ QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) con
     while(entryListIndex<entryList.size())
     {
         {
-            QFileInfo pnfFile(QStringLiteral("%1/skin/%2/%3/trainer.png").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName));
-            if(pnfFile.exists())
-                return pnfFile.absoluteFilePath();
+            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            if(pngFile.exists())
+                return pngFile.absoluteFilePath();
         }
         {
-            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/trainer.gif").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName));
+            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(gifFile.exists())
                 return gifFile.absoluteFilePath();
         }
@@ -1135,9 +1138,11 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
     {
         if(!debugFile.isOpen())
         {
+            QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
             debugFile.setFileName(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/LogFile.log");
             if(!debugFile.open(QIODevice::WriteOnly))
             {
+                qDebug() << debugFile.errorString();
                 BaseWindow::debugFileStatus=2;
                 std::cout << static_cast<const char *>(msg.toLocal8Bit().constData()) << std::endl;
                 return;

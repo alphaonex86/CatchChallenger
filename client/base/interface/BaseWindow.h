@@ -122,7 +122,7 @@ protected:
 public slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void selectObject(const ObjectType &objectType);
-    void objectSelection(const bool &ok,const quint32 &itemId=0,const quint32 &quantity=1);
+    void objectSelection(const bool &ok, const quint16 &itemId=0, const quint32 &quantity=1);
     void connectAllSignals();
 private slots:
     void message(QString message) const;
