@@ -3016,7 +3016,6 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
                 paramToPassToCallBack << clanActionParam;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 paramToPassToCallBackType << QStringLiteral("ClanActionParam");
-                qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
                 #endif
                 callbackRegistred << callback;
             }

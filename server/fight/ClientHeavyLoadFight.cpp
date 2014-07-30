@@ -408,7 +408,6 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
             paramToPassToCallBack << selectIndexParam;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             paramToPassToCallBackType << QStringLiteral("SelectIndexParam");
-            qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
             #endif
         }
     }
@@ -539,7 +538,6 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
             paramToPassToCallBack << selectIndexParam;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             paramToPassToCallBackType << QStringLiteral("SelectIndexParam");
-            qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
             #endif
         }
     }

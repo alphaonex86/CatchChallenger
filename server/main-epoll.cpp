@@ -499,17 +499,6 @@ int main(int argc, char *argv[])
                             break;
                         }*/
 
-                        //just for informations
-                        {
-                            char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-                            const int &s = getnameinfo(&in_addr, in_len,
-                            hbuf, sizeof hbuf,
-                            sbuf, sizeof sbuf,
-                            NI_NUMERICHOST | NI_NUMERICSERV);
-                            if(s == 0)
-                                std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
-                        }
-
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
                         numberOfConnectedClient++;
@@ -540,6 +529,20 @@ int main(int argc, char *argv[])
                                 case MapVisibilityAlgorithmSelection_None:
                                     client=new MapVisibilityAlgorithm_None(infd);
                                 break;
+                            }
+                            //just for informations
+                            {
+                                char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+                                const int &s = getnameinfo(&in_addr, in_len,
+                                hbuf, sizeof hbuf,
+                                sbuf, sizeof sbuf,
+                                NI_NUMERICHOST | NI_NUMERICSERV);
+                                if(s == 0)
+                                {
+                                    //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
+                                    client->socketStringSize=strlen(hbuf)+strlen(sbuf);
+                                    client->socketString=new char[client->socketStringSize];
+                                }
                             }
                             epoll_event event;
                             event.data.ptr = client;

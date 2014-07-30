@@ -1,6 +1,7 @@
 #include "ProtocolParsing.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
+#include "ProtocolParsingCheck.h"
 
 #include <lzma.h>
 
@@ -9,14 +10,23 @@ using namespace CatchChallenger;
 #ifdef EPOLLCATCHCHALLENGERSERVER
 char ProtocolParsingInputOutput::commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
 #endif
-const quint16 ProtocolParsingInputOutput::sizeHeaderNullquint16=0;
+const quint16 ProtocolParsingBase::sizeHeaderNullquint16=0;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
-char ProtocolParsingInputOutput::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+#endif
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+int ProtocolParsingInputOutput::parseIncommingDataCount=0;
 #endif
 
 QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
 //if is a query
 QSet<quint8>                        ProtocolParsing::mainCode_IsQueryClientToServer;
+
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+QSet<quint8> ProtocolParsing::toDebugValidMainCodeServerToClient;//if need sub code or not
+QSet<quint8> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub code or not
+#endif
+
 quint8                              ProtocolParsing::replyCodeClientToServer;
 ProtocolParsing::CompressionType    ProtocolParsing::compressionType=CompressionType_None;
 //predefined size
@@ -70,7 +80,7 @@ extern "C" void lz_free(void *opaque, void *ptr)
 }
 
 
-QByteArray ProtocolParsingInputOutput::lzmaCompress(QByteArray data)
+QByteArray ProtocolParsingBase::lzmaCompress(QByteArray data)
 {
     QByteArray arr;
     lzma_check check = LZMA_CHECK_CRC64;
@@ -109,7 +119,7 @@ QByteArray ProtocolParsingInputOutput::lzmaCompress(QByteArray data)
     return arr;
 }
 
-QByteArray ProtocolParsingInputOutput::lzmaUncompress(QByteArray data)
+QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
 {
     lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
     const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED;
@@ -145,26 +155,7 @@ QByteArray ProtocolParsingInputOutput::lzmaUncompress(QByteArray data)
     return arr;
 }
 
-ProtocolParsing::ProtocolParsing(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
-        ) :
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-        #ifndef SERVERNOSSL
-            epollSslClient(infd,*ctx)
-        #else
-            epollSocket(infd)
-        #endif
-    #else
-    socket(socket)
-    #endif
+ProtocolParsing::ProtocolParsing()
 {
 }
 
@@ -178,7 +169,11 @@ void ProtocolParsing::initialiseTheVariable()
 
     //def query without the sub code
     mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
-    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x43 << 0x41 << 0x61 << 0x03 << 0x04 << 0x05;
+    mainCodeWithoutSubCodeTypeClientToServer << 0x03 << 0x04 << 0x05 << 0x40 << 0x41 << 0x43 << 0x61;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    toDebugValidMainCodeServerToClient << 0x79 << 0xC2 << 0x90 << 0xE0 << 0xD0 << 0x80 << 0xF0;
+    toDebugValidMainCodeClientToServer << 0x02 << 0x42 << 0x60 << 0x50 << 0x6a;
+    #endif
 
     //define the size of direct query
     {
@@ -280,28 +275,19 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
     }
 }
 
-ProtocolParsingInputOutput::ProtocolParsingInputOutput(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
+ProtocolParsingBase::ProtocolParsingBase(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        ,PacketModeTransmission packetModeTransmission
+        PacketModeTransmission packetModeTransmission
         #endif
         ) :
     #ifdef EPOLLCATCHCHALLENGERSERVER
         #ifndef SERVERNOSSL
-            ProtocolParsing(infd,ctx),
+            ProtocolParsing(),
         #else
-            ProtocolParsing(infd),
+            ProtocolParsing(),
         #endif
     #else
-    ProtocolParsing(socket),
+    ProtocolParsing(),
     #endif
     // for data
     haveData(false),
@@ -309,12 +295,10 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
     is_reply(false),
     dataSize(0),
     //to parse the netwrok stream
-    RXSize(0),
     have_subCodeType(false),
     need_subCodeType(false),
     need_query_number(false),
     have_query_number(false),
-    TXSize(0),
     mainCodeType(0),
     subCodeType(0),
     queryNumber(0)
@@ -328,12 +312,16 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
     #endif
 }
 
-bool ProtocolParsingInputOutput::checkStringIntegrity(const QByteArray &data)
+ProtocolParsingBase::~ProtocolParsingBase()
+{
+}
+
+bool ProtocolParsingBase::checkStringIntegrity(const QByteArray &data)
 {
     return checkStringIntegrity(data.constData(),data.size());
 }
 
-bool ProtocolParsingInputOutput::checkStringIntegrity(const char *data, const unsigned int &size)
+bool ProtocolParsingBase::checkStringIntegrity(const char *data, const unsigned int &size)
 {
     if(size<(int)sizeof(unsigned int))
     {
@@ -360,6 +348,7 @@ bool ProtocolParsingInputOutput::checkStringIntegrity(const char *data, const un
     return true;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 quint64 ProtocolParsingInputOutput::getRXSize() const
 {
     return RXSize;
@@ -369,10 +358,10 @@ quint64 ProtocolParsingInputOutput::getTXSize() const
 {
     return TXSize;
 }
+#endif
 
-void ProtocolParsingInputOutput::reset()
+void ProtocolParsingBase::reset()
 {
-    TXSize=0;
     waitedReply_mainCodeType.clear();
     waitedReply_subCodeType.clear();
     replyOutputCompression.clear();
@@ -381,7 +370,54 @@ void ProtocolParsingInputOutput::reset()
     queryReceived.clear();
     #endif
 
-    RXSize=0;
-
     dataClear();
+}
+
+ProtocolParsingInputOutput::ProtocolParsingInputOutput(
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+            #ifndef SERVERNOSSL
+                const int &infd, SSL_CTX *ctx
+            #else
+                const int &infd
+            #endif
+        #else
+        ConnectedSocket *socket
+        #endif
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        ,const PacketModeTransmission &packetModeTransmission
+        #endif
+        ) :
+    ProtocolParsingBase(packetModeTransmission),
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifndef SERVERNOSSL
+            epollSslClient(infd,*ctx)
+        #else
+            epollSocket(infd)
+        #endif
+    #else
+    socket(socket)
+    #endif
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        isClient=(packetModeTransmission==PacketModeTransmission_Client);
+        if(packetModeTransmission==PacketModeTransmission_Client)
+            protocolParsingCheck=new ProtocolParsingCheck(PacketModeTransmission_Server);
+        else
+            protocolParsingCheck=new ProtocolParsingCheck(PacketModeTransmission_Client);
+    #else
+        #error "Can't have both CATCHCHALLENGERSERVERDROPIFCLENT and CATCHCHALLENGER_EXTRA_CHECK enabled because ProtocolParsingCheck work as client"
+    #endif
+    #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    RXSize=0;
+    TXSize=0;
+    #endif
+}
+
+ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    delete protocolParsingCheck;
+    #endif
 }

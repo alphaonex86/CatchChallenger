@@ -60,7 +60,6 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
         paramToPassToCallBack << selectCharacterParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("SelectCharacterParam");
-        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }

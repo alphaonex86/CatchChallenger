@@ -64,6 +64,10 @@ Client::Client(
     otherPlayerTrade(NULL),
     tradeIsValidated(false),
     clan(NULL),
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    socketString(NULL),
+    socketStringSize(0),
+    #endif
     otherCityPlayerBattle(NULL)
 {
     public_and_private_informations.repel_step=0;
@@ -101,6 +105,9 @@ Client::~Client()
         delete socket;
         socket=NULL;
     }
+    #else
+    if(socketString!=NULL)
+        delete socketString;
     #endif
     {
         int index=0;
@@ -135,9 +142,11 @@ void Client::connectionError(QAbstractSocket::SocketError error)
 /// \warning called in one other thread!!!
 void Client::disconnectClient()
 {
+    if(account_id==0)
+        return;
+    account_id=0;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    if(account_id!=0)
-        normalOutput("Disconnected client");
+    normalOutput("Disconnected client");
     #endif
     GlobalServerData::serverPrivateVariables.db.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -266,6 +275,11 @@ void Client::messageParsingLayer(const QString &message) const
 //* do the message by the general broadcast */
 void Client::errorOutput(const QString &errorString)
 {
+    if(account_id==0)
+    {
+        normalOutput("Kicked by: "+errorString);
+        return;
+    }
     if(character_loaded)
         sendSystemMessage(public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
@@ -305,7 +319,11 @@ void Client::normalOutput(const QString &message) const
                 ip=QStringLiteral("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
         }
         #else
-        QString ip(QStringLiteral("[IP]:[PORT]"));
+        QString ip;
+        if(socketString==NULL)
+            ip=QStringLiteral("[IP]:[PORT]");
+        else
+            ip=socketString;
         #endif
         if(GlobalServerData::serverSettings.anonymous)
         {

@@ -836,7 +836,7 @@ void BaseServer::preload_profile()
         if(GlobalServerData::serverPrivateVariables.map_list.contains(profile.map))
         {
             const quint32 &mapId=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(profile.map))->reverse_db_id;
-            const QString &mapQuery=QString::number(mapId)+QLatin1String(",")+QString::number(profile.x)+QLatin1String(",")+QString::number(profile.y)+QLatin1String(",0");
+            const QString &mapQuery=QString::number(mapId)+QLatin1String(",")+QString::number(profile.x)+QLatin1String(",")+QString::number(profile.y)+QLatin1String(",")+QString::number(Orientation_bottom);
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:

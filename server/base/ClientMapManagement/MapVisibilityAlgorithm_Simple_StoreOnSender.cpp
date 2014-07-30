@@ -79,7 +79,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
             }
             #endif
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            normalOutput(QStringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+            //normalOutput(QStringLiteral("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
             #endif
             //insert the new client
             to_send_insert=true;
@@ -193,7 +193,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
     else //normal working
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("removeClient() normal work, just remove from client on: %1").arg(map->map_file));
+        //normalOutput(QStringLiteral("removeClient() normal work, just remove from client on: %1").arg(map->map_file));
         #endif
         //on client side to remove the other visible client for later reinsert
         Client::dropAllClients();
