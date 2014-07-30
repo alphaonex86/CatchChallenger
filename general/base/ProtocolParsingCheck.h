@@ -12,6 +12,9 @@ class ProtocolParsingCheck : public ProtocolParsingBase
 {
     public:
         ProtocolParsingCheck(const PacketModeTransmission &packetModeTransmission);
+        friend class Client;
+        friend class ProtocolParsingBase;
+        friend class ProtocolParsingInputOutput;
         bool valid;
         bool parseIncommingDataRaw(const char *commonBuffer, const quint32 &size,quint32 &cursor);
     private:
