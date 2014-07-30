@@ -1,10 +1,11 @@
 #include "ProtocolParsing.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
+#include "ProtocolParsingCheck.h"
 
 using namespace CatchChallenger;
 
-void ProtocolParsingInputOutput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
     if(waitedReply_mainCodeType.contains(queryNumber))
     {
@@ -73,7 +74,7 @@ void ProtocolParsingInputOutput::newOutputQuery(const quint8 &mainCodeType,const
     waitedReply_mainCodeType[queryNumber]=mainCodeType;
 }
 
-void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
     if(waitedReply_mainCodeType.contains(queryNumber))
     {
@@ -145,7 +146,7 @@ void ProtocolParsingInputOutput::newFullOutputQuery(const quint8 &mainCodeType,c
     waitedReply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingInputOutput::postReplyData(const quint8 &queryNumber, const char *data,const int &size)
+bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -156,21 +157,21 @@ bool ProtocolParsingInputOutput::postReplyData(const quint8 &queryNumber, const 
     }
     #endif
 
-    const int &newSize=ProtocolParsingInputOutput::computeReplyData(ProtocolParsingInputOutput::tempBigBufferForOutput,queryNumber,data,size);
+    const int &newSize=ProtocolParsingBase::computeReplyData(ProtocolParsingBase::tempBigBufferForOutput,queryNumber,data,size);
     if(newSize==0)
         return false;
-    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
     #else
     QByteArray bigBufferForOutput;
     bigBufferForOutput.resize(16+size);
-    const int &newSize=ProtocolParsingInputOutput::computeReplyData(bigBufferForOutput.data(),queryNumber,data,size);
+    const int &newSize=ProtocolParsingBase::computeReplyData(bigBufferForOutput.data(),queryNumber,data,size);
     if(newSize==0)
         return false;
     return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
     #endif
 }
 
-QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data)
+QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data)
 {
     switch(compressionType)
     {
@@ -187,7 +188,7 @@ QByteArray ProtocolParsingInputOutput::computeCompression(const QByteArray &data
     }
 }
 
-bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -202,11 +203,11 @@ bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeTy
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 isClient,
                 #endif
-                ProtocolParsingInputOutput::tempBigBufferForOutput,
+                ProtocolParsingBase::tempBigBufferForOutput,
                 mainCodeType,subCodeType,data,size);
     if(newSize==0)
         return false;
-    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
     #else
     QByteArray bigBufferForOutput;
     bigBufferForOutput.resize(16+size);
@@ -222,7 +223,7 @@ bool ProtocolParsingInputOutput::packFullOutcommingData(const quint8 &mainCodeTy
     #endif
 }
 
-bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size)
+bool ProtocolParsingBase::packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -237,11 +238,11 @@ bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,c
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
             #endif
-            ProtocolParsingInputOutput::tempBigBufferForOutput,
+            ProtocolParsingBase::tempBigBufferForOutput,
             mainCodeType,data,size);
     if(newSize==0)
         return false;
-    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
     #else
     QByteArray bigBufferForOutput;
     bigBufferForOutput.resize(16+size);
@@ -257,7 +258,7 @@ bool ProtocolParsingInputOutput::packOutcommingData(const quint8 &mainCodeType,c
     #endif
 }
 
-bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -272,12 +273,12 @@ bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
             #endif
-            ProtocolParsingInputOutput::tempBigBufferForOutput,
+            ProtocolParsingBase::tempBigBufferForOutput,
             mainCodeType,queryNumber,data,size);
     if(newSize==0)
         return false;
     newOutputQuery(mainCodeType,queryNumber);
-    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
     #else
     QByteArray bigBufferForOutput;
     bigBufferForOutput.resize(16+size);
@@ -294,7 +295,7 @@ bool ProtocolParsingInputOutput::packOutcommingQuery(const quint8 &mainCodeType,
     #endif
 }
 
-bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -309,12 +310,12 @@ bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeT
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
             #endif
-            ProtocolParsingInputOutput::tempBigBufferForOutput,
+            ProtocolParsingBase::tempBigBufferForOutput,
             mainCodeType,subCodeType,queryNumber,data,size);
     if(newSize==0)
         return false;
     newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
-    return internalPackOutcommingData(ProtocolParsingInputOutput::tempBigBufferForOutput,newSize);
+    return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
     #else
     QByteArray bigBufferForOutput;
     bigBufferForOutput.resize(16+size);
@@ -331,7 +332,7 @@ bool ProtocolParsingInputOutput::packFullOutcommingQuery(const quint8 &mainCodeT
     #endif
 }
 
-bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,const int &size)
+bool ProtocolParsingBase::internalPackOutcommingData(const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size<=0)
@@ -344,77 +345,46 @@ bool ProtocolParsingInputOutput::internalPackOutcommingData(const char *data,con
     DebugClass::debugConsole("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    message(QStringLiteral("Sended packet size: %1: %2").arg(size).arg(QString(data.toHex())));
+    qDebug() << QString(QStringLiteral("Sended packet size: %1: %2").arg(size).arg(QString(QByteArray(data,size).toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
-    if(socket->openMode()|QIODevice::WriteOnly)
+
+    if(size<=CATCHCHALLENGER_MAX_PACKET_SIZE)
     {
-    #endif
-        if(size<=CATCHCHALLENGER_MAX_PACKET_SIZE)
+        const int &byteWriten = write(data,size);
+        if(Q_UNLIKELY(size!=byteWriten))
         {
-            #ifdef EPOLLCATCHCHALLENGERSERVER
-            const int &byteWriten = epollSocket.write(data,size);
-            #else
-            const int &byteWriten = socket->write(data,size);
-            #endif
-            if(Q_UNLIKELY(size!=byteWriten))
-            {
-                #ifdef EPOLLCATCHCHALLENGERSERVER
-                DebugClass::debugConsole(QStringLiteral("All the bytes have not be written byteWriten: %1").arg(byteWriten));
-                #else
-                DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                #endif
-                disconnectClient();
-                return false;
-            }
-            TXSize+=size;
-            return true;
+            disconnectClient();
+            return false;
         }
-        else
-        {
-            int cursor=0;
-            int byteWriten;
-            while(Q_LIKELY(cursor<size))
-            {
-                const int &remaining_size=size-cursor;
-                int size_to_send;
-                if(remaining_size<CATCHCHALLENGER_MAX_PACKET_SIZE)
-                    size_to_send=remaining_size;
-                else
-                    size_to_send=CATCHCHALLENGER_MAX_PACKET_SIZE;
-                #ifdef EPOLLCATCHCHALLENGERSERVER
-                byteWriten = epollSocket.write(data+cursor,size_to_send);
-                #else
-                byteWriten = socket->write(data+cursor,size_to_send);
-                #endif
-                if(Q_UNLIKELY(size_to_send!=byteWriten))
-                {
-                    #ifdef EPOLLCATCHCHALLENGERSERVER
-                    DebugClass::debugConsole(QStringLiteral("All the bytes have not be written byteWriten: %1").arg(byteWriten));
-                    #else
-                    DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-                    #endif
-                    disconnectClient();
-                    return false;
-                }
-                TXSize+=size_to_send;
-                cursor+=size_to_send;
-            }
-            return true;
-        }
-    #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
+        return true;
     }
     else
     {
-        DebugClass::debugConsole(QStringLiteral("Socket open in read only!"));
-        disconnectClient();
-        return false;
+        int cursor=0;
+        int byteWriten;
+        while(Q_LIKELY(cursor<size))
+        {
+            const int &remaining_size=size-cursor;
+            int size_to_send;
+            if(remaining_size<CATCHCHALLENGER_MAX_PACKET_SIZE)
+                size_to_send=remaining_size;
+            else
+                size_to_send=CATCHCHALLENGER_MAX_PACKET_SIZE;
+            byteWriten = write(data+cursor,size_to_send);
+            if(Q_UNLIKELY(size_to_send!=byteWriten))
+            {
+                disconnectClient();
+                return false;
+            }
+            cursor+=size_to_send;
+        }
+        return true;
     }
-    #endif
+    return true;
 }
 
 //no control to be more fast
-bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,const int &size)
+bool ProtocolParsingBase::internalSendRawSmallPacket(const char *data,const int &size)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size<=0)
@@ -427,7 +397,7 @@ bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,con
     DebugClass::debugConsole("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    message(QStringLiteral("Sended packet size: %1: %2").arg(size).arg(QString(data.toHex())));
+    DebugClass::debugConsole(QStringLiteral("Sended packet size: %1: %2").arg(size).arg(QString(QByteArray(data,size).toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>CATCHCHALLENGER_MAX_PACKET_SIZE)
@@ -438,26 +408,16 @@ bool ProtocolParsingInputOutput::internalSendRawSmallPacket(const char *data,con
     }
     #endif
 
-    TXSize+=size;
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    const int &byteWriten = epollSocket.write(data,size);
-    #else
-    const int &byteWriten = socket->write(data,size);
-    #endif
+    const int &byteWriten = write(data,size);
     if(Q_UNLIKELY(size!=byteWriten))
     {
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-        DebugClass::debugConsole(QStringLiteral("All the bytes have not be written byteWriten: %1").arg(byteWriten));
-        #else
-        DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        #endif
         disconnectClient();
         return false;
     }
     return true;
 }
 
-qint8 ProtocolParsingInputOutput::encodeSize(char *data,const quint32 &size)
+qint8 ProtocolParsingBase::encodeSize(char *data,const quint32 &size)
 {
     if(size<=0xFF)
     {
@@ -467,20 +427,20 @@ qint8 ProtocolParsingInputOutput::encodeSize(char *data,const quint32 &size)
     else if(size<=0xFFFF)
     {
         const quint16 &newSize=htobe16(size);
-        memcpy(data,&ProtocolParsingInputOutput::sizeHeaderNullquint16,sizeof(quint8));
+        memcpy(data,&ProtocolParsingBase::sizeHeaderNullquint16,sizeof(quint8));
         memcpy(data+sizeof(quint8),&newSize,sizeof(newSize));
         return sizeof(quint8)+sizeof(quint16);
     }
     else
     {
         const quint32 &newSize=htobe32(size);
-        memcpy(data,&ProtocolParsingInputOutput::sizeHeaderNullquint16,sizeof(quint16));
+        memcpy(data,&ProtocolParsingBase::sizeHeaderNullquint16,sizeof(quint16));
         memcpy(data+sizeof(quint16),&newSize,sizeof(newSize));
         return sizeof(quint16)+sizeof(quint32);
     }
 }
 
-int ProtocolParsingInputOutput::computeOutcommingData(
+int ProtocolParsingBase::computeOutcommingData(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
@@ -625,7 +585,7 @@ int ProtocolParsingInputOutput::computeOutcommingData(
     }
 }
 
-int ProtocolParsingInputOutput::computeOutcommingQuery(
+int ProtocolParsingBase::computeOutcommingQuery(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
@@ -771,7 +731,7 @@ int ProtocolParsingInputOutput::computeOutcommingQuery(
     }
 }
 
-int ProtocolParsingInputOutput::computeFullOutcommingQuery(
+int ProtocolParsingBase::computeFullOutcommingQuery(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
@@ -1145,7 +1105,7 @@ int ProtocolParsingInputOutput::computeFullOutcommingQuery(
     }
 }
 
-int ProtocolParsingInputOutput::computeFullOutcommingData(
+int ProtocolParsingBase::computeFullOutcommingData(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         const bool &isClient,
         #endif
@@ -1519,13 +1479,13 @@ int ProtocolParsingInputOutput::computeFullOutcommingData(
 }
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-bool ProtocolParsingInputOutput::removeFromQueryReceived(const quint8 &queryNumber)
+bool ProtocolParsingBase::removeFromQueryReceived(const quint8 &queryNumber)
 {
     return queryReceived.remove(queryNumber);
 }
 #endif
 
-int ProtocolParsingInputOutput::computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size)
+int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!queryReceived.contains(queryNumber))
