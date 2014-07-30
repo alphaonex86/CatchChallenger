@@ -1,6 +1,7 @@
 #include "Client.h"
 #include "GlobalServerData.h"
 #include "MapServer.h"
+#include "../../general/base/ProtocolParsingCheck.h"
 
 using namespace CatchChallenger;
 
