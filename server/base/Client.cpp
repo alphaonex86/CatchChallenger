@@ -323,7 +323,7 @@ void Client::normalOutput(const QString &message) const
         if(socketString==NULL)
             ip=QStringLiteral("[IP]:[PORT]");
         else
-            ip=socketString;
+            ip=QString::fromLatin1(QByteArray(socketString,socketStringSize));
         #endif
         if(GlobalServerData::serverSettings.anonymous)
         {

@@ -6,6 +6,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonMap.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/ProtocolParsingCheck.h"
 #include "SqlFunction.h"
 
 #include <stdio.h>
