@@ -199,6 +199,4 @@ void Client::sendInventory()
     }
     //send the items
     sendFullPacket(0xD0,0x0001,outputData);
-
-    normalOutput(QStringLiteral("Inventory send"));
 }

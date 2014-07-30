@@ -97,15 +97,15 @@ void MainWindow::tryLink(CatchChallengerClient * client)
     numberOfBotConnected++;
     ui->numberOfBotConnected->setText(tr("Number of bot connected: %1").arg(numberOfBotConnected));
 
+    connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
     if(!ui->multipleConnexion->isChecked())
     {
         client->login=ui->login->text();
+        client->pass=ui->pass->text();
         client->api->sendProtocol();
-        client->api->tryLogin(ui->login->text(),ui->pass->text());
     }
     else
     {
-        connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
         QString login=ui->login->text();
         QString pass=ui->pass->text();
         login.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));

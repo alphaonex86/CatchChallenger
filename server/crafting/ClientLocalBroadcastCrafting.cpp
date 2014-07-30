@@ -241,7 +241,7 @@ void Client::seedValidated()
             else
                 out << (quint16)(plantOnMap.mature_at-current_time);
             finalData.resize(16+outputData.size());
-            finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
+            finalData.resize(ProtocolParsingBase::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
@@ -474,7 +474,7 @@ void Client::collectPlant(const quint8 &query_id)
                     out << plant.x;
                     out << plant.y;
                     finalData.resize(16+outputData.size());
-                    finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
+                    finalData.resize(ProtocolParsingBase::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif

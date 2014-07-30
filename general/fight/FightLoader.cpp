@@ -193,18 +193,18 @@ QList<Type> FightLoader::loadTypes(const QString &file)
                                                     types[nameToId.value(name)].multiplicator[nameToId.value(typeName)]=-(1.0/number);
                                             }
                                             else
-                                                qDebug() << QStringLiteral("Unable to open the file: %1, name is not into list: %4 is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber()).arg(to.at(index));
+                                                qDebug() << QStringLiteral("Unable to open the file: %1, name is not into list: %4 is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber()).arg(to.at(index));
                                             index++;
                                         }
                                     }
                                     else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                                        qDebug() << QStringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber());
                                 }
                                 else
-                                    qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                                    qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber());
                             }
                             else
-                                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(multiplicator.tagName()).arg(multiplicator.lineNumber());
                             multiplicator = multiplicator.nextSiblingElement(FightLoader::text_multiplicator);
                         }
                     }

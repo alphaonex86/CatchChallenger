@@ -4506,7 +4506,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
     }
     if(token.isEmpty())
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Token empty"));
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Token is empty"));
         return false;
     }
     QByteArray outputData;
