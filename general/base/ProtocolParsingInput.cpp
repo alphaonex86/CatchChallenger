@@ -70,6 +70,11 @@ ssize_t ProtocolParsingInputOutput::write(const char * data, const int &size)
                 qDebug() << "Bug at data-sending not tigger the function";
                 abort();
             }
+            if(cursor!=(quint32)size)
+            {
+                qDebug() << "Bug at data-sending cursor != size";
+                abort();
+            }
             protocolParsingCheck->valid=false;
         }
         #endif
@@ -1553,4 +1558,17 @@ QStringLiteral(" storeInputQuery(%1,%2,%3) query with same id previously say").a
                }
         }
     }
+}
+
+void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+{
+    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
+    ProtocolParsingBase::storeInputQuery(mainCodeType,queryNumber);
+}
+
+void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+{
+    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
+    protocolParsingCheck->waitedReply_subCodeType[queryNumber]=subCodeType;
+    ProtocolParsingBase::storeFullInputQuery(mainCodeType,subCodeType,queryNumber);
 }

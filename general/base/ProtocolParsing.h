@@ -93,6 +93,7 @@ public:
     );
     virtual ~ProtocolParsingBase();
     friend class ProtocolParsing;
+    friend class ProtocolParsingCheck;
     bool checkStringIntegrity(const char *data, const unsigned int &size);
     bool checkStringIntegrity(const QByteArray &data);
     virtual ssize_t read(char * data, const int &size) = 0;
@@ -133,6 +134,7 @@ private:
     bool have_subCodeType,need_subCodeType,need_query_number,have_query_number;
     // function
     void dataClear();
+public:
     //reply to the query
     QHash<quint8,quint8> waitedReply_mainCodeType;
     QHash<quint8,quint16> waitedReply_subCodeType;
@@ -197,8 +199,8 @@ private:
     static QByteArray lzmaUncompress(QByteArray data);
     static const quint16 sizeHeaderNullquint16;
 public:
-    void storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    virtual void storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
+    virtual void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
     //no control to be more fast
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -229,10 +231,13 @@ public:
         #endif
        );
     virtual ~ProtocolParsingInputOutput();
+    friend class Client;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     quint64 getTXSize() const;
     quint64 getRXSize() const;
     #endif
+    void storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
+    void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
     void parseIncommingData();
     #ifdef EPOLLCATCHCHALLENGERSERVER
