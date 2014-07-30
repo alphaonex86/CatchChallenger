@@ -29,7 +29,7 @@ void Client::sendSystemMessage(const QString &text,const bool &important)
             out.device()->seek(out.device()->pos()+tempText.size());
         }
         finalData.resize(16+outputData.size());
-        finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
+        finalData.resize(ProtocolParsingBase::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
@@ -194,7 +194,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
                     out2 << (quint8)this->public_and_private_informations.public_informations.type;
                 QByteArray tempBuffer(outputData+rawPseudo+outputData2);
                 finalData.resize(16+tempBuffer.size());
-                finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
+                finalData.resize(ProtocolParsingBase::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
@@ -251,7 +251,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
                 out2 << (quint8)this->public_and_private_informations.public_informations.type;
             QByteArray tempBuffer(outputData+rawPseudo+outputData2);
             finalData.resize(16+tempBuffer.size());
-            finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
+            finalData.resize(ProtocolParsingBase::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif

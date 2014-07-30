@@ -546,7 +546,13 @@ private:
     QList<PlayerMonster> tradeMonster;
     QList<quint32> inviteToClanList;
     Clan *clan;
+public:
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    char *socketString;
+    int socketStringSize;
+    #endif
 
+private:
     //city
     Client * otherCityPlayerBattle;
 

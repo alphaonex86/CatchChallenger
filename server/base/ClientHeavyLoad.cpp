@@ -59,7 +59,6 @@ void Client::askLogin(const quint8 &query_id,const char *rawdata)
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AskLoginParam");
-        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -206,7 +205,6 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AskLoginParam");
-        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -261,7 +259,6 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AskLoginParam");
-        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -609,7 +606,6 @@ void Client::deleteCharacterNow(const quint32 &characterId)
         paramToPassToCallBack << deleteCharacterNow;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("DeleteCharacterNow");
-        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -772,7 +768,6 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         paramToPassToCallBack << addCharacterParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AddCharacterParam");
-        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
         callbackRegistred << callback;
     }
@@ -976,7 +971,6 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
         paramToPassToCallBack << removeCharacterParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("RemoveCharacterParam");
-        qDebug() << "After insert" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         #endif
     }
 }

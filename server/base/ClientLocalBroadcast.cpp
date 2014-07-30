@@ -43,7 +43,7 @@ void Client::sendLocalChatText(const QString &text)
             out2 << (quint8)this->public_and_private_informations.public_informations.type;
         QByteArray replyData(outputData+rawPseudo+outputData2);
         finalData.resize(16+outputData.size()+rawPseudo.size()+outputData2.size());
-        finalData.resize(ProtocolParsingInputOutput::computeOutcommingData(
+        finalData.resize(ProtocolParsingBase::computeOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
