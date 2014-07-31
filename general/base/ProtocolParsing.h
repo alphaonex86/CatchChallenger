@@ -187,10 +187,6 @@ private:
     bool internalPackOutcommingData(const char *data,const int &size);
     static qint8 encodeSize(char *data,const quint32 &size);
 
-    //reply to the query
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    QSet<quint8> queryReceived;
-    #endif
     // for data
     quint8 mainCodeType;
     quint32 subCodeType;
@@ -202,9 +198,10 @@ public:
     virtual void storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     virtual void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 protected:
-    //no control to be more fast
+    //reply to the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     bool removeFromQueryReceived(const quint8 &queryNumber);
+    QSet<quint8> queryReceived;
     #endif
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
