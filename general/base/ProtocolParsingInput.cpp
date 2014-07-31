@@ -237,8 +237,8 @@ bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &si
         {
             if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType) && !toDebugValidMainCodeServerToClient.contains(mainCodeType))
             {
-                qDebug() << "Critical bug, mainCodeType not valid";
-                abort();
+                errorParsingLayer("Critical bug, mainCodeType not valid");
+                return false;
             }
         }
         else
@@ -246,8 +246,8 @@ bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &si
         {
             if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType) && !toDebugValidMainCodeClientToServer.contains(mainCodeType))
             {
-                qDebug() << "Critical bug, mainCodeType not valid";
-                abort();
+                errorParsingLayer("Critical bug, mainCodeType not valid");
+                return false;
             }
         }
         if(cursor==0)
@@ -1276,6 +1276,20 @@ void ProtocolParsingBase::dataClear()
 
 void ProtocolParsingBase::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
+    Q_UNUSED(mainCodeType);
+    Q_UNUSED(queryNumber);
+}
+
+void ProtocolParsingBase::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+{
+    Q_UNUSED(mainCodeType);
+    Q_UNUSED(subCodeType);
+    Q_UNUSED(queryNumber);
+}
+
+void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+{
+    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
     {
@@ -1376,8 +1390,10 @@ void ProtocolParsingBase::storeInputQuery(const quint8 &mainCodeType,const quint
     }
 }
 
-void ProtocolParsingBase::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
+    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
+    protocolParsingCheck->waitedReply_subCodeType[queryNumber]=subCodeType;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
     {
@@ -1385,7 +1401,7 @@ void ProtocolParsingBase::storeFullInputQuery(const quint8 &mainCodeType,const q
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             QString::number(isClient)+
             #endif
-QStringLiteral(" storeInputQuery(%1,%2,%3) query with same id previously say").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    QStringLiteral(" storeInputQuery(%1,%2,%3) query with same id previously say").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
     queryReceived << queryNumber;
@@ -1558,17 +1574,4 @@ QStringLiteral(" storeInputQuery(%1,%2,%3) query with same id previously say").a
                }
         }
     }
-}
-
-void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
-{
-    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
-    ProtocolParsingBase::storeInputQuery(mainCodeType,queryNumber);
-}
-
-void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
-{
-    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
-    protocolParsingCheck->waitedReply_subCodeType[queryNumber]=subCodeType;
-    ProtocolParsingBase::storeFullInputQuery(mainCodeType,subCodeType,queryNumber);
 }

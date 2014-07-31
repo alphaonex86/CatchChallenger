@@ -190,7 +190,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(buffer));
+                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(quint8)+sizeof(quint8)*to_send_remove.size());
                     index_subindex++;
                 }
             }
@@ -213,7 +213,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(buffer));
+                    clientsToSendDataOldClients[index_subindex]->packOutcommingData(0xC8,buffer,sizeof(quint16)+sizeof(quint16)*to_send_remove.size());
                     index_subindex++;
                 }
             }
