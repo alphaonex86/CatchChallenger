@@ -540,7 +540,7 @@ int main(int argc, char *argv[])
                                 if(s == 0)
                                 {
                                     //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
-                                    client->socketStringSize=strlen(hbuf)+strlen(sbuf);
+                                    client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1;
                                     client->socketString=new char[client->socketStringSize];
                                     strcpy(client->socketString,hbuf);
                                     strcat(client->socketString,":");
