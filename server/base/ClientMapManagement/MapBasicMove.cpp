@@ -16,7 +16,9 @@ using namespace CatchChallenger;
 /** Never reserve the list, because it have square memory usage, and use more cpu */
 
 MapBasicMove::MapBasicMove() :
-    map(NULL)
+    map(NULL),
+    x(0),
+    y(0)
 {
 }
 

@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     number=1;
     numberOfBotConnected=0;
     numberOfSelectedCharacter=0;
+    haveEnError=false;
 
     if(settings.contains("login"))
         ui->login->setText(settings.value("login").toString());
@@ -66,6 +67,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::disconnected()
 {
+    haveEnError=true;
     numberOfBotConnected--;
     ui->numberOfBotConnected->setText(tr("Number of bot connected: %1").arg(numberOfBotConnected));
 
@@ -136,25 +138,35 @@ void MainWindow::doMove()
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
         if(i.value()->api->getCaracterSelected() && i.value()->have_informations && i.value()->socket->isValid() && i.value()->socket->state()==QAbstractSocket::ConnectedState)
         {
-            if(i.value()->direction==CatchChallenger::Direction_look_at_bottom)
-            {
-                i.value()->direction=CatchChallenger::Direction_look_at_left;
+            if(ui->bugInDirection->isChecked())
                 i.value()->api->send_player_move(0,i.value()->direction);
-            }
-            else if(i.value()->direction==CatchChallenger::Direction_look_at_left)
-            {
-                i.value()->direction=CatchChallenger::Direction_look_at_top;
-                i.value()->api->send_player_move(0,i.value()->direction);
-            }
-            else if(i.value()->direction==CatchChallenger::Direction_look_at_top)
-            {
-                i.value()->direction=CatchChallenger::Direction_look_at_right;
-                i.value()->api->send_player_move(0,i.value()->direction);
-            }
             else
             {
-                i.value()->direction=CatchChallenger::Direction_look_at_bottom;
-                i.value()->api->send_player_move(0,i.value()->direction);
+                if(i.value()->direction==CatchChallenger::Direction_look_at_bottom)
+                {
+                    i.value()->direction=CatchChallenger::Direction_look_at_left;
+                    i.value()->api->send_player_move(0,i.value()->direction);
+                }
+                else if(i.value()->direction==CatchChallenger::Direction_look_at_left)
+                {
+                    i.value()->direction=CatchChallenger::Direction_look_at_top;
+                    i.value()->api->send_player_move(0,i.value()->direction);
+                }
+                else if(i.value()->direction==CatchChallenger::Direction_look_at_top)
+                {
+                    i.value()->direction=CatchChallenger::Direction_look_at_right;
+                    i.value()->api->send_player_move(0,i.value()->direction);
+                }
+                else if(i.value()->direction==CatchChallenger::Direction_look_at_right)
+                {
+                    i.value()->direction=CatchChallenger::Direction_look_at_bottom;
+                    i.value()->api->send_player_move(0,i.value()->direction);
+                }
+                else
+                {
+                    qDebug() << "Out of direction scope";
+                    abort();
+                }
             }
         }
     }
@@ -468,6 +480,8 @@ void MainWindow::have_current_player_info(const CatchChallenger::Player_private_
 
 void MainWindow::newError(QString error,QString detailedError)
 {
+    haveEnError=true;
+
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
         return;
@@ -480,6 +494,8 @@ void MainWindow::newError(QString error,QString detailedError)
 
 void MainWindow::newSocketError(QAbstractSocket::SocketError error)
 {
+    haveEnError=true;
+
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());
     if(senderObject==NULL)
         return;
@@ -564,6 +580,7 @@ void MainWindow::on_connect_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Your login need to be at minimum of 3 characters"));
         return;
     }
+    haveEnError=false;
     ui->groupBox_MultipleConnexion->setEnabled(false);
     ui->groupBox_Proxy->setEnabled(false);
     settings.setValue("login",ui->login->text());
@@ -591,9 +608,12 @@ void MainWindow::on_connect_clicked()
 
 void MainWindow::createClient()
 {
+    if(haveEnError)
+        return;
     CatchChallengerClient * client=new CatchChallengerClient;
 
     QSslSocket *sslSocket=new QSslSocket();
+
     QNetworkProxy proxy;
     if(!ui->proxy->text().isEmpty())
     {

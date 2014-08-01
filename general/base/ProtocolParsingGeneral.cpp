@@ -165,6 +165,9 @@ void ProtocolParsing::initialiseTheVariable()
     if(!mainCodeWithoutSubCodeTypeClientToServer.isEmpty())
         return;
 
+    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+    memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+    #endif
     compressionType=CompressionType_Zlib;
 
     //def query without the sub code
@@ -387,7 +390,11 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         ,const PacketModeTransmission &packetModeTransmission
         #endif
         ) :
-    ProtocolParsingBase(packetModeTransmission),
+    ProtocolParsingBase(
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        packetModeTransmission
+        #endif
+        ),
     #ifdef EPOLLCATCHCHALLENGERSERVER
         #ifndef SERVERNOSSL
             epollSslClient(infd,*ctx)
