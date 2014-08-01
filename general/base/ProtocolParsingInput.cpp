@@ -87,8 +87,9 @@ void ProtocolParsingInputOutput::closeSocket()
     #ifdef EPOLLCATCHCHALLENGERSERVER
     return epollSocket.close();
     #else
-    return socket->disconnectFromHost();
-#endif
+    if(socket!=NULL)
+        return socket->disconnectFromHost();
+    #endif
 }
 
 void ProtocolParsingInputOutput::parseIncommingData()

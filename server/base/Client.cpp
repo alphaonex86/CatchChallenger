@@ -43,6 +43,7 @@ Client::Client(
     #endif
     randomIndex(0),
     randomSize(0),
+    accountCharatersCount(0),
     connected_players(0),
     have_send_protocol(false),
     is_logging_in_progess(false),

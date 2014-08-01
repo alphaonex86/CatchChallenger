@@ -86,6 +86,8 @@ void BaseWindow::newCharacterId(const quint8 &returnCode, const quint32 &charact
     }
     else if(returnCode==0x01)
         QMessageBox::warning(this,tr("Error"),tr("This pseudo is already taken"));
+    else if(returnCode==0x02)
+        QMessageBox::warning(this,tr("Error"),tr("Have already the max caraters taken"));
     else
         QMessageBox::warning(this,tr("Error"),tr("Unable to create the character"));
 }
@@ -100,9 +102,12 @@ void BaseWindow::updateCharacterList()
         QListWidgetItem * item=new QListWidgetItem();
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
+        item->setData(97,characterEntry.mapId);
         QString text=characterEntry.pseudo+"\n"+QStringLiteral("%1 played").arg(FacilityLib::timeToString(characterEntry.played_time));
         if(characterEntry.delete_time_left>0)
             text+="\n"+tr("%1 to be deleted").arg(FacilityLib::timeToString(characterEntry.delete_time_left));
+        if(characterEntry.mapId==-1)
+            text+="\n"+tr("Map missing, can't play");
         item->setText(text);
         item->setIcon(QIcon(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
         ui->characterEntryList->addItem(item);
@@ -152,6 +157,11 @@ void BaseWindow::on_character_remove_clicked()
 
 void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
 {
+    if(item->data(97).toInt()==-1)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("You can't play with this buggy charater"));
+        return;
+    }
     CatchChallenger::Api_client_real::client->selectCharacter(item->data(99).toUInt());
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
