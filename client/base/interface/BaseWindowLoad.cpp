@@ -436,8 +436,9 @@ void BaseWindow::updateConnectingStatus()
             }
             if(characterEntryList.size()==1 && CommonSettings::commonSettings.min_character>=characterEntryList.size() && CommonSettings::commonSettings.max_character<=characterEntryList.size())
             {
-                if(!characterSelected)
+                if(!characterSelected && characterEntryList.first().mapId!=-1)
                 {
+                    qDebug() << characterEntryList.first().mapId;
                     characterSelected=true;
                     ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
                     on_character_select_clicked();

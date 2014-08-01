@@ -145,6 +145,7 @@ private:
     bool isConnected;
     #endif
     quint16 randomIndex,randomSize;
+    quint8 accountCharatersCount;
 
     PlayerOnMap map_entry;
     PlayerOnMap rescue;

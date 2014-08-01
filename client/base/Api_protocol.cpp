@@ -2854,37 +2854,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         return;
                     }
                     in >> characterEntry.last_connect;
-                    if(number_of_map>65535)
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
-                            return;
-                        }
-                        in >> characterEntry.mapId;
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
                     }
-                    else if(number_of_map>255)
-                    {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
-                            return;
-                        }
-                        quint16 tempMapId;
-                        in >> tempMapId;
-                        characterEntry.mapId=tempMapId;
-                    }
-                    else
-                    {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
-                            return;
-                        }
-                        quint8 tempMapId;
-                        in >> tempMapId;
-                        characterEntry.mapId=tempMapId;
-                    }
+                    in >> characterEntry.mapId;
                     characterEntryList << characterEntry;
                     index++;
                 }
