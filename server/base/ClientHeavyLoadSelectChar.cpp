@@ -500,11 +500,14 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
     //load the variables
     character_id=characterId;
     GlobalServerData::serverPrivateVariables.connected_players_id_list << characterId;
-    public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
-    simplifiedIdList.removeFirst();
-    character_loaded=true;
     connectedSince=QDateTime::currentDateTime();
     this->map=map;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        QString mapToDebug=this->map->map_file;
+        mapToDebug+=this->map->map_file;
+    }
+    #endif
     this->x=x;
     this->y=y;
     this->last_direction=static_cast<Direction>(orientation);
@@ -517,6 +520,13 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
     this->unvalidated_rescue.y=unvalidated_rescue_y;
     this->unvalidated_rescue.orientation=unvalidated_rescue_orientation;
     selectCharacterQueryId << query_id;
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        QString mapToDebug=this->map->map_file;
+        mapToDebug+=this->map->map_file;
+    }
+    #endif
 
     if(public_and_private_informations.clan!=0)
     {
@@ -544,6 +554,12 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
     }
     else
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            QString mapToDebug=this->map->map_file;
+            mapToDebug+=this->map->map_file;
+        }
+        #endif
         loadLinkedData();
         return;
     }
@@ -551,6 +567,16 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
 
 void Client::loginIsRightFinalStep()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        QString mapToDebug=this->map->map_file;
+        mapToDebug+=this->map->map_file;
+    }
+    #endif
+
+    public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.takeFirst();
+    character_loaded=true;
+
     const quint8 &query_id=selectCharacterQueryId.takeFirst();
     //send the network reply
     QByteArray outputData;
@@ -667,12 +693,31 @@ void Client::loginIsRightFinalStep()
             out << k.next();
     }
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        QString mapToDebug=this->map->map_file;
+        mapToDebug+=this->map->map_file;
+    }
+    #endif
+
     postReply(query_id,outputData);
     sendInventory();
     updateCanDoFight();
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        QString mapToDebug=this->map->map_file;
+        mapToDebug+=this->map->map_file;
+    }
+    #endif
+
     //send signals into the server
-    normalOutput(QStringLiteral("Logged: %1 on the map: %2 (%3,%4)").arg(public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
+    normalOutput(QStringLiteral("Logged: %1 on the map: %2 (%3,%4)")
+                 .arg(public_and_private_informations.public_informations.pseudo)
+                 .arg(map->map_file)
+                 .arg(x)
+                 .arg(y)
+                 );
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("load the normal player id: %1, simplified id: %2").arg(character_id).arg(public_and_private_informations.public_informations.simplifiedId));
@@ -686,12 +731,26 @@ void Client::loginIsRightFinalStep()
     playerByPseudo[public_and_private_informations.public_informations.pseudo]=this;
     clientBroadCastList << this;
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        QString mapToDebug=this->map->map_file;
+        mapToDebug+=this->map->map_file;
+    }
+    #endif
+
     put_on_the_map(
                 map,//map pointer
         x,
         y,
         static_cast<Orientation>(last_direction)
     );
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        QString mapToDebug=this->map->map_file;
+        mapToDebug+=this->map->map_file;
+    }
+    #endif
 }
 
 void Client::selectClan_static(void *object)
