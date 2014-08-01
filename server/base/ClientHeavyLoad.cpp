@@ -192,7 +192,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
         }
     }
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_characters.arg(account_id).arg(CommonSettings::commonSettings.max_character);
+    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_characters.arg(account_id).arg(CommonSettings::commonSettings.max_character*2);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::character_static);
     if(callback==NULL)
     {
@@ -235,7 +235,12 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
         return;
     }
     #endif
-    QByteArray login,pass;
+    if(accountCharatersCount>=CommonSettings::commonSettings.max_character)
+    {
+        loginIsWrong(query_id,0x03,QStringLiteral("Have already the max charaters: %1/%2").arg(accountCharatersCount).arg(CommonSettings::commonSettings.max_character));
+        return;
+    }
+    QByteArray login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
@@ -257,6 +262,7 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
     }
     else
     {
+        accountCharatersCount++;
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AskLoginParam");
@@ -414,8 +420,10 @@ void Client::character_return(const quint8 &query_id)
         const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
         QList<CharacterEntry> characterEntryList;
         bool ok;
-        while(GlobalServerData::serverPrivateVariables.db.next())
+        int validCharaterCount=0;
+        while(GlobalServerData::serverPrivateVariables.db.next() && validCharaterCount<CommonSettings::commonSettings.max_character)
         {
+            accountCharatersCount++;
             CharacterEntry characterEntry;
             characterEntry.character_id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
             if(ok)
@@ -472,22 +480,25 @@ void Client::character_return(const quint8 &query_id)
                             normalOutput(QStringLiteral("character return map is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
                         else
                         {
-                            if(characterEntry.mapId>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+                            if(characterEntry.mapId>=GlobalServerData::serverPrivateVariables.dictionary_map.size())
                             {
                                 normalOutput(QStringLiteral("character return map id out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
-                                characterEntry.mapId=0;
-                                ok=false;
+                                characterEntry.mapId=-1;
+                                //ok=false;
                             }
                             else
                             {
                                 if(GlobalServerData::serverPrivateVariables.dictionary_map.at(characterEntry.mapId)==NULL)
                                 {
-                                    normalOutput(QStringLiteral("character return map id not resolved: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
-                                    characterEntry.mapId=0;
-                                    ok=false;
+                                    normalOutput(QStringLiteral("character return map id not resolved: %1 for %2 fixed by 0: %3").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id).arg(characterEntry.mapId));
+                                    characterEntry.mapId=-1;
+                                    //ok=false;
                                 }
                                 else
+                                {
                                     characterEntry.mapId=GlobalServerData::serverPrivateVariables.dictionary_map.at(characterEntry.mapId)->id;
+                                    validCharaterCount++;
+                                }
                             }
                         }
                         if(ok)
@@ -519,12 +530,7 @@ void Client::character_return(const quint8 &query_id)
             out << (quint32)characterEntry.delete_time_left;
             out << (quint32)characterEntry.played_time;
             out << (quint32)characterEntry.last_connect;
-            if(GlobalServerData::serverPrivateVariables.map_list.size()>65535)
-                out << (quint32)characterEntry.mapId;
-            else if(GlobalServerData::serverPrivateVariables.map_list.size()>255)
-                out << (quint16)characterEntry.mapId;
-            else
-                out << (quint8)characterEntry.mapId;
+            out << (qint32)characterEntry.mapId;
             index++;
         }
     }
