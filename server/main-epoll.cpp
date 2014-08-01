@@ -540,11 +540,12 @@ int main(int argc, char *argv[])
                                 if(s == 0)
                                 {
                                     //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << ")" << std::endl;
-                                    client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1;
+                                    client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1+1;
                                     client->socketString=new char[client->socketStringSize];
                                     strcpy(client->socketString,hbuf);
                                     strcat(client->socketString,":");
                                     strcat(client->socketString,sbuf);
+                                    client->socketString[client->socketStringSize-1]='\0';
                                 }
                             }
                             epoll_event event;
@@ -577,6 +578,7 @@ int main(int argc, char *argv[])
                         ready for reading (why were we notified then?) */
                         std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
+                        client->disconnectClient();
                         delete client;
                         continue;
                     }
@@ -591,6 +593,7 @@ int main(int argc, char *argv[])
                     #endif
                     if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
                     {
+                        numberOfConnectedClient--;
                         client->disconnectClient();
                         delete client;//disconnected, remove the object
                     }

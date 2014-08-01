@@ -82,6 +82,15 @@ ssize_t ProtocolParsingInputOutput::write(const char * data, const int &size)
     return byteWriten;
 }
 
+void ProtocolParsingInputOutput::closeSocket()
+{
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    return epollSocket.close();
+    #else
+    return socket->disconnectFromHost();
+#endif
+}
+
 void ProtocolParsingInputOutput::parseIncommingData()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -114,7 +123,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             if(size!=0)
             {
                 QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer+header_cut.size(),size-header_cut.size());
-                qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
+                //qDebug() << "with header cut" << header_cut << tempDataToDebug.toHex() << "and size" << size;
             }
             header_cut.clear();
         }
@@ -124,7 +133,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             if(size!=0)
             {
                 QByteArray tempDataToDebug(ProtocolParsingInputOutput::commonBuffer,size);
-                qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
+                //qDebug() << "without header cut" << tempDataToDebug.toHex() << "and size" << size;
             }
         }
         if(size==0)
@@ -1289,8 +1298,8 @@ void ProtocolParsingBase::storeFullInputQuery(const quint8 &mainCodeType,const q
 
 void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
-    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
     if(queryReceived.contains(queryNumber))
     {
         messageParsingLayer(
@@ -1392,9 +1401,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
 
 void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;
     protocolParsingCheck->waitedReply_subCodeType[queryNumber]=subCodeType;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
     {
         errorParsingLayer(
