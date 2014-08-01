@@ -117,6 +117,9 @@ Client::~Client()
             index++;
         }
     }
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    normalOutput("Client Removed");
+    #endif
 }
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -142,6 +145,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
 /// \warning called in one other thread!!!
 void Client::disconnectClient()
 {
+    closeSocket();
     if(account_id==0)
         return;
     account_id=0;
@@ -258,6 +262,9 @@ void Client::disconnectClient()
 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_player_is_disconnected(public_and_private_informations.public_informations.pseudo);
+    #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    normalOutput("Disconnected client done");
     #endif
 }
 

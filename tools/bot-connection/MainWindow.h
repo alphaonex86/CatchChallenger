@@ -58,6 +58,7 @@ private:
     QSet<quint32> characterOnMap;
     quint16 numberOfBotConnected;
     quint16 numberOfSelectedCharacter;
+    bool haveEnError;
 public slots:
     void doMove();
     void doText();

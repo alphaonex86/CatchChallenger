@@ -235,6 +235,8 @@ public:
     #endif
     void storeInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+
+    void closeSocket();
 protected:
     void parseIncommingData();
     #ifdef EPOLLCATCHCHALLENGERSERVER

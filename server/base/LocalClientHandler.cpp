@@ -285,17 +285,20 @@ bool Client::moveThePlayer(const quint8 &previousMovedUnit,const Direction &dire
     #endif
     const bool &returnValue=MapBasicMove::moveThePlayer(previousMovedUnit,direction);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(this->x>=this->map->width)
+    if(returnValue)
     {
-        qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
-        abort();
-        return false;
-    }
-    if(this->y>=this->map->height)
-    {
-        qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
-        abort();
-        return false;
+        if(this->x>=this->map->width)
+        {
+            qDebug() << QStringLiteral("x to out of map: %1 > %2 (%3)").arg(this->x).arg(this->map->width).arg(this->map->map_file);
+            abort();
+            return false;
+        }
+        if(this->y>=this->map->height)
+        {
+            qDebug() << QStringLiteral("y to out of map: %1 > %2 (%3)").arg(this->y).arg(this->map->height).arg(this->map->map_file);
+            abort();
+            return false;
+        }
     }
     #endif
     return returnValue;
@@ -424,6 +427,10 @@ bool Client::singleMove(const Direction &direction)
     }
 
     this->map=map;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(this->map->width==999)
+        this->map->width=9999;
+    #endif
     this->x=x;
     this->y=y;
     if(static_cast<MapServer*>(map)->rescue.contains(QPair<quint8,quint8>(x,y)))

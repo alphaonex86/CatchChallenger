@@ -31,7 +31,8 @@ void Client::loadRecipes()
 
 void Client::loadRecipes_static(void *object)
 {
-    static_cast<Client *>(object)->loadRecipes_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadRecipes_return();
 }
 
 void Client::loadRecipes_return()
@@ -78,7 +79,8 @@ void Client::loadItems()
 
 void Client::loadItems_static(void *object)
 {
-    static_cast<Client *>(object)->loadItems_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadItems_return();
 }
 
 void Client::loadItems_return()
@@ -139,7 +141,8 @@ void Client::loadItemsWarehouse()
 
 void Client::loadItemsWarehouse_static(void *object)
 {
-    static_cast<Client *>(object)->loadItemsWarehouse_return();
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadItemsWarehouse_return();
 }
 
 void Client::loadItemsWarehouse_return()

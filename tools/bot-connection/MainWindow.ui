@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>486</width>
-    <height>660</height>
+    <width>488</width>
+    <height>685</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -316,6 +316,13 @@
         <widget class="QCheckBox" name="chatRandomReply">
          <property name="text">
           <string>Do global chat random reply</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="bugInDirection">
+         <property name="text">
+          <string>Do bug in direction</string>
          </property>
         </widget>
        </item>
