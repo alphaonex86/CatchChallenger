@@ -217,6 +217,7 @@ void BaseWindow::have_current_player_info()
         return;
     havePlayerInformations=true;
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    MapController::mapController->have_current_player_info(informations);
     CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
     clan=informations.clan;
     allow=informations.allow;

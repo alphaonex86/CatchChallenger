@@ -129,6 +129,8 @@ private slots:
     void on_programmedEventAdd_clicked();
     void on_programmedEventEdit_clicked();
     void on_programmedEventRemove_clicked();
+    void on_tcpNodelay_toggled(bool checked);
+
 signals:
     void record_latency();
 };

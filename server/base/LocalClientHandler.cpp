@@ -190,7 +190,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
         out << (quint16)map->id;
     else
         out << (quint32)map->id;
-    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+    if(GlobalServerData::serverSettings.max_players<=255)
     {
         out << (quint8)0x01;
         out << (quint8)public_and_private_informations.public_informations.simplifiedId;

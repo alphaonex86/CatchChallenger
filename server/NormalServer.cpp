@@ -33,7 +33,8 @@ NormalServer::NormalServer() :
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
     #ifdef Q_OS_LINUX
-    normalServerSettings.linuxSettings.tcpCork                      = true;
+    CommonSettings::commonSettings.tcpCork  = true;
+    normalServerSettings.tcpNodelay         = false;
     #endif
 
 
@@ -238,13 +239,25 @@ void NormalServer::start_internal_server()
         return;
     }
     #ifdef Q_OS_LINUX
-    if(normalServerSettings.linuxSettings.tcpCork)
+    if(CommonSettings::commonSettings.tcpCork)
     {
         qintptr socketDescriptor=sslServer->socketDescriptor();
         if(socketDescriptor!=-1)
         {
             int state = 1;
             if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+    }
+    else if(normalServerSettings.tcpNodelay)
+    {
+        qintptr socketDescriptor=sslServer->socketDescriptor();
+        if(socketDescriptor!=-1)
+        {
+            int state = 1;
+            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
                 DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
         }
         else
@@ -391,13 +404,25 @@ void NormalServer::newConnection()
                 if(socket!=NULL)
                 {
                     #ifdef Q_OS_LINUX
-                    if(normalServerSettings.linuxSettings.tcpCork)
+                    if(CommonSettings::commonSettings.tcpCork)
                     {
                         qintptr socketDescriptor=socket->socketDescriptor();
                         if(socketDescriptor!=-1)
                         {
                             int state = 1;
                             if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                                DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
+                        }
+                        else
+                            DebugClass::debugConsole(QStringLiteral("Unable to get socket descriptor to apply tcp cork under linux"));
+                    }
+                    else if(normalServerSettings.tcpNodelay)
+                    {
+                        qintptr socketDescriptor=socket->socketDescriptor();
+                        if(socketDescriptor!=-1)
+                        {
+                            int state = 1;
+                            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
                                 DebugClass::debugConsole(QStringLiteral("Unable to apply tcp cork under linux"));
                         }
                         else

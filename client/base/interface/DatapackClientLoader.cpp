@@ -163,7 +163,7 @@ void DatapackClientLoader::parseVisualCategory()
             qDebug() << (QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return;
         }
-        qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
+        //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
@@ -319,7 +319,7 @@ void DatapackClientLoader::parseReputationExtra()
             qDebug() << (QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return;
         }
-        qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
+        //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();
@@ -605,7 +605,7 @@ void DatapackClientLoader::parseItemsExtra()
                 file_index++;
                 continue;
             }
-            qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
+            //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
             CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         const QDomElement &root = domDocument.documentElement();
@@ -890,7 +890,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 index++;
                 continue;
             }
-            qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
+            //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
             CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
         const QDomElement &root = domDocument.documentElement();
@@ -1196,7 +1196,7 @@ void DatapackClientLoader::parseAudioAmbiance()
             qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return;
         }
-        qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
+        //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
     const QDomElement &root = domDocument.documentElement();

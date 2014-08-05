@@ -34,6 +34,7 @@ Client::Client(
         #endif
         ),
     character_loaded(false),
+    character_loaded_in_progress(false),
     account_id(0),
     number_of_character(0),
     character_id(0),
@@ -118,9 +119,6 @@ Client::~Client()
             index++;
         }
     }
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Client Removed");
-    #endif
 }
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -192,7 +190,13 @@ void Client::disconnectClient()
         }
     }
 
-    if(character_loaded)
+    if(character_loaded_in_progress)
+    {
+        character_loaded_in_progress=false;
+        GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(character_id);
+        simplifiedIdList << public_and_private_informations.public_informations.simplifiedId;
+    }
+    else if(character_loaded)
     {
         if(map!=NULL)
             removeClientOnMap(map,true);
