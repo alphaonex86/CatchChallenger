@@ -390,13 +390,17 @@ void MainWindow::load_settings()
     }
     {
         #ifdef Q_OS_LINUX
+        bool tcpNodelay=false;
         bool tcpCork=true;
         settings->beginGroup(QLatin1Literal("Linux"));
         tcpCork=settings->value(QLatin1Literal("tcpCork")).toBool();
+        tcpNodelay=settings->value(QLatin1Literal("tcpNodelay")).toBool();
         settings->endGroup();
         ui->linux_socket_cork->setChecked(tcpCork);
+        ui->tcpNodelay->setChecked(tcpNodelay);
         #else
         ui->linux_socket_cork->setEnabled(false);
+        ui->tcpNodelay->setEnabled(false);
         #endif
     }
     if(settings->value(QLatin1Literal("forcedSpeed")).toUInt()==0)
@@ -652,7 +656,8 @@ void MainWindow::send_settings()
     else
         formatedServerSettings.datapackCache			= ui->datapack_cache_timeout->value();
     #ifdef Q_OS_LINUX
-    formatedServerNormalSettings.linuxSettings.tcpCork  = ui->linux_socket_cork->isChecked();
+    CommonSettings::commonSettings.tcpCork  = ui->linux_socket_cork->isChecked();
+    formatedServerNormalSettings.tcpNodelay  = ui->tcpNodelay->isChecked();
     #endif
 
     //ddos
@@ -1427,4 +1432,13 @@ void CatchChallenger::MainWindow::on_programmedEventRemove_clicked()
         settings->endGroup();
     settings->endGroup();
     on_programmedEventType_currentIndexChanged(0);
+}
+
+void CatchChallenger::MainWindow::on_tcpNodelay_toggled(bool checked)
+{
+    #ifdef Q_OS_LINUX
+    settings->beginGroup(QLatin1Literal("Linux"));
+    settings->setValue(QLatin1Literal("tcpNodelay"),checked);
+    settings->endGroup();
+    #endif
 }

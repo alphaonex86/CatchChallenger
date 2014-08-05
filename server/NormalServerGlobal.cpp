@@ -62,6 +62,8 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
     settings->beginGroup(QLatin1Literal("Linux"));
     if(!settings->contains(QLatin1Literal("tcpCork")))
         settings->setValue(QLatin1Literal("tcpCork"),true);
+    if(!settings->contains(QLatin1Literal("tcpNodelay")))
+        settings->setValue(QLatin1Literal("tcpNodelay"),false);
     settings->endGroup();
     #endif
 

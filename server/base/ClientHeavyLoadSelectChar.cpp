@@ -148,10 +148,19 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x03,QLatin1String("Already logged"));
         return;
     }
-    if(simplifiedIdList.size()<=0)
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
-        characterSelectionIsWrong(query_id,0x04,QLatin1String("Not free id to login"));
-        return;
+        default:
+        case MapVisibilityAlgorithmSelection_Simple:
+        case MapVisibilityAlgorithmSelection_WithBorder:
+        if(simplifiedIdList.size()<=0)
+        {
+            characterSelectionIsWrong(query_id,0x04,QLatin1String("Not free id to login"));
+            return;
+        }
+        break;
+        case MapVisibilityAlgorithmSelection_None:
+        break;
     }
 
     public_and_private_informations.public_informations.pseudo=QString(GlobalServerData::serverPrivateVariables.db.value(1));
@@ -499,7 +508,19 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
     #endif
     //load the variables
     character_id=characterId;
+    character_loaded_in_progress=true;
     GlobalServerData::serverPrivateVariables.connected_players_id_list << characterId;
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    {
+        default:
+        case MapVisibilityAlgorithmSelection_Simple:
+        case MapVisibilityAlgorithmSelection_WithBorder:
+        public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.takeFirst();
+        break;
+        case MapVisibilityAlgorithmSelection_None:
+        public_and_private_informations.public_informations.simplifiedId = 0;
+        break;
+    }
     connectedSince=QDateTime::currentDateTime();
     this->map=map;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -574,7 +595,7 @@ void Client::loginIsRightFinalStep()
     }
     #endif
 
-    public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.takeFirst();
+    character_loaded_in_progress=false;
     character_loaded=true;
 
     const quint8 &query_id=selectCharacterQueryId.takeFirst();

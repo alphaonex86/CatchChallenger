@@ -688,7 +688,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
                 out << (quint16)map->id;
             else
                 out << (quint32)map->id;
-            if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+            if(GlobalServerData::serverSettings.max_players<=255)
                 out << (quint8)list_size;
             else
                 out << (quint16)list_size;
@@ -711,7 +711,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
                     .arg(client->public_and_private_informations.public_informations.skinId)
                      );
                 #endif
-                if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+                if(GlobalServerData::serverSettings.max_players<=255)
                     out << (quint8)client->public_and_private_informations.public_informations.simplifiedId;
                 else
                     out << (quint16)client->public_and_private_informations.public_informations.simplifiedId;
@@ -758,7 +758,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
     purgeBuffer_indexMovement=0;
     i_move = to_send_move.constBegin();
     i_move_end = to_send_move.constEnd();
-    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+    if(GlobalServerData::serverSettings.max_players<=255)
         out << (quint8)to_send_move.size();
     else
         out << (quint16)to_send_move.size();
@@ -771,7 +771,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
             .arg(public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+        if(GlobalServerData::serverSettings.max_players<=255)
             out << (quint8)i_move.key();
         else
             out << (quint16)i_move.key();
@@ -807,7 +807,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
     //////////////////////////// remove //////////////////////////
     i_remove = to_send_remove.constBegin();
     i_remove_end = to_send_remove.constEnd();
-    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+    if(GlobalServerData::serverSettings.max_players<=255)
         out << (quint8)to_send_remove.size();
     else
         out << (quint16)to_send_remove.size();
@@ -820,7 +820,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
             .arg(public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+        if(GlobalServerData::serverSettings.max_players<=255)
             out << (quint8)*i_remove;
         else
             out << (quint16)*i_remove;
@@ -844,7 +844,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
     out.setVersion(QDataStream::Qt_4_4);
 
     //////////////////////////// re-insert //////////////////////////
-    if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+    if(GlobalServerData::serverSettings.max_players<=255)
         out << (quint8)to_send_reinsert.size();
     else
         out << (quint16)to_send_reinsert.size();
@@ -863,7 +863,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
             .arg(public_and_private_informations.public_informations.simplifiedId)
              );
         #endif
-        if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
+        if(GlobalServerData::serverSettings.max_players<=255)
             out << (quint8)i_insert.key();
         else
             out << (quint16)i_insert.key();
@@ -1047,9 +1047,4 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::teleportValidatedTo(Common
     }
     else
         reinsertClientForOthersOnSameMap();
-}
-
-quint16 MapVisibilityAlgorithm_WithBorder_StoreOnSender::getMaxVisiblePlayerAtSameTime()
-{
-    return 0xFFFF;
 }

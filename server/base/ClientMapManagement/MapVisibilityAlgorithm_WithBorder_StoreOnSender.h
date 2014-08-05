@@ -38,7 +38,6 @@ protected:
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
-    quint16 getMaxVisiblePlayerAtSameTime();
 private:
     static int index;
     static int loop_size;

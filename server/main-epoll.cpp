@@ -69,6 +69,7 @@ void send_settings()
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
     CommonSettings::commonSettings.tcpCork	= settings->value(QLatin1Literal("tcpCork")).toBool();
+    formatedServerNormalSettings.tcpNodelay= settings->value(QLatin1Literal("tcpNodelay")).toBool();
     settings->endGroup();
     #endif
 
@@ -360,11 +361,12 @@ int main(int argc, char *argv[])
 
     server->loadAndFixSettings();
     server->initialize_the_database_prepared_query();
-    bool tcpCork;
+    bool tcpCork,tcpNodelay;
     {
         const ServerSettings &formatedServerSettings=server->getSettings();
         const NormalServerSettings &formatedServerNormalSettings=server->getNormalSettings();
         tcpCork=CommonSettings::commonSettings.tcpCork;
+        tcpNodelay=formatedServerNormalSettings.tcpNodelay;
 
         if(!formatedServerNormalSettings.proxy.isEmpty())
         {
@@ -514,6 +516,13 @@ int main(int argc, char *argv[])
                                 int state = 1;
                                 if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
                                     std::cerr << "Unable to apply tcp cork" << std::endl;
+                            }
+                            else if(tcpNodelay)
+                            {
+                                //set no delay to don't try group the packet and improve the performance
+                                int state = 1;
+                                if(setsockopt(infd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
+                                    std::cerr << "Unable to apply tcp no delay" << std::endl;
                             }
 
                             Client *client;

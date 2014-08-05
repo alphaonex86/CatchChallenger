@@ -18,12 +18,19 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const int &size)
     }
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    RXSize+=size;
-    #endif
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    return epollSocket.read(data,size);
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        const int &temp_size=epollSocket.read(data,size);
+        #else
+        const int &temp_size=socket->read(data,size);
+        #endif
+        RXSize+=temp_size;
+        return temp_size;
     #else
-    return socket->read(data,size);
+        #ifdef EPOLLCATCHCHALLENGERSERVER
+        return epollSocket.read(data,size);
+        #else
+        return socket->read(data,size);
+        #endif
     #endif
 }
 
@@ -39,13 +46,13 @@ ssize_t ProtocolParsingInputOutput::write(const char * data, const int &size)
         return false;
     }
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    TXSize+=size;
-    #endif
     #ifdef EPOLLCATCHCHALLENGERSERVER
     const ssize_t &byteWriten=epollSocket.write(data,size);
     #else
     const ssize_t &byteWriten=socket->write(data,size);
+    #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    TXSize+=byteWriten;
     #endif
     if(Q_UNLIKELY(size!=byteWriten))
     {

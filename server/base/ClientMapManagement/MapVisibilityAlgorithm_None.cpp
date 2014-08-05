@@ -79,8 +79,3 @@ bool MapVisibilityAlgorithm_None::singleMove(const Direction &direction)
 {
     return Client::singleMove(direction);
 }
-
-quint16 MapVisibilityAlgorithm_None::getMaxVisiblePlayerAtSameTime()
-{
-    return 0;
-}

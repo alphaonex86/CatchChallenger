@@ -1912,11 +1912,22 @@ void BaseServer::preload_the_players()
 {
     Client::simplifiedIdList.clear();
     Client::marketObjectIdList.reserve(GlobalServerData::serverSettings.max_players);
-    int index=0;
-    while(index<GlobalServerData::serverSettings.max_players)
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
-        Client::simplifiedIdList << index;
-        index++;
+        default:
+        case MapVisibilityAlgorithmSelection_Simple:
+        case MapVisibilityAlgorithmSelection_WithBorder:
+        {
+            int index=0;
+            while(index<GlobalServerData::serverSettings.max_players)
+            {
+                Client::simplifiedIdList << index;
+                index++;
+            }
+        }
+        break;
+        case MapVisibilityAlgorithmSelection_None:
+        break;
     }
 }
 
@@ -2804,10 +2815,7 @@ void BaseServer::loadAndFixSettings()
             sizeof(quint8)+map_list_size+/*player_list_size same with move, delete, ...*/
             //of the player
             /*player_list_size same with move, delete, ...*/+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+0/*pseudo size put directy*/+sizeof(quint8);
-    GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.max_players;
-    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_None)
-        GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=0;
-    else if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
+    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)
             GlobalServerData::serverSettings.mapVisibility.simple.max=5;
