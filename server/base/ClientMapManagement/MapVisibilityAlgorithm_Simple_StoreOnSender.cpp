@@ -310,8 +310,3 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap 
     else
         haveNewMove=true;
 }
-
-quint16 MapVisibilityAlgorithm_Simple_StoreOnSender::getMaxVisiblePlayerAtSameTime()
-{
-    return GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime;
-}

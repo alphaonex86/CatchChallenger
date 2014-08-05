@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>11</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -540,6 +540,13 @@
          <widget class="QCheckBox" name="linux_socket_cork">
           <property name="text">
            <string>Socket cork (linux only)</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QCheckBox" name="tcpNodelay">
+          <property name="text">
+           <string>Tcp no delay (linux only)</string>
           </property>
          </widget>
         </item>

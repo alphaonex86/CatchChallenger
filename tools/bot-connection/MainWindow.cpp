@@ -67,6 +67,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::disconnected()
 {
+    qDebug() << "disconnected()";
     haveEnError=true;
     numberOfBotConnected--;
     ui->numberOfBotConnected->setText(tr("Number of bot connected: %1").arg(numberOfBotConnected));
@@ -399,10 +400,13 @@ void MainWindow::haveTheDatapack()
     if(!characterOnMap.contains(character_id))
     {
         characterOnMap << character_id;
-        if(!apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id))
-            qDebug() << "Unable to select character after datpack loading:" << character_id;
-        else
-            qDebug() << "Select character after datpack loading:" << character_id;
+        if(ui->multipleConnexion->isChecked())
+        {
+            if(!apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id))
+                qDebug() << "Unable to select character after datpack loading:" << character_id;
+            else
+                qDebug() << "Select character after datpack loading:" << character_id;
+        }
     }
 }
 
@@ -494,6 +498,7 @@ void MainWindow::newError(QString error,QString detailedError)
 
 void MainWindow::newSocketError(QAbstractSocket::SocketError error)
 {
+    qDebug() << "newSocketError()" << error;
     haveEnError=true;
 
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());

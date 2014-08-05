@@ -50,11 +50,12 @@ void ProcessControler::send_settings()
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
 
-    CommonSettings::commonSettings.httpDatapackMirror			= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
+    CommonSettings::commonSettings.httpDatapackMirror	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
-    formatedServerNormalSettings.linuxSettings.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
+    CommonSettings::commonSettings.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
+    formatedServerNormalSettings.tcpNodelay     = settings->value(QLatin1Literal("tcpNodelay")).toBool();
     settings->endGroup();
     #endif
 

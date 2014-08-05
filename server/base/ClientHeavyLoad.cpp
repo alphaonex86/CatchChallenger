@@ -390,7 +390,6 @@ void Client::character_return(const quint8 &query_id)
     out << (quint32)0x00000000;
     #endif
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
-    out << (quint16)getMaxVisiblePlayerAtSameTime();
 
     //common settings
     out << (quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick;
