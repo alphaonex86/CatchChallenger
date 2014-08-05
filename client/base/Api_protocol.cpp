@@ -141,7 +141,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
 
                 quint16 playerSizeList;
-                if(maxVisiblePlayerAtSameTime<=255)
+                if(max_players<=255)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -166,7 +166,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 {
                     //player id
                     Player_public_informations public_informations;
-                    if(maxVisiblePlayerAtSameTime<=255)
+                    if(max_players<=255)
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -296,7 +296,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             //move the player
             quint8 directionInt,moveListSize;
             quint16 playerSizeList;
-            if(maxVisiblePlayerAtSameTime<=255)
+            if(max_players<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -405,7 +405,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         {
             //remove player
             quint16 playerSizeList;
-            if(maxVisiblePlayerAtSameTime<=255)
+            if(max_players<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -458,7 +458,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         //Player number
         case 0xC3:
         {
-            if(max_player<=255)
+            if(max_players<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -467,7 +467,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
                 quint8 current_player_connected_8Bits;
                 in >> current_player_connected_8Bits;
-                number_of_player(current_player_connected_8Bits,max_player);
+                number_of_player(current_player_connected_8Bits,max_players);
             }
             else
             {
@@ -478,7 +478,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
                 quint16 current_player_connected_16Bits;
                 in >> current_player_connected_16Bits;
-                number_of_player(current_player_connected_16Bits,max_player);
+                number_of_player(current_player_connected_16Bits,max_players);
             }
         }
         break;
@@ -490,7 +490,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         case 0xC5:
         {
             quint16 playerSizeList;
-            if(maxVisiblePlayerAtSameTime<=255)
+            if(max_players<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -515,7 +515,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             {
                 //player id
                 quint16 simplifiedId;
-                if(maxVisiblePlayerAtSameTime<=255)
+                if(max_players<=255)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -612,7 +612,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     in >> mapId;
                 }
                 quint16 playerSizeList;
-                if(maxVisiblePlayerAtSameTime<=255)
+                if(max_players<=255)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -637,7 +637,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 {
                     //player id
                     quint16 simplifiedId;
-                    if(maxVisiblePlayerAtSameTime<=255)
+                    if(max_players<=255)
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -2621,8 +2621,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> max_player;
-                setMaxPlayers(max_player);
+                in >> max_players;
+                setMaxPlayers(max_players);
 
                 quint32 captureRemainingTime;
                 quint8 captureFrequencyType;
@@ -2649,12 +2649,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 }
                 cityCapture(captureRemainingTime,captureFrequencyType);
 
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
-                {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
-                    return;
-                }
-                in >> maxVisiblePlayerAtSameTime;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
@@ -3002,7 +2996,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     }
                     else
                     {
-                        if(max_player<=255)
+                        if(max_players<=255)
                         {
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                             {
@@ -5786,7 +5780,7 @@ void Api_protocol::resetAll()
     character_selected=false;
     have_send_protocol=false;
     have_receive_protocol=false;
-    max_player=65535;
+    max_players=65535;
     number_of_map=0;
     player_informations.allow.clear();
     player_informations.bot_already_beaten.clear();

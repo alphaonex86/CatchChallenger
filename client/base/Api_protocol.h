@@ -96,8 +96,7 @@ protected:
     virtual void defineMaxPlayers(const quint16 &maxPlayers) = 0;
 
     //stored local player info
-    quint16 max_player;
-    quint16 maxVisiblePlayerAtSameTime;
+    quint16 max_players;
     quint32 number_of_map;
 
     //to send trame
@@ -135,7 +134,7 @@ signals:
     void protocol_is_good() const;
 
     //general info
-    void number_of_player(const quint16 &number,const quint16 &max_player) const;
+    void number_of_player(const quint16 &number,const quint16 &max_players) const;
     void random_seeds(const QByteArray &data) const;
 
     //character

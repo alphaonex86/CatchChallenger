@@ -97,6 +97,9 @@ struct NormalServerSettings
     QString proxy;
     quint16 proxy_port;
     bool useSsl;
+    #ifdef Q_OS_LINUX
+    bool tcpNodelay;
+    #endif
 };
 
 struct ServerSettings
@@ -378,7 +381,6 @@ struct ServerPrivateVariables
     PlayerUpdater player_updater;
     QSet<quint32> connected_players_id_list;
     QStringList server_message;
-    quint16 maxVisiblePlayerAtSameTime;
 
     quint32 number_of_bots_logged;
     int botSpawnIndex;
