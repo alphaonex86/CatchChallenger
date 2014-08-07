@@ -1556,7 +1556,7 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
     }
 }
 
-void MapControllerMP::pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8>> path)
+void MapControllerMP::pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8> > path)
 {
     PathFinding *pathFinding=qobject_cast<PathFinding *>(QObject::sender());
     if(pathFinding==NULL)
