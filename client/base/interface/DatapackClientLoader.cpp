@@ -1236,12 +1236,15 @@ void DatapackClientLoader::parseQuestsLink()
     QHashIterator<quint16,CatchChallenger::Quest> i(CatchChallenger::CommonDatapack::commonDatapack.quests);
     while(i.hasNext()) {
         i.next();
-        QList<quint16> bots=i.value().steps.first().bots;
-        int index=0;
-        while(index<bots.size())
+        if(!i.value().steps.isEmpty())
         {
-            botToQuestStart.insert(bots.at(index),i.key());
-            index++;
+            QList<quint16> bots=i.value().steps.first().bots;
+            int index=0;
+            while(index<bots.size())
+            {
+                botToQuestStart.insert(bots.at(index),i.key());
+                index++;
+            }
         }
     }
     qDebug() << QStringLiteral("%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());

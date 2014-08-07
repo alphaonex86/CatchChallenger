@@ -73,7 +73,7 @@
     <message>
         <location filename="../../mainwindow.cpp" line="268"/>
         <source>Your login need to be at minimum of 3 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Votre login doit faire au moins 3 caratéres</translation>
     </message>
     <message>
         <location filename="../../mainwindow.cpp" line="344"/>
@@ -159,12 +159,12 @@
         <location filename="../../mainwindow.cpp" line="526"/>
         <location filename="../../mainwindow.cpp" line="537"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation>Ok</translation>
     </message>
     <message>
         <location filename="../../mainwindow.cpp" line="543"/>
         <source>Ok (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Ok (%1)</translation>
     </message>
 </context>
 </TS>

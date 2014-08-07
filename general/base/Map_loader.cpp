@@ -563,7 +563,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     {
                         const quint32 &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
                         if(!ok)
-                            DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                            DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2): %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!

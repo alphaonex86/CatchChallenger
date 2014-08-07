@@ -252,7 +252,7 @@ bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &si
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         if(isClient)
         {
-            if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType) && !toDebugValidMainCodeServerToClient.contains(mainCodeType))
+            if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType) && !toDebugValidMainCodeServerToClient.contains(mainCodeType) && !sizeMultipleCodePacketServerToClient.contains(mainCodeType))
             {
                 errorParsingLayer("Critical bug, mainCodeType not valid");
                 return false;
@@ -261,7 +261,7 @@ bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &si
         else
         #endif
         {
-            if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType) && !toDebugValidMainCodeClientToServer.contains(mainCodeType))
+            if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType) && !toDebugValidMainCodeClientToServer.contains(mainCodeType) && !sizeMultipleCodePacketClientToServer.contains(mainCodeType))
             {
                 errorParsingLayer("Critical bug, mainCodeType not valid");
                 return false;
