@@ -1516,8 +1516,9 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
                 }
                 if(index==list_size)
                 {
+                    const Skill::Life &life=monsterSkills.value(0).level.first().life.first();
                     monsterSkills.remove(0);
-                    DebugClass::debugConsole(QStringLiteral("Warning: no valid life effect for the default attack: success=100%, on=ApplyOn_AloneEnemy, quantity<0"));
+                    DebugClass::debugConsole(QStringLiteral("Warning: no valid life effect for the default attack (id: 0): success=100%: %1, on=ApplyOn_AloneEnemy: %2, quantity<0: %3 for skill").arg(life.success).arg(life.effect.on).arg(life.effect.quantity));
                 }
             }
         }
