@@ -22,7 +22,7 @@ void PathFinding::searchPath(QList<MapVisualiserThread::Map_full> mapList)
 
 void PathFinding::internalSearchPath()
 {
-    QList<QPair<CatchChallenger::Direction,quint8>> path;
+    QList<QPair<CatchChallenger::Direction,quint8> > path;
     emit result(path);
 }
 

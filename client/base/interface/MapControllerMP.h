@@ -150,7 +150,7 @@ protected slots:
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
-    void pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8>> path);
+    void pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8> > path);
     virtual void keyPressParse();
 signals:
     void searchPath(QList<MapVisualiserThread::Map_full> mapList);

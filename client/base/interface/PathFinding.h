@@ -12,7 +12,7 @@ public:
     explicit PathFinding();
     virtual ~PathFinding();
 signals:
-    void result(QList<QPair<CatchChallenger::Direction,quint8>> path);
+    void result(QList<QPair<CatchChallenger::Direction,quint8> > path);
     void internalCancel();
     void emitSearchPath();
 public slots:
