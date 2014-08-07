@@ -82,12 +82,12 @@
     <message>
         <location filename="../../solo/SoloWindow.cpp" line="543"/>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Supprimer</translation>
     </message>
     <message>
         <location filename="../../solo/SoloWindow.cpp" line="543"/>
         <source>Are you sure remove this savegame?</source>
-        <translation type="unfinished"></translation>
+        <translation>Êtes vous sure de vouloir supprimer cette sauvegarde?</translation>
     </message>
     <message>
         <location filename="../../solo/SoloWindow.cpp" line="572"/>

@@ -2608,6 +2608,7 @@ void BaseServer::unload_the_static_data()
 void BaseServer::unload_zone()
 {
     GlobalServerData::serverPrivateVariables.captureFightIdList.clear();
+    GlobalServerData::serverPrivateVariables.plantUsedId.clear();
 }
 
 void BaseServer::unload_market()

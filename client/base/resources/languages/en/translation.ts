@@ -466,7 +466,7 @@
     <message>
         <location filename="../../../Api_protocol.cpp" line="2576"/>
         <location filename="../../../Api_protocol.cpp" line="2612"/>
-        <location filename="../../../Api_protocol.cpp" line="2914"/>
+        <location filename="../../../Api_protocol.cpp" line="2883"/>
         <source>Unknown error %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -496,32 +496,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2910"/>
+        <location filename="../../../Api_protocol.cpp" line="2879"/>
         <source>Login already used</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="2912"/>
+        <location filename="../../../Api_protocol.cpp" line="2881"/>
         <source>Not created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="3017"/>
+        <location filename="../../../Api_protocol.cpp" line="2986"/>
         <source>Character not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="3019"/>
+        <location filename="../../../Api_protocol.cpp" line="2988"/>
         <source>Already logged</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="3021"/>
+        <location filename="../../../Api_protocol.cpp" line="2990"/>
         <source>Server internal problem</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="3023"/>
+        <location filename="../../../Api_protocol.cpp" line="2992"/>
         <source>Unknown error: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -657,7 +657,9 @@
         <location filename="../../../interface/BaseWindowCharacter.cpp" line="46"/>
         <location filename="../../../interface/BaseWindowCharacter.cpp" line="88"/>
         <location filename="../../../interface/BaseWindowCharacter.cpp" line="90"/>
-        <location filename="../../../interface/BaseWindowCharacter.cpp" line="135"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="92"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="140"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="162"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="257"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="270"/>
         <location filename="../../../interface/BaseWindowMarket.cpp" line="306"/>
@@ -692,26 +694,41 @@
     </message>
     <message>
         <location filename="../../../interface/BaseWindowCharacter.cpp" line="90"/>
+        <source>Have already the max caraters taken</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="92"/>
         <source>Unable to create the character</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowCharacter.cpp" line="105"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="108"/>
         <source>%1 to be deleted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowCharacter.cpp" line="135"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="110"/>
+        <source>Map missing, can&apos;t play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="140"/>
         <source>Deleting already planned</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowCharacter.cpp" line="150"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="155"/>
         <source>Your charater will be deleted into %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowCharacter.cpp" line="157"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="162"/>
+        <source>You can&apos;t play with this buggy charater</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="167"/>
         <source>Selecting your character</source>
         <translation type="unfinished"></translation>
     </message>
@@ -845,8 +862,8 @@ Report the bug to the datapack maintainer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="952"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="953"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="954"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="955"/>
         <source>Cash: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -986,7 +1003,7 @@ Report the bug to the datapack maintainer.</source>
     </message>
     <message>
         <location filename="../../../interface/BaseWindow.cpp" line="2539"/>
-        <location filename="../../../interface/BaseWindowCharacter.cpp" line="150"/>
+        <location filename="../../../interface/BaseWindowCharacter.cpp" line="155"/>
         <location filename="../../../interface/BaseWindowFactory.cpp" line="171"/>
         <location filename="../../../interface/BaseWindowFactory.cpp" line="175"/>
         <location filename="../../../interface/BaseWindowFactory.cpp" line="215"/>
@@ -1077,7 +1094,7 @@ Report the bug to the datapack maintainer.</source>
     <message>
         <location filename="../../../interface/BaseWindow.cpp" line="3023"/>
         <location filename="../../../interface/BaseWindow.cpp" line="3031"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="231"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="232"/>
         <source>Cash: %1$</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1436,76 +1453,76 @@ Quantity: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="453"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="455"/>
         <source>Loading of the player informations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="455"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="457"/>
         <source>Loading of the inventory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="460"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="462"/>
         <source>Loading of the datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="462"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="464"/>
         <source>Loaded datapack file: %1%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="465"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="467"/>
         <source>Opening the datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="484"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="486"/>
         <source>Welcome &lt;b&gt;&lt;i&gt;%1&lt;/i&gt;&lt;/b&gt; on &lt;i&gt;CatchChallenger&lt;/i&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="487"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="489"/>
         <source>Waiting: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="733"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="739"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="746"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="752"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="735"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="741"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="748"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="754"/>
         <source>Select a quest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="791"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="793"/>
         <source>Step requirements: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="800"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="802"/>
         <source>Final rewards: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="845"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="847"/>
         <source>Less reputation for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="847"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="849"/>
         <source>More reputation for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="866"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="868"/>
         <source>Add permission to create clan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="970"/>
-        <location filename="../../../interface/BaseWindowLoad.cpp" line="996"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="972"/>
+        <location filename="../../../interface/BaseWindowLoad.cpp" line="998"/>
         <source>%1, level: %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2543,65 +2560,65 @@ SP cost: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="72"/>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="100"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="73"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="101"/>
         <source>Number of bot connected: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="80"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="81"/>
         <source>Disconnected by the host</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="88"/>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="475"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="89"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="479"/>
         <source>Selected character: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="94"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="95"/>
         <source>Last reply time: %1ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="251"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="252"/>
         <source>Running query: %1 Query with worse time: %2h</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="253"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="254"/>
         <source>Running query: %1 Query with worse time: %2min</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="255"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="256"/>
         <source>Running query: %1 Query with worse time: %2s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="257"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="258"/>
         <source>Running query: %1 Query with worse time: %2ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="267"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="268"/>
         <source>On the map</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="575"/>
         <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="580"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="585"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="575"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="580"/>
         <source>Your password need to be at minimum of 6 characters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="580"/>
+        <location filename="../../../../../tools/bot-connection/MainWindow.cpp" line="585"/>
         <source>Your login need to be at minimum of 3 characters</source>
         <translation type="unfinished"></translation>
     </message>
