@@ -39,7 +39,6 @@ function compil {
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/qmake *.pro -spec macx-g++ -config release"
         echo "try make"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/usr/bin/make -j 3 > /dev/null"
-        exit;
         RETURN_CODE=$?
         if [ $? -ne 0 ]
         then

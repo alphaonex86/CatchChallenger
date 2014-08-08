@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ ! -x /usr/bin/lrelease ]
+then
+    echo "no /usr/bin/lrelease found!"
+    exit;
+fi
+
 export TEMP_PATH="/home/ultracopier-temp/"
 export WINEBASEPATH="/home/wine/"
 export CATCHCHALLENGERSOURCESPATH="/root/catchchallenger/sources/"
