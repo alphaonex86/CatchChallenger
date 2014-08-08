@@ -43,16 +43,12 @@ HEADERS += \
     $$PWD/base/GlobalServerData.h \
     $$PWD/base/SqlFunction.h \
     $$PWD/base/BaseServer.h \
-    $$PWD/base/LocalClientHandler.h \
     $$PWD/base/LocalClientHandlerWithoutSender.h \
     $$PWD/VariableServer.h \
     $$PWD/base/ServerStructures.h \
     $$PWD/base/EventThreader.h \
     $$PWD/base/Client.h \
-    $$PWD/base/ClientNetworkWrite.h \
-    $$PWD/base/ClientNetworkRead.h \
     $$PWD/base/ClientNetworkReadWithoutSender.h \
-    $$PWD/base/ClientBroadCast.h \
     $$PWD/base/BroadCastWithoutSender.h \
     $$PWD/base/PlayerUpdater.h \
     $$PWD/base/MapServer.h \
@@ -64,10 +60,7 @@ HEADERS += \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h \
     $$PWD/base/ClientMapManagement/MapBasicMove.h \
-    $$PWD/crafting/BaseServerCrafting.h \
     $$PWD/crafting/MapServerCrafting.h \
-    $$PWD/fight/ServerStructuresFight.h \
-    $$PWD/fight/BaseServerFight.h \
     $$PWD/base/DatabaseBase.h
 
 RESOURCES += \

@@ -31,7 +31,6 @@ ALTER TABLE public.account OWNER TO postgres;
 --
 
 CREATE TABLE account_register (
-    id integer NOT NULL,
     login character varying(128),
     password character varying(128),
     email character varying(64),
@@ -403,15 +402,6 @@ ALTER TABLE ONLY account
 
 ALTER TABLE ONLY account_register
     ADD CONSTRAINT account_register_login_key UNIQUE (login);
-
-
---
--- Name: account_register_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY account_register
-    ADD CONSTRAINT account_register_pkey PRIMARY KEY (id);
-
 
 --
 -- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 

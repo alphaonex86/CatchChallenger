@@ -43,7 +43,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -927,7 +927,78 @@ color: rgb(0, 0, 0);</string>
                  </spacer>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_login_4">
+                 <layout class="QHBoxLayout" name="horizontalLayout_10">
+                  <item>
+                   <spacer name="horizontalSpacer_login_5">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_login_website">
+                    <property name="styleSheet">
+                     <string notr="true">background-image: url(:/images/light-white.png);
+padding: 0 5px;</string>
+                    </property>
+                    <property name="text">
+                     <string>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Web site&lt;/span&gt;&lt;/a&gt;</string>
+                    </property>
+                    <property name="openExternalLinks">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_website">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_login_register">
+                    <property name="styleSheet">
+                     <string notr="true">background-image: url(:/images/light-white.png);
+padding: 0 5px;</string>
+                    </property>
+                    <property name="text">
+                     <string>&lt;a href=&quot;http://catchchallenger.first-world.info/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Register&lt;/span&gt;&lt;/a&gt;</string>
+                    </property>
+                    <property name="openExternalLinks">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_register">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_12">
                   <item>
                    <spacer name="horizontalSpacer_login_3">
                     <property name="orientation">
@@ -949,6 +1020,19 @@ color: rgb(0, 0, 0);</string>
                    </widget>
                   </item>
                   <item>
+                   <spacer name="horizontalSpacer_13">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
                    <widget class="QPushButton" name="login_cancel">
                     <property name="text">
                      <string>Cancel</string>
@@ -956,7 +1040,7 @@ color: rgb(0, 0, 0);</string>
                    </widget>
                   </item>
                   <item>
-                   <spacer name="horizontalSpacer_login_5">
+                   <spacer name="horizontalSpacer_14">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
                     </property>
