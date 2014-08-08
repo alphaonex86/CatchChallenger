@@ -136,7 +136,7 @@ Section Uninstall
 
   NotLaunched:
 
-  DeleteRegKey HKCU "Software\CatchChallenger\client-CATCHCHALLENGER_SUBVERSION"
+;  DeleteRegKey HKCU "Software\CatchChallenger\client-CATCHCHALLENGER_SUBVERSION"
   Delete "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION\Uninstall.lnk"
   Delete "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION\CatchChallenger.lnk"
   RMDir /REBOOTOK /r "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION"
