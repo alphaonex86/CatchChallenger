@@ -92,7 +92,9 @@ function compil {
             upx --lzma -9 ${COMPIL_FOLDER}/*.exe > /dev/null 2>&1
         fi
         mv ${COMPIL_FOLDER}/*.exe ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/
+        /usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" -or -name "*.png" \) -exec rm -f {} \;
     else
+        cp -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/base/resources/music/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/music/
         cd ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/${TARGET}/
         echo "catchchallenger-${TARGET}-windows-x86 application..."
         DISPLAY="na" WINEPREFIX=${REAL_WINEPREFIX} /usr/bin/nice -n 15 /usr/bin/ionice -c 3 wine qmake QMAKE_CFLAGS_RELEASE+="${CFLAGSCUSTOM}" QMAKE_CFLAGS+="${CFLAGSCUSTOM}" QMAKE_CXXFLAGS_RELEASE="${CFLAGSCUSTOM}" QMAKE_CXXFLAGS="${CFLAGSCUSTOM}" *.pro
@@ -112,8 +114,8 @@ function compil {
             upx --lzma -9 ${COMPIL_FOLDER}/catchchallenger*.exe > /dev/null 2>&1
         fi
         mv ${COMPIL_FOLDER}/catchchallenger*.exe ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/
+        /usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" -or -name "*.png" -or -name "*.ogg" \) -exec rm -f {} \;
     fi
-	/usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" -or -name "*.png" \) -exec rm -f {} \;
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1
