@@ -632,6 +632,20 @@ void MainWindow::on_server_select_clicked()
         settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
     else
         settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
+    if(!serverConnexion.value(selectedServer)->register_page.isEmpty())
+    {
+        ui->label_login_register->setVisible(true);
+        ui->label_login_register->setText(tr("<a href=\"%1\"><span style=\"text-decoration:underline;color:#0057ae;\">Register</span></a>").arg(serverConnexion.value(selectedServer)->register_page));
+    }
+    else
+        ui->label_login_register->setVisible(false);
+    if(!serverConnexion.value(selectedServer)->site_page.isEmpty())
+    {
+        ui->label_login_website->setVisible(true);
+        ui->label_login_website->setText(tr("<a href=\"%1\"><span style=\"text-decoration:underline;color:#0057ae;\">Web site</span></a>").arg(serverConnexion.value(selectedServer)->site_page));
+    }
+    else
+        ui->label_login_website->setVisible(false);
     serverLoginList.clear();
     if(settings.contains(QStringLiteral("login")))
     {
