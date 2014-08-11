@@ -4,6 +4,7 @@
 #include "../base/GeneralVariable.h"
 
 #include <QtMath>
+#include <QDebug>
 
 using namespace CatchChallenger;
 
@@ -164,9 +165,9 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId, const quint32 &skil
                             errorFightEngine(QStringLiteral("Skill to learn not found into learnSkill()"));
                             return false;
                         }
-                        if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.size()>learn.learnSkillLevel)
+                        if(learn.learnSkillLevel>CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.size())
                         {
-                            errorFightEngine(QStringLiteral("Skill level to learn not found learnSkill()"));
+                            errorFightEngine(QStringLiteral("Skill level to learn not found learnSkill() %2>%1").arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.size()).arg(learn.learnSkillLevel));
                             return false;
                         }
                         if(CommonSettings::commonSettings.useSP)
@@ -325,20 +326,28 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     playerMonster.remaining_xp=0;
     playerMonster.sp=0;
     quint8 randomMonsterInt=getOneSeed(100);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    quint8 randomMonsterIntOriginal=randomMonsterInt;
+    QString monsterListString;
+    #endif
     bool monsterFound=false;
     int index=0;
     while(index<monsterList.size())
     {
-        int luck=monsterList.at(index).luck;
+        const MapMonster &mapMonster=monsterList.at(index);
+        const int &luck=mapMonster.luck;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        monsterListString=QStringLiteral("luck:%1;id:%2;").arg(mapMonster.luck).arg(mapMonster.id);
+        #endif
         if(randomMonsterInt<=luck)// with < it crash because randomMonsterInt can be 0
         {
             //it's this monster
-            playerMonster.monster=monsterList.at(index).id;
+            playerMonster.monster=mapMonster.id;
             //select the level
-            if(monsterList.at(index).maxLevel==monsterList.at(index).minLevel)
-                playerMonster.level=monsterList.at(index).minLevel;
+            if(mapMonster.maxLevel==mapMonster.minLevel)
+                playerMonster.level=mapMonster.minLevel;
             else
-                playerMonster.level=getOneSeed(monsterList.at(index).maxLevel-monsterList.at(index).minLevel+1)+monsterList.at(index).minLevel;
+                playerMonster.level=getOneSeed(mapMonster.maxLevel-mapMonster.minLevel+1)+mapMonster.minLevel;
             monsterFound=true;
             break;
         }
@@ -350,7 +359,12 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     {
         if(monsterList.isEmpty())
         {
+            #ifndef CATCHCHALLENGER_EXTRA_CHECK
             errorFightEngine(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+            #else
+            errorFightEngine(QStringLiteral("error: no wild monster selected, with: randomMonsterIntOriginal: %1, monsterListString: %2").arg(randomMonsterIntOriginal).arg(monsterListString));
+            #endif
+
             *ok=false;
             playerMonster.monster=0;
             playerMonster.level=0;
@@ -359,7 +373,11 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
         }
         else
         {
-            messageFightEngine(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+            #ifndef CATCHCHALLENGER_EXTRA_CHECK
+            messageFightEngine(QStringLiteral("warning: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+            #else
+            messageFightEngine(QStringLiteral("warning: no wild monster selected, with: randomMonsterIntOriginal: %1, monsterListString: %2").arg(randomMonsterIntOriginal).arg(monsterListString));
+            #endif
             playerMonster.monster=monsterList.first().id;
             //select the level
             if(monsterList.first().maxLevel==monsterList.first().minLevel)
@@ -686,6 +704,9 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
         quantity=1;
         errorFightEngine("Wrong calculated value");
     }
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    qDebug() << "Life: Apply on" << otherMonster->monster << "quantity" << quantity << "hp was:" << otherMonster->hp;
+    #endif
     //kill
     if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
     {
@@ -701,6 +722,9 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
     //other life change
     else
         otherMonster->hp+=quantity;
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    qDebug() << "Life: Apply on" << otherMonster->monster << "quantity" << quantity << "hp is now:" << otherMonster->hp;
+    #endif
     effect_to_return.critical=false;
     effect_to_return.on=effect.on;
     effect_to_return.quantity=quantity;
@@ -1905,7 +1929,7 @@ QList<Skill::BuffEffect> CommonFightEngine::removeOldBuff(PublicPlayerMonster * 
     return returnValue;
 }
 
-QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMonster *playerMonster)
+QList<Skill::LifeEffectReturn> CommonFightEngine::applyBuffLifeEffect(PublicPlayerMonster *playerMonster)
 {
     QList<Skill::LifeEffectReturn> returnValue;
     int index=0;
@@ -1922,6 +1946,9 @@ QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMon
             while(sub_index<effects.size())
             {
                 const Buff::Effect &effect=effects.at(sub_index);
+                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                qDebug() << "Buff: Apply on" << playerMonster->monster << "the buff" << playerBuff.buff << "and effect on" << effect.on << "quantity" << effect.quantity << "type" << effect.type << "was hp:" << playerMonster->hp;
+                #endif
                 if(effect.on==Buff::Effect::EffectOn_HP)
                 {
                     qint32 quantity=0;
@@ -1961,8 +1988,12 @@ QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMon
                         lifeEffectReturn.on=ApplyOn_Themself;
                         lifeEffectReturn.quantity=quantity;
                         returnValue << lifeEffectReturn;
+                        playerMonster->hp+=quantity;
                     }
                 }
+                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                qDebug() << "Buff: Apply on" << playerMonster->monster << "the buff" << playerBuff.buff << "and effect on" << effect.on << "quantity" << effect.quantity << "type" << effect.type << "new hp:" << playerMonster->hp;
+                #endif
                 sub_index++;
             }
             index++;
@@ -2196,10 +2227,13 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
                         #endif
                         startTheFight();
                         wildMonsters << monster;
+                        return true;
                     }
                     else
+                    {
                         errorFightEngine(QStringLiteral("error: no more random seed here to have the get"));
-                    return ok;
+                        return false;
+                    }
                 }
                 else
                     return false;
@@ -2442,34 +2476,8 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     //apply the effect of current buff
     if(!genericMonsterIsKO(currentMonster))
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        //don't use pointer  here because the value of currentMonster->hp will change
-        quint32 currentMonsterHp=currentMonster->hp;
-        quint32 otherMonsterHp=otherMonster->hp;
-        #endif
         attackReturn.removeBuffEffectMonster << removeOldBuff(currentMonster);
-        QList<Skill::LifeEffectReturn> lifeEffectMonster=buffLifeEffect(currentMonster);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        int index=0;
-        while(index<lifeEffectMonster.size())
-        {
-            if(lifeEffectMonster.at(index).on==ApplyOn_AllAlly || lifeEffectMonster.at(index).on==ApplyOn_Themself)
-                currentMonsterHp+=lifeEffectMonster.at(index).quantity;
-            if(lifeEffectMonster.at(index).on==ApplyOn_AllEnemy || lifeEffectMonster.at(index).on==ApplyOn_AloneEnemy)
-                otherMonsterHp+=lifeEffectMonster.at(index).quantity;
-            index++;
-        }
-        if(currentMonster->hp!=currentMonsterHp)
-        {
-            errorFightEngine(QStringLiteral("buff effect: Returned damage don't match with the real effect on current monster: %1!=(%2+%3)").arg(currentMonster->hp).arg(currentMonsterHp).arg(lifeEffectMonster.at(index).quantity));
-            return attackReturn;
-        }
-        if(otherMonster->hp!=otherMonsterHp)
-        {
-            errorFightEngine(QStringLiteral("buff effect: Returned damage don't match with the real effect on other monster: %1!=(%2+%3)").arg(otherMonster->hp).arg(otherMonsterHp).arg(lifeEffectMonster.at(index).quantity));
-            return attackReturn;
-        }
-        #endif
+        const QList<Skill::LifeEffectReturn> &lifeEffectMonster=applyBuffLifeEffect(currentMonster);
         attackReturn.lifeEffectMonster << lifeEffectMonster;
     }
     if(genericMonsterIsKO(currentMonster) && !genericMonsterIsKO(otherMonster))

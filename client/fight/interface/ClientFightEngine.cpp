@@ -602,6 +602,7 @@ quint32 ClientFightEngine::lastGivenXP()
 
 void ClientFightEngine::errorFightEngine(const QString &errorMessage)
 {
+    qDebug() << errorMessage;
     error(errorMessage);
 }
 

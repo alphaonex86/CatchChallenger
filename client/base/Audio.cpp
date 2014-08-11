@@ -2,13 +2,17 @@
 #include "PlatformMacro.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralVariable.h"
+#include <QCoreApplication>
 
 Audio Audio::audio;
 
 Audio::Audio()
 {
     /* Initialize libVLC */
-    vlcInstance = libvlc_new(0, NULL);
+    const char * const vlc_args[] = {
+          "-vvv"
+    };
+    vlcInstance = libvlc_new(1,vlc_args);
     /* Complain in case of broken installation */
     if (vlcInstance == NULL)
         qDebug() << "Qt libVLC player, Could not init libVLC";

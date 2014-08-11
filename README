@@ -15,13 +15,13 @@ Programming:
 
 Asynchronous protocol with no influence of internet and server latency. Thread isolation for the important or heavy server task. It can be hosted on ADSL connection.
 Qt programming to have multi-platform and assembly access. Internal implementation with event.
-SGBD: Mysql and SQLite.
+SGBD: Mysql, SQLite, PostgreSQL.
 Is into 3 part: server, client, datapack.
 
 ====================================================
 Compiling
 
-Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvorbis/libogg/libvlc for the client, Qt5
+Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvlc for the client, Qt5
 For the server: db, db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
 For the Gui server:
 cd server/

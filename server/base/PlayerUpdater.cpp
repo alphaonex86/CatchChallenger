@@ -9,8 +9,11 @@
 using namespace CatchChallenger;
 PlayerUpdater::PlayerUpdater() :
     connected_players(0),
-    sended_connected_players(0),
-    next_send_timer(NULL)
+    sended_connected_players(0)
+      #ifndef EPOLLCATCHCHALLENGERSERVER
+      ,
+        next_send_timer(NULL)
+      #endif
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     connect(this,&PlayerUpdater::send_addConnectedPlayer,this,&PlayerUpdater::internal_addConnectedPlayer,Qt::QueuedConnection);
@@ -43,6 +46,7 @@ void PlayerUpdater::removeConnectedPlayer()
 
 void PlayerUpdater::initAll()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(next_send_timer==NULL)
     {
         next_send_timer=new QTimer();
@@ -51,15 +55,21 @@ void PlayerUpdater::initAll()
         //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=9*16*4=576B/s
         next_send_timer->setInterval(250);
 
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        connect(next_send_timer,&QTimer::timeout,this,&PlayerUpdater::send_timer,Qt::QueuedConnection);
-        #endif
+        connect(next_send_timer,&QTimer::timeout,this,&PlayerUpdater::exec,Qt::QueuedConnection);
     }
+    #else
+    setInterval(250);
+    #endif
 }
 
 void PlayerUpdater::internal_addConnectedPlayer()
 {
-    connected_players++;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(connected_players<GlobalServerData::serverSettings.max_players)
+    #endif
+        connected_players++;
+
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     switch(connected_players)
     {
         //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=49*16*1=735B/s
@@ -84,11 +94,38 @@ void PlayerUpdater::internal_addConnectedPlayer()
 
     if(!next_send_timer->isActive())
         next_send_timer->start();
+    #else
+    switch(connected_players)
+    {
+        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=49*16*1=735B/s
+        case 10:
+            setInterval(1000);
+        break;
+        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=99*16*0.5=792B/s
+        case 50:
+            setInterval(2000);
+        break;
+        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=999*16*0.1=1.6KB/s
+        case 100:
+            setInterval(10000);
+        break;
+        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=65535*16*0.016=16.7KB/s
+        case 1000:
+            setInterval(60000);
+        break;
+        default:
+        break;
+    }
+    #endif
 }
 
 void PlayerUpdater::internal_removeConnectedPlayer()
 {
-    connected_players--;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(connected_players>0)
+    #endif
+        connected_players--;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     switch(connected_players)
     {
         case (10-1):
@@ -108,9 +145,28 @@ void PlayerUpdater::internal_removeConnectedPlayer()
     }
     if(!next_send_timer->isActive())
         next_send_timer->start();
+    #else
+    switch(connected_players)
+    {
+        case (10-1):
+            setInterval(250);
+        break;
+        case (50-1):
+            setInterval(1000);
+        break;
+        case (100-1):
+            setInterval(2000);
+        break;
+        case (1000-1):
+            setInterval(10000);
+        break;
+        default:
+        break;
+    }
+    #endif
 }
 
-void PlayerUpdater::send_timer()
+void PlayerUpdater::exec()
 {
     if(GlobalServerData::serverSettings.sendPlayerNumber && sended_connected_players!=connected_players)
     {

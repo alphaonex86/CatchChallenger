@@ -2,7 +2,7 @@
 $content=file_get_contents($argv[1]);
 $content=str_replace(' lang="en"','',$content);
 $content=preg_replace('#<!--.*-->#isU','',$content);
-$content=preg_replace("#<[a-z]+ ?/>#isU",'',$content);
+//$content=preg_replace("#<[a-z]+ ?/>#isU",'',$content);////drop <br /> into bot test
 $content=preg_replace("#^[ \t]+#isU",'',$content);
 $content=preg_replace("#([\n\r])[ \t]+#",'$1',$content);
 $content=preg_replace("#[ \t]+([\n\r])#",'$1',$content);

@@ -327,26 +327,49 @@ int main(int argc, char *argv[])
         const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
         timerCityCapture.setSingleShot(true);
         if(!timerCityCapture.start(time))
+        {
+            std::cerr << "timerCityCapture fail to set" << std::endl;
             return EXIT_FAILURE;
+        }
     }
     {
         if(!timerDdos.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000))
+        {
+            std::cerr << "timerDdos fail to set" << std::endl;
             return EXIT_FAILURE;
+        }
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         if(!timerDisplayEventBySeconds.start(60*1000))
+        {
+            std::cerr << "timerDisplayEventBySeconds fail to set" << std::endl;
             return EXIT_FAILURE;
+        }
     }
     #endif
     {
         if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
             if(!timerPositionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000))
+            {
+                std::cerr << "timerPositionSync fail to set" << std::endl;
                 return EXIT_FAILURE;
+            }
     }
     {
         if(!timerSendInsertMoveRemove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT))
+        {
+            std::cerr << "timerSendInsertMoveRemove fail to set" << std::endl;
             return EXIT_FAILURE;
+        }
+    }
+    {
+        if(GlobalServerData::serverSettings.sendPlayerNumber)
+            if(!GlobalServerData::serverPrivateVariables.player_updater.start())
+            {
+                std::cerr << "player_updater timer fail to set" << std::endl;
+                return EXIT_FAILURE;
+            }
     }
 
     #ifndef SERVERNOBUFFER
