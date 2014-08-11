@@ -140,6 +140,7 @@ BaseWindow::BaseWindow() :
 
 
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::error);
 
     connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX);
@@ -485,7 +486,17 @@ void BaseWindow::message(QString message) const
 void BaseWindow::number_of_player(quint16 number,quint16 max)
 {
     ui->frame_main_display_interface_player->show();
-    ui->label_interface_number_of_player->setText(QStringLiteral("%1/%2").arg(number).arg(max));
+    QString stringMax;
+    if(max>1000)
+        stringMax=QStringLiteral("%1K").arg(max/1000);
+    else
+        stringMax=QString::number(max);
+    QString stringNumber;
+    if(number>1000)
+        stringNumber=QStringLiteral("%1K").arg(number/1000);
+    else
+        stringNumber=QString::number(number);
+    ui->label_interface_number_of_player->setText(QStringLiteral("%1/%2").arg(stringNumber).arg(stringMax));
 }
 
 void BaseWindow::on_toolButton_interface_quit_clicked()

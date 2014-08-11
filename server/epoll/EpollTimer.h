@@ -10,6 +10,7 @@ public:
     Type getType() const;
     bool start(const unsigned int &msec,unsigned int offset=0);
     bool start();
+    bool stop();
     void setInterval(const unsigned int &msec,const unsigned int &offset=0);
     void setSingleShot(const bool &singleShot);
     virtual void exec() = 0;

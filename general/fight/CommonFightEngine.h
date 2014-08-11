@@ -57,7 +57,7 @@ public:
     quint8 getSkillLevel(const quint32 &skill);
     virtual quint8 decreaseSkillEndurance(const quint32 &skill);
     bool haveMoreEndurance();
-    QList<Skill::LifeEffectReturn> buffLifeEffect(PublicPlayerMonster * playerMonster);
+    QList<Skill::LifeEffectReturn> applyBuffLifeEffect(PublicPlayerMonster * playerMonster);
     QList<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
     virtual bool isInBattle() const = 0;
