@@ -200,6 +200,8 @@ void Client::disconnectClient()
     {
         if(map!=NULL)
             removeClientOnMap(map,true);
+        if(GlobalServerData::serverSettings.sendPlayerNumber)
+            GlobalServerData::serverPrivateVariables.player_updater.removeConnectedPlayer();
         extraStop();
         tradeCanceled();
         battleCanceled();

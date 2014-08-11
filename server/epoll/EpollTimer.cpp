@@ -97,6 +97,20 @@ bool EpollTimer::start()
     return start(msec,offset);
 }
 
+bool EpollTimer::stop()
+{
+    if(tfd==-1)
+        return false;
+    if(Epoll::epoll.ctl(EPOLL_CTL_DEL,tfd,NULL) < 0)
+    {
+        std::cerr << "epoll_ctl error" << std::endl;
+        return false;
+    }
+    ::close(tfd);
+    tfd=-1;
+    return true;
+}
+
 void EpollTimer::setInterval(const unsigned int &msec,const unsigned int &offset)
 {
     this->msec=msec;
@@ -104,6 +118,11 @@ void EpollTimer::setInterval(const unsigned int &msec,const unsigned int &offset
         this->offset=msec;
     else
         this->offset=offset;
+    if(tfd!=-1)
+    {
+        stop();
+        start();
+    }
 }
 
 void EpollTimer::setSingleShot(const bool &singleShot)

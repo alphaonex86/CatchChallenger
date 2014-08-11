@@ -4,10 +4,16 @@
 #include <QObject>
 #include <QTimer>
 
+#ifdef EPOLLCATCHCHALLENGERSERVER
+#include "../epoll/EpollTimer.h"
+#endif
+
 namespace CatchChallenger {
 class PlayerUpdater
         #ifndef EPOLLCATCHCHALLENGERSERVER
         : public QObject
+        #else
+        : public EpollTimer
         #endif
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -28,11 +34,14 @@ public:
 private:
     void internal_addConnectedPlayer();
     void internal_removeConnectedPlayer();
-    void send_timer();
+    void exec();
     void initAll();
 private:
     quint16 connected_players,sended_connected_players;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     QTimer *next_send_timer;
+    #else
+    #endif
 };
 }
 
