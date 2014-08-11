@@ -27,22 +27,22 @@ For the Gui server:
 cd server/
 qmake catchchallenger-server-gui.pro
 make
-git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 For the CLI server:
 cd server/
 qmake catchchallenger-server-cli.pro
 make
-git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 For the Epoll server (linux only):
 cd server/
 qmake catchchallenger-server-epoll.pro
 make
-git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 For the game solo:
 cd client/single-player/
 qmake *.pro
 make
-git clone -depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 For the MMORPG game:
 cd client/single-server/
 qmake *.pro
