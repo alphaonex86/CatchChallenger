@@ -1736,8 +1736,6 @@ void BaseServer::preload_the_map()
         index++;
     }
 
-    preload_the_bots(semi_loaded_map);
-
     //clean border balise without another oposite border
     size=semi_loaded_map.size();
     index=0;
@@ -1847,6 +1845,9 @@ void BaseServer::preload_the_map()
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=0;
         index++;
     }
+
+    //nead be after the offet
+    preload_the_bots(semi_loaded_map);
 
     //load the rescue
     size=semi_loaded_map.size();

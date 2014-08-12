@@ -26,6 +26,7 @@ public:
     Map_to_send map_to_send;
     QString errorString();
     bool tryLoadMap(const QString &fileName);
+    static void removeMapLayer(const ParsedLayer &parsed_layer);
     bool loadMonsterMap(const QString &fileName,QList<QString> detectedMonsterCollisionMonsterType,QList<QString> detectedMonsterCollisionLayer);
     static QString resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath=QString());
     static QDomElement getXmlCondition(const QString &fileName,const QString &conditionFile,const quint32 &conditionId);

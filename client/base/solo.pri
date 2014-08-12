@@ -13,3 +13,5 @@ RESOURCES += $$PWD/resources/resources-single-player.qrc \
 
 TRANSLATIONS    = $$PWD/resources/languages/en/solo.ts \
     $$PWD/languages/fr/solo.ts
+
+DEFINES += CATCHCHALLENGER_SOLO

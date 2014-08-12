@@ -1664,6 +1664,7 @@ void BaseWindow::doNextAction()
     qDebug() << "doNextAction(): show the menu";
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_SOLO
     if(ClientBase::public_and_private_informations_solo!=NULL)
     {
         if(ClientBase::public_and_private_informations_solo->playerMonster.size()!=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().size())
@@ -1688,6 +1689,7 @@ void BaseWindow::doNextAction()
             }
         }
     }
+    #endif
     PublicPlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(currentMonster!=NULL)
     {

@@ -705,6 +705,8 @@ void MainWindow::on_server_remove_clicked()
                 settings.setValue(QStringLiteral("lastConnexion"),QDateTime::currentMSecsSinceEpoch()/1000);
                 settings.endGroup();
             }
+            serverConnexion.remove(selectedServer);
+            selectedServer=NULL;
             displayServerList();
             break;
         }
