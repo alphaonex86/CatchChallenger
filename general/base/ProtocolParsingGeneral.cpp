@@ -212,7 +212,7 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketClientToServer[0x60][0x0006]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0007]=2;
     sizeMultipleCodePacketClientToServer[0x60][0x0008]=2;
-    sizeMultipleCodePacketClientToServer[0x60][0x0009]=2;
+    sizeMultipleCodePacketClientToServer[0x60][0x0009]=4;//monster id in db
     sizeMultipleCodePacketClientToServer[0x6a][0x0001]=2;
     sizeMultipleCodePacketClientToServer[0x6a][0x0002]=2;
     sizeMultipleCodePacketClientToServer[0x6a][0x0003]=2;

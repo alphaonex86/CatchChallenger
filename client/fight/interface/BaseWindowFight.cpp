@@ -523,7 +523,9 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
     //map not located
     if(map==NULL)
     {
-        ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
+        ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+        ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
+        ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
         return;
     }
     const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*map,x,y);
@@ -537,39 +539,39 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
             {
                 const QString &baseSearch=CatchChallenger::Api_client_real::client->datapackPath()+QLatin1Literal(DATAPACK_BASE_PATH_MAP)+monstersCollision.background;
                 if(QFile(baseSearch+"/background.png").exists())
-                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url('")+baseSearch+QLatin1Literal("/background.png');}"));
+                    ui->labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.png")).scaled(800,440));
                 else if(QFile(baseSearch+"/background.jpg").exists() && (supportedImageFormats.contains(QLatin1Literal("jpeg")) || supportedImageFormats.contains(QLatin1Literal("jpg"))))
-                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url('")+baseSearch+QLatin1Literal("/background.jpg');}"));
+                    ui->labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.jpg")).scaled(800,440));
                 else
-                    ui->frameFightBackground->setStyleSheet(QLatin1Literal("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
+                    ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
 
                 if(QFile(baseSearch+"/plateform-front.png").exists())
-                    ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.png")));
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.png")).scaled(260,90));
                 else if(QFile(baseSearch+"/plateform-front.gif").exists())
-                    ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.gif")));
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.gif")).scaled(260,90));
                 else
-                    ui->labelFightPlateformTop->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-front.png")));
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-front.png")).scaled(800,440));
 
                 if(QFile(baseSearch+"/plateform-background.png").exists())
-                    ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-background.png")));
+                    ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-background.png")).scaled(230,90));
                 else if(QFile(baseSearch+"/plateform-background.gif").exists())
-                    ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-background.gif")));
+                    ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-background.gif")).scaled(230,90));
                 else
-                    ui->labelFightPlateformBottom->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-background.png")));
+                    ui->labelFightPlateformBottom->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-background.png")).scaled(230,90));
             }
             else
             {
-                ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
-                ui->labelFightPlateformTop->setPixmap(QPixmap(":/images/interface/fight/plateform-front.png"));
-                ui->labelFightPlateformBottom->setPixmap(QPixmap(":/images/interface/fight/plateform-background.png"));
+                ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+                ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
+                ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
             }
             return;
         }
         index++;
     }
-    ui->frameFightBackground->setStyleSheet(QStringLiteral("#frameFightBackground{background-image: url(:/images/interface/fight/background.jpg);}"));
-    ui->labelFightPlateformTop->setPixmap(QPixmap(":/images/interface/fight/plateform-front.png"));
-    ui->labelFightPlateformBottom->setPixmap(QPixmap(":/images/interface/fight/plateform-background.png"));
+    ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+    ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
+    ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
 }
 
 void BaseWindow::init_other_monster_display()
@@ -577,9 +579,10 @@ void BaseWindow::init_other_monster_display()
     updateOtherMonsterInformation();
 }
 
-void BaseWindow::init_current_monster_display()
+void BaseWindow::init_current_monster_display(PlayerMonster *fightMonster)
 {
-    PlayerMonster *fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(fightMonster==NULL)
+        fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(fightMonster!=NULL)
     {
         //current monster
@@ -799,6 +802,9 @@ void BaseWindow::updateCurrentMonsterInformation()
         newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
         return;
     }
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    qDebug() << "Now visible monster have hp:" << monster->hp;
+    #endif
     QPoint p;
     p.setX(60);
     p.setY(280);
@@ -1658,8 +1664,38 @@ void BaseWindow::doNextAction()
     qDebug() << "doNextAction(): show the menu";
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(ClientBase::public_and_private_informations_solo!=NULL)
+    {
+        if(ClientBase::public_and_private_informations_solo->playerMonster.size()!=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().size())
+        {
+            emit error(QStringLiteral("both monster list don't have same size: %1!=%2").arg(ClientBase::public_and_private_informations_solo->playerMonster.size()).arg(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().size()));
+            return;
+        }
+        {
+            int index=0;
+            while(index<ClientBase::public_and_private_informations_solo->playerMonster.size())
+            {
+                if(ClientBase::public_and_private_informations_solo->playerMonster.at(index)!=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().at(index))
+                {
+                    emit error(QStringLiteral("both monster at %1 is not same for monster %2!=%3")
+                               .arg(index)
+                               .arg(ClientBase::public_and_private_informations_solo->playerMonster.at(index).monster)
+                               .arg(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().at(index).monster)
+                               );
+                    abort();
+                }
+                index++;
+            }
+        }
+    }
     PublicPlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(currentMonster!=NULL)
+    {
+        if(!CommonDatapack::commonDatapack.monsters.contains(currentMonster->monster))
+        {
+            emit error(QStringLiteral("Current monster don't exists: %1").arg(currentMonster->monster));
+            return;
+        }
         if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
         {
             emit error(QStringLiteral("Current monster damage don't match with the internal value (doNextAction && currentMonster): %1!=%2")
@@ -1668,8 +1704,15 @@ void BaseWindow::doNextAction()
                        );
             return;
         }
+    }
     PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
     if(otherMonster!=NULL)
+    {
+        if(!CommonDatapack::commonDatapack.monsters.contains(otherMonster->monster))
+        {
+            emit error(QStringLiteral("Current monster don't exists: %1").arg(otherMonster->monster));
+            return;
+        }
         if((int)otherMonster->hp!=ui->progressBarFightTopHP->value())
         {
             emit error(QStringLiteral("Other monster damage don't match with the internal value (doNextAction && otherMonster): %1!=%2")
@@ -1678,6 +1721,7 @@ void BaseWindow::doNextAction()
                        );
             return;
         }
+    }
     #endif
     return;
 }

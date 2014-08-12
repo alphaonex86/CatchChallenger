@@ -313,6 +313,8 @@ class PlayerMonster : public PublicPlayerMonster
     quint32 character_origin;
 };
 
+bool operator!=(const PlayerMonster &monster1,const PlayerMonster &monster2);
+
 struct PlayerQuest
 {
     quint8 step;
