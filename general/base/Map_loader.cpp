@@ -174,6 +174,18 @@ Map_loader::~Map_loader()
 {
 }
 
+void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
+{
+    if(parsed_layer.dirt!=NULL)
+        delete parsed_layer.dirt;
+    if(parsed_layer.monstersCollisionMap!=NULL)
+        delete parsed_layer.monstersCollisionMap;
+    if(parsed_layer.ledges!=NULL)
+        delete parsed_layer.ledges;
+    if(parsed_layer.walkable!=NULL)
+        delete parsed_layer.walkable;
+}
+
 bool Map_loader::tryLoadMap(const QString &fileName)
 {
     error.clear();
