@@ -980,7 +980,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                     return;
                 }
                 break;
-                //change monster in fight
+                //change monster in fight, monster id in db
                 case 0x0009:
                 {
                     if(size!=((int)sizeof(quint32)))

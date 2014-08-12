@@ -528,7 +528,16 @@ PlayerMonster * CommonFightEngine::getCurrentMonster()
 {
     const int &playerMonsterSize=public_and_private_informations.playerMonster.size();
     if(selectedMonster>=0 && selectedMonster<playerMonsterSize)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(!CommonDatapack::commonDatapack.monsters.contains(public_and_private_informations.playerMonster.at(selectedMonster).monster))
+        {
+            errorFightEngine(QStringLiteral("Current monster don't exists: %1").arg(public_and_private_informations.playerMonster.at(selectedMonster).monster));
+            return NULL;
+        }
+        #endif
         return &public_and_private_informations.playerMonster[selectedMonster];
+    }
     else
     {
         errorFightEngine(QStringLiteral("selectedMonster is out of range, max: %1").arg(playerMonsterSize));
