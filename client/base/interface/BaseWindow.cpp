@@ -62,6 +62,7 @@ BaseWindow::BaseWindow() :
     ui->setupUi(this);
     animationWidget=NULL;
     qQuickViewContainer=NULL;
+    monsterBeforeMoveForChangeInWaiting=false;
     Chat::chat=new Chat(ui->page_map);
     escape=false;
     multiplayer=false;
@@ -765,12 +766,20 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             load_monsters();
             if(!ok)
                 return;
+            resetPosition(true,false,true);
+            //do copie here because the call of changeOfMonsterInFight apply the skill/buff effect
+            const PlayerMonster *tempMonster=ClientFightEngine::fightEngine.monsterById(itemId);
+            if(tempMonster==NULL)
+            {
+                qDebug() << "Monster not found";
+                return;
+            }
+            PlayerMonster copiedMonster=*tempMonster;
             if(!ClientFightEngine::fightEngine.changeOfMonsterInFight(itemId))
                 return;
             CatchChallenger::Api_client_real::client->changeOfMonsterInFight(itemId);
             PlayerMonster * playerMonster=ClientFightEngine::fightEngine.getCurrentMonster();
-            resetPosition(true,false,true);
-            init_current_monster_display();
+            init_current_monster_display(&copiedMonster);
             ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
             if(DatapackClientLoader::datapackLoader.monsterExtra.contains(playerMonster->monster))
             {
@@ -785,6 +794,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             ui->pushButtonFightEnterNext->setVisible(false);
             moveType=MoveType_Enter;
             battleStep=BattleStep_Presentation;
+            monsterBeforeMoveForChangeInWaiting=true;
             moveFightMonsterBottom();
         }
         break;
@@ -1538,7 +1548,7 @@ void BaseWindow::currentMapLoaded()
                 if(Audio::audio.vlcInstance)
                 {
                     // Create a new Media
-                    libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, file.toUtf8().constData());
+                    libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, QDir::toNativeSeparators(file).toUtf8().constData());
                     if(vlcMedia!=NULL)
                     {
                         Ambiance ambiance;

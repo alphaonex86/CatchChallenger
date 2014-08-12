@@ -72,6 +72,9 @@ Client::Client(
     #endif
     otherCityPlayerBattle(NULL)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    ClientBase::public_and_private_informations_solo=&public_and_private_informations;
+    #endif
     public_and_private_informations.repel_step=0;
     {
         memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
@@ -98,6 +101,9 @@ Client::Client(
 //need be call after isReadyToDelete() emited
 Client::~Client()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    ClientBase::public_and_private_informations_solo=NULL;
+    #endif
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif

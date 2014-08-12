@@ -9,10 +9,11 @@ Audio Audio::audio;
 Audio::Audio()
 {
     /* Initialize libVLC */
-    const char * const vlc_args[] = {
+    /*const char * const vlc_args[] = {
           "-vvv"
     };
-    vlcInstance = libvlc_new(1,vlc_args);
+    vlcInstance = libvlc_new(1,vlc_args);*/
+    vlcInstance = libvlc_new(0,NULL);
     /* Complain in case of broken installation */
     if (vlcInstance == NULL)
         qDebug() << "Qt libVLC player, Could not init libVLC";

@@ -192,4 +192,3 @@ void CommonDatapack::unload()
     skins.clear();
     isParsed=false;
 }
-
