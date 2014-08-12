@@ -35,8 +35,9 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         if(QFile(QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).exists())
         {
+            const QString &musicPath=QDir::toNativeSeparators(QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg"));
             // Create a new Media
-            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, (QCoreApplication::applicationDirPath()+QStringLiteral("/music/loading.ogg")).toUtf8().constData());
+            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, musicPath.toUtf8().constData());
             if(vlcMedia!=NULL)
             {
                 // Create a new libvlc player
@@ -63,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent) :
             }
             else
             {
-                qDebug() << "problem with vlc media";
+                qDebug() << "problem with vlc media" << musicPath;
                 const char * string=libvlc_errmsg();
                 if(string!=NULL)
                     qDebug() << string;

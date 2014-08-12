@@ -1278,6 +1278,37 @@ bool CatchChallenger::operator<(const CatchChallenger::FileToSend &fileToSend1,c
     return true;
 }
 
+bool CatchChallenger::operator!=(const CatchChallenger::PlayerMonster &monster1,const CatchChallenger::PlayerMonster &monster2)
+{
+    if(monster1.remaining_xp!=monster2.remaining_xp)
+        return true;
+    if(monster1.sp!=monster2.sp)
+        return true;
+    if(monster1.egg_step!=monster2.egg_step)
+        return true;
+    if(monster1.id!=monster2.id)
+        return true;
+/* transfer in 0.6 and check it
+    if(monster1.character_origin!=monster2.character_origin)
+        return true;*/
+    if(monster1.skills.size()!=monster2.skills.size())
+        return true;
+    int index=0;
+    while(index<monster1.skills.size())
+    {
+        const PlayerMonster::PlayerSkill &skill1=monster1.skills.at(index);
+        const PlayerMonster::PlayerSkill &skill2=monster2.skills.at(index);
+        if(skill1.endurance!=skill2.endurance)
+            return true;
+        if(skill1.level!=skill2.level)
+            return true;
+        if(skill1.skill!=skill2.skill)
+            return true;
+        index++;
+    }
+    return false;
+}
+
 void Client::addDatapackListReply(const bool &fileRemove)
 {
     tempDatapackListReplyTestCount++;

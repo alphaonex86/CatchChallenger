@@ -12,6 +12,6 @@
         <file>images/interface/fight/labelTop.png</file>
         <file>images/interface/buff.png</file>
         <file>qml/evolution-animation.qml</file>
-        <file>images/interface/fight/background.jpg</file>
+        <file>images/interface/fight/background.png</file>
     </qresource>
 </RCC>

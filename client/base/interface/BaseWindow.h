@@ -284,7 +284,7 @@ private slots:
     void displayText(const QString &text);
     void resetPosition(bool outOfScreen=false, bool topMonster=true, bool bottomMonster=true);
     void init_environement_display(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
-    void init_current_monster_display();
+    void init_current_monster_display(PlayerMonster *fightMonster=NULL);
     void init_other_monster_display();
     void useTrap(const quint32 &itemId);
     void displayTrap();
@@ -634,6 +634,7 @@ private:
     static QString text_en;
     static QString text_text;
 
+    bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;
     int lastReplyTimeValue;
     QTime lastReplyTimeSince;

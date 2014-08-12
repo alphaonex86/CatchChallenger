@@ -4,35 +4,35 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="109"/>
-        <location filename="../../SimpleSoloServer.cpp" line="195"/>
-        <location filename="../../SimpleSoloServer.cpp" line="245"/>
-        <location filename="../../SimpleSoloServer.cpp" line="267"/>
+        <location filename="../../SimpleSoloServer.cpp" line="110"/>
+        <location filename="../../SimpleSoloServer.cpp" line="196"/>
+        <location filename="../../SimpleSoloServer.cpp" line="246"/>
+        <location filename="../../SimpleSoloServer.cpp" line="268"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="109"/>
+        <location filename="../../SimpleSoloServer.cpp" line="110"/>
         <source>Unable to load internal value</source>
         <translation>Impossible de charger une valeur interne</translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="162"/>
+        <location filename="../../SimpleSoloServer.cpp" line="163"/>
         <source>Disconnected</source>
         <translation>Déconnecté</translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="162"/>
+        <location filename="../../SimpleSoloServer.cpp" line="163"/>
         <source>Disconnected by the reason: %1</source>
         <translation>Déconnecté par la raison: %1</translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="195"/>
+        <location filename="../../SimpleSoloServer.cpp" line="196"/>
         <source>The engine is closed due to: %1</source>
         <translation>Le moteur est fermé à cause de: %1</translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="245"/>
+        <location filename="../../SimpleSoloServer.cpp" line="246"/>
         <source>Unable to save internal value at game stopping</source>
         <translation>Impossible de sauvegarder des valeurs interne à l&apos;arret du jeu</translation>
     </message>

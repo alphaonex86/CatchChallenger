@@ -36,6 +36,7 @@ void BaseWindow::resetAll()
     MapController::mapController->resetAll();
     waitedObjectType=ObjectType_All;
     lastReplyTimeValue=-1;
+    monsterBeforeMoveForChangeInWaiting=false;
     worseQueryTime=0;
     haveDatapack=false;
     characterSelected=false;

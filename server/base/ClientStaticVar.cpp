@@ -119,3 +119,7 @@ const QString Client::text_1=QLatin1Literal("1");
 const QString Client::text_false=QLatin1Literal("false");
 const QString Client::text_true=QLatin1Literal("true");
 const QString Client::text_to=QLatin1Literal("to");
+
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+Player_private_and_public_informations *ClientBase::public_and_private_informations_solo=NULL;
+#endif
