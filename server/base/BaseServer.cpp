@@ -1099,19 +1099,34 @@ void BaseServer::preload_market_monsters()
     DebugClass::debugConsole(QStringLiteral("%1 SQL industrie loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size()));
 
     QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster_market`");
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market");
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market");
-        break;
-    }
+    if(CommonSettings::commonSettings.useSP)
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster_market`");
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market");
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market");
+            break;
+        }
+    else
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster_market`");
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                queryText=QLatin1String("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character,market_price FROM monster_market");
+            break;
+            case ServerSettings::Database::DatabaseType_PostgreSQL:
+                queryText=QLatin1String("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character,market_price FROM monster_market");
+            break;
+        }
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
@@ -1126,6 +1141,11 @@ void BaseServer::preload_market_monsters_static(void *object)
 
 void BaseServer::preload_market_monsters_return()
 {
+    quint8 spOffset;
+    if(CommonSettings::commonSettings.useSP)
+        spOffset=0;
+    else
+        spOffset=1;
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
@@ -1176,26 +1196,31 @@ void BaseServer::preload_market_monsters_return()
             else
                 DebugClass::debugConsole(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(4)));
         }
-        if(ok)
+        if(CommonSettings::commonSettings.useSP)
         {
-            playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
-            if(!ok)
-                DebugClass::debugConsole(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+            if(ok)
+            {
+                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
+                if(!ok)
+                    DebugClass::debugConsole(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+            }
         }
+        else
+            playerMonster.sp=0;
         if(ok)
         {
-            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toUInt(&ok);
+            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db.value(6-spOffset)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
                     DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
             }
             else
-                DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(6)));
+                DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(6-spOffset)));
         }
         if(ok)
         {
-            const quint32 &value=QString(GlobalServerData::serverPrivateVariables.db.value(7)).toUInt(&ok);
+            const quint32 &value=QString(GlobalServerData::serverPrivateVariables.db.value(7-spOffset)).toUInt(&ok);
             if(ok)
             {
                 if(value>=1 && value<=3)
@@ -1210,20 +1235,20 @@ void BaseServer::preload_market_monsters_return()
             else
             {
                 playerMonster.gender=Gender_Unknown;
-                DebugClass::debugConsole(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7)));
+                DebugClass::debugConsole(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7-spOffset)));
                 ok=false;
             }
         }
         if(ok)
         {
-            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8)).toUInt(&ok);
+            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8-spOffset)).toUInt(&ok);
             if(!ok)
-                DebugClass::debugConsole(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8)));
+                DebugClass::debugConsole(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8-spOffset)));
         }
         if(ok)
-            marketPlayerMonster.player=QString(GlobalServerData::serverPrivateVariables.db.value(9)).toUInt(&ok);
+            marketPlayerMonster.player=QString(GlobalServerData::serverPrivateVariables.db.value(9-spOffset)).toUInt(&ok);
         if(ok)
-            marketPlayerMonster.cash=QString(GlobalServerData::serverPrivateVariables.db.value(10)).toULongLong(&ok);
+            marketPlayerMonster.cash=QString(GlobalServerData::serverPrivateVariables.db.value(10-spOffset)).toULongLong(&ok);
         //stats
         if(ok)
         {
