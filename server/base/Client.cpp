@@ -10,7 +10,7 @@ using namespace CatchChallenger;
 
 Client::Client(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
                 const int &infd
@@ -21,7 +21,7 @@ Client::Client(
         ) :
     ProtocolParsingInputOutput(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 infd,ctx
             #else
                 infd

@@ -1049,7 +1049,7 @@ void MapControllerMP::have_current_player_info(const CatchChallenger::Player_pri
 
     if(player_informations_is_set)
     {
-        qDebug() << "player information already set";
+        //qDebug() << "player information already set";
         return;
     }
     this->player_informations=informations;

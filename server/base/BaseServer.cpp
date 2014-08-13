@@ -729,6 +729,8 @@ void BaseServer::preload_dictionary_reputation_return()
 
 void BaseServer::preload_dictionary_skin()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL reputation dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_reputation.size()));
+
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -827,6 +829,8 @@ void BaseServer::preload_dictionary_skin_return()
 
 void BaseServer::preload_profile()
 {
+    DebugClass::debugConsole(QStringLiteral("%1 SQL skin dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_skin.size()));
+
     int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
@@ -885,6 +889,8 @@ void BaseServer::preload_profile()
         GlobalServerData::serverPrivateVariables.serverProfileList << serverProfile;
         index++;
     }
+
+    DebugClass::debugConsole(QStringLiteral("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileList.size()));
     preload_finish();
 }
 

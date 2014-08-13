@@ -1,4 +1,4 @@
-#ifdef SERVERNOSSL
+#ifndef SERVERSSL
 
 #include "EpollServer.h"
 #include "EpollSocket.h"

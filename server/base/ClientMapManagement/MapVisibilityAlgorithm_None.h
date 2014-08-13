@@ -9,7 +9,7 @@ class MapVisibilityAlgorithm_None : public Client
 public:
     explicit MapVisibilityAlgorithm_None(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
                 const int &infd

@@ -1,4 +1,4 @@
-#ifdef SERVERNOSSL
+#ifndef SERVERSSL
 
 #include "EpollClient.h"
 
@@ -8,6 +8,8 @@
 #include <netdb.h>
 #include <sys/ioctl.h>
 #include <cstring>
+#include <errno.h>
+#include <string.h>
 #include "../base/GlobalServerData.h"
 #include "Epoll.h"
 #include "EpollSocket.h"
@@ -80,6 +82,7 @@ ssize_t EpollClient::write(const char *buffer, const size_t &bufferSize)
         }
         else
         {
+            std::cerr << "Write socket full: EAGAIN for size:" << bufferSize << std::endl;
             #ifndef SERVERNOBUFFER
             if(this->bufferSize<BUFFER_MAX_SIZE)
             {
