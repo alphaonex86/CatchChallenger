@@ -3251,17 +3251,25 @@ void BaseWindow::detectSlowDown()
         return;
     quint32 queryCount=0;
     worseQueryTime=0;
+    QStringList middleQueryList;
     const QMap<quint8,QTime> &values=CatchChallenger::Api_client_real::client->getQuerySendTimeList();
     queryCount+=values.size();
     QMapIterator<quint8,QTime> i(values);
     while (i.hasNext()) {
         i.next();
+        middleQueryList << QString::number(i.key());
         const quint32 &time=i.value().elapsed();
         if(time>worseQueryTime)
             worseQueryTime=time;
     }
     if(queryCount>0)
-        ui->labelQueryList->setText(tr("Running query: %1, query with worse time: %2ms").arg(queryCount).arg(worseQueryTime));
+        ui->labelQueryList->setText(
+                    tr("Running query: %1 (%3 and %4), query with worse time: %2ms")
+                    .arg(queryCount)
+                    .arg(worseQueryTime)
+                    .arg(CatchChallenger::Api_client_real::client->getQueryRunningList().join(QStringLiteral(";")))
+                    .arg(middleQueryList.join(QStringLiteral(";")))
+                    );
     else
         ui->labelQueryList->setText(tr("No query running"));
     updateTheTurtle();

@@ -31,7 +31,7 @@
 
 using namespace CatchChallenger;
 
-#ifndef SERVERNOSSL
+#ifdef SERVERSSL
 EpollSslServer *server=NULL;
 #else
 EpollServer *server=NULL;
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
-    #ifndef SERVERNOSSL
+    #ifdef SERVERSSL
     server=new EpollSslServer();
     #else
     server=new EpollServer();
@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
     }
 
     #ifndef SERVERNOBUFFER
-    #ifndef SERVERNOSSL
+    #ifdef SERVERSSL
     EpollSslClient::staticInit();
     #endif
     #endif
@@ -415,14 +415,14 @@ int main(int argc, char *argv[])
             settings->endGroup();
             return EXIT_FAILURE;
         }
-        #ifdef SERVERNOSSL
-        if(formatedServerNormalSettings.useSsl)
+        #ifdef SERVERSSL
+        if(!formatedServerNormalSettings.useSsl)
         {
             qDebug() << "Ssl connexion requested but server not compiled with ssl support!";
             return EXIT_FAILURE;
         }
         #else
-        if(!formatedServerNormalSettings.useSsl)
+        if(formatedServerNormalSettings.useSsl)
         {
             qDebug() << "Clear connexion requested but server compiled with ssl support!";
             return EXIT_FAILURE;
@@ -430,8 +430,10 @@ int main(int argc, char *argv[])
         #endif
         if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
         {
-            qDebug() << "Need use mirror http";
+            #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
+            qDebug() << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input";
             return EXIT_FAILURE;
+            #endif
         }
         else
         {
@@ -458,7 +460,7 @@ int main(int argc, char *argv[])
     }
 
     char encodingBuff[1];
-    #ifndef SERVERNOSSL
+    #ifdef SERVERSSL
     encodingBuff[0]=0x01;
     #else
     encodingBuff[0]=0x00;
@@ -552,14 +554,26 @@ int main(int argc, char *argv[])
                             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                             {
                                 case MapVisibilityAlgorithmSelection_Simple:
-                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender(infd);
+                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender(infd
+                                                       #ifdef SERVERSSL
+                                                       ,server->getCtx()
+                                                       #endif
+                                                                                           );
                                 break;
                                 case MapVisibilityAlgorithmSelection_WithBorder:
-                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender(infd);
+                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender(infd
+                                                           #ifdef SERVERSSL
+                                                           ,server->getCtx()
+                                                           #endif
+                                                                                               );
                                 break;
                                 default:
                                 case MapVisibilityAlgorithmSelection_None:
-                                    client=new MapVisibilityAlgorithm_None(infd);
+                                    client=new MapVisibilityAlgorithm_None(infd
+                                       #ifdef SERVERSSL
+                                       ,server->getCtx()
+                                       #endif
+                                                                           );
                                 break;
                             }
                             //just for informations

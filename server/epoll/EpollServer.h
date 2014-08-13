@@ -1,7 +1,7 @@
 #ifndef EPOLL_SERVER_H
 #define EPOLL_SERVER_H
 
-#ifdef SERVERNOSSL
+#ifndef SERVERSSL
 
 #include <sys/socket.h>
 
