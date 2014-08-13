@@ -4,7 +4,7 @@ using namespace CatchChallenger;
 
 MapVisibilityAlgorithm_None::MapVisibilityAlgorithm_None(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
                 const int &infd
@@ -15,7 +15,7 @@ MapVisibilityAlgorithm_None::MapVisibilityAlgorithm_None(
         ) :
     Client(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 infd,ctx
             #else
                 infd

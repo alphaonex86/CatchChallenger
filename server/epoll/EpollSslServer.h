@@ -1,7 +1,7 @@
 #ifndef EPOLL_SSL_SERVER_H
 #define EPOLL_SSL_SERVER_H
 
-#ifndef SERVERNOSSL
+#ifdef SERVERSSL
 #include <sys/socket.h>
 #include <openssl/ssl.h>
 
@@ -22,7 +22,6 @@ public:
     Type getType() const;
     SSL_CTX * getCtx() const;
     void preload_the_data();
-    CatchChallenger::ClientMapManagement * getClientMapManagement();
     void unload_the_data();
     void setNormalSettings(const NormalServerSettings &settings);
     NormalServerSettings getNormalSettings() const;

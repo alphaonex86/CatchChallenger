@@ -13,7 +13,7 @@ class MapVisibilityAlgorithm_Simple_StoreOnSender : public Client
 public:
     explicit MapVisibilityAlgorithm_Simple_StoreOnSender(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
                 const int &infd

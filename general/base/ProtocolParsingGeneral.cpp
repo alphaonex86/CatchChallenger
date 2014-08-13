@@ -235,9 +235,9 @@ void ProtocolParsing::initialiseTheVariable()
     replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
     replySizeMultipleCodePacketServerToClient[0x80][0x0001]=1;
 
-    compressionMultipleCodePacketServerToClient[0x02] << 0x000C;
-    compressionMultipleCodePacketClientToServer[0xC2] << 0x0004;
-    compressionMultipleCodePacketClientToServer[0xC2] << 0x000D;
+    compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
+    compressionMultipleCodePacketServerToClient[0xC2] << 0x0004;
+    compressionMultipleCodePacketServerToClient[0xC2] << 0x000D;
     //define the compression of the reply
     /** \note previously send by: sizeMultipleCodePacketClientToServer */
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
@@ -284,7 +284,7 @@ ProtocolParsingBase::ProtocolParsingBase(
         #endif
         ) :
     #ifdef EPOLLCATCHCHALLENGERSERVER
-        #ifndef SERVERNOSSL
+        #ifdef SERVERSSL
             ProtocolParsing(),
         #else
             ProtocolParsing(),
@@ -378,7 +378,7 @@ void ProtocolParsingBase::reset()
 
 ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
                 const int &infd
@@ -396,8 +396,8 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         #endif
         ),
     #ifdef EPOLLCATCHCHALLENGERSERVER
-        #ifndef SERVERNOSSL
-            epollSslClient(infd,*ctx)
+        #ifdef SERVERSSL
+            epollSocket(infd,ctx)
         #else
             epollSocket(infd)
         #endif

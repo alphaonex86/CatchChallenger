@@ -1,7 +1,7 @@
 #ifndef EPOLL_CLIENT_H
 #define EPOLL_CLIENT_H
 
-#ifdef SERVERNOSSL
+#ifndef SERVERSSL
 
 #include "BaseClassSwitch.h"
 #include <sys/types.h>

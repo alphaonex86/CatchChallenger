@@ -1,7 +1,7 @@
 #ifndef EPOLL_SSL_CLIENT_H
 #define EPOLL_SSL_CLIENT_H
 
-#ifndef SERVERNOSSL
+#ifdef SERVERSSL
 #include <openssl/ssl.h>
 
 #include "BaseClassSwitch.h"
@@ -19,7 +19,7 @@ public:
     #endif
     void close();
     ssize_t read(char *bufferClearToOutput,const size_t &bufferSizeClearToOutput);
-    ssize_t write(char *bufferClearToOutput,const size_t &bufferSizeClearToOutput);
+    ssize_t write(const char *bufferClearToOutput, const size_t &bufferSizeClearToOutput);
     #ifndef SERVERNOBUFFER
     void flush();
     #endif

@@ -8,7 +8,7 @@
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
-    #ifndef SERVERNOSSL
+    #ifdef SERVERSSL
         #include "../../server/epoll/EpollSslClient.h"
     #else
         #include "../../server/epoll/EpollClient.h"
@@ -20,8 +20,11 @@
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
-    #define CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-    #define CATCHCHALLENGER_BIGBUFFERSIZE 512*1024
+    //#define CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
+    #define CATCHCHALLENGER_BIGBUFFERSIZE 10*1024*1024
+    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_MAX_PACKET_SIZE
+    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_MAX_PACKET_SIZE
+    #endif
     #define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER CATCHCHALLENGER_BIGBUFFERSIZE-16
     #ifndef CATCHCHALLENGER_EXTRA_CHECK
         #define CATCHCHALLENGERSERVERDROPIFCLENT
@@ -100,6 +103,9 @@ public:
     virtual ssize_t write(const char * data, const int &size) = 0;
 public:
     bool parseIncommingDataRaw(const char *commonBuffer, const quint32 &size,quint32 &cursor);
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    QStringList getQueryRunningList();
+    #endif
 protected:
     bool parseHeader(const char *commonBuffer, const quint32 &size, quint32 &cursor);
     bool parseQueryNumber(const char *commonBuffer, const quint32 &size,quint32 &cursor);
@@ -215,7 +221,7 @@ class ProtocolParsingInputOutput : public ProtocolParsingBase
 public:
     ProtocolParsingInputOutput(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
                 const int &infd
@@ -240,7 +246,7 @@ public:
 protected:
     void parseIncommingData();
     #ifdef EPOLLCATCHCHALLENGERSERVER
-        #ifndef SERVERNOSSL
+        #ifdef SERVERSSL
             EpollSslClient epollSocket;
         #else
             EpollClient epollSocket;

@@ -53,7 +53,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -4121,7 +4121,7 @@ padding:6px 6px 6px 14px;
            </rect>
           </property>
           <property name="pixmap">
-           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/fight/background.jpg</pixmap>
+           <pixmap>:/images/interface/fight/background.jpg</pixmap>
           </property>
          </widget>
          <zorder>labelFightBackground</zorder>

@@ -10,7 +10,7 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::mapHaveChanged;
 
 MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 const int &infd, SSL_CTX *ctx
             #else
                 const int &infd
@@ -21,7 +21,7 @@ MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_Store
         ) :
     Client(
         #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifndef SERVERNOSSL
+            #ifdef SERVERSSL
                 infd,ctx
             #else
                 infd

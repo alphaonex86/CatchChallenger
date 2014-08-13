@@ -152,8 +152,8 @@ bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char *d
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
-        return false;
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        abort();
     }
     #endif
 
@@ -194,8 +194,8 @@ bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,cons
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
-        return false;
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        abort();
     }
     #endif
 
@@ -229,8 +229,8 @@ bool ProtocolParsingBase::packOutcommingData(const quint8 &mainCodeType,const ch
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
-        return false;
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        abort();
     }
     #endif
 
@@ -264,8 +264,8 @@ bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const q
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
-        return false;
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        abort();
     }
     #endif
 
@@ -301,8 +301,8 @@ bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,con
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
     {
-        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, line %1").arg(__LINE__));
-        return false;
+        errorParsingLayer(QString("Buffer in input is too big and will do buffer overflow, size: %1, line %2").arg(size).arg(__LINE__));
+        abort();
     }
     #endif
 

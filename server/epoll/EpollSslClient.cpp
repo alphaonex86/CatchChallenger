@@ -1,4 +1,4 @@
-#ifndef SERVERNOSSL
+#ifdef SERVERSSL
 
 #include "EpollSslClient.h"
 
@@ -7,6 +7,8 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
+#include <errno.h>
+#include <string.h>
 #include "../base/GlobalServerData.h"
 #include "Epoll.h"
 #include "EpollSocket.h"
@@ -96,7 +98,7 @@ ssize_t EpollSslClient::read(char *buffer,const size_t &bufferSize)
     return SSL_read(ssl, buffer, bufferSize);
 }
 
-ssize_t EpollSslClient::write(char *buffer,const size_t &bufferSize)
+ssize_t EpollSslClient::write(const char *buffer,const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
@@ -111,6 +113,7 @@ ssize_t EpollSslClient::write(char *buffer,const size_t &bufferSize)
         }
         else
         {
+            std::cerr << "Write socket full: EAGAIN for size:" << bufferSize << std::endl;
             #ifndef SERVERNOBUFFER
             if(this->bufferSizeClearToOutput<BUFFER_MAX_SIZE)
             {
