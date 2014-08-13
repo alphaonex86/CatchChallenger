@@ -129,8 +129,26 @@ bool EpollSslServer::tryListen()
 
     if(rp == NULL)
     {
-        sfd=-1;
-        std::cerr << "Could not bind" << std::endl;
+        std::cerr << qPrintable(normalServerSettings.server_ip) << " resolved into:" << std::endl;
+        for(rp = result; rp != NULL; rp = rp->ai_next)
+        {
+            std::cerr
+                    << "familly: " << rp->ai_family
+                    << ", rp->ai_socktype: " << rp->ai_socktype
+                    << ", rp->ai_protocol: " << rp->ai_protocol
+                    << ", rp->ai_addr: " << rp->ai_addr
+                    << ", rp->ai_addrlen: " << rp->ai_addrlen
+                    << std::endl;
+            sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+            if(sfd == -1)
+                std::cerr << "socket not created:" << sfd << ", error: " << errno << std::endl;
+            else
+            {
+                s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
+                std::cerr << "bind failed:" << s << ", error: " << errno << std::endl;
+                ::close(sfd);
+            }
+        }
         return false;
     }
 
