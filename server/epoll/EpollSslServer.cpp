@@ -1,4 +1,4 @@
-#ifndef SERVERNOSSL
+#ifdef SERVERSSL
 
 #include "EpollSslServer.h"
 #include "EpollSocket.h"
@@ -25,7 +25,7 @@ EpollSslServer::EpollSslServer()
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
     #ifdef Q_OS_LINUX
-    normalServerSettings.linuxSettings.tcpCork                      = true;
+    CommonSettings::commonSettings.tcpCork                      = true;
     #endif
 }
 
@@ -34,12 +34,13 @@ EpollSslServer::~EpollSslServer()
     close();
 }
 
-void EpollServer::preload_finish()
+void EpollSslServer::preload_finish()
 {
+    BaseServer::preload_finish();
     ready=true;
 }
 
-bool EpollServer::isReady()
+bool EpollSslServer::isReady()
 {
     return ready;
 }
@@ -212,11 +213,6 @@ SSL_CTX * EpollSslServer::getCtx() const
 void EpollSslServer::preload_the_data()
 {
     BaseServer::preload_the_data();
-}
-
-CatchChallenger::ClientMapManagement * EpollSslServer::getClientMapManagement()
-{
-    return BaseServer::getClientMapManagement();
 }
 
 void EpollSslServer::unload_the_data()

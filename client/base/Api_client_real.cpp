@@ -46,6 +46,11 @@ Api_client_real::~Api_client_real()
 
 void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(querySendTime.contains(queryNumber))
+    {
+        lastReplyTime(querySendTime.value(queryNumber).elapsed());
+        querySendTime.remove(queryNumber);
+    }
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
     switch(mainCodeType)
@@ -326,8 +331,8 @@ void Api_client_real::sendDatapackContent()
         int index=0;
         while(index<values.size())
         {
-            if(!values.at(index).endsWith("/"))
-                values[index]+="/";
+            if(!values.at(index).endsWith(QStringLiteral("/")))
+                values[index]+=QStringLiteral("/");
             index++;
         }
     }
@@ -337,8 +342,9 @@ void Api_client_real::sendDatapackContent()
         return;
     }
     wait_datapack_content=true;
-    CommonSettings::commonSettings.httpDatapackMirror=values.join(";");
+    CommonSettings::commonSettings.httpDatapackMirror=values.join(QStringLiteral(";"));
     datapackFilesList=listDatapack(QString());
+    datapackFilesList.sort();
     if(values.isEmpty())
     {
         quint8 datapack_content_query_number=queryNumber();
