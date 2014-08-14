@@ -436,6 +436,7 @@ private slots:
 protected slots:
     //datapack
     void datapackParsed();
+    void datapackChecksumError();
     void loadSoundSettings();
     //UI
     void updateConnectingStatus();

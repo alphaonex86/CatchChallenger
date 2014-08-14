@@ -62,7 +62,7 @@ void send_settings()
     formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
     formatedServerNormalSettings.useSsl					= settings->value(QLatin1Literal("useSsl")).toBool();
 
-    formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
+    CommonSettings::commonSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
     CommonSettings::commonSettings.httpDatapackMirror	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
@@ -271,8 +271,8 @@ int main(int argc, char *argv[])
 
     bool datapack_loaded=false;
 
-    QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/information.xml"));
-    if(datapackFolder.isDir())
+    QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));
+    if(!datapackFolder.isFile())
     {
         qDebug() << "No datapack found into: " << datapackFolder.absoluteFilePath();
         return EXIT_FAILURE;

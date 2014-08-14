@@ -430,7 +430,13 @@ void Client::character_return(const quint8 &query_id)
     out << (quint8)CommonSettings::commonSettings.chat_allow_private;
     out << (quint8)CommonSettings::commonSettings.chat_allow_clan;
     out << (quint8)CommonSettings::commonSettings.factoryPriceChange;
+    out << (quint8)CommonSettings::commonSettings.anonymous;
     out << CommonSettings::commonSettings.httpDatapackMirror;
+    if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+    {
+        outputData+=CommonSettings::commonSettings.datapackHash;
+        out.device()->seek(out.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
+    }
     out << (quint32)GlobalServerData::serverPrivateVariables.map_list.size();
 
     {

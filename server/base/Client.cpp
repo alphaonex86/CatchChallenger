@@ -317,7 +317,7 @@ void Client::normalOutput(const QString &message) const
 {
     if(!public_and_private_informations.public_informations.pseudo.isEmpty())
     {
-        if(GlobalServerData::serverSettings.anonymous)
+        if(CommonSettings::commonSettings.anonymous)
             DebugClass::debugConsole(QStringLiteral("%1: %2").arg(character_id).arg(message));
         else
             DebugClass::debugConsole(QStringLiteral("%1: %2").arg(public_and_private_informations.public_informations.pseudo).arg(message));
@@ -345,7 +345,7 @@ void Client::normalOutput(const QString &message) const
         else
             ip=QString::fromLatin1(QByteArray(socketString,socketStringSize));
         #endif
-        if(GlobalServerData::serverSettings.anonymous)
+        if(CommonSettings::commonSettings.anonymous)
         {
             QCryptographicHash hash(QCryptographicHash::Sha1);
             hash.addData(ip.toUtf8());

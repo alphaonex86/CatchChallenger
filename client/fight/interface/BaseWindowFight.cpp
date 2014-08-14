@@ -524,6 +524,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
     if(map==NULL)
     {
         ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+        ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/foreground.png")).scaled(800,440));
         ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
         ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
         return;
@@ -545,12 +546,19 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
                 else
                     ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
 
+                if(QFile(baseSearch+"/foreground.png").exists())
+                    ui->labelFightForeground->setPixmap(QPixmap(baseSearch+QLatin1Literal("/foreground.png")).scaled(800,440));
+                else if(QFile(baseSearch+"/foreground.gif").exists())
+                    ui->labelFightForeground->setPixmap(QPixmap(baseSearch+QLatin1Literal("/foreground.gif")).scaled(800,440));
+                else
+                    ui->labelFightForeground->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/foreground.png")).scaled(800,440));
+
                 if(QFile(baseSearch+"/plateform-front.png").exists())
                     ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.png")).scaled(260,90));
                 else if(QFile(baseSearch+"/plateform-front.gif").exists())
                     ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-front.gif")).scaled(260,90));
                 else
-                    ui->labelFightPlateformTop->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-front.png")).scaled(800,440));
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(QLatin1Literal(":/images/interface/fight/plateform-front.png")).scaled(260,90));
 
                 if(QFile(baseSearch+"/plateform-background.png").exists())
                     ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QLatin1Literal("/plateform-background.png")).scaled(230,90));
@@ -562,6 +570,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
             else
             {
                 ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+                ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/foreground.png")).scaled(800,440));
                 ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
                 ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
             }
@@ -570,6 +579,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
         index++;
     }
     ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+    ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/foreground.png")).scaled(800,440));
     ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
     ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
 }

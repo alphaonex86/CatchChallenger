@@ -102,12 +102,12 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.datapackCache                              = -1;
     GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QLatin1String("/datapack/");
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
-    GlobalServerData::serverSettings.anonymous                                  = false;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
-    CommonSettings::commonSettings.httpDatapackMirror                         = QString();
+    CommonSettings::commonSettings.httpDatapackMirror                           = QString();
     CommonSettings::commonSettings.forceClientToSendAtMapChange = true;
     CommonSettings::commonSettings.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     CommonSettings::commonSettings.useSP                  = true;
+    CommonSettings::commonSettings.anonymous              = false;
     CommonSettings::commonSettings.autoLearn              = false;//need useSP to false
     CommonSettings::commonSettings.dontSendPseudo         = false;
     CommonSettings::commonSettings.chat_allow_clan        = true;
@@ -1938,6 +1938,39 @@ void BaseServer::preload_the_datapack()
     QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     Client::compressedExtension=compressedExtensionAllowedTemp.toSet();
     Client::datapack_list_cache_timestamp=0;
+
+    if(GlobalServerData::serverSettings.datapackCache==0)
+        Client::datapack_file_list_cache=Client::datapack_file_list();
+
+    if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+    {
+        QCryptographicHash hash(QCryptographicHash::Sha224);
+        QStringList datapack_file_temp=Client::datapack_file_list().keys();
+        datapack_file_temp.sort();
+        int index=0;
+        while(index<datapack_file_temp.size()) {
+            QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
+            if(file.open(QIODevice::ReadOnly))
+            {
+                const QByteArray &data=file.readAll();
+                {
+                    QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                    hashFile.addData(data);
+                    DebugClass::debugConsole(QStringLiteral("%1 %2").arg(file.fileName()).arg(QString(hashFile.result().toHex())));
+                }
+                hash.addData(data);
+                file.close();
+            }
+            else
+            {
+                DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                abort();
+            }
+            index++;
+        }
+        CommonSettings::commonSettings.datapackHash=hash.result();
+        DebugClass::debugConsole(QStringLiteral("%1 file for datapack loaded").arg(datapack_file_temp.size()));
+    }
 }
 
 void BaseServer::preload_the_players()
