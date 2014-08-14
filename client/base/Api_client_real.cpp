@@ -8,6 +8,7 @@ using namespace CatchChallenger;
 #include <sys/stat.h>
 #endif
 
+#include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
 
@@ -200,6 +201,13 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
         file.close();
     }
 
+    //send size
+    {
+        if(httpMode)
+            newDatapackFile(ceil((float)data.size()/1000)*1000);
+        else
+            newDatapackFile(data.size());
+    }
     //set the modification time
     {
         time_t actime=QFileInfo(fullPath).lastRead().toTime_t();
@@ -212,7 +220,6 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
             DebugClass::debugConsole(QStringLiteral("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
             return;
         }
-        newDatapackFile(data.size());
         #ifdef Q_CC_GNU
             //this function avalaible on unix and mingw
             utimbuf butime;
@@ -473,7 +480,7 @@ void Api_client_real::httpFinishedForDatapackList()
         if(fileToGet==0)
             haveTheDatapack();
         else
-            datapackSize(fileToGet,sizeToGet);
+            datapackSize(fileToGet,sizeToGet*1000);
     }
 }
 

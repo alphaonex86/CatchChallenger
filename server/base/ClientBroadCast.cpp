@@ -85,13 +85,13 @@ void Client::sendPM(const QString &text,const QString &pseudo)
     if(!playerByPseudo.contains(pseudo))
     {
         receiveSystemText(QStringLiteral("unable to found the connected player: pseudo: \"%1\"").arg(pseudo),false);
-        if(GlobalServerData::serverSettings.anonymous)
+        if(CommonSettings::commonSettings.anonymous)
             normalOutput(QStringLiteral("%1 have try send message to not connected user").arg(character_id));
         else
             normalOutput(QStringLiteral("%1 have try send message to not connected user: %2").arg(this->public_and_private_informations.public_informations.pseudo).arg(pseudo));
         return;
     }
-    if(!GlobalServerData::serverSettings.anonymous)
+    if(!CommonSettings::commonSettings.anonymous)
         normalOutput(QStringLiteral("[chat PM]: %1 -> %2: %3").arg(this->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
     #ifndef EPOLLCATCHCHALLENGERSERVER
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QStringLiteral("to %1: %2").arg(pseudo).arg(text));
@@ -160,7 +160,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
             errorOutput(QLatin1String("Unable to chat with clan, you have not clan"));
         else
         {
-            if(!GlobalServerData::serverSettings.anonymous)
+            if(!CommonSettings::commonSettings.anonymous)
                 normalOutput(QStringLiteral("[chat] %1: To the clan %2: %3").arg(public_and_private_informations.public_informations.pseudo).arg(clan->name).arg(text));
             #ifndef EPOLLCATCHCHALLENGERSERVER
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(public_and_private_informations.public_informations.pseudo,chatType,text);
@@ -218,7 +218,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
     {
         if((generalChatDropTotalCache+generalChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
             return;
-        if(!GlobalServerData::serverSettings.anonymous)
+        if(!CommonSettings::commonSettings.anonymous)
             normalOutput(QStringLiteral("[chat all] %1: %2").arg(public_and_private_informations.public_informations.pseudo).arg(text));
         #ifndef EPOLLCATCHCHALLENGERSERVER
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(public_and_private_informations.public_informations.pseudo,chatType,text);

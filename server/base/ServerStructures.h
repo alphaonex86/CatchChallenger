@@ -112,7 +112,6 @@ struct ServerSettings
 
     //the listen, implicit on the client
     QString datapack_basePath;
-    bool anonymous;
     QString server_message;
     bool dontSendPlayerType;
     qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s

@@ -19,6 +19,8 @@ public:
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
     int waitBeforeConnectAfterKick;
+    bool anonymous;
+    QByteArray datapackHash;
 
     //rates
     float rates_xp;

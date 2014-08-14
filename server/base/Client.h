@@ -33,6 +33,7 @@ class Client :
     Q_OBJECT
 #endif
 public:
+    friend class BaseServer;
     explicit Client(
         #ifdef EPOLLCATCHCHALLENGERSERVER
             #ifdef SERVERSSL
@@ -320,7 +321,7 @@ private:
     void deleteCharacterNow_return(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
-    QHash<QString,quint32> datapack_file_list();
+    static QHash<QString,quint32> datapack_file_list();
     QHash<QString,quint32> datapack_file_list_cached();
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const quint8 &query_id);
