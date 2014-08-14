@@ -395,7 +395,20 @@ void Api_client_real::httpFinishedForDatapackList()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if(!reply->isFinished() || reply->error() || !redirectionTarget.isNull())
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply, try next: %1").arg(reply->errorString()));
+        const QNetworkProxy &proxy=qnam.proxy();
+        if(proxy==QNetworkProxy::NoProxy)
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 (try next)")
+                                                  .arg(reply->url().toString())
+                                                  .arg(reply->errorString())
+                                                  );
+        else
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
+                                                  .arg(reply->url().toString())
+                                                  .arg(reply->errorString())
+                                                  .arg(proxy.hostName())
+                                                  .arg(proxy.port())
+                                                  .arg(proxy.type())
+                                                  );
         reply->deleteLater();
         index_mirror++;
         if(index_mirror>=CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).size())
