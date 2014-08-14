@@ -27,10 +27,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     tolerantMode(tolerantMode)
 {
     if(extensionAllowed.isEmpty())
-    {
-        QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";");
-        extensionAllowed=extensionAllowedTemp.toSet();
-    }
+        extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
 
     connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
     //connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::DirectConnection);-> why direct?
@@ -2786,12 +2783,28 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     return;
                 }
                 in >> CommonSettings::commonSettings.factoryPriceChange;
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the anonymous, line: %1").arg(__LINE__));
+                    return;
+                }
+                in >> CommonSettings::commonSettings.anonymous;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the httpDatapackMirror, line: %1").arg(__LINE__));
                     return;
                 }
                 in >> CommonSettings::commonSettings.httpDatapackMirror;
+                if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+                {
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
+                    {
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(__LINE__));
+                        return;
+                    }
+                    CommonSettings::commonSettings.datapackHash=data.mid(in.device()->pos(),28);
+                    in.device()->seek(in.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
+                }
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the number of map, line: %1").arg(__LINE__));

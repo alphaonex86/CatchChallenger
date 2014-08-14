@@ -112,6 +112,7 @@ BaseWindow::BaseWindow() :
 
     //connect the datapack loader
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumError,  this,                            &BaseWindow::datapackChecksumError,Qt::QueuedConnection);
     connect(this,                                   &BaseWindow::parseDatapack,             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
 
