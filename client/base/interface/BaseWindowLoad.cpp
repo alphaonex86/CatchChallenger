@@ -359,6 +359,15 @@ void BaseWindow::datapackParsed()
     //updatePlayerImage();
 }
 
+void BaseWindow::datapackChecksumError()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::datapackChecksumError()";
+    #endif
+    datapackIsParsed=false;
+    emit newError(tr("Datapack on mirror is corrupted"),QStringLiteral("The checksum sended by the server is not the same than have on the mirror"));
+}
+
 void BaseWindow::loadSoundSettings()
 {
     /*const QStringList &outputDeviceNames=soundEngine.outputDeviceNames();

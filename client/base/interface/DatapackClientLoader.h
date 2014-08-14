@@ -131,6 +131,7 @@ public slots:
     void parseDatapack(const QString &datapackPath);
 signals:
     void datapackParsed();
+    void datapackChecksumError();
 private:
     bool inProgress;
     QString datapackPath;

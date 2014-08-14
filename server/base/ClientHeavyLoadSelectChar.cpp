@@ -166,14 +166,14 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     public_and_private_informations.public_informations.pseudo=QString(GlobalServerData::serverPrivateVariables.db.value(1));
     if(!loadTheRawUTF8String())
     {
-        if(GlobalServerData::serverSettings.anonymous)
+        if(CommonSettings::commonSettings.anonymous)
             characterSelectionIsWrong(query_id,0x04,QStringLiteral("Unable to convert the pseudo to utf8 for character id: %1").arg(character_id));
         else
             characterSelectionIsWrong(query_id,0x04,QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(public_and_private_informations.public_informations.pseudo));
         return;
     }
 
-    if(GlobalServerData::serverSettings.anonymous)
+    if(CommonSettings::commonSettings.anonymous)
         normalOutput(QStringLiteral("Charater id is logged: %1").arg(characterId));
     else
         normalOutput(QStringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db.value(1)));
@@ -664,7 +664,7 @@ void Client::loginIsRightFinalStep()
     out << (quint8)size;
     while(index<size)
     {
-        QByteArray data=FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.at(index));
+        const QByteArray &data=FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.at(index));
         outputData+=data;
         out.device()->seek(out.device()->pos()+data.size());
         index++;
@@ -674,7 +674,7 @@ void Client::loginIsRightFinalStep()
     out << (quint8)size;
     while(index<size)
     {
-        QByteArray data=FacilityLib::privateMonsterToBinary(public_and_private_informations.warehouse_playerMonster.at(index));
+        const QByteArray &data=FacilityLib::privateMonsterToBinary(public_and_private_informations.warehouse_playerMonster.at(index));
         outputData+=data;
         out.device()->seek(out.device()->pos()+data.size());
         index++;
