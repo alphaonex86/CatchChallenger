@@ -204,6 +204,7 @@ private slots:
     //datapack
     void haveTheDatapack();
     void newDatapackFile(const quint32 &size);
+    void progressingDatapackFile(const quint32 &size);
     void datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize);
 
     //inventory
@@ -468,6 +469,7 @@ private:
     ObjectType waitedObjectType;
     quint32 datapackDownloadedCount;
     quint32 datapackDownloadedSize;
+    quint32 progressingDatapackFileSize;
     QList<CharacterEntry> characterEntryList,characterEntryListInWaiting;
     bool isLogged;
     NewProfile *newProfile;
