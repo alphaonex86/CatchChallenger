@@ -377,25 +377,33 @@ void Api_client_real::sendDatapackContent()
         packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
-    {
-        index_mirror=0;
-        test_with_proxy=(proxy.type()==QNetworkProxy::Socks5Proxy);
-        test_mirror();
-        if(!datapackFilesList.isEmpty())
-            emit doDifferedChecksum(mDatapack);
-    }
+        emit doDifferedChecksum(mDatapack);
 }
 
 void Api_client_real::datapackChecksumDone(const QByteArray &hash)
 {
-    if(test_with_proxy)
-        qnam.setProxy(proxy);
+    if(hash==CommonSettings::commonSettings.datapackHash)
+    {
+        haveTheDatapack();
+        return;
+    }
+    if(datapackFilesList.isEmpty())
+    {
+        index_mirror=0;
+        test_with_proxy=(proxy.type()==QNetworkProxy::Socks5Proxy);
+        test_mirror();
+    }
     else
-        qnam.setProxy(QNetworkProxy::applicationProxy());
-    QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("datapack-diff-%1.tar.xz").arg(QString(hash.toHex())));
-    QNetworkReply *reply = qnam.get(networkRequest);
-    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
-    connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
+    {
+        if(test_with_proxy)
+            qnam.setProxy(proxy);
+        else
+            qnam.setProxy(QNetworkProxy::applicationProxy());
+        QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("datapack-diff-%1.tar.xz").arg(QString(hash.toHex())));
+        QNetworkReply *reply = qnam.get(networkRequest);
+        connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
+        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
+    }
 }
 
 void Api_client_real::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
