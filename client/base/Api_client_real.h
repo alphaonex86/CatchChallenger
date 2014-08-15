@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_API_CLIENT_REAL_H
 
 #include "../../general/base/GeneralVariable.h"
+#include "DatapackChecksum.h"
 
 #include <QObject>
 #include <QString>
@@ -23,6 +24,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "ClientStructures.h"
 #include "Api_protocol.h"
+#include "qt-tar-xz/QXzDecodeThread.h"
 
 namespace CatchChallenger {
 class Api_client_real : public Api_protocol
@@ -43,6 +45,7 @@ public:
     //datapack related
     void sendDatapackContent();
     void test_mirror();
+    void decodedIsFinish();
     void httpFinishedForDatapackList();
     const QStringList listDatapack(QString suffix);
     void cleanDatapack(QString suffix);
@@ -53,6 +56,9 @@ protected:
     //general data
     void defineMaxPlayers(const quint16 &maxPlayers);
 private:
+    QXzDecodeThread xzDecodeThread;
+    bool datapackTarXz;
+    CatchChallenger::DatapackChecksum datapackChecksum;
     QString host;
     quint16 port;
     quint64 RXSize,TXSize;
@@ -83,8 +89,12 @@ private slots:
     void writeNewFile(const QString &fileName, const QByteArray &data, const quint64 &mtime);
     void getHttpFile(const QString &url, const QString &fileName, const quint64 &mtime);
     void httpFinished();
+    void datapackChecksumDone(const QByteArray &hash);
+    void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 signals:
     void newDatapackFile(const quint32 &size) const;
+    void doDifferedChecksum(const QString &datapackPath);
+    void progressingDatapackFile(const quint32 &size);
 };
 }
 

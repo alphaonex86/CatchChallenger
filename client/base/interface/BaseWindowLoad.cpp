@@ -38,6 +38,7 @@ void BaseWindow::resetAll()
     lastReplyTimeValue=-1;
     monsterBeforeMoveForChangeInWaiting=false;
     worseQueryTime=0;
+    progressingDatapackFileSize=0;
     haveDatapack=false;
     characterSelected=false;
     havePlayerInformations=false;
@@ -256,7 +257,8 @@ void BaseWindow::haveTheDatapack()
         return;
     haveDatapack=true;
 
-    emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPath());
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPath());
 }
 
 void BaseWindow::datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize)
@@ -268,8 +270,15 @@ void BaseWindow::datapackSize(const quint32 &datapckFileNumber,const quint32 &da
 
 void BaseWindow::newDatapackFile(const quint32 &size)
 {
+    progressingDatapackFileSize=0;
     datapackDownloadedCount++;
     datapackDownloadedSize+=size;
+    updateConnectingStatus();
+}
+
+void BaseWindow::progressingDatapackFile(const quint32 &size)
+{
+    progressingDatapackFileSize=size;
     updateConnectingStatus();
 }
 
@@ -470,8 +479,10 @@ void BaseWindow::updateConnectingStatus()
     {
         if(datapckFileSize==0)
             waitedData << tr("Loading of the datapack");
+        else if((datapackDownloadedSize+progressingDatapackFileSize)>=datapckFileSize)
+            waitedData << tr("Loaded datapack file: 100%");
         else
-            waitedData << tr("Loaded datapack file: %1%").arg(datapackDownloadedSize*100/datapckFileSize);
+            waitedData << tr("Loaded datapack file: %1%").arg(((datapackDownloadedSize+progressingDatapackFileSize)*100)/datapckFileSize);
     }
     else if(!datapackIsParsed)
         waitedData << tr("Opening the datapack");

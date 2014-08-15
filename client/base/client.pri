@@ -5,8 +5,8 @@ QT       += script multimedia opengl widgets qml quick
 
 win32:CONFIG   += console
 
-SOURCES += $$PWD/Api_client_real.cpp \
-    $$PWD/Api_client_virtual.cpp \
+SOURCES += $$PWD/Api_client_virtual.cpp \
+    $$PWD/DatapackChecksum.cpp \
     $$PWD/Api_protocol.cpp \
     $$PWD/Bot/FakeBot.cpp \
     $$PWD/render/TileLayerItem.cpp \
@@ -61,7 +61,7 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/interface/PathFinding.cpp
 
 HEADERS  += $$PWD/ClientStructures.h \
-    $$PWD/Api_client_real.h \
+    $$PWD/DatapackChecksum.h \
     $$PWD/Api_client_virtual.h \
     $$PWD/Api_protocol.h \
     $$PWD/Bot/FakeBot.h \

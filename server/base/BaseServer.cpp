@@ -1956,7 +1956,6 @@ void BaseServer::preload_the_datapack()
                 {
                     QCryptographicHash hashFile(QCryptographicHash::Sha224);
                     hashFile.addData(data);
-                    DebugClass::debugConsole(QStringLiteral("%1 %2").arg(file.fileName()).arg(QString(hashFile.result().toHex())));
                 }
                 hash.addData(data);
                 file.close();
