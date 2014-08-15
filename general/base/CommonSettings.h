@@ -19,7 +19,6 @@ public:
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
     int waitBeforeConnectAfterKick;
-    bool anonymous;
     QByteArray datapackHash;
 
     //rates

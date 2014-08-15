@@ -16,3 +16,5 @@ HEADERS  += $$PWD/RssNews.h \
     $$PWD/qt-tar-xz/QTarDecode.h \
 
 RESOURCES += $$PWD/resources/client-resources-multi.qrc
+
+DEFINES += CATCHCHALLENGER_MULTI

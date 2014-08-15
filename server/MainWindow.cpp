@@ -646,7 +646,7 @@ void MainWindow::send_settings()
     formatedServerNormalSettings.proxy    				= ui->proxy->text();
     formatedServerNormalSettings.proxy_port				= ui->proxy_port->value();
     formatedServerNormalSettings.useSsl					= ui->useSsl->isChecked();
-    CommonSettings::commonSettings.anonymous					= ui->anonymous->isChecked();
+    formatedServerSettings.anonymous					= ui->anonymous->isChecked();
     formatedServerSettings.server_message				= ui->server_message->toPlainText();
     CommonSettings::commonSettings.httpDatapackMirror    		= ui->httpDatapackMirror->text();
     if(!ui->datapack_cache->isChecked())
