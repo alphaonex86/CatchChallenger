@@ -302,6 +302,7 @@ void BaseWindow::connectAllSignals()
     //datapack
     connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFile,            this,&BaseWindow::newDatapackFile);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::datapackSize,this,&BaseWindow::datapackSize);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::progressingDatapackFile,this,&BaseWindow::progressingDatapackFile);
 
     connect(this,&BaseWindow::destroyObject,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::destroyObject);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection);
