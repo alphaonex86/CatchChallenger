@@ -24,6 +24,7 @@ class Api_protocol : public QObject, public ProtocolParsingInputOutput, public M
 {
     Q_OBJECT
 public:
+    static Api_protocol *client;
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
     void disconnectClient();
@@ -176,8 +177,8 @@ signals:
 
     //datapack
     void haveTheDatapack() const;
-    void newFile(const QString &fileName,const QByteArray &data,const quint64 &mtime) const;
-    void newHttpFile(const QString &url,const QString &fileName,const quint64 &mtime) const;
+    void newFile(const QString &fileName,const QByteArray &data) const;
+    void newHttpFile(const QString &url,const QString &fileName) const;
     void removeFile(const QString &fileName) const;
     void datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
 

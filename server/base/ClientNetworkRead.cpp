@@ -1276,9 +1276,9 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                 quint32 number_of_file;
                 in >> number_of_file;
                 QStringList files;
-                QList<quint64> timestamps;
+                QList<quint32> partialHashList;
                 QString tempFileName;
-                quint64 tempTimestamps;
+                quint32 partialHash;
                 quint32 index=0;
                 while(index<number_of_file)
                 {
@@ -1289,7 +1289,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     }
                     in >> tempFileName;
                     files << tempFileName;
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                     {
                         parseError(QStringLiteral("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
                             .arg(mainCodeType)
@@ -1299,11 +1299,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                             );
                         return;
                     }
-                    in >> tempTimestamps;
-                    timestamps << tempTimestamps;
+                    in >> partialHash;
+                    partialHashList << partialHash;
                     index++;
                 }
-                datapackList(queryNumber,files,timestamps);
+                datapackList(queryNumber,files,partialHashList);
                 if((in.device()->size()-in.device()->pos())!=0)
                 {
                     parseError(QStringLiteral("remaining data: parseQuery(%1,%2,%3): %4 %5")

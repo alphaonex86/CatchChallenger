@@ -320,7 +320,7 @@ private:
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-    void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
+    void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
     static QHash<QString,quint32> datapack_file_list();
     QHash<QString,quint32> datapack_file_list_cached();
     void addDatapackListReply(const bool &fileRemove);
@@ -622,7 +622,7 @@ private:
     void parseError(const QString &errorString);
 
     // ------------------------------
-    bool sendFile(const QString &fileName, const quint64 &mtime);
+    bool sendFile(const QString &fileName);
 
     void loginIsRight(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
     void loginIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,

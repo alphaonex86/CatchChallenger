@@ -50,6 +50,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
     qRegisterMetaType<QList<QPair<quint8,quint8> > >("QList<QPair<quint8,quint8> >");
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
+    qRegisterMetaType<QList<quint32> >("QList<quint32>");
     qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
 
@@ -300,9 +301,11 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawObject,       this,&BaseWindow::marketWithdrawObject);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster);
     //datapack
-    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFile,            this,&BaseWindow::newDatapackFile);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::datapackSize,this,&BaseWindow::datapackSize);
+    #ifdef CATCHCHALLENGER_MULTI
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFile,            this,&BaseWindow::newDatapackFile);
     connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::progressingDatapackFile,this,&BaseWindow::progressingDatapackFile);
+    #endif
 
     connect(this,&BaseWindow::destroyObject,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::destroyObject);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection);

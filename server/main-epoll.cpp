@@ -62,7 +62,7 @@ void send_settings()
     formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
     formatedServerNormalSettings.useSsl					= settings->value(QLatin1Literal("useSsl")).toBool();
 
-    CommonSettings::commonSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
+    formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
     CommonSettings::commonSettings.httpDatapackMirror	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
