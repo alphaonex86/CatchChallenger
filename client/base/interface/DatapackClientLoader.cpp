@@ -1,6 +1,7 @@
 #include "../interface/DatapackClientLoader.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/DatapackGeneralLoader.h"
+#include "../DatapackChecksum.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/DatapackGeneralLoader.h"
@@ -113,53 +114,19 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 
     if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
     {
-        QCryptographicHash hash(QCryptographicHash::Sha224);
-
-        QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
-        QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
-        QStringList returnList=CatchChallenger::FacilityLib::listFolder(datapackPath);
-        returnList.sort();
-        int index=0;
-        const int &size=returnList.size();
-        while(index<size)
+        const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksum(datapackPath);
+        if(hash.isEmpty())
         {
-            const QString &fileName=returnList.at(index);
-            if(fileName.contains(datapack_rightFileName))
-            {
-                if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
-                {
-                    QFile file(datapackPath+returnList.at(index));
-                    if(file.size()<=8*1024*1024)
-                    {
-                        if(file.open(QIODevice::ReadOnly))
-                        {
-                            const QByteArray &data=file.readAll();
-                            {
-                                QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                                hashFile.addData(data);
-                                qDebug() << QStringLiteral("%1 %2").arg(file.fileName()).arg(QString(hashFile.result().toHex()));
-                            }
-                            hash.addData(data);
-                            file.close();
-                        }
-                        else
-                        {
-                            qDebug() << QStringLiteral("Unable to open the file to do the checksum: %1").arg(file.fileName());
-                            emit datapackChecksumError();
-                            inProgress=false;
-                            return;
-                        }
-                    }
-                }
-            }
-            index++;
+            emit datapackChecksumError();
+            inProgress=false;
+            return;
         }
 
-        if(CommonSettings::commonSettings.datapackHash!=hash.result())
+        if(CommonSettings::commonSettings.datapackHash!=hash)
         {
             qDebug() << QStringLiteral("CommonSettings::commonSettings.datapackHash!=hash.result(): %1!=%2")
                         .arg(QString(CommonSettings::commonSettings.datapackHash.toHex()))
-                        .arg(QString(hash.result().toHex()));
+                        .arg(QString(hash.toHex()));
             emit datapackChecksumError();
             inProgress=false;
             return;
