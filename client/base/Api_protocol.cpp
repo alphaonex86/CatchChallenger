@@ -22,6 +22,8 @@ const unsigned char protocolHeaderToMatch[] = PROTOCOL_HEADER;
 
 QSet<QString> Api_protocol::extensionAllowed;
 
+Api_protocol* Api_protocol::client=NULL;
+
 Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     ProtocolParsingInputOutput(socket,PacketModeTransmission_Client),
     tolerantMode(tolerantMode)
@@ -989,15 +991,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         }
                         quint32 size;
                         in >> size;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                            return;
-                        }
-                        quint64 mtime;
-                        in >> mtime;
-                        QDateTime date;
-                        date.setTime_t(mtime);
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<size)
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -1006,10 +999,10 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         QByteArray dataFile=data.mid(in.device()->pos(),size);
                         in.device()->seek(in.device()->pos()+size);
                         if(subCodeType==0x0003)
-                            DebugClass::debugConsole(QStringLiteral("Raw file to create: %1 with time: %2").arg(fileName).arg(QDateTime::fromMSecsSinceEpoch(mtime*1000).toString()));
+                            DebugClass::debugConsole(QStringLiteral("Raw file to create: %1").arg(fileName));
                         else
-                            DebugClass::debugConsole(QStringLiteral("Compressed file to create: %1 with time: %2").arg(fileName).arg(QDateTime::fromMSecsSinceEpoch(mtime*1000).toString()));
-                        newFile(fileName,dataFile,mtime);
+                            DebugClass::debugConsole(QStringLiteral("Compressed file to create: %1").arg(fileName));
+                        newFile(fileName,dataFile);
                         index++;
                     }
                     return;//no remaining data, because all remaing is used as file data
@@ -1194,7 +1187,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         in >> mtime;
                         QDateTime date;
                         date.setTime_t(mtime);
-                        newHttpFile(baseHttp+fileName,fileName,mtime);
+                        newHttpFile(baseHttp+fileName,fileName);
 
                         index++;
                     }
@@ -2783,12 +2776,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     return;
                 }
                 in >> CommonSettings::commonSettings.factoryPriceChange;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the anonymous, line: %1").arg(__LINE__));
-                    return;
-                }
-                in >> CommonSettings::commonSettings.anonymous;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the httpDatapackMirror, line: %1").arg(__LINE__));

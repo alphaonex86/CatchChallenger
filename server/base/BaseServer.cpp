@@ -107,7 +107,7 @@ BaseServer::BaseServer() :
     CommonSettings::commonSettings.forceClientToSendAtMapChange = true;
     CommonSettings::commonSettings.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     CommonSettings::commonSettings.useSP                  = true;
-    CommonSettings::commonSettings.anonymous              = false;
+    GlobalServerData::serverSettings.anonymous            = false;
     CommonSettings::commonSettings.autoLearn              = false;//need useSP to false
     CommonSettings::commonSettings.dontSendPseudo         = false;
     CommonSettings::commonSettings.chat_allow_clan        = true;

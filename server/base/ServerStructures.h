@@ -106,6 +106,7 @@ struct ServerSettings
 {
     CompressionType compressionType;
     bool sendPlayerNumber;
+    bool anonymous;
     //fight
     bool pvp;
     quint16 max_players;//not common because if null info not send

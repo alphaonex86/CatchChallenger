@@ -14,7 +14,7 @@ public:
 public slots:
     void doDifferedChecksum(const QString &datapackPath);
 signals:
-    void datapackChecksumDone(const QByteArray &hash);
+    void datapackChecksumDone(const QByteArray &hash,const QList<quint32> &partialHashList);
 };
 }
 

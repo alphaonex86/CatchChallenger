@@ -33,7 +33,6 @@ class Api_client_real : public Api_protocol
 public:
     explicit Api_client_real(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_client_real();
-    static Api_protocol *client;
     void resetAll();
 
     //connection related
@@ -75,21 +74,21 @@ private:
     QList<query_files> query_files_list;
     bool wait_datapack_content;
     QStringList datapackFilesList;
+    QList<quint32> partialHashList;
     static QString text_slash;
     bool httpMode,httpError;
     QNetworkAccessManager qnam;
     struct UrlInWaiting
     {
         QString fileName;
-        quint64 mtime;
     };
     QHash<QNetworkReply *,UrlInWaiting> urlInWaitingList;
 private slots:
     void disconnected();
-    void writeNewFile(const QString &fileName, const QByteArray &data, const quint64 &mtime);
-    void getHttpFile(const QString &url, const QString &fileName, const quint64 &mtime);
+    void writeNewFile(const QString &fileName, const QByteArray &data);
+    void getHttpFile(const QString &url, const QString &fileName);
     void httpFinished();
-    void datapackChecksumDone(const QByteArray &hash);
+    void datapackChecksumDone(const QByteArray &hash, const QList<quint32> &partialHash);
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 signals:
     void newDatapackFile(const quint32 &size) const;

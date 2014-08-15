@@ -430,7 +430,6 @@ void Client::character_return(const quint8 &query_id)
     out << (quint8)CommonSettings::commonSettings.chat_allow_private;
     out << (quint8)CommonSettings::commonSettings.chat_allow_clan;
     out << (quint8)CommonSettings::commonSettings.factoryPriceChange;
-    out << (quint8)CommonSettings::commonSettings.anonymous;
     out << CommonSettings::commonSettings.httpDatapackMirror;
     if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
     {
@@ -1138,7 +1137,9 @@ QHash<QString,quint32> Client::datapack_file_list()
                         #ifdef Q_OS_WIN32
                         fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
                         #endif
-                        filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(file.readAll());
+                        filesList[fileName]=*reinterpret_cast<const int *>(hashFile.result().constData());
                         file.close();
                     }
                 }
@@ -1150,7 +1151,7 @@ QHash<QString,quint32> Client::datapack_file_list()
 }
 
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-void Client::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
+void Client::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &partialHashList)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     //do in network read to prevent DDOS
@@ -1181,7 +1182,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         while(index<loop_size)
         {
             const QString &fileName=files.at(index);
-            const quint32 &remote_mtime=timestamps.at(index);
+            const quint32 &remote_partialHash=partialHashList.at(index);
             if(fileName.contains(Client::text_dotslash) || fileName.contains(Client::text_antislash) || fileName.contains(Client::text_double_slash))
             {
                 errorOutput(QStringLiteral("file name contains illegale char: %1").arg(fileName));
@@ -1196,7 +1197,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
             {
                 quint32 server_file_mtime;
                 server_file_mtime=filesListForSize.value(fileName);
-                if(server_file_mtime==remote_mtime)
+                if(server_file_mtime==remote_partialHash)
                     addDatapackListReply(false);//found
                 else
                 {
@@ -1221,7 +1222,6 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
             datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+i.key()).size();
             FileToSend fileToSend;
             fileToSend.file=i.key();
-            fileToSend.mtime=i.value();
             fileToSendList << fileToSend;
         }
         QByteArray outputData;
@@ -1245,7 +1245,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
             int index=0;
             while(index<fileToSendList.size())
             {
-                sendFile(fileToSendList.at(index).file,fileToSendList.at(index).mtime);
+                sendFile(fileToSendList.at(index).file);
                 index++;
             }
         }
@@ -1440,7 +1440,7 @@ void Client::sendCompressedFileContent()
     }
 }
 
-bool Client::sendFile(const QString &fileName,const quint64 &mtime)
+bool Client::sendFile(const QString &fileName)
 {
     if(fileName.size()>255 || fileName.isEmpty())
         return false;
@@ -1455,7 +1455,6 @@ bool Client::sendFile(const QString &fileName,const quint64 &mtime)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint32)content.size();
-        out << mtime;
         if(compressedExtension.contains(QFileInfo(file).suffix()) && ProtocolParsing::compressionType!=ProtocolParsing::CompressionType_None && content.size()<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024)
         {
             compressedFiles+=fileNameRaw+outputData+content;
