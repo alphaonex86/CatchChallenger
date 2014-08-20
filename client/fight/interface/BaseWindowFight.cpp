@@ -3015,7 +3015,7 @@ void BaseWindow::monsterCatch(const quint32 &newMonsterId)
         emit message(QStringLiteral("catch is success"));
         #endif
         CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.first().id=newMonsterId;
-        if(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().count()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+        if(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().count()>=CommonSettings::commonSettings.maxPlayerMonsters)
             warehouse_playerMonster << CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.first();
         else
         {

@@ -234,6 +234,7 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     out << (quint16)monster.catched_with;
     out << (quint8)monster.gender;
     out << (quint32)monster.egg_step;
+    out << (quint32)monster.character_origin;
     int sub_index=0;
     int sub_size=monster.buffs.size();
     out << (quint8)sub_size;

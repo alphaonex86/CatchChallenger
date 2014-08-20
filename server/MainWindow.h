@@ -130,7 +130,10 @@ private slots:
     void on_programmedEventEdit_clicked();
     void on_programmedEventRemove_clicked();
     void on_tcpNodelay_toggled(bool checked);
-
+    void on_maxPlayerMonsters_editingFinished();
+    void on_maxWarehousePlayerMonsters_editingFinished();
+    void on_maxPlayerItems_editingFinished();
+    void on_maxWarehousePlayerItems_editingFinished();
 signals:
     void record_latency();
 };
