@@ -938,6 +938,11 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             load_inventory();
             if(!ok)
                 break;
+            if(warehouse_playerMonster.size()>=CommonSettings::commonSettings.maxWarehousePlayerMonsters)
+            {
+                QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
+                break;
+            }
             if(!items.contains(itemId))
             {
                 qDebug() << "item id is not into the inventory";

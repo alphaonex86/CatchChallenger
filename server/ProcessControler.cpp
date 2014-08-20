@@ -40,6 +40,10 @@ void ProcessControler::send_settings()
     CommonSettings::commonSettings.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
     CommonSettings::commonSettings.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
     formatedServerSettings.dontSendPlayerType                       = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
+    CommonSettings::commonSettings.maxPlayerMonsters                = settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt();
+    CommonSettings::commonSettings.maxWarehousePlayerMonsters       = settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt();
+    CommonSettings::commonSettings.maxPlayerItems                   = settings->value(QLatin1Literal("maxPlayerItems")).toUInt();
+    CommonSettings::commonSettings.maxWarehousePlayerItems          = settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt();
 
     //the listen
     formatedServerNormalSettings.server_port			= settings->value(QLatin1Literal("server-port")).toUInt();

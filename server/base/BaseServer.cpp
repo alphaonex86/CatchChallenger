@@ -46,6 +46,7 @@ const QString BaseServer::text_left=QLatin1String("left");
 const QString BaseServer::text_right=QLatin1String("right");
 const QString BaseServer::text_top=QLatin1String("top");
 const QString BaseServer::text_bottom=QLatin1String("bottom");
+const QString BaseServer::text_fightRange=QLatin1String("fightRange");
 const QString BaseServer::text_bots=QLatin1String("bots");
 const QString BaseServer::text_bot=QLatin1String("bot");
 const QString BaseServer::text_id=QLatin1String("id");
@@ -107,6 +108,10 @@ BaseServer::BaseServer() :
     CommonSettings::commonSettings.forceClientToSendAtMapChange = true;
     CommonSettings::commonSettings.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     CommonSettings::commonSettings.useSP                  = true;
+    CommonSettings::commonSettings.maxPlayerMonsters            = 8;
+    CommonSettings::commonSettings.maxWarehousePlayerMonsters   = 30;
+    CommonSettings::commonSettings.maxPlayerItems               = 30;
+    CommonSettings::commonSettings.maxWarehousePlayerItems      = 150;
     GlobalServerData::serverSettings.anonymous            = false;
     CommonSettings::commonSettings.autoLearn              = false;//need useSP to false
     CommonSettings::commonSettings.dontSendPseudo         = false;
@@ -1567,6 +1572,7 @@ void BaseServer::preload_the_map()
     QStringList map_name;
     QStringList map_name_to_do_id;
     QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
+    returnList.sort();
 
     //load the map
     int size=returnList.size();
@@ -2166,7 +2172,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
-                                quint32 fightid=step.attribute(BaseServer::text_fightid).toUInt(&ok);
+                                const quint32 &fightid=step.attribute(BaseServer::text_fightid).toUInt(&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapack::commonDatapack.botFights.contains(fightid))
@@ -2194,15 +2200,38 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),fightid);
                                             botfights_number++;
 
+                                            quint32 fightRange=5;
+                                            if(step.hasAttribute(BaseServer::text_fightRange))
+                                            {
+                                                fightRange=step.attribute(BaseServer::text_fightRange).toUInt(&ok);
+                                                if(!ok)
+                                                {
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
+                                                        .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y)
+                                                        .arg(step.attribute(BaseServer::text_fightRange)));
+                                                    fightRange=5;
+                                                }
+                                                else
+                                                {
+                                                    if(fightRange>10)
+                                                    {
+                                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
+                                                            .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y)
+                                                            .arg(fightRange)
+                                                            );
+                                                        fightRange=5;
+                                                    }
+                                                }
+                                            }
                                             //load the botsFightTrigger
                                             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
                                             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
                                             #endif
                                             quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
-                                            int index_botfight_range=0;
+                                            quint32 index_botfight_range=0;
                                             CatchChallenger::CommonMap *map=semi_loaded_map.value(index).map;
                                             CatchChallenger::CommonMap *old_map=map;
-                                            while(index_botfight_range<CATCHCHALLENGER_BOTFIGHT_RANGE)
+                                            while(index_botfight_range<fightRange)
                                             {
                                                 if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
                                                     break;

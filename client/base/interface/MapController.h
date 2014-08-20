@@ -73,6 +73,7 @@ protected:
     static QString text_bottom;
     static QString text_slash;
     static QString text_type;
+    static QString text_fightRange;
     static QString text_fight;
     static QString text_fightid;
     static QString text_bot;

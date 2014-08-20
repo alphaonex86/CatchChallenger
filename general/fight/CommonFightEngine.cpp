@@ -1213,7 +1213,7 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
         newMonster.remaining_xp=0;
         newMonster.skills=wildMonsters.first().skills;
         newMonster.sp=0;
-        newMonster.id=catchAWild(public_and_private_informations.playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
+        newMonster.id=catchAWild(public_and_private_informations.playerMonster.size()>=CommonSettings::commonSettings.maxPlayerMonsters,newMonster);
         return newMonster.id;
     }
     else
@@ -1484,8 +1484,56 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const quint8 &numberOf
     return true;
 }
 
+QList<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const quint8 &level,const quint8 &monsterIndex)
+{
+    QList<Monster::AttackToLearn> returnVar;
+    const PlayerMonster &monster=public_and_private_informations.playerMonster.value(monsterIndex);
+    int sub_index=0;
+    int sub_index2=0;
+    const int &learn_size=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.size();
+    while(sub_index<learn_size)
+    {
+        const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monster.monster).learn.at(sub_index);
+        if(learn.learnAtLevel==level)
+        {
+            //search if have already the previous skill
+            sub_index2=0;
+            const int &monster_skill_size=monster.skills.size();
+            while(sub_index2<monster_skill_size)
+            {
+                if(monster.skills.at(sub_index2).skill==learn.learnSkill)
+                {
+                    if(monster.skills.at(sub_index2).level<learn.learnSkillLevel)
+                    {
+                        setSkillLevel(&public_and_private_informations.playerMonster[monsterIndex],sub_index2,learn.learnSkillLevel);
+                        returnVar << learn;
+                    }
+                    break;
+                }
+                sub_index2++;
+            }
+            if(sub_index2==monster_skill_size)
+            {
+                if(learn.learnSkillLevel==1)
+                {
+                    PlayerMonster::PlayerSkill temp;
+                    temp.skill=learn.learnSkill;
+                    temp.level=1;
+                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
+                    addSkill(&public_and_private_informations.playerMonster[monsterIndex],temp);
+                    returnVar << learn;
+                }
+            }
+        }
+        sub_index++;
+    }
+    return returnVar;
+}
+
 void CommonFightEngine::levelUp(const quint8 &level,const quint8 &monsterIndex)
 {
+    autoLearnSkill(level,monsterIndex);
+
     Q_UNUSED(level);
     Q_UNUSED(monsterIndex);
 }

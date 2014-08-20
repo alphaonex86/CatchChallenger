@@ -20,6 +20,10 @@ public:
     bool forceClientToSendAtMapChange;
     int waitBeforeConnectAfterKick;
     QByteArray datapackHash;
+    quint8 maxPlayerMonsters;
+    quint8 maxWarehousePlayerMonsters;
+    quint8 maxPlayerItems;
+    quint8 maxWarehousePlayerItems;
 
     //rates
     float rates_xp;

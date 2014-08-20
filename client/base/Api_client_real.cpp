@@ -391,7 +391,7 @@ void Api_client_real::datapackChecksumDone(const QByteArray &hash,const QList<qu
                 qnam.setProxy(proxy);
             else
                 qnam.setProxy(QNetworkProxy::applicationProxy());
-            QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("datapack-diff-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("pack/diff/datapack-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
             connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
@@ -418,7 +418,7 @@ void Api_client_real::test_mirror()
     QNetworkReply *reply;
     if(!datapackTarXz)
     {
-        QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("datapack.tar.xz"));
+        QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("pack/datapack.tar.xz"));
         reply = qnam.get(networkRequest);
     }
     else
