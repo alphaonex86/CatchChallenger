@@ -311,6 +311,10 @@ void MainWindow::load_settings()
         ui->compression->setCurrentIndex(2);
     else
         ui->compression->setCurrentIndex(1);
+    ui->maxPlayerMonsters->setValue(settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt());
+    ui->maxWarehousePlayerMonsters->setValue(settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt());
+    ui->maxPlayerItems->setValue(settings->value(QLatin1Literal("maxPlayerItems")).toUInt());
+    ui->maxWarehousePlayerItems->setValue(settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt());
     ui->min_character->setValue(settings->value(QLatin1Literal("min_character")).toUInt());
     ui->max_character->setValue(settings->value(QLatin1Literal("max_character")).toUInt());
     ui->max_pseudo_size->setValue(settings->value(QLatin1Literal("max_pseudo_size")).toUInt());
@@ -639,6 +643,10 @@ void MainWindow::send_settings()
     CommonSettings::commonSettings.forceClientToSendAtMapChange		= ui->forceClientToSendAtMapChange->isChecked();
     CommonSettings::commonSettings.useSP                            = ui->useSP->isChecked();
     CommonSettings::commonSettings.autoLearn                        = ui->autoLearn->isChecked() && !ui->useSP->isChecked();
+    CommonSettings::commonSettings.maxPlayerMonsters                = ui->maxPlayerMonsters->value();
+    CommonSettings::commonSettings.maxWarehousePlayerMonsters       = ui->maxWarehousePlayerMonsters->value();
+    CommonSettings::commonSettings.maxPlayerItems                   = ui->maxPlayerItems->value();
+    CommonSettings::commonSettings.maxWarehousePlayerItems          = ui->maxWarehousePlayerItems->value();
 
     //the listen
     formatedServerNormalSettings.server_port			= ui->server_port->value();
@@ -1441,4 +1449,24 @@ void CatchChallenger::MainWindow::on_tcpNodelay_toggled(bool checked)
     settings->setValue(QLatin1Literal("tcpNodelay"),checked);
     settings->endGroup();
     #endif
+}
+
+void CatchChallenger::MainWindow::on_maxPlayerMonsters_editingFinished()
+{
+    settings->setValue(QLatin1Literal("maxPlayerMonsters"),ui->maxPlayerMonsters->value());
+}
+
+void CatchChallenger::MainWindow::on_maxWarehousePlayerMonsters_editingFinished()
+{
+    settings->setValue(QLatin1Literal("maxWarehousePlayerMonsters"),ui->maxWarehousePlayerMonsters->value());
+}
+
+void CatchChallenger::MainWindow::on_maxPlayerItems_editingFinished()
+{
+    settings->setValue(QLatin1Literal("maxPlayerItems"),ui->maxPlayerItems->value());
+}
+
+void CatchChallenger::MainWindow::on_maxWarehousePlayerItems_editingFinished()
+{
+    settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),ui->maxWarehousePlayerItems->value());
 }

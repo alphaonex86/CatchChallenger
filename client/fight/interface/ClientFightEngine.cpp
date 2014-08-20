@@ -531,6 +531,7 @@ bool ClientFightEngine::doTheOtherMonsterTurn()
 
 void ClientFightEngine::levelUp(const quint8 &level, const quint8 &monsterIndex)
 {
+    CommonFightEngine::levelUp(level,monsterIndex);
     const PlayerMonster &monster=public_and_private_informations.playerMonster.at(monsterIndex);
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster.monster);
     int index=0;

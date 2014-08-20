@@ -425,6 +425,10 @@ void Client::character_return(const quint8 &query_id)
     out << (float)CommonSettings::commonSettings.rates_gold;
     out << (float)CommonSettings::commonSettings.rates_xp_pow;
     out << (float)CommonSettings::commonSettings.rates_drop;
+    out << (quint8)CommonSettings::commonSettings.maxPlayerMonsters;
+    out << (quint8)CommonSettings::commonSettings.maxWarehousePlayerMonsters;
+    out << (quint8)CommonSettings::commonSettings.maxPlayerItems;
+    out << (quint8)CommonSettings::commonSettings.maxWarehousePlayerItems;
     out << (quint8)CommonSettings::commonSettings.chat_allow_all;
     out << (quint8)CommonSettings::commonSettings.chat_allow_local;
     out << (quint8)CommonSettings::commonSettings.chat_allow_private;

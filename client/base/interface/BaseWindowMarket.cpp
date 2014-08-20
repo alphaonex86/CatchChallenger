@@ -2,6 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "DatapackClientLoader.h"
 #include "../../fight/interface/ClientFightEngine.h"
+#include "../../../general/base/CommonSettings.h"
 
 #include <QInputDialog>
 
@@ -357,7 +358,7 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
 {
-    if(ClientFightEngine::fightEngine.getPlayerMonster().size()>CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+    if(ClientFightEngine::fightEngine.getPlayerMonster().size()>CommonSettings::commonSettings.maxPlayerMonsters)
     {
         QMessageBox::warning(this,tr("Warning"),tr("You can't wear this monster more"));
         return;

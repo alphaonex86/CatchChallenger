@@ -198,6 +198,7 @@ protected:
     static const QString text_right;
     static const QString text_top;
     static const QString text_bottom;
+    static const QString text_fightRange;
     static const QString text_bots;
     static const QString text_bot;
     static const QString text_id;

@@ -12,6 +12,7 @@ QString MapController::text_top=QLatin1Literal("top");
 QString MapController::text_bottom=QLatin1Literal("bottom");
 QString MapController::text_slash=QLatin1Literal("/");
 QString MapController::text_type=QLatin1Literal("type");
+QString MapController::text_fightRange=QLatin1Literal("fightRange");
 QString MapController::text_fight=QLatin1Literal("fight");
 QString MapController::text_fightid=QLatin1Literal("fightid");
 QString MapController::text_bot=QLatin1Literal("bot");
@@ -320,11 +321,36 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                     #ifdef DEBUG_CLIENT_BOT
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
                     #endif
+
+                    quint32 fightRange=5;
+                    if(stepBot.hasAttribute(MapController::text_fightRange))
+                    {
+                        fightRange=stepBot.attribute(MapController::text_fightRange).toUInt(&ok);
+                        if(!ok)
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
+                                .arg(parsedMap->logicalMap.map_file).arg(x).arg(y)
+                                .arg(stepBot.attribute(MapController::text_fightRange)));
+                            fightRange=5;
+                        }
+                        else
+                        {
+                            if(fightRange>10)
+                            {
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
+                                    .arg(parsedMap->logicalMap.map_file).arg(x).arg(y)
+                                    .arg(fightRange)
+                                    );
+                                fightRange=5;
+                            }
+                        }
+                    }
+
                     quint8 temp_x=x,temp_y=y;
-                    int index_botfight_range=0;
+                    quint32 index_botfight_range=0;
                     CatchChallenger::CommonMap *map=&parsedMap->logicalMap;
                     CatchChallenger::CommonMap *old_map=map;
-                    while(index_botfight_range<CATCHCHALLENGER_BOTFIGHT_RANGE)
+                    while(index_botfight_range<fightRange)
                     {
                         if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
                             break;
