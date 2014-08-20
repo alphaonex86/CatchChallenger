@@ -1282,7 +1282,7 @@ bool Client::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint16, 
             index++;
         }
     }
-    if((public_and_private_informations.playerMonster.size()+count_change)>CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+    if((public_and_private_informations.playerMonster.size()+count_change)>CommonSettings::commonSettings.maxPlayerMonsters)
     {
         errorOutput("have more monster to withdraw than the allowed");
         return false;
@@ -4290,7 +4290,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    if(public_and_private_informations.playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+    if(public_and_private_informations.playerMonster.size()>=CommonSettings::commonSettings.maxPlayerMonsters)
     {
         out << (quint8)0x02;
         postReply(query_id,outputData);
@@ -4847,7 +4847,7 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
                 postReply(query_id,outputData);
                 return;
             }
-            if(public_and_private_informations.playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+            if(public_and_private_informations.playerMonster.size()>=CommonSettings::commonSettings.maxPlayerMonsters)
             {
                 out << (quint8)0x02;
                 postReply(query_id,outputData);

@@ -35,7 +35,6 @@
 
 #define CATCHCHALLENGER_TOKENSIZE 16//can't be more than 250 due to server conception, and useless, with 8bytes, at 2 billions connexion rate, it's 300years to crack
 #define CATCHCHALLENGER_MONSTER_LEVEL_MAX 100
-#define CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER 6
 #define CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER 5
 //32Bits for the monster, 8Bits for the gender, 8Bits for level, 8Bits for the next step
 #define CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT 7
@@ -43,7 +42,6 @@
 #define CATCHCHALLENGER_MIN_PACKET_SIZE 128
 #define CATCHCHALLENGER_MAX_PACKET_SIZE 1024*1024
 
-#define CATCHCHALLENGER_BOTFIGHT_RANGE 5
 #define RANDOM_FLOAT_PART_DIVIDER 10000
 
 #define CATCHCHALLENGER_EXTENSION_ALLOWED "tmx;xml;tsx;js;png;jpg;gif;ogg;qml;qm;ts"
