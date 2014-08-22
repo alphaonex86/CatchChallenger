@@ -344,6 +344,7 @@ struct Player_private_and_public_informations
     bool clan_leader;
     QSet<ActionAllow> allow;
     quint32 repel_step;
+    QList<quint8> itemOnMap;
 };
 
 /// \brief Define the mode of transmission: client or server
@@ -483,10 +484,19 @@ struct Map_to_send
     {
         Map_Point point;
         QString file;
-        quint32 id;
+        quint16 id;
         QHash<QString,QVariant> property_text;
     };
     QList<Bot_Semi> bots;
+
+    struct ItemOnMap_Semi
+    {
+        Map_Point point;
+        quint16 item;
+        bool visible;
+        bool infinite;
+    };
+    QList<ItemOnMap_Semi> items;
 
     quint8 *monstersCollisionMap;
     QList<MonstersCollisionValue> monstersCollisionList;

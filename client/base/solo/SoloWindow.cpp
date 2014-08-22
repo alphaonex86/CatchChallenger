@@ -276,7 +276,7 @@ void SoloWindow::updateSavegameList()
                         //update process
                         if(!metaData.contains("savegame_version"))
                             metaData.setValue("savegame_version","0.4");
-                        const QString &version=metaData.value("savegame_version").toString();
+                        QString version=metaData.value("savegame_version").toString();
 
                         if(version!=CATCHCHALLENGER_SAVEGAME_VERSION)
                         {
@@ -316,14 +316,34 @@ void SoloWindow::updateSavegameList()
                                 else
                                     qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText();
                                 QSqlDatabase::removeDatabase("savegameupdate");
-                                metaData.setValue("savegame_version",CATCHCHALLENGER_SAVEGAME_VERSION);
+                                version=QStringLiteral("0.5");
+                                metaData.setValue("savegame_version",version);
                             }
-                            else
+                            if(version==QStringLiteral("0.5"))
                             {
-                                newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br />Version not compatible (%2)</span>")
-                                                  .arg(metaData.value("title").toString())
-                                                  .arg(version)
-                                                  );
+                                QStringList values;
+                                values << "CREATE TABLE \"character_itemOnMap\" (\"character\" INTEGER,\"itemOnMap\" INTEGER);";
+                                values << "CREATE INDEX \"character_itemOnMap_index\" on character_itemonmap (character ASC);";
+                                values << "CREATE TABLE dictionary_itemonmap (\"id\" INTEGER,\"map\" TEXT,\"x\" INTEGER,\"y\" INTEGER);";
+                                QSqlDatabase conn = QSqlDatabase::addDatabase("QSQLITE","savegameupdate");
+                                conn.setDatabaseName(savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
+                                if(conn.open())
+                                {
+                                    int index=0;
+                                    while(index<values.size())
+                                    {
+                                        QSqlQuery query(conn);
+                                        if(!query.exec(values.at(index)))
+                                            qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
+                                        index++;
+                                    }
+                                    conn.close();
+                                }
+                                else
+                                    qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText();
+                                QSqlDatabase::removeDatabase("savegameupdate");
+                                version=QStringLiteral("0.6");
+                                metaData.setValue("savegame_version",version);
                             }
                         }
                         int time_played_number=metaData.value("time_played").toUInt(&ok);
@@ -358,7 +378,15 @@ void SoloWindow::updateSavegameList()
                         else
                             lastLine=QStringLiteral("%1 (%2)").arg(mapName).arg(time_played);
 
-                        newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
+                        if(version!=QStringLiteral(CATCHCHALLENGER_SAVEGAME_VERSION))
+                        {
+                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br />Version not compatible (%2)</span>")
+                                              .arg(metaData.value("title").toString())
+                                              .arg(version)
+                                              );
+                        }
+                        else
+                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
                                           .arg(metaData.value("title").toString())
                                           .arg(dateString)
                                           .arg(lastLine)

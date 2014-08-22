@@ -1397,6 +1397,17 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
             selectObject(ObjectType_Seed);
         return;
     }
+    else if(map->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+    {
+        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+        if(!itemOnMap.contains(item.indexOfItemOnMap))
+        {
+            if(!item.infinite)
+                itemOnMap << item.indexOfItemOnMap;
+            add_to_inventory(item.item);
+            CatchChallenger::Api_client_real::client->takeAnObjectOnMap();
+        }
+    }
     else
     {
         //check bot with border
@@ -1555,7 +1566,7 @@ void BaseWindow::currentMapLoaded()
             }
             if(!noSound)
             {
-                if(Audio::audio.vlcInstance)
+                if(Audio::audio.vlcInstance && QFileInfo(file).isFile())
                 {
                     // Create a new Media
                     libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, QDir::toNativeSeparators(file).toUtf8().constData());

@@ -27,7 +27,15 @@ public:
     int reverse_db_id;
 
     //at last to improve the other variable cache
-    QList<Client *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
+    QList<Client *> clientsForBroadcast;//frequent remove/insert due to map change
+    struct ItemOnMap
+    {
+        quint16 item;
+        quint8 itemIndexOnMap;
+        quint16 itemDbCode;
+        bool infinite;
+    };
+    QHash<QPair<quint8,quint8>,ItemOnMap> itemsOnMap;//first is x,y, second is db code, item
 };
 
 class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer

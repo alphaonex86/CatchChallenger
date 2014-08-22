@@ -112,6 +112,9 @@ public:
     static QString text_zone;
     static QString text_fightid;
     static QString text_randomoffset;
+    static QString text_visible;
+    static QString text_true;
+    static QString text_false;
 signals:
     void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);
 public slots:

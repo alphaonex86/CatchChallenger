@@ -10,6 +10,7 @@
 #include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 #include "LocalClientHandlerWithoutSender.h"
 #include "ClientNetworkReadWithoutSender.h"
+#include "SqlFunction.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -215,28 +216,7 @@ void BaseServer::preload_the_data()
     preload_shop();
     preload_the_players();
     preload_monsters_drops();
-    preload_the_map();
-    preload_the_visibility_algorithm();
-    preload_the_city_capture();
-    preload_zone();
-    qDebug() << QStringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
-    timeDatapack.restart();
-
-    //start SQL load
-    preload_zone_sql();
-    /*
-    load_monsters_max_id();
-    preload_the_plant_on_map();
-    load_clan_max_id();
-    preload_industries();
-    preload_market_monsters();
-    preload_market_items();
-    if(GlobalServerData::serverSettings.automatic_account_creation)
-        load_account_max_id();
-    if(CommonSettings::commonSettings.max_character)
-        load_character_max_id();
-    qDebug() << QStringLiteral("Loaded the server datapack into %1ms").arg(time.elapsed());
-    */
+    preload_itemOnMap_sql();
 }
 
 void BaseServer::preload_the_events()
@@ -446,11 +426,108 @@ void BaseServer::preload_zone_sql()
             abort();//stop because can't do the first db access
             entryListIndex++;
             load_monsters_max_id();
+            return;
         }
         else
             return;
     }
     load_monsters_max_id();
+}
+
+void BaseServer::preload_itemOnMap_sql()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y` FROM `dictionary_itemonmap`;");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_itemonmap;");
+        break;
+        case ServerSettings::Database::DatabaseType_PostgreSQL:
+            queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_itemonmap;");
+        break;
+    }
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_itemOnMap_static)==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        abort();//stop because can't do the first db access
+
+        preload_the_map();
+        preload_the_visibility_algorithm();
+        preload_the_city_capture();
+        preload_zone();
+        qDebug() << QStringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
+        timeDatapack.restart();
+
+        //start SQL load
+        preload_zone_sql();
+    }
+}
+
+void BaseServer::preload_itemOnMap_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_itemOnMap_return();
+}
+
+void BaseServer::preload_itemOnMap_return()
+{
+    bool ok;
+    GlobalServerData::serverPrivateVariables.dictionary_item_maxId=0;
+    while(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        const quint16 &id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(!ok)
+            qDebug() << QStringLiteral("preload_itemOnMap_return(): Id not found: %1").arg(QString(GlobalServerData::serverPrivateVariables.db.value(0)));
+        else
+        {
+            const QString &map=QString(GlobalServerData::serverPrivateVariables.db.value(1));
+            const quint32 &x=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+            if(!ok)
+                qDebug() << QStringLiteral("preload_itemOnMap_return(): x not number: %1").arg(QString(GlobalServerData::serverPrivateVariables.db.value(2)));
+            else
+            {
+                if(x>255)
+                    qDebug() << QStringLiteral("preload_itemOnMap_return(): x out of range").arg(x);
+                else
+                {
+                    const quint32 &y=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
+                    if(!ok)
+                        qDebug() << QStringLiteral("preload_itemOnMap_return(): y not number: %1").arg(QString(GlobalServerData::serverPrivateVariables.db.value(3)));
+                    else
+                    {
+                        if(y>255)
+                            qDebug() << QStringLiteral("preload_itemOnMap_return(): y out of range").arg(y);
+                        else
+                        {
+                            if(GlobalServerData::serverPrivateVariables.dictionary_item.contains(map)
+                                    && GlobalServerData::serverPrivateVariables.dictionary_item.value(map).contains(QPair<quint8/*x*/,quint8/*y*/>(x,y)))
+                                qDebug() << QStringLiteral("preload_itemOnMap_return(): duplicate entry: %1 %2 %3").arg(map).arg(x).arg(y);
+                            else
+                            {
+                                GlobalServerData::serverPrivateVariables.dictionary_item[map][QPair<quint8/*x*/,quint8/*y*/>(x,y)]=id;
+                                GlobalServerData::serverPrivateVariables.dictionary_item_maxId=id;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    GlobalServerData::serverPrivateVariables.db.clear();
+    {
+        preload_the_map();
+        preload_the_visibility_algorithm();
+        preload_the_city_capture();
+        preload_zone();
+        qDebug() << QStringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
+        timeDatapack.restart();
+
+        //start SQL load
+        preload_zone_sql();
+    }
 }
 
 void BaseServer::preload_dictionary_allow()
@@ -1575,6 +1652,7 @@ void BaseServer::preload_the_map()
     returnList.sort();
 
     //load the map
+    quint8 indexOfItemOnMap=0;
     int size=returnList.size();
     int index=0;
     int sub_index;
@@ -1609,12 +1687,82 @@ void BaseServer::preload_the_map()
                         flat_map_list_temp << new MapServer;
                     break;
                 }
-                GlobalServerData::serverPrivateVariables.map_list[sortFileName]=flat_map_list_temp.last();
+                MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.last());
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]=mapServer;
 
-                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->width			= map_temp.map_to_send.width;
-                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->height			= map_temp.map_to_send.height;
-                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->parsed_layer	= map_temp.map_to_send.parsed_layer;
-                GlobalServerData::serverPrivateVariables.map_list[sortFileName]->map_file		= sortFileName;
+                mapServer->width			= map_temp.map_to_send.width;
+                mapServer->height			= map_temp.map_to_send.height;
+                mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
+                mapServer->map_file		= sortFileName;
+
+                {
+                    int index=0;
+                    while(index<map_temp.map_to_send.items.size())
+                    {
+                        const Map_to_send::ItemOnMap_Semi &item=map_temp.map_to_send.items.at(index);
+
+                        quint16 itemDbCode;
+                        if(GlobalServerData::serverPrivateVariables.dictionary_item.contains(sortFileName)
+                                && GlobalServerData::serverPrivateVariables.dictionary_item.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(item.point.x,item.point.y)))
+                            itemDbCode=GlobalServerData::serverPrivateVariables.dictionary_item.value(sortFileName).value(QPair<quint8,quint8>(item.point.x,item.point.y));
+                        else
+                        {
+                            GlobalServerData::serverPrivateVariables.dictionary_item_maxId++;
+                            QString queryText;
+                            switch(GlobalServerData::serverSettings.database.type)
+                            {
+                                default:
+                                case ServerSettings::Database::DatabaseType_Mysql:
+                                    queryText=QStringLiteral("INSERT INTO `dictionary_itemonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
+                                            .arg(GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
+                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
+                                            .arg(item.point.x)
+                                            .arg(item.point.y)
+                                            ;
+                                break;
+                                case ServerSettings::Database::DatabaseType_SQLite:
+                                    queryText=QStringLiteral("INSERT INTO dictionary_itemonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                                            .arg(GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
+                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
+                                            .arg(item.point.x)
+                                            .arg(item.point.y)
+                                            ;
+                                break;
+                                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                                    queryText=QStringLiteral("INSERT INTO dictionary_itemonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                                            .arg(GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
+                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
+                                            .arg(item.point.x)
+                                            .arg(item.point.y)
+                                            ;
+                                break;
+                            }
+                            if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
+                            {
+                                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+                                abort();//stop because can't resolv the name
+                            }
+                            while(GlobalServerData::serverPrivateVariables.dictionary_item_reverse.size()<GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
+                                GlobalServerData::serverPrivateVariables.dictionary_item_reverse << 255/*-1*/;
+                            GlobalServerData::serverPrivateVariables.dictionary_item_reverse << indexOfItemOnMap;
+                            GlobalServerData::serverPrivateVariables.dictionary_item[sortFileName][QPair<quint8,quint8>(item.point.x,item.point.y)]=indexOfItemOnMap;
+
+                            itemDbCode=GlobalServerData::serverPrivateVariables.dictionary_item_maxId;
+                        }
+
+                        MapServer::ItemOnMap itemOnMap;
+                        itemOnMap.infinite=item.infinite;
+                        itemOnMap.item=item.item;
+                        itemOnMap.itemIndexOnMap=indexOfItemOnMap;
+                        itemOnMap.itemDbCode=itemDbCode;
+                        mapServer->itemsOnMap[QPair<quint8,quint8>(item.point.x,item.point.y)]=itemOnMap;
+                        while(GlobalServerData::serverPrivateVariables.dictionary_item_reverse.size()<=itemOnMap.itemDbCode)
+                            GlobalServerData::serverPrivateVariables.dictionary_item_reverse << 255/*-1*/;
+                        GlobalServerData::serverPrivateVariables.dictionary_item_reverse[itemOnMap.itemDbCode]=indexOfItemOnMap;
+                        indexOfItemOnMap++;
+                        index++;
+                    }
+                }
 
                 map_name << sortFileName;
 
@@ -2437,6 +2585,8 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap=QStringLiteral("SELECT `itemOnMap` FROM `character_itemonmap` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO `character_itemonmap`(`character`,`itemOnMap`) VALUES(%1,%2);");
         break;
 
         case ServerSettings::Database::DatabaseType_SQLite:
@@ -2502,6 +2652,8 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap=QStringLiteral("SELECT \"itemOnMap\" FROM \"character_itemonmap\" WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2);");
         break;
         #endif
 
@@ -2567,6 +2719,8 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap=QStringLiteral("SELECT \"itemOnMap\" FROM \"character_itemonmap\" WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2);");
         break;
     }
 }
@@ -2691,6 +2845,8 @@ void BaseServer::unload_dictionary()
     GlobalServerData::serverPrivateVariables.dictionary_map.clear();
     GlobalServerData::serverPrivateVariables.dictionary_reputation.clear();
     GlobalServerData::serverPrivateVariables.dictionary_skin.clear();
+    GlobalServerData::serverPrivateVariables.dictionary_item.clear();
+    GlobalServerData::serverPrivateVariables.dictionary_item_reverse.clear();
 }
 
 void BaseServer::unload_the_static_data()
