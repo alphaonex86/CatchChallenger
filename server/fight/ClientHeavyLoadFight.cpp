@@ -675,7 +675,7 @@ void Client::loadBotAlreadyBeaten()
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        loginIsRightFinalStep();
+        loadItemOnMap();
         return;
     }
     else
@@ -708,5 +708,5 @@ void Client::loadBotAlreadyBeaten_return()
         }
         public_and_private_informations.bot_already_beaten << id;
     }
-    loginIsRightFinalStep();
+    loadItemOnMap();
 }

@@ -126,7 +126,10 @@ void MainWindow::server_is_started(bool is_started)
             send_settings();
             server.start_server();
         }
+        ui->displayPort->setText(QString());
     }
+    else
+        ui->displayPort->setText(QString::number(server.getNormalSettings().server_port));
 }
 
 void MainWindow::server_need_be_stopped()

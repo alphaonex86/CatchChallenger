@@ -26,6 +26,14 @@ public:
 class Map_client : public CommonMap
 {
 public:
+    struct ItemOnMapForClient
+    {
+        Tiled::MapObject* tileObject;
+        quint32 item;
+        bool infinite;
+        quint8 indexOfItemOnMap;
+    };
+
     QList<Map_semi_teleport> teleport_semi;
     QStringList teleport_condition_texts;
     QList<Map_to_send::Map_Point> rescue_points;
@@ -40,6 +48,7 @@ public:
     QHash<QPair<quint8,quint8>,BotDisplay> botsDisplay;
 
     QMultiHash<QPair<quint8,quint8>,QPair<quint8,quint8> > botsFightTriggerExtra;//trigger line in front of bot fight
+    QHash<QPair<quint8,quint8>,ItemOnMapForClient> itemsOnMap;
 
     QDomElement xmlRoot;
 };

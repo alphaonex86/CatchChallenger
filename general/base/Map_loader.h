@@ -102,6 +102,12 @@ private:
     static const QString text_percent;
     static const QString text_data;
     static const QString text_dotcomma;
+    static const QString text_false;
+    static const QString text_true;
+    static const QString text_visible;
+    static const QString text_infinite;
+    static const QString text_tileheight;
+    static const QString text_tilewidth;
 };
 }
 

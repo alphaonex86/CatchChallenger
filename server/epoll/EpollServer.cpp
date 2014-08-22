@@ -35,6 +35,7 @@ EpollServer::~EpollServer()
 void EpollServer::preload_finish()
 {
     BaseServer::preload_finish();
+    qDebug() << QStringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
     ready=true;
 }
 

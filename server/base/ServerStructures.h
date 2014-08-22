@@ -321,6 +321,8 @@ struct ServerPrivateVariables
     QString db_query_select_monstersSkill_by_id;
     QString db_query_select_monstersBuff_by_id;
     QString db_query_select_bot_beaten;
+    QString db_query_select_itemOnMap;
+    QString db_query_insert_itemonmap;
 
     QList<ServerProfile> serverProfileList;
 
@@ -409,6 +411,9 @@ struct ServerPrivateVariables
     QList<int> dictionary_reputation;//negative == not found
     QList<quint8> dictionary_skin;
     QList<quint32> dictionary_skin_reverse;
+    QHash<QString,QHash<QPair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/> > dictionary_item;
+    quint16 dictionary_item_maxId;
+    QList<quint8> dictionary_item_reverse;
     //datapack
     QHash<QString,quint8> skinList;
 };

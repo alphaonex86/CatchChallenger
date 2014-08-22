@@ -82,6 +82,12 @@ const QString Map_loader::text_slash=QLatin1Literal("/");
 const QString Map_loader::text_percent=QLatin1Literal("%");
 const QString Map_loader::text_data=QLatin1Literal("data");
 const QString Map_loader::text_dotcomma=QLatin1Literal(";");
+const QString Map_loader::text_false=QLatin1Literal("false");
+const QString Map_loader::text_true=QLatin1Literal("true");
+const QString Map_loader::text_visible=QLatin1Literal("visible");
+const QString Map_loader::text_infinite=QLatin1Literal("infinite");
+const QString Map_loader::text_tilewidth=QLatin1Literal("tilewidth");
+const QString Map_loader::text_tileheight=QLatin1Literal("tileheight");
 
 /// \todo put at walkable the tp on push
 
@@ -303,6 +309,27 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         }
     }
 
+    int tilewidth=16;
+    int tileheight=16;
+    if(root.hasAttribute(Map_loader::text_tilewidth))
+    {
+        tilewidth=root.attribute(Map_loader::text_tilewidth).toUShort(&ok);
+        if(!ok)
+        {
+            qDebug() << QStringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(fileName);
+            tilewidth=16;
+        }
+    }
+    if(root.hasAttribute(Map_loader::text_tileheight))
+    {
+        tileheight=root.attribute(Map_loader::text_tileheight).toUShort(&ok);
+        if(!ok)
+        {
+            qDebug() << QStringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(fileName);
+            tileheight=16;
+        }
+    }
+
     // objectgroup
     child = root.firstChildElement(Map_loader::text_objectgroup);
     while(!child.isNull())
@@ -320,14 +347,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
                     {
-                        const quint32 &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
+                        const quint32 &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/tilewidth;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const quint32 &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
+                            const quint32 &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/tileheight)-1;
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
@@ -573,14 +600,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(SubChild.isElement() && SubChild.hasAttribute(Map_loader::text_x) && SubChild.hasAttribute(Map_loader::text_y))
                     {
-                        const quint32 &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/16;
+                        const quint32 &object_x=SubChild.attribute(Map_loader::text_x).toUInt(&ok)/tilewidth;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Wrong conversion with x: %1 (at line: %2): %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const quint32 &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/16)-1;
+                            const quint32 &object_y=(SubChild.attribute(Map_loader::text_y).toUInt(&ok)/tileheight)-1;
 
                             if(!ok)
                                 DebugClass::debugConsole(QStringLiteral("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
@@ -634,6 +661,35 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                             bot_semi.point.x=object_x;
                                             bot_semi.point.y=object_y;
                                             map_to_send_temp.bots << bot_semi;
+                                        }
+                                    }
+                                    else
+                                        DebugClass::debugConsole(QStringLiteral("Missing \"bot\" properties for the bot: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
+                                }
+                                else if(type==Map_loader::text_object)
+                                {
+                                    #ifdef DEBUG_MESSAGE_MAP
+                                    DebugClass::debugConsole(QStringLiteral("type: %1, object_x: %2, object_y: %3")
+                                         .arg(type)
+                                         .arg(object_x)
+                                         .arg(object_y)
+                                         );
+                                    #endif
+                                    if(property_text.contains(Map_loader::text_item))
+                                    {
+                                        Map_to_send::ItemOnMap_Semi item_semi;
+                                        item_semi.infinite=false;
+                                        if(property_text.contains(Map_loader::text_infinite) && property_text.value(Map_loader::text_infinite)==Map_loader::text_true)
+                                            item_semi.infinite=true;
+                                        item_semi.visible=true;
+                                        if(property_text.contains(Map_loader::text_visible) && property_text.value(Map_loader::text_visible)==Map_loader::text_false)
+                                            item_semi.visible=false;
+                                        item_semi.item=property_text.value(Map_loader::text_item).toUInt(&ok);
+                                        if(ok)
+                                        {
+                                            item_semi.point.x=object_x;
+                                            item_semi.point.y=object_y;
+                                            map_to_send_temp.items << item_semi;
                                         }
                                     }
                                     else

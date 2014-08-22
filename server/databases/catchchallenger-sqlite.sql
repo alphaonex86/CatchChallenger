@@ -1,4 +1,3 @@
-CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE "monster_buff" (
     "monster" INTEGER,
     "buff" INTEGER,
@@ -157,7 +156,6 @@ CREATE TABLE plant (
     "plant_timestamps" INTEGER
 , "id" INTEGER);
 CREATE UNIQUE INDEX "plant_primarykey" on plant (id ASC);
-
 CREATE TABLE dictionary_allow (
     "id" INTEGER,
     "allow" TEXT
@@ -177,4 +175,15 @@ CREATE TABLE dictionary_skin (
 CREATE TABLE character_allow (
     "character" INTEGER,
     "allow" INTEGER
+);
+CREATE TABLE "character_itemOnMap" (
+    "character" INTEGER,
+    "itemOnMap" INTEGER
+);
+CREATE INDEX "character_itemOnMap_index" on character_itemonmap (character ASC);
+CREATE TABLE dictionary_itemonmap (
+    "id" INTEGER,
+    "map" TEXT,
+    "x" INTEGER,
+    "y" INTEGER
 );

@@ -122,6 +122,7 @@ public:
     QStringList maps,skins;
     QHash<QString,quint32> mapToId;
     QHash<QString,quint32> fullMapPathToId;
+    QHash<QString,QHash<QPair<quint8,quint8>,quint8> > itemOnMap;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();
@@ -207,6 +208,14 @@ protected:
     static const QString text_color;
     static const QString text_event;
     static const QString text_value;
+    static const QString text_tileheight;
+    static const QString text_tilewidth;
+    static const QString text_x;
+    static const QString text_y;
+    static const QString text_object;
+    static const QString text_objectgroup;
+    static const QString text_Object;
+    static const QString text_DATAPACK_BASE_PATH_MAP;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

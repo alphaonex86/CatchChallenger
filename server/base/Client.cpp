@@ -297,19 +297,19 @@ void Client::errorOutput(const QString &errorString)
 {
     if(account_id==0)
     {
-        normalOutput("Kicked by: "+errorString);
+        normalOutput(QStringLiteral("Kicked by: ")+errorString);
         return;
     }
     if(character_loaded)
         sendSystemMessage(public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
-    normalOutput("Kicked by: "+errorString);
+    normalOutput(QStringLiteral("Kicked by: ")+errorString);
     disconnectClient();
 }
 
 void Client::kick()
 {
-    normalOutput("kicked()");
+    normalOutput(QStringLiteral("kicked()"));
     disconnectClient();
 }
 

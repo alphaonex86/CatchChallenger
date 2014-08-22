@@ -271,6 +271,7 @@ public:
     void useObject(const quint16 &object);
     void useObjectOnMonster(const quint16 &object,const quint32 &monster);
     void wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
+    void takeAnObjectOnMap();
 
     //shop
     void getShopList(const quint32 &shopId);

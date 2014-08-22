@@ -18,7 +18,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
     if(!settings->contains(QLatin1Literal("autoLearn")))
         settings->setValue(QLatin1Literal("autoLearn"),false);
     if(!settings->contains(QLatin1Literal("server-port")))
-        settings->setValue(QLatin1Literal("server-port"),42489);
+        settings->setValue(QLatin1Literal("server-port"),10000+rand()%(65535-10000));
     if(!settings->contains(QLatin1Literal("sendPlayerNumber")))
         settings->setValue(QLatin1Literal("sendPlayerNumber"),false);
     if(!settings->contains(QLatin1Literal("tolerantMode")))
