@@ -586,6 +586,56 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
     }
 }
 
+void Client::loadItemOnMap()
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap.isEmpty())
+    {
+        errorOutput(QStringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
+        return;
+    }
+    #endif
+    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap.arg(character_id);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItemOnMap_static);
+    if(callback==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        loginIsRightFinalStep();
+        return;
+    }
+    else
+        callbackRegistred << callback;
+}
+
+void Client::loadItemOnMap_static(void *object)
+{
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadItemOnMap_return();
+}
+
+void Client::loadItemOnMap_return()
+{
+    callbackRegistred.removeFirst();
+    bool ok;
+    //parse the result
+    while(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        const quint16 &itemDbCode=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        if(!ok)
+        {
+            normalOutput(QStringLiteral("wrong value type for item on map, skip: %1").arg(itemDbCode));
+            continue;
+        }
+        if(GlobalServerData::serverPrivateVariables.dictionary_item_reverse[itemDbCode]==255/*-1*/)
+        {
+            normalOutput(QStringLiteral("item on map is not into the map list, skip: %1").arg(itemDbCode));
+            continue;
+        }
+        public_and_private_informations.itemOnMap << GlobalServerData::serverPrivateVariables.dictionary_item_reverse[itemDbCode];
+    }
+    loginIsRightFinalStep();
+}
+
 void Client::loginIsRightFinalStep()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -644,6 +694,15 @@ void Client::loginIsRightFinalStep()
     }
     out << (quint64)public_and_private_informations.cash;
     out << (quint64)public_and_private_informations.warehouse_cash;
+    out << (quint8)public_and_private_informations.itemOnMap.size();
+    {
+        int index=0;
+        while(index<public_and_private_informations.itemOnMap.size())
+        {
+            out << (quint8)public_and_private_informations.itemOnMap.at(index);
+            index++;
+        }
+    }
 
     //temporary variable
     quint32 index;

@@ -2,6 +2,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../base/GlobalServerData.h"
+#include "../base/MapServer.h"
 
 using namespace CatchChallenger;
 
@@ -73,4 +74,98 @@ void Client::useRecipe(const quint8 &query_id,const quint32 &recipe_id)
     else
         out << (quint8)RecipeUsage_failed;
     postReply(query_id,outputData);
+}
+
+void Client::takeAnObjectOnMap()
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    normalOutput(QStringLiteral("takeAnObjectOnMap()"));
+    #endif
+    CommonMap *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    //resolv the dirt
+    switch(getLastDirection())
+    {
+        case Direction_look_at_top:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                {
+                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                errorOutput("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_right:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                {
+                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                errorOutput("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_bottom:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                {
+                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                errorOutput("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_left:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                {
+                    errorOutput(QStringLiteral("takeAnObjectOnMap() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                errorOutput("No valid map in this direction");
+                return;
+            }
+        break;
+        default:
+        errorOutput("Wrong direction to plant a seed");
+        return;
+    }
+    //check if is dirt
+    if(!static_cast<MapServer *>(map)->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+    {
+        errorOutput("Not on map item on this place");
+        return;
+    }
+    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+    if(public_and_private_informations.itemOnMap.contains(item.itemIndexOnMap))
+    {
+        errorOutput("Have already this item");
+        return;
+    }
+    public_and_private_informations.itemOnMap << item.itemIndexOnMap;
+    //add get item from db
+    if(!item.infinite)
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap.arg(character_id).arg(item.itemDbCode));
+    addObject(item.item);
 }

@@ -367,6 +367,7 @@ private:
     void useSeed(const quint8 &plant_id);
     //crafting
     void useRecipe(const quint8 &query_id,const quint32 &recipe_id);
+    void takeAnObjectOnMap();
     //inventory
     void addObjectAndSend(const quint16 &item,const quint32 &quantity=1);
     void addObject(const quint16 &item,const quint32 &quantity=1);
@@ -668,6 +669,9 @@ private:
     void loadBotAlreadyBeaten_return();
     static void loadPlayerAllow_static(void *object);
     void loadPlayerAllow_return();
+    void loadItemOnMap();
+    static void loadItemOnMap_static(void *object);
+    void loadItemOnMap_return();
 
     static void loadPlayerMonsterBuffs_static(void *object);
     void loadPlayerMonsterBuffs_object();

@@ -908,6 +908,9 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                     return;
                 }
                 break;
+                case 0x0007:
+                    takeAnObjectOnMap();
+                break;
                 default:
                     parseError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;

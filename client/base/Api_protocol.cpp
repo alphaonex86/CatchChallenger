@@ -3137,6 +3137,30 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         }
                         in >> player_informations.warehouse_cash;
 
+                        //item on map
+                        {
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            quint8 itemOnMapSize;
+                            in >> itemOnMapSize;
+                            quint8 index=0;
+                            while(index<itemOnMapSize)
+                            {
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                quint8 itemOnMap;
+                                in >> itemOnMap;
+                                player_informations.itemOnMap << itemOnMap;
+                                index++;
+                            }
+                        }
+
                         //recipes
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                         {
@@ -4951,6 +4975,11 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint16,
     is_logged=character_selected=packFullOutcommingData(0x50,0x0006,outputData.constData(),outputData.size());
 }
 
+void Api_protocol::takeAnObjectOnMap()
+{
+    packFullOutcommingData(0x50,0x0007,NULL,0);
+}
+
 void Api_protocol::getShopList(const quint32 &shopId)
 {
     if(!is_logged)
@@ -5857,6 +5886,7 @@ void Api_protocol::resetAll()
     player_informations.items.clear();
     player_informations.reputation.clear();
     player_informations.quests.clear();
+    player_informations.itemOnMap.clear();
     isInTrade=false;
     tradeRequestId.clear();
     isInBattle=false;

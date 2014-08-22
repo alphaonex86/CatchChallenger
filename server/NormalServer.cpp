@@ -528,3 +528,9 @@ void NormalServer::loadAndFixSettings()
     if(normalServerSettings.proxy_port<=0)
         normalServerSettings.proxy=QString();
 }
+
+void NormalServer::preload_finish()
+{
+    QtServer::preload_finish();
+    qDebug() << QStringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
+}

@@ -116,6 +116,9 @@ protected:
     void preload_market_items_return();
     static void preload_market_monsters_static(void *object);
     void preload_market_monsters_return();
+    void preload_itemOnMap_return();
+    static void preload_itemOnMap_static(void *object);
+    void preload_itemOnMap_sql();
 
     void preload_dictionary_allow();
     static void preload_dictionary_allow_static(void *object);

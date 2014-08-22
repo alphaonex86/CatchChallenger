@@ -537,6 +537,7 @@ private:
     QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
+    QList<quint8> itemOnMap;
     QHash<quint16,qint32> change_warehouse_items;//negative = deposite, positive = withdraw
     QHash<quint16,quint32> items,warehouse_items;
     QHash<QListWidgetItem *,quint32> items_graphical;

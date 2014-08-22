@@ -50,6 +50,9 @@ QString MapVisualiserThread::text_fight=QLatin1Literal("fight");
 QString MapVisualiserThread::text_zone=QLatin1Literal("zone");
 QString MapVisualiserThread::text_fightid=QLatin1Literal("fightid");
 QString MapVisualiserThread::text_randomoffset=QLatin1Literal("random-offset");
+QString MapVisualiserThread::text_visible=QLatin1Literal("visible");
+QString MapVisualiserThread::text_true=QLatin1Literal("true");
+QString MapVisualiserThread::text_false=QLatin1Literal("false");
 
 MapVisualiserThread::MapVisualiserThread()
 {
@@ -161,6 +164,30 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     tempMapObject->logicalMap.border.top.map                        = NULL;
     tempMapObject->logicalMap.border.right.map                      = NULL;
     tempMapObject->logicalMap.border.left.map                       = NULL;
+    //load the item
+    {
+        int index=0;
+        while(index<map_loader.map_to_send.items.size())
+        {
+            const CatchChallenger::Map_to_send::ItemOnMap_Semi &item=map_loader.map_to_send.items.at(index);
+            CatchChallenger::Map_client::ItemOnMapForClient newItem;
+            newItem.infinite=item.infinite;
+            newItem.item=item.item;
+            newItem.tileObject=NULL;
+            newItem.indexOfItemOnMap=0;
+            if(DatapackClientLoader::datapackLoader.itemOnMap.contains(resolvedFileName))
+            {
+                if(DatapackClientLoader::datapackLoader.itemOnMap.value(resolvedFileName).contains(QPair<quint8,quint8>(item.point.x,item.point.y)))
+                    newItem.indexOfItemOnMap=DatapackClientLoader::datapackLoader.itemOnMap.value(resolvedFileName).value(QPair<quint8,quint8>(item.point.x,item.point.y));
+                else
+                    qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
+            }
+            else
+                qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2").arg(resolvedFileName).arg(QStringList(DatapackClientLoader::datapackLoader.itemOnMap.keys()).join(";"));
+            tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(item.point.x,item.point.y)]=newItem;
+            index++;
+        }
+    }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!DatapackClientLoader::datapackLoader.fullMapPathToId.contains(resolvedFileName))
     {
@@ -288,6 +315,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                     int index2=0;
                     while(index2<objects.size())
                     {
+                        const quint32 &x=objects.at(index2)->x();
+                        const quint32 &y=objects.at(index2)->y()-1;
                         //remove the unknow object
                         if(objects.at(index2)->type()==MapVisualiserThread::text_door)
                         {
@@ -298,8 +327,6 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                             }
                             else
                             {
-                                quint32 x=objects.at(index2)->x();
-                                quint32 y=objects.at(index2)->y()-1;
                                 const Tiled::Tile *tile=objects.at(index2)->cell().tile;
                                 const QString &animation=tile->property(MapVisualiserThread::text_animation);
                                 if(!animation.isEmpty())
@@ -355,11 +382,13 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                     while(index2<objects.size())
                     {
                         //remove the bot
-                        if(objects.at(index2)->type()!=MapVisualiserThread::text_bot)
+                        if(objects.at(index2)->type()==MapVisualiserThread::text_bot)
                         {
                             objectGroup->removeObject(objects.at(index2));
                             delete objects.at(index2);
                         }
+                        else if(objects.at(index2)->type()==MapVisualiserThread::text_object)
+                        {}
                         //remove the unknow object
                         else
                         {

@@ -5,6 +5,7 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/DatapackGeneralLoader.h"
+#include "../../general/base/Map_loader.h"
 #include "../LanguagesSelect.h"
 #include "../../tiled/tiled_tileset.h"
 #include "../../tiled/tiled_mapreader.h"
@@ -71,6 +72,15 @@ const QString DatapackClientLoader::text_alpha=QLatin1Literal("alpha");
 const QString DatapackClientLoader::text_color=QLatin1Literal("color");
 const QString DatapackClientLoader::text_event=QLatin1Literal("event");
 const QString DatapackClientLoader::text_value=QLatin1Literal("value");
+
+const QString DatapackClientLoader::text_tileheight=QLatin1Literal("tileheight");
+const QString DatapackClientLoader::text_tilewidth=QLatin1Literal("tilewidth");
+const QString DatapackClientLoader::text_x=QLatin1Literal("x");
+const QString DatapackClientLoader::text_y=QLatin1Literal("y");
+const QString DatapackClientLoader::text_object=QLatin1Literal("object");
+const QString DatapackClientLoader::text_objectgroup=QLatin1Literal("objectgroup");
+const QString DatapackClientLoader::text_Object=QLatin1Literal("Object");
+const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAP=QLatin1Literal(DATAPACK_BASE_PATH_MAP);
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -795,6 +805,7 @@ void DatapackClientLoader::parseMaps()
     QRegularExpression mapExclude(QLatin1String("[\"']"));
     QHash<QString,QString> sortToFull;
     QStringList tempMapList;
+    int indexOfItemOnMap=0;
     while(index<size)
     {
         const QString &fileName=returnList.at(index);
@@ -815,10 +826,106 @@ void DatapackClientLoader::parseMaps()
         mapToId[sortToFull.value(tempMapList.at(index))]=index;
         fullMapPathToId[QFileInfo(basePath+sortToFull.value(tempMapList.at(index))).absoluteFilePath()]=index;
         maps << sortToFull.value(tempMapList.at(index));
+
+        const QString &fileName=sortToFull.value(tempMapList.at(index));
+        {
+            QDomDocument domDocument;
+            QFile itemsFile(basePath+fileName);
+            if(!itemsFile.open(QIODevice::ReadOnly))
+            {
+                qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(fileName).arg(itemsFile.errorString());
+                index++;
+                continue;
+            }
+            const QByteArray &xmlContent=itemsFile.readAll();
+            itemsFile.close();
+            QString errorStr;
+            int errorLine,errorColumn;
+            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+            {
+                qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(fileName).arg(errorLine).arg(errorColumn).arg(errorStr);
+                index++;
+                continue;
+            }
+            const QDomElement &root = domDocument.documentElement();
+            if(root.tagName()!=DatapackClientLoader::text_map)
+            {
+                qDebug() << QStringLiteral("Unable to open the file: %1, \"map\" root balise not found for the xml file").arg(fileName);
+                index++;
+                continue;
+            }
+            bool ok;
+            int tilewidth=16;
+            int tileheight=16;
+            if(root.hasAttribute(DatapackClientLoader::text_tilewidth))
+            {
+                tilewidth=root.attribute(DatapackClientLoader::text_tilewidth).toUShort(&ok);
+                if(!ok)
+                {
+                    qDebug() << QStringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(fileName);
+                    tilewidth=16;
+                }
+            }
+            if(root.hasAttribute(DatapackClientLoader::text_tileheight))
+            {
+                tileheight=root.attribute(DatapackClientLoader::text_tileheight).toUShort(&ok);
+                if(!ok)
+                {
+                    qDebug() << QStringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(fileName);
+                    tileheight=16;
+                }
+            }
+
+            //load name
+            {
+                QDomElement objectgroup = root.firstChildElement(DatapackClientLoader::text_objectgroup);
+                while(!objectgroup.isNull())
+                {
+                    if(objectgroup.isElement())
+                    {
+                        if(objectgroup.hasAttribute(DatapackClientLoader::text_name) && objectgroup.attribute(DatapackClientLoader::text_name)==DatapackClientLoader::text_Object)
+                        {
+                            QDomElement object = objectgroup.firstChildElement(DatapackClientLoader::text_object);
+                            while(!object.isNull())
+                            {
+                                if(object.isElement())
+                                {
+                                    if(
+                                            object.hasAttribute(DatapackClientLoader::text_type) && object.attribute(DatapackClientLoader::text_type)==DatapackClientLoader::text_object
+                                            && object.hasAttribute(DatapackClientLoader::text_x)
+                                            && object.hasAttribute(DatapackClientLoader::text_y)
+                                            )
+                                    {
+                                        /** the -1 is important to fix object layer bug into tiled!!!
+                                         * Don't remove! */
+                                        const quint32 &object_y=(object.attribute(DatapackClientLoader::text_y).toUInt(&ok)/tileheight)-1;
+                                        if(ok)
+                                        {
+                                            const quint32 &object_x=object.attribute(DatapackClientLoader::text_x).toUInt(&ok)/tilewidth;
+                                            if(ok)
+                                            {
+                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAP+fileName][QPair<quint8,quint8>(object_x,object_y)]=indexOfItemOnMap;
+                                                indexOfItemOnMap++;
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                    qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(fileName).arg(object.tagName()).arg(object.lineNumber());
+                                object = object.nextSiblingElement(DatapackClientLoader::text_object);
+                            }
+                        }
+                    }
+                    else
+                        qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(fileName).arg(objectgroup.tagName()).arg(objectgroup.lineNumber());
+                    objectgroup = objectgroup.nextSiblingElement(DatapackClientLoader::text_objectgroup);
+                }
+            }
+        }
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(tempMapList.size());
+    qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(DatapackClientLoader::datapackLoader.maps.size());
 }
 
 void DatapackClientLoader::parseSkins()
@@ -848,6 +955,7 @@ void DatapackClientLoader::resetAll()
             delete i.value().tileset;
         }
     }
+    itemOnMap.clear();
     plantExtra.clear();
     itemToPlants.clear();
     questsExtra.clear();
