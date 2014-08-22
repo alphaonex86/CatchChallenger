@@ -367,7 +367,7 @@ CREATE TABLE IF NOT EXISTS `monster_warehouse` (
 
 CREATE TABLE IF NOT EXISTS `plant` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `map` text NOT NULL,
+  `map` smallint(6) NOT NULL,
   `x` tinyint(3) unsigned NOT NULL,
   `y` tinyint(3) unsigned NOT NULL,
   `plant` tinyint(3) unsigned NOT NULL,
@@ -412,7 +412,7 @@ CREATE TABLE IF NOT EXISTS `recipe` (
 
 CREATE TABLE IF NOT EXISTS `reputation` (
   `character` int(11) NOT NULL,
-  `type` varchar(16) NOT NULL,
+  `type` smallint(6) NOT NULL,
   `point` bigint(20) NOT NULL,
   `level` tinyint(4) NOT NULL,
   PRIMARY KEY (`character`,`type`),
