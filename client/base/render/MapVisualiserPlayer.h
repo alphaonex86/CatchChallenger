@@ -46,7 +46,7 @@ public:
     void setDatapackPath(const QString &path);
     virtual void datapackParsed();
 
-    void setInformations(QHash<quint16,quint32> *items,QHash<quint16, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events);
+    void setInformations(QHash<quint16,quint32> *items, QHash<quint16, CatchChallenger::PlayerQuest> *quests, QList<quint8> *events, QList<quint8> *itemOnMap);
 protected:
     //datapack
     bool mHaveTheDatapack;
@@ -89,6 +89,7 @@ protected:
     QList<quint8> *events;
     QHash<quint16,quint32> *items;
     QHash<quint16, CatchChallenger::PlayerQuest> *quests;
+    QList<quint8> *itemOnMap;
 protected:
     static QString text_DATAPACK_BASE_PATH_SKIN;
     static QString text_DATAPACK_BASE_PATH_MAP;

@@ -57,6 +57,7 @@ void BaseWindow::resetAll()
     plants_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     crafting_recipes_items_to_graphical.clear();
+    itemOnMap.clear();
     quests.clear();
     ui->tip->setVisible(false);
     ui->persistant_tip->setVisible(false);
@@ -489,9 +490,10 @@ void BaseWindow::updateConnectingStatus()
     if(waitedData.isEmpty())
     {
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
+        itemOnMap=player_private_and_public_informations.itemOnMap;
         warehouse_playerMonster=player_private_and_public_informations.warehouse_playerMonster;
         MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
-        MapController::mapController->setInformations(&items,&quests,&events);
+        MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap);
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();

@@ -91,6 +91,7 @@ private:
     void start_internal_server();
     void sslErrors(const QList<QSslError> &errors);
     virtual void loadAndFixSettings();
+    void preload_finish();
 signals:
     //async the call
     void need_be_stopped();

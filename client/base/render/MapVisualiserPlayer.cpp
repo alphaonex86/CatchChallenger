@@ -35,6 +35,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     events=NULL;
     items=NULL;
     quests=NULL;
+    itemOnMap=NULL;
 
     keyAccepted << Qt::Key_Left << Qt::Key_Right << Qt::Key_Up << Qt::Key_Down << Qt::Key_Return;
 
@@ -483,6 +484,77 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
     if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
     {
+        int index=0;
+        while(index<tempMapObject->tiledMap->layerCount())
+        {
+            if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
+            {
+                if(objectGroup->name()==MapVisualiserThread::text_Object)
+                {
+                    QList<Tiled::MapObject*> objects=objectGroup->objects();
+                    int index2=0;
+                    while(index2<objects.size())
+                    {
+                        Tiled::MapObject* object=objects.at(index2);
+                        const quint32 &x=object->x();
+                        const quint32 &y=object->y()-1;
+
+                        if(object->type()==MapVisualiserThread::text_object)
+                        {
+                            //found into the logical map
+                            if(tempMapObject->logicalMap.itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                            {
+                                if(object->property(MapVisualiserThread::text_visible)==MapVisualiserThread::text_false)
+                                {
+                                    objectGroup->removeObject(object);
+                                    delete object;
+                                    tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                                }
+                                else
+                                {
+                                    if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMapObject->logicalMap.map_file))
+                                    {
+                                        if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).contains(QPair<quint8,quint8>(x,y)))
+                                        {
+                                            const quint8 &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).value(QPair<quint8,quint8>(x,y));
+                                            if(itemOnMap->contains(itemIndex))
+                                            {
+                                                objectGroup->removeObject(object);
+                                                delete object;
+                                            }
+                                            else
+                                            {
+                                                tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
+                                                index2++;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
+                                            index2++;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
+                                        index2++;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                objectGroup->removeObject(object);
+                                delete object;
+                            }
+                        }
+                        else
+                            index2++;
+                    }
+                }
+            }
+            index++;
+        }
+
         if(fileName==current_map)
         {
             if(tempMapObject!=NULL)
@@ -499,11 +571,12 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(QHash<quint16,quint32> *items,QHash<quint16, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events)
+void MapVisualiserPlayer::setInformations(QHash<quint16,quint32> *items,QHash<quint16, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events,QList<quint8> *itemOnMap)
 {
     this->events=events;
     this->items=items;
     this->quests=quests;
+    this->itemOnMap=itemOnMap;
 }
 
 void MapVisualiserPlayer::finalPlayerStep()
@@ -889,6 +962,15 @@ void MapVisualiserPlayer::parseAction()
                     cell.tile=botDisplay->tileset->tileAt(4);
                     botDisplay->mapObject->setCell(cell);
                 }
+                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    if(item.tileObject!=NULL)
+                    {
+                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
+                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                    }
+                }
                 emit actionOn(map_client,x,y);
             }
         }
@@ -907,6 +989,15 @@ void MapVisualiserPlayer::parseAction()
                     Tiled::Cell cell=botDisplay->mapObject->cell();
                     cell.tile=botDisplay->tileset->tileAt(10);
                     botDisplay->mapObject->setCell(cell);
+                }
+                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    if(item.tileObject!=NULL)
+                    {
+                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
+                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                    }
                 }
                 emit actionOn(map_client,x,y);
             }
@@ -927,6 +1018,15 @@ void MapVisualiserPlayer::parseAction()
                     cell.tile=botDisplay->tileset->tileAt(7);
                     botDisplay->mapObject->setCell(cell);
                 }
+                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    if(item.tileObject!=NULL)
+                    {
+                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
+                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                    }
+                }
                 emit actionOn(map_client,x,y);
             }
         }
@@ -945,6 +1045,15 @@ void MapVisualiserPlayer::parseAction()
                     Tiled::Cell cell=botDisplay->mapObject->cell();
                     cell.tile=botDisplay->tileset->tileAt(1);
                     botDisplay->mapObject->setCell(cell);
+                }
+                else if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                {
+                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+                    if(item.tileObject!=NULL)
+                    {
+                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
+                        map_client->itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                    }
                 }
                 emit actionOn(map_client,x,y);
             }

@@ -7,6 +7,50 @@ SET client_min_messages = warning;
 
 SET search_path = public, pg_catalog;
 
+--
+-- Name: gender; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE gender AS ENUM (
+    'unknown',
+    'male',
+    'female'
+);
+
+--
+-- Name: orientation; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE orientation AS ENUM (
+    'top',
+    'bottom',
+    'left',
+    'right'
+);
+
+
+--
+-- Name: place; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE place AS ENUM (
+    'wear',
+    'warehouse',
+    'market'
+);
+
+--
+-- Name: player_type; Type: TYPE; Schema: public; Owner: root
+--
+
+CREATE TYPE player_type AS ENUM (
+    'normal',
+    'premium',
+    'gm',
+    'dev'
+);
+
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -24,8 +68,6 @@ CREATE TABLE account (
 );
 
 
-ALTER TABLE public.account OWNER TO postgres;
-
 --
 -- Name: account_register; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -39,8 +81,6 @@ CREATE TABLE account_register (
 );
 
 
-ALTER TABLE public.account_register OWNER TO postgres;
-
 --
 -- Name: bot_already_beaten; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -50,8 +90,6 @@ CREATE TABLE bot_already_beaten (
     botfight_id smallint
 );
 
-
-ALTER TABLE public.bot_already_beaten OWNER TO postgres;
 
 --
 -- Name: character; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -88,8 +126,6 @@ CREATE TABLE "character" (
 );
 
 
-ALTER TABLE public."character" OWNER TO postgres;
-
 --
 -- Name: character_allow; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -100,7 +136,15 @@ CREATE TABLE character_allow (
 );
 
 
-ALTER TABLE public.character_allow OWNER TO postgres;
+--
+-- Name: character_itemOnMap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE "character_itemonmap" (
+    "character" integer,
+    "itemOnMap" smallint
+);
+
 
 --
 -- Name: city; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -111,8 +155,6 @@ CREATE TABLE city (
     clan integer
 );
 
-
-ALTER TABLE public.city OWNER TO postgres;
 
 --
 -- Name: clan; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -126,8 +168,6 @@ CREATE TABLE clan (
 );
 
 
-ALTER TABLE public.clan OWNER TO postgres;
-
 --
 -- Name: dictionary_allow; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -138,7 +178,17 @@ CREATE TABLE dictionary_allow (
 );
 
 
-ALTER TABLE public.dictionary_allow OWNER TO postgres;
+--
+-- Name: dictionary_itemOnMap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE "dictionary_itemonmap" (
+    id integer NOT NULL,
+    map text,
+    x smallint,
+    y smallint
+);
+
 
 --
 -- Name: dictionary_map; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -150,8 +200,6 @@ CREATE TABLE dictionary_map (
 );
 
 
-ALTER TABLE public.dictionary_map OWNER TO postgres;
-
 --
 -- Name: dictionary_reputation; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -162,8 +210,6 @@ CREATE TABLE dictionary_reputation (
 );
 
 
-ALTER TABLE public.dictionary_reputation OWNER TO postgres;
-
 --
 -- Name: dictionary_skin; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -173,8 +219,6 @@ CREATE TABLE dictionary_skin (
     skin text
 );
 
-
-ALTER TABLE public.dictionary_skin OWNER TO postgres;
 
 --
 -- Name: factory; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -188,8 +232,6 @@ CREATE TABLE factory (
 );
 
 
-ALTER TABLE public.factory OWNER TO postgres;
-
 --
 -- Name: item; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -200,8 +242,6 @@ CREATE TABLE item (
     quantity integer
 );
 
-
-ALTER TABLE public.item OWNER TO postgres;
 
 --
 -- Name: item_market; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -215,8 +255,6 @@ CREATE TABLE item_market (
 );
 
 
-ALTER TABLE public.item_market OWNER TO postgres;
-
 --
 -- Name: item_warehouse; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -227,8 +265,6 @@ CREATE TABLE item_warehouse (
     quantity integer
 );
 
-
-ALTER TABLE public.item_warehouse OWNER TO postgres;
 
 --
 -- Name: monster; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -250,8 +286,6 @@ CREATE TABLE monster (
 );
 
 
-ALTER TABLE public.monster OWNER TO postgres;
-
 --
 -- Name: monster_buff; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -262,8 +296,6 @@ CREATE TABLE monster_buff (
     level smallint
 );
 
-
-ALTER TABLE public.monster_buff OWNER TO postgres;
 
 --
 -- Name: monster_market; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -285,8 +317,6 @@ CREATE TABLE monster_market (
 );
 
 
-ALTER TABLE public.monster_market OWNER TO postgres;
-
 --
 -- Name: monster_skill; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -298,8 +328,6 @@ CREATE TABLE monster_skill (
     endurance smallint
 );
 
-
-ALTER TABLE public.monster_skill OWNER TO postgres;
 
 --
 -- Name: monster_warehouse; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -321,8 +349,6 @@ CREATE TABLE monster_warehouse (
 );
 
 
-ALTER TABLE public.monster_warehouse OWNER TO postgres;
-
 --
 -- Name: plant; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -338,8 +364,6 @@ CREATE TABLE plant (
 );
 
 
-ALTER TABLE public.plant OWNER TO postgres;
-
 --
 -- Name: quest; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -352,8 +376,6 @@ CREATE TABLE quest (
 );
 
 
-ALTER TABLE public.quest OWNER TO postgres;
-
 --
 -- Name: recipe; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -363,8 +385,6 @@ CREATE TABLE recipe (
     recipe smallint
 );
 
-
-ALTER TABLE public.recipe OWNER TO postgres;
 
 --
 -- Name: reputation; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -377,8 +397,6 @@ CREATE TABLE reputation (
     level smallint
 );
 
-
-ALTER TABLE public.reputation OWNER TO postgres;
 
 --
 -- Name: account_login_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
@@ -402,6 +420,7 @@ ALTER TABLE ONLY account
 
 ALTER TABLE ONLY account_register
     ADD CONSTRAINT account_register_login_key UNIQUE (login);
+
 
 --
 -- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
@@ -433,6 +452,14 @@ ALTER TABLE ONLY clan
 
 ALTER TABLE ONLY dictionary_allow
     ADD CONSTRAINT dictionary_allow_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY "dictionary_itemonmap"
+    ADD CONSTRAINT "dictionary_itemOnMap_pkey" PRIMARY KEY (id);
 
 
 --
@@ -522,6 +549,13 @@ CREATE UNIQUE INDEX character_bypseudoandclan ON "character" USING btree (pseudo
 --
 
 CREATE INDEX character_clan ON "character" USING btree (clan);
+
+
+--
+-- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE INDEX "character_itemOnMap_index" ON "character_itemonmap" USING btree ("character");
 
 
 --
