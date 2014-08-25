@@ -1178,15 +1178,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                             if(!tolerantMode)
                                 return;
                         }
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                            return;
-                        }
-                        quint64 mtime;
-                        in >> mtime;
-                        QDateTime date;
-                        date.setTime_t(mtime);
                         newHttpFile(baseHttp+fileName,fileName);
 
                         index++;
@@ -2814,16 +2805,13 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     return;
                 }
                 in >> CommonSettings::commonSettings.httpDatapackMirror;
-                if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(__LINE__));
-                        return;
-                    }
-                    CommonSettings::commonSettings.datapackHash=data.mid(in.device()->pos(),28);
-                    in.device()->seek(in.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(__LINE__));
+                    return;
                 }
+                CommonSettings::commonSettings.datapackHash=data.mid(in.device()->pos(),28);
+                in.device()->seek(in.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the number of map, line: %1").arg(__LINE__));

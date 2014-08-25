@@ -435,11 +435,8 @@ void Client::character_return(const quint8 &query_id)
     out << (quint8)CommonSettings::commonSettings.chat_allow_clan;
     out << (quint8)CommonSettings::commonSettings.factoryPriceChange;
     out << CommonSettings::commonSettings.httpDatapackMirror;
-    if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
-    {
-        outputData+=CommonSettings::commonSettings.datapackHash;
-        out.device()->seek(out.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
-    }
+    outputData+=CommonSettings::commonSettings.datapackHash;
+    out.device()->seek(out.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
     out << (quint32)GlobalServerData::serverPrivateVariables.map_list.size();
 
     {
@@ -1173,7 +1170,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
     compressedFilesCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
-    QHash<QString,quint32> filesList=datapack_file_list_cached();
+    const QHash<QString,quint32> &filesList=datapack_file_list_cached();
     QList<FileToSend> fileToSendList;
 
     const int &loop_size=files.size();
@@ -1199,9 +1196,56 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
             }
             if(filesListForSize.contains(fileName))
             {
+                quint32 partialHash;
                 quint32 server_file_mtime;
                 server_file_mtime=filesListForSize.value(fileName);
-                if(server_file_mtime==remote_partialHash)
+                if(!Client::datapack_file_hash_cache.contains(fileName))
+                {
+                    QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
+                    if(file.open(QIODevice::ReadOnly))
+                    {
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(file.readAll());
+                        Client::DatapackCacheFile newCacheFile;
+                        newCacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
+                        newCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        partialHash=newCacheFile.partialHash;
+                        Client::datapack_file_hash_cache[fileName]=newCacheFile;
+                        file.close();
+                    }
+                    else
+                    {
+                        errorOutput(QStringLiteral("unable to read: %1").arg(fileName));
+                        return;
+                    }
+                }
+                else
+                {
+                    const Client::DatapackCacheFile &cacheFile=Client::datapack_file_hash_cache.value(fileName);
+                    if(cacheFile.mtime==server_file_mtime)
+                        partialHash=cacheFile.partialHash;
+                    else
+                    {
+                        QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
+                        if(file.open(QIODevice::ReadOnly))
+                        {
+                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                            hashFile.addData(file.readAll());
+                            Client::DatapackCacheFile newCacheFile;
+                            newCacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
+                            newCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                            partialHash=newCacheFile.partialHash;
+                            Client::datapack_file_hash_cache[fileName]=newCacheFile;
+                            file.close();
+                        }
+                        else
+                        {
+                            errorOutput(QStringLiteral("unable to read: %1").arg(fileName));
+                            return;
+                        }
+                    }
+                }
+                if(partialHash==remote_partialHash)
                     addDatapackListReply(false);//found
                 else
                 {
@@ -1210,7 +1254,6 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
                     datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
                     FileToSend fileToSend;
                     fileToSend.file=fileName;
-                    fileToSend.mtime=server_file_mtime;
                     fileToSendList << fileToSend;
                 }
                 filesListForSize.remove(fileName);
@@ -1234,6 +1277,11 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         out << (quint32)datapckFileNumber;
         out << (quint32)datapckFileSize;
         sendFullPacket(0xC2,0x000C,outputData);
+    }
+    if(fileToSendList.isEmpty())
+    {
+        errorOutput("Ask datapack list where the checksum match");
+        return;
     }
     qSort(fileToSendList);
     if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
@@ -1287,10 +1335,8 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
                     errorOutput(QLatin1Literal("file path too big or not compatible with utf8"));
                     return;
                 }
-                const quint64 &fileInfoModTime=fileToSendList.at(index).mtime;
                 outputData+=rawFileName;
                 out.device()->seek(out.device()->size());
-                out << (quint64)fileInfoModTime;
                 index++;
             }
             sendFullPacket(0xC2,0x000D,outputData);
