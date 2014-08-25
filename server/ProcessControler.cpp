@@ -33,7 +33,13 @@ void ProcessControler::send_settings()
     CommonSettings::commonSettings.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
     CommonSettings::commonSettings.max_character					= settings->value(QLatin1Literal("max_character")).toUInt();
     CommonSettings::commonSettings.max_pseudo_size					= settings->value(QLatin1Literal("max_pseudo_size")).toUInt();
-    CommonSettings::commonSettings.character_delete_time			= settings->value(QLatin1Literal("character_delete_time")).toUInt();
+    CommonSettings::commonSettings.character_delete_time            = settings->value(QLatin1Literal("character_delete_time")).toUInt();
+    if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("none"))
+        formatedServerSettings.compressionType                                = CompressionType_None;
+    else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("xz"))
+        formatedServerSettings.compressionType                                = CompressionType_Xz;
+    else
+        formatedServerSettings.compressionType                                = CompressionType_Zlib;
     CommonSettings::commonSettings.useSP                            = settings->value(QLatin1Literal("useSP")).toBool();
     CommonSettings::commonSettings.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettings::commonSettings.useSP;
     CommonSettings::commonSettings.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();

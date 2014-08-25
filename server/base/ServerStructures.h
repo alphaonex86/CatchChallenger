@@ -56,7 +56,6 @@ struct Map_player_info
 struct FileToSend
 {
     QString file;
-    quint32 mtime;
 };
 
 enum MapVisibilityAlgorithmSelection
