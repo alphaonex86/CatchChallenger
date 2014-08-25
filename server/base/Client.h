@@ -252,7 +252,13 @@ private:
     static int tempDatapackListReplyTestCount;
     static QByteArray rawFiles,compressedFiles;
     static int rawFilesCount,compressedFilesCount;
+    struct DatapackCacheFile
+    {
+        quint32 mtime;
+        quint32 partialHash;
+    };
     static QHash<QString,quint32> datapack_file_list_cache;
+    static QHash<QString,DatapackCacheFile> datapack_file_hash_cache;
     static QRegularExpression fileNameStartStringRegex;
     static QString single_quote;
     static QString antislash_single_quote;
