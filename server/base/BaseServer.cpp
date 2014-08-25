@@ -2096,34 +2096,35 @@ void BaseServer::preload_the_datapack()
     if(GlobalServerData::serverSettings.datapackCache==0)
         Client::datapack_file_list_cache=Client::datapack_file_list();
 
-    if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
-    {
-        QCryptographicHash hash(QCryptographicHash::Sha224);
-        QStringList datapack_file_temp=Client::datapack_file_list().keys();
-        datapack_file_temp.sort();
-        int index=0;
-        while(index<datapack_file_temp.size()) {
-            QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
-            if(file.open(QIODevice::ReadOnly))
+    QCryptographicHash hash(QCryptographicHash::Sha224);
+    QStringList datapack_file_temp=Client::datapack_file_list().keys();
+    datapack_file_temp.sort();
+    int index=0;
+    while(index<datapack_file_temp.size()) {
+        QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
+        if(file.open(QIODevice::ReadOnly))
+        {
+            const QByteArray &data=file.readAll();
             {
-                const QByteArray &data=file.readAll();
-                {
-                    QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                    hashFile.addData(data);
-                }
-                hash.addData(data);
-                file.close();
+                QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                hashFile.addData(data);
+                Client::DatapackCacheFile cacheFile;
+                cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
+                cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                Client::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
             }
-            else
-            {
-                DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
-                abort();
-            }
-            index++;
+            hash.addData(data);
+            file.close();
         }
-        CommonSettings::commonSettings.datapackHash=hash.result();
-        DebugClass::debugConsole(QStringLiteral("%1 file for datapack loaded").arg(datapack_file_temp.size()));
+        else
+        {
+            DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+            abort();
+        }
+        index++;
     }
+    CommonSettings::commonSettings.datapackHash=hash.result();
+    DebugClass::debugConsole(QStringLiteral("%1 file for datapack loaded").arg(datapack_file_temp.size()));
 }
 
 void BaseServer::preload_the_players()
@@ -2349,14 +2350,14 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             botfights_number++;
 
                                             quint32 fightRange=5;
-                                            if(step.hasAttribute(BaseServer::text_fightRange))
+                                            if(bot_Semi.property_text.contains(BaseServer::text_fightRange))
                                             {
-                                                fightRange=step.attribute(BaseServer::text_fightRange).toUInt(&ok);
+                                                fightRange=bot_Semi.property_text.value(BaseServer::text_fightRange).toUInt(&ok);
                                                 if(!ok)
                                                 {
                                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
                                                         .arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y)
-                                                        .arg(step.attribute(BaseServer::text_fightRange)));
+                                                        .arg(bot_Semi.property_text.value(BaseServer::text_fightRange).toString()));
                                                     fightRange=5;
                                                 }
                                                 else
@@ -2946,6 +2947,8 @@ void BaseServer::unload_the_events()
 void BaseServer::unload_the_datapack()
 {
     Client::compressedExtension.clear();
+    Client::datapack_file_hash_cache.clear();
+    Client::datapack_file_list_cache.clear();
 }
 
 void BaseServer::unload_the_players()

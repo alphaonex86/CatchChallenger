@@ -323,14 +323,14 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                     #endif
 
                     quint32 fightRange=5;
-                    if(stepBot.hasAttribute(MapController::text_fightRange))
+                    if(parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).properties.contains(MapController::text_fightRange))
                     {
-                        fightRange=stepBot.attribute(MapController::text_fightRange).toUInt(&ok);
+                        fightRange=parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).properties.value(MapController::text_fightRange).toUInt(&ok);
                         if(!ok)
                         {
                             CatchChallenger::DebugClass::debugConsole(QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
                                 .arg(parsedMap->logicalMap.map_file).arg(x).arg(y)
-                                .arg(stepBot.attribute(MapController::text_fightRange)));
+                                .arg(parsedMap->logicalMap.bots.value(QPair<quint8,quint8>(x,y)).properties.value(MapController::text_fightRange)));
                             fightRange=5;
                         }
                         else

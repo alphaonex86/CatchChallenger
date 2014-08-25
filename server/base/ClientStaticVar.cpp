@@ -67,6 +67,7 @@ QSet<QString> Client::compressedExtension;
 QSet<QString> Client::extensionAllowed;
 quint64 Client::datapack_list_cache_timestamp;
 QHash<QString,quint32> Client::datapack_file_list_cache;
+QHash<QString,Client::DatapackCacheFile> Client::datapack_file_hash_cache;
 QRegularExpression Client::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
 QString Client::single_quote=QLatin1Literal("'");
 QString Client::antislash_single_quote=QLatin1Literal("\\'");
