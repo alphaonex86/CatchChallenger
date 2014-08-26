@@ -14,8 +14,9 @@ class MapDoor : public QObject
 public:
     explicit MapDoor(Tiled::MapObject* object, const quint8 &framesCount, const quint16 &ms);
     ~MapDoor();
-    void startOpen();
+    void startOpen(const quint16 &timeRemainOpen);
     void startClose();
+    quint16 timeToOpen();
 private:
     Tiled::MapObject* object;
     Tiled::Cell cell;

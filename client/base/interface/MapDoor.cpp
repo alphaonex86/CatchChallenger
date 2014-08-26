@@ -25,8 +25,9 @@ MapDoor::~MapDoor()
     }
 }
 
-void MapDoor::startOpen()
+void MapDoor::startOpen(const quint16 &timeRemainOpen)
 {
+    Q_UNUSED(timeRemainOpen);
     EventCall eventCall;
     eventCall.timer=new QTimer(this);
     eventCall.timer->start(ms);
@@ -43,6 +44,11 @@ void MapDoor::startClose()
     eventCall.frame=framesCount;
     connect(eventCall.timer,&QTimer::timeout,this,&MapDoor::timerFinish,Qt::QueuedConnection);
     events << eventCall;
+}
+
+quint16 MapDoor::timeToOpen()
+{
+    return ms*framesCount;
 }
 
 void MapDoor::timerFinish()

@@ -47,6 +47,7 @@ public:
     virtual void datapackParsed();
 
     void setInformations(QHash<quint16,quint32> *items, QHash<quint16, CatchChallenger::PlayerQuest> *quests, QList<quint8> *events, QList<quint8> *itemOnMap);
+    void unblock();
 protected:
     //datapack
     bool mHaveTheDatapack;
@@ -66,6 +67,7 @@ protected:
     bool teleportedOnPush;
     bool stepAlternance;
     QString mLastLocation;
+    bool blocked;
 
     //display
     bool centerOnPlayer;
@@ -74,6 +76,7 @@ protected:
     QTimer timer;
     QTimer moveTimer;
     QTimer lookToMove;
+    QTimer moveAnimationTimer;
 
     //control
     QSet<int> keyPressed;
@@ -85,6 +88,8 @@ protected:
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
     Tiled::Tileset * animationTileset;
+    quint32 currentPlayerSpeed;
+    bool animationDisplayed;
 
     QList<quint8> *events;
     QHash<quint16,quint32> *items;
@@ -103,7 +108,8 @@ protected:
 protected slots:
     virtual void keyPressParse();
 
-    void moveStepSlot();
+    virtual void doMoveAnimation();
+    virtual void moveStepSlot();
     virtual void finalPlayerStep();
     virtual bool haveStopTileAction();
     //have look into another direction, if the key remain pressed, apply like move
