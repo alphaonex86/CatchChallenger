@@ -55,16 +55,20 @@ private:
         CatchChallenger::Player_public_informations informations;
         Tiled::MapObject * labelMapObject;
         Tiled::Tileset * labelTileset;
+        quint32 playerSpeed;
+        bool animationDisplayed;
 
         //presumed map
         MapVisualiserThread::Map_full *presumed_map;
         quint8 presumed_x,presumed_y;
         CatchChallenger::Direction presumed_direction;
+        //pointer to allow copy of OtherPlayer
         QTimer *oneStepMore;
+        QTimer *moveAnimationTimer;
     };
     QList<PathFinding *> pathFindingList;
     QHash<quint16,OtherPlayer> otherPlayerList;
-    QHash<QTimer *,quint16> otherPlayerListByTimer;
+    QHash<QTimer *,quint16> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
     QHash<QString,quint16> mapUsedByOtherPlayer;
 
     //datapack
@@ -140,6 +144,8 @@ protected:
 private slots:
     bool loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y);
     void moveOtherPlayerStepSlot();
+    void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);
+    void doMoveOtherAnimation();
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
     void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);

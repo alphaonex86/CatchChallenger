@@ -47,7 +47,7 @@ public:
     QHash<QPair<quint8,quint8>,Bot> bots;
     QHash<QPair<quint8,quint8>,BotDisplay> botsDisplay;
 
-    QMultiHash<QPair<quint8,quint8>,QPair<quint8,quint8> > botsFightTriggerExtra;//trigger line in front of bot fight
+    QMultiHash<QPair<quint8,quint8>,QPair<quint8,quint8> > botsFightTriggerExtra;//trigger line in front of bot fight, tigger x,y, bot x,y
     QHash<QPair<quint8,quint8>,ItemOnMapForClient> itemsOnMap;
 
     QDomElement xmlRoot;

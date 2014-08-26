@@ -6,6 +6,7 @@
 
 #include "../tiled/tiled_mapobject.h"
 #include "../tiled/tiled_tileset.h"
+#include "interface/TemporaryTile.h"
 
 namespace CatchChallenger {
 
@@ -15,6 +16,7 @@ struct BotDisplay
     Tiled::MapObject *mapObject;
     Tiled::Tileset *tileset;
     QList<Tiled::MapObject *> flags;
+    TemporaryTile * temporaryTile;
 };
 
 }
