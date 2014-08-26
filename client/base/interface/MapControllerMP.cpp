@@ -395,11 +395,17 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
 
         loadOtherPlayerFromMap(tempPlayer,false);
 
+        tempPlayer.animationDisplayed=false;
         tempPlayer.informations=player;
         tempPlayer.oneStepMore=new QTimer();
         tempPlayer.oneStepMore->setSingleShot(true);
+        tempPlayer.moveAnimationTimer=new QTimer();
+        tempPlayer.moveAnimationTimer->setSingleShot(true);
+        tempPlayer.playerSpeed=player.speed;
         otherPlayerListByTimer[tempPlayer.oneStepMore]=player.simplifiedId;
-        connect(tempPlayer.oneStepMore,SIGNAL(timeout()),this,SLOT(moveOtherPlayerStepSlot()));
+        otherPlayerListByAnimationTimer[tempPlayer.moveAnimationTimer]=player.simplifiedId;
+        connect(tempPlayer.oneStepMore,&QTimer::timeout,this,&MapControllerMP::moveOtherPlayerStepSlot);
+        connect(tempPlayer.moveAnimationTimer,&QTimer::timeout,this,&MapControllerMP::doMoveOtherAnimation);
         otherPlayerList[player.simplifiedId]=tempPlayer;
 
         switch(direction)
@@ -760,6 +766,7 @@ void MapControllerMP::remove_player(const quint16 &id)
     unloadOtherPlayerFromMap(otherPlayerList.value(id));
 
     otherPlayerListByTimer.remove(otherPlayerList.value(id).oneStepMore);
+    otherPlayerListByAnimationTimer.remove(otherPlayerList.value(id).moveAnimationTimer);
 
     Tiled::ObjectGroup *currentGroup=otherPlayerList.value(id).playerMapObject->objectGroup();
     if(currentGroup!=NULL)
@@ -780,6 +787,7 @@ void MapControllerMP::remove_player(const quint16 &id)
     delete otherPlayerList.value(id).playerMapObject;
     delete otherPlayerList.value(id).playerTileset;
     delete otherPlayerList.value(id).oneStepMore;
+    delete otherPlayerList.value(id).moveAnimationTimer;
     if(otherPlayerList.value(id).labelMapObject!=NULL)
         delete otherPlayerList.value(id).labelMapObject;
     if(otherPlayerList.value(id).labelTileset!=NULL)
@@ -1181,6 +1189,18 @@ bool MapControllerMP::asyncMapLoaded(const QString &fileName,MapVisualiserThread
     return result;
 }
 
+void MapControllerMP::doMoveOtherAnimation()
+{
+    QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
+    if(timer==NULL)
+    {
+        qDebug() << "moveOtherPlayerStepSlot() timer not located";
+        return;
+    }
+    const quint16 &simplifiedId=otherPlayerListByAnimationTimer.value(timer);
+    moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
+}
+
 void MapControllerMP::moveOtherPlayerStepSlot()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
@@ -1189,138 +1209,173 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         qDebug() << "moveOtherPlayerStepSlot() timer not located";
         return;
     }
+    const quint16 &simplifiedId=otherPlayerListByTimer.value(timer);
+    moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
+}
+
+void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer)
+{
     #ifdef DEBUG_CLIENT_OTHER_PLAYER_MOVE_STEP
     qDebug() << QStringLiteral("moveOtherPlayerStepSlot() player: %1 (%2), moveStep: %3")
-            .arg(otherPlayerList.value(otherPlayerListByTimer.value(timer)).informations.pseudo)
-            .arg(otherPlayerList.value(otherPlayerListByTimer.value(timer)).informations.simplifiedId)
-            .arg(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep);
+            .arg(otherPlayer.informations.pseudo)
+            .arg(otherPlayer.informations.simplifiedId)
+            .arg(otherPlayer.moveStep);
     #endif
-    int baseTile=1;
-    //move the player for intermediate step and define the base tile (define the stopped step with direction)
-    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
+    //tiger the next tile
+    if(!otherPlayer.animationDisplayed)
     {
-        case CatchChallenger::Direction_move_at_left:
-        baseTile=10;
-        switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep)
-        {
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->x()-0.20);
-            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->x()-0.20);
-            break;
-        }
-        break;
-        case CatchChallenger::Direction_move_at_right:
-        baseTile=4;
-        switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep)
-        {
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->x()+0.20);
-            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setX(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->x()+0.20);
-            break;
-        }
-        break;
-        case CatchChallenger::Direction_move_at_top:
-        baseTile=1;
-        switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep)
-        {
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->y()-0.20);
-            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->y()-0.20);
-            break;
-        }
-        break;
-        case CatchChallenger::Direction_move_at_bottom:
-        baseTile=7;
-        switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep)
-        {
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->y()+0.20);
-            if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setY(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->y()+0.20);
-            break;
-        }
-        break;
-        default:
-        qDebug() << QStringLiteral("moveOtherPlayerStepSlot(): moveStep: %1, wrong direction").arg(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep);
-        timer->stop();
-        return;
-    }
-
-    //apply the right step of the base step defined previously by the direction
-    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep)
-    {
-        //stopped step
-        case 0:
-        {
-            Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
-            cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(baseTile+0);
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
-        }
-        break;
-        case 1:
-        MapObjectItem::objectLink.value(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject)->setZValue(qCeil(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->y()));
-        break;
-        //transition step
-        case 2:
-        {
-            Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
-            if(stepAlternance)
-                cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(baseTile-1);
-            else
-                cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(baseTile+1);
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
-            otherPlayerList[otherPlayerListByTimer[timer]].stepAlternance=!otherPlayerList.value(otherPlayerListByTimer.value(timer)).stepAlternance;
-        }
-        break;
-        //stopped step
-        case 4:
-        {
-            Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
-            cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(baseTile+0);
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
-        }
-        break;
-    }
-
-    otherPlayerList[otherPlayerListByTimer[timer]].moveStep++;
-
-    //if have finish the step
-    if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep>5)
-    {
-        CatchChallenger::CommonMap * old_map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
-        CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
-        quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
-        quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
+        otherPlayer.animationDisplayed=true;
+        CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
+        quint8 x=otherPlayer.presumed_x;
+        quint8 y=otherPlayer.presumed_y;
         //set the final value (direction, position, ...)
-        switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
+        switch(otherPlayer.presumed_direction)
         {
             case CatchChallenger::Direction_move_at_right:
             case CatchChallenger::Direction_move_at_top:
             case CatchChallenger::Direction_move_at_bottom:
             case CatchChallenger::Direction_move_at_left:
-                CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
+                CatchChallenger::MoveOnTheMap::move(otherPlayer.presumed_direction,&map,&x,&y);
             break;
             default:
-            qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(otherPlayerList.value(otherPlayerListByTimer.value(timer)).moveStep);
+            break;
+        }
+        if(all_map.contains(map->map_file))
+            if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
+            {
+                MapDoor* door=all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y));
+                door->startOpen(otherPlayer.playerSpeed);
+                otherPlayer.moveAnimationTimer->start(door->timeToOpen());
+                return;
+            }
+    }
+    int baseTile=1;
+    //move the player for intermediate step and define the base tile (define the stopped step with direction)
+    switch(otherPlayer.presumed_direction)
+    {
+        case CatchChallenger::Direction_move_at_left:
+        baseTile=10;
+        switch(otherPlayer.moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayer.playerMapObject->setX(otherPlayer.playerMapObject->x()-0.20);
+            if(otherPlayer.labelMapObject!=NULL)
+                otherPlayer.labelMapObject->setX(otherPlayer.labelMapObject->x()-0.20);
+            break;
+        }
+        break;
+        case CatchChallenger::Direction_move_at_right:
+        baseTile=4;
+        switch(otherPlayer.moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayer.playerMapObject->setX(otherPlayer.playerMapObject->x()+0.20);
+            if(otherPlayer.labelMapObject!=NULL)
+                otherPlayer.labelMapObject->setX(otherPlayer.labelMapObject->x()+0.20);
+            break;
+        }
+        break;
+        case CatchChallenger::Direction_move_at_top:
+        baseTile=1;
+        switch(otherPlayer.moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayer.playerMapObject->setY(otherPlayer.playerMapObject->y()-0.20);
+            if(otherPlayer.labelMapObject!=NULL)
+                otherPlayer.labelMapObject->setY(otherPlayer.labelMapObject->y()-0.20);
+            break;
+        }
+        break;
+        case CatchChallenger::Direction_move_at_bottom:
+        baseTile=7;
+        switch(otherPlayer.moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayer.playerMapObject->setY(otherPlayer.playerMapObject->y()+0.20);
+            if(otherPlayer.labelMapObject!=NULL)
+                otherPlayer.labelMapObject->setY(otherPlayer.labelMapObject->y()+0.20);
+            break;
+        }
+        break;
+        default:
+        qDebug() << QStringLiteral("moveOtherPlayerStepSlot(): moveStep: %1, wrong direction").arg(otherPlayer.moveStep);
+        otherPlayer.oneStepMore->stop();
+        return;
+    }
+
+    //apply the right step of the base step defined previously by the direction
+    switch(otherPlayer.moveStep)
+    {
+        //stopped step
+        case 0:
+        {
+            Tiled::Cell cell=otherPlayer.playerMapObject->cell();
+            cell.tile=otherPlayer.playerTileset->tileAt(baseTile+0);
+            otherPlayer.playerMapObject->setCell(cell);
+        }
+        break;
+        case 1:
+        MapObjectItem::objectLink.value(otherPlayer.playerMapObject)->setZValue(qCeil(otherPlayer.playerMapObject->y()));
+        break;
+        //transition step
+        case 2:
+        {
+            Tiled::Cell cell=otherPlayer.playerMapObject->cell();
+            if(stepAlternance)
+                cell.tile=otherPlayer.playerTileset->tileAt(baseTile-1);
+            else
+                cell.tile=otherPlayer.playerTileset->tileAt(baseTile+1);
+            otherPlayer.playerMapObject->setCell(cell);
+            otherPlayer.stepAlternance=!otherPlayer.stepAlternance;
+        }
+        break;
+        //stopped step
+        case 4:
+        {
+            Tiled::Cell cell=otherPlayer.playerMapObject->cell();
+            cell.tile=otherPlayer.playerTileset->tileAt(baseTile+0);
+            otherPlayer.playerMapObject->setCell(cell);
+        }
+        break;
+    }
+
+    otherPlayer.moveStep++;
+
+    //if have finish the step
+    if(otherPlayer.moveStep>5)
+    {
+        otherPlayer.animationDisplayed=false;
+        CatchChallenger::CommonMap * old_map=&otherPlayer.presumed_map->logicalMap;
+        CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
+        quint8 x=otherPlayer.presumed_x;
+        quint8 y=otherPlayer.presumed_y;
+        //set the final value (direction, position, ...)
+        switch(otherPlayer.presumed_direction)
+        {
+            case CatchChallenger::Direction_move_at_right:
+            case CatchChallenger::Direction_move_at_top:
+            case CatchChallenger::Direction_move_at_bottom:
+            case CatchChallenger::Direction_move_at_left:
+                CatchChallenger::MoveOnTheMap::move(otherPlayer.presumed_direction,&map,&x,&y);
+            break;
+            default:
+            qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(otherPlayer.moveStep);
             return;
         }
-        otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_x=x;
-        otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_y=y;
+        otherPlayer.presumed_x=x;
+        otherPlayer.presumed_y=y;
         //if the map have changed
         if(old_map!=map)
         {
@@ -1329,193 +1384,109 @@ void MapControllerMP::moveOtherPlayerStepSlot()
                 qDebug() << QStringLiteral("map changed not located: %1").arg(map->map_file);
             else
             {
-                unloadOtherPlayerFromMap(otherPlayerList.value(otherPlayerListByTimer.value(timer)));
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_map=all_map.value(map->map_file);
-                loadOtherPlayerFromMap(otherPlayerList.value(otherPlayerListByTimer.value(timer)));
+                unloadOtherPlayerFromMap(otherPlayer);
+                otherPlayer.presumed_map=all_map.value(map->map_file);
+                loadOtherPlayerFromMap(otherPlayer);
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setPosition(QPoint(x,y+1));
-        if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject!=NULL)
-            otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelMapObject->setPosition(QPointF((float)x-(float)otherPlayerList.value(otherPlayerListByTimer.value(timer)).labelTileset->tileWidth()/2/16+0.5,y+1-1.4));
-        MapObjectItem::objectLink.value(otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject)->setZValue(y);
+        otherPlayer.playerMapObject->setPosition(QPoint(x,y+1));
+        if(otherPlayer.labelMapObject!=NULL)
+            otherPlayer.labelMapObject->setPosition(QPointF((float)x-(float)otherPlayer.labelTileset->tileWidth()/2/16+0.5,y+1-1.4));
+        MapObjectItem::objectLink.value(otherPlayer.playerMapObject)->setZValue(y);
 
         //check if one arrow key is pressed to continue to move into this direction
-        if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction==CatchChallenger::Direction_move_at_left)
+        if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_left)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,otherPlayer.presumed_map->logicalMap,x,y,true))
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_look_at_left;
-                Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
-                cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(10);
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
-                otherPlayerList[otherPlayerListByTimer.value(timer)].inMove=false;
-                timer->stop();
+                otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_left;
+                Tiled::Cell cell=otherPlayer.playerMapObject->cell();
+                cell.tile=otherPlayer.playerTileset->tileAt(10);
+                otherPlayer.playerMapObject->setCell(cell);
+                otherPlayer.inMove=false;
+                otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
             else
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_left;
-                //tiger the next tile
-                {
-                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
-                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
-                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
-                    //set the final value (direction, position, ...)
-                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
-                    {
-                        case CatchChallenger::Direction_move_at_right:
-                        case CatchChallenger::Direction_move_at_top:
-                        case CatchChallenger::Direction_move_at_bottom:
-                        case CatchChallenger::Direction_move_at_left:
-                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
-                        break;
-                        default:
-                        break;
-                    }
-                    if(all_map.contains(map->map_file))
-                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
-                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
-                }
-                otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
+                otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_left;
+                otherPlayer.moveStep=0;
                 moveOtherPlayerStepSlot();
             }
         }
-        else if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction==CatchChallenger::Direction_move_at_right)
+        else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_right)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,otherPlayer.presumed_map->logicalMap,x,y,true))
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_look_at_right;
-                Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
-                cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(4);
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
-                otherPlayerList[otherPlayerListByTimer.value(timer)].inMove=false;
-                timer->stop();
+                otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_right;
+                Tiled::Cell cell=otherPlayer.playerMapObject->cell();
+                cell.tile=otherPlayer.playerTileset->tileAt(4);
+                otherPlayer.playerMapObject->setCell(cell);
+                otherPlayer.inMove=false;
+                otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
             else
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_right;
-                //tiger the next tile
-                {
-                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
-                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
-                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
-                    //set the final value (direction, position, ...)
-                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
-                    {
-                        case CatchChallenger::Direction_move_at_right:
-                        case CatchChallenger::Direction_move_at_top:
-                        case CatchChallenger::Direction_move_at_bottom:
-                        case CatchChallenger::Direction_move_at_left:
-                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
-                        break;
-                        default:
-                        break;
-                    }
-                    if(all_map.contains(map->map_file))
-                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
-                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
-                }
-                otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
+                otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_right;
+                otherPlayer.moveStep=0;
                 moveOtherPlayerStepSlot();
             }
         }
-        else if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction==CatchChallenger::Direction_move_at_top)
+        else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_top)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,otherPlayer.presumed_map->logicalMap,x,y,true))
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_look_at_top;
+                otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_top;
 
-                Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
-                cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(1);
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
-                otherPlayerList[otherPlayerListByTimer.value(timer)].inMove=false;
-                timer->stop();
+                Tiled::Cell cell=otherPlayer.playerMapObject->cell();
+                cell.tile=otherPlayer.playerTileset->tileAt(1);
+                otherPlayer.playerMapObject->setCell(cell);
+                otherPlayer.inMove=false;
+                otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
             else
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_top;
-                //tiger the next tile
-                {
-                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
-                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
-                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
-                    //set the final value (direction, position, ...)
-                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
-                    {
-                        case CatchChallenger::Direction_move_at_right:
-                        case CatchChallenger::Direction_move_at_top:
-                        case CatchChallenger::Direction_move_at_bottom:
-                        case CatchChallenger::Direction_move_at_left:
-                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
-                        break;
-                        default:
-                        break;
-                    }
-                    if(all_map.contains(map->map_file))
-                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
-                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
-                }
-                otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
+                otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_top;
+                otherPlayer.moveStep=0;
                 moveOtherPlayerStepSlot();
             }
         }
-        else if(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction==CatchChallenger::Direction_move_at_bottom)
+        else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_bottom)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,otherPlayer.presumed_map->logicalMap,x,y,true))
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_look_at_bottom;
-                Tiled::Cell cell=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->cell();
-                cell.tile=otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerTileset->tileAt(7);
-                otherPlayerList.value(otherPlayerListByTimer.value(timer)).playerMapObject->setCell(cell);
-                otherPlayerList[otherPlayerListByTimer.value(timer)].inMove=false;
-                timer->stop();
+                otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_bottom;
+                Tiled::Cell cell=otherPlayer.playerMapObject->cell();
+                cell.tile=otherPlayer.playerTileset->tileAt(7);
+                otherPlayer.playerMapObject->setCell(cell);
+                otherPlayer.inMove=false;
+                otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
             else
             {
-                otherPlayerList[otherPlayerListByTimer.value(timer)].presumed_direction=CatchChallenger::Direction_move_at_bottom;
-                //tiger the next tile
-                {
-                    CatchChallenger::CommonMap * map=&otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_map->logicalMap;
-                    quint8 x=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_x;
-                    quint8 y=otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_y;
-                    //set the final value (direction, position, ...)
-                    switch(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction)
-                    {
-                        case CatchChallenger::Direction_move_at_right:
-                        case CatchChallenger::Direction_move_at_top:
-                        case CatchChallenger::Direction_move_at_bottom:
-                        case CatchChallenger::Direction_move_at_left:
-                            CatchChallenger::MoveOnTheMap::move(otherPlayerList.value(otherPlayerListByTimer.value(timer)).presumed_direction,&map,&x,&y);
-                        break;
-                        default:
-                        break;
-                    }
-                    if(all_map.contains(map->map_file))
-                        if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
-                            all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y))->startOpen();
-                }
-                otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
+                otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_bottom;
+                otherPlayer.moveStep=0;
                 moveOtherPlayerStepSlot();
             }
         }
         //now stop walking, no more arrow key is pressed
         else
         {
-            otherPlayerList[otherPlayerListByTimer.value(timer)].moveStep=0;
-            otherPlayerList[otherPlayerListByTimer.value(timer)].inMove=false;
-            timer->stop();
+            otherPlayer.moveStep=0;
+            otherPlayer.inMove=false;
+            otherPlayer.oneStepMore->stop();
         }
     }
     else
-        timer->start();
+        otherPlayer.oneStepMore->start();
 }
 
 /// \warning all ObjectGroupItem destroyed into removeMap()

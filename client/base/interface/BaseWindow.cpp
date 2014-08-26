@@ -108,6 +108,8 @@ BaseWindow::BaseWindow() :
     displayTrapTimer.setInterval(50);
     doNextActionTimer.setSingleShot(true);
     doNextActionTimer.setInterval(1500);
+    botFightTimer.setSingleShot(true);
+    botFightTimer.setInterval(1000);
 
     connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setVisible,Qt::QueuedConnection);
 
@@ -139,6 +141,7 @@ BaseWindow::BaseWindow() :
     connect(&displayExpTimer,               &QTimer::timeout,                       this,&BaseWindow::displayExperienceGain);
     connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap);
     connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
+    connect(&botFightTimer,                 &QTimer::timeout,                       this,&BaseWindow::botFightFullDiffered);
     connect(ui->stackedWidget,              &QStackedWidget::currentChanged,        this,&BaseWindow::pageChanged);
 
 
@@ -1465,7 +1468,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, quint8 x, q
         newError(tr("Internal error"),"Bot trigged but no step found");
         return;
     }
-    if(actualBot.step.value(step).attribute(BaseWindow::text_type)=="fight")
+    if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("fight"))
     {
         if(!actualBot.step.value(step).hasAttribute("fightid"))
         {

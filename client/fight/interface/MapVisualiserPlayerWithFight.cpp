@@ -10,6 +10,16 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
     repel_step=0;
     items=NULL;
     quests=NULL;
+    fightCollisionBot=NULL;
+}
+
+MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
+{
+    if(fightCollisionBot!=NULL)
+    {
+        delete fightCollisionBot;
+        fightCollisionBot=NULL;
+    }
 }
 
 void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint16> &botAlreadyBeaten)
@@ -88,6 +98,22 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                 }
                 parseStop();
                 emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
+                if(all_map.value(current_map)->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
+                {
+                    TemporaryTile *temporaryTile=all_map.value(current_map)->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
+                    //show a temporary flags
+                    {
+                        if(fightCollisionBot==NULL)
+                        {
+                            fightCollisionBot=new Tiled::Tileset(QLatin1Literal("fightCollisionBot"),16,16);
+                            fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
+                        }
+                    }
+                    temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,fightCollisionBot->tileCount());
+                }
+                else
+                    qDebug() <<  "temporaryTile not found";
+                blocked=true;
                 return true;
             }
             index++;
@@ -104,6 +130,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                     keyPressed.clear();
                     parseStop();
                     emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),x,y);
+                    blocked=true;
                     return true;
                 }
             }

@@ -328,41 +328,44 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                             else
                             {
                                 const Tiled::Tile *tile=objects.at(index2)->cell().tile;
-                                const QString &animation=tile->property(MapVisualiserThread::text_animation);
-                                if(!animation.isEmpty())
+                                if(tile!=NULL)
                                 {
-                                    const QStringList &animationList=animation.split(MapVisualiserThread::text_dotcomma);
-                                    if(animationList.size()==2)
+                                    const QString &animation=tile->property(MapVisualiserThread::text_animation);
+                                    if(!animation.isEmpty())
                                     {
-                                        if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
+                                        const QStringList &animationList=animation.split(MapVisualiserThread::text_dotcomma);
+                                        if(animationList.size()==2)
                                         {
-                                            QString msString=animationList.at(0);
-                                            QString framesString=animationList.at(1);
-                                            msString.remove(MapVisualiserThread::text_ms);
-                                            framesString.remove(MapVisualiserThread::text_frames);
-                                            quint16 ms=msString.toUShort();
-                                            quint8 frames=framesString.toUShort();
-                                            if(ms>0 && frames>1)
+                                            if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
                                             {
-                                                if(!tempMapObject->doors.contains(QPair<quint8,quint8>(x,y)))
+                                                QString msString=animationList.at(0);
+                                                QString framesString=animationList.at(1);
+                                                msString.remove(MapVisualiserThread::text_ms);
+                                                framesString.remove(MapVisualiserThread::text_frames);
+                                                quint16 ms=msString.toUShort();
+                                                quint8 frames=framesString.toUShort();
+                                                if(ms>0 && frames>1)
                                                 {
-                                                    MapDoor *door=new MapDoor(objects.at(index2),frames,ms);
-                                                    tempMapObject->doors[QPair<quint8,quint8>(x,y)]=door;
+                                                    if(!tempMapObject->doors.contains(QPair<quint8,quint8>(x,y)))
+                                                    {
+                                                        MapDoor *door=new MapDoor(objects.at(index2),frames,ms);
+                                                        tempMapObject->doors[QPair<quint8,quint8>(x,y)]=door;
+                                                    }
                                                 }
+                                                else
+                                                    qDebug() << "ms is 0 or frame is <=1";
                                             }
                                             else
-                                                qDebug() << "ms is 0 or frame is <=1";
+                                                qDebug() << "Wrong animation tile args regex match";
                                         }
                                         else
-                                            qDebug() << "Wrong animation tile args regex match";
+                                            qDebug() << "Wrong animation tile args count";
                                     }
                                     else
-                                        qDebug() << "Wrong animation tile args count";
-                                }
-                                else
-                                {
-                                    objectGroup->removeObject(objects.at(index2));
-                                    delete objects.at(index2);
+                                    {
+                                        objectGroup->removeObject(objects.at(index2));
+                                        delete objects.at(index2);
+                                    }
                                 }
                             }
                         }
