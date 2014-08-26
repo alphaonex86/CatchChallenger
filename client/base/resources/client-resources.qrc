@@ -53,5 +53,6 @@
         <file>images/inventory/background.jpg</file>
         <file>images/map/marker.png</file>
         <file>images/map/block.png</file>
+        <file>images/fightCollisionBot.png</file>
     </qresource>
 </RCC>

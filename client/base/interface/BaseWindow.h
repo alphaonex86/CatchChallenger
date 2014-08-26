@@ -261,6 +261,7 @@ private slots:
     void prepareFight();
     void botFight(const quint32 &fightId);
     void botFightFull(const quint32 &fightId);
+    void botFightFullDiffered();
     bool fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void on_pushButtonFightEnterNext_clicked();
     void moveFightMonsterBottom();
@@ -490,6 +491,7 @@ private:
     QString lastPlaceDisplayed;
     QList<quint8> events;
     QString visualCategory;
+    QTimer botFightTimer;
 
     //plant seed in waiting
     struct SeedInWaiting
@@ -520,6 +522,7 @@ private:
     QAbstractSocket::SocketState socketState;
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
     bool characterSelected;
+    quint32 fightId;
 
     //market buy
     QList<QPair<quint32,quint32> > marketBuyObjectList;
@@ -562,7 +565,6 @@ private:
 
     //bot
     Bot actualBot;
-    quint32 fightId;
 
     //fight
     QTimer moveFightMonsterBottomTimer;

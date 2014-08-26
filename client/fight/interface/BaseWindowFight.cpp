@@ -461,6 +461,12 @@ void BaseWindow::botFight(const quint32 &fightId)
 
 void BaseWindow::botFightFull(const quint32 &fightId)
 {
+    this->fightId=fightId;
+    botFightTimer.start();
+}
+
+void BaseWindow::botFightFullDiffered()
+{
     prepareFight();
     ui->frameFightTop->setVisible(false);
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
@@ -475,7 +481,6 @@ void BaseWindow::botFightFull(const quint32 &fightId)
         index++;
     }
     CatchChallenger::ClientFightEngine::fightEngine.setBotMonster(botFightMonstersTransformed);
-    this->fightId=fightId;
     init_environement_display(MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
     ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     init_current_monster_display();
@@ -1389,6 +1394,7 @@ void BaseWindow::loose()
     #endif
     CatchChallenger::ClientFightEngine::fightEngine.healAllMonsters();
     CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
+    MapController::mapController->unblock();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     escape=false;
@@ -1467,6 +1473,7 @@ void BaseWindow::win()
             return;
         }
     #endif
+    MapController::mapController->unblock();
     if(zonecatch)
         ui->stackedWidget->setCurrentWidget(ui->page_zonecatch);
     else

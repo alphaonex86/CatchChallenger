@@ -200,8 +200,19 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         {
             botFlags=new Tiled::Tileset(QLatin1Literal("botflags"),16,16);
             botFlags->loadFromImage(QImage(QStringLiteral(":/images/flags.png")),QStringLiteral(":/images/flags.png"));
+            TemporaryTile::empty=botFlags->tileAt(15);
         }
 
+        //fight collision bot
+        {
+            Tiled::MapObject * flag=new Tiled::MapObject();
+            flag->setName("fight collision bot");
+            botDisplay->temporaryTile=new TemporaryTile(flag);
+            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            flag->setPosition(QPointF(x,y-1.5));
+            MapObjectItem::objectLink.value(flag)->setZValue(9999);
+        }
         if(parsedMap->logicalMap.shops.contains(QPair<quint8,quint8>(x,y)))
         {
             Tiled::MapObject * flag=new Tiled::MapObject();

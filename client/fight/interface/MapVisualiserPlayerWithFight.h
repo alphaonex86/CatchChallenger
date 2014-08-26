@@ -10,6 +10,7 @@ class MapVisualiserPlayerWithFight : public MapVisualiserPlayer
     Q_OBJECT
 public:
     explicit MapVisualiserPlayerWithFight(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
+    ~MapVisualiserPlayerWithFight();
     void setBotsAlreadyBeaten(const QSet<quint16> &botAlreadyBeaten);
     void addBeatenBotFight(const quint16 &botFightId);
     bool haveBeatBot(const quint16 &botFightId) const;
@@ -22,6 +23,7 @@ protected slots:
 protected:
     QSet<quint16> botAlreadyBeaten;
     quint32 repel_step;
+    Tiled::Tileset *fightCollisionBot;
 signals:
     void repelEffectIsOver() const;
     void teleportConditionNotRespected(const QString &text) const;
