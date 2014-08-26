@@ -40,13 +40,13 @@ void TemporaryTile::updateTheTile()
         {
             cell.tile=cell.tile->tileset()->tileAt(cell.tile->id()+1);
             object->setCell(cell);
+            return;
         }
         else
-        {
             qDebug() << "TemporaryTile::updateTheTile(): out of tile";
-            timer.stop();
-        }
     }
-    else
-        timer.stop();
+    timer.stop();
+    Tiled::Cell cell=object->cell();
+    cell.tile=TemporaryTile::empty;
+    object->setCell(cell);
 }
