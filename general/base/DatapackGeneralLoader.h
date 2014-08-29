@@ -26,6 +26,7 @@ public:
     static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint16, Item> &items, const QList<Event> &events);
     static LayersOptions loadLayersOptions(const QString &file);
     static QList<Event> loadEvents(const QString &file);
+    static QHash<quint32,Shop> preload_shop(const QString &file, const QHash<quint16, Item> &items);
 protected:
     static const QString text_list;
     static const QString text_dotxml;
@@ -110,6 +111,9 @@ protected:
     static const QString text_layers;
     static const QString text_events;
     static const QString text_event;
+    static const QString text_shop;
+    static const QString text_shops;
+    static const QString text_overridePrice;
 };
 }
 

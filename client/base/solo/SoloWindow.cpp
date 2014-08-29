@@ -13,6 +13,30 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../InternetUpdater.h"
 
+const QString SoloWindow::text_savegame_version=QStringLiteral("savegame_version");
+const QString SoloWindow::text_QSQLITE=QStringLiteral("QSQLITE");
+const QString SoloWindow::text_savegameupdate=QStringLiteral("savegameupdate");
+const QString SoloWindow::text_catchchallenger_db_sqlite=QStringLiteral("catchchallenger.db.sqlite");
+const QString SoloWindow::text_time_played=QStringLiteral("time_played");
+const QString SoloWindow::text_location=QStringLiteral("location");
+const QString SoloWindow::text_dotxml=QStringLiteral(".xml");
+const QString SoloWindow::text_dottmx=QStringLiteral(".tmx");
+const QString SoloWindow::text_metadatadotconf=QStringLiteral("metadata.conf");
+const QString SoloWindow::text_slash=QStringLiteral("/");
+const QString SoloWindow::text_title=QStringLiteral("title");
+const QString SoloWindow::text_pass=QStringLiteral("pass");
+const QString SoloWindow::text_hover_entry=QStringLiteral("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
+const QString SoloWindow::text_map=QStringLiteral("map");
+const QString SoloWindow::text_zone=QStringLiteral("zone");
+const QString SoloWindow::text_name=QStringLiteral("name");
+const QString SoloWindow::text_value=QStringLiteral("value");
+const QString SoloWindow::text_properties=QStringLiteral("properties");
+const QString SoloWindow::text_property=QStringLiteral("property");
+const QString SoloWindow::text_lang=QStringLiteral("lang");
+const QString SoloWindow::text_en=QStringLiteral("en");
+const QString SoloWindow::text_full_entry=QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>");
+const QString SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION=QStringLiteral(CATCHCHALLENGER_SAVEGAME_VERSION);
+
 SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString &savegamePath,const bool &standAlone) :
     QMainWindow(parent),
     ui(new Ui::SoloWindow)
@@ -69,7 +93,7 @@ void SoloWindow::on_SaveGame_New_clicked()
     int index=0;
     while(QDir().exists(savegamePath+QString::number(index)))
         index++;
-    QString savegamesPath=savegamePath+QString::number(index)+"/";
+    QString savegamesPath=savegamePath+QString::number(index)+SoloWindow::text_slash;
     if(!QDir().mkpath(savegamesPath))
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
@@ -96,7 +120,7 @@ void SoloWindow::on_SaveGame_New_clicked()
         dbSource.close();
     }
     {
-        QFile dbDestination(savegamesPath+"catchchallenger.db.sqlite");
+        QFile dbDestination(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
         if(!dbDestination.open(QIODevice::WriteOnly))
         {
             QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
@@ -114,21 +138,21 @@ void SoloWindow::on_SaveGame_New_clicked()
     }
 
     //initialise the pass
-    QString pass=CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",32);
+    QString pass=CatchChallenger::FacilityLib::randomPassword(QStringLiteral("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"),32);
 
     //initialise the meta data
     bool settingOk=false;
     {
-        QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+        QSettings metaData(savegamesPath+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
         if(metaData.isWritable())
         {
             if(metaData.status()==QSettings::NoError)
             {
-                metaData.setValue(QStringLiteral("title"),gameName);
-                metaData.setValue(QStringLiteral("location"),QStringLiteral(""));
-                metaData.setValue(QStringLiteral("time_played"),0);
-                metaData.setValue(QStringLiteral("pass"),pass);
-                metaData.setValue(QStringLiteral("savegame_version"),CATCHCHALLENGER_SAVEGAME_VERSION);
+                metaData.setValue(SoloWindow::text_title,gameName);
+                metaData.setValue(SoloWindow::text_location,QString());
+                metaData.setValue(SoloWindow::text_time_played,0);
+                metaData.setValue(SoloWindow::text_pass,pass);
+                metaData.setValue(SoloWindow::text_savegame_version,SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION);
                 settingOk=true;
             }
             else
@@ -253,40 +277,40 @@ void SoloWindow::updateSavegameList()
             index++;
             continue;
         }
-        QString savegamesPath=fileInfo.absoluteFilePath()+QStringLiteral("/");
-        QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+        QString savegamesPath=fileInfo.absoluteFilePath()+text_slash;
+        QSettings metaData(savegamesPath+text_metadatadotconf,QSettings::IniFormat);
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
         connect(newEntry,&ListEntryEnvolued::clicked,this,&SoloWindow::SoloWindowListEntryEnvoluedClicked,Qt::QueuedConnection);
         connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&SoloWindow::SoloWindowListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
-        newEntry->setStyleSheet(QStringLiteral("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}"));
+        newEntry->setStyleSheet(text_hover_entry);
         QString dateString;
-        if(!QFileInfo(savegamesPath+QStringLiteral("metadata.conf")).exists())
+        if(!QFileInfo(savegamesPath+text_metadatadotconf).exists())
             newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">Missing metadata</span><br/><span style=\"color:#909090;\">Missing metadata<br/>Bug</span>"));
         else
         {
-            dateString=QFileInfo(savegamesPath+QStringLiteral("metadata.conf")).lastModified().toString(QStringLiteral("dd/MM/yyyy hh:mm:ssAP"));
+            dateString=QFileInfo(savegamesPath+text_metadatadotconf).lastModified().toString(QStringLiteral("dd/MM/yyyy hh:mm:ssAP"));
             if(!metaData.isWritable())
                 newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>Bug</span>").arg("Bug").arg(dateString));
             else
             {
                 if(metaData.status()==QSettings::NoError)
                 {
-                    if(metaData.contains(QStringLiteral("title")) && metaData.contains(QStringLiteral("location")) && metaData.contains(QStringLiteral("time_played")) && metaData.contains(QStringLiteral("pass")))
+                    if(metaData.contains(text_title) && metaData.contains(text_location) && metaData.contains(SoloWindow::text_time_played) && metaData.contains(SoloWindow::text_pass))
                     {
                         //update process
-                        if(!metaData.contains("savegame_version"))
-                            metaData.setValue("savegame_version","0.4");
-                        QString version=metaData.value("savegame_version").toString();
+                        if(!metaData.contains(text_savegame_version))
+                            metaData.setValue(text_savegame_version,QStringLiteral("0.4"));
+                        QString version=metaData.value(text_savegame_version).toString();
 
-                        if(version!=CATCHCHALLENGER_SAVEGAME_VERSION)
+                        if(version!=SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION)
                         {
                             if(version==QStringLiteral("0.4"))
                             {
                                 QStringList values;
                                 values << "ALTER TABLE plant ADD id INT;";
                                 values << "CREATE UNIQUE INDEX \"plant_primarykey\" on plant (id ASC);";
-                                QSqlDatabase conn = QSqlDatabase::addDatabase("QSQLITE","savegameupdate");
-                                conn.setDatabaseName(savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
+                                QSqlDatabase conn = QSqlDatabase::addDatabase(SoloWindow::text_QSQLITE,SoloWindow::text_savegameupdate);
+                                conn.setDatabaseName(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
                                 if(conn.open())
                                 {
                                     int index=0;
@@ -314,10 +338,10 @@ void SoloWindow::updateSavegameList()
                                     conn.close();
                                 }
                                 else
-                                    qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText();
-                                QSqlDatabase::removeDatabase("savegameupdate");
+                                    qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText() << values.at(index) << "for" << (savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
+                                QSqlDatabase::removeDatabase(SoloWindow::text_savegameupdate);
                                 version=QStringLiteral("0.5");
-                                metaData.setValue("savegame_version",version);
+                                metaData.setValue(SoloWindow::text_savegame_version,version);
                             }
                             if(version==QStringLiteral("0.5"))
                             {
@@ -334,35 +358,35 @@ void SoloWindow::updateSavegameList()
                                     {
                                         QSqlQuery query(conn);
                                         if(!query.exec(values.at(index)))
-                                            qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
+                                            qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText() << values.at(index) << "for" << (savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
                                         index++;
                                     }
                                     conn.close();
                                 }
                                 else
                                     qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText();
-                                QSqlDatabase::removeDatabase("savegameupdate");
+                                QSqlDatabase::removeDatabase(SoloWindow::text_savegameupdate);
                                 version=QStringLiteral("0.6");
-                                metaData.setValue("savegame_version",version);
+                                metaData.setValue(SoloWindow::text_savegame_version,version);
                             }
                         }
-                        int time_played_number=metaData.value("time_played").toUInt(&ok);
+                        int time_played_number=metaData.value(SoloWindow::text_time_played).toUInt(&ok);
                         QString time_played;
                         if(!ok || time_played_number>3600*24*365*50)
-                            time_played="Time player: bug";
+                            time_played=QStringLiteral("Time player: bug");
                         else
                             time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLib::timeToString(time_played_number));
                         //load the map name
                         QString mapName;
-                        QString map=metaData.value(QStringLiteral("location")).toString();
+                        QString map=metaData.value(SoloWindow::text_location).toString();
                         if(!map.isEmpty())
                         {
-                            map.replace(QStringLiteral(".tmx"),QStringLiteral(".xml"));
+                            map.replace(SoloWindow::text_dottmx,SoloWindow::text_dotxml);
                             if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map).isFile())
                                 mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+map);
                             if(mapName.isEmpty())
                             {
-                                QString tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+metaData.value(QStringLiteral("location")).toString();
+                                QString tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+metaData.value(SoloWindow::text_location).toString();
                                 if(QFileInfo(tmxFile).isFile())
                                 {
                                     QString zone=getMapZone(tmxFile);
@@ -378,7 +402,7 @@ void SoloWindow::updateSavegameList()
                         else
                             lastLine=QStringLiteral("%1 (%2)").arg(mapName).arg(time_played);
 
-                        if(version!=QStringLiteral(CATCHCHALLENGER_SAVEGAME_VERSION))
+                        if(version!=SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION)
                         {
                             newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br />Version not compatible (%2)</span>")
                                               .arg(metaData.value("title").toString())
@@ -386,15 +410,15 @@ void SoloWindow::updateSavegameList()
                                               );
                         }
                         else
-                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
-                                          .arg(metaData.value("title").toString())
+                            newEntry->setText(SoloWindow::text_full_entry
+                                          .arg(metaData.value(SoloWindow::text_title).toString())
                                           .arg(dateString)
                                           .arg(lastLine)
                                           );
                     }
-                    else if(metaData.contains("title"))
+                    else if(metaData.contains(SoloWindow::text_title))
                         newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span></span>")
-                                          .arg(metaData.value("title").toString())
+                                          .arg(metaData.value(SoloWindow::text_title).toString())
                                           );
                     else
                         newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span></span>")
@@ -446,28 +470,28 @@ QString SoloWindow::getMapName(const QString &file)
         return QString();
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("map"))
+    if(root.tagName()!=SoloWindow::text_map)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-    QDomElement item = root.firstChildElement(QStringLiteral("name"));
-    if(!language.isEmpty() && language!=QStringLiteral("en"))
+    QDomElement item = root.firstChildElement(SoloWindow::text_name);
+    if(!language.isEmpty() && language!=SoloWindow::text_en)
         while(!item.isNull())
         {
             if(item.isElement())
-                if(item.hasAttribute(QStringLiteral("lang")) && item.attribute(QStringLiteral("lang"))==language)
+                if(item.hasAttribute(SoloWindow::text_lang) && item.attribute(SoloWindow::text_lang)==language)
                     return item.text();
-            item = item.nextSiblingElement(QStringLiteral("name"));
+            item = item.nextSiblingElement(SoloWindow::text_name);
         }
-    item = root.firstChildElement(QStringLiteral("name"));
+    item = root.firstChildElement(SoloWindow::text_name);
     while(!item.isNull())
     {
         if(item.isElement())
-            if(!item.hasAttribute(QStringLiteral("lang")) || item.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+            if(!item.hasAttribute(SoloWindow::text_lang) || item.attribute(SoloWindow::text_lang)==SoloWindow::text_en)
                 return item.text();
-        item = item.nextSiblingElement(QStringLiteral("name"));
+        item = item.nextSiblingElement(SoloWindow::text_name);
     }
     return QString();
 }
@@ -493,27 +517,27 @@ QString SoloWindow::getMapZone(const QString &file)
         return QString();
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="map")
+    if(root.tagName()!=SoloWindow::text_map)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
-    QDomElement properties = root.firstChildElement(QStringLiteral("properties"));
+    QDomElement properties = root.firstChildElement(SoloWindow::text_properties);
     while(!properties.isNull())
     {
         if(properties.isElement())
         {
-            QDomElement property = properties.firstChildElement(QStringLiteral("property"));
+            QDomElement property = properties.firstChildElement(SoloWindow::text_property);
             while(!property.isNull())
             {
                 if(property.isElement())
-                    if(property.hasAttribute(QStringLiteral("name")) && property.hasAttribute(QStringLiteral("value")))
-                        if(property.attribute(QStringLiteral("name"))==QStringLiteral("zone"))
-                            return property.attribute(QStringLiteral("value"));
-                property = property.nextSiblingElement(QStringLiteral("property"));
+                    if(property.hasAttribute(SoloWindow::text_name) && property.hasAttribute(SoloWindow::text_value))
+                        if(property.attribute(SoloWindow::text_name)==SoloWindow::text_zone)
+                            return property.attribute(SoloWindow::text_value);
+                property = property.nextSiblingElement(SoloWindow::text_property);
             }
         }
-        properties = properties.nextSiblingElement(QStringLiteral("properties"));
+        properties = properties.nextSiblingElement(SoloWindow::text_properties);
     }
     return QString();
 }
@@ -539,29 +563,29 @@ QString SoloWindow::getZoneName(const QString &zone)
         return QString();
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!=QStringLiteral("zone"))
+    if(root.tagName()!=SoloWindow::text_zone)
     {
         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
 
     //load the content
-    QDomElement item = root.firstChildElement(QStringLiteral("name"));
+    QDomElement item = root.firstChildElement(SoloWindow::text_name);
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     while(!item.isNull())
     {
         if(item.isElement())
-            if(item.hasAttribute(QStringLiteral("lang")) && item.attribute(QStringLiteral("lang"))==language)
+            if(item.hasAttribute(SoloWindow::text_lang) && item.attribute(SoloWindow::text_lang)==language)
                 return item.text();
-        item = item.nextSiblingElement(QStringLiteral("name"));
+        item = item.nextSiblingElement(SoloWindow::text_name);
     }
-    item = root.firstChildElement(QStringLiteral("name"));
+    item = root.firstChildElement(SoloWindow::text_name);
     while(!item.isNull())
     {
         if(item.isElement())
-            if(!item.hasAttribute(QStringLiteral("lang")) || item.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
+            if(!item.hasAttribute(SoloWindow::text_lang) || item.attribute(SoloWindow::text_lang)==SoloWindow::text_en)
                 return item.text();
-        item = item.nextSiblingElement(QStringLiteral("name"));
+        item = item.nextSiblingElement(SoloWindow::text_name);
     }
     return QString();
 }
@@ -591,16 +615,16 @@ void SoloWindow::on_SaveGame_Rename_clicked()
     QString savegamesPath=savegamePathList.value(selectedSavegame);
     if(!savegameWithMetaData.value(selectedSavegame))
         return;
-    QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
-    if(!QFileInfo(savegamesPath+QStringLiteral("metadata.conf")).exists())
+    QSettings metaData(savegamesPath+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
+    if(!QFileInfo(savegamesPath+SoloWindow::text_metadatadotconf).exists())
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("No meta data file"));
         return;
     }
-    QString newName=QInputDialog::getText(NULL,tr("New name"),tr("Write the new name"),QLineEdit::Normal,metaData.value(QStringLiteral("title")).toString());
+    QString newName=QInputDialog::getText(NULL,tr("New name"),tr("Write the new name"),QLineEdit::Normal,metaData.value(SoloWindow::text_title).toString());
     if(newName.isEmpty())
         return;
-    metaData.setValue(QStringLiteral("title"),newName);
+    metaData.setValue(SoloWindow::text_title,newName);
 
     updateSavegameList();
 }
@@ -614,30 +638,30 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     if(!savegameWithMetaData.value(selectedSavegame))
         return;
     int index=0;
-    while(QDir(savegamePath+QString::number(index)+QStringLiteral("/")).exists())
+    while(QDir(savegamePath+QString::number(index)+SoloWindow::text_slash).exists())
         index++;
-    QString destinationPath=savegamePath+QString::number(index)+QStringLiteral("/");
+    QString destinationPath=savegamePath+QString::number(index)+SoloWindow::text_slash;
     if(!QDir().mkpath(destinationPath))
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame"));
         return;
     }
-    if(!QFile::copy(savegamesPath+QStringLiteral("metadata.conf"),destinationPath+QStringLiteral("metadata.conf")))
+    if(!QFile::copy(savegamesPath+SoloWindow::text_metadatadotconf,destinationPath+SoloWindow::text_metadatadotconf))
     {
         CatchChallenger::FacilityLib::rmpath(destinationPath);
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: metadata.conf)"));
         updateSavegameList();
         return;
     }
-    if(!QFile::copy(savegamesPath+QStringLiteral("catchchallenger.db.sqlite"),destinationPath+QStringLiteral("catchchallenger.db.sqlite")))
+    if(!QFile::copy(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite,destinationPath+SoloWindow::text_catchchallenger_db_sqlite))
     {
         CatchChallenger::FacilityLib::rmpath(destinationPath);
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: catchchallenger.db.sqlite)"));
         updateSavegameList();
         return;
     }
-    QSettings metaData(destinationPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
-    metaData.setValue("title",tr("Copy of %1").arg(metaData.value(QStringLiteral("title")).toString()));
+    QSettings metaData(destinationPath+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
+    metaData.setValue(SoloWindow::text_title,tr("Copy of %1").arg(metaData.value(SoloWindow::text_title).toString()));
     updateSavegameList();
 }
 

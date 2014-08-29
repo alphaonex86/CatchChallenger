@@ -4,7 +4,7 @@
 #define PROTOCOL_HEADER_VERSION 0x02
 #define PROTOCOL_HEADER {0x9c,0xd6,0x49,0x8d,PROTOCOL_HEADER_VERSION}
 #define CATCHCHALLENGER_VERSION "0.6.0.0"
-#define CATCHCHALLENGER_SAVEGAME_VERSION "0.5"
+#define CATCHCHALLENGER_SAVEGAME_VERSION "0.6"
 #define CATCHCHALLENGER_SERVER_LIST_URL "http://catchchallenger.first-world.info/server_list.xml"
 #define CATCHCHALLENGER_UPDATER_URL "http://catchchallenger.first-world.info/updater.txt"
 #define CATCHCHALLENGER_RSS_URL "http://catchchallenger.first-world.info/rss_global.xml"

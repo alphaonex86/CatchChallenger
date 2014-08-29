@@ -37,12 +37,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
 
 MapControllerMP::~MapControllerMP()
 {
-    int index=0;
-    while(index<pathFindingList.size())
-    {
-        delete pathFindingList.at(index);
-        index++;
-    }
+    pathFindingList.cancel();
 }
 
 void MapControllerMP::connectAllSignals()
@@ -1512,46 +1507,20 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {
         MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-        if(!pathFindingList.isEmpty())
-            pathFindingList.last()->cancel();
-        PathFinding *pathFinding=new PathFinding;
-        pathFindingList << pathFinding;
-        QList<MapVisualiserThread::Map_full> mapList;
-        QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
-        while (i != all_map.constEnd()) {
-            if(i.value()->displayed)
-                mapList << *i.value();
-            ++i;
-        }
-        pathFindingList.last()->searchPath(mapList);
+        pathFindingList.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
     }
 }
 
 void MapControllerMP::pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8> > path)
 {
-    PathFinding *pathFinding=qobject_cast<PathFinding *>(QObject::sender());
-    if(pathFinding==NULL)
-        return;
-    int index=0;
-    while(index<pathFindingList.size())
+    if(!path.isEmpty())
     {
-        if(pathFinding==pathFindingList.at(index))
-        {
-            delete pathFinding;
-            pathFindingList.removeAt(index);
-            if(index==pathFindingList.size() && !path.isEmpty())
-            {
-                //take care of the returned data
-            }
-            return;
-        }
-        index++;
+        //take care of the returned data
     }
 }
 
 void MapControllerMP::keyPressParse()
 {
-    if(!pathFindingList.isEmpty())
-        pathFindingList.last()->cancel();
+    pathFindingList.cancel();
     MapVisualiserPlayerWithFight::keyPressParse();
 }

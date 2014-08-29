@@ -46,6 +46,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseProfileList();
     parseMonstersCollision();
     parseLayersOptions();
+    parseShop();
     isParsed=true;
 }
 
@@ -139,6 +140,12 @@ void CommonDatapack::parseMonstersItemToLearn()
     qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(items.itemToLearn.size());
 }
 
+void CommonDatapack::parseShop()
+{
+    shops=DatapackGeneralLoader::preload_shop(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SHOP)+QStringLiteral("shop.xml"),items.item);
+    qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(shops.size());
+}
+
 void CommonDatapack::parseBotFights()
 {
     botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT), monsters, monsterSkills,items.item);
@@ -190,5 +197,6 @@ void CommonDatapack::unload()
     teleportConditionsUnparsed.clear();
     monstersCollision.clear();
     skins.clear();
+    shops.clear();
     isParsed=false;
 }

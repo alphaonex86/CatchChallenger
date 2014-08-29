@@ -66,7 +66,7 @@ private:
         QTimer *oneStepMore;
         QTimer *moveAnimationTimer;
     };
-    QList<PathFinding *> pathFindingList;
+    PathFinding pathFindingList;
     QHash<quint16,OtherPlayer> otherPlayerList;
     QHash<QTimer *,quint16> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
     QHash<QString,quint16> mapUsedByOtherPlayer;
@@ -148,7 +148,7 @@ private slots:
     void doMoveOtherAnimation();
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
-    void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);
+    void eventOnMap(CatchChallenger::MapEvent event, MapVisualiserThread::Map_full * tempMapObject, quint8 x, quint8 y);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
 protected slots:
     virtual void finalPlayerStep();
