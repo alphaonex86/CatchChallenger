@@ -213,7 +213,6 @@ void BaseServer::preload_the_data()
     preload_the_ddos();
     preload_the_datapack();
     preload_the_skin();
-    preload_shop();
     preload_the_players();
     preload_monsters_drops();
     preload_itemOnMap_sql();
@@ -2237,7 +2236,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 if(!ok)
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                                else if(!GlobalServerData::serverPrivateVariables.shops.contains(shop))
+                                else if(!CommonDatapack::commonDatapack.shops.contains(shop))
                                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map.value(index).map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else
@@ -2822,7 +2821,6 @@ void BaseServer::unload_the_data()
     unload_the_map();
     unload_the_bots();
     unload_monsters_drops();
-    unload_shop();
     unload_the_skin();
     unload_the_datapack();
     unload_the_players();

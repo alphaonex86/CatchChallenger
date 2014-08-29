@@ -89,6 +89,30 @@ private:
     QString launchedGamePath;
     bool haveLaunchedGame;
     */
+
+    static const QString text_savegame_version;
+    static const QString text_QSQLITE;
+    static const QString text_savegameupdate;
+    static const QString text_catchchallenger_db_sqlite;
+    static const QString text_time_played;
+    static const QString text_location;
+    static const QString text_dotxml;
+    static const QString text_dottmx;
+    static const QString text_metadatadotconf;
+    static const QString text_slash;
+    static const QString text_title;
+    static const QString text_hover_entry;
+    static const QString text_pass;
+    static const QString text_map;
+    static const QString text_zone;
+    static const QString text_name;
+    static const QString text_value;
+    static const QString text_properties;
+    static const QString text_property;
+    static const QString text_full_entry;
+    static const QString text_lang;
+    static const QString text_en;
+    static const QString text_CATCHCHALLENGER_SAVEGAME_VERSION;
 signals:
     void play(const QString &savegamesPath);
     void back();

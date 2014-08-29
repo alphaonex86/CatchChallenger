@@ -96,6 +96,9 @@ const QString DatapackGeneralLoader::text_slash=QLatin1String("/");
 const QString DatapackGeneralLoader::text_layers=QLatin1String("layers");
 const QString DatapackGeneralLoader::text_events=QLatin1String("events");
 const QString DatapackGeneralLoader::text_event=QLatin1String("event");
+const QString DatapackGeneralLoader::text_shop=QLatin1String("shop");
+const QString DatapackGeneralLoader::text_shops=QLatin1String("shops");
+const QString DatapackGeneralLoader::text_overridePrice=QLatin1String("overridePrice");
 
 QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
@@ -2605,4 +2608,106 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
         eventItem = eventItem.nextSiblingElement(DatapackGeneralLoader::text_event);
     }
     return returnVar;
+}
+
+QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, const QHash<quint16, Item> &items)
+{
+    QHash<quint32,Shop> shops;
+
+    QDomDocument domDocument;
+    //open and quick check the file
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    else
+    {
+        QFile shopFile(file);
+        QByteArray xmlContent;
+        if(!shopFile.open(QIODevice::ReadOnly))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, error: %2").arg(file).arg(shopFile.errorString()));
+            return shops;
+        }
+        xmlContent=shopFile.readAll();
+        shopFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            return shops;
+        }
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!=DatapackGeneralLoader::text_shops)
+    {
+        DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, \"shops\" root balise not found for the xml file").arg(file));
+        return shops;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement shopItem = root.firstChildElement(DatapackGeneralLoader::text_shop);
+    while(!shopItem.isNull())
+    {
+        if(shopItem.isElement())
+        {
+            if(shopItem.hasAttribute(DatapackGeneralLoader::text_id))
+            {
+                quint32 id=shopItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                if(ok)
+                {
+                    if(!shops.contains(id))
+                    {
+                        Shop shop;
+                        QDomElement product = shopItem.firstChildElement(DatapackGeneralLoader::text_product);
+                        while(!product.isNull())
+                        {
+                            if(product.isElement())
+                            {
+                                if(product.hasAttribute(DatapackGeneralLoader::text_itemId))
+                                {
+                                    quint32 itemId=product.attribute(DatapackGeneralLoader::text_itemId).toUInt(&ok);
+                                    if(!ok)
+                                        DebugClass::debugConsole(QStringLiteral("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                    else
+                                    {
+                                        if(!items.contains(itemId))
+                                            DebugClass::debugConsole(QStringLiteral("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                        else
+                                        {
+                                            quint32 price=items.value(itemId).price;
+                                            if(product.hasAttribute(DatapackGeneralLoader::text_overridePrice))
+                                            {
+                                                price=product.attribute(DatapackGeneralLoader::text_overridePrice).toUInt(&ok);
+                                                if(!ok)
+                                                    price=items.value(itemId).price;
+                                            }
+                                            shop.prices << price;
+                                            shop.items << itemId;
+                                        }
+                                    }
+                                }
+                                else
+                                    DebugClass::debugConsole(QStringLiteral("preload_shop() material have not attribute itemId for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                            }
+                            else
+                                DebugClass::debugConsole(QStringLiteral("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                            product = product.nextSiblingElement(DatapackGeneralLoader::text_product);
+                        }
+                        shops[id]=shop;
+                    }
+                    else
+                        DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                }
+                else
+                    DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+            }
+            else
+                DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, have not the shops id: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+        shopItem = shopItem.nextSiblingElement(DatapackGeneralLoader::text_shop);
+    }
+    return shops;
 }

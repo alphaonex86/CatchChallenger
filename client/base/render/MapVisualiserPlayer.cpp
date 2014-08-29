@@ -465,9 +465,9 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                             {
                                 if(object->property(MapVisualiserThread::text_visible)==MapVisualiserThread::text_false)
                                 {
-                                    objectGroup->removeObject(object);
-                                    delete object;
+                                    ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
                                     tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                                    objects.removeAt(index2);
                                 }
                                 else
                                 {
@@ -478,8 +478,8 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                                             const quint8 &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).value(QPair<quint8,quint8>(x,y));
                                             if(itemOnMap->contains(itemIndex))
                                             {
-                                                objectGroup->removeObject(object);
-                                                delete object;
+                                                ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
+                                                objects.removeAt(index2);
                                             }
                                             else
                                             {
@@ -502,8 +502,8 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                             }
                             else
                             {
-                                objectGroup->removeObject(object);
-                                delete object;
+                                ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
+                                objects.removeAt(index2);
                             }
                         }
                         else
