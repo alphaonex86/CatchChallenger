@@ -48,6 +48,7 @@ public:
     LayersOptions layersOptions;
     QList<Event> events;
     QList<QString> skins;
+    QHash<quint32,Shop> shops;
 private:
     QMutex inProgress;
     bool isParsed;
@@ -71,6 +72,7 @@ private:
     void parseMonstersCollision();
     void parseLayersOptions();
     void parseSkins();
+    void parseShop();
 };
 }
 

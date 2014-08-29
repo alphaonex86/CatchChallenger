@@ -329,7 +329,6 @@ struct ServerPrivateVariables
     QString datapack_mapPath;
     QRegularExpression datapack_rightFileName;
     QRegularExpression datapack_rightFolderName;
-    QHash<quint32,Shop> shops;
 
     //fight
     QMultiHash<quint16,MonsterDrops> monsterDrops;

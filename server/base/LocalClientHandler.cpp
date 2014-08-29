@@ -1862,7 +1862,7 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
-    if(!GlobalServerData::serverPrivateVariables.shops.contains(shopId))
+    if(!CommonDatapack::commonDatapack.shops.contains(shopId))
     {
         errorOutput(QStringLiteral("shopId not found: %1").arg(shopId));
         return;
@@ -1938,7 +1938,7 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
         }
     }
     //send the shop items (no taxes from now)
-    const Shop &shop=GlobalServerData::serverPrivateVariables.shops.value(shopId);
+    const Shop &shop=CommonDatapack::commonDatapack.shops.value(shopId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -1967,7 +1967,7 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
-    if(!GlobalServerData::serverPrivateVariables.shops.contains(shopId))
+    if(!CommonDatapack::commonDatapack.shops.contains(shopId))
     {
         errorOutput(QStringLiteral("shopId not found: %1").arg(shopId));
         return;
@@ -2051,7 +2051,7 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
         }
     }
     //send the shop items (no taxes from now)
-    const int &priceIndex=GlobalServerData::serverPrivateVariables.shops.value(shopId).items.indexOf(objectId);
+    const int &priceIndex=CommonDatapack::commonDatapack.shops.value(shopId).items.indexOf(objectId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -2061,7 +2061,7 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
         postReply(query_id,outputData);
         return;
     }
-    const quint32 &realprice=GlobalServerData::serverPrivateVariables.shops.value(shopId).prices.at(priceIndex);
+    const quint32 &realprice=CommonDatapack::commonDatapack.shops.value(shopId).prices.at(priceIndex);
     if(realprice==0)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
@@ -2097,7 +2097,7 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
-    if(!GlobalServerData::serverPrivateVariables.shops.contains(shopId))
+    if(!CommonDatapack::commonDatapack.shops.contains(shopId))
     {
         errorOutput(QStringLiteral("shopId not found: %1").arg(shopId));
         return;
