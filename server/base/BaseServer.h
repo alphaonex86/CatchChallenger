@@ -93,7 +93,6 @@ protected:
     void preload_the_plant_on_map();
     static void preload_the_plant_on_map_static(void *object);
     void preload_the_plant_on_map_return();
-    void preload_shop();
     void preload_monsters_drops();
     void load_monsters_max_id();
     static void load_monsters_max_id_static(void *object);

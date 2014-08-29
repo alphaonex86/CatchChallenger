@@ -990,6 +990,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     {
         if(realSslSocket==NULL)
             CatchChallenger::Api_client_real::client->sendProtocol();
+        else
+            qDebug() << "Tcp socket found, skip sendProtocol()";
     }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
@@ -1000,6 +1002,12 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         }
         if(internalServer!=NULL)
             internalServer->stop();
+        /* to fix bug: firstly try connect but connexion refused on localhost, secondly try local game */
+        if(realSslSocket!=NULL)
+        {
+            realSslSocket->deleteLater();
+            realSslSocket=NULL;
+        }
         if(socket!=NULL)
         {
             socket->deleteLater();

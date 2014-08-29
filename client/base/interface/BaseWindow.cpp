@@ -2186,6 +2186,11 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("Shop called but wrong id"));
             return;
         }
+        if(!CommonDatapack::commonDatapack.shops.contains(shopId))
+        {
+            showTip(tr("Shop not found"));
+            return;
+        }
         if(actualBot.properties.contains(QStringLiteral("skin")))
         {
             QPixmap skin=getFrontSkinPath(actualBot.properties.value(QStringLiteral("skin")));
@@ -2202,10 +2207,28 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->stackedWidget->setCurrentWidget(ui->page_shop);
         ui->shopItemList->clear();
         on_shopItemList_itemSelectionChanged();
+        #ifndef CATCHCHALLENGER_CLIENT_INSTANT_SHOP
         ui->shopDescription->setText(tr("Waiting the shop content"));
         ui->shopBuy->setVisible(false);
         qDebug() << "goToBotStep(), client->getShopList(shopId): " << shopId;
         CatchChallenger::Api_client_real::client->getShopList(shopId);
+        #else
+        {
+            QList<ItemToSellOrBuy> items;
+            const Shop &shop=CommonDatapack::commonDatapack.shops.value(shopId);
+            int index=0;
+            while(index<shop.items.size())
+            {
+                ItemToSellOrBuy newItem;
+                newItem.object=shop.items.at(index);
+                newItem.price=shop.prices.at(index);
+                newItem.quantity=0;
+                items << newItem;
+                index++;
+            }
+            haveShopList(items);
+        }
+        #endif
         return;
     }
     else if(actualBot.step.value(step).attribute(BaseWindow::text_type)==QStringLiteral("sell"))
