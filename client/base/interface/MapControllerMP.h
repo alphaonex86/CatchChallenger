@@ -150,6 +150,7 @@ private slots:
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
     void eventOnMap(CatchChallenger::MapEvent event, MapVisualiserThread::Map_full * tempMapObject, quint8 x, quint8 y);
+    CatchChallenger::Direction moveFromPath();
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
 protected slots:
     virtual void finalPlayerStep();
@@ -158,6 +159,7 @@ protected slots:
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
     void pathFindingResult(const QList<QPair<CatchChallenger::Orientation, quint8> > &path);
+    bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:
     void searchPath(QList<MapVisualiserThread::Map_full> mapList);

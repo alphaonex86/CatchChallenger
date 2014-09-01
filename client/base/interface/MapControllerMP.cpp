@@ -1504,6 +1504,23 @@ void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
     MapVisualiser::destroyMap(map);
 }
 
+CatchChallenger::Direction MapControllerMP::moveFromPath()
+{
+    const CatchChallenger::Orientation orientation=path.first().first;
+    path.first().second--;
+    if(path.first().second==0)
+        path.removeFirst();
+    if(orientation==CatchChallenger::Orientation_bottom)
+        return CatchChallenger::Direction_move_at_bottom;
+    if(orientation==CatchChallenger::Orientation_top)
+        return CatchChallenger::Direction_move_at_top;
+    if(orientation==CatchChallenger::Orientation_left)
+        return CatchChallenger::Direction_move_at_left;
+    if(orientation==CatchChallenger::Orientation_right)
+        return CatchChallenger::Direction_move_at_right;
+    return CatchChallenger::Direction_move_at_bottom;
+}
+
 void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y)
 {
     if(event==CatchChallenger::MapEvent_SimpleClick)
@@ -1513,9 +1530,43 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
             pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
             path.clear();
-            //do the event now
         }
     }
+}
+
+bool MapControllerMP::nextPathStep()//true if have step
+{
+    if(!path.isEmpty())
+    {
+        direction=MapControllerMP::moveFromPath();
+        moveStep=0;
+        moveStepSlot();
+        emit send_player_direction(direction);
+        if(direction==CatchChallenger::Direction_move_at_bottom)
+        {
+            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==(all_map.value(current_map)->logicalMap.height-1))
+                emit send_player_direction(CatchChallenger::Direction_look_at_right);
+        }
+        if(direction==CatchChallenger::Direction_move_at_top)
+        {
+            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==0)
+                emit send_player_direction(CatchChallenger::Direction_look_at_top);
+        }
+        if(direction==CatchChallenger::Direction_move_at_right)
+        {
+            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==(all_map.value(current_map)->logicalMap.width-1))
+                emit send_player_direction(CatchChallenger::Direction_look_at_right);
+        }
+        if(direction==CatchChallenger::Direction_move_at_left)
+        {
+            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==0)
+                emit send_player_direction(CatchChallenger::Direction_look_at_left);
+        }
+        //startGrassAnimation(direction);
+        return true;
+    }
+    else
+        return false;
 }
 
 void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orientation,quint8> > &path)
@@ -1526,6 +1577,8 @@ void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orien
         {
             //take care of the returned data
             this->path=path;
+            if(!inMove)
+                nextPathStep();
             return;
         }
     }
