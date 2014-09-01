@@ -137,6 +137,7 @@ private:
     static QPixmap *imgForPseudoAdmin;
     static QPixmap *imgForPseudoDev;
     static QPixmap *imgForPseudoPremium;
+    QList<QPair<CatchChallenger::Orientation,quint8> > path;
 protected:
     //current player
     CatchChallenger::Player_private_and_public_informations player_informations;
