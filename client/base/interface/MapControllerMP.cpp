@@ -62,7 +62,7 @@ void MapControllerMP::resetAll()
 
     unloadPlayerFromCurrentMap();
     current_map.clear();
-
+    path.clear();
     delayedActions.clear();
     skinFolderList.clear();
 
@@ -1508,8 +1508,12 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
 {
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {
-        MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-        pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
+        if(keyAccepted.isEmpty() || (keyAccepted.contains(Qt::Key_Return) && keyAccepted.size()))
+        {
+            MapVisualiser::eventOnMap(event,tempMapObject,x,y);
+            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
+            path.clear();
+        }
     }
 }
 
@@ -1520,7 +1524,7 @@ void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orien
         if(keyAccepted.isEmpty() || (keyAccepted.contains(Qt::Key_Return) && keyAccepted.size()))
         {
             //take care of the returned data
-            //to do
+            this->path=path;
             return;
         }
     }
@@ -1531,5 +1535,6 @@ void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orien
 void MapControllerMP::keyPressParse()
 {
     pathFinding.cancel();
+    path.clear();
     MapVisualiserPlayerWithFight::keyPressParse();
 }
