@@ -1513,7 +1513,7 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
             pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
             path.clear();
-            //do the event
+            //do the event now
         }
     }
 }
