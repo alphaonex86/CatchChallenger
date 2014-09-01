@@ -66,7 +66,7 @@ private:
         QTimer *oneStepMore;
         QTimer *moveAnimationTimer;
     };
-    PathFinding pathFindingList;
+    PathFinding pathFinding;
     QHash<quint16,OtherPlayer> otherPlayerList;
     QHash<QTimer *,quint16> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
     QHash<QString,quint16> mapUsedByOtherPlayer;
@@ -156,10 +156,11 @@ protected slots:
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
-    void pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8> > path);
+    void pathFindingResult(const QList<QPair<CatchChallenger::Orientation, quint8> > &path);
     virtual void keyPressParse();
 signals:
     void searchPath(QList<MapVisualiserThread::Map_full> mapList);
+    void pathFindingNotFound();
 };
 
 #endif // CATCHCHALLENGER_MAPCONTROLLERMP_H

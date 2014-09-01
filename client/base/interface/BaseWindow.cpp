@@ -134,6 +134,7 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
     connect(MapController::mapController,   &MapController::botFightCollision,      this,&BaseWindow::botFightCollision);
     connect(MapController::mapController,   &MapController::currentMapLoaded,       this,&BaseWindow::currentMapLoaded);
+    connect(MapController::mapController,   &MapController::pathFindingNotFound,    this,&BaseWindow::pathFindingNotFound);
     connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom);
     connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop);
     connect(&moveFightMonsterBothTimer,     &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBoth);
@@ -1514,6 +1515,11 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
             showTip(tr("You can't enter to the zone"));
         break;
     }
+}
+
+void BaseWindow::pathFindingNotFound()
+{
+    showTip(tr("No path to go here"));
 }
 
 void BaseWindow::currentMapLoaded()
