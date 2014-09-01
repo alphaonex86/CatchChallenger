@@ -111,6 +111,7 @@ protected slots:
     virtual void doMoveAnimation();
     virtual void moveStepSlot();
     virtual void finalPlayerStep();
+    virtual bool nextPathStep() = 0;//true if have step
     virtual bool haveStopTileAction();
     //have look into another direction, if the key remain pressed, apply like move
     void transformLookToMove();

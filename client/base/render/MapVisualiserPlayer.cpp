@@ -725,7 +725,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStepSlot();
             emit send_player_direction(direction);
             if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==0)
-                emit send_player_direction(CatchChallenger::Direction_look_at_right);
+                emit send_player_direction(CatchChallenger::Direction_look_at_top);
             //startGrassAnimation(direction);
         }
     }
@@ -751,19 +751,20 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStepSlot();
             emit send_player_direction(direction);
             if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==(current_map_pointer->logicalMap.height-1))
-                emit send_player_direction(CatchChallenger::Direction_look_at_right);
+                emit send_player_direction(CatchChallenger::Direction_look_at_bottom);
             //startGrassAnimation(direction);
         }
     }
     //now stop walking, no more arrow key is pressed
     else
     {
-        if(inMove)
-        {
-            inMove=false;
-            emit send_player_direction(direction);
-            parseStop();
-        }
+        if(!nextPathStep())
+            if(inMove)
+            {
+                inMove=false;
+                emit send_player_direction(direction);
+                parseStop();
+            }
     }
 }
 
