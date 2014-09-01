@@ -193,6 +193,7 @@ private slots:
     void botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void currentMapLoaded();
+    void pathFindingNotFound();
     void updateFactoryStatProduction(const IndustryStatus &industryStatus,const Industry &industry);
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);

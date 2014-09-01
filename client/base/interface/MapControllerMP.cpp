@@ -25,8 +25,10 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
     qRegisterMetaType<QList<QPair<quint8,CatchChallenger::Direction> > >("QList<QPair<quint8,CatchChallenger::Direction> >");
     qRegisterMetaType<QList<MapVisualiserThread::Map_full> >("QList<MapVisualiserThread::Map_full>");
     qRegisterMetaType<QList<QPair<CatchChallenger::Direction,quint8> > >("QList<QPair<CatchChallenger::Direction,quint8> >");
+    qRegisterMetaType<QList<QPair<CatchChallenger::Orientation,quint8> > >("QList<QPair<CatchChallenger::Orientation,quint8> >");
+    connect(&pathFinding,&PathFinding::result,this,&MapControllerMP::pathFindingResult);
 
-    playerpseudofont=QFont("Arial");
+    playerpseudofont=QFont(QStringLiteral("Arial"));
     playerpseudofont.setPixelSize(14);
     player_informations_is_set=false;
 
@@ -37,7 +39,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
 
 MapControllerMP::~MapControllerMP()
 {
-    pathFindingList.cancel();
+    pathFinding.cancel();
 }
 
 void MapControllerMP::connectAllSignals()
@@ -1507,20 +1509,27 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserTh
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {
         MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-        pathFindingList.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
+        pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
     }
 }
 
-void MapControllerMP::pathFindingResult(QList<QPair<CatchChallenger::Direction,quint8> > path)
+void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orientation,quint8> > &path)
 {
     if(!path.isEmpty())
     {
-        //take care of the returned data
+        if(keyAccepted.isEmpty() || (keyAccepted.contains(Qt::Key_Return) && keyAccepted.size()))
+        {
+            //take care of the returned data
+            //to do
+            return;
+        }
     }
+    else
+        pathFindingNotFound();
 }
 
 void MapControllerMP::keyPressParse()
 {
-    pathFindingList.cancel();
+    pathFinding.cancel();
     MapVisualiserPlayerWithFight::keyPressParse();
 }
