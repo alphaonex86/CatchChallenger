@@ -20,6 +20,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     framesCountAgain(framesCountAgain),
     msAgain(msAgain),
     over(over),
+    playerOnThisTile(0),
     firstTime(true)
 {
     moveToThread(QApplication::instance()->thread());
@@ -42,6 +43,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     framesCountAgain(0),
     msAgain(0),
     over(over),
+    playerOnThisTile(0),
     firstTime(true)
 {
     moveToThread(QApplication::instance()->thread());
@@ -65,6 +67,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     framesCountAgain(framesCountAgain),
     msAgain(msAgain),
     over(over),
+    playerOnThisTile(0),
     firstTime(true)
 {
     moveToThread(QApplication::instance()->thread());
@@ -92,6 +95,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     framesCountAgain(0),
     msAgain(0),
     over(over),
+    playerOnThisTile(0),
     firstTime(true)
 {
     moveToThread(QApplication::instance()->thread());
@@ -124,7 +128,7 @@ void TriggerAnimation::startEnter()
         EnterEventCall eventCall;
         eventCall.timer=new QTimer(this);
         eventCall.timer->start(msAgain);
-        eventCall.frame=framesCountEnter+framesCountLeave+0;
+        eventCall.frame=framesCountEnter+framesCountLeave-1;
         connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishEnter,Qt::QueuedConnection);
         enterEvents << eventCall;
     }
@@ -136,7 +140,7 @@ void TriggerAnimation::startLeave()
     LeaveEventCall eventCall;
     eventCall.timer=new QTimer(this);
     eventCall.timer->start(msLeave);
-    eventCall.frame=framesCountEnter+0;
+    eventCall.frame=framesCountEnter-1;
     connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishLeave,Qt::QueuedConnection);
     leaveEvents << eventCall;
 }
@@ -155,86 +159,96 @@ void TriggerAnimation::setTileOffset(const quint8 &offset)
 void TriggerAnimation::timerFinishEnter()
 {
     QTimer *timer         = qobject_cast<QTimer *>(sender());
-    quint8 lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain;
-    if(playerOnThisTile>0)
-        lowerFrame=framesCountEnter;
-    else if(enterEvents.isEmpty() && leaveEvents.isEmpty())
+    quint8 lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain-1;
+    int index=0;
+    while(index<enterEvents.size())
     {
-        if(framesCountAgain==0)
-            setTileOffset(0);
+        const EnterEventCall &eventCall=enterEvents.at(index);
+        if(eventCall.timer==timer)
+            enterEvents[index].frame++;
+        if(eventCall.frame==(framesCountEnter-1) || (eventCall.frame>=(framesCountEnter+framesCountLeave+framesCountAgain) && framesCountAgain>0))
+        {
+            eventCall.timer->stop();
+            delete eventCall.timer;
+            enterEvents.removeAt(index);
+            index--;
+            playerOnThisTile++;
+        }
         else
-            setTileOffset(framesCountEnter+0);
+        {
+            if(eventCall.frame<lowerFrame)
+                lowerFrame=eventCall.frame;
+        }
+        index++;
+    }
+    //set if one player is on it
+    if(playerOnThisTile>0)
+    {
+        if((framesCountEnter-1)<lowerFrame)
+            lowerFrame=framesCountEnter-1;
     }
     else
     {
-        int index=0;
-        while(index<enterEvents.size())
+        //no body on it and no event
+        if(enterEvents.isEmpty() && leaveEvents.isEmpty())
         {
-            const EnterEventCall &eventCall=enterEvents.at(index);
-            if(eventCall.timer==timer)
-                enterEvents[index].frame++;
-            if(eventCall.frame==framesCountEnter || eventCall.frame>=framesCountAgain)
-            {
-                eventCall.timer->stop();
-                delete eventCall.timer;
-                enterEvents.removeAt(index);
-                index--;
-                playerOnThisTile++;
-            }
+            if(framesCountAgain==0)
+                lowerFrame=0;
             else
-            {
-                if(eventCall.frame<lowerFrame)
-                    lowerFrame=eventCall.frame;
-            }
-            index++;
+                lowerFrame=framesCountEnter-1;
         }
-        setTileOffset(lowerFrame);
     }
+    setTileOffset(lowerFrame);
 }
 
 void TriggerAnimation::timerFinishLeave()
 {
     QTimer *timer         = qobject_cast<QTimer *>(sender());
-    quint8 lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain;
-    if(playerOnThisTile>0)
-        lowerFrame=framesCountEnter;
-    else if(enterEvents.isEmpty() && leaveEvents.isEmpty())
+    quint8 lowerFrame=framesCountEnter+framesCountLeave+framesCountAgain-1;
+    int index=0;
+    while(index<leaveEvents.size())
     {
-        if(framesCountAgain==0)
-            setTileOffset(0);
+        const LeaveEventCall &eventCall=leaveEvents.at(index);
+        if(eventCall.timer==timer)
+            leaveEvents[index].frame++;
+        if(eventCall.frame>=(framesCountEnter+framesCountLeave-1))
+        {
+            eventCall.timer->stop();
+            delete eventCall.timer;
+            leaveEvents.removeAt(index);
+            index--;
+        }
         else
-            setTileOffset(framesCountEnter+0);
+        {
+            if(eventCall.frame<lowerFrame)
+                lowerFrame=eventCall.frame;
+        }
+        index++;
+    }
+    index=0;
+    while(index<enterEvents.size())
+    {
+        const EnterEventCall &eventCall=enterEvents.at(index);
+        if(eventCall.frame<lowerFrame)
+            lowerFrame=eventCall.frame;
+        index++;
+    }
+    //set if one player is on it
+    if(playerOnThisTile>0)
+    {
+        if((framesCountEnter-1)<lowerFrame)
+            lowerFrame=framesCountEnter-1;
     }
     else
     {
-        int index=0;
-        while(index<leaveEvents.size())
+        //no body on it and no event
+        if(enterEvents.isEmpty() && leaveEvents.isEmpty())
         {
-            const LeaveEventCall &eventCall=leaveEvents.at(index);
-            if(eventCall.timer==timer)
-                leaveEvents[index].frame++;
-            if(eventCall.frame>=(framesCountEnter+framesCountLeave))
-            {
-                eventCall.timer->stop();
-                delete eventCall.timer;
-                leaveEvents.removeAt(index);
-                index--;
-            }
+            if(framesCountAgain==0)
+                lowerFrame=0;
             else
-            {
-                if(eventCall.frame<lowerFrame)
-                    lowerFrame=eventCall.frame;
-            }
-            index++;
+                lowerFrame=framesCountEnter+framesCountLeave-1;
         }
-        index=0;
-        while(index<enterEvents.size())
-        {
-            const EnterEventCall &eventCall=enterEvents.at(index);
-            if(eventCall.frame<lowerFrame)
-                lowerFrame=eventCall.frame;
-            index++;
-        }
-        setTileOffset(lowerFrame);
     }
+    setTileOffset(lowerFrame);
 }
