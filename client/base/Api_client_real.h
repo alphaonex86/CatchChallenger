@@ -44,7 +44,9 @@ public:
     //datapack related
     void sendDatapackContent();
     void test_mirror();
+    void httpErrorEvent();
     void decodedIsFinish();
+    void mirrorTryNext();
     void httpFinishedForDatapackList();
     const QStringList listDatapack(QString suffix);
     void cleanDatapack(QString suffix);

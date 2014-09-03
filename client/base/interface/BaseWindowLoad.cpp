@@ -109,8 +109,8 @@ void BaseWindow::resetAll()
     datapackDownloadedSize=0;
     escape=false;
     escapeSuccess=false;
-    datapckFileNumber=0;
-    datapckFileSize=0;
+    datapackFileNumber=0;
+    datapackFileSize=0;
     baseMonsterEvolution=NULL;
     targetMonsterEvolution=NULL;
     idMonsterEvolution=0;
@@ -262,10 +262,10 @@ void BaseWindow::haveTheDatapack()
         emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPath());
 }
 
-void BaseWindow::datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize)
+void BaseWindow::datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize)
 {
-    this->datapckFileNumber=datapckFileNumber;
-    this->datapckFileSize=datapckFileSize;
+    this->datapackFileNumber=datapackFileNumber;
+    this->datapackFileSize=datapackFileSize;
     updateConnectingStatus();
 }
 
@@ -478,12 +478,14 @@ void BaseWindow::updateConnectingStatus()
     }
     if(!haveDatapack)
     {
-        if(datapckFileSize==0)
+        if(datapackFileSize==0)
             waitedData << tr("Loading of the datapack");
-        else if((datapackDownloadedSize+progressingDatapackFileSize)>=datapckFileSize)
+        else if(datapackFileSize<0)
+            waitedData << tr("Loaded datapack size: %1KB").arg((datapackDownloadedSize+progressingDatapackFileSize)/1000);//when the http server don't send the size
+        else if((datapackDownloadedSize+progressingDatapackFileSize)>=(quint32)datapackFileSize)
             waitedData << tr("Loaded datapack file: 100%");
         else
-            waitedData << tr("Loaded datapack file: %1%").arg(((datapackDownloadedSize+progressingDatapackFileSize)*100)/datapckFileSize);
+            waitedData << tr("Loaded datapack file: %1%").arg(((datapackDownloadedSize+progressingDatapackFileSize)*100)/datapackFileSize);
     }
     else if(!datapackIsParsed)
         waitedData << tr("Opening the datapack");

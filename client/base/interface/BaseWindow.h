@@ -206,7 +206,7 @@ private slots:
     void haveTheDatapack();
     void newDatapackFile(const quint32 &size);
     void progressingDatapackFile(const quint32 &size);
-    void datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize);
+    void datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize);
 
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
@@ -475,8 +475,8 @@ private:
     QList<CharacterEntry> characterEntryList,characterEntryListInWaiting;
     bool isLogged;
     NewProfile *newProfile;
-    quint32 datapckFileNumber;
-    quint32 datapckFileSize;
+    quint32 datapackFileNumber;
+    qint32 datapackFileSize;
     AnimationControl animationControl;
     EvolutionControl *evolutionControl;
     QWidget *previousAnimationWidget;
