@@ -70,6 +70,7 @@ BaseWindow::BaseWindow() :
     movie=NULL;
     newProfile=NULL;
     lastStepUsed=0;
+    datapackFileSize=0;
     craftingAnimationObject=NULL;
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     ui->label_ultimate->setVisible(false);

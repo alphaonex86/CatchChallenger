@@ -18,10 +18,17 @@ PathFinding::~PathFinding()
 
 void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const QString &destination_map,const quint8 &destination_x,const quint8 &destination_y,const QString &current_map,const quint8 &x,const quint8 &y,const QHash<quint16,quint32> &items)
 {
+    //path finding buggy
+    {
+        QList<QPair<CatchChallenger::Orientation,quint8> > path;
+        emit result(path);
+        return;
+    }
     if(!all_map.contains(current_map))
     {
         QList<QPair<CatchChallenger::Orientation,quint8> > path;
         emit result(path);
+        return;
     }
     tryCancel=false;
     QHash<QString,SimplifiedMapForPathFinding> simplifiedMapList;
