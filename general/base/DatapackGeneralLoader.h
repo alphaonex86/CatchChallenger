@@ -114,6 +114,7 @@ protected:
     static const QString text_shop;
     static const QString text_shops;
     static const QString text_overridePrice;
+    static const QString text_inverse;
 };
 }
 

@@ -12,12 +12,13 @@ class MapMark : public QObject
 {
     Q_OBJECT
 public:
-    explicit MapMark(Tiled::MapObject *mapObject);
+    explicit MapMark(Tiled::MapObject *m_mapObject);
     ~MapMark();
+    Tiled::MapObject *mapObject();
 private slots:
     void updateTheFrame();
 private:
-    Tiled::MapObject *mapObject;
+    Tiled::MapObject *m_mapObject;
     QTimer timer;
 };
 

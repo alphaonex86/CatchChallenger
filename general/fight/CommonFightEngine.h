@@ -82,10 +82,10 @@ protected:
     Skill::LifeEffectReturn applyLifeEffect(const quint8 &type, const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
     virtual quint8 getOneSeed(const quint8 &max) = 0;
     virtual bool internalTryEscape();
-    bool internalTryCapture(const Trap &trap);
+    virtual bool internalTryCapture(const Trap &trap);
     virtual void fightFinished();
-    void wildDrop(const quint32 &monster);
-    bool checkKOOtherMonstersForGain();
+    virtual void wildDrop(const quint32 &monster);
+    virtual bool checkKOOtherMonstersForGain();
     virtual bool giveXPSP(int xp,int sp);
     virtual bool addLevel(PlayerMonster * monster,const quint8 &numberOfLevel=1);
     virtual void levelUp(const quint8 &level,const quint8 &monsterIndex);

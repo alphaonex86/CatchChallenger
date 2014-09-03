@@ -1538,35 +1538,40 @@ bool MapControllerMP::nextPathStep()//true if have step
 {
     if(!path.isEmpty())
     {
-        direction=MapControllerMP::moveFromPath();
-        moveStep=0;
-        moveStepSlot();
-        emit send_player_direction(direction);
-        if(direction==CatchChallenger::Direction_move_at_bottom)
+        const CatchChallenger::Direction &direction=MapControllerMP::moveFromPath();
+        if(canGoTo(direction,all_map.value(current_map)->logicalMap,x,y,true))
         {
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==(all_map.value(current_map)->logicalMap.height-1))
-                emit send_player_direction(CatchChallenger::Direction_look_at_right);
+            this->direction=direction;
+            moveStep=0;
+            moveStepSlot();
+            emit send_player_direction(direction);
+            if(direction==CatchChallenger::Direction_move_at_bottom)
+            {
+                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==(all_map.value(current_map)->logicalMap.height-1))
+                    emit send_player_direction(CatchChallenger::Direction_look_at_right);
+            }
+            if(direction==CatchChallenger::Direction_move_at_top)
+            {
+                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==0)
+                    emit send_player_direction(CatchChallenger::Direction_look_at_top);
+            }
+            if(direction==CatchChallenger::Direction_move_at_right)
+            {
+                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==(all_map.value(current_map)->logicalMap.width-1))
+                    emit send_player_direction(CatchChallenger::Direction_look_at_right);
+            }
+            if(direction==CatchChallenger::Direction_move_at_left)
+            {
+                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==0)
+                    emit send_player_direction(CatchChallenger::Direction_look_at_left);
+            }
+            //startGrassAnimation(direction);
+            return true;
         }
-        if(direction==CatchChallenger::Direction_move_at_top)
-        {
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==0)
-                emit send_player_direction(CatchChallenger::Direction_look_at_top);
-        }
-        if(direction==CatchChallenger::Direction_move_at_right)
-        {
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==(all_map.value(current_map)->logicalMap.width-1))
-                emit send_player_direction(CatchChallenger::Direction_look_at_right);
-        }
-        if(direction==CatchChallenger::Direction_move_at_left)
-        {
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==0)
-                emit send_player_direction(CatchChallenger::Direction_look_at_left);
-        }
-        //startGrassAnimation(direction);
-        return true;
+        else
+            path.clear();
     }
-    else
-        return false;
+    return false;
 }
 
 void MapControllerMP::pathFindingResult(const QList<QPair<CatchChallenger::Orientation,quint8> > &path)
