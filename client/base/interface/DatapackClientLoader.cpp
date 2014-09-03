@@ -539,6 +539,8 @@ void DatapackClientLoader::parseReputationExtra()
                         qDebug() << (QStringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     level = level.nextSiblingElement(DatapackClientLoader::text_level);
                 }
+                qSort(point_list_positive);
+                qSort(point_list_negative.end(),point_list_negative.begin());
                 if(ok)
                     if(point_list_positive.size()<2)
                     {
@@ -554,8 +556,17 @@ void DatapackClientLoader::parseReputationExtra()
                 if(ok)
                     if(!point_list_negative.empty() && !point_list_negative.contains(-1))
                     {
-                        qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the negative: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                        ok=false;
+                        //qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the negative client: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        QList<qint32> point_list_negative_new;
+                        int lastValue=-1;
+                        int index=0;
+                        while(index<point_list_negative.size())
+                        {
+                            point_list_negative_new << lastValue;
+                            lastValue=point_list_negative.at(index);//(1 less to negative value)
+                            index++;
+                        }
+                        point_list_negative=point_list_negative_new;
                     }
                 if(ok)
                     if(!item.attribute("type").contains(QRegExp("^[a-z]{1,32}$")))

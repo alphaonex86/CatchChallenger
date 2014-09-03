@@ -2,6 +2,7 @@
 #include "MapItem.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../tiled/tiled_mapobject.h"
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../ClientVariable.h"
@@ -53,6 +54,7 @@ QString MapVisualiserThread::text_randomoffset=QLatin1Literal("random-offset");
 QString MapVisualiserThread::text_visible=QLatin1Literal("visible");
 QString MapVisualiserThread::text_true=QLatin1Literal("true");
 QString MapVisualiserThread::text_false=QLatin1Literal("false");
+QString MapVisualiserThread::text_trigger=QLatin1Literal("trigger");
 
 MapVisualiserThread::MapVisualiserThread()
 {
@@ -61,6 +63,8 @@ MapVisualiserThread::MapVisualiserThread()
     hideTheDoors=false;
     regexMs=QRegularExpression(QStringLiteral("^[0-9]{1,5}ms$"));
     regexFrames=QRegularExpression(QStringLiteral("^[0-9]{1,3}frames$"));
+    regexTrigger=QRegularExpression("^start:([0-9]+)ms;([0-9]+)frames;leave:([0-9]+)ms;([0-9]+)frames;?(.*)$");
+    regexTriggerAgain=QRegularExpression("^again:([0-9]+)ms;([0-9]+)frames;?(.*)$");
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
 }
 
@@ -97,6 +101,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     if(stopIt)
         return NULL;
     MapVisualiserThread::Map_full *tempMapObject=new MapVisualiserThread::Map_full();
+
+    tileToTriggerAnimationContent.clear();
 
     tempMapObject->displayed=false;
     tempMapObject->relative_x=0;
@@ -466,62 +472,6 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                     }
                 }
             }
-            else if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
-            {
-                if(tileLayer->name()==MapVisualiserThread::text_Grass)
-                {
-                    /*grass = tempMapObject->tiledMap->takeLayerAt(index);
-                    if(tempMapObject->objectGroupIndex-1<=0)
-                        tempMapObject->tiledMap->insertLayer(0,grass);
-                    else
-                    {
-                        if(index>tempMapObject->objectGroupIndex)
-                            tempMapObject->objectGroupIndex++;
-                        tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,grass);
-                    }
-                    grassOver = grass->clone();
-                    grassOver->setName(MapVisualiserThread::text_Grass);
-                    tempMapObject->tiledMap->addLayer(grassOver);
-
-                    QSet<Tiled::Tileset*> tilesets=grassOver->usedTilesets();
-                    QSet<Tiled::Tileset*>::const_iterator i = tilesets.constBegin();
-                    while (i != tilesets.constEnd()) {
-                         Tiled::Tileset* oldTileset=*i;
-                         Tiled::MapReader mapReader;
-                         QFile tsxFile(oldTileset->fileName());
-                         if(tsxFile.open(QIODevice::ReadOnly))
-                         {
-                             Tiled::Tileset* newTileset=mapReader.readTileset(&tsxFile,QFileInfo(tsxFile).absoluteFilePath());
-                             if(newTileset!=NULL)
-                             {
-                                 Tiled::Tile * currentTile;
-                                 QSet<Tiled::Tile *> tileUsed;
-                                 int indexTile=0;
-                                 while(indexTile<=newTileset->tileCount())
-                                 {
-                                     currentTile=newTileset->tileAt(indexTile);
-                                     if(currentTile!=NULL)
-                                         if(!tileUsed.contains(currentTile))
-                                         {
-                                             qDebug() << "New tile" << tileUsed;
-                                             QPixmap pixmap=currentTile->image();
-                                             pixmap.fill();
-                                             currentTile->setImage(pixmap);
-                                             tileUsed << currentTile;
-                                         }
-                                     indexTile++;
-                                 }
-                                 grassOver->replaceReferencesToTileset(*i,newTileset);
-                             }
-                             else
-                                 qDebug() << "Unable to load the tileset:" << oldTileset->fileName() << ", error:" << mapReader.errorString();
-                         }
-                         else
-                             qDebug() << "Unable to open the tsx file:" << tsxFile.fileName() << ", error:" << tsxFile.errorString();
-                         ++i;
-                     }*/
-                }
-            }
             index++;
         }
     }
@@ -607,6 +557,164 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                 }
                                 else
                                     qDebug() << "Wrong animation tile args count";
+                            }
+                            else
+                            {
+                                if(tileToTriggerAnimationContent.contains(tile))
+                                {
+                                    const TriggerAnimationContent &content=tileToTriggerAnimationContent.value(tile);
+                                    Tiled::ObjectGroup *objectGroup=NULL;
+                                    if(index<(tempMapObject->tiledMap->layerCount()))
+                                        if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
+                                            objectGroup=objectGroupTemp;
+                                    if(objectGroup==NULL)
+                                    {
+                                        objectGroup=new Tiled::ObjectGroup;
+                                        tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
+                                    }
+                                    Tiled::MapObject* object=new Tiled::MapObject();
+                                    Tiled::MapObject* objectOver=NULL;
+                                    Tiled::Cell cell;
+                                    cell.tile=content.objectTile;
+                                    object->setCell(cell);
+                                    objectGroup->addObject(object);
+                                    object->setPosition(QPointF(x,y+1));
+                                    //do the layer over
+                                    if(content.over)
+                                    {
+                                        Tiled::ObjectGroup *objectGroupOver=NULL;
+                                        if(index<(tempMapObject->tiledMap->layerCount()))
+                                            if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
+                                                objectGroupOver=objectGroupTemp;
+                                        if(objectGroupOver==NULL)
+                                        {
+                                            objectGroupOver=new Tiled::ObjectGroup;
+                                            tempMapObject->tiledMap->insertLayer(index+1,objectGroupOver);
+                                        }
+                                        Tiled::MapObject* objectOver=new Tiled::MapObject();
+                                        Tiled::Cell cell;
+                                        cell.tile=content.objectTileOver;
+                                        objectOver->setCell(cell);
+                                        objectGroupOver->addObject(objectOver);
+                                        objectOver->setPosition(QPointF(x,y+1));
+                                    }
+                                    //register on map
+                                    tempMapObject->triggerAnimations[QPair<quint8,quint8>(x,y)]=new TriggerAnimation(
+                                                object,
+                                                objectOver,
+                                                content.framesCountEnter,content.msEnter,
+                                                content.framesCountLeave,content.msLeave,
+                                                content.framesCountAgain,content.msAgain,
+                                                content.over
+                                                );
+                                    {
+                                        Tiled::Cell cell;
+                                        cell.tile=NULL;
+                                        tileLayer->setCell(x,y,cell);
+                                    }
+                                }
+                                else
+                                {
+                                    const QString &trigger=tile->property(MapVisualiserThread::text_trigger);
+                                    if(!trigger.isEmpty())
+                                    {
+                                        if(trigger.contains(regexTrigger))
+                                        {
+                                            TriggerAnimationContent content;
+                                            content.objectTile=tile;
+                                            content.objectTileOver=NULL;
+                                            content.framesCountEnter=0;
+                                            content.msEnter=0;
+                                            content.framesCountLeave=0;
+                                            content.msLeave=0;
+                                            content.framesCountAgain=0;
+                                            content.msAgain=0;
+                                            content.over=false;
+                                            QString tempString=trigger;
+                                            tempString.replace(regexTrigger,"\\1");
+                                            content.msEnter=tempString.toUShort();
+                                            tempString=trigger;
+                                            tempString.replace(regexTrigger,"\\2");
+                                            content.framesCountEnter=tempString.toUShort();
+                                            tempString=trigger;
+                                            tempString.replace(regexTrigger,"\\3");
+                                            content.msLeave=tempString.toUShort();
+                                            tempString=trigger;
+                                            tempString.replace(regexTrigger,"\\4");
+                                            content.framesCountLeave=tempString.toUShort();
+                                            tempString=trigger;
+                                            tempString.replace(regexTrigger,"\\5");
+                                            //again here
+                                            {
+                                                QString againString=tempString;
+                                                tempString.replace(regexTriggerAgain,"\\1");
+                                                content.msAgain=tempString.toUShort();
+                                                againString=tempString;
+                                                tempString.replace(regexTriggerAgain,"\\2");
+                                                content.framesCountAgain=tempString.toUShort();
+                                            }
+                                            //over here
+                                            if(tempString.contains(QStringLiteral("over")))
+                                            {
+                                                content.over=true;
+                                                content.objectTileOver=tile->tileset()->tileAt(tile->id()+tile->tileset()->columnCount());
+                                            }
+                                            tileToTriggerAnimationContent[tile]=content;
+                                            //create tile and add
+                                            {
+                                                Tiled::ObjectGroup *objectGroup=NULL;
+                                                if(index<(tempMapObject->tiledMap->layerCount()))
+                                                    if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
+                                                        objectGroup=objectGroupTemp;
+                                                if(objectGroup==NULL)
+                                                {
+                                                    objectGroup=new Tiled::ObjectGroup;
+                                                    tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
+                                                }
+                                                Tiled::MapObject* object=new Tiled::MapObject();
+                                                Tiled::MapObject* objectOver=NULL;
+                                                Tiled::Cell cell;
+                                                cell.tile=content.objectTile;
+                                                object->setCell(cell);
+                                                objectGroup->addObject(object);
+                                                object->setPosition(QPointF(x,y+1));
+                                                //do the layer over
+                                                if(content.over)
+                                                {
+                                                    Tiled::ObjectGroup *objectGroupOver=NULL;
+                                                    if(index<(tempMapObject->tiledMap->layerCount()))
+                                                        if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
+                                                            objectGroupOver=objectGroupTemp;
+                                                    if(objectGroupOver==NULL)
+                                                    {
+                                                        objectGroupOver=new Tiled::ObjectGroup;
+                                                        tempMapObject->tiledMap->insertLayer(index+1,objectGroupOver);
+                                                    }
+                                                    Tiled::MapObject* objectOver=new Tiled::MapObject();
+                                                    Tiled::Cell cell;
+                                                    cell.tile=content.objectTileOver;
+                                                    objectOver->setCell(cell);
+                                                    objectGroupOver->addObject(objectOver);
+                                                    objectOver->setPosition(QPointF(x,y+1));
+                                                }
+                                                //register on map
+                                                tempMapObject->triggerAnimations[QPair<quint8,quint8>(x,y)]=new TriggerAnimation(
+                                                            object,
+                                                            objectOver,
+                                                            content.framesCountEnter,content.msEnter,
+                                                            content.framesCountLeave,content.msLeave,
+                                                            content.framesCountAgain,content.msAgain,
+                                                            content.over
+                                                            );
+                                            }
+                                            Tiled::Cell cell;
+                                            cell.tile=NULL;
+                                            tileLayer->setCell(x,y,cell);
+                                        }
+                                        else
+                                            qDebug() << "Wrong animation trigger string";
+                                    }
+                                }
                             }
                         }
                         y++;

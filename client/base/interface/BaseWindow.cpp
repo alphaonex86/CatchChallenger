@@ -1786,8 +1786,12 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     int index=0;
     while(index<quest.requirements.quests.size())
     {
-        const quint32 &questId=quest.requirements.quests.at(index);
-        if(!quests.contains(questId))
+        const quint16 &questId=quest.requirements.quests.at(index).quest;
+        if(
+                (!quests.contains(questId) && !quest.requirements.quests.at(index).inverse)
+                ||
+                (quests.contains(questId) && quest.requirements.quests.at(index).inverse)
+                )
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "have never started the quest: " << questId;

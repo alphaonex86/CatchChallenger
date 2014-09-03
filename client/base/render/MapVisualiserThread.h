@@ -24,6 +24,7 @@
 #include "../../client/base/DisplayStructures.h"
 #include "../../general/base/Map_loader.h"
 #include "../interface/MapDoor.h"
+#include "../interface/TriggerAnimation.h"
 
 class MapVisualiserThread : public QThread
 {
@@ -56,10 +57,25 @@ public:
         int relative_x_pixel,relative_y_pixel;
         bool displayed;
         QHash<QPair<quint8,quint8>,MapDoor*> doors;
+        QHash<QPair<quint8,quint8>,TriggerAnimation*> triggerAnimations;
         QString visualType;
         QString name;
         QString zone;
     };
+    struct TriggerAnimationContent
+    {
+        Tiled::Tile* objectTile;
+        Tiled::Tile* objectTileOver;
+        quint8 framesCountEnter;
+        quint16 msEnter;
+        quint8 framesCountLeave;
+        quint16 msLeave;
+        quint8 framesCountAgain;
+        quint16 msAgain;
+        bool over;
+    };
+    QHash<Tiled::Tile *,TriggerAnimationContent> tileToTriggerAnimationContent;
+
     explicit MapVisualiserThread();
     ~MapVisualiserThread();
     QString mLastError;
@@ -115,6 +131,7 @@ public:
     static QString text_visible;
     static QString text_true;
     static QString text_false;
+    static QString text_trigger;
 signals:
     void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);
 public slots:
@@ -129,6 +146,8 @@ public slots:
 private:
     QRegularExpression regexMs;
     QRegularExpression regexFrames;
+    QRegularExpression regexTrigger;
+    QRegularExpression regexTriggerAgain;
     QHash<QString,MapVisualiserThread::Map_full> mapCache;
     Tiled::MapReader reader;
     QHash<QString/*name*/,QHash<quint32/*bot id*/,CatchChallenger::Bot> > botFiles;

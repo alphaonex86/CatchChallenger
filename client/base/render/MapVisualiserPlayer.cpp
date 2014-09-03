@@ -256,11 +256,18 @@ void MapVisualiserPlayer::doMoveAnimation()
 
 void MapVisualiserPlayer::moveStepSlot()
 {
+    MapVisualiserThread::Map_full * map_full=all_map.value(current_map);
     if(!animationDisplayed)
     {
+        //leave
+        if(map_full->triggerAnimations.contains(QPair<quint8,quint8>(x,y)))
+        {
+            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.value(QPair<quint8,quint8>(x,y));
+            triggerAnimation->startLeave();
+        }
         animationDisplayed=true;
         //tiger the next tile
-        CatchChallenger::CommonMap * map=&all_map.value(current_map)->logicalMap;
+        CatchChallenger::CommonMap * map=&map_full->logicalMap;
         quint8 x=this->x;
         quint8 y=this->y;
         //set the final value (direction, position, ...)
@@ -275,14 +282,20 @@ void MapVisualiserPlayer::moveStepSlot()
             default:
             break;
         }
-        if(all_map.contains(map->map_file))
-            if(all_map.value(map->map_file)->doors.contains(QPair<quint8,quint8>(x,y)))
-            {
-                MapDoor* door=all_map.value(map->map_file)->doors.value(QPair<quint8,quint8>(x,y));
-                door->startOpen(currentPlayerSpeed);
-                moveAnimationTimer.start(door->timeToOpen());
-                return;
-            }
+        //enter
+        if(map_full->triggerAnimations.contains(QPair<quint8,quint8>(x,y)))
+        {
+            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.value(QPair<quint8,quint8>(x,y));
+            triggerAnimation->startEnter();
+        }
+        //door
+        if(map_full->doors.contains(QPair<quint8,quint8>(x,y)))
+        {
+            MapDoor* door=map_full->doors.value(QPair<quint8,quint8>(x,y));
+            door->startOpen(currentPlayerSpeed);
+            moveAnimationTimer.start(door->timeToOpen());
+            return;
+        }
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!moveTimer.isSingleShot())

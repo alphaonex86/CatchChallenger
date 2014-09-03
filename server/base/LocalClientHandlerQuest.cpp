@@ -180,8 +180,12 @@ bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
     int index=0;
     while(index<quest.requirements.quests.size())
     {
-        const quint32 &questId=quest.requirements.quests.at(index);
-        if(!public_and_private_informations.quests.contains(questId))
+        const quint16 &questId=quest.requirements.quests.at(index).quest;
+        if(
+                (!public_and_private_informations.quests.contains(questId) && !quest.requirements.quests.at(index).inverse)
+                ||
+                (public_and_private_informations.quests.contains(questId) && quest.requirements.quests.at(index).inverse)
+            )
         {
             normalOutput(QStringLiteral("have never started the quest: %1").arg(questId));
             return false;
