@@ -193,6 +193,12 @@ void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThre
     {
         if(mark!=NULL)
             delete mark;
+        /*        if(mark!=NULL)
+        {
+            Tiled::MapObject *mapObject=mark->mapObject();
+            if(mapObject!=NULL)
+                ObjectGroupItem::objectGroupLink.value(mapObject->objectGroup())->removeObject(mapObject);
+        }*/
         Tiled::MapObject *mapObject=new Tiled::MapObject();
         mapObject->setName("Mark for path finding");
         Tiled::Cell cell=mapObject->cell();

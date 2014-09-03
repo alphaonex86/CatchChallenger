@@ -99,6 +99,7 @@ const QString DatapackGeneralLoader::text_event=QLatin1String("event");
 const QString DatapackGeneralLoader::text_shop=QLatin1String("shop");
 const QString DatapackGeneralLoader::text_shops=QLatin1String("shops");
 const QString DatapackGeneralLoader::text_overridePrice=QLatin1String("overridePrice");
+const QString DatapackGeneralLoader::text_inverse=QLatin1String("inverse");
 
 QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
@@ -222,6 +223,8 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                         DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     level = level.nextSiblingElement(DatapackGeneralLoader::text_level);
                 }
+                qSort(point_list_positive);
+                qSort(point_list_negative.end(),point_list_negative.begin());
                 if(ok)
                     if(point_list_positive.size()<2)
                     {
@@ -237,8 +240,17 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                 if(ok)
                     if(!point_list_negative.empty() && !point_list_negative.contains(-1))
                     {
-                        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, no starting level for the negative: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                        ok=false;
+                        //DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, no starting level for the negative, first level need start with -1, fix by change range: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        QList<qint32> point_list_negative_new;
+                        int lastValue=-1;
+                        int index=0;
+                        while(index<point_list_negative.size())
+                        {
+                            point_list_negative_new << lastValue;
+                            lastValue=point_list_negative.at(index);//(1 less to negative value)
+                            index++;
+                        }
+                        point_list_negative=point_list_negative_new;
                     }
                 if(ok)
                     if(!item.attribute(DatapackGeneralLoader::text_type).contains(typeRegex))
@@ -429,7 +441,15 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
                         {
                             const quint32 &questId=requirementsItem.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                             if(ok)
-                                quest.requirements.quests << questId;
+                            {
+                                QuestRequirements questNewEntry;
+                                questNewEntry.quest=questId;
+                                questNewEntry.inverse=false;
+                                if(requirementsItem.hasAttribute(DatapackGeneralLoader::text_inverse))
+                                    if(requirementsItem.attribute(DatapackGeneralLoader::text_inverse)==DatapackGeneralLoader::text_true)
+                                        questNewEntry.inverse=true;
+                                quest.requirements.quests << questNewEntry;
+                            }
                             else
                                 qDebug() << QStringLiteral("Unable to open the file: %1, requirement quest item id is not a number %4: child.tagName(): %2 (at line: %3)").arg(file).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(requirementsItem.attribute(DatapackGeneralLoader::text_id));
                         }
