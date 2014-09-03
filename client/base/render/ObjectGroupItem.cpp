@@ -2,6 +2,7 @@
 #include "MapObjectItem.h"
 
 #include <QDebug>
+#include <QtCore/qmath.h>
 
 QHash<Tiled::ObjectGroup *,ObjectGroupItem *> ObjectGroupItem::objectGroupLink;
 
@@ -18,7 +19,9 @@ ObjectGroupItem::ObjectGroupItem(Tiled::ObjectGroup *objectGroup,
     int index=0;
     while(index<loopSize)
     {
-        MapObjectItem::objectLink[objects.at(index)]=new MapObjectItem(objects.at(index), this);
+        MapObjectItem *mapObjectItem=new MapObjectItem(objects.at(index), this);
+        mapObjectItem->setZValue(qCeil(objects.at(index)->y()));
+        MapObjectItem::objectLink[objects.at(index)]=mapObjectItem;
         index++;
     }
 }

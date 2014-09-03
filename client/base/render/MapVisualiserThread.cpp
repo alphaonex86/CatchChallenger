@@ -293,6 +293,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
 
     //do the object group to move the player on it
     tempMapObject->objectGroup = new Tiled::ObjectGroup(MapVisualiserThread::text_Dyna_management,0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
+    tempMapObject->objectGroup->setName("objectGroup for player layer");
 
     //add a tags
     if(debugTags)
@@ -522,6 +523,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             if(objectGroup==NULL)
                                             {
                                                 objectGroup=new Tiled::ObjectGroup;
+                                                objectGroup->setName("Layer for animation "+tileLayer->name());
                                                 tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
                                             }
                                             Tiled::MapObject *object=new Tiled::MapObject();
@@ -570,6 +572,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                     if(objectGroup==NULL)
                                     {
                                         objectGroup=new Tiled::ObjectGroup;
+                                        objectGroup->setName("From cache under "+tileLayer->name());
                                         tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
                                     }
                                     Tiled::MapObject* object=new Tiled::MapObject();
@@ -582,20 +585,11 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                     //do the layer over
                                     if(content.over)
                                     {
-                                        Tiled::ObjectGroup *objectGroupOver=NULL;
-                                        if(index<(tempMapObject->tiledMap->layerCount()))
-                                            if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
-                                                objectGroupOver=objectGroupTemp;
-                                        if(objectGroupOver==NULL)
-                                        {
-                                            objectGroupOver=new Tiled::ObjectGroup;
-                                            tempMapObject->tiledMap->insertLayer(index+1,objectGroupOver);
-                                        }
                                         objectOver=new Tiled::MapObject();
                                         Tiled::Cell cell;
                                         cell.tile=content.objectTileOver;
                                         objectOver->setCell(cell);
-                                        objectGroupOver->addObject(objectOver);
+                                        tempMapObject->objectGroup->addObject(objectOver);
                                         objectOver->setPosition(QPointF(x,y+1));
                                     }
                                     //register on map
@@ -670,6 +664,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                                 if(objectGroup==NULL)
                                                 {
                                                     objectGroup=new Tiled::ObjectGroup;
+                                                    objectGroup->setName("Under "+tileLayer->name());
                                                     tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
                                                 }
                                                 Tiled::MapObject* object=new Tiled::MapObject();
@@ -682,20 +677,11 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                                 //do the layer over
                                                 if(content.over)
                                                 {
-                                                    Tiled::ObjectGroup *objectGroupOver=NULL;
-                                                    if(index<(tempMapObject->tiledMap->layerCount()))
-                                                        if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
-                                                            objectGroupOver=objectGroupTemp;
-                                                    if(objectGroupOver==NULL)
-                                                    {
-                                                        objectGroupOver=new Tiled::ObjectGroup;
-                                                        tempMapObject->tiledMap->insertLayer(index+1,objectGroupOver);
-                                                    }
                                                     objectOver=new Tiled::MapObject();
                                                     Tiled::Cell cell;
                                                     cell.tile=content.objectTileOver;
                                                     objectOver->setCell(cell);
-                                                    objectGroupOver->addObject(objectOver);
+                                                    tempMapObject->objectGroup->addObject(objectOver);
                                                     objectOver->setPosition(QPointF(x,y+1));
                                                 }
                                                 //register on map
