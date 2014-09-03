@@ -118,6 +118,12 @@ struct ReputationRequirements
     bool positif;
 };
 
+struct QuestRequirements
+{
+    quint16 quest;
+    bool inverse;
+};
+
 struct Plant
 {
     quint16 itemUsed;
@@ -717,12 +723,12 @@ struct Quest
     struct ItemMonster
     {
         quint16 item;
-        QList<quint32> monsters;
+        QList<quint16> monsters;
         quint8 rate;
     };
     struct Requirements
     {
-        QList<quint32> quests;
+        QList<QuestRequirements> quests;
         QList<ReputationRequirements> reputation;
     };
     struct Rewards
@@ -734,7 +740,7 @@ struct Quest
     struct StepRequirements
     {
         QList<Item> items;
-        QList<quint32> fightId;
+        QList<quint16> fightId;
     };
     struct Step
     {
@@ -743,7 +749,7 @@ struct Quest
         QList<quint16> bots;
     };
 
-    quint32 id;
+    quint16 id;
     bool repeatable;
     Requirements requirements;
     Rewards rewards;
