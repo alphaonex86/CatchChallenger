@@ -95,11 +95,11 @@ bool EpollServer::tryListen()
                     << std::endl;
             sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
             if(sfd == -1)
-                std::cerr << "socket not created:" << sfd << ", error: " << errno << std::endl;
+                std::cerr << "socket not created:" << sfd << ", error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
             else
             {
                 s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
-                std::cerr << "bind failed:" << s << ", error: " << errno << std::endl;
+                std::cerr << "bind failed:" << s << ", error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
                 ::close(sfd);
             }
         }

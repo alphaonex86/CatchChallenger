@@ -382,7 +382,7 @@ void Api_client_real::datapackChecksumDone(const QByteArray &hash,const QList<qu
             index_mirror=0;
             test_with_proxy=(proxy.type()==QNetworkProxy::Socks5Proxy);
             test_mirror();
-            qDebug() << "Datapack is empty, get from mirror";
+            qDebug() << "Datapack is empty, get from mirror into" << mDatapack;
         }
         else
         {
@@ -426,8 +426,33 @@ void Api_client_real::test_mirror()
         QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("datapack-list.txt"));
         reply = qnam.get(networkRequest);
     }
-    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
-    connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
+    if(reply->error()==QNetworkReply::NoError)
+    {
+        connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
+        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEvent);
+        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
+    }
+    else
+    {
+        qDebug() << reply->url().toString() << reply->errorString();
+        mirrorTryNext();
+        return;
+    }
+}
+
+void Api_client_real::httpErrorEvent()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if(reply==NULL)
+    {
+        httpError=true;
+        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        socket->disconnectFromHost();
+        return;
+    }
+    qDebug() << reply->url().toString() << reply->errorString();
+    mirrorTryNext();
+    return;
 }
 
 void Api_client_real::decodedIsFinish()
@@ -477,6 +502,32 @@ void Api_client_real::decodedIsFinish()
     }
 }
 
+void Api_client_real::mirrorTryNext()
+{
+    if(!datapackTarXz)
+    {
+        datapackTarXz=true;
+        test_mirror();
+    }
+    else
+    {
+        datapackTarXz=false;
+        index_mirror++;
+        if(index_mirror>=CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).size())
+        {
+            if(test_with_proxy)
+            {
+                test_with_proxy=false;
+                index_mirror=0;
+            }
+            else
+                newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
+        }
+        else
+            test_mirror();
+    }
+}
+
 void Api_client_real::httpFinishedForDatapackList()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -490,41 +541,22 @@ void Api_client_real::httpFinishedForDatapackList()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if(!reply->isFinished() || reply->error() || !redirectionTarget.isNull())
     {
-        if(!datapackTarXz)
-        {
-            datapackTarXz=true;
-            test_mirror();
-        }
+        const QNetworkProxy &proxy=qnam.proxy();
+        if(proxy==QNetworkProxy::NoProxy)
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 (try next)")
+                                                  .arg(reply->url().toString())
+                                                  .arg(reply->errorString())
+                                                  );
         else
-        {
-            datapackTarXz=false;
-            const QNetworkProxy &proxy=qnam.proxy();
-            if(proxy==QNetworkProxy::NoProxy)
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 (try next)")
-                                                      .arg(reply->url().toString())
-                                                      .arg(reply->errorString())
-                                                      );
-            else
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
-                                                      .arg(reply->url().toString())
-                                                      .arg(reply->errorString())
-                                                      .arg(proxy.hostName())
-                                                      .arg(proxy.port())
-                                                      .arg(proxy.type())
-                                                      );
-            reply->deleteLater();
-            index_mirror++;
-            if(index_mirror>=CommonSettings::commonSettings.httpDatapackMirror.split(";",QString::SkipEmptyParts).size())
-            {
-                if(test_with_proxy)
-                {
-                    test_with_proxy=false;
-                    index_mirror=0;
-                }
-                else
-                    newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed: %1").arg(reply->errorString()));
-            }
-        }
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
+                                                  .arg(reply->url().toString())
+                                                  .arg(reply->errorString())
+                                                  .arg(proxy.hostName())
+                                                  .arg(proxy.port())
+                                                  .arg(proxy.type())
+                                                  );
+        reply->deleteLater();
+        mirrorTryNext();
         return;
     }
     else
