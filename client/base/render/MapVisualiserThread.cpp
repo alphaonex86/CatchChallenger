@@ -591,7 +591,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             objectGroupOver=new Tiled::ObjectGroup;
                                             tempMapObject->tiledMap->insertLayer(index+1,objectGroupOver);
                                         }
-                                        Tiled::MapObject* objectOver=new Tiled::MapObject();
+                                        objectOver=new Tiled::MapObject();
                                         Tiled::Cell cell;
                                         cell.tile=content.objectTileOver;
                                         objectOver->setCell(cell);
@@ -645,13 +645,14 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             tempString=trigger;
                                             tempString.replace(regexTrigger,"\\5");
                                             //again here
+                                            if(tempString.contains(regexTriggerAgain))
                                             {
                                                 QString againString=tempString;
-                                                tempString.replace(regexTriggerAgain,"\\1");
-                                                content.msAgain=tempString.toUShort();
+                                                againString.replace(regexTriggerAgain,"\\1");
+                                                content.msAgain=againString.toUShort();
                                                 againString=tempString;
-                                                tempString.replace(regexTriggerAgain,"\\2");
-                                                content.framesCountAgain=tempString.toUShort();
+                                                againString.replace(regexTriggerAgain,"\\2");
+                                                content.framesCountAgain=againString.toUShort();
                                             }
                                             //over here
                                             if(tempString.contains(QStringLiteral("over")))
@@ -690,7 +691,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                                         objectGroupOver=new Tiled::ObjectGroup;
                                                         tempMapObject->tiledMap->insertLayer(index+1,objectGroupOver);
                                                     }
-                                                    Tiled::MapObject* objectOver=new Tiled::MapObject();
+                                                    objectOver=new Tiled::MapObject();
                                                     Tiled::Cell cell;
                                                     cell.tile=content.objectTileOver;
                                                     objectOver->setCell(cell);
