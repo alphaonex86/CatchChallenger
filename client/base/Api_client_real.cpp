@@ -490,7 +490,7 @@ void Api_client_real::decodedIsFinish()
                 }
                 else
                 {
-                    newError(tr("Security warning"),QStringLiteral("file not allowed: %1").arg(file.fileName()));
+                    newError(tr("Security error, file not allowed: %1").arg(file.fileName()),QStringLiteral("file not allowed: %1").arg(file.fileName()));
                     return;
                 }
                 index++;
@@ -563,6 +563,7 @@ void Api_client_real::httpFinishedForDatapackList()
     {
         if(!datapackTarXz)
         {
+            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarXz=true;
             xzDecodeThread.setData(reply->readAll(),100*1024*1024);
             xzDecodeThread.start(QThread::LowestPriority);
