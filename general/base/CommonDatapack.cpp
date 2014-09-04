@@ -27,6 +27,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     QMutexLocker mutexLocker(&inProgress);
     if(isParsed)
         return;
+
     this->datapackPath=datapackPath;
     parseSkins();
     parseReputation();

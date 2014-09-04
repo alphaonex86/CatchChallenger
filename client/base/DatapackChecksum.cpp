@@ -23,7 +23,7 @@ DatapackChecksum::~DatapackChecksum()
 {
 }
 
-QByteArray DatapackChecksum::doChecksum(const QString &datapackPath)
+QByteArray DatapackChecksum::doChecksum(const QString &datapackPath, bool onlyFull)
 {
     QCryptographicHash hash(QCryptographicHash::Sha224);
 
@@ -46,6 +46,7 @@ QByteArray DatapackChecksum::doChecksum(const QString &datapackPath)
                     if(file.open(QIODevice::ReadOnly))
                     {
                         const QByteArray &data=file.readAll();
+                        if(!onlyFull)
                         {
                             QCryptographicHash hashFile(QCryptographicHash::Sha224);
                             hashFile.addData(data);
@@ -69,6 +70,7 @@ QByteArray DatapackChecksum::doChecksum(const QString &datapackPath)
 void DatapackChecksum::doDifferedChecksum(const QString &datapackPath)
 {
     QList<quint32> partialHashList;
+    QStringList datapackFilesList;
 
     //do the by file partial hash
     {
@@ -90,6 +92,8 @@ void DatapackChecksum::doDifferedChecksum(const QString &datapackPath)
                     {
                         if(file.open(QIODevice::ReadOnly))
                         {
+                            datapackFilesList << returnList.at(index);
+
                             QCryptographicHash hash(QCryptographicHash::Sha224);
                             const QByteArray &data=file.readAll();
                             {
@@ -112,5 +116,5 @@ void DatapackChecksum::doDifferedChecksum(const QString &datapackPath)
         }
     }
 
-    emit datapackChecksumDone(doChecksum(datapackPath),partialHashList);
+    emit datapackChecksumDone(datapackFilesList,doChecksum(datapackPath),partialHashList);
 }

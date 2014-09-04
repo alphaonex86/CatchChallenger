@@ -456,43 +456,51 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
     if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
     {
-        int index=0;
-        while(index<tempMapObject->tiledMap->layerCount())
+        if(tempMapObject!=NULL)
         {
-            if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
+            int index=0;
+            while(index<tempMapObject->tiledMap->layerCount())
             {
-                if(objectGroup->name()==MapVisualiserThread::text_Object)
+                if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
                 {
-                    QList<Tiled::MapObject*> objects=objectGroup->objects();
-                    int index2=0;
-                    while(index2<objects.size())
+                    if(objectGroup->name()==MapVisualiserThread::text_Object)
                     {
-                        Tiled::MapObject* object=objects.at(index2);
-                        const quint32 &x=object->x();
-                        const quint32 &y=object->y()-1;
-
-                        if(object->type()==MapVisualiserThread::text_object)
+                        QList<Tiled::MapObject*> objects=objectGroup->objects();
+                        int index2=0;
+                        while(index2<objects.size())
                         {
-                            //found into the logical map
-                            if(tempMapObject->logicalMap.itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+                            Tiled::MapObject* object=objects.at(index2);
+                            const quint32 &x=object->x();
+                            const quint32 &y=object->y()-1;
+
+                            if(object->type()==MapVisualiserThread::text_object)
                             {
-                                if(object->property(MapVisualiserThread::text_visible)==MapVisualiserThread::text_false)
+                                //found into the logical map
+                                if(tempMapObject->logicalMap.itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
                                 {
-                                    ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
-                                    tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
-                                    objects.removeAt(index2);
-                                }
-                                else
-                                {
-                                    if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMapObject->logicalMap.map_file))
+                                    if(object->property(MapVisualiserThread::text_visible)==MapVisualiserThread::text_false)
                                     {
-                                        if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).contains(QPair<quint8,quint8>(x,y)))
+                                        ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
+                                        tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
+                                        objects.removeAt(index2);
+                                    }
+                                    else
+                                    {
+                                        if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMapObject->logicalMap.map_file))
                                         {
-                                            const quint8 &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).value(QPair<quint8,quint8>(x,y));
-                                            if(itemOnMap->contains(itemIndex))
+                                            if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).contains(QPair<quint8,quint8>(x,y)))
                                             {
-                                                ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
-                                                objects.removeAt(index2);
+                                                const quint8 &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMapObject->logicalMap.map_file).value(QPair<quint8,quint8>(x,y));
+                                                if(itemOnMap->contains(itemIndex))
+                                                {
+                                                    ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
+                                                    objects.removeAt(index2);
+                                                }
+                                                else
+                                                {
+                                                    tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
+                                                    index2++;
+                                                }
                                             }
                                             else
                                             {
@@ -506,38 +514,35 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                                             index2++;
                                         }
                                     }
-                                    else
-                                    {
-                                        tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=object;
-                                        index2++;
-                                    }
+                                }
+                                else
+                                {
+                                    ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
+                                    objects.removeAt(index2);
                                 }
                             }
                             else
-                            {
-                                ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
-                                objects.removeAt(index2);
-                            }
+                                index2++;
                         }
-                        else
-                            index2++;
                     }
                 }
+                index++;
             }
-            index++;
-        }
 
-        if(fileName==current_map)
-        {
-            if(tempMapObject!=NULL)
-                finalPlayerStep();
-            else
+            if(fileName==current_map)
             {
-                emit errorWithTheCurrentMap();
-                return false;
+                if(tempMapObject!=NULL)
+                    finalPlayerStep();
+                else
+                {
+                    emit errorWithTheCurrentMap();
+                    return false;
+                }
             }
+            return true;
         }
-        return true;
+        else
+            return false;
     }
     else
         return false;

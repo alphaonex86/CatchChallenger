@@ -10,11 +10,11 @@ class DatapackChecksum : public QThread
 public:
     explicit DatapackChecksum();
     ~DatapackChecksum();
-    static QByteArray doChecksum(const QString &datapackPath);
+    static QByteArray doChecksum(const QString &datapackPath, bool onlyFull=false);
 public slots:
     void doDifferedChecksum(const QString &datapackPath);
 signals:
-    void datapackChecksumDone(const QByteArray &hash,const QList<quint32> &partialHashList);
+    void datapackChecksumDone(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList);
 };
 }
 

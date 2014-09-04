@@ -1,12 +1,25 @@
 #include "NormalServerGlobal.h"
 #include "VariableServer.h"
 
+#include <QDebug>
+
 NormalServerGlobal::NormalServerGlobal()
 {
 }
 
 void NormalServerGlobal::checkSettingsFile(QSettings *settings)
 {
+    #if defined(Q_CC_GNU)
+        qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
+    #else
+        #if defined(__DATE__) && defined(__TIME__)
+            qDebug() << QStringLiteral("Unknow compiler: ")+__DATE__+" "+__TIME__;
+        #else
+            qDebug() << QStringLiteral("Unknow compiler");
+        #endif
+    #endif
+    qDebug() << QStringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
+
     if(!settings->contains(QLatin1Literal("max-players")))
         settings->setValue(QLatin1Literal("max-players"),200);
     if(!settings->contains(QLatin1Literal("server-ip")))

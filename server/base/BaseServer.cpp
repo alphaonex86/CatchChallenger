@@ -671,10 +671,12 @@ void BaseServer::preload_dictionary_map_return()
         }
     }
     GlobalServerData::serverPrivateVariables.db.clear();
-    QHashIterator<QString,CommonMap *> i(GlobalServerData::serverPrivateVariables.map_list);
-    while (i.hasNext()) {
-        i.next();
-        const QString &map=i.key();
+    QStringList map_list_flat=GlobalServerData::serverPrivateVariables.map_list.keys();
+    map_list_flat.sort();
+    int index=0;
+    while(index<map_list_flat.size())
+    {
+        const QString &map=map_list_flat.at(index);
         if(!foundMap.contains(map))
         {
             lastId++;
@@ -699,9 +701,10 @@ void BaseServer::preload_dictionary_map_return()
             }
             while(GlobalServerData::serverPrivateVariables.dictionary_map.size()<=lastId)
                 GlobalServerData::serverPrivateVariables.dictionary_map << NULL;
-            GlobalServerData::serverPrivateVariables.dictionary_map[lastId]=i.value();
-            static_cast<MapServer *>(i.value())->reverse_db_id=lastId;
+            GlobalServerData::serverPrivateVariables.dictionary_map[lastId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
+            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->reverse_db_id=lastId;
         }
+        index++;
     }
     plant_on_the_map=0;
     preload_the_plant_on_map();
@@ -2101,25 +2104,30 @@ void BaseServer::preload_the_datapack()
     int index=0;
     while(index<datapack_file_temp.size()) {
         QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
-        if(file.open(QIODevice::ReadOnly))
+        if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            const QByteArray &data=file.readAll();
+            if(file.open(QIODevice::ReadOnly))
             {
-                QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                hashFile.addData(data);
-                Client::DatapackCacheFile cacheFile;
-                cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
-                cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                Client::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                const QByteArray &data=file.readAll();
+                {
+                    QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                    hashFile.addData(data);
+                    Client::DatapackCacheFile cacheFile;
+                    cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
+                    cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                    Client::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                }
+                hash.addData(data);
+                file.close();
             }
-            hash.addData(data);
-            file.close();
+            else
+            {
+                DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                abort();
+            }
         }
         else
-        {
-            DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
-            abort();
-        }
+            DebugClass::debugConsole(QStringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
         index++;
     }
     CommonSettings::commonSettings.datapackHash=hash.result();
