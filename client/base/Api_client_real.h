@@ -57,6 +57,7 @@ protected:
     //general data
     void defineMaxPlayers(const quint16 &maxPlayers);
 private:
+    static QRegularExpression regex_DATAPACK_FILE_REGEX;
     QXzDecodeThread xzDecodeThread;
     bool datapackTarXz;
     CatchChallenger::DatapackChecksum datapackChecksum;
@@ -78,8 +79,13 @@ private:
     QStringList datapackFilesList;
     QList<quint32> partialHashList;
     static QString text_slash;
+    static QString text_dotcoma;
     bool httpMode,httpError;
+    int qnamQueueCount,qnamQueueCount2,qnamQueueCount3,qnamQueueCount4;
     QNetworkAccessManager qnam;
+    QNetworkAccessManager qnam2;
+    QNetworkAccessManager qnam3;
+    QNetworkAccessManager qnam4;
     struct UrlInWaiting
     {
         QString fileName;
@@ -90,7 +96,7 @@ private slots:
     void writeNewFile(const QString &fileName, const QByteArray &data);
     void getHttpFile(const QString &url, const QString &fileName);
     void httpFinished();
-    void datapackChecksumDone(const QByteArray &hash, const QList<quint32> &partialHash);
+    void datapackChecksumDone(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 signals:
     void newDatapackFile(const quint32 &size) const;
