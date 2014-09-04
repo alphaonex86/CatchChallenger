@@ -3344,6 +3344,7 @@ void BaseWindow::updateTheTurtle()
     }
     if(lastReplyTimeValue>TIMEINMSTOBESLOW && lastReplyTimeSince.elapsed()<TIMETOSHOWTHETURTLE)
     {
+        qDebug() << "The last query was slow:" << lastReplyTimeValue << ">" << TIMEINMSTOBESLOW << " && " << lastReplyTimeSince.elapsed() << "<" << TIMETOSHOWTHETURTLE;
         if(ui->labelSlow->isVisible())
             return;
         ui->labelSlow->setToolTip(tr("The last query was slow"));

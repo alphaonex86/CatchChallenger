@@ -177,6 +177,13 @@ bool EpollSslServer::tryListen()
         return false;
     }
 
+    int one=1;
+    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
+        std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
+    one=1;
+    if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
+        std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
+
     epoll_event event;
     event.data.ptr = this;
     event.events = EPOLLIN | EPOLLOUT | EPOLLET;

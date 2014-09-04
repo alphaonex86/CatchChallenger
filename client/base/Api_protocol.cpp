@@ -36,6 +36,17 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
 
     resetAll();
+
+    #if defined(Q_CC_GNU)
+        qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
+    #else
+        #if defined(__DATE__) && defined(__TIME__)
+            qDebug() << QStringLiteral("Unknow compiler: ")+__DATE__+" "+__TIME__;
+        #else
+            qDebug() << QStringLiteral("Unknow compiler");
+        #endif
+    #endif
+    qDebug() << QStringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
 }
 
 Api_protocol::~Api_protocol()

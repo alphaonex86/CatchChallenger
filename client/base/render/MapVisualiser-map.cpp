@@ -383,7 +383,10 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
             hideNotloadedMap();//hide the mpa loaded by mistake
             removeUnusedMap();
         }
-    return true;
+    if(tempMapObject!=NULL)
+        return true;
+    else
+        return false;
 }
 
 void MapVisualiser::applyTheAnimationTimer()

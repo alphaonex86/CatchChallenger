@@ -46,7 +46,7 @@
 
 #define CATCHCHALLENGER_EXTENSION_ALLOWED "tmx;xml;tsx;js;png;jpg;gif;ogg;qml;qm;ts;txt"
 
-#define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]*[0-9a-zA-Z]\\.[a-z]{2,4}$"
+#define DATAPACK_FILE_REGEX "^[0-9/a-z\\.\\- _]*[0-9a-z]\\.[a-z]{2,4}$"
 #define DATAPACK_BASE_PATH_MAP "map/"
 #define DATAPACK_BASE_PATH_ZONE "map/zone/"
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
