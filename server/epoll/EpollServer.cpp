@@ -130,10 +130,10 @@ bool EpollServer::tryListen()
         std::cerr << "Unable to listen" << std::endl;
         return false;
     }
-    int one=0;
+    int one=1;
     if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
         std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
-    one=0;
+    one=1;
     if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
         std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
 
