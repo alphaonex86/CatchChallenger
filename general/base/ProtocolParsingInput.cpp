@@ -255,7 +255,7 @@ bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &si
         {
             if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType) && !toDebugValidMainCodeServerToClient.contains(mainCodeType) && !sizeMultipleCodePacketServerToClient.contains(mainCodeType))
             {
-                errorParsingLayer("Critical bug, mainCodeType not valid");
+                //errorParsingLayer("Critical bug, mainCodeType not valid");//flood when web browser try connect on it
                 return false;
             }
         }
@@ -264,7 +264,7 @@ bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &si
         {
             if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType) && !toDebugValidMainCodeClientToServer.contains(mainCodeType) && !sizeMultipleCodePacketClientToServer.contains(mainCodeType))
             {
-                errorParsingLayer("Critical bug, mainCodeType not valid");
+                //errorParsingLayer("Critical bug, mainCodeType not valid");//flood when web browser try connect on it
                 return false;
             }
         }
