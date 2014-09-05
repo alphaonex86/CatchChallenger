@@ -318,7 +318,7 @@ bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,con
     return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
     #else
     QByteArray bigBufferForOutput;
-    bigBufferForOutput.resize(16+size);
+    bigBufferForOutput.resize(16+size+(200+size*2/*overhead of empty data char* compression*/));
     const int &newSize=computeFullOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             isClient,
@@ -328,7 +328,8 @@ bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,con
     if(newSize==0)
         return false;
     newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
-    return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
+    const bool returnedValue=internalPackOutcommingData(bigBufferForOutput.data(),newSize);
+    return returnedValue;
     #endif
 }
 
