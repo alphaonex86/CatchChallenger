@@ -326,14 +326,21 @@ void Client::sendBroadCastCommand(const QString &command,const QString &extraTex
             normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
+        Client * client=playerByPseudo.value(list.first());
+        if(client==NULL)
+        {
+            qDebug() << "Internal bug";
+            normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
+            return;
+        }
         if(list.last()==Client::text_normal)
-            playerByPseudo.value(extraText)->setRights(Player_type_normal);
+            client->setRights(Player_type_normal);
         else if(list.last()==Client::text_premium)
-            playerByPseudo.value(extraText)->setRights(Player_type_premium);
+            client->setRights(Player_type_premium);
         else if(list.last()==Client::text_gm)
-            playerByPseudo.value(extraText)->setRights(Player_type_gm);
+            client->setRights(Player_type_gm);
         else if(list.last()==Client::text_dev)
-            playerByPseudo.value(extraText)->setRights(Player_type_dev);
+            client->setRights(Player_type_dev);
         else
         {
             receiveSystemText(Client::text_unabletofoundthisrightslevel+list.last());
@@ -387,4 +394,6 @@ void Client::sendBroadCastCommand(const QString &command,const QString &extraTex
 void Client::setRights(const Player_type& type)
 {
     public_and_private_informations.public_informations.type=type;
+    const int &newType=type/0x10-1;
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_change_right.arg(account_id).arg(newType));
 }

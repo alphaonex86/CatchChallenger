@@ -1331,7 +1331,11 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
             if(!detectedMonsterCollisionMonsterType.at(index).isEmpty())
             {
                 if(!monsterTypeList.contains(detectedMonsterCollisionMonsterType.at(index)))
-                    monsterTypeList[detectedMonsterCollisionMonsterType.at(index)]=loadSpecificMonster(fileName,detectedMonsterCollisionMonsterType.at(index));
+                {
+                    const QList<MapMonster> &monsterList=loadSpecificMonster(fileName,detectedMonsterCollisionMonsterType.at(index));
+                    if(!monsterList.isEmpty())
+                        monsterTypeList[detectedMonsterCollisionMonsterType.at(index)]=monsterList;
+                }
             }
             index++;
         }
@@ -1534,6 +1538,8 @@ QList<MapMonster> Map_loader::loadSpecificMonster(const QString &fileName,const 
                     qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
                 monsters = monsters.nextSiblingElement(Map_loader::text_monster);
             }
+            if(monsterTypeList.isEmpty())
+                qDebug() << "map have empty monster layer:" << fileName << "type:" << monsterType;
         }
         else
             qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2), file: %3").arg(layer.tagName()).arg(layer.lineNumber()).arg(fileName);

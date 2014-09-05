@@ -2267,29 +2267,34 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
                     while(index_condition<monstersCollisionContent.conditions.size())
                     {
                         const MonstersCollisionValue::MonstersCollisionValueOnCondition &monstersCollisionValueOnCondition=monstersCollisionContent.conditions.at(index_condition);
-                        if(events.at(monstersCollisionValueOnCondition.event)==monstersCollisionValueOnCondition.event_value)
+                        if(events.at(monstersCollisionValueOnCondition.event)==monstersCollisionValueOnCondition.event_value && !monstersCollisionValueOnCondition.monsters.isEmpty())
                         {
                             monsterList=monstersCollisionValueOnCondition.monsters;
                             break;
                         }
                         index_condition++;
                     }
-                    if(index_condition==monstersCollisionContent.conditions.size())
+                    if(index_condition==monstersCollisionContent.conditions.size() || monsterList.isEmpty())
                         monsterList=monstersCollisionContent.defaultMonsters;
-                    const PlayerMonster &monster=getRandomMonster(monsterList,&ok);
-                    if(ok)
-                    {
-                        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                        messageFightEngine(QStringLiteral("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
-                        #endif
-                        startTheFight();
-                        wildMonsters << monster;
-                        return true;
-                    }
+                    if(monsterList.isEmpty())
+                        return false;
                     else
                     {
-                        errorFightEngine(QStringLiteral("error: no more random seed here to have the get"));
-                        return false;
+                        const PlayerMonster &monster=getRandomMonster(monsterList,&ok);
+                        if(ok)
+                        {
+                            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                            messageFightEngine(QStringLiteral("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
+                            #endif
+                            startTheFight();
+                            wildMonsters << monster;
+                            return true;
+                        }
+                        else
+                        {
+                            errorFightEngine(QStringLiteral("error: no more random seed here to have the get on map %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return false;
+                        }
                     }
                 }
                 else
