@@ -322,6 +322,7 @@ struct ServerPrivateVariables
     QString db_query_select_bot_beaten;
     QString db_query_select_itemOnMap;
     QString db_query_insert_itemonmap;
+    QString db_query_change_right;
 
     QList<ServerProfile> serverProfileList;
 

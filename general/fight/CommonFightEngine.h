@@ -77,7 +77,7 @@ public:
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
 protected:
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
-    PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
+    virtual PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
     static bool monsterIsKO(const PlayerMonster &playerMonter);
     Skill::LifeEffectReturn applyLifeEffect(const quint8 &type, const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
     virtual quint8 getOneSeed(const quint8 &max) = 0;
