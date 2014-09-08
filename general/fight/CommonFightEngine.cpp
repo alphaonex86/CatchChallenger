@@ -412,32 +412,68 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     }
     Monster::Stat monsterStat=getStat(monsterDef,playerMonster.level);
     playerMonster.hp=monsterStat.hp;
-    index=monsterDef.learn.size()-1;
-    QHash<quint32,quint8> learnedSkill;
-    while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    messageFightEngine(QStringLiteral("do skill while: playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER: %1<%2").arg(playerMonster.skills.size()).arg(CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER));
+    #endif
     {
-        //monsterDef.learn.at(index).learnAtLevel -> need be sorted at load
-        if(monsterDef.learn.at(index).learnAtLevel<=playerMonster.level)
+        index=monsterDef.learn.size()-1;
+        QList<quint16> learnedSkill;
+        while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
         {
-            if(learnedSkill.contains(monsterDef.learn.at(index).learnSkill))
+            const Monster::AttackToLearn &attackToLearn=monsterDef.learn.at(index);
+            //attackToLearn.learnAtLevel -> need be sorted at load
+            if(attackToLearn.learnAtLevel<=playerMonster.level)
             {
-                const int &skillIndex=learnedSkill.value(monsterDef.learn.at(index).learnSkill);
-                playerMonster.skills[skillIndex].level=monsterDef.learn.at(index).learnSkillLevel;
+                //have already learned the best level because start to learn the highther skill, else if it's new skill
+                if(!learnedSkill.contains(attackToLearn.learnSkill))
+                {
+                    PlayerMonster::PlayerSkill temp;
+                    temp.level=attackToLearn.learnSkillLevel;
+                    temp.skill=attackToLearn.learnSkill;
+                    temp.endurance=CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
+                    learnedSkill << attackToLearn.learnSkill;
+                    playerMonster.skills << temp;
+                }
             }
+            /*else
+                break;-->start with wrong value, then never break*/
+            index--;
+        }
+    }
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    {
+        if(playerMonster.skills.isEmpty())
+        {
+            if(monsterDef.learn.isEmpty())
+                messageFightEngine(QStringLiteral("no skill to learn for random monster"));
             else
             {
-                PlayerMonster::PlayerSkill temp;
-                temp.level=monsterDef.learn.at(index).learnSkillLevel;
-                temp.skill=monsterDef.learn.at(index).learnSkill;
-                temp.endurance=CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
-                learnedSkill[temp.skill]=playerMonster.skills.size();
-                playerMonster.skills << temp;
+                messageFightEngine(QStringLiteral("no skill for random monster, but skill to learn:"));
+                int index=0;
+                while(index<monsterDef.learn.size())
+                {
+                    messageFightEngine(
+                                QStringLiteral("%1 level %2 for monster at level %3")
+                                       .arg(monsterDef.learn.at(index).learnSkill)
+                                       .arg(monsterDef.learn.at(index).learnSkillLevel)
+                                       .arg(monsterDef.learn.at(index).learnAtLevel)
+                                       );
+                    index++;
+                }
             }
         }
         else
-            break;
-        index--;
+        {
+            int index=0;
+            while(index<playerMonster.skills.size())
+            {
+                messageFightEngine(QStringLiteral("skill for random monster: %1 level %2").arg(playerMonster.skills.at(index).skill).arg(playerMonster.skills.at(index).level));
+                index++;
+            }
+        }
+        messageFightEngine(QStringLiteral("random monster id: %1").arg(playerMonster.monster));
     }
+    #endif
     *ok=true;
     return playerMonster;
 }
@@ -623,10 +659,13 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
             quantity=effect.quantity;
         else
         {
+            const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(type);
             float OtherMulti=1.0;
-            /*if(type==commentMonster.type)
-                OtherMulti*=1.45;*/
-            OtherMulti*=1.24;
+            if(commonMonster.type.contains(type))
+            {
+                qDebug() << "1.45x because the attack is same type as the current monster" << typeDefinition.name;
+                OtherMulti*=1.45;
+            }
             effect_to_return.effective=1.0;
             const QList<quint8> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster).type;
             if(type!=255 && !typeList.isEmpty())
@@ -634,14 +673,23 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
                 int index=0;
                 while(index<typeList.size())
                 {
-                    const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(type);
                     if(typeDefinition.multiplicator.contains(typeList.at(index)))
                     {
                         const qint8 &multiplicator=typeDefinition.multiplicator.value(typeList.at(index));
                         if(multiplicator>0)
+                        {
+                            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                            qDebug() << "type: " << typeList.at(index) << "very effective againts" << typeDefinition.name;
+                            #endif
                             effect_to_return.effective*=multiplicator;
+                        }
                         else
+                        {
+                            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                            qDebug() << "type: " << typeList.at(index) << "not effective againts" << typeDefinition.name;
+                            #endif
                             effect_to_return.effective/=-multiplicator;
+                        }
                     }
                     index++;
                 }
@@ -649,7 +697,12 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
             float criticalHit=1.0;
             effect_to_return.critical=(getOneSeed(255)<20);
             if(effect_to_return.critical)
+            {
+                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                qDebug() << "critical hit, then: 1.5x";
+                #endif
                 criticalHit=1.5;
+            }
             quint32 attack;
             quint32 defense;
             if(type==0)
@@ -665,7 +718,11 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
             qint32 effect_quantity=effect.quantity;
             if(effect_quantity<0)
                 effect_quantity-=2;
-            quantity = effect_to_return.effective*(((float)currentMonster->level*(float)1.99+10.5)/(float)255*((float)attack/(float)defense)*(float)effect.quantity)*criticalHit*OtherMulti*(100-getOneSeed(17))/100;
+            const quint8 &seed=getOneSeed(17);
+            quantity = effect_to_return.effective*(((float)currentMonster->level*(float)1.99+10.5)/(float)255*((float)attack/(float)defense)*(float)effect.quantity)*criticalHit*OtherMulti*(100-seed)/100;
+            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+            qDebug() << "quantity(" << quantity << ") = effect_to_return.effective(" << effect_to_return.effective << ")*(((float)currentMonster->level(" << currentMonster->level << ")*(float)1.99+10.5)/(float)255*((float)attack(" << attack << ")/(float)defense(" << defense << "))*(float)effect.quantity(" << effect.quantity << "))*criticalHit(" << criticalHit << ")*OtherMulti(" << OtherMulti << ")*(100-getOneSeed(17)(" << seed << "))/100;";
+            #endif
             /*if(effect.quantity<0)
                 quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
             else if(effect.quantity>0)//ignore the def for heal
@@ -1469,7 +1526,6 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const quint8 &numberOf
     const quint8 &level=public_and_private_informations.playerMonster.at(monsterIndex).level;
     const quint32 &old_max_hp=getStat(monsterInformations,level).hp;
     const quint32 &new_max_hp=getStat(monsterInformations,level+1).hp;
-    levelUp(level,monsterIndex);
     if(new_max_hp>old_max_hp)
         monster->hp+=new_max_hp-old_max_hp;
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
@@ -1481,6 +1537,7 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const quint8 &numberOf
     else
         public_and_private_informations.playerMonster[monsterIndex].level+=numberOfLevel;
     public_and_private_informations.playerMonster[monsterIndex].remaining_xp=0;
+    levelUp(level,monsterIndex);
     return true;
 }
 
@@ -1530,7 +1587,7 @@ QList<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const quint8 &le
     return returnVar;
 }
 
-void CommonFightEngine::levelUp(const quint8 &level,const quint8 &monsterIndex)
+void CommonFightEngine::levelUp(const quint8 &level,const quint8 &monsterIndex)//call after done the level
 {
     autoLearnSkill(level,monsterIndex);
 
@@ -2267,14 +2324,14 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
                     while(index_condition<monstersCollisionContent.conditions.size())
                     {
                         const MonstersCollisionValue::MonstersCollisionValueOnCondition &monstersCollisionValueOnCondition=monstersCollisionContent.conditions.at(index_condition);
-                        if(events.at(monstersCollisionValueOnCondition.event)==monstersCollisionValueOnCondition.event_value && !monstersCollisionValueOnCondition.monsters.isEmpty())
+                        if(events.at(monstersCollisionValueOnCondition.event)==monstersCollisionValueOnCondition.event_value)
                         {
                             monsterList=monstersCollisionValueOnCondition.monsters;
                             break;
                         }
                         index_condition++;
                     }
-                    if(index_condition==monstersCollisionContent.conditions.size() || monsterList.isEmpty())
+                    if(index_condition==monstersCollisionContent.conditions.size())
                         monsterList=monstersCollisionContent.defaultMonsters;
                     if(monsterList.isEmpty())
                         return false;

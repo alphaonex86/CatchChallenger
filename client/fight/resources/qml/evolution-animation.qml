@@ -8,7 +8,7 @@ Rectangle {
     width: 800;
     height: 600;    
     Image {
-        source: "qrc:/images/interface/player/background.png";
+        source: "qrc:/images/interface/player/background.jpg";
         smooth: false;
         anchors {
             left: parent.left;

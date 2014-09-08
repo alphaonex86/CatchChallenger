@@ -597,11 +597,11 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                         add_to_inventory(item,1,false);
                 break;
             }
+            const PlayerMonster &monster=*ClientFightEngine::fightEngine.monsterById(monsterUniqueId);
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster.monster);
+            const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster);
             if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(item))
             {
-                const PlayerMonster &monster=*ClientFightEngine::fightEngine.monsterById(monsterUniqueId);
-                const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.value(monster.monster);
-                const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster);
                 idMonsterEvolution=0;
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.value(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(item).value(monster.monster));
                 const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.value(item).value(monster.monster));
@@ -650,13 +650,14 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                 ui->inventoryUse->setText(tr("Select"));
                 if(ClientFightEngine::fightEngine.useObjectOnMonster(item,monsterUniqueId))
                 {
-                    showTip(tr("Using %1 on %2").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monsterUniqueId).name));
+                    showTip(tr("Using <b>%1</b> on <b>%2</b>").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(monsterInformationsExtra.name));
                     CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
                     load_monsters();
+                    checkEvolution();
                 }
                 else
                 {
-                    showTip(tr("Failed to use %1 on %2").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monsterUniqueId).name));
+                    showTip(tr("Failed to use <b>%1</b> on <b>%2</b>").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(monsterInformationsExtra.name));
                     if(CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
                         if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
                             add_to_inventory(item,1,false);
