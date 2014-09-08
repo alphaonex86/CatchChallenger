@@ -1745,7 +1745,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknow-object.png</pixmap>
+             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -3195,7 +3195,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknow-object.png</pixmap>
+             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="shopDescription">
@@ -6051,7 +6051,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknow-object.png</pixmap>
+             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -6136,7 +6136,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknow-object.png</pixmap>
+             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>

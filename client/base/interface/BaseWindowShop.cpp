@@ -67,7 +67,7 @@ void BaseWindow::on_shopItemList_itemSelectionChanged()
         ui->shopName->setText("");
         ui->shopDescription->setText(tr("Select an object"));
         ui->shopBuy->setVisible(false);
-        ui->shopImage->setPixmap(QPixmap(":/images/inventory/unknow-object.png"));
+        ui->shopImage->setPixmap(QPixmap(":/images/inventory/unknown-object.png"));
         return;
     }
     ui->shopBuy->setVisible(true);

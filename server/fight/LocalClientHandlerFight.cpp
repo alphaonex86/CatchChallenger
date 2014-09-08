@@ -1724,19 +1724,12 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &mon
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     PlayerMonster * currentMonster=getCurrentMonster();
-    PublicPlayerMonster * otherMonster=getOtherMonster();
     const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(currentMonster->monster),currentMonster->level);
-    const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(otherMonster->monster),otherMonster->level);
+    /// \note NO OTHER MONSTER because it's evolution on current monster
     if(currentMonster!=NULL)
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorOutput(QStringLiteral("confirmEvolutionTo() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
-            return;
-        }
-    if(otherMonster!=NULL)
-        if(otherMonster->hp>otherMonsterStat.hp)
-        {
-            errorOutput(QStringLiteral("confirmEvolutionTo() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
             return;
         }
     #endif

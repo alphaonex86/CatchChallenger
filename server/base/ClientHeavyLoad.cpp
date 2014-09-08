@@ -60,7 +60,6 @@ void Client::askLogin(const quint8 &query_id,const char *rawdata)
         hash.addData(rawdata,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
         login=hash.result();
     }
-    qDebug() << QString(login.toHex());
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->query_id=query_id;
     askLoginParam->login=login;
