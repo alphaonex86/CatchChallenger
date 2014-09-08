@@ -1010,7 +1010,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                     return;
                 }
                 break;
-                //Monster evolution validated
+                //Use object on monster
                 case 0x000B:
                 {
                     if(size<((int)sizeof(quint16)+(int)sizeof(quint32)))

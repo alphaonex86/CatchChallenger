@@ -1006,8 +1006,10 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
                     case MonsterItemEffectType_AddHp:
                         if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(quint32)effect.value)
                             hpChange(playerMonster,playerMonster->hp+effect.value);
-                        else
+                        else if(playerMonsterStat.hp!=playerMonster->hp)
                             hpChange(playerMonster,playerMonsterStat.hp);
+                        else if(monsterItemEffect.size()==1)
+                            return false;
                     break;
                     case MonsterItemEffectType_RemoveBuff:
                         if(effect.value>0)
