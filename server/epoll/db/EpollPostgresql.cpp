@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/epoll.h>
 #include "../Epoll.h"
+#include "../../../general/base/GeneralVariable.h"
 
 char EpollPostgresql::emptyString[]={'\0'};
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
@@ -154,6 +155,9 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const char 
         queriesList << QString::fromUtf8(query);
         return &queue.last();
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    queriesList << QString::fromUtf8(query);
+    #endif
     const int &query_id=PQsendQuery(conn,query);
     if(query_id==0)
     {
@@ -177,6 +181,9 @@ bool EpollPostgresql::asyncWrite(const char *query)
         queriesList << QString::fromUtf8(query);
         return true;
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    queriesList << QString::fromUtf8(query);
+    #endif
     const int &query_id=PQsendQuery(conn,query);
     if(query_id==0)
     {
@@ -266,7 +273,14 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 const ExecStatusType &execStatusType=PQresultStatus(result);
                 if(execStatusType!=PGRES_TUPLES_OK && execStatusType!=PGRES_COMMAND_OK)
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(queriesList.isEmpty())
+                        std::cerr << "Query to database failed: " << errorMessage() << std::endl;
+                    else
+                        std::cerr << "Query to database failed: " << errorMessage() << qPrintable(queriesList.first()) << std::endl;
+                    #else
                     std::cerr << "Query to database failed: " << errorMessage() << std::endl;
+                    #endif
                     tuleIndex=0;
                 }
                 else
@@ -280,9 +294,17 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 }
                 if(result!=NULL)
                     clear();
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(!queriesList.isEmpty())
+                    queriesList.removeFirst();
+                #endif
                 if(!queriesList.isEmpty())
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    const int &query_id=PQsendQuery(conn,queriesList.first().toUtf8());
+                    #else
                     const int &query_id=PQsendQuery(conn,queriesList.takeFirst().toUtf8());
+                    #endif
                     if(query_id==0)
                     {
                         std::cerr << "query async send failed: " << errorMessage() << std::endl;

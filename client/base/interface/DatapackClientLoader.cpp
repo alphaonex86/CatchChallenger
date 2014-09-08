@@ -145,7 +145,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 
     this->datapackPath=datapackPath;
     if(mDefaultInventoryImage==NULL)
-        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknow-object.png"));
+        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     parseVisualCategory();
@@ -677,30 +677,32 @@ void DatapackClientLoader::parseItemsExtra()
                     {
                         if(!DatapackClientLoader::itemsExtra.contains(id))
                         {
+                            ItemExtra itemExtra;
                             //load the image
                             if(item.hasAttribute(DatapackClientLoader::text_image))
                             {
-                                QPixmap image(folder+item.attribute("image"));
+                                const QString &imagePath=folder+item.attribute(DatapackClientLoader::text_image);
+                                QPixmap image(imagePath);
                                 if(image.isNull())
                                 {
                                     qDebug() << QStringLiteral("Unable to open the items image: %1: child.tagName(): %2 (at line: %3)").arg(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(QStringLiteral("image"))).arg(item.tagName()).arg(item.lineNumber());
-                                    DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
-                                    DatapackClientLoader::itemsExtra[id].imagePath=QStringLiteral(":/images/inventory/unknow-object.png");
+                                    itemExtra.image=*mDefaultInventoryImage;
+                                    itemExtra.imagePath=QStringLiteral(":/images/inventory/unknown-object.png");
                                 }
                                 else
                                 {
-                                    DatapackClientLoader::itemsExtra[id].imagePath=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+item.attribute(DatapackClientLoader::text_image)).absoluteFilePath();
-                                    DatapackClientLoader::itemsExtra[id].image=image;
+                                    itemExtra.imagePath=QFileInfo(imagePath).absoluteFilePath();
+                                    itemExtra.image=image;
                                 }
                             }
                             else
                             {
                                 qDebug() << QStringLiteral("For parse item: Have not image attribute: child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(file).arg(item.lineNumber());
-                                DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
-                                DatapackClientLoader::itemsExtra[id].imagePath=QStringLiteral(":/images/inventory/unknow-object.png");
+                                itemExtra.image=*mDefaultInventoryImage;
+                                itemExtra.imagePath=QStringLiteral(":/images/inventory/unknown-object.png");
                             }
                             // base size: 24x24
-                            DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra.value(id).image.scaled(72,72);//then zoom: 3x
+                            itemExtra.image=itemExtra.image.scaled(72,72);//then zoom: 3x
 
                             //load the name
                             {
@@ -713,7 +715,7 @@ void DatapackClientLoader::parseItemsExtra()
                                         {
                                             if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                             {
-                                                DatapackClientLoader::itemsExtra[id].name=name.text();
+                                                itemExtra.name=name.text();
                                                 name_found=true;
                                                 break;
                                             }
@@ -729,7 +731,7 @@ void DatapackClientLoader::parseItemsExtra()
                                         {
                                             if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                             {
-                                                DatapackClientLoader::itemsExtra[id].name=name.text();
+                                                itemExtra.name=name.text();
                                                 name_found=true;
                                                 break;
                                             }
@@ -739,7 +741,7 @@ void DatapackClientLoader::parseItemsExtra()
                                 }
                                 if(!name_found)
                                 {
-                                    DatapackClientLoader::itemsExtra[id].name=tr("Unknown object");
+                                    itemExtra.name=tr("Unknown object");
                                     qDebug() << QStringLiteral("English name not found for the item with id: %1").arg(id);
                                 }
                             }
@@ -755,7 +757,7 @@ void DatapackClientLoader::parseItemsExtra()
                                         {
                                             if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
                                             {
-                                                DatapackClientLoader::itemsExtra[id].description=description.text();
+                                                itemExtra.description=description.text();
                                                 description_found=true;
                                                 break;
                                             }
@@ -771,7 +773,7 @@ void DatapackClientLoader::parseItemsExtra()
                                         {
                                             if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                             {
-                                                DatapackClientLoader::itemsExtra[id].description=description.text();
+                                                itemExtra.description=description.text();
                                                 description_found=true;
                                                 break;
                                             }
@@ -781,10 +783,11 @@ void DatapackClientLoader::parseItemsExtra()
                                 }
                                 if(!description_found)
                                 {
-                                    DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
+                                    itemExtra.description=tr("This object is not listed as know object. The information can't be found.");
                                     //qDebug() << QStringLiteral("English description not found for the item with id: %1").arg(id);
                                 }
                             }
+                            DatapackClientLoader::itemsExtra[id]=itemExtra;
                         }
                         else
                             qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
@@ -953,7 +956,14 @@ void DatapackClientLoader::resetAll()
     mapToId.clear();
     fullMapPathToId.clear();
     if(mDefaultInventoryImage==NULL)
-        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknow-object.png"));
+    {
+        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
+        if(mDefaultInventoryImage->isNull())
+        {
+            qDebug() << "default internal image bug for item";
+            abort();
+        }
+    }
     datapackPath.clear();
     itemsExtra.clear();
     maps.clear();
