@@ -230,15 +230,29 @@ bool MapVisibilityAlgorithm_Simple_StoreOnSender::singleMove(const Direction &di
         return false;
     if(old_map!=map)
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("singleMove() have change from old map: %1, to the new map: %2").arg(old_map->map_file).arg(map->map_file));
-        #endif
-        mapHaveChanged=true;
-        CommonMap *new_map=map;
-        map=old_map;
-        unloadFromTheMap();
-        map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(new_map);
-        loadOnTheMap();
+        if(old_map==NULL)
+            normalOutput(QStringLiteral("singleMove() old map is null"));
+        else
+        {
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            normalOutput(QStringLiteral("singleMove() have change from old map: %1").arg(old_map->map_file));
+            normalOutput(QStringLiteral("singleMove() to the new map: %1").arg(map->map_file));
+            #endif
+            mapHaveChanged=true;
+            CommonMap *new_map=map;
+            map=old_map;
+            unloadFromTheMap();
+            map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(new_map);
+            if(map==NULL)
+                normalOutput(QStringLiteral("singleMove() new map is null"));
+            else
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+                normalOutput(QStringLiteral("singleMove() to the new map: %1").arg(map->map_file));
+                #endif
+                loadOnTheMap();
+            }
+        }
     }
     return true;
 }
@@ -293,19 +307,18 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo(CommonMap 
     normalOutput(QStringLiteral("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: %1").arg(mapChange));
     if(mapChange)
         unloadFromTheMap();
-    Client::teleportValidatedTo(map,x,y,orientation);
+    Client::teleportValidatedTo(map,x,y,orientation);//apply the change into it
     if(mapChange)
     {
-        if(this->map->map_file==map->map_file)
+        if(this->map->map_file!=map->map_file)
         {
-            errorOutput("Map pointer != but map_file is same");
-            return;
+            errorOutput(QStringLiteral("Warning: Map pointer != but map_file is same: %1 && %2, need be done into Client::teleportValidatedTo()").arg(this->map->map_file).arg(map->map_file));
+            /*#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            normalOutput(QStringLiteral("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
+            #endif
+            this->map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
+            loadOnTheMap();*/
         }
-        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        normalOutput(QStringLiteral("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
-        #endif
-        this->map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
-        loadOnTheMap();
     }
     else
         haveNewMove=true;

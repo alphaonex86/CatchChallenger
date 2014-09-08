@@ -1329,14 +1329,8 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
         while(index<detectedMonsterCollisionMonsterType.size())
         {
             if(!detectedMonsterCollisionMonsterType.at(index).isEmpty())
-            {
                 if(!monsterTypeList.contains(detectedMonsterCollisionMonsterType.at(index)))
-                {
-                    const QList<MapMonster> &monsterList=loadSpecificMonster(fileName,detectedMonsterCollisionMonsterType.at(index));
-                    if(!monsterList.isEmpty())
-                        monsterTypeList[detectedMonsterCollisionMonsterType.at(index)]=monsterList;
-                }
-            }
+                    monsterTypeList[detectedMonsterCollisionMonsterType.at(index)]=loadSpecificMonster(fileName,detectedMonsterCollisionMonsterType.at(index));
             index++;
         }
     }

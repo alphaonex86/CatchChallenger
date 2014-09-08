@@ -2551,7 +2551,7 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_buff=QStringLiteral("DELETE FROM `monster_buff` WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill=QStringLiteral("DELETE FROM `monster_skill` WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM `bot_already_beaten` WHERE `character`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM `character` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM `character` WHERE `id`=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM `item` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM `item_warehouse` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `character`=%1");
@@ -2618,7 +2618,7 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM character WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM character WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM item WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
@@ -2687,7 +2687,7 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM character WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM character WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM item WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");

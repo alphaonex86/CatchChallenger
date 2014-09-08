@@ -529,7 +529,7 @@ bool ClientFightEngine::doTheOtherMonsterTurn()
     return true;
 }
 
-void ClientFightEngine::levelUp(const quint8 &level, const quint8 &monsterIndex)
+void ClientFightEngine::levelUp(const quint8 &level, const quint8 &monsterIndex)//call after done the level
 {
     CommonFightEngine::levelUp(level,monsterIndex);
     const PlayerMonster &monster=public_and_private_informations.playerMonster.at(monsterIndex);

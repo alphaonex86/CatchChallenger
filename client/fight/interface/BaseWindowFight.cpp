@@ -99,15 +99,19 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                 ui->monsterDetailsGender->setPixmap(QPixmap());
                 ui->monsterDetailsGender->setToolTip(QString());
             }
+            quint32 maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
             ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
             ui->monsterDetailsStatHeal->setText(tr("Heal: %1/%2").arg(monster.hp).arg(stat.hp));
             ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
-            ui->monsterDetailsStatXp->setText(tr("Xp: %1").arg(monster.remaining_xp));
+            ui->monsterDetailsStatXp->setText(tr("Xp: %1/%2").arg(monster.remaining_xp).arg(maxXp));
             ui->monsterDetailsStatAttack->setText(tr("Attack: %1").arg(stat.attack));
             ui->monsterDetailsStatDefense->setText(tr("Defense: %1").arg(stat.defense));
-            ui->monsterDetailsStatXpBar->setValue(monster.remaining_xp);
+            ui->monsterDetailsStatXpBar->setMaximum(maxXp);
+            if(monster.remaining_xp<=maxXp)
+                ui->monsterDetailsStatXpBar->setValue(monster.remaining_xp);
+            else
+                ui->monsterDetailsStatXpBar->setValue(maxXp);
             ui->monsterDetailsStatXpBar->repaint();
-            ui->monsterDetailsStatXpBar->setMaximum(monsterGeneralInfo.level_to_xp.at(monster.level-1));
             ui->monsterDetailsStatAttackSpe->setText(tr("Special attack: %1").arg(stat.special_attack));
             ui->monsterDetailsStatDefenseSpe->setText(tr("Special defense: %1").arg(stat.special_defense));
             if(CommonSettings::commonSettings.useSP)
