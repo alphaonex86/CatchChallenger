@@ -5,6 +5,9 @@
 #include <QStandardPaths>
 #include <QNetworkProxy>
 #include <QCoreApplication>
+#include <QSslKey>
+#include <QInputDialog>
+#include <QSettings>
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -25,11 +28,48 @@
 #include "../base/LanguagesSelect.h"
 #include "../base/Api_client_real.h"
 #include "../base/Api_client_virtual.h"
+#include "../base/SslCert.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
+    toQuit(false),
     ui(new Ui::MainWindow)
 {
+    static bool crackedVersion=false;
+    if(!crackedVersion)
+    {
+        while(1)
+        {
+            QSettings keySettings;
+            QString key;
+            if(keySettings.contains(QStringLiteral("key")))
+            {
+                QCryptographicHash hash(QCryptographicHash::Sha224);
+                hash.addData(keySettings.value(QStringLiteral("key")).toString().toUtf8());
+                const QByteArray &result=hash.result();
+                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
+                    break;
+            }
+            key=QInputDialog::getText(this,tr("Key"),tr("Give the key of this software, more information on <a href=\"http://catchchallenger.first-world.info/\">catchchallenger.first-world.info</a>"));
+            if(key.isEmpty())
+            {
+                QCoreApplication::quit();
+                toQuit=true;
+                return;
+            }
+            {
+                QCryptographicHash hash(QCryptographicHash::Sha224);
+                hash.addData(key.toUtf8());
+                const QByteArray &result=hash.result();
+                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
+                {
+                    keySettings.setValue(QStringLiteral("key"),key);
+                    break;
+                }
+            }
+        }
+    }
+
     qDebug() << "QStandardPaths::writableLocation(QStandardPaths::DataLocation)" << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     serverMode=ServerMode_None;
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
@@ -938,8 +978,84 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     displayServerList();
 }
 
+void MainWindow::saveCert(const QString &file)
+{
+    QFile certFile(file);
+    if(realSslSocket->mode()==QSslSocket::UnencryptedMode)
+        certFile.remove();
+    else
+    {
+        if(certFile.open(QIODevice::WriteOnly))
+        {
+            qDebug() << "Register the certificate into" << certFile.fileName();
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::Organization);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::CommonName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::LocalityName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::OrganizationalUnitName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::CountryName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::StateOrProvinceName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::EmailAddress);
+            certFile.write(realSslSocket->peerCertificate().publicKey().toPem());
+            certFile.close();
+        }
+    }
+}
+
 void MainWindow::connectTheExternalSocket()
 {
+    //check the certificat
+    {
+        QDir datapack(QStringLiteral("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
+        datapack.mkpath(datapack.absolutePath());
+        QFile certFile;
+        if(customServerConnexion.contains(selectedServer))
+        {
+            if(!serverConnexion.value(selectedServer)->name.isEmpty())
+                 certFile.setFileName(datapack.absolutePath()+QStringLiteral("/")+serverConnexion.value(selectedServer)->name);
+            else
+                 certFile.setFileName(datapack.absolutePath()+QStringLiteral("/%1-%2").arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
+        }
+        else
+            certFile.setFileName(datapack.absolutePath()+QStringLiteral("/Xml-%1").arg(serverConnexion.value(selectedServer)->unique_code));
+        if(certFile.exists())
+        {
+            if(realSslSocket->mode()==QSslSocket::UnencryptedMode)
+            {
+                SslCert sslCert(this);
+                sslCert.exec();
+                if(sslCert.validated())
+                    saveCert(certFile.fileName());
+                else
+                {
+                    realSslSocket->disconnectFromHost();
+                    return;
+                }
+            }
+            else if(certFile.open(QIODevice::ReadOnly))
+            {
+                if(realSslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
+                {
+                    SslCert sslCert(this);
+                    sslCert.exec();
+                    if(sslCert.validated())
+                        saveCert(certFile.fileName());
+                    else
+                    {
+                        realSslSocket->disconnectFromHost();
+                        return;
+                    }
+                }
+                certFile.close();
+            }
+        }
+        else
+        {
+            if(realSslSocket->mode()!=QSslSocket::UnencryptedMode)
+                saveCert(certFile.fileName());
+
+        }
+    }
+    //continue the normal procedure
     socket=new CatchChallenger::ConnectedSocket(realSslSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())

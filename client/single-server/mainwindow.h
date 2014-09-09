@@ -35,6 +35,7 @@ private slots:
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();
+    void saveCert(const QString &file);
     void connectTheExternalSocket();
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);

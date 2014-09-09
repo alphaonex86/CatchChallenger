@@ -6,8 +6,10 @@
 #include "../base/InternetUpdater.h"
 #include "../base/Audio.h"
 #include "../../general/base/CommonSettings.h"
+#include "../base/SslCert.h"
 #include <QNetworkProxy>
 #include <QStandardPaths>
+#include <QSslKey>
 
 #ifdef Q_OS_LINUX
 #include <sys/types.h>
@@ -320,8 +322,76 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     realSslSocket->connectToHost(host,port);
 }
 
+void MainWindow::saveCert(const QString &file)
+{
+    QFile certFile(file);
+    if(realSslSocket->mode()==QSslSocket::UnencryptedMode)
+        certFile.remove();
+    else
+    {
+        if(certFile.open(QIODevice::WriteOnly))
+        {
+            qDebug() << "Register the certificate into" << certFile.fileName();
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::Organization);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::CommonName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::LocalityName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::OrganizationalUnitName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::CountryName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::StateOrProvinceName);
+            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::EmailAddress);
+            certFile.write(realSslSocket->peerCertificate().publicKey().toPem());
+            certFile.close();
+        }
+    }
+}
+
 void MainWindow::connectTheExternalSocket()
 {
+    //check the certificat
+    {
+        QDir datapack(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+        datapack.mkpath(datapack.absolutePath());
+        QFile certFile;
+        certFile.setFileName(datapack.absolutePath()+QStringLiteral("/pub.key"));
+        if(certFile.exists())
+        {
+            if(realSslSocket->mode()==QSslSocket::UnencryptedMode)
+            {
+                SslCert sslCert(this);
+                sslCert.exec();
+                if(sslCert.validated())
+                    saveCert(certFile.fileName());
+                else
+                {
+                    realSslSocket->disconnectFromHost();
+                    return;
+                }
+            }
+            else if(certFile.open(QIODevice::ReadOnly))
+            {
+                if(realSslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
+                {
+                    SslCert sslCert(this);
+                    sslCert.exec();
+                    if(sslCert.validated())
+                        saveCert(certFile.fileName());
+                    else
+                    {
+                        realSslSocket->disconnectFromHost();
+                        return;
+                    }
+                }
+                certFile.close();
+            }
+        }
+        else
+        {
+            if(realSslSocket->mode()!=QSslSocket::UnencryptedMode)
+                saveCert(certFile.fileName());
+
+        }
+    }
+    //continue the normal procedure
     socket=new CatchChallenger::ConnectedSocket(realSslSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     if(!proxy_dns_or_ip.isEmpty())
