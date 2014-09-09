@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
 
     LanguagesSelect::languagesSelect=new LanguagesSelect();
     MainWindow w;
+    if(w.toQuit)
+        return 523;
     w.show();
     return a.exec();
 }

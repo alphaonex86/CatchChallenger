@@ -53,12 +53,14 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    bool toQuit;
 protected:
     void changeEvent(QEvent *e);
 private slots:
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();
+    void saveCert(const QString &file);
     void connectTheExternalSocket();
     QString serverToDatapachPath(ListEntryEnvolued *selectedServer) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
