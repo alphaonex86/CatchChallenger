@@ -1,7 +1,7 @@
 include(../tiled/tiled.pri)
 
 LIBS += -lvlc
-QT       += script multimedia opengl widgets qml quick
+QT       += script opengl widgets qml quick
 
 win32:CONFIG   += console
 
