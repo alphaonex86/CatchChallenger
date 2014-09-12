@@ -8,7 +8,9 @@ public:
     enum Type
     {
         Server,
+        UnixServer,
         Client,
+        UnixClient,
         Timer,
         Database
     };

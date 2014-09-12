@@ -157,14 +157,14 @@ bool EpollSslServer::tryListen()
     s = EpollSocket::make_non_blocking(sfd);
     if(s == -1)
     {
-        sfd=-1;
+        close();
         std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
     yes=1;
     if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
     {
-        sfd=-1;
+        close();
         std::cerr << "Can't put in reuse" << std::endl;
         return false;
     }
@@ -172,7 +172,7 @@ bool EpollSslServer::tryListen()
     s = listen(sfd, SOMAXCONN);
     if(s == -1)
     {
-        sfd=-1;
+        close();
         std::cerr << "Listen error" << std::endl;
         return false;
     }
@@ -190,7 +190,7 @@ bool EpollSslServer::tryListen()
     s = Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event);
     if(s == -1)
     {
-        sfd=-1;
+        close();
         std::cerr << "epoll_ctl error" << std::endl;
         return false;
     }
