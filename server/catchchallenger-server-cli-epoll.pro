@@ -8,6 +8,7 @@ QT       -= gui widgets
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
+DEFINES += SERVERBENCHMARK
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 
@@ -25,8 +26,11 @@ SOURCES += main-epoll.cpp \
     epoll/EpollSocket.cpp \
     epoll/EpollClient.cpp \
     epoll/EpollServer.cpp \
+    epoll/EpollUnixSocketServer.cpp \
     epoll/EpollSslClient.cpp \
     epoll/EpollSslServer.cpp \
+    epoll/EpollUnixSocketClient.cpp \
+    epoll/EpollUnixSocketClientFinal.cpp \
     epoll/Epoll.cpp \
     epoll/EpollTimer.cpp \
     epoll/db/EpollPostgresql.cpp \
@@ -41,8 +45,11 @@ SOURCES += main-epoll.cpp \
 HEADERS += epoll/EpollSocket.h \
     epoll/EpollClient.h \
     epoll/EpollServer.h \
+    epoll/EpollUnixSocketServer.h \
     epoll/EpollSslClient.h \
     epoll/EpollSslServer.h \
+    epoll/EpollUnixSocketClient.h \
+    epoll/EpollUnixSocketClientFinal.h \
     epoll/Epoll.h \
     epoll/BaseClassSwitch.h \
     epoll/EpollTimer.h \

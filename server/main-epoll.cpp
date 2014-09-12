@@ -9,7 +9,9 @@
 #include "epoll/EpollSslClient.h"
 #include "epoll/EpollSslServer.h"
 #include "epoll/EpollClient.h"
+#include "epoll/EpollUnixSocketClientFinal.h"
 #include "epoll/EpollServer.h"
+#include "epoll/EpollUnixSocketServer.h"
 #include "epoll/Epoll.h"
 #include "epoll/EpollTimer.h"
 #include "epoll/timer/TimerCityCapture.h"
@@ -310,6 +312,7 @@ int main(int argc, char *argv[])
     #else
     server=new EpollServer();
     #endif
+
     send_settings();
 
     if(!GlobalServerData::serverPrivateVariables.db.syncConnect(
@@ -324,6 +327,13 @@ int main(int argc, char *argv[])
 
     if(!server->tryListen())
         return EPOLLERR;
+
+    EpollUnixSocketServer unixServer;
+    if(!unixServer.tryListen())
+    {
+        server->close();
+        return EPOLLERR;
+    }
 
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
@@ -476,12 +486,27 @@ int main(int argc, char *argv[])
     encodingBuff[0]=0x00;
     #endif
 
-    int numberOfConnectedClient=0;
+    int numberOfConnectedClient=0,numberOfConnectedUnixClient=0;
     /* The event loop */
     int number_of_events, i;
+    bool startedTs=false;
     while(1)
     {
+        #ifdef SERVERBENCHMARK
+        if(startedTs)
+        {
+            timespec ts;
+            ::clock_gettime(CLOCK_REALTIME, &ts);
+            EpollUnixSocketClientFinal::timeUsed+=ts.tv_nsec-EpollUnixSocketClientFinal::ts.tv_nsec;
+            EpollUnixSocketClientFinal::timeUsed+=ts.tv_sec*1000000-EpollUnixSocketClientFinal::ts.tv_sec*1000000;
+        }
+        #endif
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        #ifdef SERVERBENCHMARK
+        if(!startedTs)
+            startedTs=true;
+        ::clock_gettime(CLOCK_REALTIME, &EpollUnixSocketClientFinal::ts);
+        #endif
         for(i = 0; i < number_of_events; i++)
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
@@ -620,8 +645,81 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
+                case BaseClassSwitch::Type::UnixServer:
+                {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    timerDisplayEventBySeconds.addServerCount();
+                    #endif
+                    if((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
+                    {
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        std::cerr << "unix server epoll error" << std::endl;
+                        continue;
+                    }
+                    /* We have a notification on the listening socket, which
+                    means one or more incoming connections. */
+                    while(1)
+                    {
+                        sockaddr in_addr;
+                        socklen_t in_len = sizeof(in_addr);
+                        const int &infd = unixServer.accept(&in_addr, &in_len);
+                        if(infd == -1)
+                        {
+                            if((errno == EAGAIN) ||
+                            (errno == EWOULDBLOCK))
+                            {
+                                /* We have processed all incoming
+                                connections. */
+                                break;
+                            }
+                            else
+                            {
+                                std::cout << "connexion accepted" << std::endl;
+                                break;
+                            }
+                        }
+
+                        int s = EpollSocket::make_non_blocking(infd);
+                        if(s == -1)
+                            std::cerr << "unable to make to socket non blocking" << std::endl;
+                        else
+                        {
+                            EpollUnixSocketClientFinal *client=new EpollUnixSocketClientFinal(infd);
+
+                            epoll_event event;
+                            event.data.ptr = client;
+                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                            s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            if(s == -1)
+                            {
+                                std::cerr << "epoll_ctl on socket error" << std::endl;
+                                delete client;
+                            }
+                            if(numberOfConnectedUnixClient==0)
+                            {
+                                timespec ts;
+                                ::clock_gettime(CLOCK_REALTIME, &ts);
+                                EpollUnixSocketClientFinal::timeUsed=0;
+                                EpollUnixSocketClientFinal::timeUsedForTimer=0;
+                                EpollUnixSocketClientFinal::timeUsedForUser=0;
+                                EpollUnixSocketClientFinal::timeUsedForDatabase=0;
+                            }
+                            numberOfConnectedUnixClient++;
+                            client->parseIncommingData();
+                        }
+                    }
+                    continue;
+                }
+                break;
                 case BaseClassSwitch::Type::Client:
                 {
+                    #ifdef SERVERBENCHMARK
+                    timespec ts;
+                    ::clock_gettime(CLOCK_REALTIME, &ts);
+                    #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     timerDisplayEventBySeconds.addClientCount();
                     #endif
@@ -653,17 +751,68 @@ int main(int argc, char *argv[])
                         client->disconnectClient();
                         delete client;//disconnected, remove the object
                     }
+                    #ifdef SERVERBENCHMARK
+                    timespec ts_new;
+                    ::clock_gettime(CLOCK_REALTIME, &ts_new);
+                    EpollUnixSocketClientFinal::timeUsedForUser+=ts_new.tv_nsec-ts.tv_nsec;
+                    EpollUnixSocketClientFinal::timeUsedForUser+=(unsigned long long)ts_new.tv_sec*1000000-(unsigned long long)ts.tv_sec*1000000;
+                    #endif
+                }
+                break;
+                case BaseClassSwitch::Type::UnixClient:
+                {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    timerDisplayEventBySeconds.addClientCount();
+                    #endif
+                    EpollUnixSocketClientFinal *client=static_cast<EpollUnixSocketClientFinal *>(events[i].data.ptr);
+                    if((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
+                    {
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        numberOfConnectedUnixClient--;
+                        client->close();
+                        delete client;
+                        continue;
+                    }
+                    //ready to read
+                    if(events[i].events & EPOLLIN)
+                        client->parseIncommingData();
+                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                    {
+                        numberOfConnectedUnixClient--;
+                        client->close();
+                        delete client;//disconnected, remove the object
+                    }
                 }
                 break;
                 case BaseClassSwitch::Type::Timer:
+                {
+                    #ifdef SERVERBENCHMARK
+                    timespec ts;
+                    ::clock_gettime(CLOCK_REALTIME, &ts);
+                    #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     timerDisplayEventBySeconds.addTimerCount();
                     #endif
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
+                    #ifdef SERVERBENCHMARK
+                    timespec ts_new;
+                    ::clock_gettime(CLOCK_REALTIME, &ts_new);
+                    EpollUnixSocketClientFinal::timeUsedForTimer+=ts_new.tv_nsec-ts.tv_nsec;
+                    EpollUnixSocketClientFinal::timeUsedForTimer+=(unsigned long long)ts_new.tv_sec*1000000-(unsigned long long)ts.tv_sec*1000000;
+                    #endif
+                }
                 break;
                 case BaseClassSwitch::Type::Database:
                 {
+                    #ifdef SERVERBENCHMARK
+                    timespec ts;
+                    ::clock_gettime(CLOCK_REALTIME, &ts);
+                    #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
@@ -680,6 +829,12 @@ int main(int argc, char *argv[])
                         else
                             std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
                     }
+                    #ifdef SERVERBENCHMARK
+                    timespec ts_new;
+                    ::clock_gettime(CLOCK_REALTIME, &ts_new);
+                    EpollUnixSocketClientFinal::timeUsedForDatabase+=ts_new.tv_nsec-ts.tv_nsec;
+                    EpollUnixSocketClientFinal::timeUsedForDatabase+=(unsigned long long)ts_new.tv_sec*1000000-(unsigned long long)ts.tv_sec*1000000;
+                    #endif
                 }
                 break;
                 default:

@@ -69,7 +69,7 @@ bool EpollServer::tryListen()
     {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if(sfd == -1)
-        continue;
+            continue;
 
         s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
         if (s == 0)
@@ -111,14 +111,14 @@ bool EpollServer::tryListen()
     s = EpollSocket::make_non_blocking(sfd);
     if(s == -1)
     {
-        sfd=-1;
+        close();
         std::cerr << "Can't put in non blocking" << std::endl;
         return false;
     }
     yes=1;
     if(setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)))
     {
-        sfd=-1;
+        close();
         std::cerr << "Can't put in reuse" << std::endl;
         return false;
     }
@@ -126,7 +126,7 @@ bool EpollServer::tryListen()
     s = listen(sfd, SOMAXCONN);
     if(s == -1)
     {
-        sfd=-1;
+        close();
         std::cerr << "Unable to listen" << std::endl;
         return false;
     }
@@ -143,7 +143,7 @@ bool EpollServer::tryListen()
     s = Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event);
     if(s == -1)
     {
-        sfd=-1;
+        close();
         std::cerr << "epoll_ctl error" << std::endl;
         return false;
     }
