@@ -11,8 +11,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        MainWindow.cpp
-HEADERS  += MainWindow.h
+        MainWindow.cpp \
+    ../bot/MultipleBotConnection.cpp
+HEADERS  += MainWindow.h \
+    ../bot/MultipleBotConnection.h
 
 FORMS    += MainWindow.ui
 

@@ -7,7 +7,7 @@
 #include <QNetworkProxy>
 #include <QMessageBox>
 
-#define CATCHCHALLENGER_BOTCONNECTION_VERSION "0.0.0.2"
+#define CATCHCHALLENGER_BOTCONNECTION_VERSION "0.0.0.3"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -20,15 +20,11 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
     connect(&moveTimer,&QTimer::timeout,this,&MainWindow::doMove);
-    connect(&moveTimer,&QTimer::timeout,this,&MainWindow::doText);
-    connect(&moveTimer,&QTimer::timeout,this,&MainWindow::detectSlowDown);
+    connect(&textTimer,&QTimer::timeout,this,&MainWindow::doText);
+    connect(&slowDownTimer,&QTimer::timeout,this,&MainWindow::detectSlowDown);
     moveTimer.start(1000);
     textTimer.start(1000);
     slowDownTimer.start(200);
-    number=1;
-    numberOfBotConnected=0;
-    numberOfSelectedCharacter=0;
-    haveEnError=false;
 
     if(settings.contains("login"))
         ui->login->setText(settings.value("login").toString());
@@ -67,9 +63,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::disconnected()
 {
-    qDebug() << "disconnected()";
-    haveEnError=true;
-    numberOfBotConnected--;
+    MultipleBotConnection::disconnected();
     ui->numberOfBotConnected->setText(tr("Number of bot connected: %1").arg(numberOfBotConnected));
 
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());
@@ -97,26 +91,28 @@ void MainWindow::lastReplyTime(const quint32 &time)
 
 void MainWindow::tryLink(CatchChallengerClient * client)
 {
-    numberOfBotConnected++;
+    MultipleBotConnection::tryLink(client);
     ui->numberOfBotConnected->setText(tr("Number of bot connected: %1").arg(numberOfBotConnected));
+}
 
-    connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
-    if(!ui->multipleConnexion->isChecked())
-    {
-        client->login=ui->login->text();
-        client->pass=ui->pass->text();
-        client->api->sendProtocol();
-    }
-    else
-    {
-        QString login=ui->login->text();
-        QString pass=ui->pass->text();
-        login.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
-        pass.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
-        client->login=login;
-        client->pass=login;
-        client->api->sendProtocol();
-    }
+QString MainWindow::login()
+{
+    return ui->login->text();
+}
+
+QString MainWindow::pass()
+{
+    return ui->pass->text();
+}
+
+bool MainWindow::multipleConnexion()
+{
+    return ui->multipleConnexion->isChecked();
+}
+
+bool MainWindow::autoCreateCharacter()
+{
+    return ui->autoCreateCharacter->isChecked();
 }
 
 void MainWindow::protocol_is_good()
@@ -261,24 +257,17 @@ void MainWindow::detectSlowDown()
 //quint32,QString,quint16,quint16,quint8,quint16
 void MainWindow::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
-    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
     if(senderObject==NULL)
         return;
 
+    MultipleBotConnection::insert_player(apiToCatchChallengerClient.value(senderObject),player,mapId,x,y,direction);
     ui->statusBar->showMessage(tr("On the map"));
-    Q_UNUSED(mapId);
-    Q_UNUSED(x);
-    Q_UNUSED(y);
-    if(player.simplifiedId==apiToCatchChallengerClient[senderObject]->api->getId())
-        apiToCatchChallengerClient[senderObject]->direction=direction;
-    apiToCatchChallengerClient[senderObject]->have_informations=true;
 }
 
 void MainWindow::haveCharacter()
 {
-    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
-    if(senderObject==NULL)
-        return;
+    MultipleBotConnection::haveCharacter();
     ui->statusBar->showMessage(QStringLiteral("Now on the map"));
 }
 
@@ -287,8 +276,6 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
         return;
-
-    apiToCatchChallengerClient[senderObject]->charactersList=characterEntryList;
 
     ui->characterList->clear();
     if(!ui->multipleConnexion->isChecked())
@@ -303,6 +290,8 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
     }
     ui->characterList->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
     ui->characterSelect->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
+
+    apiToCatchChallengerClient[senderObject]->charactersList=characterEntryList;
     if(apiToCatchChallengerClient.size()==1)
     {
         if(!CommonSettings::commonSettings.chat_allow_all && !CommonSettings::commonSettings.chat_allow_local)
@@ -316,37 +305,7 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
         apiToCatchChallengerClient[senderObject]->api->sendDatapackContent();
         return;
     }
-    if(apiToCatchChallengerClient[senderObject]->charactersList.count()<=0)
-    {
-        qDebug() << apiToCatchChallengerClient[senderObject]->login << "have not character";
-        if(ui->autoCreateCharacter->isChecked())
-        {
-            qDebug() << apiToCatchChallengerClient[senderObject]->login << "create new character";
-            quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-            QString pseudo="bot"+CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettings::commonSettings.max_pseudo_size-3);
-            quint32 skinId;
-            const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
-            if(!profile.forcedskin.isEmpty())
-                skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
-            else
-                skinId=rand()%skinsList.size();
-            apiToCatchChallengerClient[senderObject]->api->addCharacter(profileIndex,pseudo,skinId);
-        }
-        return;
-    }
-    if(ui->multipleConnexion->isChecked())
-    {
-        const quint32 &character_id=apiToCatchChallengerClient[senderObject]->charactersList.at(rand()%apiToCatchChallengerClient[senderObject]->charactersList.size()).character_id;
-        if(!characterOnMap.contains(character_id))
-        {
-            characterOnMap << character_id;
-            if(!apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id))
-                qDebug() << "Unable to do automatic character selection:" << character_id;
-            else
-                qDebug() << "Automatic select character:" << character_id;
-        }
-        return;
-    }
+    MultipleBotConnection::logged(characterEntryList);
 }
 
 void MainWindow::haveTheDatapack()
@@ -355,58 +314,11 @@ void MainWindow::haveTheDatapack()
     if(senderObject==NULL)
         return;
 
-    //load the datapack
-    {
-        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
-        //load the skins list
-        QDir dir(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/skin/fighter/"));
-        QFileInfoList entryList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
-        int index=0;
-        while(index<entryList.size())
-        {
-            skinsList << entryList.at(index);
-            index++;
-        }
-    }
+    MultipleBotConnection::haveTheDatapack(apiToCatchChallengerClient.value(senderObject));
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.isEmpty())
     {
         qDebug() << "Profile list is empty";
         return;
-    }
-
-    if(apiToCatchChallengerClient[senderObject]->charactersList.count()<=0)
-    {
-        qDebug() << apiToCatchChallengerClient[senderObject]->login << "have not character";
-        if(ui->autoCreateCharacter->isChecked())
-        {
-            qDebug() << apiToCatchChallengerClient[senderObject]->login << "create new character";
-            ui->characterSelect->setEnabled(false);
-            ui->characterList->setEnabled(false);
-            quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-            QString pseudo="bot"+CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettings::commonSettings.max_pseudo_size-3);
-            quint32 skinId;
-            const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
-            if(!profile.forcedskin.isEmpty())
-                skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
-            else
-                skinId=rand()%skinsList.size();
-            apiToCatchChallengerClient[senderObject]->api->addCharacter(profileIndex,pseudo,skinId);
-        }
-        return;
-    }
-    ifMultipleConnexionStartCreation();
-    //the actual client
-    const quint32 &character_id=apiToCatchChallengerClient[senderObject]->charactersList.at(rand()%apiToCatchChallengerClient[senderObject]->charactersList.size()).character_id;
-    if(!characterOnMap.contains(character_id))
-    {
-        characterOnMap << character_id;
-        if(ui->multipleConnexion->isChecked())
-        {
-            if(!apiToCatchChallengerClient[senderObject]->api->selectCharacter(character_id))
-                qDebug() << "Unable to select character after datpack loading:" << character_id;
-            else
-                qDebug() << "Select character after datpack loading:" << character_id;
-        }
     }
 }
 
@@ -639,29 +551,8 @@ void MainWindow::createClient()
 
 void MainWindow::connectTheExternalSocket(CatchChallengerClient * client)
 {
-    client->socket=new CatchChallenger::ConnectedSocket(client->sslSocket);
-    client->api=new CatchChallenger::Api_client_real(client->socket,false);
-    client->api->setDatapackPath(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
-    connect(client->api,&CatchChallenger::Api_client_real::insert_player,            this,&MainWindow::insert_player);
     connect(client->api,&CatchChallenger::Api_client_real::new_chat_text,            this,&MainWindow::new_chat_text,Qt::QueuedConnection);
-    connect(client->api,&CatchChallenger::Api_client_real::haveCharacter,            this,&MainWindow::haveCharacter);
-    connect(client->api,&CatchChallenger::Api_client_real::logged,                   this,&MainWindow::logged);
-    connect(client->api,&CatchChallenger::Api_client_real::have_current_player_info, this,&MainWindow::have_current_player_info);
-    connect(client->api,&CatchChallenger::Api_client_real::newError,                 this,&MainWindow::newError);
-    connect(client->api,&CatchChallenger::Api_client_real::newCharacterId,           this,&MainWindow::newCharacterId);
-    connect(client->api,&CatchChallenger::Api_client_real::lastReplyTime,            this,&MainWindow::lastReplyTime);
-    connect(client->socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),                    this,&MainWindow::newSocketError);
-    connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MainWindow::disconnected);
-    if(apiToCatchChallengerClient.isEmpty())
-        connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,      this,&MainWindow::haveTheDatapack);
-    client->haveShowDisconnectionReason=false;
-    client->have_informations=false;
-    client->number=number;
-    client->selectedCharacter=false;
-    number++;
-    apiToCatchChallengerClient[client->api]=client;
-    connectedSocketToCatchChallengerClient[client->socket]=client;
-    tryLink(client);
+    MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * client);
 }
 
 void MainWindow::sslErrors(const QList<QSslError> &errors)
