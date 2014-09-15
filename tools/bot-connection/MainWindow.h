@@ -12,53 +12,23 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../../general/base/QFakeSocket.h"
-#include "../../general/base/ConnectedSocket.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../client/base/Api_client_real.h"
+#include "../bot/MultipleBotConnection.h"
 
 namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
+class MainWindow : public QMainWindow, public MultipleBotConnection
 {
     Q_OBJECT
-
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 private:
-    struct CatchChallengerClient
-    {
-        QSslSocket *sslSocket;
-        CatchChallenger::ConnectedSocket *socket;
-        CatchChallenger::Api_client_real *api;
-        bool have_informations;
-        bool haveShowDisconnectionReason;
-        CatchChallenger::Direction direction;
-        QList<CatchChallenger::CharacterEntry> charactersList;
-        quint16 number;
-        QString login;
-        QString pass;
-        bool selectedCharacter;
-        bool haveFirstHeader;
-    };
-    QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
-    QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
-    QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
-
-    QTimer connectTimer;
     QSettings settings;
     QTimer moveTimer;
     QTimer textTimer;
     QTimer slowDownTimer;
-    QFileInfoList skinsList;
-    quint16 number;
-    QSet<quint32> characterOnMap;
-    quint16 numberOfBotConnected;
-    quint16 numberOfSelectedCharacter;
-    bool haveEnError;
 public slots:
     void doMove();
     void doText();
@@ -86,6 +56,11 @@ private slots:
     void sslHandcheckIsFinished();
     void readForFirstHeader();
     void connectTheExternalSocket(CatchChallengerClient *client);
+
+    QString login();
+    QString pass();
+    bool multipleConnexion();
+    bool autoCreateCharacter();
 signals:
     void isDisconnected();
 private:
