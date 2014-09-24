@@ -13,10 +13,13 @@
 
 using namespace CatchChallenger;
 
+QThread DatapackChecksum::thread;
+
 DatapackChecksum::DatapackChecksum()
 {
-    start();
-    moveToThread(this);
+    if(!thread.isRunning())
+        thread.start();
+    moveToThread(&thread);
 }
 
 DatapackChecksum::~DatapackChecksum()

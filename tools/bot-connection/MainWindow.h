@@ -12,13 +12,13 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../bot/MultipleBotConnection.h"
+#include "../bot/MultipleBotConnectionImplFoprGui.h"
 
 namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow, public MultipleBotConnection
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
@@ -26,41 +26,23 @@ public:
     ~MainWindow();
 private:
     QSettings settings;
-    QTimer moveTimer;
-    QTimer textTimer;
     QTimer slowDownTimer;
-public slots:
-    void doMove();
-    void doText();
-    void detectSlowDown();
-    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
-private slots:
-    void createClient();
-    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    void haveCharacter();
-    void logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList);
-    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-    void newError(QString error,QString detailedError);
-    void newSocketError(QAbstractSocket::SocketError error);
-    void disconnected();
-    void lastReplyTime(const quint32 &time);
-    void tryLink(CatchChallengerClient *client);
-    void protocol_is_good();
-    void on_connect_clicked();
-    void sslErrors(const QList<QSslError> &errors);
-    void on_characterSelect_clicked();
-    void haveTheDatapack();
-    void ifMultipleConnexionStartCreation();
-    void connectTimerSlot();
-    void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
-    void sslHandcheckIsFinished();
-    void readForFirstHeader();
-    void connectTheExternalSocket(CatchChallengerClient *client);
 
-    QString login();
-    QString pass();
-    bool multipleConnexion();
-    bool autoCreateCharacter();
+    MultipleBotConnectionImplFoprGui multipleBotConnexion;
+public slots:
+    void detectSlowDown(QString text);
+private slots:
+    void lastReplyTime(const quint32 &time);
+    void on_connect_clicked();
+    void on_characterSelect_clicked();
+    void logged(const QList<CatchChallenger::CharacterEntry> &characterEntryList,bool haveTheDatapack);
+    void statusError(QString error);
+    void display_numberOfBotConnected(quint16 numberOfBotConnected);
+    void display_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter);
+    void on_move_toggled(bool checked);
+    void on_randomText_toggled(bool checked);
+    void on_chatRandomReply_toggled(bool checked);
+    void on_bugInDirection_toggled(bool checked);
 signals:
     void isDisconnected();
 private:

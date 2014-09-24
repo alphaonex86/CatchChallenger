@@ -485,14 +485,17 @@ void Api_client_real::test_mirror()
         qnam4.setProxy(QNetworkProxy::applicationProxy());
     }
     QNetworkReply *reply;
+    const QStringList &httpDatapackMirrorList=CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+    if(index_mirror>=httpDatapackMirrorList.size())
+        return;
     if(!datapackTarXz)
     {
-        QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("pack/datapack.tar.xz"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("pack/datapack.tar.xz"));
         reply = qnam.get(networkRequest);
     }
     else
     {
-        QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("datapack-list.txt"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("datapack-list.txt"));
         reply = qnam.get(networkRequest);
     }
     if(reply->error()==QNetworkReply::NoError)
@@ -571,7 +574,7 @@ void Api_client_real::decodedIsFinish()
     }
 }
 
-void Api_client_real::mirrorTryNext()
+bool Api_client_real::mirrorTryNext()
 {
     if(!datapackTarXz)
     {
@@ -590,11 +593,15 @@ void Api_client_real::mirrorTryNext()
                 index_mirror=0;
             }
             else
+            {
                 newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
+                return false;
+            }
         }
         else
             test_mirror();
     }
+    return true;
 }
 
 void Api_client_real::httpFinishedForDatapackList()

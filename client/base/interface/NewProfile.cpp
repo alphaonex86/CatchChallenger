@@ -7,10 +7,10 @@
 #include <QDomElement>
 #include <QMessageBox>
 
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/DatapackGeneralLoader.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/DebugClass.h"
+#include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/DatapackGeneralLoader.h"
+#include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/DebugClass.h"
 #include "../../base/interface/DatapackClientLoader.h"
 #include "../../base/LanguagesSelect.h"
 
