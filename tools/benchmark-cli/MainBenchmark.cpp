@@ -29,6 +29,7 @@ MainBenchmark::MainBenchmark() :
     connect(&socket,&QLocalSocket::readyRead,this,&MainBenchmark::readyRead,Qt::QueuedConnection);
 
     connect(&process,static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error),this,&MainBenchmark::processError,Qt::QueuedConnection);
+    //connect(&process,static_cast<void(QProcess::*)(QProcess::ProcessState)>(&QProcess::stateChanged),this,&MainBenchmark::processStateChanged,Qt::QueuedConnection);
     connect(&process,&QProcess::readyReadStandardOutput,this,&MainBenchmark::readyReadStandardOutput,Qt::QueuedConnection);
     connect(&process,&QProcess::readyReadStandardError,this,&MainBenchmark::readyReadStandardError,Qt::QueuedConnection);
 
@@ -66,10 +67,12 @@ MainBenchmark::~MainBenchmark()
 
 void MainBenchmark::init()
 {
+    qDebug() << "init done";
     if(QFile(server).exists())
     {
         process.setProgram(server);
         process.start();
+        qDebug() << "init error:" << process.errorString();
     }
     else
     {
@@ -81,6 +84,15 @@ void MainBenchmark::init()
 void MainBenchmark::processError(QProcess::ProcessError error)
 {
     Q_UNUSED(error);
+    qDebug() << "QProcess::ProcessError" << error;
+}
+
+void MainBenchmark::processStateChanged(QProcess::ProcessState stateChanged)
+{
+    Q_UNUSED(stateChanged);
+    qDebug() << "QProcess::ProcessState" << stateChanged;
+    if(stateChanged==QProcess::NotRunning)
+        QCoreApplication::quit();
 }
 
 void MainBenchmark::updateUserTime()
@@ -102,7 +114,10 @@ QString MainBenchmark::convertUsToString(quint64 us)
 void MainBenchmark::readyReadStandardError()
 {
     if(!serverStarted)
-        if(QString::fromLocal8Bit(process.readAllStandardError()).contains(QStringLiteral("Waiting connection on port ")))
+    {
+        const QString &content=QString::fromLocal8Bit(process.readAllStandardError());
+        qDebug() << content;
+        if(content.contains(QStringLiteral("Waiting connection on port ")))
         {
             socket.connectToServer("/tmp/catchchallenger-server.sock");
             socket.waitForConnected(0);
@@ -114,12 +129,16 @@ void MainBenchmark::readyReadStandardError()
             startServerConnexion();
             return;
         }
+    }
 }
 
 void MainBenchmark::readyReadStandardOutput()
 {
     if(!serverStarted)
-        if(QString::fromLocal8Bit(process.readAllStandardOutput()).contains(QStringLiteral("Waiting connection on port ")))
+    {
+        const QString &content=QString::fromLocal8Bit(process.readAllStandardOutput());
+        qDebug() << content;
+        if(content.contains(QStringLiteral("Waiting connection on port ")))
         {
             socket.connectToServer("/tmp/catchchallenger-server.sock");
             socket.waitForConnected(0);
@@ -130,6 +149,7 @@ void MainBenchmark::readyReadStandardOutput()
             startServerConnexion();
             return;
         }
+    }
 }
 
 void MainBenchmark::startServerConnexion()
