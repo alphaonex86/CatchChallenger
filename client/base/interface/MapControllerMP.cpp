@@ -1,6 +1,6 @@
 #include "MapController.h"
-#include "../../general/base/MoveOnTheMap.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../../general/base/MoveOnTheMap.h"
+#include "../../../general/base/FacilityLib.h"
 #include "DatapackClientLoader.h"
 #include "../ClientVariable.h"
 #include "../Api_client_real.h"

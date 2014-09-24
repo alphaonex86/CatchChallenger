@@ -4,6 +4,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <cstring>
+#include <chrono>
+#include <ctime>
 
 #include "epoll/EpollSocket.h"
 #include "epoll/EpollSslClient.h"
@@ -486,26 +488,15 @@ int main(int argc, char *argv[])
     encodingBuff[0]=0x00;
     #endif
 
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_inter;
     int numberOfConnectedClient=0,numberOfConnectedUnixClient=0;
     /* The event loop */
     int number_of_events, i;
-    bool startedTs=false;
     while(1)
     {
-        #ifdef SERVERBENCHMARK
-        if(startedTs)
-        {
-            timespec ts;
-            ::clock_gettime(CLOCK_REALTIME, &ts);
-            EpollUnixSocketClientFinal::timeUsed+=ts.tv_nsec-EpollUnixSocketClientFinal::ts.tv_nsec;
-            EpollUnixSocketClientFinal::timeUsed+=ts.tv_sec*1000000-EpollUnixSocketClientFinal::ts.tv_sec*1000000;
-        }
-        #endif
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
         #ifdef SERVERBENCHMARK
-        if(!startedTs)
-            startedTs=true;
-        ::clock_gettime(CLOCK_REALTIME, &EpollUnixSocketClientFinal::ts);
+        EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
         #endif
         for(i = 0; i < number_of_events; i++)
         {
@@ -700,12 +691,13 @@ int main(int argc, char *argv[])
                             }
                             if(numberOfConnectedUnixClient==0)
                             {
-                                timespec ts;
-                                ::clock_gettime(CLOCK_REALTIME, &ts);
+                                #ifdef SERVERBENCHMARK
+                                EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
                                 EpollUnixSocketClientFinal::timeUsed=0;
                                 EpollUnixSocketClientFinal::timeUsedForTimer=0;
                                 EpollUnixSocketClientFinal::timeUsedForUser=0;
                                 EpollUnixSocketClientFinal::timeUsedForDatabase=0;
+                                #endif
                             }
                             numberOfConnectedUnixClient++;
                             client->parseIncommingData();
@@ -717,8 +709,7 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::Type::Client:
                 {
                     #ifdef SERVERBENCHMARK
-                    timespec ts;
-                    ::clock_gettime(CLOCK_REALTIME, &ts);
+                    start_inter = std::chrono::high_resolution_clock::now();
                     #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     timerDisplayEventBySeconds.addClientCount();
@@ -730,7 +721,8 @@ int main(int argc, char *argv[])
                     {
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
-                        std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        if(!(events[i].events & EPOLLHUP))
+                            std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
                         client->disconnectClient();
                         delete client;
@@ -752,10 +744,8 @@ int main(int argc, char *argv[])
                         delete client;//disconnected, remove the object
                     }
                     #ifdef SERVERBENCHMARK
-                    timespec ts_new;
-                    ::clock_gettime(CLOCK_REALTIME, &ts_new);
-                    EpollUnixSocketClientFinal::timeUsedForUser+=ts_new.tv_nsec-ts.tv_nsec;
-                    EpollUnixSocketClientFinal::timeUsedForUser+=(unsigned long long)ts_new.tv_sec*1000000-(unsigned long long)ts.tv_sec*1000000;
+                    std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
+                    EpollUnixSocketClientFinal::timeUsedForUser+=elapsed_seconds.count();
                     #endif
                 }
                 break;
@@ -791,8 +781,7 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::Type::Timer:
                 {
                     #ifdef SERVERBENCHMARK
-                    timespec ts;
-                    ::clock_gettime(CLOCK_REALTIME, &ts);
+                    start_inter = std::chrono::high_resolution_clock::now();
                     #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     timerDisplayEventBySeconds.addTimerCount();
@@ -800,18 +789,15 @@ int main(int argc, char *argv[])
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
                     #ifdef SERVERBENCHMARK
-                    timespec ts_new;
-                    ::clock_gettime(CLOCK_REALTIME, &ts_new);
-                    EpollUnixSocketClientFinal::timeUsedForTimer+=ts_new.tv_nsec-ts.tv_nsec;
-                    EpollUnixSocketClientFinal::timeUsedForTimer+=(unsigned long long)ts_new.tv_sec*1000000-(unsigned long long)ts.tv_sec*1000000;
+                    std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
+                    EpollUnixSocketClientFinal::timeUsedForTimer+=elapsed_seconds.count();
                     #endif
                 }
                 break;
                 case BaseClassSwitch::Type::Database:
                 {
                     #ifdef SERVERBENCHMARK
-                    timespec ts;
-                    ::clock_gettime(CLOCK_REALTIME, &ts);
+                    start_inter = std::chrono::high_resolution_clock::now();
                     #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     timerDisplayEventBySeconds.addDbCount();
@@ -830,10 +816,8 @@ int main(int argc, char *argv[])
                             std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
                     }
                     #ifdef SERVERBENCHMARK
-                    timespec ts_new;
-                    ::clock_gettime(CLOCK_REALTIME, &ts_new);
-                    EpollUnixSocketClientFinal::timeUsedForDatabase+=ts_new.tv_nsec-ts.tv_nsec;
-                    EpollUnixSocketClientFinal::timeUsedForDatabase+=(unsigned long long)ts_new.tv_sec*1000000-(unsigned long long)ts.tv_sec*1000000;
+                    std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
+                    EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
                     #endif
                 }
                 break;
@@ -845,6 +829,10 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+        #ifdef SERVERBENCHMARK
+        std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-EpollUnixSocketClientFinal::start;
+        EpollUnixSocketClientFinal::timeUsed+=elapsed_seconds.count();
+        #endif
     }
     server->close();
     server->unload_the_data();

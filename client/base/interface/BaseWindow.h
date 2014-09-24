@@ -16,8 +16,8 @@
 #include <QQuickView>
 
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
-#include "../../general/base/ChatParsing.h"
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/ChatParsing.h"
+#include "../../../general/base/GeneralStructures.h"
 #include "../Api_client_real.h"
 #include "../Api_protocol.h"
 #include "MapController.h"

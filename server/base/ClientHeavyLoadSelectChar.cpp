@@ -173,10 +173,12 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         return;
     }
 
+    #ifndef SERVERBENCHMARK
     if(GlobalServerData::serverSettings.anonymous)
         normalOutput(QStringLiteral("Charater id is logged: %1").arg(characterId));
     else
         normalOutput(QStringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db.value(1)));
+    #endif
     const quint32 &time_to_delete=QString(GlobalServerData::serverPrivateVariables.db.value(21)).toUInt(&ok);
     if(!ok || time_to_delete>0)
         dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.arg(characterId));
@@ -792,12 +794,14 @@ void Client::loginIsRightFinalStep()
     #endif
 
     //send signals into the server
+    #ifndef SERVERBENCHMARK
     normalOutput(QStringLiteral("Logged: %1 on the map: %2 (%3,%4)")
                  .arg(public_and_private_informations.public_informations.pseudo)
                  .arg(map->map_file)
                  .arg(x)
                  .arg(y)
                  );
+    #endif
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("load the normal player id: %1, simplified id: %2").arg(character_id).arg(public_and_private_informations.public_informations.simplifiedId));

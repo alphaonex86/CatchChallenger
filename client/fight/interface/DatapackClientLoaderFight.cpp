@@ -1,10 +1,10 @@
 #include "../../base/interface/DatapackClientLoader.h"
 #include "../../base/LanguagesSelect.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/DebugClass.h"
-#include "../../general/fight/FightLoader.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/DebugClass.h"
+#include "../../../general/fight/FightLoader.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "../../fight/interface/ClientFightEngine.h"
 
 #include <QDomElement>

@@ -25,6 +25,7 @@ class Api_protocol : public QObject, public ProtocolParsingInputOutput, public M
     Q_OBJECT
 public:
     static Api_protocol *client;
+    static bool internalVersionDisplayed;
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
     void disconnectClient();
@@ -63,6 +64,12 @@ private:
 
     //to send trame
     quint8 lastQueryNumber;
+
+    #ifdef BENCHMARKMUTIPLECLIENT
+    static char hurgeBufferForBenchmark[4096];
+    static bool precomputeDone;
+    static char hurgeBufferMove[4];
+    #endif
 protected:
     virtual void socketDestroyed();
     void parseIncommingData();

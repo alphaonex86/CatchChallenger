@@ -9,12 +9,12 @@
 #include <QFileInfo>
 #include <QPointer>
 
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/MoveOnTheMap.h"
-#include "../../general/base/DebugClass.h"
+#include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/MoveOnTheMap.h"
+#include "../../../general/base/DebugClass.h"
 #include "../../tiled/tiled_tile.h"
-#include "../../general/base/CommonMap.h"
+#include "../../../general/base/CommonMap.h"
 #include "../ClientVariable.h"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()

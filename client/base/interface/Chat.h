@@ -1,8 +1,8 @@
 #ifndef CHAT_H
 #define CHAT_H
 
-#include "../../general/base/ChatParsing.h"
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/ChatParsing.h"
+#include "../../../general/base/GeneralStructures.h"
 #include "../Api_protocol.h"
 
 #include <QWidget>

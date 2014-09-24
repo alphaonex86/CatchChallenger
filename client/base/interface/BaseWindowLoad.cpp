@@ -1,7 +1,7 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 #include "Chat.h"
@@ -1178,6 +1178,9 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
         }
         BaseWindow::debugFileStatus=1;
     }
-    debugFile.write(txt.toUtf8());
-    debugFile.flush();
+    if(debugFile.isOpen())
+    {
+        debugFile.write(txt.toUtf8());
+        debugFile.flush();
+    }
 }

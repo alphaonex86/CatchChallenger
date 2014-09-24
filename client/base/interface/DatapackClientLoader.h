@@ -10,7 +10,7 @@
 #include <QIcon>
 #include <QColor>
 
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/GeneralStructures.h"
 
 #include "../../tiled/tiled_tileset.h"
 

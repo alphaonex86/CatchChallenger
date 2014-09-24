@@ -83,6 +83,7 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
         strcat(strCoPG,password);
     }
 
+    std::cerr << "Connecting to postgresql: " << host << "..." << std::endl;
     conn=PQconnectdb(strCoPG);
     const ConnStatusType &connStatusType=PQstatus(conn);
     if(connStatusType==CONNECTION_BAD)
@@ -90,6 +91,7 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
        std::cerr << "pg connexion not OK" << std::endl;
        return false;
     }
+    std::cerr << "Connected to postgresql: " << host << std::endl;
     if(PQsetnonblocking(conn,1)!=0)
     {
        std::cerr << "pg no blocking error" << std::endl;
