@@ -1,7 +1,7 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "NewGame.h"
 
 using namespace CatchChallenger;

@@ -18,16 +18,34 @@ const unsigned char protocolHeaderToMatch[] = PROTOCOL_HEADER;
 
 #include <QCoreApplication>
 
+#ifdef BENCHMARKMUTIPLECLIENT
+char Api_protocol::hurgeBufferForBenchmark[4096];
+bool Api_protocol::precomputeDone=false;
+char Api_protocol::hurgeBufferMove[4];
+
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
+#endif
+
 //need host + port here to have datapack base
 
 QSet<QString> Api_protocol::extensionAllowed;
 
 Api_protocol* Api_protocol::client=NULL;
+bool Api_protocol::internalVersionDisplayed=false;
 
 Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     ProtocolParsingInputOutput(socket,PacketModeTransmission_Client),
     tolerantMode(tolerantMode)
 {
+    #ifdef BENCHMARKMUTIPLECLIENT
+    if(!Api_protocol::precomputeDone)
+    {
+        Api_protocol::precomputeDone=true;
+        hurgeBufferMove[0]=0x40;
+    }
+    #endif
     if(extensionAllowed.isEmpty())
         extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
 
@@ -37,16 +55,20 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
     resetAll();
 
-    #if defined(Q_CC_GNU)
-        qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
-    #else
-        #if defined(__DATE__) && defined(__TIME__)
-            qDebug() << QStringLiteral("Unknow compiler: ")+__DATE__+" "+__TIME__;
+    if(!Api_protocol::internalVersionDisplayed)
+    {
+        Api_protocol::internalVersionDisplayed=true;
+        #if defined(Q_CC_GNU)
+            qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
         #else
-            qDebug() << QStringLiteral("Unknow compiler");
+            #if defined(__DATE__) && defined(__TIME__)
+                qDebug() << QStringLiteral("Unknown compiler: ")+__DATE__+" "+__TIME__;
+            #else
+                qDebug() << QStringLiteral("Unknown compiler");
+            #endif
         #endif
-    #endif
-    qDebug() << QStringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
+        qDebug() << QStringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
+    }
 }
 
 Api_protocol::~Api_protocol()
@@ -297,6 +319,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         break;
         //Move player on map
         case 0xC7:
+        #ifndef BENCHMARKMUTIPLECLIENT
         {
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
             {
@@ -409,9 +432,13 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
             }
         }
+        #else
+        return;
+        #endif
         break;
         //Remove player from map
         case 0xC8:
+        #ifndef BENCHMARKMUTIPLECLIENT
         {
             //remove player
             quint16 playerSizeList;
@@ -464,9 +491,13 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
             }
         }
+        #else
+        return;
+        #endif
         break;
         //Player number
         case 0xC3:
+        #ifndef BENCHMARKMUTIPLECLIENT
         {
             if(max_players<=255)
             {
@@ -491,13 +522,21 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 number_of_player(current_player_connected_16Bits,max_players);
             }
         }
+        #else
+        return;
+        #endif
         break;
         //drop all player on the map
         case 0xC4:
+        #ifndef BENCHMARKMUTIPLECLIENT
             dropAllPlayerOnTheMap();
+        #else
+        return;
+        #endif
         break;
         //Reinser player on same map
         case 0xC5:
+        #ifndef BENCHMARKMUTIPLECLIENT
         {
             quint16 playerSizeList;
             if(max_players<=255)
@@ -575,9 +614,13 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 index_sub_loop++;
             }
         }
+        #else
+        return;
+        #endif
         break;
         //Reinser player on other map
         case 0xC6:
+        #ifndef BENCHMARKMUTIPLECLIENT
         {
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
             {
@@ -705,6 +748,9 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             }
 
         }
+        #else
+        return;
+        #endif
         break;
         //chat as input
         case 0xCA:
@@ -4601,6 +4647,16 @@ bool Api_protocol::tryCreate()
 
 void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &direction)
 {
+    #ifdef BENCHMARKMUTIPLECLIENT
+    hurgeBufferMove[1]=moved_unit;
+    hurgeBufferMove[2]=direction;
+    const int &infd=socket->sslSocket->socketDescriptor();
+    if(infd!=-1)
+        ::write(infd,hurgeBufferMove,3);
+    else
+        internalSendRawSmallPacket(hurgeBufferMove,3);
+    return;
+    #endif
     if(!is_logged)
     {
         DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));

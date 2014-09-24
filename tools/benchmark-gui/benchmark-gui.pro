@@ -1,10 +1,9 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2014-09-11T23:54:05
-#
-#-------------------------------------------------
+include(../../general/general.pri)
+include(../../client/base/client.pri)
+include(../../client/base/multi.pri)
+include(../bot/simple/Simple.pri)
 
-QT       += core gui network
+QT       += core gui xml network sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -13,8 +12,13 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        MainWindow.cpp
+        MainWindow.cpp \
+    ../bot/MultipleBotConnection.cpp \
+    ../bot/MultipleBotConnectionImplFoprGui.cpp
 
-HEADERS  += MainWindow.h
+HEADERS  += MainWindow.h \
+    ../bot/BotInterface.h \
+    ../bot/MultipleBotConnection.h \
+    ../bot/MultipleBotConnectionImplFoprGui.h
 
 FORMS    += MainWindow.ui

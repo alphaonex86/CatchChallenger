@@ -4,10 +4,11 @@
 #include <QThread>
 
 namespace CatchChallenger {
-class DatapackChecksum : public QThread
+class DatapackChecksum : public QObject
 {
     Q_OBJECT
 public:
+    static QThread thread;
     explicit DatapackChecksum();
     ~DatapackChecksum();
     static QByteArray doChecksum(const QString &datapackPath, bool onlyFull=false);

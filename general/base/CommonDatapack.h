@@ -2,7 +2,6 @@
 #define COMMONDATAPACK_H
 
 #include <QObject>
-#include <QThread>
 #include <QMutex>
 #include <QHash>
 #include <QSet>

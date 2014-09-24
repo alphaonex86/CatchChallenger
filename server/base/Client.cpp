@@ -155,7 +155,8 @@ void Client::disconnectClient()
         return;
     account_id=0;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Disconnected client");
+    if(character_id!=0)
+        normalOutput("Disconnected client");
     #endif
     GlobalServerData::serverPrivateVariables.db.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -277,7 +278,8 @@ void Client::disconnectClient()
     BroadCastWithoutSender::broadCastWithoutSender.emit_player_is_disconnected(public_and_private_informations.public_informations.pseudo);
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Disconnected client done");
+    if(character_id!=0)
+        normalOutput("Disconnected client done");
     #endif
 }
 

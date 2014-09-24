@@ -1,7 +1,7 @@
 #include "../../base/interface/DatapackClientLoader.h"
 #include "../../../general/base/CommonDatapack.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/FacilityLib.h"
 
 #include <QDomElement>
 #include <QDomDocument>

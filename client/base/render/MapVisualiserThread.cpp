@@ -1,7 +1,7 @@
 #include "MapVisualiserThread.h"
 #include "MapItem.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "../../tiled/tiled_mapobject.h"
 #include <QFileInfo>
 #include <QRegularExpression>

@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QMutex>
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/GeneralStructures.h"
 #include "../render/MapVisualiserThread.h"
 
 class PathFinding : public QThread

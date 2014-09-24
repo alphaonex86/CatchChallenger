@@ -378,7 +378,9 @@ void Client::character_return(const quint8 &query_id)
     #endif
     callbackRegistred.removeFirst();
     //send signals into the server
+    #ifndef SERVERBENCHMARK
     normalOutput(QStringLiteral("Logged the account %1").arg(account_id));
+    #endif
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);

@@ -6,11 +6,11 @@
 #include "ObjectGroupItem.h"
 #include "MapMark.h"
 
-#include "../../general/base/GeneralStructures.h"
-#include "../../general/base/CommonMap.h"
-#include "../../client/base/Map_client.h"
-#include "../../client/base/DisplayStructures.h"
-#include "../../general/base/Map_loader.h"
+#include "../../../general/base/GeneralStructures.h"
+#include "../../../general/base/CommonMap.h"
+#include "../../../client/base/Map_client.h"
+#include "../../../client/base/DisplayStructures.h"
+#include "../../../general/base/Map_loader.h"
 
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>

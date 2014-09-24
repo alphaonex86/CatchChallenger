@@ -1,6 +1,7 @@
 include(../../general/general.pri)
 include(../../client/base/client.pri)
 include(../../client/base/multi.pri)
+include(../bot/simple/Simple.pri)
 
 QT       += core gui xml network sql
 
@@ -12,9 +13,12 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         MainWindow.cpp \
-    ../bot/MultipleBotConnection.cpp
+    ../bot/MultipleBotConnection.cpp \
+    ../bot/MultipleBotConnectionImplFoprGui.cpp
 HEADERS  += MainWindow.h \
-    ../bot/MultipleBotConnection.h
+    ../bot/MultipleBotConnection.h \
+    ../bot/MultipleBotConnectionImplFoprGui.h \
+    ../bot/BotInterface.h
 
 FORMS    += MainWindow.ui
 

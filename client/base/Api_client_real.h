@@ -46,7 +46,7 @@ public:
     void test_mirror();
     void httpErrorEvent();
     void decodedIsFinish();
-    void mirrorTryNext();
+    bool mirrorTryNext();
     void httpFinishedForDatapackList();
     const QStringList listDatapack(QString suffix);
     void cleanDatapack(QString suffix);
