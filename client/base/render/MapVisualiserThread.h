@@ -17,12 +17,12 @@
 #include "../../tiled/tiled_tileset.h"
 #include "../../tiled/tiled_tile.h"
 
-#include "../../general/base/GeneralStructures.h"
-#include "../../general/base/CommonMap.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../client/base/Map_client.h"
-#include "../../client/base/DisplayStructures.h"
-#include "../../general/base/Map_loader.h"
+#include "../../../general/base/GeneralStructures.h"
+#include "../../../general/base/CommonMap.h"
+#include "../../../general/base/GeneralVariable.h"
+#include "../../../client/base/Map_client.h"
+#include "../../../client/base/DisplayStructures.h"
+#include "../../../general/base/Map_loader.h"
 #include "../interface/MapDoor.h"
 #include "../interface/TriggerAnimation.h"
 

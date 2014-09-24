@@ -5,7 +5,7 @@
 using namespace CatchChallenger;
 
 #ifdef SERVERBENCHMARK
-timespec EpollUnixSocketClientFinal::ts;
+std::chrono::time_point<std::chrono::high_resolution_clock> EpollUnixSocketClientFinal::start;
 unsigned long long EpollUnixSocketClientFinal::timeUsed=0;
 unsigned long long EpollUnixSocketClientFinal::timeUsedForTimer=0;
 unsigned long long EpollUnixSocketClientFinal::timeUsedForUser=0;
@@ -35,11 +35,9 @@ void EpollUnixSocketClientFinal::parseIncommingData()
         {
             #ifdef SERVERBENCHMARK
             {
-                timespec ts;
-                ::clock_gettime(CLOCK_REALTIME, &ts);
-                EpollUnixSocketClientFinal::timeUsed+=ts.tv_nsec-EpollUnixSocketClientFinal::ts.tv_nsec;
-                EpollUnixSocketClientFinal::timeUsed+=(unsigned long long)ts.tv_sec*1000000-EpollUnixSocketClientFinal::ts.tv_sec*1000000;
-                EpollUnixSocketClientFinal::ts=ts;
+                std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start;
+                EpollUnixSocketClientFinal::timeUsed+=elapsed_seconds.count();
+                EpollUnixSocketClientFinal::start=std::chrono::high_resolution_clock::now();
             }
             unsigned long long tempSend[4];
             tempSend[0]=EpollUnixSocketClientFinal::timeUsed;

@@ -1,6 +1,6 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
@@ -959,19 +959,23 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                 qDebug() << "item id have not the quantity";
                 break;
             }
-            const quint32 &monsterUniqueId=ClientFightEngine::fightEngine.getCurrentMonster()->id;
-            if(ClientFightEngine::fightEngine.useObjectOnMonster(itemId,monsterUniqueId))
+            //it's trap
+            if(CommonDatapack::commonDatapack.items.trap.contains(itemId) && CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
+                useTrap(itemId);
+            else//else it's to use on current monster
             {
-                remove_to_inventory(itemId);
-                if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.contains(itemId))
-                    useTrap(itemId);
-                else if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(itemId))
-                    CatchChallenger::Api_client_real::client->useObjectOnMonster(itemId,monsterUniqueId);
+                const quint32 &monsterUniqueId=ClientFightEngine::fightEngine.getCurrentMonster()->id;
+                if(ClientFightEngine::fightEngine.useObjectOnMonster(itemId,monsterUniqueId))
+                {
+                    remove_to_inventory(itemId);
+                    if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(itemId))
+                        CatchChallenger::Api_client_real::client->useObjectOnMonster(itemId,monsterUniqueId);
+                    else
+                        error(tr("You have selected a buggy object"));
+                }
                 else
-                    error(tr("You have selected a buggy object"));
+                    QMessageBox::warning(this,tr("Warning"),tr("Can't be used now!"));
             }
-            else
-                QMessageBox::warning(this,tr("Warning"),tr("Can't be used now!"));
 
         }
         break;
@@ -3348,7 +3352,7 @@ void BaseWindow::updateTheTurtle()
     }
     if(lastReplyTimeValue>TIMEINMSTOBESLOW && lastReplyTimeSince.elapsed()<TIMETOSHOWTHETURTLE)
     {
-        qDebug() << "The last query was slow:" << lastReplyTimeValue << ">" << TIMEINMSTOBESLOW << " && " << lastReplyTimeSince.elapsed() << "<" << TIMETOSHOWTHETURTLE;
+        //qDebug() << "The last query was slow:" << lastReplyTimeValue << ">" << TIMEINMSTOBESLOW << " && " << lastReplyTimeSince.elapsed() << "<" << TIMETOSHOWTHETURTLE;
         if(ui->labelSlow->isVisible())
             return;
         ui->labelSlow->setToolTip(tr("The last query was slow"));

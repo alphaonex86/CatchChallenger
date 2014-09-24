@@ -1,8 +1,8 @@
 #include "../../base/interface/BaseWindow.h"
 #include "../../base/interface/DatapackClientLoader.h"
 #include "../../base/Api_client_real.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/GeneralStructures.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "ui_BaseWindow.h"
 

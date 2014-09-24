@@ -4,7 +4,8 @@
 #include "EpollUnixSocketClient.h"
 
 #ifdef SERVERBENCHMARK
-#include <sys/time.h>
+#include <chrono>
+#include <ctime>
 #endif
 
 namespace CatchChallenger {
@@ -15,7 +16,7 @@ public:
     ~EpollUnixSocketClientFinal();
     void parseIncommingData();
     #ifdef SERVERBENCHMARK
-    static timespec ts;
+    static std::chrono::time_point<std::chrono::high_resolution_clock> start;
     static unsigned long long timeUsed;
     static unsigned long long timeUsedForUser;
     static unsigned long long timeUsedForTimer;
