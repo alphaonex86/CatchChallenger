@@ -11,11 +11,7 @@ CATCHCHALLENGERDATAPACK="/home/user/Desktop/CatchChallenger/build-catchchallenge
 TMPFOLDER="/tmp/benchmarkcatchchallenger/"
 
 cd ${GITFOLDER}
-git pull --rebase
-nice -n 19 yes > /dev/null 2>&1 &
-nice -n 19 yes > /dev/null 2>&1 &
-nice -n 19 yes > /dev/null 2>&1 &
-nice -n 19 yes > /dev/null 2>&1 &
+killall -s 9 yes > /dev/null 2>&1
 
 #compil the tools
 /usr/bin/rsync -art --delete ${GITFOLDER} ${TMPFOLDER}
@@ -23,12 +19,18 @@ cd ${TMPFOLDER}/tools/benchmark-cli/
 ${QTQMAKE}
 make -j4 >> /dev/null 2>&1
 mv benchmark-cli /tmp/benchmark-cli
-if [ ! -x benchmark-cli ]
+if [ ! -x /tmp/benchmark-cli ]
 then
-    echo benchmark-cli failed
+    echo "benchmark-cli application not found in /tmp/benchmark-cli"
     exit;
 fi
 
+nice -n 19 yes > /dev/null 2>&1 &
+nice -n 19 yes > /dev/null 2>&1 &
+nice -n 19 yes > /dev/null 2>&1 &
+nice -n 19 yes > /dev/null 2>&1 &
+
+git pull --rebase
 COMMITLIST=`git log --reverse --pretty=format:"%H" --date=short | tail -n 15`
 for COMMIT in ${COMMITLIST}
 do
@@ -57,7 +59,7 @@ do
             if [ -x catchchallenger-server-cli-epoll ]
             then
                 echo 'catchchallenger-server-cli-epoll rsync'
-                /usr/bin/rsync -art --delete ${SERVERPROPERTIES} ${TMPFOLDER}/server/datapack/
+                /usr/bin/rsync -art --delete ${SERVERPROPERTIES} ${TMPFOLDER}/server/
                 /usr/bin/rsync -art --delete ${CATCHCHALLENGERDATAPACK} ${TMPFOLDER}/server/datapack/
                 if [ -e ${TMPFOLDER}/tools/benchmark-cli/ ] && [ -e ${TMPFOLDER}/tools/benchmark-cli/repport.sh ]
                 then
@@ -121,4 +123,4 @@ do
     fi
 done
 rm -Rf ${TMPFOLDER}
-killall -s 9 yes
+killall -s 9 yes > /dev/null 2>&1
