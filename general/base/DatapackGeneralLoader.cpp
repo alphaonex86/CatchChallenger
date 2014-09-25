@@ -1617,8 +1617,8 @@ QHash<quint16,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
                     {
                         if(industries.contains(industry_id))
                         {
-                            industriesLink[industry_id].industry=industry_id;
-                            IndustryLink *industryLink=&industriesLink[industry_id];
+                            industriesLink[factory_id].industry=industry_id;
+                            IndustryLink *industryLink=&industriesLink[factory_id];
                             {
                                 {
                                     QDomElement requirementsItem = linkItem.firstChildElement(DatapackGeneralLoader::text_requirements);
