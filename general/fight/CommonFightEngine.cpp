@@ -112,11 +112,10 @@ void CommonFightEngine::healAllMonsters()
             int sub_index=0;
             while(sub_index<public_and_private_informations.playerMonster.value(index).skills.size())
             {
+                const int &skill=public_and_private_informations.playerMonster[index].skills.at(sub_index).skill;
+                const int &skillIndex=public_and_private_informations.playerMonster.value(index).skills.at(sub_index).level-1;
                 public_and_private_informations.playerMonster[index].skills[sub_index].endurance=
-                        CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(
-                        public_and_private_informations.playerMonster[index].skills.at(sub_index).skill
-                        )
-                        .level.at(public_and_private_informations.playerMonster.value(index).skills.at(sub_index).level-1).endurance;
+                        CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skill).level.at(skillIndex).endurance;
                 sub_index++;
             }
         }
