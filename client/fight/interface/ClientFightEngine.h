@@ -5,7 +5,6 @@
 #include <QByteArray>
 #include <QHash>
 #include <QString>
-#include <QPixmap>
 
 #include "../../../general/base/GeneralStructures.h"
 #include "../../../general/base/CommonMap.h"

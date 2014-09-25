@@ -9,8 +9,8 @@
 #include <QFileInfo>
 #include <QPointer>
 #include <QMessageBox>
-#include <QGLFormat>
-#include <QGLWidget>
+/*#include <QGLFormat>
+#include <QGLWidget>*/
 #include <QLabel>
 
 #include "../../../general/base/MoveOnTheMap.h"
@@ -110,7 +110,7 @@ void MapVisualiser::setOpenGl(const bool &OpenGL)
 {
     if(OpenGL)
     {
-        QGLFormat format=QGLFormat::defaultFormat();//(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
+        /*QGLFormat format=QGLFormat::defaultFormat();//(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
         //setSampleBuffers
         format.setRgba(true);
         //format.setAlpha(true);
@@ -120,7 +120,7 @@ void MapVisualiser::setOpenGl(const bool &OpenGL)
         if(widgetOpenGL==NULL)
             QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers: create widget");
         else
-            setViewport(widgetOpenGL);
+            setViewport(widgetOpenGL);*/
     }
 }
 
