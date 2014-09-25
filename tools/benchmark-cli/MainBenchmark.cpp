@@ -3,9 +3,6 @@
 
 #include <unistd.h>
 
-#include <QMessageBox>
-#include <QFileDialog>
-
 MainBenchmark::MainBenchmark() :
     inClosing(false),
     systemItem(-1),

@@ -694,9 +694,11 @@ int main(int argc, char *argv[])
                                 #ifdef SERVERBENCHMARK
                                 EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
                                 EpollUnixSocketClientFinal::timeUsed=0;
+                                #ifdef SERVERBENCHMARKFULL
                                 EpollUnixSocketClientFinal::timeUsedForTimer=0;
                                 EpollUnixSocketClientFinal::timeUsedForUser=0;
                                 EpollUnixSocketClientFinal::timeUsedForDatabase=0;
+                                #endif
                                 #endif
                             }
                             numberOfConnectedUnixClient++;
@@ -708,7 +710,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Client:
                 {
-                    #ifdef SERVERBENCHMARK
+                    #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -743,7 +745,7 @@ int main(int argc, char *argv[])
                         client->disconnectClient();
                         delete client;//disconnected, remove the object
                     }
-                    #ifdef SERVERBENCHMARK
+                    #ifdef SERVERBENCHMARKFULL
                     std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
                     EpollUnixSocketClientFinal::timeUsedForUser+=elapsed_seconds.count();
                     #endif
@@ -780,7 +782,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Timer:
                 {
-                    #ifdef SERVERBENCHMARK
+                    #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -788,7 +790,7 @@ int main(int argc, char *argv[])
                     #endif
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
-                    #ifdef SERVERBENCHMARK
+                    #ifdef SERVERBENCHMARKFULL
                     std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
                     EpollUnixSocketClientFinal::timeUsedForTimer+=elapsed_seconds.count();
                     #endif
@@ -796,7 +798,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Database:
                 {
-                    #ifdef SERVERBENCHMARK
+                    #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -815,7 +817,7 @@ int main(int argc, char *argv[])
                         else
                             std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
                     }
-                    #ifdef SERVERBENCHMARK
+                    #ifdef SERVERBENCHMARKFULL
                     std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
                     EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
                     #endif
