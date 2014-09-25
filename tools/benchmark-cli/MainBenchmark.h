@@ -5,7 +5,6 @@
 #include <QTime>
 #include <QLocalSocket>
 #include <QList>
-#include <QCloseEvent>
 #include <QSettings>
 #include <QProcess>
 

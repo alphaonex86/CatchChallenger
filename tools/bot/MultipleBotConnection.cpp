@@ -3,7 +3,6 @@
 #include "MultipleBotConnection.h"
 
 #include <QNetworkProxy>
-#include <QMessageBox>
 #include <QPluginLoader>
 
 MultipleBotConnection::MultipleBotConnection() :

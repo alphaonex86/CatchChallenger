@@ -8,7 +8,6 @@
 #include "LocalListener.h"
 
 #include <QLocalSocket>
-#include <QMessageBox>
 #include <QCoreApplication>
 
 LocalListener::LocalListener(QObject *parent) :

@@ -1,6 +1,7 @@
 #!/bin/bash
 CATCHCHALLENGERPLATFORM='test'
-CATCHCHALLENGERDETAILS='-O2 -march=native -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops'
+CFLAGS='-O2 -march=native'
+CATCHCHALLENGERDETAILS="${CFLAGS}"
 GITFOLDER='/home/user/Desktop/CatchChallenger/git/'
 CACHEFOLDER='/mnt/perso/other/catchchallengerbenchmark/'
 URLTOSEND='http://amber/benchmark-tracking/send.php'
@@ -12,12 +13,14 @@ TMPFOLDER="/tmp/benchmarkcatchchallenger/"
 
 cd ${GITFOLDER}
 killall -s 9 yes > /dev/null 2>&1
+CPUCOUNT=`grep -c ^processor /proc/cpuinfo`
 
 #compil the tools
 /usr/bin/rsync -art --delete ${GITFOLDER} ${TMPFOLDER}
+/usr/bin/rsync -art --delete ${CATCHCHALLENGERDATAPACK} /tmp/datapack/
 cd ${TMPFOLDER}/tools/benchmark-cli/
 ${QTQMAKE}
-make -j4 >> /dev/null 2>&1
+make -j${CPUCOUNT} >> /dev/null 2>&1
 mv benchmark-cli /tmp/benchmark-cli
 if [ ! -x /tmp/benchmark-cli ]
 then
@@ -25,10 +28,10 @@ then
     exit;
 fi
 
-nice -n 19 yes > /dev/null 2>&1 &
-nice -n 19 yes > /dev/null 2>&1 &
-nice -n 19 yes > /dev/null 2>&1 &
-nice -n 19 yes > /dev/null 2>&1 &
+for (( c=1; c<=${CPUCOUNT}; c++ ))
+do
+   nice -n 19 yes > /dev/null 2>&1 &
+done
 
 git pull --rebase
 COMMITLIST=`git log --reverse --pretty=format:"%H" --date=short | tail -n 15`
@@ -48,13 +51,13 @@ do
             sed -i 's/#define CATCHCHALLENGER_SERVER_EXTRA_CHECK/\/\/CATCHCHALLENGER_SERVER_EXTRA_CHECK/g' server/VariableServer.h
             echo '' >> server/catchchallenger-server-cli-epoll.pro
             echo 'DEFINES += SERVERBENCHMARK' >> server/catchchallenger-server-cli-epoll.pro
-            echo 'QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"' >> server/catchchallenger-server-cli-epoll.pro
-            echo 'QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"' >> server/catchchallenger-server-cli-epoll.pro
+            echo "QMAKE_CFLAGS=\"${CFLAGS}\"" >> server/catchchallenger-server-cli-epoll.pro
+            echo "QMAKE_CXXFLAGS=\"${CFLAGS}\"" >> server/catchchallenger-server-cli-epoll.pro
             echo '' > ${CACHEFILE}
 
             cd ${TMPFOLDER}/server/
             ${QTQMAKE} catchchallenger-server-cli-epoll.pro
-            make -j4 > ${TMPFOLDER}/fail.log 2>&1
+            make -j${CPUCOUNT} > ${TMPFOLDER}/fail.log 2>&1
             echo 'Make catchchallenger-server-cli-epoll done'
             if [ -x catchchallenger-server-cli-epoll ]
             then
@@ -72,14 +75,20 @@ do
                     BENCHMARKVALUEIDLE=`cat ${CACHEFILE} | grep 'Result internal to idle server' | sed -r 's/.* ([0-9]+).*/\1/g'`
                     BENCHMARKVALUEMOVE=`cat ${CACHEFILE} | grep 'Result internal to moving on server' | sed -r 's/.* ([0-9]+).*/\1/g'`
                     BENCHMARKVALUECHAT=`cat ${CACHEFILE} | grep 'Result internal to chat' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                    BENCHMARKVALUEEXTERNAL=`cat ${CACHEFILE} | grep 'Result to connect all player' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                    BENCHMARKVALUEIDLEEXTERNAL=`cat ${CACHEFILE} | grep 'Result to idle server' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                    BENCHMARKVALUEMOVEEXTERNAL=`cat ${CACHEFILE} | grep 'Result to moving on server' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                    BENCHMARKVALUECHATEXTERNAL=`cat ${CACHEFILE} | grep 'Result to chat' | sed -r 's/.* ([0-9]+).*/\1/g'`
                     if [ `cat ${CACHEFILE} | grep 'Result internal to connect all player' | wc -l` -ne 1 ]
                     then
-                        echo 'bug: application not found'
+                        echo "bug: application not found for commit ${COMMIT}"
                         exit;
                     fi
                     echo '' > ${CACHEFOLDER}/${COMMIT}-ok.txt
                     echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&connectAllPlayer=${BENCHMARKVALUE}&idle=${BENCHMARKVALUEIDLE}&move=${BENCHMARKVALUEMOVE}&chat=${BENCHMARKVALUECHAT}"
                     /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&connectAllPlayer=${BENCHMARKVALUE}&idle=${BENCHMARKVALUEIDLE}&move=${BENCHMARKVALUEMOVE}&chat=${BENCHMARKVALUECHAT}"
+                    echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS} external&connectAllPlayer=${BENCHMARKVALUEEXTERNAL}&idle=${BENCHMARKVALUEIDLEEXTERNAL}&move=${BENCHMARKVALUEMOVEEXTERNAL}&chat=${BENCHMARKVALUECHATEXTERNAL}"
+                    /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS} external&connectAllPlayer=${BENCHMARKVALUEEXTERNAL}&idle=${BENCHMARKVALUEIDLEEXTERNAL}&move=${BENCHMARKVALUEMOVEEXTERNAL}&chat=${BENCHMARKVALUECHATEXTERNAL}"
                 else
                     echo '' > ${CACHEFOLDER}/${COMMIT}-skip.txt
                 fi
@@ -93,28 +102,23 @@ do
     else
         if [ ! -e ${CACHEFOLDER}/${COMMIT}-skip.txt ]
         then
-                BENCHMARKVALUE=`cat ${CACHEFILE} | grep 'Result internal to connect all player' | sed -r 's/.* ([0-9]+).*/\1/g'`
-                BENCHMARKVALUEIDLE=`cat ${CACHEFILE} | grep 'Result internal to idle server' | sed -r 's/.* ([0-9]+).*/\1/g'`
-                BENCHMARKVALUEMOVE=`cat ${CACHEFILE} | grep 'Result internal to moving on server' | sed -r 's/.* ([0-9]+).*/\1/g'`
-                BENCHMARKVALUECHAT=`cat ${CACHEFILE} | grep 'Result internal to chat' | sed -r 's/.* ([0-9]+).*/\1/g'`
-                if [ `cat ${CACHEFILE} | grep 'Result internal to connect all player' | wc -l` -ne 1 ]
-                then
-                    echo 'bug: application not found'
-                    exit;
-                fi
             if [ -e ${CACHEFOLDER}/${COMMIT}-ok.txt ]
             then
                 BENCHMARKVALUE=`cat ${CACHEFILE} | grep 'Result internal to connect all player' | sed -r 's/.* ([0-9]+).*/\1/g'`
                 BENCHMARKVALUEIDLE=`cat ${CACHEFILE} | grep 'Result internal to idle server' | sed -r 's/.* ([0-9]+).*/\1/g'`
                 BENCHMARKVALUEMOVE=`cat ${CACHEFILE} | grep 'Result internal to moving on server' | sed -r 's/.* ([0-9]+).*/\1/g'`
                 BENCHMARKVALUECHAT=`cat ${CACHEFILE} | grep 'Result internal to chat' | sed -r 's/.* ([0-9]+).*/\1/g'`
-                if [ "${BENCHMARKVALUE}" != "" ]
+                BENCHMARKVALUEEXTERNAL=`cat ${CACHEFILE} | grep 'Result to connect all player' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                BENCHMARKVALUEIDLEEXTERNAL=`cat ${CACHEFILE} | grep 'Result to idle server' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                BENCHMARKVALUEMOVEEXTERNAL=`cat ${CACHEFILE} | grep 'Result to moving on server' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                BENCHMARKVALUECHATEXTERNAL=`cat ${CACHEFILE} | grep 'Result to chat' | sed -r 's/.* ([0-9]+).*/\1/g'`
+                if [ `cat ${CACHEFILE} | grep 'Result internal to connect all player' | wc -l` -eq 1 ]
                 then
-                    echo 'bug: application not found'
-                    exit;
+                    echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&connectAllPlayer=${BENCHMARKVALUE}&idle=${BENCHMARKVALUEIDLE}&move=${BENCHMARKVALUEMOVE}&chat=${BENCHMARKVALUECHAT}"
+                    /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&connectAllPlayer=${BENCHMARKVALUE}&idle=${BENCHMARKVALUEIDLE}&move=${BENCHMARKVALUEMOVE}&chat=${BENCHMARKVALUECHAT}"
+                    echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS} external&connectAllPlayer=${BENCHMARKVALUEEXTERNAL}&idle=${BENCHMARKVALUEIDLEEXTERNAL}&move=${BENCHMARKVALUEMOVEEXTERNAL}&chat=${BENCHMARKVALUECHATEXTERNAL}"
+                    /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS} external&connectAllPlayer=${BENCHMARKVALUEEXTERNAL}&idle=${BENCHMARKVALUEIDLEEXTERNAL}&move=${BENCHMARKVALUEMOVEEXTERNAL}&chat=${BENCHMARKVALUECHATEXTERNAL}"
                 fi
-                echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&connectAllPlayer=${BENCHMARKVALUE}&idle=${BENCHMARKVALUEIDLE}&move=${BENCHMARKVALUEMOVE}&chat=${BENCHMARKVALUECHAT}"
-                /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&connectAllPlayer=${BENCHMARKVALUE}&idle=${BENCHMARKVALUEIDLE}&move=${BENCHMARKVALUEMOVE}&chat=${BENCHMARKVALUECHAT}"
             else
                 echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&failed"
                 /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&failed"
