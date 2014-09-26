@@ -2534,14 +2534,10 @@ void BaseServer::initialize_the_database_prepared_query()
         case ServerSettings::Database::DatabaseType_Mysql:
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT `allow` FROM `character_allow` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')");
-        GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)");
         GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 LIMIT 0,%2");
         GlobalServerData::serverPrivateVariables.db_query_played_time=QStringLiteral("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1");
-        if(CommonSettings::commonSettings.useSP)
-            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1;");
-        else
-            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`position`=%6 WHERE `id`=%1;");
-        GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;");
+        GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3");
         GlobalServerData::serverPrivateVariables.db_query_character_by_id=QStringLiteral("SELECT `account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`warehouse_cash`,`clan_leader`,`market_cash`,`time_to_delete` FROM `character` WHERE `id`=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete=QStringLiteral("UPDATE `character` SET `time_to_delete`=0 WHERE `id`=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect=QStringLiteral("UPDATE `character` SET `last_connect`=%2 WHERE `id`=%1");
@@ -2552,12 +2548,15 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill=QStringLiteral("DELETE FROM `monster_skill` WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM `bot_already_beaten` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM `character` WHERE `id`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM `item` WHERE `character`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM `item_warehouse` WHERE `character`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `character`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_monster=QStringLiteral("DELETE FROM `monster` WHERE `character`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse=QStringLiteral("DELETE FROM `monster_warehouse` WHERE `character`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_monster_market=QStringLiteral("DELETE FROM `monster_market` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item=QStringLiteral("DELETE FROM `item` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item_warehouse=QStringLiteral("DELETE FROM `item_warehouse` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_character=QStringLiteral("DELETE FROM `monster` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse_by_character=QStringLiteral("DELETE FROM `monster_warehouse` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM `monster_market` WHERE `character`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_id=QStringLiteral("DELETE FROM `monster` WHERE `id`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse_by_id=QStringLiteral("DELETE FROM `monster_warehouse` WHERE `id`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM `monster_market` WHERE `id`=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_plant=QStringLiteral("DELETE FROM `plant` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_quest=QStringLiteral("DELETE FROM `quest` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_recipes=QStringLiteral("DELETE FROM `recipe` WHERE `character`=%1");
@@ -2567,12 +2566,31 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo=QStringLiteral("SELECT `id` FROM `character` WHERE `pseudo`='%1'");
         GlobalServerData::serverPrivateVariables.db_query_select_clan_by_name=QStringLiteral("SELECT `id` FROM `clan` WHERE `name`='%1'");
         if(CommonSettings::commonSettings.useSP)
-            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8);");
+        {
+            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_full=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO `monster_warehouse`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4,`sp`=%5 WHERE `id`=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch=QStringLiteral("INSERT INTO `%3`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2,`sp`=%3 WHERE `id`=%1");
+        }
         else
-            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill=QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_reputation=QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_item=QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`) VALUES(%1,%2,%3);");
+        {
+            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`position`=%6 WHERE `id`=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_full=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO `monster_warehouse`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4 WHERE `id`=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch=QStringLiteral("INSERT INTO `%3`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2 WHERE `id`=%1");
+        }
+        GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill=QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_item=QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`) VALUES(%1,%2,%3)");
         GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id=QStringLiteral("SELECT `account`,`time_to_delete` FROM `character` WHERE `id`=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete_by_id=QStringLiteral("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id=QStringLiteral("SELECT `type`,`point`,`level` FROM `reputation` WHERE `character`=%1");
@@ -2580,35 +2598,53 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id=QStringLiteral("SELECT `recipe` FROM `recipe` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id=QStringLiteral("SELECT `item`,`quantity` FROM `item` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT `item`,`quantity` FROM `item_warehouse` WHERE `character`=%1");
-        if(CommonSettings::commonSettings.useSP)
-        {
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
-        }
-        else
-        {
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
-        }
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap=QStringLiteral("SELECT `itemOnMap` FROM `character_itemonmap` WHERE `character`=%1");
-        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO `character_itemonmap`(`character`,`itemOnMap`) VALUES(%1,%2);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO `character_itemonmap`(`character`,`itemOnMap`) VALUES(%1,%2)");
         GlobalServerData::serverPrivateVariables.db_query_change_right=QStringLiteral("UPDATE `character` SET `type`=%2 WHERE `id`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_update_item=QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
+        GlobalServerData::serverPrivateVariables.db_query_update_item_warehouse=QStringLiteral("UPDATE `item_warehouse` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
+        GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM `item_warehouse` WHERE `item`=%1 AND `character`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_cash=QStringLiteral("UPDATE `character` SET `cash`=%1 WHERE `id`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_warehouse_cash=QStringLiteral("UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_insert_recipe=QStringLiteral("INSERT INTO `recipe`(`character`,`recipe`) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_factory=QStringLiteral("INSERT INTO `factory`(`id`,`resources`,`products`,`last_update`) VALUES(%1,'%2','%3',%4)");
+        GlobalServerData::serverPrivateVariables.db_query_update_factory=QStringLiteral("UPDATE `factory` SET `resources`='%2',`products`='%3',`last_update`=%4 WHERE `id`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_insert_character_allow=QStringLiteral("INSERT INTO `character_allow`(`character`,`allow`) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_allow=QStringLiteral("DELETE FROM `character_allow` WHERE `character`=%1 AND `allow`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_insert_reputation=QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4)");
+        GlobalServerData::serverPrivateVariables.db_query_update_reputation=QStringLiteral("UPDATE `reputation` SET `point`=%3,`level`=%4 WHERE `character`=%1 AND `type`='%2'");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_clan=QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `id`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_clan=QStringLiteral("DELETE FROM `clan` WHERE `id`=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_city=QStringLiteral("DELETE FROM `city` WHERE `city`='%1'");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_clan_by_pseudo=QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `pseudo`=%1 AND `clan`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_hp_only=QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_sp_only=QStringLiteral("UPDATE `monster` SET `sp`=%1 WHERE `id`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_skill_level=QStringLiteral("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3");
+        GlobalServerData::serverPrivateVariables.db_query_insert_bot_already_beaten=QStringLiteral("INSERT INTO `bot_already_beaten`(`character`,`botfight_id`) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_monster_buff=QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3)");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_level=QStringLiteral("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND `buff`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_position=QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_and_hp=QStringLiteral("UPDATE `monster` SET `hp`=%1,`monster`=%2 WHERE `id`=%3");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_buff=QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_level_only=QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM `monster_skill` WHERE `monster`=%1 AND `skill`=%2");
         break;
+        #endif
 
+
+
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case ServerSettings::Database::DatabaseType_SQLite:
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
-        GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
         GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2");
         GlobalServerData::serverPrivateVariables.db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
-        if(CommonSettings::commonSettings.useSP)
-            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1;");
-        else
-            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1;");
-        GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;");
+        GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
         GlobalServerData::serverPrivateVariables.db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,clan_leader,market_cash,time_to_delete FROM character WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete=QStringLiteral("UPDATE character SET time_to_delete=0 WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect=QStringLiteral("UPDATE character SET last_connect=%2 WHERE id=%1");
@@ -2619,9 +2655,12 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM character WHERE id=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM item WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item_by_character=QStringLiteral("DELETE FROM item WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item_warehouse_by_character=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item_market_by_character=QStringLiteral("DELETE FROM item_market WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse_by_id=QStringLiteral("DELETE FROM monster_warehouse WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM monster_market WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_id=QStringLiteral("DELETE FROM monster WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse=QStringLiteral("DELETE FROM monster_warehouse WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_market=QStringLiteral("DELETE FROM monster_market WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_monster=QStringLiteral("DELETE FROM monster WHERE character=%1");
@@ -2635,12 +2674,31 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_clan_by_name=QStringLiteral("SELECT id FROM clan WHERE name='%1'");
         GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo=QStringLiteral("SELECT id FROM character WHERE pseudo='%1'");
         if(CommonSettings::commonSettings.useSP)
-            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8);");
+        {
+            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
+        }
         else
-            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_reputation=QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3);");
+        {
+            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
+        }
+        GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)");
         GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id=QStringLiteral("SELECT account,time_to_delete FROM character WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete_by_id=QStringLiteral("UPDATE character SET time_to_delete=%2 WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id=QStringLiteral("SELECT type,point,level FROM reputation WHERE character=%1");
@@ -2648,36 +2706,50 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id=QStringLiteral("SELECT recipe FROM recipe WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id=QStringLiteral("SELECT item,quantity FROM item WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT item,quantity FROM item_warehouse WHERE character=%1");
-        if(CommonSettings::commonSettings.useSP)
-        {
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
-        }
-        else
-        {
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
-        }
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap=QStringLiteral("SELECT \"itemOnMap\" FROM \"character_itemonmap\" WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2)");
         GlobalServerData::serverPrivateVariables.db_query_change_right=QStringLiteral("UPDATE \"character\" SET \"type\"=%2 WHERE \"id\"=%1");
+        GlobalServerData::serverPrivateVariables.db_query_update_item=QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3");
+        GlobalServerData::serverPrivateVariables.db_query_update_item_warehouse=QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3");
+        GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2");
+        GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE item=%1 AND character=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_cash=QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_warehouse_cash=QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_insert_recipe=QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_factory=QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)");
+        GlobalServerData::serverPrivateVariables.db_query_update_factory=QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_insert_character_allow=QStringLiteral("INSERT INTO character_allow(character,allow) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_allow=QStringLiteral("DELETE FROM character_allow WHERE character=%1 AND `allow`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_insert_reputation=QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4)");
+        GlobalServerData::serverPrivateVariables.db_query_update_reputation=QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2'");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_clan=QStringLiteral("UPDATE character SET clan=0 WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_clan=QStringLiteral("DELETE FROM clan WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_city=QStringLiteral("DELETE FROM city WHERE city='%1'");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_clan_by_pseudo=QStringLiteral("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_hp_only=QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_sp_only=QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_skill_level=QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3");
+        GlobalServerData::serverPrivateVariables.db_query_insert_bot_already_beaten=QStringLiteral("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_monster_buff=QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3)");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_level=QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_position=QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_and_hp=QStringLiteral("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_level_only=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2");
         break;
         #endif
 
         case ServerSettings::Database::DatabaseType_PostgreSQL:
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
-        GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
         GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT %2");
         GlobalServerData::serverPrivateVariables.db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
-        if(CommonSettings::commonSettings.useSP)
-            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1;");
-        else
-            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1;");
-        GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;");
+        GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
         GlobalServerData::serverPrivateVariables.db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,clan_leader,market_cash,time_to_delete FROM character WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete=QStringLiteral("UPDATE character SET time_to_delete=0 WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect=QStringLiteral("UPDATE character SET last_connect=%2 WHERE id=%1");
@@ -2688,12 +2760,15 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_delete_monster_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_character=QStringLiteral("DELETE FROM character WHERE id=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM item WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse=QStringLiteral("DELETE FROM monster_warehouse WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_monster_market=QStringLiteral("DELETE FROM monster_market WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_delete_monster=QStringLiteral("DELETE FROM monster WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item=QStringLiteral("DELETE FROM item WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse_by_character=QStringLiteral("DELETE FROM monster_warehouse WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM monster_market WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_character=QStringLiteral("DELETE FROM monster WHERE character=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse_by_id=QStringLiteral("DELETE FROM monster_warehouse WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM monster_market WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_id=QStringLiteral("DELETE FROM monster WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_plant=QStringLiteral("DELETE FROM plant WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_quest=QStringLiteral("DELETE FROM quest WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_delete_recipes=QStringLiteral("DELETE FROM recipe WHERE character=%1");
@@ -2703,12 +2778,31 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_clan_by_name=QStringLiteral("SELECT id FROM clan WHERE name='%1'");
         GlobalServerData::serverPrivateVariables.db_query_select_character_by_pseudo=QStringLiteral("SELECT id FROM character WHERE pseudo='%1'");
         if(CommonSettings::commonSettings.useSP)
-            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8);");
+        {
+            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
+        }
         else
-            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_reputation=QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4);");
-        GlobalServerData::serverPrivateVariables.db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3);");
+        {
+            GlobalServerData::serverPrivateVariables.db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            GlobalServerData::serverPrivateVariables.db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
+        }
+        GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)");
         GlobalServerData::serverPrivateVariables.db_query_account_time_to_delete_character_by_id=QStringLiteral("SELECT account,time_to_delete FROM character WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete_by_id=QStringLiteral("UPDATE character SET time_to_delete=%2 WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_reputation_by_id=QStringLiteral("SELECT type,point,level FROM reputation WHERE character=%1");
@@ -2716,22 +2810,40 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id=QStringLiteral("SELECT recipe FROM recipe WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id=QStringLiteral("SELECT item,quantity FROM item WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT item,quantity FROM item_warehouse WHERE character=%1");
-        if(CommonSettings::commonSettings.useSP)
-        {
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
-        }
-        else
-        {
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
-            GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
-        }
         GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap=QStringLiteral("SELECT \"itemOnMap\" FROM \"character_itemonmap\" WHERE character=%1");
-        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2)");
         GlobalServerData::serverPrivateVariables.db_query_change_right=QStringLiteral("UPDATE \"character\" SET \"type\"=%2 WHERE \"id\"=%1");
+        GlobalServerData::serverPrivateVariables.db_query_update_item=QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3");
+        GlobalServerData::serverPrivateVariables.db_query_update_item_warehouse=QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3");
+        GlobalServerData::serverPrivateVariables.db_query_delete_item=QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2");
+        GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE item=%1 AND character=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_cash=QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_warehouse_cash=QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_insert_recipe=QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_factory=QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)");
+        GlobalServerData::serverPrivateVariables.db_query_update_factory=QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_insert_character_allow=QStringLiteral("INSERT INTO character_allow(character,allow) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_delete_character_allow=QStringLiteral("DELETE FROM character_allow WHERE character=%1 AND `allow`=%2");
+        GlobalServerData::serverPrivateVariables.db_query_insert_reputation=QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4)");
+        GlobalServerData::serverPrivateVariables.db_query_update_reputation=QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2'");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_clan=QStringLiteral("UPDATE character SET clan=0 WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_clan=QStringLiteral("DELETE FROM clan WHERE id=%1");
+        GlobalServerData::serverPrivateVariables.db_query_delete_city=QStringLiteral("DELETE FROM city WHERE city='%1'");
+        GlobalServerData::serverPrivateVariables.db_query_update_character_clan_by_pseudo=QStringLiteral("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_hp_only=QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_sp_only=QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_skill_level=QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3");
+        GlobalServerData::serverPrivateVariables.db_query_insert_bot_already_beaten=QStringLiteral("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2)");
+        GlobalServerData::serverPrivateVariables.db_query_insert_monster_buff=QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3)");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_level=QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_position=QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_and_hp=QStringLiteral("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        GlobalServerData::serverPrivateVariables.db_query_update_monster_level_only=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2");
         break;
     }
 }

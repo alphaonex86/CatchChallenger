@@ -1,3 +1,5 @@
+#ifdef SERVERBENCHMARKFULL
+
 #include "TimerDisplayEventBySeconds.h"
 #include "../Epoll.h"
 
@@ -87,3 +89,5 @@ void TimerDisplayEventBySeconds::addOtherCount()
     if(otherCount<=2*1000*1000*1000)
         otherCount++;
 }
+
+#endif

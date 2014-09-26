@@ -24,11 +24,20 @@ void SimpleAction::insert_player(CatchChallenger::Api_protocol *api,const CatchC
     connect(api,&CatchChallenger::Api_protocol::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection);
 }
 
+void SimpleAction::purgeCpuCache()
+{
+    const int size=16*1024*1024;
+    char var[size];
+    memset(var,0,size);
+    memcmp(var,var,size);
+}
+
 void SimpleAction::doMove()
 {
     if(!move)
         return;
 
+    purgeCpuCache();
     QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
     while (i.hasNext()) {
         i.next();
@@ -78,6 +87,7 @@ void SimpleAction::doText()
     if(clientList.isEmpty())
         return;
 
+    purgeCpuCache();
     QList<CatchChallenger::Api_protocol *> clientListApi;
     QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
     while (i.hasNext()) {
@@ -132,6 +142,7 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
     if(!globalChatRandomReply && chat_type!=CatchChallenger::Chat_type_pm)
         return;
 
+    purgeCpuCache();
     Q_UNUSED(text);
     Q_UNUSED(pseudo);
     Q_UNUSED(type);

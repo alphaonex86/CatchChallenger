@@ -72,95 +72,29 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
     {
         if(CommonSettings::commonSettings.useSP)
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4,`sp`=%5 WHERE `id`=%1;")
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level
                                  .arg(monster.id)
                                  .arg(monster.hp)
                                  .arg(monster.remaining_xp)
                                  .arg(monster.level)
                                  .arg(monster.sp)
                                  );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                                 .arg(monster.id)
-                                 .arg(monster.hp)
-                                 .arg(monster.remaining_xp)
-                                 .arg(monster.level)
-                                 .arg(monster.sp)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                                 .arg(monster.id)
-                                 .arg(monster.hp)
-                                 .arg(monster.remaining_xp)
-                                 .arg(monster.level)
-                                 .arg(monster.sp)
-                                 );
-                break;
-            }
         else
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4 WHERE `id`=%1;")
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level
                                  .arg(monster.id)
                                  .arg(monster.hp)
                                  .arg(monster.remaining_xp)
                                  .arg(monster.level)
                                  );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1;")
-                                 .arg(monster.id)
-                                 .arg(monster.hp)
-                                 .arg(monster.remaining_xp)
-                                 .arg(monster.level)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1;")
-                                 .arg(monster.id)
-                                 .arg(monster.hp)
-                                 .arg(monster.remaining_xp)
-                                 .arg(monster.level)
-                                 );
-                break;
-            }
         QHash<quint32, QHash<quint32,quint32> >::const_iterator i = deferedEndurance.constBegin();
         while (i != deferedEndurance.constEnd()) {
             QHash<quint32,quint32>::const_iterator j = i.value().constBegin();
             while (j != i.value().constEnd()) {
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                                     .arg(j.value())
-                                     .arg(i.key())
-                                     .arg(j.key())
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                                     .arg(j.value())
-                                     .arg(i.key())
-                                     .arg(j.key())
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                                     .arg(j.value())
-                                     .arg(i.key())
-                                     .arg(j.key())
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster_skill
+                             .arg(j.value())
+                             .arg(i.key())
+                             .arg(j.key())
+                             );
                 ++j;
             }
             ++i;
@@ -240,50 +174,14 @@ void Client::healAllMonsters()
             if(public_and_private_informations.playerMonster.value(index).hp!=stat.hp)
             {
                 public_and_private_informations.playerMonster[index].hp=stat.hp;
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2;")
-                                     .arg(public_and_private_informations.playerMonster.value(index).hp)
-                                     .arg(public_and_private_informations.playerMonster.value(index).id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                     .arg(public_and_private_informations.playerMonster.value(index).hp)
-                                     .arg(public_and_private_informations.playerMonster.value(index).id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                     .arg(public_and_private_informations.playerMonster.value(index).hp)
-                                     .arg(public_and_private_informations.playerMonster.value(index).id)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_hp_only
+                             .arg(public_and_private_informations.playerMonster.value(index).hp)
+                             .arg(public_and_private_informations.playerMonster.value(index).id)
+                             );
             }
             if(!public_and_private_informations.playerMonster.value(index).buffs.isEmpty())
             {
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1")
-                                 .arg(public_and_private_informations.playerMonster.value(index).id)
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
-                                 .arg(public_and_private_informations.playerMonster.value(index).id)
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
-                                 .arg(public_and_private_informations.playerMonster.value(index).id)
-                                 );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_buff.arg(public_and_private_informations.playerMonster.value(index).id));
                 public_and_private_informations.playerMonster[index].buffs.clear();
             }
             sub_index=0;
@@ -296,31 +194,11 @@ void Client::healAllMonsters()
                         .level.at(public_and_private_informations.playerMonster.value(index).skills.at(sub_index).level-1).endurance;
                 if(public_and_private_informations.playerMonster.value(index).skills.value(sub_index).endurance!=endurance)
                 {
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            dbQueryWrite(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                                         .arg(endurance)
-                                         .arg(public_and_private_informations.playerMonster.value(index).id)
-                                         .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index).skill)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            dbQueryWrite(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                                         .arg(endurance)
-                                         .arg(public_and_private_informations.playerMonster.value(index).id)
-                                         .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index).skill)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_PostgreSQL:
-                            dbQueryWrite(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                                         .arg(endurance)
-                                         .arg(public_and_private_informations.playerMonster.value(index).id)
-                                         .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index).skill)
-                                         );
-                        break;
-                    }
+                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster_skill
+                                 .arg(endurance)
+                                 .arg(public_and_private_informations.playerMonster.value(index).id)
+                                 .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index).skill)
+                                 );
                     public_and_private_informations.playerMonster[index].skills[sub_index].endurance=endurance;
                 }
                 sub_index++;
@@ -366,28 +244,10 @@ void Client::saveStat()
             }
     }
     #endif
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2;")
-                         .arg(getCurrentMonster()->hp)
-                         .arg(getCurrentMonster()->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2;")
-                         .arg(getCurrentMonster()->hp)
-                         .arg(getCurrentMonster()->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2;")
-                         .arg(getCurrentMonster()->hp)
-                         .arg(getCurrentMonster()->id)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_hp_only
+                 .arg(getCurrentMonster()->hp)
+                 .arg(getCurrentMonster()->id)
+                 );
 }
 
 bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
@@ -557,28 +417,10 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                                 return false;
                             }
                             public_and_private_informations.playerMonster[index].sp-=sp;
-                            switch(GlobalServerData::serverSettings.database.type)
-                            {
-                                default:
-                                case ServerSettings::Database::DatabaseType_Mysql:
-                                    dbQueryWrite(QStringLiteral("UPDATE `monster` SET `sp`=%1 WHERE `id`=%2;")
-                                                 .arg(public_and_private_informations.playerMonster.value(index).sp)
-                                                 .arg(monsterId)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_SQLite:
-                                    dbQueryWrite(QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2;")
-                                                 .arg(public_and_private_informations.playerMonster.value(index).sp)
-                                                 .arg(monsterId)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                                    dbQueryWrite(QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2;")
-                                                 .arg(public_and_private_informations.playerMonster.value(index).sp)
-                                                 .arg(monsterId)
-                                                 );
-                                break;
-                            }
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_sp_only
+                                         .arg(public_and_private_informations.playerMonster.value(index).sp)
+                                         .arg(monsterId)
+                                         );
                         }
                         if(learn.learnSkillLevel==1)
                         {
@@ -587,60 +429,21 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                             temp.level=1;
                             temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.first().endurance;
                             public_and_private_informations.playerMonster[index].skills << temp;
-                            switch(GlobalServerData::serverSettings.database.type)
-                            {
-                                default:
-                                case ServerSettings::Database::DatabaseType_Mysql:
-                                    dbQueryWrite(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,1,%3);")
-                                                 .arg(monsterId)
-                                                 .arg(temp.skill)
-                                                 .arg(temp.endurance)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_SQLite:
-                                    dbQueryWrite(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,1,%3);")
-                                                 .arg(monsterId)
-                                                 .arg(temp.skill)
-                                                 .arg(temp.endurance)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                                    dbQueryWrite(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,1,%3);")
-                                                 .arg(monsterId)
-                                                 .arg(temp.skill)
-                                                 .arg(temp.endurance)
-                                                 );
-                                break;
-                            }
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill
+                                         .arg(monsterId)
+                                         .arg(temp.skill)
+                                         .arg(1)
+                                         .arg(temp.endurance)
+                                         );
                         }
                         else
                         {
                             public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
-                            switch(GlobalServerData::serverSettings.database.type)
-                            {
-                                default:
-                                case ServerSettings::Database::DatabaseType_Mysql:
-                                    dbQueryWrite(QStringLiteral("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                                                 .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index2).level)
-                                                 .arg(monsterId)
-                                                 .arg(skill)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_SQLite:
-                                    dbQueryWrite(QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
-                                                 .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index2).level)
-                                                 .arg(monsterId)
-                                                 .arg(skill)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                                    dbQueryWrite(QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
-                                                 .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index2).level)
-                                                 .arg(monsterId)
-                                                 .arg(skill)
-                                                 );
-                                break;
-                            }
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_skill_level
+                                         .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index2).level)
+                                         .arg(monsterId)
+                                         .arg(skill)
+                                         );
                         }
                         return true;
                     }
@@ -959,118 +762,34 @@ bool Client::giveXPSP(int xp,int sp)
         if(CommonSettings::commonSettings.useSP)
         {
             if(haveChangeOfLevel)
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `level`=%2,`hp`=%3,`xp`=%2,`sp`=%3 WHERE `id`=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     .arg(getCurrentMonster()->sp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET level=%2,hp=%3,xp=%2,sp=%3 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     .arg(getCurrentMonster()->sp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET level=%2,hp=%3,xp=%2,sp=%3 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     .arg(getCurrentMonster()->sp)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level
+                             .arg(getCurrentMonster()->id)
+                             .arg(getCurrentMonster()->hp)
+                             .arg(getCurrentMonster()->remaining_xp)
+                             .arg(getCurrentMonster()->level)
+                             .arg(getCurrentMonster()->sp)
+                             );
             else
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `xp`=%2,`sp`=%3 WHERE `id`=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     .arg(getCurrentMonster()->sp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     .arg(getCurrentMonster()->sp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     .arg(getCurrentMonster()->sp)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_xp
+                             .arg(getCurrentMonster()->id)
+                             .arg(getCurrentMonster()->remaining_xp)
+                             .arg(getCurrentMonster()->sp)
+                             );
         }
         else
         {
             if(haveChangeOfLevel)
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `level`=%2,`hp`=%3,`xp`=%2 WHERE `id`=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET level=%2,hp=%3,xp=%2 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET level=%2,hp=%3,xp=%2 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level
+                             .arg(getCurrentMonster()->id)
+                             .arg(getCurrentMonster()->hp)
+                             .arg(getCurrentMonster()->remaining_xp)
+                             .arg(getCurrentMonster()->level)
+                             );
             else
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `xp`=%2 WHERE `id`=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->remaining_xp)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_xp
+                             .arg(getCurrentMonster()->id)
+                             .arg(getCurrentMonster()->remaining_xp)
+                             );
         }
     }
     return haveChangeOfLevel;
@@ -1096,28 +815,10 @@ bool Client::finishTheTurn(const bool &isBot)
                 {
                     addCash(CommonDatapack::commonDatapack.botFights.value(botFightId).cash);
                     public_and_private_informations.bot_already_beaten << botFightId;
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            dbQueryWrite(QStringLiteral("INSERT INTO `bot_already_beaten`(`character`,`botfight_id`) VALUES(%1,%2);")
-                                         .arg(character_id)
-                                         .arg(botFightId)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            dbQueryWrite(QStringLiteral("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2);")
-                                         .arg(character_id)
-                                         .arg(botFightId)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_PostgreSQL:
-                            dbQueryWrite(QStringLiteral("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2);")
-                                         .arg(character_id)
-                                         .arg(botFightId)
-                                         );
-                        break;
-                    }
+                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_bot_already_beaten
+                                 .arg(character_id)
+                                 .arg(botFightId)
+                                 );
                 }
                 fightOrBattleFinish(win,botFightId);
                 normalOutput(QStringLiteral("Register the win against the bot fight: %1").arg(botFightId));
@@ -1249,137 +950,68 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
     }
     QString place;
     if(toStorage)
-        place="monster_warehouse";
+        place=QStringLiteral("monster_warehouse");
     else
-        place="monster";
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `%3`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2);")
-                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
-                              .arg(monster_id)
-                              .arg(newMonster.hp)
-                              .arg(character_id)
-                              .arg(newMonster.monster)
-                              .arg(newMonster.level)
-                              .arg(newMonster.remaining_xp)
-                              .arg(newMonster.sp)
-                              .arg(newMonster.catched_with)
-                              .arg((quint8)newMonster.gender)
-                              )
-                         .arg(QStringLiteral("%1,%2,%3")
-                              .arg(newMonster.egg_step)
-                              .arg(character_id)
-                              .arg(position)
-                              )
-                         .arg(place)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
-                              .arg(monster_id)
-                              .arg(newMonster.hp)
-                              .arg(character_id)
-                              .arg(newMonster.monster)
-                              .arg(newMonster.level)
-                              .arg(newMonster.remaining_xp)
-                              .arg(newMonster.sp)
-                              .arg(newMonster.catched_with)
-                              .arg((quint8)newMonster.gender)
-                              )
-                         .arg(QStringLiteral("%1,%2,%3")
-                              .arg(newMonster.egg_step)
-                              .arg(character_id)
-                              .arg(position)
-                              )
-                         .arg(place)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,'%9'")
-                              .arg(monster_id)
-                              .arg(newMonster.hp)
-                              .arg(character_id)
-                              .arg(newMonster.monster)
-                              .arg(newMonster.level)
-                              .arg(newMonster.remaining_xp)
-                              .arg(newMonster.sp)
-                              .arg(newMonster.catched_with)
-                              .arg((quint8)newMonster.gender)
-                              )
-                         .arg(QStringLiteral("%1,%2,%3")
-                              .arg(newMonster.egg_step)
-                              .arg(character_id)
-                              .arg(position)
-                              )
-                         .arg(place)
-                         );
-        break;
-    }
+        place=QStringLiteral("monster");
+    if(CommonSettings::commonSettings.useSP)
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch
+                     .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                          .arg(monster_id)
+                          .arg(newMonster.hp)
+                          .arg(character_id)
+                          .arg(newMonster.monster)
+                          .arg(newMonster.level)
+                          .arg(newMonster.remaining_xp)
+                          .arg(newMonster.sp)
+                          .arg(newMonster.catched_with)
+                          .arg((quint8)newMonster.gender)
+                          )
+                     .arg(QStringLiteral("%1,%2,%3")
+                          .arg(newMonster.egg_step)
+                          .arg(character_id)
+                          .arg(position)
+                          )
+                     .arg(place)
+                     );
+    else
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_catch
+                     .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8")
+                          .arg(monster_id)
+                          .arg(newMonster.hp)
+                          .arg(character_id)
+                          .arg(newMonster.monster)
+                          .arg(newMonster.level)
+                          .arg(newMonster.remaining_xp)
+                          .arg(newMonster.catched_with)
+                          .arg((quint8)newMonster.gender)
+                          )
+                     .arg(QStringLiteral("%1,%2,%3")
+                          .arg(newMonster.egg_step)
+                          .arg(character_id)
+                          .arg(position)
+                          )
+                     .arg(place)
+                     );
     int index=0;
     while(index<newMonster.skills.size())
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
-                             .arg(monster_id)
-                             .arg(newMonster.skills.at(index).skill)
-                             .arg(newMonster.skills.at(index).level)
-                             .arg(newMonster.skills.at(index).endurance)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
-                             .arg(monster_id)
-                             .arg(newMonster.skills.at(index).skill)
-                             .arg(newMonster.skills.at(index).level)
-                             .arg(newMonster.skills.at(index).endurance)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
-                             .arg(monster_id)
-                             .arg(newMonster.skills.at(index).skill)
-                             .arg(newMonster.skills.at(index).level)
-                             .arg(newMonster.skills.at(index).endurance)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill
+                     .arg(monster_id)
+                     .arg(newMonster.skills.at(index).skill)
+                     .arg(newMonster.skills.at(index).level)
+                     .arg(newMonster.skills.at(index).endurance)
+                     );
         index++;
     }
     index=0;
     while(index<newMonster.buffs.size())
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
-                             .arg(monster_id)
-                             .arg(newMonster.buffs.at(index).buff)
-                             .arg(newMonster.buffs.at(index).level)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                             .arg(monster_id)
-                             .arg(newMonster.buffs.at(index).buff)
-                             .arg(newMonster.buffs.at(index).level)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                             .arg(monster_id)
-                             .arg(newMonster.buffs.at(index).buff)
-                             .arg(newMonster.buffs.at(index).level)
-                             );
-            break;
-        }
+        if(CommonDatapack::commonDatapack.monsterBuffs.value(newMonster.buffs.at(index).buff).level.at(newMonster.buffs.at(index).level).duration==Buff::Duration_Always)
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_buff
+                         .arg(monster_id)
+                         .arg(newMonster.buffs.at(index).buff)
+                         .arg(newMonster.buffs.at(index).level)
+                         );
         index++;
     }
     wildMonsters.removeFirst();
@@ -1414,59 +1046,19 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 case ApplyOn_AloneEnemy:
                 case ApplyOn_AllEnemy:
                 if(isInBattle())
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            dbQueryWrite(QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
-                                     .arg(otherPlayerBattle->getCurrentMonster()->id)
-                                     .arg(effect.buff)
-                                     .arg(effect.level)
-                                     );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            dbQueryWrite(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                                     .arg(otherPlayerBattle->getCurrentMonster()->id)
-                                     .arg(effect.buff)
-                                     .arg(effect.level)
-                                     );
-                        break;
-                        case ServerSettings::Database::DatabaseType_PostgreSQL:
-                            dbQueryWrite(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                                     .arg(otherPlayerBattle->getCurrentMonster()->id)
-                                     .arg(effect.buff)
-                                     .arg(effect.level)
-                                     );
-                        break;
-                    }
+                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_buff
+                             .arg(otherPlayerBattle->getCurrentMonster()->id)
+                             .arg(effect.buff)
+                             .arg(effect.level)
+                             );
                 break;
                 case ApplyOn_Themself:
                 case ApplyOn_AllAlly:
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
-                                 .arg(getCurrentMonster()->id)
-                                 .arg(effect.buff)
-                                 .arg(effect.level)
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                                 .arg(getCurrentMonster()->id)
-                                 .arg(effect.buff)
-                                 .arg(effect.level)
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                                 .arg(getCurrentMonster()->id)
-                                 .arg(effect.buff)
-                                 .arg(effect.level)
-                                 );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_buff
+                         .arg(getCurrentMonster()->id)
+                         .arg(effect.buff)
+                         .arg(effect.level)
+                         );
                 break;
                 default:
                     errorOutput("Not apply match, can't apply the buff");
@@ -1478,59 +1070,19 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 case ApplyOn_AloneEnemy:
                 case ApplyOn_AllEnemy:
                 if(isInBattle())
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            dbQueryWrite(QStringLiteral("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND buff=%2;")
-                                         .arg(otherPlayerBattle->getCurrentMonster()->id)
-                                         .arg(effect.buff)
-                                         .arg(effect.level)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            dbQueryWrite(QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
-                                         .arg(otherPlayerBattle->getCurrentMonster()->id)
-                                         .arg(effect.buff)
-                                         .arg(effect.level)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_PostgreSQL:
-                            dbQueryWrite(QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
-                                         .arg(otherPlayerBattle->getCurrentMonster()->id)
-                                         .arg(effect.buff)
-                                         .arg(effect.level)
-                                         );
-                        break;
-                    }
+                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_level
+                                 .arg(otherPlayerBattle->getCurrentMonster()->id)
+                                 .arg(effect.buff)
+                                 .arg(effect.level)
+                                 );
                 break;
                 case ApplyOn_Themself:
                 case ApplyOn_AllAlly:
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND `buff`=%2;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(effect.buff)
-                                     .arg(effect.level)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(effect.buff)
-                                     .arg(effect.level)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(effect.buff)
-                                     .arg(effect.level)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_level
+                             .arg(getCurrentMonster()->id)
+                             .arg(effect.buff)
+                             .arg(effect.level)
+                             );
                 break;
                 default:
                     errorOutput("Not apply match, can't apply the buff");
@@ -1570,28 +1122,10 @@ bool Client::moveDownMonster(const quint8 &number)
 
 void Client::saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterPosition)
 {
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
-                         .arg(monsterPosition)
-                         .arg(monsterId)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
-                         .arg(monsterPosition)
-                         .arg(monsterId)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
-                         .arg(monsterPosition)
-                         .arg(monsterId)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_position
+                 .arg(monsterPosition)
+                 .arg(monsterId)
+                 );
 }
 
 bool Client::changeOfMonsterInFight(const quint32 &monsterId)
@@ -1686,31 +1220,11 @@ quint8 Client::decreaseSkillEndurance(const quint32 &skill)
     const quint8 &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                             .arg(newEndurance)
-                             .arg(currentMonster->id)
-                             .arg(skill)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                             .arg(newEndurance)
-                             .arg(currentMonster->id)
-                             .arg(skill)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                             .arg(newEndurance)
-                             .arg(currentMonster->id)
-                             .arg(skill)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster_skill
+                     .arg(newEndurance)
+                     .arg(currentMonster->id)
+                     .arg(skill)
+                     );
     }
     else
     {
@@ -1734,31 +1248,11 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &mon
         }
     #endif
     CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `monster` SET `hp`=%1,`monster`=%2 WHERE `id`=%3")
-                         .arg(playerMonster->hp)
-                         .arg(playerMonster->monster)
-                         .arg(playerMonster->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3;")
-                         .arg(playerMonster->hp)
-                         .arg(playerMonster->monster)
-                         .arg(playerMonster->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3;")
-                         .arg(playerMonster->hp)
-                         .arg(playerMonster->monster)
-                         .arg(playerMonster->id)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_and_hp
+                 .arg(playerMonster->hp)
+                 .arg(playerMonster->monster)
+                 .arg(playerMonster->id)
+                 );
 }
 
 void Client::confirmEvolution(const quint32 &monsterId)
@@ -1842,58 +1336,17 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
         }
     }
     #endif
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2")
-                         .arg(newHpValue)
-                         .arg(currentMonster->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2")
-                         .arg(newHpValue)
-                         .arg(currentMonster->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2")
-                         .arg(newHpValue)
-                         .arg(currentMonster->id)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_hp_only
+                 .arg(newHpValue)
+                 .arg(currentMonster->id)
+                 );
 }
 
 bool Client::removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId)
 {
     const bool returnVal=CommonFightEngine::removeBuffOnMonster(currentMonster,buffId);
     if(returnVal)
-    {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2")
-                             .arg(currentMonster->id)
-                             .arg(buffId)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2")
-                             .arg(currentMonster->id)
-                             .arg(buffId)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2")
-                             .arg(currentMonster->id)
-                             .arg(buffId)
-                             );
-            break;
-        }
-    }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_buff.arg(currentMonster->id).arg(buffId));
     return returnVal;
 }
 
@@ -1901,27 +1354,7 @@ bool Client::removeAllBuffOnMonster(PlayerMonster * currentMonster)
 {
     const bool &returnVal=CommonFightEngine::removeAllBuffOnMonster(currentMonster);
     if(returnVal)
-    {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1")
-                             .arg(currentMonster->id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
-                             .arg(currentMonster->id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
-                             .arg(currentMonster->id)
-                             );
-            break;
-        }
-    }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_buff.arg(currentMonster->id));
     return returnVal;
 }
 
@@ -1929,31 +1362,7 @@ bool Client::addLevel(PlayerMonster * monster, const quint8 &numberOfLevel)
 {
     if(!CommonFightEngine::addLevel(monster,numberOfLevel))
         return false;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `monster` SET `hp`=%1,`xp`=0,`level`=%2 WHERE `id`=%3;")
-                         .arg(monster->hp)
-                         .arg(monster->level)
-                         .arg(monster->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1,xp=0,level=%2 WHERE id=%3;")
-                         .arg(monster->hp)
-                         .arg(monster->level)
-                         .arg(monster->id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE monster SET hp=%1,xp=0,level=%2 WHERE id=%3;")
-                         .arg(monster->hp)
-                         .arg(monster->level)
-                         .arg(monster->id)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_level_only.arg(monster->hp).arg(monster->level).arg(monster->id));
     return true;
 }
 
@@ -1961,34 +1370,7 @@ bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::Player
 {
     if(!CommonFightEngine::addSkill(currentMonster,skill))
         return false;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
-                         .arg(currentMonster->id)
-                         .arg(skill.skill)
-                         .arg(skill.level)
-                         .arg(skill.endurance)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
-                         .arg(currentMonster->id)
-                         .arg(skill.skill)
-                         .arg(skill.level)
-                         .arg(skill.endurance)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
-                         .arg(currentMonster->id)
-                         .arg(skill.skill)
-                         .arg(skill.level)
-                         .arg(skill.endurance)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_skill.arg(currentMonster->id).arg(skill.skill).arg(skill.level).arg(skill.endurance));
     return true;
 }
 
@@ -1996,31 +1378,7 @@ bool Client::setSkillLevel(PlayerMonster * currentMonster,const int &index,const
 {
     if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
         return false;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                         .arg(level)
-                         .arg(currentMonster->id)
-                         .arg(currentMonster->skills.at(index).skill)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
-                         .arg(level)
-                         .arg(currentMonster->id)
-                         .arg(currentMonster->skills.at(index).skill)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
-                         .arg(level)
-                         .arg(currentMonster->id)
-                         .arg(currentMonster->skills.at(index).skill)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_skill_level.arg(level).arg(currentMonster->id).arg(currentMonster->skills.at(index).skill));
     return true;
 }
 
@@ -2028,27 +1386,6 @@ bool Client::removeSkill(PlayerMonster * currentMonster,const int &index)
 {
     if(!CommonFightEngine::removeSkill(currentMonster,index))
         return false;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("DELETE FROM `monster_skill` WHERE `monster`=%1 AND `skill`=%2;")
-                         .arg(currentMonster->id)
-                         .arg(currentMonster->skills.at(index).skill)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2;")
-                         .arg(currentMonster->id)
-                         .arg(currentMonster->skills.at(index).skill)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2;")
-                         .arg(currentMonster->id)
-                         .arg(currentMonster->skills.at(index).skill)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_specific_skill.arg(currentMonster->id).arg(currentMonster->skills.at(index).skill));
     return true;
 }

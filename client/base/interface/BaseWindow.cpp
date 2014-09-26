@@ -961,7 +961,10 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             }
             //it's trap
             if(CommonDatapack::commonDatapack.items.trap.contains(itemId) && CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
+            {
+                remove_to_inventory(itemId);
                 useTrap(itemId);
+            }
             else//else it's to use on current monster
             {
                 const quint32 &monsterUniqueId=ClientFightEngine::fightEngine.getCurrentMonster()->id;
