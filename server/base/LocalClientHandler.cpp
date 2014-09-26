@@ -509,59 +509,19 @@ void Client::addObject(const quint16 &item,const quint32 &quantity)
     if(public_and_private_informations.items.contains(item))
     {
         public_and_private_informations.items[item]+=quantity;
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3;")
-                             .arg(public_and_private_informations.items.value(item))
-                             .arg(item)
-                             .arg(character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3;")
-                         .arg(public_and_private_informations.items.value(item))
-                         .arg(item)
-                         .arg(character_id)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3;")
-                         .arg(public_and_private_informations.items.value(item))
-                         .arg(item)
-                         .arg(character_id)
-                         );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item
+                 .arg(public_and_private_informations.items.value(item))
+                 .arg(item)
+                 .arg(character_id)
+                 );
     }
     else
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`) VALUES(%1,%2,%3);")
-                             .arg(item)
-                             .arg(character_id)
-                             .arg(quantity)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3);")
-                         .arg(item)
-                         .arg(character_id)
-                         .arg(quantity)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3);")
-                         .arg(item)
-                         .arg(character_id)
-                         .arg(quantity)
-                         );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_item
+                     .arg(item)
+                     .arg(character_id)
+                     .arg(quantity)
+                     );
         public_and_private_informations.items[item]=quantity;
     }
 }
@@ -571,59 +531,19 @@ void Client::addWarehouseObject(const quint16 &item,const quint32 &quantity)
     if(public_and_private_informations.warehouse_items.contains(item))
     {
         public_and_private_informations.warehouse_items[item]+=quantity;
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `item_warehouse` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3;")
-                             .arg(public_and_private_informations.warehouse_items.value(item))
-                             .arg(item)
-                             .arg(character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3;")
-                         .arg(public_and_private_informations.warehouse_items.value(item))
-                         .arg(item)
-                         .arg(character_id)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3;")
-                         .arg(public_and_private_informations.warehouse_items.value(item))
-                         .arg(item)
-                         .arg(character_id)
-                         );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item_warehouse
+                 .arg(public_and_private_informations.items.value(item))
+                 .arg(item)
+                 .arg(character_id)
+                 );
     }
     else
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO item_warehouse(`item`,`character`,`quantity`) VALUES(%1,%2,%3);")
-                             .arg(item)
-                             .arg(character_id)
-                             .arg(quantity)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3);")
-                         .arg(item)
-                         .arg(character_id)
-                         .arg(quantity)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3);")
-                         .arg(item)
-                         .arg(character_id)
-                         .arg(quantity)
-                         );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_item
+                     .arg(item)
+                     .arg(character_id)
+                     .arg(quantity)
+                     );
         public_and_private_informations.warehouse_items[item]=quantity;
     }
 }
@@ -635,59 +555,21 @@ quint32 Client::removeWarehouseObject(const quint16 &item,const quint32 &quantit
         if(public_and_private_informations.warehouse_items.value(item)>quantity)
         {
             public_and_private_informations.warehouse_items[item]-=quantity;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("UPDATE `item_warehouse` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3;")
-                                 .arg(public_and_private_informations.warehouse_items.value(item))
-                                 .arg(item)
-                                 .arg(character_id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3;")
-                                 .arg(public_and_private_informations.warehouse_items.value(item))
-                                 .arg(item)
-                                 .arg(character_id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3;")
-                                 .arg(public_and_private_informations.warehouse_items.value(item))
-                                 .arg(item)
-                                 .arg(character_id)
-                             );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item_warehouse
+                     .arg(public_and_private_informations.items.value(item))
+                     .arg(item)
+                     .arg(character_id)
+                     );
             return quantity;
         }
         else
         {
             quint32 removed_quantity=public_and_private_informations.warehouse_items.value(item);
             public_and_private_informations.warehouse_items.remove(item);
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("DELETE FROM `item_warehouse` WHERE `item`=%1 AND `character`=%2")
-                                 .arg(item)
-                                 .arg(character_id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("DELETE FROM item_warehouse WHERE item=%1 AND character=%2")
-                             .arg(item)
-                             .arg(character_id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("DELETE FROM item_warehouse WHERE item=%1 AND character=%2")
-                             .arg(item)
-                             .arg(character_id)
-                             );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse
+                         .arg(item)
+                         .arg(character_id)
+                         );
             return removed_quantity;
         }
     }
@@ -699,56 +581,18 @@ void Client::saveObjectRetention(const quint16 &item)
 {
     if(public_and_private_informations.items.contains(item))
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3;")
-                             .arg(public_and_private_informations.items.value(item))
-                             .arg(item)
-                             .arg(character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3;")
-                             .arg(public_and_private_informations.items.value(item))
-                             .arg(item)
-                             .arg(character_id)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3;")
-                             .arg(public_and_private_informations.items.value(item))
-                             .arg(item)
-                             .arg(character_id)
-                         );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item
+                 .arg(public_and_private_informations.items.value(item))
+                 .arg(item)
+                 .arg(character_id)
+                 );
     }
     else
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2")
-                             .arg(item)
-                             .arg(character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2")
-                         .arg(item)
-                         .arg(character_id)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2")
-                         .arg(item)
-                         .arg(character_id)
-                         );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item
+                     .arg(item)
+                     .arg(character_id)
+                     );
     }
 }
 
@@ -759,59 +603,21 @@ quint32 Client::removeObject(const quint16 &item, const quint32 &quantity)
         if(public_and_private_informations.items.value(item)>quantity)
         {
             public_and_private_informations.items[item]-=quantity;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3;")
-                                 .arg(public_and_private_informations.items.value(item))
-                                 .arg(item)
-                                 .arg(character_id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3;")
-                                 .arg(public_and_private_informations.items.value(item))
-                                 .arg(item)
-                                 .arg(character_id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3;")
-                                 .arg(public_and_private_informations.items.value(item))
-                                 .arg(item)
-                                 .arg(character_id)
-                             );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item
+                     .arg(public_and_private_informations.items.value(item))
+                     .arg(item)
+                     .arg(character_id)
+                     );
             return quantity;
         }
         else
         {
             quint32 removed_quantity=public_and_private_informations.items.value(item);
             public_and_private_informations.items.remove(item);
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2")
-                                 .arg(item)
-                                 .arg(character_id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2")
-                             .arg(item)
-                             .arg(character_id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2")
-                             .arg(item)
-                             .arg(character_id)
-                             );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item
+                         .arg(item)
+                         .arg(character_id)
+                         );
             return removed_quantity;
         }
     }
@@ -850,28 +656,10 @@ void Client::addCash(const quint64 &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.cash+=cash;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `character` SET `cash`=%1 WHERE `id`=%2;")
-                         .arg(public_and_private_informations.cash)
-                         .arg(character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.cash)
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.cash)
-                     .arg(character_id)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_cash
+                 .arg(public_and_private_informations.cash)
+                 .arg(character_id)
+                 );
 }
 
 void Client::removeCash(const quint64 &cash)
@@ -879,28 +667,10 @@ void Client::removeCash(const quint64 &cash)
     if(cash==0)
         return;
     public_and_private_informations.cash-=cash;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `character` SET `cash`=%1 WHERE `id`=%2;")
-                         .arg(public_and_private_informations.cash)
-                         .arg(character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.cash)
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.cash)
-                     .arg(character_id)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_cash
+                 .arg(public_and_private_informations.cash)
+                 .arg(character_id)
+                 );
 }
 
 void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
@@ -908,28 +678,10 @@ void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.warehouse_cash+=cash;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2;")
-                         .arg(public_and_private_informations.warehouse_cash)
-                         .arg(character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.warehouse_cash)
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.warehouse_cash)
-                     .arg(character_id)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_warehouse_cash
+                 .arg(public_and_private_informations.warehouse_cash)
+                 .arg(character_id)
+                 );
 }
 
 void Client::removeWarehouseCash(const quint64 &cash)
@@ -937,28 +689,10 @@ void Client::removeWarehouseCash(const quint64 &cash)
     if(cash==0)
         return;
     public_and_private_informations.warehouse_cash-=cash;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2;")
-                         .arg(public_and_private_informations.warehouse_cash)
-                         .arg(character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.warehouse_cash)
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
-                     .arg(public_and_private_informations.warehouse_cash)
-                     .arg(character_id)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_warehouse_cash
+                 .arg(public_and_private_informations.warehouse_cash)
+                 .arg(character_id)
+                 );
 }
 
 void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
@@ -1004,85 +738,48 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
                 const PlayerMonster &playerMonsterinWarehouse=public_and_private_informations.warehouse_playerMonster.at(sub_index);
                 if(playerMonsterinWarehouse.id==withdrawMonsters.at(index))
                 {
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            dbQueryWrite(QStringLiteral("DELETE FROM `monster_warehouse` WHERE `id`=%1;")
-                                        .arg(playerMonsterinWarehouse.id)
-                                        );
-                            dbQueryWrite(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2);")
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                             .arg(playerMonsterinWarehouse.id)
-                                             .arg(playerMonsterinWarehouse.hp)
-                                             .arg(character_id)
-                                             .arg(playerMonsterinWarehouse.monster)
-                                             .arg(playerMonsterinWarehouse.level)
-                                             .arg(playerMonsterinWarehouse.remaining_xp)
-                                             .arg(playerMonsterinWarehouse.sp)
-                                             .arg(playerMonsterinWarehouse.catched_with)
-                                             .arg((quint8)playerMonsterinWarehouse.gender)
-                                             )
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3")
-                                             .arg(playerMonsterinWarehouse.egg_step)
-                                             .arg(playerMonsterinWarehouse.character_origin)
-                                             .arg(public_and_private_informations.playerMonster.size()+2)
-                                             )
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            dbQueryWrite(QStringLiteral("DELETE FROM monster_warehouse WHERE id=%1;")
-                                        .arg(playerMonsterinWarehouse.id)
-                                        );
-                            dbQueryWrite(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                             .arg(playerMonsterinWarehouse.id)
-                                             .arg(playerMonsterinWarehouse.hp)
-                                             .arg(character_id)
-                                             .arg(playerMonsterinWarehouse.monster)
-                                             .arg(playerMonsterinWarehouse.level)
-                                             .arg(playerMonsterinWarehouse.remaining_xp)
-                                             .arg(playerMonsterinWarehouse.sp)
-                                             .arg(playerMonsterinWarehouse.catched_with)
-                                             .arg((quint8)playerMonsterinWarehouse.gender)
-                                             )
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3")
-                                             .arg(playerMonsterinWarehouse.egg_step)
-                                             .arg(playerMonsterinWarehouse.character_origin)
-                                             .arg(public_and_private_informations.playerMonster.size()+2)
-                                             )
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_PostgreSQL:
-                            dbQueryWrite(QStringLiteral("DELETE FROM monster_warehouse WHERE id=%1;")
-                                        .arg(playerMonsterinWarehouse.id)
-                                        );
-                            dbQueryWrite(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                             .arg(playerMonsterinWarehouse.id)
-                                             .arg(playerMonsterinWarehouse.hp)
-                                             .arg(character_id)
-                                             .arg(playerMonsterinWarehouse.monster)
-                                             .arg(playerMonsterinWarehouse.level)
-                                             .arg(playerMonsterinWarehouse.remaining_xp)
-                                             .arg(playerMonsterinWarehouse.sp)
-                                             .arg(playerMonsterinWarehouse.catched_with)
-                                             .arg((quint8)playerMonsterinWarehouse.gender)
-                                             )
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3")
-                                             .arg(playerMonsterinWarehouse.egg_step)
-                                             .arg(playerMonsterinWarehouse.character_origin)
-                                             .arg(public_and_private_informations.playerMonster.size()+2)
-                                             )
-                                         );
-                        break;
-                    }
+                        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse_by_id.arg(playerMonsterinWarehouse.id));
+                        if(CommonSettings::commonSettings.useSP)
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_full
+                                     .arg(
+                                         QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                                         .arg(playerMonsterinWarehouse.id)
+                                         .arg(playerMonsterinWarehouse.hp)
+                                         .arg(character_id)
+                                         .arg(playerMonsterinWarehouse.monster)
+                                         .arg(playerMonsterinWarehouse.level)
+                                         .arg(playerMonsterinWarehouse.remaining_xp)
+                                         .arg(playerMonsterinWarehouse.sp)
+                                         .arg(playerMonsterinWarehouse.catched_with)
+                                         .arg((quint8)playerMonsterinWarehouse.gender)
+                                         )
+                                     .arg(
+                                         QStringLiteral("%1,%2,%3")
+                                         .arg(playerMonsterinWarehouse.egg_step)
+                                         .arg(playerMonsterinWarehouse.character_origin)
+                                         .arg(public_and_private_informations.playerMonster.size()+2)
+                                         )
+                                     );
+                        else
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_full
+                                     .arg(
+                                         QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8")
+                                         .arg(playerMonsterinWarehouse.id)
+                                         .arg(playerMonsterinWarehouse.hp)
+                                         .arg(character_id)
+                                         .arg(playerMonsterinWarehouse.monster)
+                                         .arg(playerMonsterinWarehouse.level)
+                                         .arg(playerMonsterinWarehouse.remaining_xp)
+                                         .arg(playerMonsterinWarehouse.catched_with)
+                                         .arg((quint8)playerMonsterinWarehouse.gender)
+                                         )
+                                     .arg(
+                                         QStringLiteral("%1,%2,%3")
+                                         .arg(playerMonsterinWarehouse.egg_step)
+                                         .arg(playerMonsterinWarehouse.character_origin)
+                                         .arg(public_and_private_informations.playerMonster.size()+2)
+                                         )
+                                     );
                     public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster.at(sub_index);
                     public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
                     break;
@@ -1102,14 +799,9 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
                 const PlayerMonster &playerMonsterOnPlayer=public_and_private_informations.playerMonster.at(sub_index);
                 if(playerMonsterOnPlayer.id==depositeMonsters.at(index))
                 {
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            dbQueryWrite(QStringLiteral("DELETE FROM `monster` WHERE `id`=%1;")
-                                        .arg(playerMonsterOnPlayer.id)
-                                        );
-                            dbQueryWrite(QStringLiteral("INSERT INTO `monster_warehouse`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2);")
+                        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_id.arg(playerMonsterOnPlayer.id));
+                        if(CommonSettings::commonSettings.useSP)
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full
                                          .arg(
                                              QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
                                              .arg(playerMonsterOnPlayer.id)
@@ -1129,21 +821,16 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
                                              .arg(public_and_private_informations.warehouse_playerMonster.size()+2)
                                              )
                                          );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            dbQueryWrite(QStringLiteral("DELETE FROM monster WHERE id=%1;")
-                                        .arg(playerMonsterOnPlayer.id)
-                                        );
-                            dbQueryWrite(QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
+                        else
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_warehouse_monster_full
                                          .arg(
-                                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8")
                                              .arg(playerMonsterOnPlayer.id)
                                              .arg(playerMonsterOnPlayer.hp)
                                              .arg(character_id)
                                              .arg(playerMonsterOnPlayer.monster)
                                              .arg(playerMonsterOnPlayer.level)
                                              .arg(playerMonsterOnPlayer.remaining_xp)
-                                             .arg(playerMonsterOnPlayer.sp)
                                              .arg(playerMonsterOnPlayer.catched_with)
                                              .arg((quint8)playerMonsterOnPlayer.gender)
                                              )
@@ -1154,33 +841,6 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
                                              .arg(public_and_private_informations.warehouse_playerMonster.size()+2)
                                              )
                                          );
-                        break;
-                        case ServerSettings::Database::DatabaseType_PostgreSQL:
-                            dbQueryWrite(QStringLiteral("DELETE FROM monster WHERE id=%1;")
-                                        .arg(playerMonsterOnPlayer.id)
-                                        );
-                            dbQueryWrite(QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                             .arg(playerMonsterOnPlayer.id)
-                                             .arg(playerMonsterOnPlayer.hp)
-                                             .arg(character_id)
-                                             .arg(playerMonsterOnPlayer.monster)
-                                             .arg(playerMonsterOnPlayer.level)
-                                             .arg(playerMonsterOnPlayer.remaining_xp)
-                                             .arg(playerMonsterOnPlayer.sp)
-                                             .arg(playerMonsterOnPlayer.catched_with)
-                                             .arg((quint8)playerMonsterOnPlayer.gender)
-                                             )
-                                         .arg(
-                                             QStringLiteral("%1,%2,%3")
-                                             .arg(playerMonsterOnPlayer.egg_step)
-                                             .arg(playerMonsterOnPlayer.character_origin)
-                                             .arg(public_and_private_informations.warehouse_playerMonster.size()+2)
-                                             )
-                                         );
-                        break;
-                    }
                     public_and_private_informations.warehouse_playerMonster << public_and_private_informations.playerMonster.at(sub_index);
                     public_and_private_informations.playerMonster.removeAt(sub_index);
                     break;
@@ -1752,28 +1412,10 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         out << (quint8)ObjectUsage_correctlyUsed;
         postReply(query_id,outputData);
         //add into db
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO `recipe`(`character`,`recipe`) VALUES(%1,%2);")
-                         .arg(character_id)
-                         .arg(recipeId)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2);")
-                         .arg(character_id)
-                         .arg(recipeId)
-                         );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2);")
-                         .arg(character_id)
-                         .arg(recipeId)
-                         );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_recipe
+                     .arg(character_id)
+                     .arg(recipeId)
+                     );
     }
     //use trap into fight
     else if(CommonDatapack::commonDatapack.items.trap.contains(itemId))
@@ -2239,65 +1881,21 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     //save in db
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO `factory`(`id`,`resources`,`products`,`last_update`) VALUES(%1,'%2','%3',%4);")
-                             .arg(factoryId)
-                             .arg(resourcesStringList.join(Client::text_dotcomma))
-                             .arg(productsStringList.join(Client::text_dotcomma))
-                             .arg(industryStatus.last_update)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4);")
-                             .arg(factoryId)
-                             .arg(resourcesStringList.join(Client::text_dotcomma))
-                             .arg(productsStringList.join(Client::text_dotcomma))
-                             .arg(industryStatus.last_update)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4);")
-                             .arg(factoryId)
-                             .arg(resourcesStringList.join(Client::text_dotcomma))
-                             .arg(productsStringList.join(Client::text_dotcomma))
-                             .arg(industryStatus.last_update)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_factory
+                     .arg(factoryId)
+                     .arg(resourcesStringList.join(Client::text_dotcomma))
+                     .arg(productsStringList.join(Client::text_dotcomma))
+                     .arg(industryStatus.last_update)
+                     );
     }
     else
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `factory` SET `resources`='%2',`products`='%3',`last_update`=%4 WHERE `id`=%1")
-                             .arg(factoryId)
-                             .arg(resourcesStringList.join(Client::text_dotcomma))
-                             .arg(productsStringList.join(Client::text_dotcomma))
-                             .arg(industryStatus.last_update)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1")
-                             .arg(factoryId)
-                             .arg(resourcesStringList.join(Client::text_dotcomma))
-                             .arg(productsStringList.join(Client::text_dotcomma))
-                             .arg(industryStatus.last_update)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1")
-                             .arg(factoryId)
-                             .arg(resourcesStringList.join(Client::text_dotcomma))
-                             .arg(productsStringList.join(Client::text_dotcomma))
-                             .arg(industryStatus.last_update)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_factory
+                     .arg(factoryId)
+                     .arg(resourcesStringList.join(Client::text_dotcomma))
+                     .arg(productsStringList.join(Client::text_dotcomma))
+                     .arg(industryStatus.last_update)
+                     );
     }
     GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
 }
@@ -2634,28 +2232,10 @@ void Client::appendAllow(const ActionAllow &allow)
     if(public_and_private_informations.allow.contains(allow))
         return;
     public_and_private_informations.allow << allow;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `character_allow`(`character`,`allow`) VALUES(%1,%2);")
-                         .arg(character_id)
-                         .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO character_allow(character,allow) VALUES(%1,%2);")
-                         .arg(character_id)
-                         .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO character_allow(character,allow) VALUES(%1,%2);")
-                         .arg(character_id)
-                         .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_character_allow
+                 .arg(character_id)
+                 .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
+                 );
 }
 
 void Client::removeAllow(const ActionAllow &allow)
@@ -2663,28 +2243,10 @@ void Client::removeAllow(const ActionAllow &allow)
     if(!public_and_private_informations.allow.contains(allow))
         return;
     public_and_private_informations.allow.remove(allow);
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("DELETE FROM `character_allow` WHERE `character`=%1 AND `allow`=%2;")
-                         .arg(character_id)
-                         .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("DELETE FROM character_allow WHERE character=%1 AND allow=%2;")
-                         .arg(character_id)
-                         .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("DELETE FROM character_allow WHERE character=%1 AND allow=%2;")
-                         .arg(character_id)
-                         .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_character_allow
+                 .arg(character_id)
+                 .arg(GlobalServerData::serverPrivateVariables.dictionary_allow_reverse.at(allow))
+                 );
 }
 
 void Client::appendReputationRewards(const QList<ReputationRewards> &reputationList)
@@ -2734,65 +2296,21 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
     FacilityLib::appendReputationPoint(playerReputation,point,reputation);
     if(!isNewReputation)
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
-                             .arg(character_id)
-                             .arg(reputation.reverse_database_id)
-                             .arg(playerReputation->point)
-                             .arg(playerReputation->level)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4);")
-                             .arg(character_id)
-                             .arg(reputation.reverse_database_id)
-                             .arg(playerReputation->point)
-                             .arg(playerReputation->level)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4);")
-                             .arg(character_id)
-                             .arg(reputation.reverse_database_id)
-                             .arg(playerReputation->point)
-                             .arg(playerReputation->level)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_reputation
+                         .arg(character_id)
+                         .arg(reputation.reverse_database_id)
+                         .arg(playerReputation->point)
+                         .arg(playerReputation->level)
+                         );
     }
     else
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `reputation` SET `point`=%3,`level`=%4 WHERE `character`=%1 AND `type`='%2';")
-                             .arg(character_id)
-                             .arg(reputation.reverse_database_id)
-                             .arg(playerReputation->point)
-                             .arg(playerReputation->level)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2';")
-                             .arg(character_id)
-                             .arg(reputation.reverse_database_id)
-                             .arg(playerReputation->point)
-                             .arg(playerReputation->level)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2';")
-                             .arg(character_id)
-                             .arg(reputation.reverse_database_id)
-                             .arg(playerReputation->point)
-                             .arg(playerReputation->level)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_reputation
+                     .arg(character_id)
+                     .arg(reputation.reverse_database_id)
+                     .arg(playerReputation->point)
+                     .arg(playerReputation->level)
+                     );
     }
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     normalOutput(QStringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
@@ -3055,25 +2573,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             out << (quint8)0x01;
             postReply(query_id,outputData);
             //update the db
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `id`=%1;")
-                             .arg(character_id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
-                             .arg(character_id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
-                             .arg(character_id)
-                             );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_clan.arg(character_id));
         }
         break;
         //dissolve
@@ -3105,65 +2605,11 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             int index=0;
             while(index<players.size())
             {
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `id`=%1;")
-                                 .arg(players.at(index)->getPlayerId())
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
-                                 .arg(players.at(index)->getPlayerId())
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
-                                 .arg(players.at(index)->getPlayerId())
-                                 );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_clan.arg(players.at(index)->getPlayerId()));
                 index++;
             }
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("DELETE FROM `clan` WHERE `id`=%1")
-                                 .arg(public_and_private_informations.clan)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("DELETE FROM clan WHERE id=%1")
-                                 .arg(public_and_private_informations.clan)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("DELETE FROM clan WHERE id=%1")
-                                 .arg(public_and_private_informations.clan)
-                                 );
-                break;
-            }
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("DELETE FROM `city` WHERE `city`='%1'")
-                                 .arg(clan->capturedCity)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("DELETE FROM city WHERE city='%1'")
-                                 .arg(clan->capturedCity)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("DELETE FROM city WHERE city='%1'")
-                                 .arg(clan->capturedCity)
-                                 );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_clan.arg(public_and_private_informations.clan));
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_city.arg(clan->capturedCity));
             //update the object
             clanList.remove(public_and_private_informations.clan);
             GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
@@ -3264,28 +2710,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             postReply(query_id,outputData);
             if(!isFound)
             {
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `pseudo`=%1 AND `clan`=%2;")
-                                 .arg(text)
-                                 .arg(public_and_private_informations.clan)
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2;")
-                                 .arg(text)
-                                 .arg(public_and_private_informations.clan)
-                                 );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2;")
-                                 .arg(text)
-                                 .arg(public_and_private_informations.clan)
-                                 );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_clan_by_pseudo.arg(text).arg(public_and_private_informations.clan));
                 return;
             }
             else if(isIntoTheClan)

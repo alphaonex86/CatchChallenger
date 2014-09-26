@@ -591,12 +591,12 @@ void Client::deleteCharacterNow(const quint32 &characterId)
         errorOutput(QStringLiteral("deleteCharacterNow() Query db_query_delete_character is empty, bug"));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.db_query_delete_item.isEmpty())
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_all_item.isEmpty())
     {
         errorOutput(QStringLiteral("deleteCharacterNow() Query db_query_delete_item is empty, bug"));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.db_query_delete_monster.isEmpty())
+    if(GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_character.isEmpty())
     {
         errorOutput(QStringLiteral("deleteCharacterNow() Query db_query_delete_monster is empty, bug"));
         return;
@@ -690,12 +690,12 @@ void Client::deleteCharacterNow_return(const quint32 &characterId)
     }
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_bot_already_beaten.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_character.arg(characterId));
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item.arg(characterId));
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item_warehouse.arg(characterId));
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item_market.arg(characterId));
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster.arg(characterId));
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse.arg(characterId));
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_market.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_all_item.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_all_item_warehouse.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_all_item_market.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_character.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_warehouse_by_character.arg(characterId));
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_market_by_character.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_plant.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_quest.arg(characterId));
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_recipes.arg(characterId));
