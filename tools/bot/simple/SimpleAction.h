@@ -22,6 +22,7 @@ private:
     QTimer moveTimer;
     QTimer textTimer;
 private:
+    void purgeCpuCache();
     void doMove();
     void doText();
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
