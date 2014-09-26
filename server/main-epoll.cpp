@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef SERVERBENCHMARKFULL
     TimerDisplayEventBySeconds timerDisplayEventBySeconds;
     #endif
     TimerPositionSync timerPositionSync;
@@ -361,7 +361,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef SERVERBENCHMARKFULL
     {
         if(!timerDisplayEventBySeconds.start(60*1000))
         {
@@ -504,7 +504,7 @@ int main(int argc, char *argv[])
             {
                 case BaseClassSwitch::Type::Server:
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addServerCount();
                     #endif
                     if((events[i].events & EPOLLERR) ||
@@ -638,7 +638,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::UnixServer:
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addServerCount();
                     #endif
                     if((events[i].events & EPOLLERR) ||
@@ -713,7 +713,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addClientCount();
                     #endif
                     Client *client=static_cast<Client *>(events[i].data.ptr);
@@ -753,7 +753,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::UnixClient:
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addClientCount();
                     #endif
                     EpollUnixSocketClientFinal *client=static_cast<EpollUnixSocketClientFinal *>(events[i].data.ptr);
@@ -785,7 +785,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addTimerCount();
                     #endif
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
@@ -801,7 +801,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
                     #endif
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
                     EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
@@ -824,7 +824,7 @@ int main(int argc, char *argv[])
                 }
                 break;
                 default:
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addOtherCount();
                     #endif
                     std::cerr << "unknown event" << std::endl;
