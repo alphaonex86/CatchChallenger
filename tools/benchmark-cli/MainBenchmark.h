@@ -29,10 +29,8 @@ private:
     bool serverStarted;
     MultipleBotConnectionImplFoprGui multipleBotConnection;
     QTimer stopBenchmarkTimer;
-    QString convertUsToString(quint64 us);
     double systemItem;
     QTime time;
-    long systemClockTick;
 
     QTimer startAll;
     QString server;
