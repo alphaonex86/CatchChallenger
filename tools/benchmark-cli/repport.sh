@@ -10,6 +10,7 @@ QTQMAKE='/usr/local/Qt-5.2.1/bin/qmake'
 SERVERPROPERTIES="/home/user/Desktop/CatchChallenger/build-catchchallenger-server-cli-epoll-Qt5_5_2-Debug/server.properties"
 CATCHCHALLENGERDATAPACK="/home/user/Desktop/CatchChallenger/build-catchchallenger-server-cli-epoll-Qt5_5_2-Debug/datapack/"
 TMPFOLDER="/tmp/benchmarkcatchchallenger/"
+DOCPULOAD=1
 
 cd ${GITFOLDER}
 killall -s 9 yes > /dev/null 2>&1
@@ -18,22 +19,33 @@ CPUCOUNT=`grep -c ^processor /proc/cpuinfo`
 #compil the tools
 /usr/bin/rsync -art --delete ${GITFOLDER} ${TMPFOLDER}
 /usr/bin/rsync -art --delete ${CATCHCHALLENGERDATAPACK} /tmp/datapack/
-cd ${TMPFOLDER}/tools/benchmark-cli/
-${QTQMAKE}
-make -j${CPUCOUNT} >> /dev/null 2>&1
-mv benchmark-cli /tmp/benchmark-cli
-if [ ! -x /tmp/benchmark-cli ]
+
+if [ "${DOCPULOAD}" -eq 1 ]
 then
-    echo "benchmark-cli application not found in /tmp/benchmark-cli"
-    exit;
+    for (( c=1; c<=${CPUCOUNT}; c++ ))
+    do
+        nice -n 19 yes > /dev/null 2>&1 &
+    done
 fi
 
-for (( c=1; c<=${CPUCOUNT}; c++ ))
-do
-   nice -n 19 yes > /dev/null 2>&1 &
-done
-
+git pull origin master
 git pull --rebase
+COMMITLAST=`git log --reverse --pretty=format:"%H" --date=short | tail -n 1`
+if [ -e ${CACHEFOLDER}/${COMMITLAST}.txt ]
+then
+    echo 'last commit already parsed'
+else
+    cd ${TMPFOLDER}/tools/benchmark-cli/
+    ${QTQMAKE}
+    make -j${CPUCOUNT} >> /dev/null 2>&1
+    mv benchmark-cli /tmp/benchmark-cli-DtWCeUJym5bz8AJg-${COMMITLAST}
+    if [ ! -x /tmp/benchmark-cli-DtWCeUJym5bz8AJg-${COMMITLAST} ]
+    then
+        echo "benchmark-cli application not found in /tmp/benchmark-cli-DtWCeUJym5bz8AJg-${COMMITLAST}"
+        exit;
+    fi
+fi
+LASTISOK=0
 COMMITLIST=`git log --reverse --pretty=format:"%H" --date=short | tail -n 15`
 for COMMIT in ${COMMITLIST}
 do
@@ -67,7 +79,7 @@ do
                 if [ -e ${TMPFOLDER}/tools/benchmark-cli/ ] && [ -e ${TMPFOLDER}/tools/benchmark-cli/repport.sh ]
                 then
                     echo 'benchmark-cli start'
-                    /tmp/benchmark-cli > ${CACHEFILE} 2>&1
+                    /tmp/benchmark-cli-DtWCeUJym5bz8AJg-${COMMITLAST} --server ${TMPFOLDER}/server/catchchallenger-server-cli-epoll > ${CACHEFILE} 2>&1
                     echo 'benchmark-cli done'
                     cd ${TMPFOLDER}
 
@@ -89,14 +101,18 @@ do
                     /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&connectAllPlayer=${BENCHMARKVALUE}&idle=${BENCHMARKVALUEIDLE}&move=${BENCHMARKVALUEMOVE}&chat=${BENCHMARKVALUECHAT}"
                     echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS} external&connectAllPlayer=${BENCHMARKVALUEEXTERNAL}&idle=${BENCHMARKVALUEIDLEEXTERNAL}&move=${BENCHMARKVALUEMOVEEXTERNAL}&chat=${BENCHMARKVALUECHATEXTERNAL}"
                     /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS} external&connectAllPlayer=${BENCHMARKVALUEEXTERNAL}&idle=${BENCHMARKVALUEIDLEEXTERNAL}&move=${BENCHMARKVALUEMOVEEXTERNAL}&chat=${BENCHMARKVALUECHATEXTERNAL}"
+                    LASTISOK=1
                 else
                     echo '' > ${CACHEFOLDER}/${COMMIT}-skip.txt
+                    LASTISOK=0
                 fi
             else
+                LASTISOK=0
                 echo /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&failed"
                 /usr/bin/wget -O - -q "${URLTOSEND}?commit=${COMMIT}&key=${URLTOSENDKEY}&platform=${CATCHCHALLENGERPLATFORM}&details=${CATCHCHALLENGERDETAILS}&failed"
             fi
         else
+            LASTISOK=0
             echo '' > ${CACHEFOLDER}/${COMMIT}-skip.txt
         fi
     else
@@ -127,4 +143,8 @@ do
     fi
 done
 rm -Rf ${TMPFOLDER}
+if [ ${LASTISOK} -eq 1 ]
+then
+    rm -f /tmp/benchmark-cli-DtWCeUJym5bz8AJg-*
+fi
 killall -s 9 yes > /dev/null 2>&1
