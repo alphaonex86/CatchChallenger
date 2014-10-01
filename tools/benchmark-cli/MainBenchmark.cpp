@@ -36,25 +36,38 @@ MainBenchmark::MainBenchmark() :
     stopBenchmarkTimer.setSingleShot(true);
     connect(&stopBenchmarkTimer,&QTimer::timeout,this,&MainBenchmark::stopBenchmark,Qt::QueuedConnection);
 
-    if(settings.contains("server"))
-        server=settings.value("server").toString();
+    const QStringList &args=QCoreApplication::arguments();
+    const int &indexOfServer=args.indexOf(QStringLiteral("--server"));
+    if(indexOfServer!=-1 && args.size()>(indexOfServer+1))
+        server=args.at(indexOfServer+1);
+    if(server.isEmpty())
+    {
+        if(settings.contains(QStringLiteral("server")))
+        {
+            qDebug() << "use setting to locate the server";
+            server=settings.value(QStringLiteral("server")).toString();
+        }
+        else
+        {
+            qDebug() << "set setting to default";
+            server=QStringLiteral("catchchallenger-server-cli-epoll");
+            settings.setValue(QStringLiteral("server"),QStringLiteral("catchchallenger-server-cli-epoll"));
+        }
+    }
+    if(settings.contains(QStringLiteral("multipleConnexion")))
+        multipleConnexion=settings.value(QStringLiteral("multipleConnexion")).toUInt();
     else
-        settings.setValue("server","catchchallenger-server-cli-epoll");
-    if(settings.contains("multipleConnexion"))
-        multipleConnexion=settings.value("multipleConnexion").toUInt();
+        settings.setValue(QStringLiteral("multipleConnexion"),QStringLiteral("480"));
+    if(settings.contains(QStringLiteral("connectBySeconds")))
+        connectBySeconds=settings.value(QStringLiteral("connectBySeconds")).toUInt();
     else
-        settings.setValue("multipleConnexion","480");
-    if(settings.contains("connectBySeconds"))
-        connectBySeconds=settings.value("connectBySeconds").toUInt();
+        settings.setValue(QStringLiteral("connectBySeconds"),QStringLiteral("99"));
+    if(settings.contains(QStringLiteral("maxDiffConnectedSelected")))
+        maxDiffConnectedSelected=settings.value(QStringLiteral("maxDiffConnectedSelected")).toUInt();
     else
-        settings.setValue("connectBySeconds","99");
-    if(settings.contains("maxDiffConnectedSelected"))
-        maxDiffConnectedSelected=settings.value("maxDiffConnectedSelected").toUInt();
-    else
-        settings.setValue("maxDiffConnectedSelected","20");
+        settings.setValue(QStringLiteral("maxDiffConnectedSelected"),QStringLiteral("20"));
 
     multipleBotConnection.botInterface=new SimpleAction();
-    systemClockTick=sysconf(_SC_CLK_TCK);
 }
 
 MainBenchmark::~MainBenchmark()
@@ -73,7 +86,7 @@ void MainBenchmark::init()
     }
     else
     {
-        qDebug() << tr("Unable to find %1").arg(server);
+        qDebug() << tr("Unable to find \"%1\"").arg(server);
         QCoreApplication::quit();
     }
 }
@@ -87,7 +100,7 @@ void MainBenchmark::processError(QProcess::ProcessError error)
 void MainBenchmark::processStateChanged(QProcess::ProcessState stateChanged)
 {
     Q_UNUSED(stateChanged);
-    qDebug() << "QProcess::ProcessState" << stateChanged;
+    qDebug() << QStringLiteral("QProcess::ProcessState") << stateChanged;
     if(stateChanged==QProcess::NotRunning)
         QCoreApplication::quit();
 }
@@ -96,16 +109,6 @@ void MainBenchmark::updateUserTime()
 {
     if(systemItem!=-1)
         stopSystemMeasure();
-}
-
-QString MainBenchmark::convertUsToString(quint64 us)
-{
-    if(us>5000000)
-        return tr("%1s").arg(QString::number(us/1000000,'g',4));
-    else if(us>5000)
-        return tr("%1ms").arg(QString::number(us/1000,'g',4));
-    else
-        return tr("%1us").arg(QString::number(us,'g',4));
 }
 
 void MainBenchmark::readyReadStandardError()
@@ -160,7 +163,7 @@ void MainBenchmark::startServerConnexion()
     multipleBotConnection.mMaxDiffConnectedSelected=maxDiffConnectedSelected;
     multipleBotConnection.mProxy=QString();
     multipleBotConnection.mProxyport=0;
-    multipleBotConnection.mHost=QString("localhost");
+    multipleBotConnection.mHost=QStringLiteral("localhost");
     multipleBotConnection.mPort=42489;
 
     //do only the first client to download the datapack
@@ -170,7 +173,7 @@ void MainBenchmark::startServerConnexion()
 
 void MainBenchmark::all_player_on_map()
 {
-    qDebug() << "Connect all player";
+    qDebug() << QStringLiteral("Connect all player");
     updateUserTime();
 }
 
