@@ -112,7 +112,7 @@ BaseWindow::BaseWindow() :
     botFightTimer.setSingleShot(true);
     botFightTimer.setInterval(1000);
 
-    connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setVisible,Qt::QueuedConnection);
+    connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setMultiPlayer,Qt::QueuedConnection);
 
     //connect the datapack loader
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
@@ -972,7 +972,20 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                 {
                     remove_to_inventory(itemId);
                     if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(itemId))
+                    {
                         CatchChallenger::Api_client_real::client->useObjectOnMonster(itemId,monsterUniqueId);
+                        updateAttackList();
+                        displayAttackProgression=0;
+                        attack_quantity_changed=0;
+                        if(battleType!=BattleType_OtherPlayer)
+                            doNextAction();
+                        else
+                        {
+                            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+                            ui->labelFightEnter->setText(tr("In waiting of the other player action"));
+                            ui->pushButtonFightEnterNext->hide();
+                        }
+                    }
                     else
                         error(tr("You have selected a buggy object"));
                 }

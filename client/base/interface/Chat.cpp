@@ -182,6 +182,11 @@ void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QStri
     update_chat();
 }
 
+void Chat::setMultiPlayer(const bool & multiplayer)
+{
+    ui->pushButtonChat->setChecked(multiplayer);
+}
+
 void Chat::update_chat()
 {
     QString nameHtml;
