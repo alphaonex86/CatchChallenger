@@ -207,7 +207,7 @@ void ClientFightEngine::resetAll()
 
     randomSeeds.clear();
     player_informations_local.playerMonster.clear();
-    attackReturnList.clear();
+    fightEffectList.clear();
 
     battleCurrentMonster.clear();
     battleStat.clear();
@@ -255,8 +255,8 @@ quint32 ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonster
 
 Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)
 {
-    attackReturnList << CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
-    return attackReturnList.last();
+    fightEffectList << CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
+    return fightEffectList.last();
 }
 
 bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn)
@@ -392,7 +392,7 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
         }
         index++;
     }
-    this->attackReturnList << attackReturnList;
+    this->fightEffectList << attackReturnList;
 }
 
 PublicPlayerMonster * ClientFightEngine::getOtherMonster()
@@ -409,86 +409,86 @@ quint8 ClientFightEngine::getOtherSelectedMonsterNumber() const
 
 QList<Skill::AttackReturn> ClientFightEngine::getAttackReturnList() const
 {
-    return attackReturnList;
+    return fightEffectList;
 }
 
 Skill::AttackReturn ClientFightEngine::getFirstAttackReturn() const
 {
-    return attackReturnList.first();
+    return fightEffectList.first();
 }
 
 Skill::AttackReturn ClientFightEngine::generateOtherAttack()
 {
-    attackReturnList << CommonFightEngine::generateOtherAttack();
-    return attackReturnList.last();
+    fightEffectList << CommonFightEngine::generateOtherAttack();
+    return fightEffectList.last();
 }
 
 void ClientFightEngine::removeTheFirstLifeEffectAttackReturn()
 {
-    if(attackReturnList.isEmpty())
+    if(fightEffectList.isEmpty())
         return;
-    if(!attackReturnList.first().lifeEffectMonster.isEmpty())
-        attackReturnList.first().lifeEffectMonster.removeFirst();
+    if(!fightEffectList.first().lifeEffectMonster.isEmpty())
+        fightEffectList.first().lifeEffectMonster.removeFirst();
 }
 
 void ClientFightEngine::removeTheFirstBuffEffectAttackReturn()
 {
-    if(attackReturnList.isEmpty())
+    if(fightEffectList.isEmpty())
         return;
-    if(!attackReturnList.first().buffLifeEffectMonster.isEmpty())
-        attackReturnList.first().buffLifeEffectMonster.removeFirst();
+    if(!fightEffectList.first().buffLifeEffectMonster.isEmpty())
+        fightEffectList.first().buffLifeEffectMonster.removeFirst();
 }
 
 void ClientFightEngine::removeTheFirstAddBuffEffectAttackReturn()
 {
-    if(attackReturnList.isEmpty())
+    if(fightEffectList.isEmpty())
         return;
-    if(!attackReturnList.first().addBuffEffectMonster.isEmpty())
-        attackReturnList.first().addBuffEffectMonster.removeFirst();
+    if(!fightEffectList.first().addBuffEffectMonster.isEmpty())
+        fightEffectList.first().addBuffEffectMonster.removeFirst();
 }
 
 void ClientFightEngine::removeTheFirstRemoveBuffEffectAttackReturn()
 {
-    if(attackReturnList.isEmpty())
+    if(fightEffectList.isEmpty())
         return;
-    if(!attackReturnList.first().removeBuffEffectMonster.isEmpty())
-        attackReturnList.first().removeBuffEffectMonster.removeFirst();
+    if(!fightEffectList.first().removeBuffEffectMonster.isEmpty())
+        fightEffectList.first().removeBuffEffectMonster.removeFirst();
 }
 
 void ClientFightEngine::removeTheFirstAttackReturn()
 {
-    if(!attackReturnList.isEmpty())
-        attackReturnList.removeFirst();
+    if(!fightEffectList.isEmpty())
+        fightEffectList.removeFirst();
 }
 
 bool ClientFightEngine::firstAttackReturnHaveMoreEffect()
 {
-    if(attackReturnList.isEmpty())
+    if(fightEffectList.isEmpty())
         return false;
-    if(!attackReturnList.first().lifeEffectMonster.isEmpty())
+    if(!fightEffectList.first().lifeEffectMonster.isEmpty())
         return true;
-    if(!attackReturnList.first().addBuffEffectMonster.isEmpty())
+    if(!fightEffectList.first().addBuffEffectMonster.isEmpty())
         return true;
-    if(!attackReturnList.first().removeBuffEffectMonster.isEmpty())
+    if(!fightEffectList.first().removeBuffEffectMonster.isEmpty())
         return true;
-    if(!attackReturnList.first().buffLifeEffectMonster.isEmpty())
+    if(!fightEffectList.first().buffLifeEffectMonster.isEmpty())
         return true;
     return false;
 }
 
 bool ClientFightEngine::firstLifeEffectQuantityChange(qint32 quantity)
 {
-    if(attackReturnList.isEmpty())
+    if(fightEffectList.isEmpty())
     {
         emit newError(tr("Internal error"),"try add quantity to non existant life effect");
         return false;
     }
-    if(attackReturnList.first().lifeEffectMonster.isEmpty())
+    if(fightEffectList.first().lifeEffectMonster.isEmpty())
     {
         emit newError(tr("Internal error"),"try add quantity to life effect list empty");
         return false;
     }
-    attackReturnList.first().lifeEffectMonster.first().quantity+=quantity;
+    fightEffectList.first().lifeEffectMonster.first().quantity+=quantity;
     return true;
 }
 
@@ -627,4 +627,123 @@ quint8 ClientFightEngine::getOneSeed(const quint8 &max)
 void ClientFightEngine::newRandomNumber(const QByteArray &data)
 {
     randomSeeds.append(data);
+}
+
+//duplicate to have a return
+bool ClientFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &monster)
+{
+    PlayerMonster * playerMonster=monsterById(monster);
+    if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(object))
+    {
+    }
+    //duplicate to have a return
+    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object) || CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(object))
+    {
+        if(CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object))
+        {
+            //duplicate to have a return
+            Skill::AttackReturn attackReturn;
+            attackReturn.doByTheCurrentMonster=true;
+            attackReturn.attackReturnCase=Skill::AttackReturnCase::AttackReturnCase_ItemUsage;
+            //normal attack
+            attackReturn.success=true;
+            attackReturn.attack=0;
+            //change monster if monsterPlace !=0
+            attackReturn.monsterPlace=0;
+            //use objet on monster if item!=0
+            attackReturn.on_current_monster=true;
+            attackReturn.item=object;
+
+            const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.value(playerMonster->monster),playerMonster->level);
+            const QList<MonsterItemEffect> monsterItemEffect = CommonDatapack::commonDatapack.items.monsterItemEffect.values(object);
+            int index=0;
+            //duplicate to have a return
+            while(index<monsterItemEffect.size())
+            {
+                const MonsterItemEffect &effect=monsterItemEffect.at(index);
+                switch(effect.type)
+                {
+                    //duplicate to have a return
+                    case MonsterItemEffectType_AddHp:
+                        if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(quint32)effect.value)
+                        {
+                            hpChange(playerMonster,playerMonster->hp+effect.value);
+                            Skill::LifeEffectReturn lifeEffectReturn;
+                            lifeEffectReturn.quantity=effect.value;
+                            lifeEffectReturn.on=ApplyOn_Themself;
+                            lifeEffectReturn.critical=false;
+                            lifeEffectReturn.effective=1;
+                            attackReturn.lifeEffectMonster << lifeEffectReturn;
+                        }
+                        //duplicate to have a return
+                        else if(playerMonsterStat.hp!=playerMonster->hp)
+                        {
+                            Skill::LifeEffectReturn lifeEffectReturn;
+                            lifeEffectReturn.quantity=playerMonsterStat.hp-playerMonster->hp;
+                            hpChange(playerMonster,playerMonsterStat.hp);
+                            lifeEffectReturn.on=ApplyOn_Themself;
+                            lifeEffectReturn.critical=false;
+                            lifeEffectReturn.effective=1;
+                            attackReturn.lifeEffectMonster << lifeEffectReturn;
+                        }
+                        else if(monsterItemEffect.size()==1)
+                            return false;
+                    break;
+                    //duplicate to have a return
+                    case MonsterItemEffectType_RemoveBuff:
+                        if(effect.value>0)
+                        {
+                            if(removeBuffOnMonster(playerMonster,effect.value))
+                            {
+                                Skill::BuffEffect buffEffect;
+                                buffEffect.buff=effect.value;
+                                buffEffect.on=ApplyOn_Themself;
+                                buffEffect.level=1;
+                                attackReturn.removeBuffEffectMonster << buffEffect;
+                            }
+                        }
+                        else
+                        {
+                            if(!playerMonster->buffs.isEmpty())
+                            {
+                                int index=0;
+                                while(index<playerMonster->buffs.size())
+                                {
+                                    const PlayerBuff &playerBuff=playerMonster->buffs.at(index);
+                                    Skill::BuffEffect buffEffect;
+                                    buffEffect.buff=playerBuff.buff;
+                                    buffEffect.on=ApplyOn_Themself;
+                                    buffEffect.level=playerBuff.level;
+                                    attackReturn.removeBuffEffectMonster << buffEffect;
+                                    index++;
+                                }
+                            }
+                            removeAllBuffOnMonster(playerMonster);
+                        }
+                    break;
+                    default:
+                        messageFightEngine(QStringLiteral("Item %1 have unknown effect").arg(object));
+                    break;
+                }
+                index++;
+            }
+            //duplicate to have a return
+            if(isInFight())
+            {
+                doTheOtherMonsterTurn();
+                this->fightEffectList << attackReturn;
+            }
+            return true;
+        }
+        else if(CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.contains(object))
+        {
+        }
+    }
+    else if(CommonDatapack::commonDatapack.items.itemToLearn.contains(object))
+    {
+    }
+    else
+        return false;
+
+    return CommonFightEngine::useObjectOnMonster(object,monster);
 }
