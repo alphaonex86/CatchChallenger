@@ -24,6 +24,7 @@ public:
     static ClientFightEngine fightEngine;
     virtual void resetAll();
     virtual bool isInFight() const;
+    bool useObjectOnMonster(const quint32 &object,const quint32 &monster);
     void errorFightEngine(const QString &error);
     void messageFightEngine(const QString &message) const;
     //current fight
@@ -37,7 +38,7 @@ public:
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
     bool addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
-    void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList);
+    void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &fightEffectList);
     QList<Skill::AttackReturn> getAttackReturnList() const;
     Skill::AttackReturn getFirstAttackReturn() const;
     void removeTheFirstLifeEffectAttackReturn();
@@ -67,7 +68,7 @@ public:
 private:
     quint32 mLastGivenXP;
     QList<int> mEvolutionByLevelUp;
-    QList<Skill::AttackReturn> attackReturnList;
+    QList<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     QByteArray randomSeeds;
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
