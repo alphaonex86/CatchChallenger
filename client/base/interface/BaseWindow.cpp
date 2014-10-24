@@ -1992,7 +1992,11 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
     int index=0;
     while(index<botQuests.size())
     {
-        const quint8 &questId=botQuests.at(index);
+        const quint32 &questId=botQuests.at(index);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(questId!=botQuests.at(index))
+            qDebug() << "cast error for questId at BaseWindow::getQuestList()";
+        #endif
         const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId);
         if(!quests.contains(botQuests.at(index)))
         {
@@ -2064,7 +2068,11 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
     int index=0;
     while(index<botQuests.size())
     {
-        const quint8 &questId=botQuests.at(index);
+        const quint32 &questId=botQuests.at(index);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(questId!=botQuests.at(index))
+            qDebug() << "cast error for questId at BaseWindow::getQuestList()";
+        #endif
         const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId);
         if(!quests.contains(botQuests.at(index)))
         {
