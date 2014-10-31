@@ -198,6 +198,10 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
         settings->setValue(QLatin1Literal("secondToPositionSync"),0);
     if(!settings->contains(QLatin1Literal("positionTeleportSync")))
         settings->setValue(QLatin1Literal("positionTeleportSync"),true);
+    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
+        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
+    if(!settings->contains(QLatin1Literal("tryInterval")))
+        settings->setValue(QLatin1Literal("tryInterval"),5);
     settings->endGroup();
 
 

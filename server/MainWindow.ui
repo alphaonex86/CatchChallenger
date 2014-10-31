@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>10</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -1428,11 +1428,88 @@
          </layout>
         </item>
         <item>
+         <widget class="QGroupBox" name="groupBox_6">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Connection</string>
+          </property>
+          <widget class="QLabel" name="label_49">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>221</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Try connection interval</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_50">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>30</y>
+             <width>521</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Consider down after number of try</string>
+           </property>
+          </widget>
+          <widget class="QSpinBox" name="tryInterval">
+           <property name="geometry">
+            <rect>
+             <x>610</x>
+             <y>10</y>
+             <width>56</width>
+             <height>22</height>
+            </rect>
+           </property>
+           <property name="suffix">
+            <string>s</string>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>3600</number>
+           </property>
+          </widget>
+          <widget class="QSpinBox" name="considerDownAfterNumberOfTry">
+           <property name="geometry">
+            <rect>
+             <x>610</x>
+             <y>30</y>
+             <width>56</width>
+             <height>22</height>
+            </rect>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>1000</number>
+           </property>
+          </widget>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="groupBoxDbMysql">
           <property name="title">
            <string>Mysql/PostgreSQL</string>
           </property>
           <layout class="QFormLayout" name="formLayout_3">
+           <property name="fieldGrowthPolicy">
+            <enum>QFormLayout::ExpandingFieldsGrow</enum>
+           </property>
            <item row="0" column="0">
             <widget class="QLabel" name="label_3">
              <property name="text">

@@ -536,7 +536,13 @@ void MainWindow::load_settings()
 
     if(!settings->contains(QLatin1Literal("db_fight_sync")))
         settings->setValue(QLatin1Literal("db_fight_sync"),"FightSync_AtTheEndOfBattle");
+    quint32 tryInterval;
+    quint32 considerDownAfterNumberOfTry;
+    tryInterval=settings->value(QLatin1Literal("tryInterval")).toUInt();
+    considerDownAfterNumberOfTry=settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
     settings->endGroup();
+    ui->tryInterval->setValue(tryInterval);
+    ui->considerDownAfterNumberOfTry->setValue(considerDownAfterNumberOfTry);
 
     settings->beginGroup(QLatin1Literal("DDOS"));
     ui->DDOSwaitBeforeConnectAfterKick->setValue(settings->value(QLatin1Literal("waitBeforeConnectAfterKick")).toUInt());
@@ -749,6 +755,8 @@ void MainWindow::send_settings()
     formatedServerSettings.database.fightSync                       = (ServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();
     formatedServerSettings.database.positionTeleportSync=ui->positionTeleportSync->isChecked();
     formatedServerSettings.database.secondToPositionSync=ui->secondToPositionSync->value();
+    formatedServerSettings.database.tryInterval=ui->tryInterval->value();
+    formatedServerSettings.database.considerDownAfterNumberOfTry=ui->considerDownAfterNumberOfTry->value();
 
     //connection
     formatedServerSettings.automatic_account_creation   = ui->automatic_account_creation->isChecked();
@@ -1472,4 +1480,18 @@ void CatchChallenger::MainWindow::on_maxPlayerItems_editingFinished()
 void CatchChallenger::MainWindow::on_maxWarehousePlayerItems_editingFinished()
 {
     settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),ui->maxWarehousePlayerItems->value());
+}
+
+void CatchChallenger::MainWindow::on_tryInterval_editingFinished()
+{
+    settings->beginGroup(QLatin1Literal("db"));
+    settings->setValue(QLatin1Literal("tryInterval"),ui->tryInterval->value());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_considerDownAfterNumberOfTry_editingFinished()
+{
+    settings->beginGroup(QLatin1Literal("db"));
+    settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),ui->considerDownAfterNumberOfTry->value());
+    settings->endGroup();
 }
