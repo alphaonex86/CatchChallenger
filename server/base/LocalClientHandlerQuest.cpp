@@ -231,28 +231,7 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput(QStringLiteral("finish the quest: %1").arg(quest.id));
         #endif
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `quest` SET `step`=0,`finish_one_time`=1 WHERE `character`=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE quest SET step=0,finish_one_time=true WHERE character=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_quest_finish.arg(character_id).arg(quest.id));
         public_and_private_informations.quests[quest.id].step=0;
         public_and_private_informations.quests[quest.id].finish_one_time=true;
         index=0;
@@ -279,31 +258,11 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput(QStringLiteral("next step in the quest: %1").arg(quest.id));
         #endif
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND `quest`=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(public_and_private_informations.quests.value(quest.id).step)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(public_and_private_informations.quests.value(quest.id).step)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(public_and_private_informations.quests.value(quest.id).step)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_quest_step
+                     .arg(character_id)
+                     .arg(quest.id)
+                     .arg(public_and_private_informations.quests.value(quest.id).step)
+                     );
         addQuestStepDrop(quest.id,public_and_private_informations.quests.value(quest.id).step);
     }
     return true;
@@ -313,63 +272,18 @@ bool Client::startQuest(const Quest &quest)
 {
     if(!public_and_private_informations.quests.contains(quest.id))
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,%3,%4);")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(0)
-                             .arg(1)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(0)
-                             .arg(1)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,false,%3);")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(1)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_quest
+                     .arg(character_id)
+                     .arg(quest.id)
+                     .arg(0)
+                     .arg(1)
+                     );
         public_and_private_informations.quests[quest.id].step=1;
         public_and_private_informations.quests[quest.id].finish_one_time=false;
     }
     else
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(1)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(1)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
-                             .arg(character_id)
-                             .arg(quest.id)
-                             .arg(1)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_quest_restart.arg(character_id).arg(quest.id));
         public_and_private_informations.quests[quest.id].step=1;
     }
     addQuestStepDrop(quest.id,1);
