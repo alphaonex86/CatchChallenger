@@ -5,6 +5,8 @@ TARGET = map2png
 
 QT += xml
 
+DEFINES += ONLYMAPRENDER
+
 include(../../general/general.pri)
 
 win32:RC_FILE += resources-windows.rc
