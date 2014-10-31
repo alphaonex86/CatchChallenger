@@ -102,6 +102,15 @@ public:
     static QString text_right;
     static QString text_left;
     static QString text_Collisions;
+    static QString text_animation;
+    static QString text_dotcomma;
+    static QString text_ms;
+    static QString text_frames;
+    static QString text_visible;
+    static QString text_false;
+    static QString text_object;
+    QRegularExpression regexMs;
+    QRegularExpression regexFrames;
 private:
     struct Map_full
     {

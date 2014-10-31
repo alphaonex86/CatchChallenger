@@ -54,6 +54,13 @@ QString Map2Png::text_top=QLatin1Literal("top");
 QString Map2Png::text_right=QLatin1Literal("right");
 QString Map2Png::text_left=QLatin1Literal("left");
 QString Map2Png::text_Collisions=QLatin1Literal("Collisions");
+QString Map2Png::text_animation=QLatin1Literal("animation");
+QString Map2Png::text_dotcomma=QLatin1Literal(";");
+QString Map2Png::text_ms=QLatin1Literal("ms");
+QString Map2Png::text_frames=QLatin1Literal("frames");
+QString Map2Png::text_visible=QLatin1Literal("visible");
+QString Map2Png::text_false=QLatin1Literal("false");
+QString Map2Png::text_object=QLatin1Literal("object");
 
 using namespace Tiled;
 
@@ -216,6 +223,9 @@ Map2Png::Map2Png(QWidget *parent) :
     QGraphicsView(parent),
     mScene(new QGraphicsScene(this))
 {
+    regexMs=QRegularExpression(QStringLiteral("^[0-9]{1,5}ms$"));
+    regexFrames=QRegularExpression(QStringLiteral("^[0-9]{1,3}frames$"));
+
     setWindowTitle(tr("Map2Png"));
     //scale(2,2);
 
@@ -230,7 +240,7 @@ Map2Png::Map2Png(QWidget *parent) :
     //viewport()->setAttribute(Qt::WA_StaticContents);
     //setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
 
-    hideTheDoors=true;
+    hideTheDoors=false;
 }
 
 
@@ -287,7 +297,47 @@ QString Map2Png::loadOtherMap(const QString &fileName)
             int index2=0;
             while(index2<objects.size())
             {
-                if(objects.at(index2)->type()!=Map2Png::text_door || hideTheDoors)
+                if(objects.at(index2)->type()==Map2Png::text_door)
+                {
+                    if(hideTheDoors)
+                        tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
+                    else
+                    {
+                        const Tiled::Tile *tile=objects.at(index2)->cell().tile;
+                        if(tile!=NULL)
+                        {
+                            const QString &animation=tile->property(Map2Png::text_animation);
+                            if(!animation.isEmpty())
+                            {
+                                const QStringList &animationList=animation.split(Map2Png::text_dotcomma);
+                                if(animationList.size()==2)
+                                {
+                                    if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
+                                    {
+                                        QString msString=animationList.at(0);
+                                        QString framesString=animationList.at(1);
+                                        msString.remove(Map2Png::text_ms);
+                                        framesString.remove(Map2Png::text_frames);
+                                        quint16 ms=msString.toUShort();
+                                        quint8 frames=framesString.toUShort();
+                                        if(ms>0 && frames>1)
+                                        {
+                                        }
+                                        else
+                                            qDebug() << "ms is 0 or frame is <=1";
+                                    }
+                                    else
+                                        qDebug() << "Wrong animation tile args regex match";
+                                }
+                                else
+                                    qDebug() << "Wrong animation tile args count";
+                            }
+                            else
+                                tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
+                        }
+                    }
+                }
+                else
                     tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
                 index2++;
             }
@@ -349,6 +399,15 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                                 cell.tile=tileset->tileAt(7);
                             object->setCell(cell);
                         }
+                    }
+                }
+                else if(objects.at(index2)->type()==Map2Png::text_object)
+                {
+                    if(objects.at(index2)->property(Map2Png::text_visible)==Map2Png::text_false)
+                    {
+                        tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
+                        objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
+                        index2--;
                     }
                 }
                 index2++;
