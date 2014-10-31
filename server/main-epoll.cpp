@@ -154,6 +154,8 @@ void send_settings()
         formatedServerSettings.database.fightSync                       = CatchChallenger::ServerSettings::Database::FightSync_AtTheEndOfBattle;
     formatedServerSettings.database.positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
     formatedServerSettings.database.secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
+    formatedServerSettings.database.tryInterval=settings->value(QLatin1Literal("tryInterval")).toUInt();
+    formatedServerSettings.database.considerDownAfterNumberOfTry=settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
     settings->endGroup();
 
     //connection

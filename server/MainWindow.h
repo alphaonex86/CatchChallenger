@@ -134,6 +134,8 @@ private slots:
     void on_maxWarehousePlayerMonsters_editingFinished();
     void on_maxPlayerItems_editingFinished();
     void on_maxWarehousePlayerItems_editingFinished();
+    void on_tryInterval_editingFinished();
+    void on_considerDownAfterNumberOfTry_editingFinished();
 signals:
     void record_latency();
 };

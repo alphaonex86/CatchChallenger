@@ -3180,6 +3180,16 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverPrivateVariables.server_message.removeLast();
     } while(removeTheLastList);
 
+    if(GlobalServerData::serverSettings.database.tryInterval<1)
+        GlobalServerData::serverSettings.database.tryInterval=5;
+    if(GlobalServerData::serverSettings.database.considerDownAfterNumberOfTry<1)
+        GlobalServerData::serverSettings.database.considerDownAfterNumberOfTry=3;
+    if(GlobalServerData::serverSettings.database.tryInterval*GlobalServerData::serverSettings.database.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    {
+        GlobalServerData::serverSettings.database.tryInterval=5;
+        GlobalServerData::serverSettings.database.considerDownAfterNumberOfTry=3;
+    }
+
     if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)
         GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=9;
     if(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1)

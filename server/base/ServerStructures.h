@@ -135,6 +135,9 @@ struct ServerSettings
         FightSync fightSync;
         bool positionTeleportSync;
         quint32 secondToPositionSync;//0 is disabled
+        //sync mode then prefer tryInterval*considerDownAfterNumberOfTry < 20s
+        quint32 tryInterval;//second
+        quint32 considerDownAfterNumberOfTry;
 
         struct Mysql
         {

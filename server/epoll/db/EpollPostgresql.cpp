@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <unistd.h>
 #include "../Epoll.h"
 #include "../../../general/base/GeneralVariable.h"
+#include "../../base/GlobalServerData.h"
 
 char EpollPostgresql::emptyString[]={'\0'};
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
@@ -60,7 +62,6 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
         return false;
     }
 
-    char strCoPG[255];
     strcpy(strCoPG,"");
     if(strlen(dbname)>0)
     {
@@ -82,16 +83,30 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
         strcat(strCoPG," password=");
         strcat(strCoPG,password);
     }
-
     std::cerr << "Connecting to postgresql: " << host << "..." << std::endl;
-    conn=PQconnectdb(strCoPG);
-    const ConnStatusType &connStatusType=PQstatus(conn);
+    return syncConnect(strCoPG);
+}
+
+bool EpollPostgresql::syncConnect(const char * fullConenctString)
+{
+    conn=PQconnectdb(fullConenctString);
+    ConnStatusType connStatusType=PQstatus(conn);
     if(connStatusType==CONNECTION_BAD)
     {
-       std::cerr << "pg connexion not OK" << std::endl;
-       return false;
+       std::cerr << "pg connexion not OK, retrying..." << std::endl;
+       unsigned int index=0;
+       while(index<CatchChallenger::GlobalServerData::serverSettings.database.considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
+       {
+           sleep(CatchChallenger::GlobalServerData::serverSettings.database.tryInterval);
+           //std::cerr << "Connecting to postgresql ... (" << (index+1) << ")" << std::endl;
+           conn=PQconnectdb(strCoPG);
+           connStatusType=PQstatus(conn);
+           index++;
+       }
+       if(connStatusType==CONNECTION_BAD)
+        return false;
     }
-    std::cerr << "Connected to postgresql: " << host << std::endl;
+    std::cerr << "Connected to postgresql" << std::endl;
     if(PQsetnonblocking(conn,1)!=0)
     {
        std::cerr << "pg no blocking error" << std::endl;
@@ -120,6 +135,16 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
     std::cerr << "Protocol version:" << PQprotocolVersion(conn) << std::endl;
     std::cerr << "Server version:" << PQserverVersion(conn) << std::endl;
     return true;
+}
+
+void EpollPostgresql::syncReconnect()
+{
+    if(conn!=NULL)
+    {
+        std::cerr << "pg already connected" << std::endl;
+        return;
+    }
+    syncConnect(strCoPG);
 }
 
 void EpollPostgresql::syncDisconnect()
@@ -317,7 +342,16 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
         }
     }
     if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
+    {
         started=false;
+        if(EPOLLRDHUP)
+        {
+            std::cerr << "Database disconnected, try reconnect: " << errorMessage() << std::endl;
+            syncDisconnect();
+            conn=NULL;
+            syncReconnect();
+        }
+    }
     return true;
 }
 
