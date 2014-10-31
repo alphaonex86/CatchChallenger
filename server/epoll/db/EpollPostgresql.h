@@ -17,7 +17,9 @@ public:
     ~EpollPostgresql();
     Type getType() const;
     bool syncConnect(const char * host, const char * dbname, const char * user, const char * password);
+    bool syncConnect(const char * fullConenctString);
     void syncDisconnect();
+    void syncReconnect();
     CallBack * asyncRead(const char *query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const char *query);
     static void noticeReceiver(void *arg, const PGresult *res);
@@ -39,6 +41,7 @@ private:
     static char emptyString[1];
     static CallBack emptyCallback;
     static CallBack tempCallback;
+    char strCoPG[255];
 };
 
 #endif
