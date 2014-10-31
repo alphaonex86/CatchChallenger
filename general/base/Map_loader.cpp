@@ -1419,6 +1419,9 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
 
 QList<MapMonster> Map_loader::loadSpecificMonster(const QString &fileName,const QString &monsterType)
 {
+    #ifdef ONLYMAPRENDER
+    return QList<MapMonster>();
+    #endif
     QList<MapMonster> monsterTypeList;
     bool ok;
     quint32 tempLuckTotal=0;
@@ -1441,7 +1444,7 @@ QList<MapMonster> Map_loader::loadSpecificMonster(const QString &fileName,const 
                         if(ok)
                             if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(mapMonster.id))
                             {
-                                qDebug() << QStringLiteral("monster %3 not found into the monster list: %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(mapMonster.id).arg(fileName);
+                                qDebug() << QStringLiteral("monster %4 not found into the monster list: %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName).arg(mapMonster.id);
                                 ok=false;
                             }
                         if(monsters.hasAttribute(Map_loader::text_minLevel) && monsters.hasAttribute(Map_loader::text_maxLevel))
@@ -1576,6 +1579,9 @@ QString Map_loader::resolvRelativeMap(const QString &fileName,const QString &lin
 
 QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &conditionFile,const quint32 &conditionId)
 {
+    #ifdef ONLYMAPRENDER
+    return QDomElement();
+    #endif
     if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.contains(conditionFile))
     {
         if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
@@ -1644,6 +1650,9 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
 
 MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile,const QDomElement &conditionContent)
 {
+    #ifdef ONLYMAPRENDER
+    return MapCondition();
+    #endif
     bool ok;
     MapCondition condition;
     condition.type=MapConditionType_None;
