@@ -428,8 +428,8 @@
         <location filename="../../Api_client_real.cpp" line="269"/>
         <location filename="../../Api_client_real.cpp" line="277"/>
         <location filename="../../Api_client_real.cpp" line="321"/>
-        <location filename="../../Api_client_real.cpp" line="518"/>
-        <location filename="../../Api_client_real.cpp" line="606"/>
+        <location filename="../../Api_client_real.cpp" line="521"/>
+        <location filename="../../Api_client_real.cpp" line="613"/>
         <source>Datapack downloading error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -437,17 +437,17 @@
         <location filename="../../Api_client_real.cpp" line="299"/>
         <location filename="../../Api_client_real.cpp" line="307"/>
         <location filename="../../Api_client_real.cpp" line="313"/>
-        <location filename="../../Api_client_real.cpp" line="593"/>
+        <location filename="../../Api_client_real.cpp" line="597"/>
         <source>Unable to download the datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real.cpp" line="556"/>
+        <location filename="../../Api_client_real.cpp" line="559"/>
         <source>Disk error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real.cpp" line="562"/>
+        <location filename="../../Api_client_real.cpp" line="565"/>
         <source>Security error, file not allowed: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -455,79 +455,79 @@
 <context>
     <name>CatchChallenger::Api_protocol</name>
     <message>
-        <location filename="../../Api_protocol.cpp" line="81"/>
+        <location filename="../../Api_protocol.cpp" line="103"/>
         <source>Internal error</source>
         <translation>Erreur interne</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2570"/>
+        <location filename="../../Api_protocol.cpp" line="2616"/>
         <source>Protocol not supported</source>
         <translation>Protocole non supporté</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2572"/>
+        <location filename="../../Api_protocol.cpp" line="2618"/>
         <source>Server full</source>
         <translation>Serveur complet</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2574"/>
-        <location filename="../../Api_protocol.cpp" line="2610"/>
-        <location filename="../../Api_protocol.cpp" line="2914"/>
+        <location filename="../../Api_protocol.cpp" line="2620"/>
+        <location filename="../../Api_protocol.cpp" line="2656"/>
+        <location filename="../../Api_protocol.cpp" line="2960"/>
         <source>Unknown error %1</source>
         <translation>Erreur inconnu: %1</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2595"/>
+        <location filename="../../Api_protocol.cpp" line="2641"/>
         <source>Bad login</source>
         <translation>Mauvais login</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2597"/>
+        <location filename="../../Api_protocol.cpp" line="2643"/>
         <source>Wrong login/pass</source>
         <translation>Mauvais login/pass</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2599"/>
+        <location filename="../../Api_protocol.cpp" line="2645"/>
         <source>Server internal error</source>
         <translation>Erreur interne du serveur</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2601"/>
+        <location filename="../../Api_protocol.cpp" line="2647"/>
         <source>Can&apos;t create character and don&apos;t have character</source>
         <translation>Impossible de créer le avatar et aucun avatar</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2603"/>
+        <location filename="../../Api_protocol.cpp" line="2649"/>
         <source>Login already in progress</source>
         <translation>Login déjà en cour</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2910"/>
+        <location filename="../../Api_protocol.cpp" line="2956"/>
         <source>Login already used</source>
         <translation>Login déjà utilisé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="2912"/>
+        <location filename="../../Api_protocol.cpp" line="2958"/>
         <source>Not created</source>
         <translation>Pas créé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="3017"/>
+        <location filename="../../Api_protocol.cpp" line="3063"/>
         <source>Character not found</source>
         <translation>Avatar non trouvé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="3019"/>
+        <location filename="../../Api_protocol.cpp" line="3065"/>
         <source>Already logged</source>
         <translation>Déjà loggé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="3021"/>
+        <location filename="../../Api_protocol.cpp" line="3067"/>
         <source>Server internal problem</source>
         <translation>Probléme interne du serveur</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="3023"/>
+        <location filename="../../Api_protocol.cpp" line="3069"/>
         <source>Unknown error: %1</source>
         <translation>Erreur inconnu: %1</translation>
     </message>
@@ -573,9 +573,9 @@
     </message>
     <message>
         <location filename="../../interface/BaseWindow.cpp" line="767"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1466"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1474"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1496"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1486"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1494"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1516"/>
         <location filename="../../interface/BaseWindowClan.cpp" line="34"/>
         <location filename="../../interface/BaseWindowClan.cpp" line="57"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="729"/>
@@ -624,7 +624,7 @@
         <location filename="../../interface/BaseWindow.cpp" line="827"/>
         <location filename="../../interface/BaseWindow.cpp" line="867"/>
         <location filename="../../interface/BaseWindow.cpp" line="872"/>
-        <location filename="../../interface/BaseWindow.cpp" line="974"/>
+        <location filename="../../interface/BaseWindow.cpp" line="993"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="106"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="138"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="177"/>
@@ -650,7 +650,7 @@
         <translation>Niveau: %1</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1015"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1035"/>
         <source>You have obtained: </source>
         <translation>You avez obtenu: </translation>
     </message>
@@ -736,126 +736,126 @@
         <translation>Selection de votre personnage</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1109"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1129"/>
         <source>Error with the protocol</source>
         <translation>Erreur avec le protocole</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1118"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1138"/>
         <source>Map error</source>
         <translation>Erreur de map</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1118"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1138"/>
         <source>The current map into the datapack is in error (not found, read failed, wrong format, corrupted, ...)
 Report the bug to the datapack maintainer.</source>
         <translation>La map courrante dans le datapack est en erreur (pas trouvé, lecture échoué, mauvais format, corrompu, ...)
 Repporter le bug au mainteneur du datapack.</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1123"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1143"/>
         <source>The repel effect is over</source>
         <translation>L&apos;effet du repousse est fini</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1158"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1178"/>
         <location filename="../../interface/BaseWindowShop.cpp" line="68"/>
         <source>Select an object</source>
         <translation>Sélectionner un objet</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1171"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1191"/>
         <location filename="../../interface/BaseWindowShop.cpp" line="78"/>
         <source>Unknown name</source>
         <translation>Nom inconnu</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1172"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1192"/>
         <location filename="../../interface/BaseWindowShop.cpp" line="79"/>
         <source>Unknown description</source>
         <translation>Description inconnu</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1275"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1295"/>
         <source>Planting seed...</source>
         <translation>Plantage de graine...</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1278"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1298"/>
         <source>Collecting plant...</source>
         <translation>Récolte de plante...</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1281"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1301"/>
         <source>Unknown action...</source>
         <translation>Action inconnu...</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1307"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1327"/>
         <source>To recolt the plant press &lt;i&gt;Enter&lt;/i&gt;</source>
         <translation>Pour récolter la plante, appuyez sur &lt;i&gt;Entrer&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1309"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1403"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1329"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1423"/>
         <source>This plant is growing and can&apos;t be collected</source>
         <translation>Cette plante est en train de grandir et ne peu être récoltée</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1314"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1334"/>
         <source>To plant a seed press &lt;i&gt;Enter&lt;/i&gt;</source>
         <translation>Pour planter une graine, appuyez sur &lt;i&gt;Entrer&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1356"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1376"/>
         <source>To interact with the bot press &lt;i&gt;&lt;b&gt;Enter&lt;/b&gt;&lt;/i&gt;</source>
         <translation>Pour interragir avec le bot, appuyez sur &lt;i&gt;&lt;b&gt;Enter&lt;/b&gt;&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1481"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2517"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1501"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2545"/>
         <source>Bot step missing data error, repport this error please</source>
         <translation>Erreur de donnée dans l&apos;étape du bot, repportez cette erreur</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1488"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2524"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1508"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2552"/>
         <source>Bot step wrong data type error, repport this error please</source>
         <translation>Mauvais type de donnée pour l&apos;étape du bot, repportez cette erreur</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1508"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1528"/>
         <source>You can&apos;t enter to the fight zone if you are not able to fight</source>
         <translation>Vous ne pouvez entrez dans une zone si vous n&apos;étes pas capable de combatre</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1516"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1536"/>
         <source>You can&apos;t enter to the fight zone, because have not random number</source>
         <translation>Vous ne pouvez entrez dans une zone car vous n&apos;avez pas de nombre alléatoire</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2108"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2135"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2136"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2163"/>
         <source>%1 (in progress)</source>
         <translation>%1 (progression)</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2112"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2140"/>
         <source>??? (in progress)</source>
         <translation>??? (progression)</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2152"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2180"/>
         <source>Error into the bot, repport this error please</source>
         <translation>Erreur dans le bot, merci de repporter cette erreur</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2187"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2215"/>
         <source>Bot text not found, repport this error please</source>
         <translation>Text du bot non trovué, merci de repporter cette erreur</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2226"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2254"/>
         <source>Waiting the shop content</source>
         <translation>Attente du contenu de la boutique</translation>
     </message>
@@ -866,34 +866,34 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation>Cash: %1</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2290"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2318"/>
         <source>You are healed</source>
         <translation>Vous êtes soigné</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2314"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2327"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2342"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2355"/>
         <source>No quests at the moment or you don&apos;t meat the requirements</source>
         <translation>Pas de quêtes pour le moement ou vous n&apos;avez pas les pre-requits</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2341"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2369"/>
         <source>Clan create</source>
         <translation>Creation de clan</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2346"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2374"/>
         <source>You are already into a clan. Use the clan dongle into the player information.</source>
         <translation>Vous êtes déjà un clan. Utiliser l&apos;onglet de clan dans les informations de joueurs.</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2395"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2423"/>
         <source>In waiting of market list</source>
         <translation>Attente de la liste du marché</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2194"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2253"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2222"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2281"/>
         <source>Shop called but missing informations</source>
         <translation>Boutique appellé mais informations manquantes</translation>
     </message>
@@ -908,13 +908,13 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2404"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2432"/>
         <source>Industry called but missing informations</source>
         <translation>Industrie appellé mais informations manquantes</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2201"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2260"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2229"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2288"/>
         <source>Shop called but wrong id</source>
         <translation>Boutique appellé mais mauvais id</translation>
     </message>
@@ -934,109 +934,109 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="971"/>
+        <location filename="../../interface/BaseWindow.cpp" line="990"/>
         <source>You have selected a buggy object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="974"/>
+        <location filename="../../interface/BaseWindow.cpp" line="993"/>
         <source>Can&apos;t be used now!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1193"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1213"/>
         <source>Don&apos;t meet the requirements</source>
         <translation>Vous n&apos;avez pas les prérequits</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1512"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1532"/>
         <source>You can&apos;t enter to this zone without the correct item</source>
         <translation>Vous ne pouvez pas entrer dans cette zone sans l&apos;item correct</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1520"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1540"/>
         <source>You can&apos;t enter to the zone</source>
         <translation>Vous ne pouvez pas entrer dans cette zone</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1527"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1547"/>
         <source>No path to go here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1545"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1565"/>
         <source>You arrive at &lt;b&gt;&lt;i&gt;%1&lt;/i&gt;&lt;/b&gt;</source>
         <translation>Vous arrivez à &lt;b&gt;&lt;i&gt;%1&lt;/i&gt;&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2206"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2234"/>
         <source>Shop not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2412"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2440"/>
         <source>Industry called but wrong id</source>
         <translation>Industrie appellé mais mauvais id</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2417"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2445"/>
         <source>The factory is not found</source>
         <translation>L&apos;industrie n&apos;est pas trouvé</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2422"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2450"/>
         <source>Waiting of status</source>
         <translation>Attente du status</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2444"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2472"/>
         <source>Missing attribute for the step</source>
         <translation>Attribue manquante pour l&apos;étape</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2449"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2477"/>
         <source>You can&apos;t try capture if you are not in a clan</source>
         <translation>Vous ne pouvez pas capturer si vous n&apos;êtes pas dans un clan</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2456"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2484"/>
         <source>You are waiting to capture %1</source>
         <translation>Vous être en train de capturé %1</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2461"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2489"/>
         <source>You are waiting to capture a zone</source>
         <translation>Attente pour capturer une zone</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2529"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2557"/>
         <source>Bot fight not found</source>
         <translation>Bot fight non trouvé</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2537"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2565"/>
         <source>Already beaten!</source>
         <translation>Déjà battu!</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2546"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2574"/>
         <source>Bot step type error, repport this error please</source>
         <translation>Erreur de type d&apos;étape de bot, merci repporter cette erreur</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2588"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2616"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="277"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="314"/>
         <source>Quantity</source>
         <translation>Quantité</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2588"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2616"/>
         <source>Select a quantity</source>
         <translation>Sélectionnez la quantité</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2622"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2650"/>
         <location filename="../../interface/BaseWindowCharacter.cpp" line="155"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="171"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="175"/>
@@ -1047,113 +1047,113 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation>Information</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2622"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2650"/>
         <source>You already know this recipe</source>
         <translation>Vous connaisser déjà cette recette</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2723"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2730"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2732"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2751"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2758"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2760"/>
         <source>Destroy</source>
         <translation>Détruire</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2723"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2751"/>
         <source>Quantity to destroy</source>
         <translation>Quantité à détruire</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2730"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2758"/>
         <source>Are you sure you want to destroy %1 %2?</source>
         <translation>Voulez vous détruire %1 %2?</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2732"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2760"/>
         <source>Are you sure you want to destroy %1 unknow item (id: %2)?</source>
         <translation>Voulez vous détruire %1 item inconnu (id: %2)?</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2828"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2903"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2856"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2931"/>
         <source>Quest not found</source>
         <translation>Quêtes non trouvé</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2857"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2885"/>
         <source>Give the clan name</source>
         <translation>Donner un nom de clan</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2857"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2885"/>
         <source>Clan name:</source>
         <translation>Nom de clan:</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2919"/>
-        <location filename="../../interface/BaseWindow.cpp" line="2935"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2947"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2963"/>
         <source>You don&apos;t have the requirement to start this quest</source>
         <translation>Vous n&apos;avez pas les exigences requise pour démarrer cette quéte</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2942"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2970"/>
         <source>You don&apos;t have the requirement to continue this quest</source>
         <translation>Vous n&apos;avez pas les exigences requise pour continuer cette quéte</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2948"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2976"/>
         <source>You have finish the quest &lt;b&gt;%1&lt;/b&gt;</source>
         <translation>Vous avez fini la quéte &lt;b&gt;%1&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2957"/>
+        <location filename="../../interface/BaseWindow.cpp" line="2985"/>
         <source>You need talk to another bot</source>
         <translation>Vous devez parler à un autre bot</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="2978"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3006"/>
         <source>Client file missing</source>
         <translation>Fichier de client manquant</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3086"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3114"/>
         <source>No quest text for this quest</source>
         <translation>Pas de texte de quéte pour cette quéte</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3092"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3120"/>
         <source>No quest text entry point</source>
         <translation>Pas de point d&apos;entrée de texte</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3106"/>
-        <location filename="../../interface/BaseWindow.cpp" line="3114"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3134"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3142"/>
         <location filename="../../interface/BaseWindowLoad.cpp" line="235"/>
         <source>Cash: %1$</source>
         <translation>Cash: %1$</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3293"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3321"/>
         <source>Last reply time: %1ms</source>
         <translation>Dernier temps de réponse: %1ms</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3329"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3357"/>
         <source>Running query: %1 (%3 and %4), query with worse time: %2ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3336"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3364"/>
         <source>No query running</source>
         <translation>Pas de requéte en cour</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3354"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3382"/>
         <source>The last query was slow</source>
         <translation>La derniére requéte été lente</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="3362"/>
+        <location filename="../../interface/BaseWindow.cpp" line="3390"/>
         <source>Remain query in suspend</source>
         <translation>Il reste des requétes en suspend</translation>
     </message>
@@ -2077,6 +2077,7 @@ HP: %3/%4</translation>
         <translation>Vous n&apos;avez plus d&apos;endurance pour selectionner cette compétance</translation>
     </message>
     <message>
+        <location filename="../../interface/BaseWindow.cpp" line="985"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1231"/>
         <source>In waiting of the other player action</source>
         <translation>Attente d&apos;une action de l&apos;autre joueur</translation>
@@ -2490,196 +2491,202 @@ Cout en SP: %3</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="14"/>
-        <source>Bot connection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="21"/>
-        <source>Connection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="29"/>
-        <source>Host:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="70"/>
-        <source>Login:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="80"/>
-        <source>Password:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="109"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="167"/>
         <source>Multiple connexion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="115"/>
-        <source>Multiple connexion where %NUMBER% into login change</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="14"/>
+        <source>Benchmark gui</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="127"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="24"/>
+        <source>Benchmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="37"/>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="44"/>
+        <source>Chat</source>
+        <translation type="unfinished">Chat</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="54"/>
+        <source>Time of: ???</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="66"/>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="88"/>
+        <source>Time used for timer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="106"/>
+        <source>Time used for user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="124"/>
+        <source>Time used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="142"/>
+        <source>Time used for database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="173"/>
         <source>Max diff connect - selected:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="157"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="190"/>
         <source>Connect by seconds:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="167"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="197"/>
         <source> connect/s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="190"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="210"/>
         <source>Connexion count:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="215"/>
-        <source>Proxy</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="233"/>
+        <source>System time: ???</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="251"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="160"/>
         <source>Connect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="261"/>
-        <source>Character</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="267"/>
-        <source>Autocreate if no one exists</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="286"/>
-        <source>Select</source>
-        <translation type="unfinished">Selectionner</translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="298"/>
-        <source>Options</source>
-        <translation type="unfinished">Options</translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="304"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.ui" line="30"/>
         <source>Move</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="311"/>
-        <source>Random text</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="117"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="153"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="184"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="215"/>
+        <source>Cpu time used: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="318"/>
-        <source>Do global chat random reply</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="137"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="173"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="204"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="235"/>
+        <source>Average cpu time used: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="325"/>
-        <source>Do bug in direction</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="139"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="175"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="206"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="237"/>
+        <source>Max: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="335"/>
-        <source>Connexion informations</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="140"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="176"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="207"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="238"/>
+        <source>, min: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="341"/>
-        <source>Number of bot connected: ?</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="250"/>
+        <source>Time of: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="348"/>
-        <source>Selected character: ?</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="257"/>
+        <source>%1s</source>
+        <translation type="unfinished">%1s</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="259"/>
+        <source>%1ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="355"/>
-        <source>Last reply time: ?</source>
-        <translation type="unfinished">Dernier temps de réponse: ?</translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="362"/>
-        <source>Running query: ? Query with worse time: ?</source>
-        <translation type="unfinished">Requete en cour: ? Requete avec le pire temps: ?</translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="73"/>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="101"/>
-        <source>Number of bot connected: %1</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="261"/>
+        <source>%1us</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="81"/>
-        <source>Disconnected by the host</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="271"/>
+        <source>Connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="89"/>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="479"/>
-        <source>Selected character: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="95"/>
-        <source>Last reply time: %1ms</source>
-        <translation type="unfinished">Dernier temps de réponse: %1ms</translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="252"/>
-        <source>Running query: %1 Query with worse time: %2h</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="254"/>
-        <source>Running query: %1 Query with worse time: %2min</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="256"/>
-        <source>Running query: %1 Query with worse time: %2s</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="258"/>
-        <source>Running query: %1 Query with worse time: %2ms</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="268"/>
-        <source>On the map</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="580"/>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="585"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="282"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="284"/>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="321"/>
         <source>Error</source>
         <translation type="unfinished">Erreur</translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="580"/>
-        <source>Your password need to be at minimum of 6 characters</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="282"/>
+        <source>The connexion to the server have been closed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="585"/>
-        <source>Your login need to be at minimum of 3 characters</source>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="284"/>
+        <source>The connexion to the server have been closed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="321"/>
+        <source>Unable to find %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="379"/>
+        <source>Connect all player</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="415"/>
+        <source>Idle during %1ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="432"/>
+        <source>Move during %1ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="450"/>
+        <source>Chat during %1ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="469"/>
+        <source>System time: %1 (%2 clk), real: %3ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/benchmark-gui/MainWindow.cpp" line="471"/>
+        <source>System time: %1 clk, real: %2ms</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2817,6 +2824,29 @@ Line %1, column %2</source>
     <message>
         <location filename="../../../tiled/tiled_mapwriter.cpp" line="104"/>
         <source>Could not open file for writing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MultipleBotConnectionImplFoprGui</name>
+    <message>
+        <location filename="../../../../tools/bot/MultipleBotConnectionImplFoprGui.cpp" line="85"/>
+        <source>Running query: %1 Query with worse time: %2h</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot/MultipleBotConnectionImplFoprGui.cpp" line="87"/>
+        <source>Running query: %1 Query with worse time: %2min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot/MultipleBotConnectionImplFoprGui.cpp" line="89"/>
+        <source>Running query: %1 Query with worse time: %2s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot/MultipleBotConnectionImplFoprGui.cpp" line="91"/>
+        <source>Running query: %1 Query with worse time: %2ms</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3005,6 +3035,29 @@ Line %1, column %2</source>
     <message>
         <location filename="../../qt-tar-xz/QXzDecode.cpp" line="126"/>
         <source>The input data is too short</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SslCert</name>
+    <message>
+        <location filename="../../SslCert.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../SslCert.ui" line="20"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The key have changed, &lt;span style=&quot; font-weight:600;&quot;&gt;it&apos;s maybe a hack&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;If the &lt;span style=&quot; font-weight:600;&quot;&gt;administrator inform you&lt;/span&gt; about this change, &lt;span style=&quot; font-weight:600;&quot;&gt;continue&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;Else, if the administrator &lt;span style=&quot; font-weight:600;&quot;&gt;don&apos;t inform you&lt;/span&gt; then &lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;abort&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../SslCert.ui" line="58"/>
+        <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../SslCert.ui" line="65"/>
+        <source>Abort</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -141,7 +141,7 @@ QString InternetUpdater::getText(const QString &version)
     #if !defined(CATCHCHALLENGER_VERSION_ULTIMATE)
         url="http://catchchallenger.first-world.info/download.html";
     #else
-        url="http://catchchallenger.first-world.info/shop/en/order-history";
+        url="http://catchchallenger.first-world.info/shop/";
     #endif
         return QStringLiteral("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>").arg(url).arg(tr("New version: %1").arg(QStringLiteral("<b>%1</b>").arg(version))+"<br />"+
                            #if !defined(CATCHCHALLENGER_VERSION_ULTIMATE)

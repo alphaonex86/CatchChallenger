@@ -539,7 +539,7 @@ void Client::addWarehouseObject(const quint16 &item,const quint32 &quantity)
     }
     else
     {
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_item
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_item_warehouse
                      .arg(item)
                      .arg(character_id)
                      .arg(quantity)
@@ -2777,31 +2777,11 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
     postReply(query_id,outputData);
     //add into db
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);")
-                     .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                     .arg(SqlFunction::quoteSqlVariable(text))
-                     .arg(QDateTime::currentMSecsSinceEpoch()/1000)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
-                     .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                     .arg(SqlFunction::quoteSqlVariable(text))
-                     .arg(QDateTime::currentMSecsSinceEpoch()/1000)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);")
-                     .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                     .arg(SqlFunction::quoteSqlVariable(text))
-                     .arg(QDateTime::currentMSecsSinceEpoch()/1000)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_clan
+             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+             .arg(SqlFunction::quoteSqlVariable(text))
+             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
+             );
     insertIntoAClan(GlobalServerData::serverPrivateVariables.maxClanId);
 }
 
@@ -2905,31 +2885,11 @@ void Client::insertIntoAClan(const quint32 &clanId)
         else
             clan_leader=Client::text_false;
     }
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `character` SET `clan`=%1,`clan_leader`=%2 WHERE `id`=%3;")
-                     .arg(clanId)
-                     .arg(clan_leader)
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;")
-                     .arg(clanId)
-                     .arg(clan_leader)
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;")
-                     .arg(clanId)
-                     .arg(clan_leader)
-                     .arg(character_id)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_clan_and_leader
+             .arg(clanId)
+             .arg(clan_leader)
+             .arg(character_id)
+             );
     sendClanInfo();
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
@@ -2937,25 +2897,7 @@ void Client::insertIntoAClan(const quint32 &clanId)
 void Client::ejectToClan()
 {
     dissolvedClan();
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `id`=%1;")
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
-                     .arg(character_id)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE character SET clan=0 WHERE id=%1;")
-                     .arg(character_id)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_clan.arg(character_id));
 }
 
 quint32 Client::getClanId() const
@@ -3317,73 +3259,13 @@ void Client::fightOrBattleFinish(const bool &win, const quint32 &fightId)
                             GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
-                        switch(GlobalServerData::serverSettings.database.type)
-                        {
-                            default:
-                            case ServerSettings::Database::DatabaseType_Mysql:
-                                dbQueryWrite(QStringLiteral("DELETE FROM `city` WHERE `city`='%1'")
-                                             .arg(clan->capturedCity)
-                                             );
-                            break;
-                            case ServerSettings::Database::DatabaseType_SQLite:
-                                dbQueryWrite(QStringLiteral("DELETE FROM city WHERE city='%1'")
-                                             .arg(clan->capturedCity)
-                                             );
-                            break;
-                            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                                dbQueryWrite(QStringLiteral("DELETE FROM city WHERE city='%1'")
-                                             .arg(clan->capturedCity)
-                                             );
-                            break;
-                        }
+                        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_city.arg(clan->capturedCity));
                         if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->captureCityInProgress))
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.value(clan->captureCityInProgress).clan!=0)
-                            switch(GlobalServerData::serverSettings.database.type)
-                            {
-                                default:
-                                case ServerSettings::Database::DatabaseType_Mysql:
-                                    dbQueryWrite(QStringLiteral("UPDATE `city` SET `clan`=%1 WHERE `city`='%2';")
-                                                 .arg(clan->clanId)
-                                                 .arg(clan->captureCityInProgress)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_SQLite:
-                                    dbQueryWrite(QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';")
-                                                 .arg(clan->clanId)
-                                                 .arg(clan->captureCityInProgress)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                                    dbQueryWrite(QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';")
-                                                 .arg(clan->clanId)
-                                                 .arg(clan->captureCityInProgress)
-                                                 );
-                                break;
-                            }
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_city_clan.arg(clan->clanId).arg(clan->captureCityInProgress));
                         else
-                            switch(GlobalServerData::serverSettings.database.type)
-                            {
-                                default:
-                                case ServerSettings::Database::DatabaseType_Mysql:
-                                    dbQueryWrite(QStringLiteral("INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');")
-                                                 .arg(clan->clanId)
-                                                 .arg(clan->captureCityInProgress)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_SQLite:
-                                    dbQueryWrite(QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');")
-                                                 .arg(clan->clanId)
-                                                 .arg(clan->captureCityInProgress)
-                                                 );
-                                break;
-                                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                                    dbQueryWrite(QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');")
-                                                 .arg(clan->clanId)
-                                                 .arg(clan->captureCityInProgress)
-                                                 );
-                                break;
-                            }
+                            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_city.arg(clan->clanId).arg(clan->captureCityInProgress));
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
                         clan->capturedCity=clan->captureCityInProgress;
@@ -3613,58 +3495,17 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
             //apply the buy
             if(marketItem.quantity==quantity)
             {
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2")
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2")
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2")
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item_market.arg(marketItem.item).arg(marketItem.player));
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
             }
             else
             {
                 GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `item_market` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3")
-                                     .arg(marketItem.quantity-quantity)
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3")
-                                     .arg(marketItem.quantity-quantity)
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3")
-                                     .arg(marketItem.quantity-quantity)
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item_market
+                             .arg(marketItem.quantity-quantity)
+                             .arg(marketItem.item)
+                             .arg(marketItem.player)
+                             );
             }
             removeCash(quantity*marketItem.cash);
             if(playerById.contains(marketItem.player))
@@ -3672,28 +3513,10 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
                 if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
                     normalOutput(QStringLiteral("Problem at market cash adding"));
             }
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2")
-                                 .arg(quantity*marketItem.cash)
-                                 .arg(marketItem.player)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
-                                 .arg(quantity*marketItem.cash)
-                                 .arg(marketItem.player)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
-                                 .arg(quantity*marketItem.cash)
-                                 .arg(marketItem.player)
-                                 );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_charaters_market_cash
+                         .arg(quantity*marketItem.cash)
+                         .arg(marketItem.player)
+                         );
             addObject(marketItem.item,quantity);
             out << (quint8)0x01;
             postReply(query_id,outputData);
@@ -3738,108 +3561,53 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
             //apply the buy
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
             removeCash(marketPlayerMonster.cash);
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2")
-                                 .arg(marketPlayerMonster.cash)
-                                 .arg(marketPlayerMonster.player)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
-                                 .arg(marketPlayerMonster.cash)
-                                 .arg(marketPlayerMonster.player)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2")
-                                 .arg(marketPlayerMonster.cash)
-                                 .arg(marketPlayerMonster.player)
-                                 );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_charaters_market_cash
+                         .arg(marketPlayerMonster.cash)
+                         .arg(marketPlayerMonster.player)
+                         );
             addPlayerMonster(marketPlayerMonster.monster);
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("DELETE FROM `monster_market` WHERE `id`=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(getPlayerMonster().size())
-                                     )
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("DELETE FROM monster_market WHERE id=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(getPlayerMonster().size())
-                                     )
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("DELETE FROM monster_market WHERE id=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(getPlayerMonster().size())
-                                     )
-                                 );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_market_by_id.arg(marketPlayerMonster.monster.id));
+            if(CommonSettings::commonSettings.useSP)
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_full
+                         .arg(
+                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                             .arg(marketPlayerMonster.monster.id)
+                             .arg(marketPlayerMonster.monster.hp)
+                             .arg(character_id)
+                             .arg(marketPlayerMonster.monster.monster)
+                             .arg(marketPlayerMonster.monster.level)
+                             .arg(marketPlayerMonster.monster.remaining_xp)
+                             .arg(marketPlayerMonster.monster.sp)
+                             .arg(marketPlayerMonster.monster.catched_with)
+                             .arg((quint8)marketPlayerMonster.monster.gender)
+                             )
+                         .arg(
+                             QStringLiteral("%1,%2,%3")
+                             .arg(marketPlayerMonster.monster.egg_step)
+                             .arg(marketPlayerMonster.monster.character_origin)
+                             .arg(getPlayerMonster().size())
+                             )
+                         );
+            else
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_full
+                         .arg(
+                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8")
+                             .arg(marketPlayerMonster.monster.id)
+                             .arg(marketPlayerMonster.monster.hp)
+                             .arg(character_id)
+                             .arg(marketPlayerMonster.monster.monster)
+                             .arg(marketPlayerMonster.monster.level)
+                             .arg(marketPlayerMonster.monster.remaining_xp)
+                             .arg(marketPlayerMonster.monster.catched_with)
+                             .arg((quint8)marketPlayerMonster.monster.gender)
+                             )
+                         .arg(
+                             QStringLiteral("%1,%2,%3")
+                             .arg(marketPlayerMonster.monster.egg_step)
+                             .arg(marketPlayerMonster.monster.character_origin)
+                             .arg(getPlayerMonster().size())
+                             )
+                         );
             out << (quint8)0x01;
             postReply(query_id,outputData);
             return;
@@ -3883,34 +3651,12 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
             out << (quint8)0x01;
             postReply(query_id,outputData);
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                     dbQueryWrite(QStringLiteral("UPDATE `item_market` SET `quantity`=%1,`market_price`=%2 WHERE `item`=%3 AND `character`=%4;")
-                                  .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
-                                  .arg(price)
-                                  .arg(objectId)
-                                  .arg(character_id)
-                                  );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;")
-                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
-                                 .arg(price)
-                                 .arg(objectId)
-                                 .arg(character_id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;")
-                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
-                                 .arg(price)
-                                 .arg(objectId)
-                                 .arg(character_id)
-                                 );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item_market_and_price
+                .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                .arg(price)
+                .arg(objectId)
+                .arg(character_id)
+                );
             return;
         }
         index++;
@@ -3924,34 +3670,12 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     }
     //append to the market
     removeObject(objectId,quantity);
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4);")
-                         .arg(objectId)
-                         .arg(character_id)
-                         .arg(quantity)
-                         .arg(price)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4);")
-                         .arg(objectId)
-                         .arg(character_id)
-                         .arg(quantity)
-                         .arg(price)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4);")
-                         .arg(objectId)
-                         .arg(character_id)
-                         .arg(quantity)
-                         .arg(price)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_item_market
+                 .arg(objectId)
+                 .arg(character_id)
+                 .arg(quantity)
+                 .arg(price)
+                 );
     MarketItem marketItem;
     marketItem.cash=price;
     marketItem.item=objectId;
@@ -3993,110 +3717,55 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
             marketPlayerMonster.player=character_id;
             public_and_private_informations.playerMonster.removeAt(index);
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("DELETE FROM `monster` WHERE `id`=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO `monster_market`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`market_price`) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(price)
-                                     )
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("DELETE FROM monster WHERE id=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,market_price) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(price)
-                                     )
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("DELETE FROM monster WHERE id=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,market_price) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(price)
-                                     )
-                                 );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_id.arg(marketPlayerMonster.monster.id));
+            if(CommonSettings::commonSettings.useSP)
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_market
+                         .arg(
+                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                             .arg(marketPlayerMonster.monster.id)
+                             .arg(marketPlayerMonster.monster.hp)
+                             .arg(character_id)
+                             .arg(marketPlayerMonster.monster.monster)
+                             .arg(marketPlayerMonster.monster.level)
+                             .arg(marketPlayerMonster.monster.remaining_xp)
+                             .arg(marketPlayerMonster.monster.sp)
+                             .arg(marketPlayerMonster.monster.catched_with)
+                             .arg((quint8)marketPlayerMonster.monster.gender)
+                             )
+                         .arg(
+                             QStringLiteral("%1,%2,%3")
+                             .arg(marketPlayerMonster.monster.egg_step)
+                             .arg(marketPlayerMonster.monster.character_origin)
+                             .arg(price)
+                             )
+                         );
+            else
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_market
+                         .arg(
+                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                             .arg(marketPlayerMonster.monster.id)
+                             .arg(marketPlayerMonster.monster.hp)
+                             .arg(character_id)
+                             .arg(marketPlayerMonster.monster.monster)
+                             .arg(marketPlayerMonster.monster.level)
+                             .arg(marketPlayerMonster.monster.remaining_xp)
+                             .arg(marketPlayerMonster.monster.catched_with)
+                             .arg((quint8)marketPlayerMonster.monster.gender)
+                             )
+                         .arg(
+                             QStringLiteral("%1,%2,%3")
+                             .arg(marketPlayerMonster.monster.egg_step)
+                             .arg(marketPlayerMonster.monster.character_origin)
+                             .arg(price)
+                             )
+                         );
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
-                                     .arg(index+1)
-                                     .arg(playerMonster.id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
-                                     .arg(index+1)
-                                     .arg(playerMonster.id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
-                                     .arg(index+1)
-                                     .arg(playerMonster.id)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_position
+                             .arg(index+1)
+                             .arg(playerMonster.id)
+                             );
                 index++;
             }
             out << (quint8)0x01;
@@ -4122,28 +3791,10 @@ void Client::recoverMarketCash(const quint32 &query_id)
     out << (quint64)market_cash;
     public_and_private_informations.cash+=market_cash;
     market_cash=0;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("UPDATE `character` SET `cash`=%1,`market_cash`=0 WHERE `id`=%2;")
-                         .arg(public_and_private_informations.cash)
-                         .arg(character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;")
-                         .arg(public_and_private_informations.cash)
-                         .arg(character_id)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;")
-                         .arg(public_and_private_informations.cash)
-                         .arg(character_id)
-                         );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_get_market_cash
+                 .arg(public_and_private_informations.cash)
+                 .arg(character_id)
+                 );
     postReply(query_id,outputData);
 }
 
@@ -4189,57 +3840,17 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
             {
                 marketObjectIdList << marketItem.marketObjectId;
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2")
-                                     .arg(objectId)
-                                     .arg(character_id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2")
-                                     .arg(objectId)
-                                     .arg(character_id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2")
-                                     .arg(objectId)
-                                     .arg(character_id)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_item_market
+                             .arg(objectId)
+                             .arg(character_id)
+                             );
             }
             else
-            {
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `item_market` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3")
-                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
-                                     .arg(objectId)
-                                     .arg(character_id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3")
-                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
-                                     .arg(objectId)
-                                     .arg(character_id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3")
-                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
-                                     .arg(objectId)
-                                     .arg(character_id)
-                                     );
-                    break;
-                }
-            }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_item_market
+                             .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
+                             .arg(objectId)
+                             .arg(character_id)
+                             );
             addObject(objectId,quantity);
             postReply(query_id,outputData);
             return;
@@ -4280,85 +3891,48 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
             }
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
             public_and_private_informations.playerMonster << marketPlayerMonster.monster;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQueryWrite(QStringLiteral("DELETE FROM `monster` WHERE `id`=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO `monster_market`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(public_and_private_informations.playerMonster.size())
-                                     )
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQueryWrite(QStringLiteral("DELETE FROM monster WHERE id=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(public_and_private_informations.playerMonster.size())
-                                     )
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
-                    dbQueryWrite(QStringLiteral("DELETE FROM monster WHERE id=%1;")
-                                .arg(marketPlayerMonster.monster.id)
-                                );
-                    dbQueryWrite(QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2);")
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(marketPlayerMonster.monster.id)
-                                     .arg(marketPlayerMonster.monster.hp)
-                                     .arg(character_id)
-                                     .arg(marketPlayerMonster.monster.monster)
-                                     .arg(marketPlayerMonster.monster.level)
-                                     .arg(marketPlayerMonster.monster.remaining_xp)
-                                     .arg(marketPlayerMonster.monster.sp)
-                                     .arg(marketPlayerMonster.monster.catched_with)
-                                     .arg((quint8)marketPlayerMonster.monster.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(marketPlayerMonster.monster.egg_step)
-                                     .arg(marketPlayerMonster.monster.character_origin)
-                                     .arg(public_and_private_informations.playerMonster.size())
-                                     )
-                                 );
-                break;
-            }
+            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_monster_by_id.arg(marketPlayerMonster.monster.id));
+            if(CommonSettings::commonSettings.useSP)
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_market
+                         .arg(
+                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                             .arg(marketPlayerMonster.monster.id)
+                             .arg(marketPlayerMonster.monster.hp)
+                             .arg(character_id)
+                             .arg(marketPlayerMonster.monster.monster)
+                             .arg(marketPlayerMonster.monster.level)
+                             .arg(marketPlayerMonster.monster.remaining_xp)
+                             .arg(marketPlayerMonster.monster.sp)
+                             .arg(marketPlayerMonster.monster.catched_with)
+                             .arg((quint8)marketPlayerMonster.monster.gender)
+                             )
+                         .arg(
+                             QStringLiteral("%1,%2,%3")
+                             .arg(marketPlayerMonster.monster.egg_step)
+                             .arg(marketPlayerMonster.monster.character_origin)
+                             .arg(public_and_private_informations.playerMonster.size())
+                             )
+                         );
+            else
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster_market
+                         .arg(
+                             QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8")
+                             .arg(marketPlayerMonster.monster.id)
+                             .arg(marketPlayerMonster.monster.hp)
+                             .arg(character_id)
+                             .arg(marketPlayerMonster.monster.monster)
+                             .arg(marketPlayerMonster.monster.level)
+                             .arg(marketPlayerMonster.monster.remaining_xp)
+                             .arg(marketPlayerMonster.monster.catched_with)
+                             .arg((quint8)marketPlayerMonster.monster.gender)
+                             )
+                         .arg(
+                             QStringLiteral("%1,%2,%3")
+                             .arg(marketPlayerMonster.monster.egg_step)
+                             .arg(marketPlayerMonster.monster.character_origin)
+                             .arg(public_and_private_informations.playerMonster.size())
+                             )
+                         );
             out << (quint8)0x01;
             out << (quint8)0x02;
             postReply(query_id,outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.last()));

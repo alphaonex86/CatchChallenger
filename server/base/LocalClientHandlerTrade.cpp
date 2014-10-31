@@ -146,28 +146,7 @@ void Client::addExistingMonster(QList<PlayerMonster> tradeMonster)
     int index=0;
     while(index<tradeMonster.size())
     {
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                dbQueryWrite(QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;")
-                             .arg(tradeMonster.at(index).id)
-                             .arg(character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                dbQueryWrite(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
-                             .arg(tradeMonster.at(index).id)
-                             .arg(character_id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
-                dbQueryWrite(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
-                             .arg(tradeMonster.at(index).id)
-                             .arg(character_id)
-                             );
-            break;
-        }
+        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_owner.arg(tradeMonster.at(index).id).arg(character_id));
         index++;
     }
     public_and_private_informations.playerMonster << tradeMonster;
@@ -323,28 +302,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
-                                     .arg(index+1)
-                                     .arg(playerMonster.id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
-                                     .arg(index+1)
-                                     .arg(playerMonster.id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
-                                     .arg(index+1)
-                                     .arg(playerMonster.id)
-                                     );
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_position.arg(index+1).arg(playerMonster.id));
                 index++;
             }
             return;
