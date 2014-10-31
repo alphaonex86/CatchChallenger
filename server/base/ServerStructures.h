@@ -301,6 +301,7 @@ struct ServerPrivateVariables
     QString db_query_delete_monster_warehouse_by_id;
     QString db_query_delete_monster_market_by_id;
     QString db_query_delete_plant;
+    QString db_query_delete_plant_by_id;
     QString db_query_delete_quest;
     QString db_query_delete_recipes;
     QString db_query_delete_reputation;
@@ -314,6 +315,8 @@ struct ServerPrivateVariables
     QString db_query_insert_monster_skill;
     QString db_query_insert_reputation;
     QString db_query_insert_item;
+    QString db_query_insert_item_warehouse;
+    QString db_query_insert_item_market;
     QString db_query_account_time_to_delete_character_by_id;
     QString db_query_update_character_time_to_delete_by_id;
     QString db_query_select_reputation_by_id;
@@ -342,6 +345,7 @@ struct ServerPrivateVariables
     QString db_query_delete_character_allow;
     QString db_query_update_reputation;
     QString db_query_update_character_clan;
+    QString db_query_update_character_clan_and_leader;
     QString db_query_delete_clan;
     QString db_query_delete_city;
     QString db_query_update_character_clan_by_pseudo;
@@ -358,6 +362,21 @@ struct ServerPrivateVariables
     QString db_query_update_monster_and_hp;
     QString db_query_update_monster_level_only;
     QString db_query_delete_monster_specific_skill;
+    QString db_query_insert_clan;
+    QString db_query_insert_plant;
+    QString db_query_update_monster_owner;
+    QString db_query_update_quest_finish;
+    QString db_query_update_quest_step;
+    QString db_query_update_quest_restart;
+    QString db_query_insert_quest;
+    QString db_query_update_city_clan;
+    QString db_query_insert_city;
+    QString db_query_delete_item_market;
+    QString db_query_update_item_market;
+    QString db_query_update_item_market_and_price;
+    QString db_query_update_charaters_market_cash;
+    QString db_query_insert_monster_market;
+    QString db_query_get_market_cash;
 
     QList<ServerProfile> serverProfileList;
 

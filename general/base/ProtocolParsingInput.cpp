@@ -189,7 +189,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char *commonBuffer, const 
     if(!parseHeader(commonBuffer,size,cursor))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        qDebug() << "Break due to need more in header";
+        //qDebug() << "Break due to need more in header";
         #endif
         return false;
     }

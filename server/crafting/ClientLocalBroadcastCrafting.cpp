@@ -174,43 +174,15 @@ void Client::seedValidated()
     plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
     const quint32 &map_database_id=static_cast<MapServer *>(plant_list_in_waiting.first().map)->reverse_db_id;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            dbQueryWrite(QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,%2,%3,%4,%5,%6,%7);")
-                         .arg(plantOnMap.id)
-                         .arg(map_database_id)
-                         .arg(plantOnMap.x)
-                         .arg(plantOnMap.y)
-                         .arg(plantOnMap.plant)
-                         .arg(character_id)
-                         .arg(current_time)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);")
-                     .arg(plantOnMap.id)
-                     .arg(map_database_id)
-                     .arg(plantOnMap.x)
-                     .arg(plantOnMap.y)
-                     .arg(plantOnMap.plant)
-                     .arg(character_id)
-                     .arg(current_time)
-                     );
-        break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
-            dbQueryWrite(QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);")
-                     .arg(plantOnMap.id)
-                     .arg(map_database_id)
-                     .arg(plantOnMap.x)
-                     .arg(plantOnMap.y)
-                     .arg(plantOnMap.plant)
-                     .arg(character_id)
-                     .arg(current_time)
-                     );
-        break;
-    }
+    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_plant
+                 .arg(plantOnMap.id)
+                 .arg(map_database_id)
+                 .arg(plantOnMap.x)
+                 .arg(plantOnMap.y)
+                 .arg(plantOnMap.plant)
+                 .arg(character_id)
+                 .arg(current_time)
+                 );
 
     //send to all player
 
@@ -444,19 +416,7 @@ void Client::collectPlant(const quint8 &query_id)
                     )
             {
                 //remove plant from db
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQueryWrite(QStringLiteral("DELETE FROM `plant` WHERE `id`=%1").arg(plant.id));
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQueryWrite(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
-                    break;
-                    case ServerSettings::Database::DatabaseType_PostgreSQL:
-                        dbQueryWrite(QStringLiteral("DELETE FROM plant WHERE id=%1").arg(plant.id));
-                    break;
-                }
+                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_plant_by_id.arg(plant.id));
 
                 QByteArray finalData;
                 {
