@@ -1167,6 +1167,13 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, C
             return false;
         if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision))
             return false;
+        CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.value(map.map_file)->logicalMap);
+        if(map_client->itemsOnMap.contains(QPair<quint8,quint8>(x,y)))
+        {
+            const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.value(QPair<quint8,quint8>(x,y));
+            if(item.tileObject!=NULL)
+                return false;
+        }
         ledge=CatchChallenger::MoveOnTheMap::getLedge(map,x,y);
         if(ledge==CatchChallenger::ParsedLayerLedges_NoLedges)
             return true;
