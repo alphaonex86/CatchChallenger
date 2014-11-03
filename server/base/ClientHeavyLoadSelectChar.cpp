@@ -628,9 +628,14 @@ void Client::loadItemOnMap_return()
             normalOutput(QStringLiteral("wrong value type for item on map, skip: %1").arg(itemDbCode));
             continue;
         }
+        if(itemDbCode>=GlobalServerData::serverPrivateVariables.dictionary_item_reverse.size())
+        {
+            normalOutput(QStringLiteral("item on map is not into the map list (1), skip: %1").arg(itemDbCode));
+            continue;
+        }
         if(GlobalServerData::serverPrivateVariables.dictionary_item_reverse[itemDbCode]==255/*-1*/)
         {
-            normalOutput(QStringLiteral("item on map is not into the map list, skip: %1").arg(itemDbCode));
+            normalOutput(QStringLiteral("item on map is not into the map list (2), skip: %1").arg(itemDbCode));
             continue;
         }
         public_and_private_informations.itemOnMap << GlobalServerData::serverPrivateVariables.dictionary_item_reverse[itemDbCode];
