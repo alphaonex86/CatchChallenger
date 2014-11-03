@@ -42,7 +42,7 @@ private:
 public slots:
     void updateUserTime();
     void processError(QProcess::ProcessError error);
-    void processStateChanged(QProcess::ProcessState stateChanged);
+    void processStateChanged(const QProcess::ProcessState &stateChanged);
 private slots:
     void readyReadStandardOutput();
     void readyReadStandardError();
