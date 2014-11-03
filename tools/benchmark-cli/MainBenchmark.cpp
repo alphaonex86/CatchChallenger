@@ -26,7 +26,7 @@ MainBenchmark::MainBenchmark() :
     connect(&socket,&QLocalSocket::readyRead,this,&MainBenchmark::readyRead,Qt::QueuedConnection);
 
     connect(&process,static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error),this,&MainBenchmark::processError,Qt::QueuedConnection);
-    //connect(&process,static_cast<void(QProcess::*)(QProcess::ProcessState)>(&QProcess::stateChanged),this,&MainBenchmark::processStateChanged,Qt::QueuedConnection);
+    connect(&process,&QProcess::stateChanged,this,&MainBenchmark::processStateChanged,Qt::QueuedConnection);
     connect(&process,&QProcess::readyReadStandardOutput,this,&MainBenchmark::readyReadStandardOutput,Qt::QueuedConnection);
     connect(&process,&QProcess::readyReadStandardError,this,&MainBenchmark::readyReadStandardError,Qt::QueuedConnection);
 
@@ -97,7 +97,7 @@ void MainBenchmark::processError(QProcess::ProcessError error)
     qDebug() << "QProcess::ProcessError" << error;
 }
 
-void MainBenchmark::processStateChanged(QProcess::ProcessState stateChanged)
+void MainBenchmark::processStateChanged(const QProcess::ProcessState &stateChanged)
 {
     Q_UNUSED(stateChanged);
     qDebug() << QStringLiteral("QProcess::ProcessState") << stateChanged;

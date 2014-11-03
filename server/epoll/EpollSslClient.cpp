@@ -79,7 +79,7 @@ void EpollSslClient::close()
         from the set of descriptors which are monitored. */
         Epoll::epoll.ctl(EPOLL_CTL_DEL, infd, NULL);
         ::close(infd);
-        std::cout << "Closed connection on descriptor" << infd << std::endl;
+        //std::cout << "Closed connection on descriptor" << infd << std::endl;
         infd=-1;
 
         //disconnect, free the ressources

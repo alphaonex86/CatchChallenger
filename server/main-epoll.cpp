@@ -490,7 +490,9 @@ int main(int argc, char *argv[])
     encodingBuff[0]=0x00;
     #endif
 
+    #ifdef SERVERBENCHMARKFULL
     std::chrono::time_point<std::chrono::high_resolution_clock> start_inter;
+    #endif
     int numberOfConnectedClient=0,numberOfConnectedUnixClient=0;
     /* The event loop */
     int number_of_events, i;
@@ -823,6 +825,11 @@ int main(int argc, char *argv[])
                     std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
                     EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
                     #endif
+                    if(!db->isConnected())
+                    {
+                        std::cerr << "database disconnect, quit now" << std::endl;
+                        return EXIT_FAILURE;
+                    }
                 }
                 break;
                 default:
