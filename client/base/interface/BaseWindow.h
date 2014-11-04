@@ -145,7 +145,8 @@ private slots:
     void gainTimeout();
     void showTip(const QString &tip);
     void showPlace(const QString &place);
-    void showGain(const QString &gain);
+    void showGain();
+    void composeAndDisplayGain();
     void addQuery(const QueryType &queryType);
     void removeQuery(const QueryType &queryType);
     void updateQueryList();
@@ -201,6 +202,7 @@ private slots:
     void animationFinished();
     void evolutionCanceled();
     void teleportConditionNotRespected(const QString &text);
+    static QString reputationRequirementsToText(const ReputationRequirements &reputationRequirements);
 
     //datapack
     void haveTheDatapack();
@@ -493,6 +495,10 @@ private:
     QList<quint8> events;
     QString visualCategory;
     QTimer botFightTimer;
+    QStringList add_to_inventoryGainList;
+    QList<QTime> add_to_inventoryGainTime;
+    QFont disableIntoListFont;
+    QBrush disableIntoListBrush;
 
     //plant seed in waiting
     struct SeedInWaiting
