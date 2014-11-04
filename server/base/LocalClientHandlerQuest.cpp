@@ -275,7 +275,6 @@ bool Client::startQuest(const Quest &quest)
         dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_quest
                      .arg(character_id)
                      .arg(quest.id)
-                     .arg(0)
                      .arg(1)
                      );
         public_and_private_informations.quests[quest.id].step=1;

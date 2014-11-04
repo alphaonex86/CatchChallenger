@@ -2294,7 +2294,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
     normalOutput(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
     FacilityLib::appendReputationPoint(playerReputation,point,reputation);
-    if(!isNewReputation)
+    if(isNewReputation)
     {
         dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_reputation
                          .arg(character_id)

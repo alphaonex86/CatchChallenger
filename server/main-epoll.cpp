@@ -276,6 +276,9 @@ void send_settings()
     }
     settings->endGroup();
 
+    if(QCoreApplication::arguments().contains("--benchmark"))
+        GlobalServerData::serverSettings.benchmark=true;
+
     server->setSettings(formatedServerSettings);
     server->setNormalSettings(formatedServerNormalSettings);
 }

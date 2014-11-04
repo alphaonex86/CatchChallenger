@@ -134,10 +134,11 @@ void BaseWindow::load_plant_inventory()
         i.next();
         if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
         {
+            const quint8 &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(i.key());
             QListWidgetItem *item;
             item=new QListWidgetItem();
-            plants_items_to_graphical[DatapackClientLoader::datapackLoader.itemToPlants[i.key()]]=item;
-            plants_items_graphical[item]=DatapackClientLoader::datapackLoader.itemToPlants[i.key()];
+            plants_items_to_graphical[plantId]=item;
+            plants_items_graphical[item]=plantId;
             if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
@@ -147,6 +148,12 @@ void BaseWindow::load_plant_inventory()
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
                 item->setText(QStringLiteral("item id: %1").arg(i.key())+"\n"+tr("Quantity: %1").arg(i.value()));
+            }
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plantId).requirements.reputation))
+            {
+                item->setText(item->text()+"\n"+tr("You don't have the requirements"));
+                item->setFont(disableIntoListFont);
+                item->setForeground(disableIntoListBrush);
             }
             ui->listPlantList->addItem(item);
         }
@@ -190,6 +197,30 @@ void BaseWindow::load_crafting_inventory()
     on_listCraftingList_itemSelectionChanged();
 }
 
+QString BaseWindow::reputationRequirementsToText(const ReputationRequirements &reputationRequirements)
+{
+    if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+        return QStringLiteral("???");
+    const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
+    if(!DatapackClientLoader::datapackLoader.reputationExtra.contains(reputation.name))
+        return QStringLiteral("???");
+    const DatapackClientLoader::ReputationExtra &reputationExtra=DatapackClientLoader::datapackLoader.reputationExtra.value(reputation.name);
+    if(reputationRequirements.positif)
+    {
+        if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
+            return QStringLiteral("???");
+        else
+            return reputationExtra.reputation_positive.at(reputationRequirements.level);
+    }
+    else
+    {
+        if(reputationRequirements.level>=reputationExtra.reputation_negative.size())
+            return QStringLiteral("???");
+        else
+            return reputationExtra.reputation_negative.at(reputationRequirements.level);
+    }
+}
+
 void BaseWindow::on_listPlantList_itemSelectionChanged()
 {
     QList<QListWidgetItem *> items=ui->listPlantList->selectedItems();
@@ -212,6 +243,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelFruitsText->setText(QString());
         ui->labelPlantFruitText->setText(QString());
         ui->labelPlantDescription->setText(QString());
+        ui->labelPlantRequirementsAndRewards->setText(QString());
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         ui->labelPlantByDay->setText(QString());
         #endif
@@ -225,10 +257,59 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
 
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(plant.itemUsed))
     {
-        ui->labelPlantImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].image);
-        ui->labelPlantName->setText(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].name);
-        ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].image);
-        ui->labelPlantDescription->setText(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].description);
+        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(plant.itemUsed);
+        ui->labelPlantImage->setPixmap(itemExtra.image);
+        ui->labelPlantName->setText(itemExtra.name);
+        ui->labelPlantFruitImage->setPixmap(itemExtra.image);
+        ui->labelPlantDescription->setText(itemExtra.description);
+        //requirements and rewards
+        {
+            QStringList requirements;
+            {
+                int index=0;
+                while(index<plant.requirements.reputation.size())
+                {
+                    requirements << reputationRequirementsToText(plant.requirements.reputation.at(index));
+                    index++;
+                }
+            }
+            if(requirements.isEmpty())
+                ui->labelPlantRequirementsAndRewards->setText(QString());
+            else
+                ui->labelPlantRequirementsAndRewards->setText(tr("Requirements: ")+requirements.join(QStringLiteral(", ")));
+            #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+            QStringList rewards_less_reputation,rewards_more_reputation;
+            {
+                int index=0;
+                while(index<plant.rewards.reputation.size())
+                {
+                    QString name=QStringLiteral("???");
+                    const ReputationRewards &reputationRewards=plant.rewards.reputation.at(index);
+                    if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+                    {
+                        const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
+                        if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputation.name))
+                            name=DatapackClientLoader::datapackLoader.reputationExtra.value(reputation.name).name;
+                    }
+                    if(reputationRewards.point<0)
+                        rewards_less_reputation << name;
+                    else if(reputationRewards.point>0)
+                        rewards_more_reputation << name;
+                    index++;
+                }
+            }
+            if(!rewards_less_reputation.isEmpty() || !rewards_more_reputation.isEmpty())
+            {
+                ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral("<br />"));
+                if(!rewards_less_reputation.isEmpty())
+                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("Less reputation in: ")+rewards_less_reputation.join(QStringLiteral(", ")));
+                if(!rewards_less_reputation.isEmpty() && !rewards_more_reputation.isEmpty())
+                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral(", "));
+                if(!rewards_more_reputation.isEmpty())
+                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("More reputation in: ")+rewards_more_reputation.join(QStringLiteral(", ")));
+            }
+            #endif
+        }
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         if(plant.fruits_seconds>0)
         {
@@ -247,6 +328,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantName->setText(tr("Unknow plant (%1)").arg(plant.itemUsed));
         ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->labelPlantDescription->setText(tr("This plant and these effects are unknown"));
+        ui->labelPlantRequirementsAndRewards->setText(QString());
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         if(plant.fruits_seconds>0)
         {
@@ -356,8 +438,6 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     QString nameMaterials;
     QListWidgetItem *item;
     quint32 quantity;
-    QFont MissingQuantity;
-    MissingQuantity.setItalic(true);
     while(index<content.materials.size())
     {
         //load the material item
@@ -382,8 +462,8 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         item->setText(tr("Needed: %1 %2\nIn the inventory: %3 %4").arg(content.materials.at(index).quantity).arg(nameMaterials).arg(quantity).arg(nameMaterials));
         if(quantity<content.materials.at(index).quantity)
         {
-            item->setFont(MissingQuantity);
-            item->setForeground(QBrush(QColor(200,20,20)));
+            item->setFont(disableIntoListFont);
+            item->setForeground(disableIntoListBrush);
         }
 
         if(quantity<content.materials.at(index).quantity)

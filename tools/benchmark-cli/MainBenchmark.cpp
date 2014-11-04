@@ -37,27 +37,42 @@ MainBenchmark::MainBenchmark() :
     connect(&stopBenchmarkTimer,&QTimer::timeout,this,&MainBenchmark::stopBenchmark,Qt::QueuedConnection);
 
     const QStringList &args=QCoreApplication::arguments();
-    const int &indexOfServer=args.indexOf(QStringLiteral("--server"));
-    if(indexOfServer!=-1 && args.size()>(indexOfServer+1))
-        server=args.at(indexOfServer+1);
-    if(server.isEmpty())
+
     {
-        if(settings.contains(QStringLiteral("server")))
+        const int &indexOfServer=args.indexOf(QStringLiteral("--server"));
+        if(indexOfServer!=-1 && args.size()>(indexOfServer+1))
+            server=args.at(indexOfServer+1);
+        if(server.isEmpty())
         {
-            qDebug() << "use setting to locate the server";
-            server=settings.value(QStringLiteral("server")).toString();
-        }
-        else
-        {
-            qDebug() << "set setting to default";
-            server=QStringLiteral("catchchallenger-server-cli-epoll");
-            settings.setValue(QStringLiteral("server"),QStringLiteral("catchchallenger-server-cli-epoll"));
+            if(settings.contains(QStringLiteral("server")))
+            {
+                qDebug() << "use setting to locate the server";
+                server=settings.value(QStringLiteral("server")).toString();
+            }
+            else
+            {
+                qDebug() << "set setting to default";
+                server=QStringLiteral("catchchallenger-server-cli-epoll");
+                settings.setValue(QStringLiteral("server"),QStringLiteral("catchchallenger-server-cli-epoll"));
+            }
         }
     }
-    if(settings.contains(QStringLiteral("multipleConnexion")))
-        multipleConnexion=settings.value(QStringLiteral("multipleConnexion")).toUInt();
-    else
-        settings.setValue(QStringLiteral("multipleConnexion"),QStringLiteral("480"));
+    {
+        const int &indexOfServer=args.indexOf(QStringLiteral("--multipleConnexion"));
+        if(indexOfServer!=-1 && args.size()>(indexOfServer+1))
+            multipleConnexion=args.at(indexOfServer+1).toUInt();
+        if(multipleConnexion==0)
+        {
+            if(settings.contains(QStringLiteral("multipleConnexion")) && settings.value(QStringLiteral("multipleConnexion")).toUInt()>0)
+                multipleConnexion=settings.value(QStringLiteral("multipleConnexion")).toUInt();
+            else
+            {
+                multipleConnexion=480;
+                settings.setValue(QStringLiteral("multipleConnexion"),QStringLiteral("480"));
+            }
+        }
+    }
+
     if(settings.contains(QStringLiteral("connectBySeconds")))
         connectBySeconds=settings.value(QStringLiteral("connectBySeconds")).toUInt();
     else
@@ -80,7 +95,34 @@ void MainBenchmark::init()
     qDebug() << "init done";
     if(QFile(server).exists())
     {
+        const QString &settingsFile=QFileInfo(server).absolutePath()+"/server.properties";
+        QSettings settingsOfServer(settingsFile,QSettings::IniFormat);
+        if(settingsOfServer.status()!=QSettings::NoError)
+        {
+            qDebug() << tr("settingsOfServer.status()!=QSettings::NoError: %1").arg(settingsOfServer.status());
+            QCoreApplication::quit();
+            return;
+        }
+        if(!settingsOfServer.contains("max-players"))
+        {
+            qDebug() << tr("settings: %1 don't have max-players (%2):\n%3")
+                        .arg(settingsFile);
+            QCoreApplication::quit();
+            return;
+        }
+        bool ok;
+        if(multipleConnexion>settingsOfServer.value("max-players",0).toUInt(&ok))
+        {
+            qDebug() << tr("max-players (%1) is lower than multipleConnexion (%2) for settings: %3 (%4)")
+                        .arg(settingsOfServer.value("max-players",0).toString())
+                        .arg(multipleConnexion)
+                        .arg(settingsFile)
+                        .arg(ok);
+            QCoreApplication::quit();
+            return;
+        }
         process.setProgram(server);
+        process.setArguments(QStringList() << "--benchmark");
         process.start();
         qDebug() << "init error:" << process.errorString();
     }

@@ -53,7 +53,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2747,6 +2747,16 @@ padding-bottom:3px;
           </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(0, 0, 0);</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelPlantRequirementsAndRewards">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>110</y>
+            <width>321</width>
+            <height>31</height>
+           </rect>
           </property>
          </widget>
         </widget>
