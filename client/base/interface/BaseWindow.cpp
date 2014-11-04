@@ -91,7 +91,7 @@ BaseWindow::BaseWindow() :
     updateRXTXTime.restart();
 
     tip_timeout.setInterval(TIMETODISPLAY_TIP);
-    gain_timeout.setInterval(TIMETODISPLAY_GAIN);
+    gain_timeout.setInterval(500);
     tip_timeout.setSingleShot(true);
     gain_timeout.setSingleShot(true);
 
@@ -111,6 +111,9 @@ BaseWindow::BaseWindow() :
     doNextActionTimer.setInterval(1500);
     botFightTimer.setSingleShot(true);
     botFightTimer.setInterval(1000);
+
+    disableIntoListFont.setItalic(true);
+    disableIntoListBrush=QBrush(QColor(200,20,20));
 
     connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setMultiPlayer,Qt::QueuedConnection);
 
@@ -894,27 +897,28 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
         break;
         case ObjectType_Seed:
         {
+            const quint8 &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plantId).requirements.reputation))
+            {
+                qDebug() << "You don't have the requirements to plant the seed";
+                QMessageBox::critical(this,tr("Error"),tr("You don't have the requirements to plant the seed"));
+                return;
+            }
+            ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
+            ui->plantUse->setVisible(false);
             if(havePlant(&MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap,MapController::mapController->getX(),MapController::mapController->getY())>=0)
             {
                 qDebug() << "Too slow to select a seed, have plant now";
                 showTip(tr("Sorry, but now the dirt is not free to plant"));
                 return;
             }
-            ui->stackedWidget->setCurrentWidget(ui->page_map);
-            ui->inventoryUse->setText(tr("Select"));
-            ui->plantUse->setVisible(false);
             if(!ok)
                 break;
             if(!items.contains(itemId))
             {
                 qDebug() << "item id is not into the inventory";
                 break;
-            }
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(itemId)).requirements.reputation))
-            {
-                qDebug() << "You don't have the requirements to plant the seed";
-                showTip(tr("You don't have the requirements to plant the seed"));
-                return;
             }
             remove_to_inventory(itemId);
             SeedInWaiting seedInWaiting;
@@ -1032,7 +1036,6 @@ void BaseWindow::add_to_inventory(const QHash<quint16,quint32> &items,const bool
         return;
     if(showGain)
     {
-        QString html=tr("You have obtained: ");
         QStringList objects;
         QHashIterator<quint16,quint32> i(items);
         while (i.hasNext()) {
@@ -1071,8 +1074,9 @@ void BaseWindow::add_to_inventory(const QHash<quint16,quint32> &items,const bool
         }
         if(objects.size()==16)
             objects << "...";
-        html+=objects.join(", ");
-        BaseWindow::showGain(html);
+        add_to_inventoryGainList << objects.join(", ");
+        add_to_inventoryGainTime << QTime::currentTime();
+        BaseWindow::showGain();
     }
     else
     {
@@ -1242,7 +1246,24 @@ void BaseWindow::tipTimeout()
 
 void BaseWindow::gainTimeout()
 {
-    ui->gain->setVisible(false);
+    int index=0;
+    while(index<add_to_inventoryGainTime.size())
+    {
+        if(add_to_inventoryGainTime.at(index).elapsed()>TIMETODISPLAY_GAIN)
+        {
+            add_to_inventoryGainTime.removeAt(index);
+            add_to_inventoryGainList.removeAt(index);
+        }
+        else
+            index++;
+    }
+    if(add_to_inventoryGainTime.isEmpty())
+        ui->gain->setVisible(false);
+    else
+    {
+        gain_timeout.start();
+        composeAndDisplayGain();
+    }
 }
 
 void BaseWindow::showTip(const QString &tip)
@@ -1259,11 +1280,20 @@ void BaseWindow::showPlace(const QString &place)
     gain_timeout.start();
 }
 
-void BaseWindow::showGain(const QString &gain)
+void BaseWindow::showGain()
 {
+    gainTimeout();
     ui->gain->setVisible(true);
-    ui->gain->setText(gain);
+    composeAndDisplayGain();
     gain_timeout.start();
+}
+
+void BaseWindow::composeAndDisplayGain()
+{
+    if(add_to_inventoryGainList.size()>1)
+        ui->gain->setText(tr("You have obtained: ")+QStringLiteral("<ul><li>")+add_to_inventoryGainList.join(QStringLiteral("</li><li>"))+QStringLiteral("</li></ul>"));
+    else
+        ui->gain->setText(tr("You have obtained: ")+add_to_inventoryGainList.join(QString()));
 }
 
 void BaseWindow::addQuery(const QueryType &queryType)

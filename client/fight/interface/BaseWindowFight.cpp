@@ -1753,6 +1753,8 @@ void BaseWindow::pageChanged()
 {
     if(ui->stackedWidget->currentWidget()==ui->page_map)
         MapController::mapController->setFocus();
+    if(ui->stackedWidget->currentWidget()==ui->page_plants)
+        load_plant_inventory();
 }
 
 bool BaseWindow::displayFirstAttackText(bool firstText)

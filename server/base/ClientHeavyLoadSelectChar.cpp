@@ -109,6 +109,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     callbackRegistred.removeFirst();
     if(!GlobalServerData::serverPrivateVariables.db.next())
     {
+        qDebug() << QStringLiteral("Try select %1 but not found with account %2").arg(characterId).arg(account_id);
         characterSelectionIsWrong(query_id,0x02,QLatin1String("Result return query wrong"));
         return;
     }

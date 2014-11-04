@@ -97,6 +97,7 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.tolerantMode                           = false;
     GlobalServerData::serverSettings.sendPlayerNumber                       = true;
     GlobalServerData::serverSettings.pvp                                    = true;
+    GlobalServerData::serverSettings.benchmark                              = false;
 
     GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     GlobalServerData::serverSettings.database.sqlite.file                       = QString();
@@ -265,15 +266,42 @@ void BaseServer::preload_the_events()
 
 void BaseServer::preload_the_randomData()
 {
+    GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
+    GlobalServerData::serverPrivateVariables.randomData.clear();
+
+    if(GlobalServerData::serverSettings.benchmark)
+    {
+        srand(0);
+        QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
+        randomDataStream.setVersion(QDataStream::Qt_4_4);
+        int index=0;
+        while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+        {
+            randomDataStream << quint8(rand()%256);
+            index++;
+        }
+    }
+
     #ifdef Q_OS_LINUX
     if(GlobalServerData::serverPrivateVariables.fpRandomFile!=NULL)
         fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
-    GlobalServerData::serverPrivateVariables.fpRandomFile = fopen("/dev/urandom","r");
+    GlobalServerData::serverPrivateVariables.fpRandomFile = fopen("/dev/urandom","rb");
     if(GlobalServerData::serverPrivateVariables.fpRandomFile==NULL)
         qDebug() << "Unable to open /dev/urandom to have trusted number generator";
-    #endif
-    GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
-    GlobalServerData::serverPrivateVariables.randomData.clear();
+    //fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);-> used later into ./base/ClientNetworkRead.cpp for token
+    GlobalServerData::serverPrivateVariables.randomData.resize(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
+    const int &returnedSize=fread(GlobalServerData::serverPrivateVariables.randomData.data(),1,CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE,GlobalServerData::serverPrivateVariables.fpRandomFile);
+    if(returnedSize!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+    {
+        qDebug() << QStringLiteral("CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE don't match with urandom size: %1").arg(returnedSize);
+        abort();
+    }
+    if(GlobalServerData::serverPrivateVariables.randomData.size()!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.randomData.size() don't match with urandom size");
+        abort();
+    }
+    #else
     QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
     randomDataStream.setVersion(QDataStream::Qt_4_4);
     int index=0;
@@ -282,6 +310,7 @@ void BaseServer::preload_the_randomData()
         randomDataStream << quint8(rand()%256);
         index++;
     }
+    #endif
 }
 
 void BaseServer::preload_the_ddos()
@@ -938,7 +967,7 @@ void BaseServer::preload_profile()
                             QString::number(profile.cash)+QLatin1String(",")+
                             mapQuery+QLatin1String(",")+
                             mapQuery+QLatin1String(",0,")+
-                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,0,0,0,0,")+
+                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,FALSE,0,0,0,")+
                             QString::number(index)+QLatin1String(");");
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
@@ -951,7 +980,7 @@ void BaseServer::preload_profile()
                             QString::number(profile.cash)+QLatin1String(",")+
                             mapQuery+QLatin1String(",")+
                             mapQuery+QLatin1String(",0,")+
-                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,0,0,0,0,")+
+                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,FALSE,0,0,0,")+
                             QString::number(index)+QLatin1String(");");
                 break;
                 case ServerSettings::Database::DatabaseType_PostgreSQL:
@@ -964,7 +993,7 @@ void BaseServer::preload_profile()
                             QString::number(profile.cash)+QLatin1String(",")+
                             mapQuery+QLatin1String(",")+
                             mapQuery+QLatin1String(",0,")+
-                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,false,0,0,0,")+
+                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,FALSE,0,0,0,")+
                             QString::number(index)+QLatin1String(");");
                 break;
             }
@@ -2641,10 +2670,10 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_insert_clan=QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);");
         GlobalServerData::serverPrivateVariables.db_query_insert_plant=QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,%2,%3,%4,%5,%6,%7);");
         GlobalServerData::serverPrivateVariables.db_query_update_monster_owner=QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;");
-        GlobalServerData::serverPrivateVariables.db_query_update_quest_finish=QStringLiteral("UPDATE `quest` SET `step`=0,`finish_one_time`=1 WHERE `character`=%1 AND `quest`=%2;");
+        GlobalServerData::serverPrivateVariables.db_query_update_quest_finish=QStringLiteral("UPDATE `quest` SET `step`=0,`finish_one_time`=TRUE WHERE `character`=%1 AND `quest`=%2;");
         GlobalServerData::serverPrivateVariables.db_query_update_quest_step=QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND `quest`=%2;");
         GlobalServerData::serverPrivateVariables.db_query_update_quest_restart=QStringLiteral("UPDATE `quest` SET `step`=1 WHERE `character`=%1 AND `quest`=%2;");
-        GlobalServerData::serverPrivateVariables.db_query_insert_quest=QStringLiteral("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,%3,%4);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_quest=QStringLiteral("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,FALSE,%3);");
         GlobalServerData::serverPrivateVariables.db_query_update_city_clan=QStringLiteral("UPDATE `city` SET `clan`=%1 WHERE `city`='%2';");
         GlobalServerData::serverPrivateVariables.db_query_insert_city=QStringLiteral("INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2");
@@ -2768,10 +2797,10 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
         GlobalServerData::serverPrivateVariables.db_query_insert_plant=QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);");
         GlobalServerData::serverPrivateVariables.db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
-        GlobalServerData::serverPrivateVariables.db_query_update_quest_finish=QStringLiteral("UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;");
+        GlobalServerData::serverPrivateVariables.db_query_update_quest_finish=QStringLiteral("UPDATE quest SET step=0,finish_one_time=TRUE WHERE character=%1 AND quest=%2;");
         GlobalServerData::serverPrivateVariables.db_query_update_quest_step=QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;");
         GlobalServerData::serverPrivateVariables.db_query_update_quest_restart=QStringLiteral("UPDATE quest SET step=1 WHERE character=%1 AND quest=%2;");
-        GlobalServerData::serverPrivateVariables.db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,FALSE,%3);");
         GlobalServerData::serverPrivateVariables.db_query_update_city_clan=QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';");
         GlobalServerData::serverPrivateVariables.db_query_insert_city=QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
@@ -2892,10 +2921,10 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
         GlobalServerData::serverPrivateVariables.db_query_insert_plant=QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);");
         GlobalServerData::serverPrivateVariables.db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
-        GlobalServerData::serverPrivateVariables.db_query_update_quest_finish=QStringLiteral("UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;");
+        GlobalServerData::serverPrivateVariables.db_query_update_quest_finish=QStringLiteral("UPDATE quest SET step=0,finish_one_time=TRUE WHERE character=%1 AND quest=%2;");
         GlobalServerData::serverPrivateVariables.db_query_update_quest_step=QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;");
         GlobalServerData::serverPrivateVariables.db_query_update_quest_restart=QStringLiteral("UPDATE quest SET step=1 WHERE character=%1 AND quest=%2;");
-        GlobalServerData::serverPrivateVariables.db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);");
+        GlobalServerData::serverPrivateVariables.db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,FALSE,%3);");
         GlobalServerData::serverPrivateVariables.db_query_update_city_clan=QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';");
         GlobalServerData::serverPrivateVariables.db_query_insert_city=QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');");
         GlobalServerData::serverPrivateVariables.db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
