@@ -503,7 +503,7 @@ private:
     //plant seed in waiting
     struct SeedInWaiting
     {
-        quint32 seed;
+        quint32 seedItemId;
         quint8 x,y;
         QString map;
     };

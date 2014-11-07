@@ -75,7 +75,18 @@ void BaseWindow::seed_planted(const bool &ok)
     {
         /// \todo add to the map here, and don't send on the server
         showTip(tr("Seed correctly planted"));
-        appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.value(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.value(seed_in_waiting.first().seed)).rewards.reputation);
+        //do the rewards
+        {
+            const quint32 &itemId=seed_in_waiting.first().seedItemId;
+            if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
+            {
+                qDebug() << "Item is not a plant";
+                QMessageBox::critical(this,tr("Error"),tr("Internal error"));
+                return;
+            }
+            const quint8 &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plant).rewards.reputation);
+        }
     }
     else
     {
@@ -84,7 +95,7 @@ void BaseWindow::seed_planted(const bool &ok)
             MapController::mapController->remove_plant_full(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
             cancelAllPlantQuery(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
         }
-        add_to_inventory(seed_in_waiting.first().seed,1,false);
+        add_to_inventory(seed_in_waiting.first().seedItemId,1,false);
         showTip(tr("Seed cannot be planted"));
         load_inventory();
     }
