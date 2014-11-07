@@ -2564,7 +2564,7 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT `allow` FROM `character_allow` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)");
-        GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 LIMIT 0,%2");
+        GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 ORDER BY `played_time` LIMIT 0,%2");
         GlobalServerData::serverPrivateVariables.db_query_played_time=QStringLiteral("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1");
         GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3");
         GlobalServerData::serverPrivateVariables.db_query_character_by_id=QStringLiteral("SELECT `account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`warehouse_cash`,`clan_leader`,`market_cash`,`time_to_delete` FROM `character` WHERE `id`=%1");
@@ -2691,7 +2691,7 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
-        GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2");
+        GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 ORDER BY played_time LIMIT 0,%2");
         GlobalServerData::serverPrivateVariables.db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
         GlobalServerData::serverPrivateVariables.db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,clan_leader,market_cash,time_to_delete FROM character WHERE id=%1");
@@ -2815,7 +2815,7 @@ void BaseServer::initialize_the_database_prepared_query()
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
-        GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT %2");
+        GlobalServerData::serverPrivateVariables.db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 ORDER BY played_time LIMIT %2");
         GlobalServerData::serverPrivateVariables.db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
         GlobalServerData::serverPrivateVariables.db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
         GlobalServerData::serverPrivateVariables.db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,clan_leader,market_cash,time_to_delete FROM character WHERE id=%1");
