@@ -1989,6 +1989,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
     emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
     PlayerReputation oldPlayerReputation=playerReputation;
+    qint32 old_level=playerReputation.level;
     FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.reputation.at(reputatioId));
     if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
         return;
@@ -1996,6 +1997,21 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
         CatchChallenger::Api_client_real::client->player_informations.reputation[reputatioId]=playerReputation;
     else
         CatchChallenger::Api_client_real::client->player_informations.reputation.insert(reputatioId,playerReputation);
+    const QString &reputationCodeName=CommonDatapack::commonDatapack.reputation.at(reputatioId).name;
+    if(old_level<playerReputation.level)
+    {
+        if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputationCodeName))
+            showTip(tr("You have better reputation into %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(reputationCodeName).name));
+        else
+            showTip(tr("You have better reputation into %1").arg(QStringLiteral("???")));
+    }
+    else if(old_level>playerReputation.level)
+    {
+        if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputationCodeName))
+            showTip(tr("You have worse reputation into %1").arg(DatapackClientLoader::datapackLoader.reputationExtra.value(reputationCodeName).name));
+        else
+            showTip(tr("You have worse reputation into %1").arg(QStringLiteral("???")));
+    }
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QStringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
