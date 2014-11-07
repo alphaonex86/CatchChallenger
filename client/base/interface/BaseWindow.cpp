@@ -897,7 +897,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
         break;
         case ObjectType_Seed:
         {
-            if(DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
+            if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(this,tr("Error"),tr("Internal error"));
@@ -931,7 +931,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             seedInWaiting.map=MapController::mapController->current_map;
             seedInWaiting.x=MapController::mapController->getX();
             seedInWaiting.y=MapController::mapController->getY();
-            seedInWaiting.seed=itemId;
+            seedInWaiting.seedItemId=itemId;
             seed_in_waiting << seedInWaiting;
             insert_plant(MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.value(plantId).fruits_seconds);
             addQuery(QueryType_Seed);
@@ -939,10 +939,6 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             load_inventory();
             qDebug() << QStringLiteral("send seed for: %1").arg(plantId);
             emit useSeed(plantId);
-            //do the rewards
-            {
-                appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.value(plantId).rewards.reputation);
-            }
         }
         break;
         case ObjectType_UseInFight:
