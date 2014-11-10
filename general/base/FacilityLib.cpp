@@ -419,9 +419,16 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
 {
     if(point==0)
         return;
+    bool needContinue;
+    //do input fix
+    if(playerReputation->level>0 && playerReputation->point<0)
+        playerReputation->point=0;
+    if(playerReputation->level<0 && playerReputation->point>0)
+        playerReputation->point=0;
     playerReputation->point+=point;
     do
     {
+        needContinue=false;
         //at the limit
         if(reputation.reputation_negative.isEmpty())
         {
@@ -434,10 +441,10 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
         }
         else
         {
-            if(playerReputation->level<=(-reputation.reputation_negative.size()))
+            if(playerReputation->level<=(-(reputation.reputation_negative.size()-1)) && playerReputation->point<=0)
             {
                 playerReputation->point=0;
-                playerReputation->level=(-reputation.reputation_negative.size());
+                playerReputation->level=(-(reputation.reputation_negative.size()-1));
                 break;
             }
         }
@@ -452,10 +459,10 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
         }
         else
         {
-            if(playerReputation->level<=(reputation.reputation_negative.size()-1))
+            if(playerReputation->level>=(reputation.reputation_positive.size()-1) && playerReputation->point>=0)
             {
                 playerReputation->point=0;
-                playerReputation->level=(reputation.reputation_negative.size()-1);
+                playerReputation->level=(reputation.reputation_positive.size()-1);
                 break;
             }
         }
@@ -463,33 +470,33 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
         if(playerReputation->level<0 && playerReputation->point>0)
         {
             playerReputation->level++;
-            playerReputation->point+=reputation.reputation_negative.at(-playerReputation->level);
-            continue;
+            playerReputation->point+=reputation.reputation_negative.at(-playerReputation->level+1);
+            needContinue=true;
         }
         if(playerReputation->level>0 && playerReputation->point<0)
         {
             playerReputation->level--;
-            playerReputation->point+=reputation.reputation_negative.at(playerReputation->level);
-            continue;
+            playerReputation->point+=reputation.reputation_positive.at(playerReputation->level+1);
+            needContinue=true;
         }
         //gain point in level
         if(playerReputation->level<=0 && playerReputation->point<0 && !reputation.reputation_negative.isEmpty())
         {
-            if(playerReputation->point<reputation.reputation_negative.at(-playerReputation->level))
+            if(playerReputation->point<=reputation.reputation_negative.at(-playerReputation->level+1))
             {
-                playerReputation->point-=reputation.reputation_negative.at(-playerReputation->level);
+                playerReputation->point-=reputation.reputation_negative.at(-playerReputation->level+1);
                 playerReputation->level--;
-                continue;
+                needContinue=true;
             }
         }
         if(playerReputation->level>=0 && playerReputation->point>0 && !reputation.reputation_positive.isEmpty())
         {
-            if(playerReputation->point<reputation.reputation_positive.at(playerReputation->level))
+            if(playerReputation->point>=reputation.reputation_positive.at(playerReputation->level+1))
             {
-                playerReputation->point-=reputation.reputation_positive.at(playerReputation->level);
+                playerReputation->point-=reputation.reputation_positive.at(playerReputation->level+1);
                 playerReputation->level++;
-                continue;
+                needContinue=true;
             }
         }
-    } while(false);
+    } while(needContinue);
 }

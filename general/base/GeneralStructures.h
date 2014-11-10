@@ -99,7 +99,7 @@ enum Plant_collect
 
 struct Reputation
 {
-    QList<qint32> reputation_positive,reputation_negative;
+    QList<qint32> reputation_positive/*start with 0*/,reputation_negative;
     /*server only*/
     int reverse_database_id;
     QString name;
