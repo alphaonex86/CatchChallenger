@@ -546,6 +546,8 @@ void BaseServer::preload_itemOnMap_return()
     }
     GlobalServerData::serverPrivateVariables.db.clear();
     {
+        DebugClass::debugConsole(QStringLiteral("%1 SQL item on map dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_item.size()));
+
         preload_the_map();
         preload_the_visibility_algorithm();
         preload_the_city_capture();
@@ -597,10 +599,10 @@ void BaseServer::preload_dictionary_allow_return()
         bool ok;
         lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         const QString &allow=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_allow.size()<lastId)
+        if(GlobalServerData::serverPrivateVariables.dictionary_allow.size()<=lastId)
         {
             int index=GlobalServerData::serverPrivateVariables.dictionary_allow.size();
-            while(index<lastId)
+            while(index<=lastId)
             {
                 GlobalServerData::serverPrivateVariables.dictionary_allow << ActionAllow_Nothing;
                 index++;
@@ -609,7 +611,7 @@ void BaseServer::preload_dictionary_allow_return()
         if(allow==allowClan)
         {
             haveAllowClan=true;
-            GlobalServerData::serverPrivateVariables.dictionary_allow << ActionAllow_Clan;
+            GlobalServerData::serverPrivateVariables.dictionary_allow[lastId]=ActionAllow_Clan;
             GlobalServerData::serverPrivateVariables.dictionary_allow_reverse[ActionAllow_Clan]=lastId;
         }
         else
@@ -678,15 +680,16 @@ void BaseServer::preload_dictionary_map_return()
 {
     QSet<QString> foundMap;
     int lastId=0;
+    int obsoleteMap=0;
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
         lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         const QString &map=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_map.size()<lastId)
+        if(GlobalServerData::serverPrivateVariables.dictionary_map.size()<=lastId)
         {
             int index=GlobalServerData::serverPrivateVariables.dictionary_map.size();
-            while(index<lastId)
+            while(index<=lastId)
             {
                 GlobalServerData::serverPrivateVariables.dictionary_map << NULL;
                 index++;
@@ -694,10 +697,12 @@ void BaseServer::preload_dictionary_map_return()
         }
         if(GlobalServerData::serverPrivateVariables.map_list.contains(map))
         {
-            GlobalServerData::serverPrivateVariables.dictionary_map << static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map));
+            GlobalServerData::serverPrivateVariables.dictionary_map[lastId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map));
             foundMap << map;
             static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map))->reverse_db_id=lastId;
         }
+        else
+            obsoleteMap++;
     }
     GlobalServerData::serverPrivateVariables.db.clear();
     QStringList map_list_flat=GlobalServerData::serverPrivateVariables.map_list.keys();
@@ -735,6 +740,11 @@ void BaseServer::preload_dictionary_map_return()
         }
         index++;
     }
+
+    if(obsoleteMap)
+        DebugClass::debugConsole(QStringLiteral("%1 SQL obsolete map dictionary").arg(obsoleteMap));
+    DebugClass::debugConsole(QStringLiteral("%1 SQL map dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_map.size()));
+
     plant_on_the_map=0;
     preload_the_plant_on_map();
 }
@@ -787,10 +797,10 @@ void BaseServer::preload_dictionary_reputation_return()
         bool ok;
         lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         const QString &reputation=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_reputation.size()<lastId)
+        if(GlobalServerData::serverPrivateVariables.dictionary_reputation.size()<=lastId)
         {
             int index=GlobalServerData::serverPrivateVariables.dictionary_reputation.size();
-            while(index<lastId)
+            while(index<=lastId)
             {
                 GlobalServerData::serverPrivateVariables.dictionary_reputation << -1;
                 index++;
@@ -798,7 +808,7 @@ void BaseServer::preload_dictionary_reputation_return()
         }
         if(reputationResolution.contains(reputation))
         {
-            GlobalServerData::serverPrivateVariables.dictionary_reputation << reputationResolution.value(reputation);
+            GlobalServerData::serverPrivateVariables.dictionary_reputation[lastId]=reputationResolution.value(reputation);
             foundReputation << reputation;
             CommonDatapack::commonDatapack.reputation[reputationResolution.value(reputation)].reverse_database_id=lastId;
         }
@@ -887,10 +897,10 @@ void BaseServer::preload_dictionary_skin_return()
         bool ok;
         lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         const QString &skin=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_skin.size()<lastId)
+        if(GlobalServerData::serverPrivateVariables.dictionary_skin.size()<=lastId)
         {
             int index=GlobalServerData::serverPrivateVariables.dictionary_skin.size();
-            while(index<lastId)
+            while(index<=lastId)
             {
                 GlobalServerData::serverPrivateVariables.dictionary_skin << 0;
                 index++;
@@ -899,7 +909,7 @@ void BaseServer::preload_dictionary_skin_return()
         if(GlobalServerData::serverPrivateVariables.skinList.contains(skin))
         {
             const quint8 &internalValue=GlobalServerData::serverPrivateVariables.skinList.value(skin);
-            GlobalServerData::serverPrivateVariables.dictionary_skin << internalValue;
+            GlobalServerData::serverPrivateVariables.dictionary_skin[lastId]=internalValue;
             GlobalServerData::serverPrivateVariables.dictionary_skin_reverse[internalValue]=lastId;
             foundSkin << skin;
         }
@@ -1417,10 +1427,10 @@ void BaseServer::preload_market_items()
             queryText=QLatin1String("SELECT `item`,`quantity`,`character`,`market_price` FROM `item_market` ORDER BY `item`");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY `item`");
+            queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
         break;
         case ServerSettings::Database::DatabaseType_PostgreSQL:
-            queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY `item`");
+            queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
         break;
     }
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static)==NULL)

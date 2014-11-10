@@ -31,6 +31,7 @@ private:
     QTimer stopBenchmarkTimer;
     double systemItem;
     QTime time;
+    QTimer autoKillTimeout;
 
     QTimer startAll;
     QString server;

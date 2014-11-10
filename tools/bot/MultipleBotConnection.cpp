@@ -60,6 +60,20 @@ void MultipleBotConnection::lastReplyTime(const quint32 &time)
     emit emit_lastReplyTime(time);
 }
 
+void MultipleBotConnection::notLogged(const QString &reason)
+{
+    Q_UNUSED(reason);
+    haveEnError=true;
+    numberOfBotConnected--;
+    emit emit_numberOfBotConnected(numberOfBotConnected);
+
+    QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
+    while (i.hasNext()) {
+        i.next();
+        i.key()->disconnectClient();
+    }
+}
+
 void MultipleBotConnection::tryLink(CatchChallengerClient * client)
 {
     numberOfBotConnected++;
@@ -317,6 +331,7 @@ void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * cli
     connect(client->api,&CatchChallenger::Api_client_real::newError,                 this,&MultipleBotConnection::newError);
     connect(client->api,&CatchChallenger::Api_client_real::newCharacterId,           this,&MultipleBotConnection::newCharacterId);
     connect(client->api,&CatchChallenger::Api_client_real::lastReplyTime,            this,&MultipleBotConnection::lastReplyTime);
+    connect(client->api,&CatchChallenger::Api_client_real::notLogged,                this,&MultipleBotConnection::notLogged);
     connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MultipleBotConnection::disconnected);
     if(apiToCatchChallengerClient.isEmpty())
         connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,      this,&MultipleBotConnection::haveTheDatapack);

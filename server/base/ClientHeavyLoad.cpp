@@ -515,7 +515,7 @@ void Client::character_return(const quint8 &query_id)
                             {
                                 if(GlobalServerData::serverPrivateVariables.dictionary_map.at(characterEntry.mapId)==NULL)
                                 {
-                                    normalOutput(QStringLiteral("character return map id not resolved: %1 for %2 fixed by 0: %3").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id).arg(characterEntry.mapId));
+                                    normalOutput(QStringLiteral("character return map id not resolved: %1 for %2 fixed by 0: %3").arg(characterEntry.character_id).arg(account_id).arg(characterEntry.mapId));
                                     characterEntry.mapId=-1;
                                     //ok=false;
                                 }

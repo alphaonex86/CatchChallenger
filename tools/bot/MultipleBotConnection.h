@@ -56,6 +56,7 @@ protected:
     void newSocketError_with_client(CatchChallengerClient *client, QAbstractSocket::SocketError error);
     virtual void disconnected();
     virtual void lastReplyTime(const quint32 &time);
+    virtual void notLogged(const QString &reason);
     virtual void tryLink(CatchChallengerClient *client);
     virtual void protocol_is_good_with_client(CatchChallengerClient *client);
     virtual void haveTheDatapack_with_client(CatchChallengerClient *client);
