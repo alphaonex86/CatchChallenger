@@ -22,6 +22,8 @@ MainBenchmark::MainBenchmark() :
     connect(&startAll,&QTimer::timeout,this,&MainBenchmark::init,Qt::QueuedConnection);
     startAll.setSingleShot(true);
     startAll.start(0);
+    autoKillTimeout.setSingleShot(true);
+    autoKillTimeout.start(15*60*1000);
 
     connect(&socket,&QLocalSocket::readyRead,this,&MainBenchmark::readyRead,Qt::QueuedConnection);
 
@@ -29,6 +31,7 @@ MainBenchmark::MainBenchmark() :
     connect(&process,&QProcess::stateChanged,this,&MainBenchmark::processStateChanged,Qt::QueuedConnection);
     connect(&process,&QProcess::readyReadStandardOutput,this,&MainBenchmark::readyReadStandardOutput,Qt::QueuedConnection);
     connect(&process,&QProcess::readyReadStandardError,this,&MainBenchmark::readyReadStandardError,Qt::QueuedConnection);
+    connect(&autoKillTimeout,&QTimer::timeout,&process,&QProcess::kill,Qt::QueuedConnection);
 
     connect(&multipleBotConnection,&MultipleBotConnectionImplFoprGui::emit_all_player_on_map,this,&MainBenchmark::all_player_on_map,Qt::QueuedConnection);
 
