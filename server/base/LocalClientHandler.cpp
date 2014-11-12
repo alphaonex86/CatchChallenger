@@ -958,6 +958,12 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
         QStringList arguments=extraText.split(Client::text_space,QString::SkipEmptyParts);
         if(arguments.size()==2)
             arguments << Client::text_1;
+        while(arguments.size()>3)
+        {
+            const QString &arg1=arguments.takeAt(arguments.size()-3);
+            const QString &arg2=arguments.takeAt(arguments.size()-2);
+            arguments.insert(arguments.size()-1,arg1+Client::text_space+arg2);
+        }
         if(arguments.size()!=3)
         {
             receiveSystemText(QStringLiteral("Wrong arguments number for the command, usage: /give objectId player [quantity=1]"));
@@ -974,11 +980,22 @@ void Client::sendHandlerCommand(const QString &command,const QString &extraText)
             receiveSystemText(QStringLiteral("objectId is not a valid item, usage: /give objectId player [quantity=1]"));
             return;
         }
-        const quint32 &quantity=arguments.last().toUInt(&ok);
-        if(!ok)
+        quint32 quantity=1;
+        if(arguments.size()==3)
         {
-            receiveSystemText(QStringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
-            return;
+            quantity=arguments.last().toUInt(&ok);
+            if(!ok)
+            {
+                while(arguments.size()>2)
+                {
+                    const QString &arg1=arguments.takeAt(arguments.size()-2);
+                    const QString &arg2=arguments.takeAt(arguments.size()-1);
+                    arguments << arg1+Client::text_space+arg2;
+                }
+                quantity=1;
+                //receiveSystemText(QStringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
+                //return;
+            }
         }
         if(!playerByPseudo.contains(arguments.at(1)))
         {
@@ -1593,10 +1610,13 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
     {
         if(shop.prices.at(index)>0)
         {
-            out2 << (quint16)shop.items.at(index);
-            out2 << (quint32)shop.prices.at(index);
-            out2 << (quint32)0;
-            objectCount++;
+            if(shop.prices.at(index)>0)
+            {
+                out2 << (quint16)shop.items.at(index);
+                out2 << (quint32)shop.prices.at(index);
+                out2 << (quint32)0;
+                objectCount++;
+            }
         }
         index++;
     }
@@ -1834,6 +1854,11 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
     if(objectQuantity(objectId)<quantity)
     {
         errorOutput(QStringLiteral("you have not this quantity to sell"));
+        return;
+    }
+    if(CommonDatapack::commonDatapack.items.item.value(objectId).price==0)
+    {
+        errorOutput(QStringLiteral("Can't sold %1").arg(objectId));
         return;
     }
     const quint32 &realPrice=CommonDatapack::commonDatapack.items.item.value(objectId).price/2;

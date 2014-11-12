@@ -155,7 +155,7 @@ void BaseWindow::displaySellList()
     QHashIterator<quint16,quint32> i(items);
     while (i.hasNext()) {
         i.next();
-        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()) && CatchChallenger::CommonDatapack::commonDatapack.items.item.value(i.key()).price>0)
         {
             QListWidgetItem *item=new QListWidgetItem();
             shop_items_to_graphical[i.key()]=item;
