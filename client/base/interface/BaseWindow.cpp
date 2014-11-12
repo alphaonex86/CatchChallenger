@@ -2353,11 +2353,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
             int index=0;
             while(index<shop.items.size())
             {
-                ItemToSellOrBuy newItem;
-                newItem.object=shop.items.at(index);
-                newItem.price=shop.prices.at(index);
-                newItem.quantity=0;
-                items << newItem;
+                if(shop.prices.at(index)>0)
+                {
+                    ItemToSellOrBuy newItem;
+                    newItem.object=shop.items.at(index);
+                    newItem.price=shop.prices.at(index);
+                    newItem.quantity=0;
+                    items << newItem;
+                }
                 index++;
             }
             haveShopList(items);

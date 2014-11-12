@@ -377,9 +377,9 @@ void BaseWindow::datapackParsed()
         else
             ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url(:/images/interface/fight/labelBottom.png);padding:6px 6px 6px 14px;}"));
         if(QFile(CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelTop.png")).exists())
-            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 6px 6px 14px;}"));
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 14px 6px 6px;}"));
         else
-            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url(:/images/interface/fight/labelTop.png);padding:6px 6px 6px 14px;}"));
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url(:/images/interface/fight/labelTop.png);padding:6px 14px 6px 6px;}"));
     }
     //updatePlayerImage();
 }
