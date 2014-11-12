@@ -126,6 +126,7 @@ public:
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();
+    QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
 protected:
     void run();
 public slots:

@@ -448,6 +448,7 @@ protected slots:
 private:
     Ui::BaseWindowUI *ui;
     QFrame *renderFrame;
+    QString imagesInterfaceRepeatableString,imagesInterfaceInProgressString;
     QTimer tip_timeout;
     QTimer gain_timeout;
     QList<QueryType> queryList;
@@ -497,6 +498,8 @@ private:
     QTimer botFightTimer;
     QStringList add_to_inventoryGainList;
     QList<QTime> add_to_inventoryGainTime;
+    QStringList add_to_inventoryGainExtraList;
+    QList<QTime> add_to_inventoryGainExtraTime;
     QFont disableIntoListFont;
     QBrush disableIntoListBrush;
 
