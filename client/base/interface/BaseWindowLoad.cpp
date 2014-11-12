@@ -7,6 +7,7 @@
 #include "Chat.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../Options.h"
+#include "../Audio.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -118,6 +119,10 @@ void BaseWindow::resetAll()
     lastPlaceDisplayed.clear();
     events.clear();
     visualCategory.clear();
+    add_to_inventoryGainList.clear();
+    add_to_inventoryGainTime.clear();
+    add_to_inventoryGainExtraList.clear();
+    add_to_inventoryGainExtraTime.clear();
     while(!ambianceList.isEmpty())
     {
         libvlc_media_player_stop(ambianceList.first().player);
@@ -366,6 +371,16 @@ void BaseWindow::datapackParsed()
     datapackIsParsed=true;
     updateConnectingStatus();
     loadSettingsWithDatapack();
+    {
+        if(QFile(CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelBottom.png")).exists())
+            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelBottom.png');padding:6px 6px 6px 14px;}"));
+        else
+            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url(:/images/interface/fight/labelBottom.png);padding:6px 6px 6px 14px;}"));
+        if(QFile(CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelTop.png")).exists())
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 6px 6px 14px;}"));
+        else
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url(:/images/interface/fight/labelTop.png);padding:6px 6px 6px 14px;}"));
+    }
     //updatePlayerImage();
 }
 
@@ -380,11 +395,11 @@ void BaseWindow::datapackChecksumError()
 
 void BaseWindow::loadSoundSettings()
 {
-    /*const QStringList &outputDeviceNames=soundEngine.outputDeviceNames();
+    const QStringList &outputDeviceNames=Audio::audio.output_list();
     Options::options.setAudioDeviceList(outputDeviceNames);
     ui->audiodevice->clear();
     if(outputDeviceNames.isEmpty())
-        soundEngine.setOutputDeviceName(QString());
+        {}//soundEngine.setOutputDeviceName(QString());
     else
     {
         const int &indexDevice=Options::options.getIndexDevice();
@@ -392,10 +407,10 @@ void BaseWindow::loadSoundSettings()
         if(indexDevice!=-1)
         {
             ui->audiodevice->setCurrentIndex(indexDevice);
-            soundEngine.setOutputDeviceName(outputDeviceNames.at(indexDevice));
+            {}//soundEngine.setOutputDeviceName(outputDeviceNames.at(indexDevice));
         }
         connect(ui->audiodevice,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&BaseWindow::changeDeviceIndex);
-    }*/
+    }
 }
 
 void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > &events)
@@ -730,24 +745,38 @@ void BaseWindow::updatePlayerImage()
 
 void BaseWindow::updateDisplayedQuests()
 {
-    QString html="<ul>";
+    QString html=QStringLiteral("<ul>");
     ui->questsList->clear();
     quests_to_id_graphical.clear();
     QHashIterator<quint16, PlayerQuest> i(quests);
     while (i.hasNext()) {
         i.next();
-        if(DatapackClientLoader::datapackLoader.questsExtra.contains(i.key()) && i.value().step>0)
+        if(DatapackClientLoader::datapackLoader.questsExtra.contains(i.key()))
         {
-            QListWidgetItem * item=new QListWidgetItem(DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name);
-            quests_to_id_graphical[item]=i.key();
-            ui->questsList->addItem(item);
+            if(i.value().step>0)
+            {
+                QListWidgetItem * item=new QListWidgetItem(DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name);
+                quests_to_id_graphical[item]=i.key();
+                ui->questsList->addItem(item);
+            }
+            if(i.value().step==0 || i.value().finish_one_time)
+            {
+                #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+                html+=QStringLiteral("<li>");
+                if(CommonDatapack::commonDatapack.quests.value(i.key()).repeatable)
+                    html+=imagesInterfaceRepeatableString;
+                if(i.value().step>0)
+                    html+=imagesInterfaceInProgressString;
+                html+=DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name+QStringLiteral("</li>");
+                #else
+                html+=QStringLiteral("<li>")+DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name+QStringLiteral("</li>");
+                #endif
+            }
         }
-        else
-            html+="<li>"+DatapackClientLoader::datapackLoader.questsExtra.value(i.key()).name+"</li>";
     }
-    html+="</ul>";
-    if(html=="<ul></ul>")
-        html="<i>None</i>";
+    html+=QStringLiteral("</ul>");
+    if(html==QStringLiteral("<ul></ul>"))
+        html=QStringLiteral("<i>None</i>");
     ui->finishedQuests->setHtml(html);
     on_questsList_itemSelectionChanged();
 }

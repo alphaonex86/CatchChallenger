@@ -32,6 +32,40 @@ Audio::Audio()
         qDebug() << "Audio disabled due to previous crash";
 }
 
+void Audio::setVolume(int volume)
+{
+    int index=0;
+    while(index<playerList.size())
+    {
+        libvlc_audio_set_volume(playerList.at(index),volume);
+        index++;
+    }
+    this->volume=volume;
+}
+
+void Audio::addPlayer(libvlc_media_player_t * player)
+{
+    playerList<< player;
+    libvlc_audio_set_volume(player,volume);
+}
+
+void Audio::removePlayer(libvlc_media_player_t * player)
+{
+    playerList.removeOne(player);
+}
+
+QStringList Audio::output_list()
+{
+    QStringList outputs;
+    /*libvlc_audio_output_device_t * output=libvlc_audio_output_device_list_get(vlcInstance,NULL);
+    do
+    {
+        outputs << output->psz_device;
+        output=output->p_next;
+    } while(output!=NULL);*/
+    return outputs;
+}
+
 Audio::~Audio()
 {
     /* Release libVLC instance on quit */

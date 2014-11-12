@@ -54,5 +54,7 @@
         <file>images/map/marker.png</file>
         <file>images/map/block.png</file>
         <file>images/fightCollisionBot.png</file>
+        <file>images/interface/in-progress.png</file>
+        <file>images/interface/repeatable.png</file>
     </qresource>
 </RCC>
