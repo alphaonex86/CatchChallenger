@@ -1,6 +1,7 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../Options.h"
+#include "../Audio.h"
 
 using namespace CatchChallenger;
 
@@ -48,12 +49,7 @@ void BaseWindow::on_spinBoxMaxFPS_editingFinished()
 void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 {
     Options::options.setAudioVolume(value);
-    int index=0;
-    //while(index<ambianceList.size())
-    {
-        //ambianceList.at(index)->setVolume((qreal)value/(qreal)100);
-        index++;
-    }
+    Audio::audio.setVolume(value);
 }
 
 void BaseWindow::loadSettings()

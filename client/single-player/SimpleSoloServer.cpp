@@ -53,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
                     libvlc_media_add_option(vlcMedia, "input-repeat=-1");
                     // And start playback
                     libvlc_media_player_play(vlcPlayer);
+                    Audio::audio.addPlayer(vlcPlayer);
                 }
                 else
                 {
@@ -83,6 +84,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if(vlcPlayer!=NULL)
+    {
+        libvlc_media_player_stop(vlcPlayer);
+        Audio::audio.removePlayer(vlcPlayer);
+    }
     if(internalServer!=NULL)
     {
         delete internalServer;

@@ -53,16 +53,13 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>6</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
          <string notr="true">#page_init{background-image: url(:/images/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
-         <property name="bottomMargin">
-          <number>75</number>
-         </property>
          <item>
           <spacer name="verticalSpacer_loading_4">
            <property name="orientation">
@@ -120,6 +117,32 @@ color: rgb(255, 255, 255);</string>
             </spacer>
            </item>
           </layout>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_35">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="loadingTip">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 163);
+border: 1px solid rgb(255, 221, 50);
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string>Tip: Use tabulation key (tab) to change the focus of the selection on the keyboard</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>

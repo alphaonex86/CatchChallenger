@@ -189,6 +189,27 @@ BaseWindow::BaseWindow() :
     ui->cancelQuest->hide();
     loadSoundSettings();
     qInstallMessageHandler(&BaseWindow::customMessageHandler);
+
+    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    {
+        QFile file(":/images/interface/repeatable.png");
+        if(file.open(QIODevice::ReadOnly))
+        {
+            imagesInterfaceRepeatableString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"Repeatable\" title=\"Repeatable\" />").arg(QString(file.readAll().toBase64()));
+            file.close();
+        }
+    }
+    {
+        QFile file(":/images/interface/in-progress.png");
+        if(file.open(QIODevice::ReadOnly))
+        {
+            imagesInterfaceInProgressString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"In progress\" title=\"In progress\" />").arg(QString(file.readAll().toBase64()));
+            file.close();
+        }
+    }
+    #endif
+
+    Audio::audio.setVolume(Options::options.getAudioVolume());
 }
 
 BaseWindow::~BaseWindow()
@@ -208,6 +229,7 @@ BaseWindow::~BaseWindow()
     {
         libvlc_media_player_stop(ambianceList.first().player);
         libvlc_media_player_release(ambianceList.first().player);
+        Audio::audio.removePlayer(ambianceList.first().player);
         ambianceList.removeFirst();
     }
     if(movie!=NULL)
@@ -897,6 +919,11 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
         break;
         case ObjectType_Seed:
         {
+            ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
+            ui->plantUse->setVisible(false);
+            if(!ok)
+                break;
             if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
                 qDebug() << "Item is not a plant";
@@ -910,17 +937,12 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                 QMessageBox::critical(this,tr("Error"),tr("You don't have the requirements to plant the seed"));
                 return;
             }
-            ui->stackedWidget->setCurrentWidget(ui->page_map);
-            ui->inventoryUse->setText(tr("Select"));
-            ui->plantUse->setVisible(false);
             if(havePlant(&MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap,MapController::mapController->getX(),MapController::mapController->getY())>=0)
             {
                 qDebug() << "Too slow to select a seed, have plant now";
                 showTip(tr("Sorry, but now the dirt is not free to plant"));
                 return;
             }
-            if(!ok)
-                break;
             if(!items.contains(itemId))
             {
                 qDebug() << "item id is not into the inventory";
@@ -1257,7 +1279,18 @@ void BaseWindow::gainTimeout()
         else
             index++;
     }
-    if(add_to_inventoryGainTime.isEmpty())
+    index=0;
+    while(index<add_to_inventoryGainExtraTime.size())
+    {
+        if(add_to_inventoryGainExtraTime.at(index).elapsed()>TIMETODISPLAY_GAIN)
+        {
+            add_to_inventoryGainExtraTime.removeAt(index);
+            add_to_inventoryGainExtraList.removeAt(index);
+        }
+        else
+            index++;
+    }
+    if(add_to_inventoryGainTime.isEmpty() && add_to_inventoryGainExtraTime.isEmpty())
         ui->gain->setVisible(false);
     else
     {
@@ -1275,8 +1308,10 @@ void BaseWindow::showTip(const QString &tip)
 
 void BaseWindow::showPlace(const QString &place)
 {
+    add_to_inventoryGainExtraList << place;
+    add_to_inventoryGainExtraTime << QTime::currentTime();
     ui->gain->setVisible(true);
-    ui->gain->setText(place);
+    composeAndDisplayGain();
     gain_timeout.start();
 }
 
@@ -1290,10 +1325,15 @@ void BaseWindow::showGain()
 
 void BaseWindow::composeAndDisplayGain()
 {
+    QString text;
+    text+=add_to_inventoryGainExtraList.join(QStringLiteral("<br />"));
+    if(!add_to_inventoryGainList.isEmpty() && !text.isEmpty())
+        text+=QStringLiteral("<br />");
     if(add_to_inventoryGainList.size()>1)
-        ui->gain->setText(tr("You have obtained: ")+QStringLiteral("<ul><li>")+add_to_inventoryGainList.join(QStringLiteral("</li><li>"))+QStringLiteral("</li></ul>"));
-    else
-        ui->gain->setText(tr("You have obtained: ")+add_to_inventoryGainList.join(QString()));
+        text+=tr("You have obtained: ")+QStringLiteral("<ul><li>")+add_to_inventoryGainList.join(QStringLiteral("</li><li>"))+QStringLiteral("</li></ul>");
+    else if(!add_to_inventoryGainList.isEmpty())
+        text+=tr("You have obtained: ")+add_to_inventoryGainList.join(QString());
+    ui->gain->setText(text);
 }
 
 void BaseWindow::addQuery(const QueryType &queryType)
@@ -1607,6 +1647,7 @@ void BaseWindow::currentMapLoaded()
             {
                 libvlc_media_player_stop(ambianceList.first().player);
                 libvlc_media_player_release(ambianceList.first().player);
+                Audio::audio.removePlayer(ambianceList.first().player);
                 ambianceList.removeFirst();
             }
             noSound=true;
@@ -1627,6 +1668,7 @@ void BaseWindow::currentMapLoaded()
                 }
                 libvlc_media_player_stop(ambianceList.first().player);
                 libvlc_media_player_release(ambianceList.first().player);
+                Audio::audio.removePlayer(ambianceList.first().player);
                 ambianceList.removeFirst();
             }
             if(!noSound)
@@ -1648,6 +1690,8 @@ void BaseWindow::currentMapLoaded()
 
                         ambiance.file=file;
                         ambianceList << ambiance;
+
+                        Audio::audio.addPlayer(ambiance.player);
                     }
                 }
             }
