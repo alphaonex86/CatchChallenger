@@ -2702,8 +2702,13 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
                                                 if(!ok)
                                                     price=items.value(itemId).price;
                                             }
-                                            shop.prices << price;
-                                            shop.items << itemId;
+                                            if(price==0)
+                                                DebugClass::debugConsole(QStringLiteral("preload_shop() item can't be into the shop with price == 0' for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                            else
+                                            {
+                                                shop.prices << price;
+                                                shop.items << itemId;
+                                            }
                                         }
                                     }
                                 }
