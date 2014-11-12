@@ -149,7 +149,7 @@ struct Plant
 
 struct Item
 {
-    quint32 price;
+    quint32 price;//if 0 you can't sell or buy it
     bool consumeAtUse;
 };
 
