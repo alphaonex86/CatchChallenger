@@ -53,7 +53,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -140,7 +140,7 @@ border-radius:5px;
 color: rgb(0, 0, 0);</string>
            </property>
            <property name="text">
-            <string>Tip: Use tabulation key (tab) to change the focus of the selection on the keyboard</string>
+            <string>Tip: Use tabulation key (tab) to change the focus of the selection</string>
            </property>
           </widget>
          </item>
