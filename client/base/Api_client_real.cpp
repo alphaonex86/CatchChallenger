@@ -486,8 +486,6 @@ void Api_client_real::test_mirror()
     }
     QNetworkReply *reply;
     const QStringList &httpDatapackMirrorList=CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
-    if(index_mirror>=httpDatapackMirrorList.size())
-        return;
     if(!datapackTarXz)
     {
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("pack/datapack.tar.xz"));
@@ -495,6 +493,10 @@ void Api_client_real::test_mirror()
     }
     else
     {
+        if(index_mirror>=httpDatapackMirrorList.size())
+            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list.txt, and only after that's quit */
+            return;
+
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("datapack-list.txt"));
         reply = qnam.get(networkRequest);
     }

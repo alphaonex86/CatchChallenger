@@ -175,10 +175,12 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
     QDomDocument domDocument;
     QMultiHash<quint16,MonsterDrops> monsterDrops;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile xmlFile(file);
         QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
@@ -195,8 +197,10 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return monsterDrops;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=BaseServer::text_monsters)
     {

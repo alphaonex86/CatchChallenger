@@ -353,10 +353,12 @@ void BaseServer::preload_zone_init()
         zoneCodeName.remove(BaseServer::text_dotxml);
         QDomDocument domDocument;
         const QString &file=entryListZone.at(index).absoluteFilePath();
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
+        #endif
             QFile itemsFile(file);
             QByteArray xmlContent;
             if(!itemsFile.open(QIODevice::ReadOnly))
@@ -375,8 +377,10 @@ void BaseServer::preload_zone_init()
                 index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
+        #endif
         if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(zoneCodeName))
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, zone code name already found");
@@ -2952,10 +2956,12 @@ void BaseServer::loadBotFile(const QString &mapfile,const QString &file)
         return;
     botFiles[file];//create the entry
     QDomDocument domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile botFile(file);
         if(!botFile.open(QIODevice::ReadOnly))
         {
@@ -2971,8 +2977,10 @@ void BaseServer::loadBotFile(const QString &mapfile,const QString &file)
             qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(botFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     bool ok;
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=BaseServer::text_bots)

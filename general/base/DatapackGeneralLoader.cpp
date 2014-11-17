@@ -107,10 +107,12 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
     QRegExp typeRegex(QLatin1String("^[a-z]{1,32}$"));
     QDomDocument domDocument;
     QList<Reputation> reputation;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         //open and quick check the file
         QFile itemsFile(file);
         if(!itemsFile.open(QIODevice::ReadOnly))
@@ -127,8 +129,10 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
             DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return reputation;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
@@ -336,10 +340,12 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
     CatchChallenger::Quest quest;
     quest.id=0;
     QDomDocument domDocument;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
+        #endif
         QFile itemsFile(file);
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
@@ -356,8 +362,10 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
             qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return QPair<bool,Quest>(false,quest);
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_quest)
     {
@@ -723,10 +731,12 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
     QHash<quint8, Plant> plants;
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile plantsFile(file);
         if(!plantsFile.open(QIODevice::ReadOnly))
         {
@@ -743,8 +753,10 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
             qDebug() << QStringLiteral("Unable to open the plants file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return plants;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_plants)
     {
@@ -1012,10 +1024,12 @@ QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> > DatapackGeneralLoade
     QHash<quint16,quint16> itemToCrafingRecipes;
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile craftingRecipesFile(file);
         if(!craftingRecipesFile.open(QIODevice::ReadOnly))
         {
@@ -1032,8 +1046,10 @@ QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> > DatapackGeneralLoade
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return QPair<QHash<quint16,CrafingRecipe>,QHash<quint16,quint16> >(crafingRecipes,itemToCrafingRecipes);
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_recipes)
     {
@@ -1313,10 +1329,12 @@ QHash<quint16,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
         QDomDocument domDocument;
         const QString &file=fileList.at(file_index).absoluteFilePath();
         //open and quick check the file
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
+            #endif
             QFile industryFile(file);
             if(!industryFile.open(QIODevice::ReadOnly))
             {
@@ -1334,8 +1352,10 @@ QHash<quint16,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
+        #endif
         const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackGeneralLoader::text_industries)
         {
@@ -1572,10 +1592,12 @@ QHash<quint16,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
     QHash<quint16,IndustryLink> industriesLink;
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile industriesLinkFile(file);
         if(!industriesLinkFile.open(QIODevice::ReadOnly))
         {
@@ -1591,8 +1613,10 @@ QHash<quint16,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
             qDebug() << QStringLiteral("Unable to open the crafting recipe file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return industriesLink;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_industries)
     {
@@ -1735,10 +1759,12 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
             file_index++;
             continue;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
+            #endif
             QFile itemsFile(file);
             if(!itemsFile.open(QIODevice::ReadOnly))
             {
@@ -1756,8 +1782,10 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
+        #endif
         const QDomElement &root = domDocument.documentElement();
         if(root.tagName()!=DatapackGeneralLoader::text_items)
         {
@@ -2037,10 +2065,12 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
     QPair<QList<QDomElement>, QList<Profile> > returnVar;
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
@@ -2056,8 +2086,10 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
@@ -2329,10 +2361,12 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
     QList<MonstersCollision> returnVar;
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
@@ -2348,8 +2382,10 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_layers)
     {
@@ -2517,10 +2553,12 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
     returnVar.zoom=2;
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
@@ -2536,8 +2574,10 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_layers)
     {
@@ -2572,10 +2612,12 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
 
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
@@ -2591,8 +2633,10 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
             CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_events)
     {
@@ -2636,10 +2680,12 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
 
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile shopFile(file);
         QByteArray xmlContent;
         if(!shopFile.open(QIODevice::ReadOnly))
@@ -2656,7 +2702,9 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
             DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return shops;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
     }
+    #endif
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_shops)
     {

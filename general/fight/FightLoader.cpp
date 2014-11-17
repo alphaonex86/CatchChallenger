@@ -95,10 +95,12 @@ QList<Type> FightLoader::loadTypes(const QString &file)
     QList<Type> types;
     QDomDocument domDocument;
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
     {
+        #endif
         QFile itemsFile(file);
         QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
@@ -115,8 +117,10 @@ QList<Type> FightLoader::loadTypes(const QString &file)
             qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return types;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
     }
+    #endif
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QLatin1String("types"))
     {
@@ -250,10 +254,12 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
         }
         QDomDocument domDocument;
         //open and quick check the file
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
+            #endif
             QFile xmlFile(file);
             QByteArray xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
@@ -272,8 +278,10 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
+        #endif
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=FightLoader::text_monsters)
         {
@@ -943,10 +951,12 @@ QHash<quint16,BotFight> FightLoader::loadFight(const QString &folder, const QHas
             const QString &file=list.at(index_file).absoluteFilePath();
             QDomDocument domDocument;
             //open and quick check the file
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
                 domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
             else
             {
+                #endif
                 QFile xmlFile(file);
                 QByteArray xmlContent;
                 if(!xmlFile.open(QIODevice::ReadOnly))
@@ -965,8 +975,10 @@ QHash<quint16,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                     index_file++;
                     continue;
                 }
+                #ifndef EPOLLCATCHCHALLENGERSERVER
                 CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
             }
+            #endif
             QDomElement root = domDocument.documentElement();
             if(root.tagName()!=FightLoader::text_fights)
             {
@@ -1191,10 +1203,12 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
         }
         QDomDocument domDocument;
         //open and quick check the file
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
+            #endif
             QFile xmlFile(file);
             QByteArray xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
@@ -1213,8 +1227,10 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
+        #endif
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=FightLoader::text_skills)
         {
@@ -1548,10 +1564,12 @@ QHash<quint8,Buff> FightLoader::loadMonsterBuff(const QString &folder)
         }
         QDomDocument domDocument;
         //open and quick check the file
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
             domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
         else
         {
+            #endif
             QFile xmlFile(file);
             QByteArray xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
@@ -1570,8 +1588,10 @@ QHash<quint8,Buff> FightLoader::loadMonsterBuff(const QString &folder)
                 file_index++;
                 continue;
             }
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
         }
+        #endif
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!=FightLoader::text_buffs)
         {
