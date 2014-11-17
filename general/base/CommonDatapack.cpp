@@ -48,6 +48,11 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseMonstersCollision();
     parseLayersOptions();
     parseShop();
+
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    teleportConditionsUnparsed.clear();
+    #endif
+
     isParsed=true;
 }
 
@@ -194,7 +199,9 @@ void CommonDatapack::unload()
     industries.clear();
     profileList.clear();
     types.clear();
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     xmlLoadedFile.clear();
+    #endif
     teleportConditionsUnparsed.clear();
     monstersCollision.clear();
     skins.clear();
