@@ -41,7 +41,9 @@ public:
     QHash<quint16,IndustryLink> industriesLink;
     QList<Profile> profileList;
     QList<Type> types;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
+    #endif
     QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
     QList<MonstersCollision> monstersCollision;
     LayersOptions layersOptions;
