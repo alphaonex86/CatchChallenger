@@ -209,10 +209,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     QDomDocument domDocument;
 
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
     else
     {
+        #endif
         QFile mapFile(fileName);
         if(!mapFile.open(QIODevice::ReadOnly))
         {
@@ -228,8 +230,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             error=QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return false;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=Map_loader::text_map)
     {
@@ -1277,10 +1281,12 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
     QDomDocument domDocument;
 
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
     else
     {
+        #endif
         QFile mapFile(fileName);
         if(!mapFile.open(QIODevice::ReadOnly))
         {
@@ -1296,8 +1302,10 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
             qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return false;
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
+    #endif
     this->map_to_send.xmlRoot = domDocument.documentElement();
     if(this->map_to_send.xmlRoot.tagName()!=Map_loader::text_map)
     {
@@ -1594,10 +1602,12 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
     QDomDocument domDocument;
 
     //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(conditionFile))
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(conditionFile);
     else
     {
+        #endif
         QFile mapFile(conditionFile);
         if(!mapFile.open(QIODevice::ReadOnly))
         {
@@ -1613,8 +1623,10 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
             qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return QDomElement();
         }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[conditionFile]=domDocument;
     }
+    #endif
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=QLatin1String("conditions"))
     {
