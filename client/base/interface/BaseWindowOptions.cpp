@@ -62,7 +62,8 @@ void BaseWindow::loadSettings()
 
 void BaseWindow::loadSettingsWithDatapack()
 {
-    if(Options::options.getForcedZoom()==0)
+    const quint8 &forcedZoom=Options::options.getForcedZoom();
+    if(forcedZoom==0)
     {
         ui->zoom->setEnabled(false);
         ui->forceZoom->setChecked(false);
@@ -73,7 +74,7 @@ void BaseWindow::loadSettingsWithDatapack()
     {
         ui->zoom->setEnabled(false);
         ui->forceZoom->setChecked(true);
-        ui->zoom->setValue(Options::options.getForcedZoom());
+        ui->zoom->setValue(forcedZoom);
         MapController::mapController->setScale(Options::options.getForcedZoom());
         ui->zoom->setEnabled(true);
     }

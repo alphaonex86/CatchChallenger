@@ -30,6 +30,7 @@ public:
     explicit SoloWindow(QWidget *parent,const QString &datapackPath,const QString &savegamePath,const bool &standAlone);
     ~SoloWindow();
     void updateSavegameList();
+    void setOnlySolo();
 protected:
     void changeEvent(QEvent *e);
 private slots:

@@ -89,4 +89,6 @@
     #include "PortableEndian.h"
 #endif
 
+//#define CATCHCHALLENGER_GITCOMMIT "GITCOMMITXXXXXXXXXX"
+
 #endif // GENERALVARIABLE_H

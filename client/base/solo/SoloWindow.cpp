@@ -195,6 +195,15 @@ void SoloWindow::SoloWindowListEntryEnvoluedDoubleClicked()
     on_SaveGame_Play_clicked();
 }
 
+void SoloWindow::setOnlySolo()
+{
+    #ifdef CATCHCHALLENGER_GITCOMMIT
+    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
+    #else
+    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION));
+    #endif
+}
+
 void SoloWindow::SoloWindowListEntryEnvoluedUpdate()
 {
     int index=0;

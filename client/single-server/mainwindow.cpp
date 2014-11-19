@@ -168,6 +168,11 @@ MainWindow::MainWindow(QWidget *parent) :
             qDebug() << string;
     }
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
+    #ifdef CATCHCHALLENGER_GITCOMMIT
+    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
+    #else
+    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION));
+    #endif
 }
 
 MainWindow::~MainWindow()

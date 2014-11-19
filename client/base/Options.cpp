@@ -147,7 +147,7 @@ quint16 Options::getFinalFPS() const
         return fps;
 }
 
-bool Options::getForcedZoom() const/*0 is no forced*/
+quint8 Options::getForcedZoom() const/*0 is no forced*/
 {
     return zoom;
 }

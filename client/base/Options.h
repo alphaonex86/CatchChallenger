@@ -16,7 +16,7 @@ public:
     quint16 getFPS() const;
     bool getLimitedFPS() const;
     quint16 getFinalFPS() const;
-    bool getForcedZoom() const;
+    quint8 getForcedZoom() const;
     quint8 getAudioVolume() const;
     QString getLanguage() const;//the main code
     int getIndexDevice() const;
