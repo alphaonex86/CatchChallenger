@@ -62,8 +62,8 @@ private:
     //store about the network
     QSslServer *sslServer;
     int number_of_client;
-    EventThreader * botThread;
-    EventThreader * eventDispatcherThread;
+    //EventThreader * botThread;
+    //EventThreader * eventDispatcherThread;
     //to check double instance
     //shared into all the program
     static bool oneInstanceRunning;
@@ -88,7 +88,7 @@ private:
     //starting function
     void stop_internal_server();
     bool check_if_now_stopped();
-    void start_internal_server();
+    virtual void start_internal_server();
     void sslErrors(const QList<QSslError> &errors);
     virtual void loadAndFixSettings();
     void preload_finish();

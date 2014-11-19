@@ -38,15 +38,17 @@ NormalServer::NormalServer() :
     #endif
 
 
-    botThread = new EventThreader();
-    eventDispatcherThread = new EventThreader();
-    moveToThread(eventDispatcherThread);
+    //botThread = new EventThreader();
+    //crash if this, due to different socket and thread
+    //eventDispatcherThread = new EventThreader();
+    //moveToThread(eventDispatcherThread);
 
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::serverCommand,this,&NormalServer::serverCommand,Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_player_is_connected,this,&NormalServer::new_player_is_connected,Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::player_is_disconnected,this,&NormalServer::player_is_disconnected,Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_chat_message,this,&NormalServer::new_chat_message,Qt::QueuedConnection);
     connect(&purgeKickedHostTimer,&QTimer::timeout,this,&NormalServer::purgeKickedHost,Qt::QueuedConnection);
+    connect(this,&QtServer::need_be_started,this,&NormalServer::start_internal_server,Qt::QueuedConnection);
 }
 
 /** call only when the server is down
@@ -60,12 +62,12 @@ NormalServer::~NormalServer()
         sslServer=NULL;
     }
 
-    botThread->quit();
+    /*botThread->quit();
     botThread->wait();
-    delete botThread;
-    eventDispatcherThread->quit();
+    delete botThread;*/
+    /*eventDispatcherThread->quit();
     eventDispatcherThread->wait();
-    delete eventDispatcherThread;
+    delete eventDispatcherThread;*/
     if(sslKey!=NULL)
         delete sslKey;
     if(sslCertificate!=NULL)

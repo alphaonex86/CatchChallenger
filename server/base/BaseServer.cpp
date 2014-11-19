@@ -3187,6 +3187,7 @@ void BaseServer::unload_the_randomData()
 {
     #ifdef Q_OS_LINUX
     fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
+    GlobalServerData::serverPrivateVariables.fpRandomFile=NULL;
     #endif
     GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
     GlobalServerData::serverPrivateVariables.randomData.clear();

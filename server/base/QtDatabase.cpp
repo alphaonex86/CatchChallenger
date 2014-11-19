@@ -84,7 +84,9 @@ bool QtDatabase::syncConnectPostgresql(const char * host, const char * dbname, c
         syncDisconnect();
     conn = new QSqlDatabase();
     *conn = QSqlDatabase::addDatabase("QPSQL","server");
-    conn->setHostName(host);
+    QString tempString(host);
+    if(tempString!=QStringLiteral("localhost"))
+        conn->setHostName(host);
     conn->setDatabaseName(dbname);
     conn->setUserName(user);
     conn->setPassword(password);
