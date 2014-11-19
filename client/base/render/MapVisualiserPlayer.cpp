@@ -294,6 +294,30 @@ void MapVisualiserPlayer::moveStepSlot()
             MapDoor* door=map_full->doors.value(QPair<quint8,quint8>(x,y));
             door->startOpen(currentPlayerSpeed);
             moveAnimationTimer.start(door->timeToOpen());
+
+            //block but set good look direction
+            quint8 baseTile;
+            switch(direction)
+            {
+                case CatchChallenger::Direction_move_at_left:
+                baseTile=10;
+                break;
+                case CatchChallenger::Direction_move_at_right:
+                baseTile=4;
+                break;
+                case CatchChallenger::Direction_move_at_top:
+                baseTile=1;
+                break;
+                case CatchChallenger::Direction_move_at_bottom:
+                baseTile=7;
+                break;
+                default:
+                qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction").arg(moveStep);
+                return;
+            }
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(baseTile+0);
+            playerMapObject->setCell(cell);
             return;
         }
     }
