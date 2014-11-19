@@ -213,6 +213,7 @@ void Client::disconnectClient()
         tradeCanceled();
         battleCanceled();
         removeFromClan();
+        GlobalServerData::serverPrivateVariables.connected_players--;
         simplifiedIdList << public_and_private_informations.public_informations.simplifiedId;
         GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(character_id);
         playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
