@@ -48,6 +48,13 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
+         <widget class="QLabel" name="version">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(120, 120, 120);</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer_login_2">
           <property name="orientation">
            <enum>Qt::Vertical</enum>

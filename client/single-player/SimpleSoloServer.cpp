@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->addWidget(solowindow);
     ui->stackedWidget->setCurrentWidget(solowindow);
+    solowindow->setOnlySolo();
     //solowindow->show();
     setWindowTitle(QStringLiteral("CatchChallenger"));
 

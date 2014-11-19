@@ -43,13 +43,20 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
         <string notr="true">#mode{background-image: url(:/images/background.jpg);}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_9">
+        <item>
+         <widget class="QLabel" name="version">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(120, 120, 120);</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
