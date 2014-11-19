@@ -181,6 +181,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
     {
+        const QByteArray &data=socket->readAll();
+        //CatchChallenger::Api_client_real::client->rea
         if(!isVisible() && internalServer==NULL)
         {
             QCoreApplication::quit();
