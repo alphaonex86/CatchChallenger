@@ -50,7 +50,16 @@ int main(int argc, char *argv[])
     a.setApplicationName(QStringLiteral("map2png"));
     a.setApplicationVersion(QStringLiteral("1.0"));
 
-    const QStringList &arguments=QCoreApplication::arguments();
+    QStringList arguments=QCoreApplication::arguments();
+    bool renderAll=false;
+    if(arguments.size()==1)
+        renderAll=true;
+    QString renderAllString=QStringLiteral("--renderAll");
+    if(arguments.contains(renderAllString))
+    {
+        arguments.removeAll(renderAllString);
+        renderAll=true;
+    }
     QString fileToOpen,destination;
     QFileInfo dir;
     if(arguments.size()>1)
@@ -162,14 +171,14 @@ int main(int argc, char *argv[])
 
         if(arguments.size()==1)
         {
-            w.viewMap(true,fileToOpen,destination);
+            w.viewMap(renderAll,fileToOpen,destination);
             w.show();
             w.setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
             return a.exec();
         }
         else
         {
-            w.viewMap(false,fileToOpen,destination);
+            w.viewMap(renderAll,fileToOpen,destination);
             return 0;
         }
     }
