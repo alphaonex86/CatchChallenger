@@ -313,7 +313,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 
     //send small reinsert
     const int &small_reinsert_count=clientsToSendDataSizeOldClients;
-    if(small_reinsert_count>0)
+    if(small_reinsert_count>1)//then player who is not drop/insert
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
         {
@@ -355,12 +355,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
                             {
-                                buffer[bufferCursor]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                bufferCursor+=sizeof(quint8);
-                                buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                bufferCursor+=sizeof(quint8)*3;
+                                buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                buffer[bufferCursor+3]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                bufferCursor+=sizeof(quint8)+sizeof(quint8)*3;
                             }
                             index_subindex++;
                         }
@@ -370,11 +369,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
                             {
                                 *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                bufferCursor+=sizeof(quint16);
-                                buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                bufferCursor+=sizeof(quint8)*3;
+                                buffer[bufferCursor+sizeof(quint16)+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                buffer[bufferCursor+sizeof(quint16)+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                buffer[bufferCursor+sizeof(quint16)+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                bufferCursor+=sizeof(quint16)+sizeof(quint8)*3;
                             }
                             index_subindex++;
                         }
@@ -393,7 +391,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         }
         else
         {
-
             int real_reinsert_count=0;
             int index_subindex=0;
             int bufferCursor;
@@ -413,56 +410,69 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             if(real_reinsert_count>0)
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    bufferSizeToHave=sizeof(quint8)+clientsToSendDataSizeOldClients*(sizeof(quint8)+sizeof(quint8)*3);
+                    bufferSizeToHave=sizeof(quint8)+real_reinsert_count*(sizeof(quint8)+sizeof(quint8)*3);
                 else
-                    bufferSizeToHave=sizeof(quint16)+clientsToSendDataSizeOldClients*(sizeof(quint16)+sizeof(quint8)*3);
+                    bufferSizeToHave=sizeof(quint16)+real_reinsert_count*(sizeof(quint16)+sizeof(quint8)*3);
                 if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
                 {
                     int index=0;
-                    while(index<clientsToSendDataSizeOldClients)
+                    if(GlobalServerData::serverSettings.max_players<=255)
                     {
-                        int temp_reinsert=real_reinsert_count;
-                        if(clientsToSendDataOldClients[index]->haveNewMove)
-                            temp_reinsert--;
-                        bufferCursor=bufferBaseCursor;
-                        if(temp_reinsert>0)
+                        while(index<clientsToSendDataSizeOldClients)
                         {
-                            index_subindex=0;
-                            if(GlobalServerData::serverSettings.max_players<=255)
+                            int temp_reinsert=real_reinsert_count;
+                            if(clientsToSendDataOldClients[index]->haveNewMove)
+                                temp_reinsert--;
+                            bufferCursor=bufferBaseCursor;
+                            if(temp_reinsert>0)
                             {
+                                index_subindex=0;
                                 buffer[0]=(quint8)temp_reinsert;
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        buffer[bufferCursor]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                        buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                        buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                        buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
-                                        bufferCursor+=sizeof(quint8)*3;
+                                        buffer[bufferCursor+0]=(quint8)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
+                                        buffer[bufferCursor+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                        buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                        buffer[bufferCursor+3]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        bufferCursor+=sizeof(quint8)+sizeof(quint8)*3;
                                     }
                                     index_subindex++;
                                 }
+                                clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
                             }
-                            else
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        while(index<clientsToSendDataSizeOldClients)
+                        {
+                            int temp_reinsert=real_reinsert_count;
+                            if(clientsToSendDataOldClients[index]->haveNewMove)
+                                temp_reinsert--;
+                            bufferCursor=bufferBaseCursor;
+                            if(temp_reinsert>0)
                             {
+                                index_subindex=0;
                                 *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)temp_reinsert);
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
                                         *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                        buffer[bufferCursor+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
-                                        buffer[bufferCursor+3]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
-                                        buffer[bufferCursor+4]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        buffer[bufferCursor+sizeof(quint16)+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
+                                        buffer[bufferCursor+sizeof(quint16)+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
+                                        buffer[bufferCursor+sizeof(quint16)+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
                                         bufferCursor+=sizeof(quint16)+sizeof(quint8)*3;
                                     }
                                     index_subindex++;
                                 }
+                                clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
                             }
-                            clientsToSendDataOldClients[index]->packOutcommingData(0xC5,buffer,bufferCursor);
+                            index++;
                         }
-                        index++;
                     }
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
