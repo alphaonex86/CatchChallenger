@@ -903,6 +903,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             {
                 if(playerMonster.at(index).id==itemId)
                 {
+                    tradeCurrentMonstersPosition << index;
                     tradeCurrentMonsters << playerMonster.at(index);
                     ClientFightEngine::fightEngine.removeMonster(itemId);
                     CatchChallenger::Api_client_real::client->addMonster(itemId);
@@ -3279,6 +3280,19 @@ void BaseWindow::on_tradePlayerCash_editingFinished()
 void BaseWindow::on_tradeCancel_clicked()
 {
     CatchChallenger::Api_client_real::client->tradeCanceled();
+
+    //return the pending stuff
+    {
+        //item
+        QHash<quint16,quint32> i(tradeCurrentObjects);
+        add_to_inventory(tradeCurrentObjects,false);
+        tradeCurrentObjects.clear();
+
+        //monster
+        while(!tradeCurrentMonsters.isEmpty())
+            ClientFightEngine::fightEngine.insertPlayerMonster(tradeCurrentMonstersPosition.takeFirst(),tradeCurrentMonsters.takeFirst());
+    }
+
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 

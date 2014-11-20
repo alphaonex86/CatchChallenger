@@ -27,9 +27,9 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
        objectSelection(true,monsterId);
        return;
     }
-    QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
+    const QList<PlayerMonster> &playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
     int index=0;
-    int size=playerMonster.size();
+    const int &size=playerMonster.size();
     while(index<size)
     {
         const PlayerMonster &monster=playerMonster.at(index);
