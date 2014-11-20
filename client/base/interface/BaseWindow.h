@@ -626,6 +626,7 @@ private:
     TradeOtherStat tradeOtherStat;
     QHash<quint16,quint32> tradeOtherObjects,tradeCurrentObjects;
     QList<CatchChallenger::PlayerMonster> tradeEvolutionMonsters,tradeOtherMonsters,tradeCurrentMonsters;
+    QList<quint8> tradeCurrentMonstersPosition;
 
     //learn
     quint32 monsterToLearn;

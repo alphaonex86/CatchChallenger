@@ -271,22 +271,24 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             out.setVersion(QDataStream::Qt_4_4);
             out << (quint8)0x03;
             const PlayerMonster &monster=tradeMonster.last();
-            out << (quint32)monster.id;
-            out << (quint32)monster.monster;
-            out << (quint8)monster.level;
-            out << (quint32)monster.remaining_xp;
-            out << (quint32)monster.hp;
-            out << (quint32)monster.sp;
-            out << (quint32)monster.catched_with;
+            out << monster.id;
+            out << monster.monster;
+            out << monster.level;
+            out << monster.remaining_xp;
+            out << monster.hp;
+            if(CommonSettings::commonSettings.useSP)
+                out << monster.sp;
+            out << monster.catched_with;
             out << (quint8)monster.gender;
-            out << (quint32)monster.egg_step;
+            out << monster.egg_step;
+            out << monster.character_origin;
             int sub_index=0;
             int sub_size=monster.buffs.size();
             out << (quint32)sub_size;
             while(sub_index<sub_size)
             {
-                out << (quint32)monster.buffs.at(sub_index).buff;
-                out << (quint8)monster.buffs.at(sub_index).level;
+                out << monster.buffs.at(sub_index).buff;
+                out << monster.buffs.at(sub_index).level;
                 sub_index++;
             }
             sub_index=0;
@@ -294,8 +296,8 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             out << (quint32)sub_size;
             while(sub_index<sub_size)
             {
-                out << (quint32)monster.skills.at(sub_index).skill;
-                out << (quint8)monster.skills.at(sub_index).level;
+                out << monster.skills.at(sub_index).skill;
+                out << monster.skills.at(sub_index).level;
                 sub_index++;
             }
             otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
