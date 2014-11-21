@@ -685,16 +685,17 @@ void Client::sendBattleReturn()
     {
         const Skill::AttackReturn &attackReturnTemp=attackReturn.at(master_index);
         out << (quint8)attackReturnTemp.doByTheCurrentMonster;
+        out << (quint8)attackReturnTemp.attackReturnCase;
         out << (quint8)attackReturnTemp.success;
-        out << (quint32)attackReturnTemp.attack;
+        out << attackReturnTemp.attack;
         //ad buff
         index=0;
         out << (quint8)attackReturnTemp.addBuffEffectMonster.size();
         while(index<attackReturnTemp.addBuffEffectMonster.size())
         {
-            out << (quint32)attackReturnTemp.addBuffEffectMonster.at(index).buff;
+            out << attackReturnTemp.addBuffEffectMonster.at(index).buff;
             out << (quint8)attackReturnTemp.addBuffEffectMonster.at(index).on;
-            out << (quint8)attackReturnTemp.addBuffEffectMonster.at(index).level;
+            out << attackReturnTemp.addBuffEffectMonster.at(index).level;
             index++;
         }
         //remove buff
@@ -702,9 +703,9 @@ void Client::sendBattleReturn()
         out << (quint8)attackReturnTemp.removeBuffEffectMonster.size();
         while(index<attackReturnTemp.removeBuffEffectMonster.size())
         {
-            out << (quint32)attackReturnTemp.removeBuffEffectMonster.at(index).buff;
+            out << attackReturnTemp.removeBuffEffectMonster.at(index).buff;
             out << (quint8)attackReturnTemp.removeBuffEffectMonster.at(index).on;
-            out << (quint8)attackReturnTemp.removeBuffEffectMonster.at(index).level;
+            out << attackReturnTemp.removeBuffEffectMonster.at(index).level;
             index++;
         }
         //life effect
@@ -712,7 +713,7 @@ void Client::sendBattleReturn()
         out << (quint8)attackReturnTemp.lifeEffectMonster.size();
         while(index<attackReturnTemp.lifeEffectMonster.size())
         {
-            out << (qint32)attackReturnTemp.lifeEffectMonster.at(index).quantity;
+            out << attackReturnTemp.lifeEffectMonster.at(index).quantity;
             out << (quint8)attackReturnTemp.lifeEffectMonster.at(index).on;
             index++;
         }
@@ -721,21 +722,17 @@ void Client::sendBattleReturn()
         out << (quint8)attackReturnTemp.buffLifeEffectMonster.size();
         while(index<attackReturnTemp.buffLifeEffectMonster.size())
         {
-            out << (qint32)attackReturnTemp.buffLifeEffectMonster.at(index).quantity;
+            out << attackReturnTemp.buffLifeEffectMonster.at(index).quantity;
             out << (quint8)attackReturnTemp.buffLifeEffectMonster.at(index).on;
             index++;
         }
         master_index++;
     }
-    if(otherPlayerBattle==NULL)
-        out << (quint8)0x00;
-    else if(otherPlayerBattle->haveMonsterChange())
+    if(otherPlayerBattle!=NULL && otherPlayerBattle->haveMonsterChange())
     {
         out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
         binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
     }
-    else
-        out << (quint8)0x00;
     attackReturn.clear();
 
     sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
@@ -1165,6 +1162,7 @@ Skill::AttackReturn Client::generateOtherAttack()
     Skill::AttackReturn attackReturnTemp;
     attackReturnTemp.attack=0;
     attackReturnTemp.doByTheCurrentMonster=false;
+    attackReturnTemp.attackReturnCase=Skill::AttackReturnCase_NormalAttack;
     attackReturnTemp.success=false;
     if(!isInBattle())
         return CommonFightEngine::generateOtherAttack();

@@ -3070,11 +3070,11 @@ void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInfor
     QPixmap otherFrontImage=getFrontSkin(battleInformations.skinId);
 
     //reset the other player info
-    ui->labelFightMonsterTop->setPixmap(otherFrontImage);
+    ui->labelFightMonsterTop->setPixmap(otherFrontImage.scaled(160,160));
     //ui->battleOtherPseudo->setText(lastBattleQuery.first().first);
     ui->frameFightTop->hide();
     ui->frameFightBottom->hide();
-    ui->labelFightMonsterBottom->setPixmap(playerBackImage);
+    ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
     ui->labelFightEnter->setText(tr("%1 wish fight with you").arg(battleInformations.pseudo));
     ui->pushButtonFightEnterNext->hide();
@@ -3084,6 +3084,8 @@ void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInfor
     battleStep=BattleStep_Presentation;
     moveFightMonsterBoth();
     CatchChallenger::ClientFightEngine::fightEngine.setBattleMonster(battleInformations.stat,battleInformations.monsterPlace,battleInformations.publicPlayerMonster);
+
+    init_environement_display(MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
 }
 
 void BaseWindow::battleCanceledByOther()

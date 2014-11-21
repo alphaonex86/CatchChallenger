@@ -112,11 +112,17 @@ void CommonFightEngine::healAllMonsters()
             int sub_index=0;
             while(sub_index<public_and_private_informations.playerMonster.value(index).skills.size())
             {
-                const int &skill=public_and_private_informations.playerMonster[index].skills.at(sub_index).skill;
-                const int &skillIndex=public_and_private_informations.playerMonster.value(index).skills.at(sub_index).level-1;
-                const Skill &fullSkill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skill);
-                public_and_private_informations.playerMonster[index].skills[sub_index].endurance=
-                        fullSkill.level.at(skillIndex).endurance;
+                const PlayerMonster::PlayerSkill &playerSkill=public_and_private_informations.playerMonster.value(index).skills.at(sub_index);
+                const int &skill=playerSkill.skill;
+                const int &skillIndex=playerSkill.level-1;
+                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skill))
+                {
+                    const Skill &fullSkill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skill);
+                    public_and_private_informations.playerMonster[index].skills[sub_index].endurance=
+                            fullSkill.level.at(skillIndex).endurance;
+                }
+                else
+                    errorFightEngine(QStringLiteral("Try heal an unknown skill: %1 into list %2").arg(skill).arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.size()));
                 sub_index++;
             }
         }
@@ -2371,6 +2377,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     Skill::AttackReturn attackReturn;
     attackReturn.attack=0;
     attackReturn.doByTheCurrentMonster=false;
+    attackReturn.attackReturnCase=Skill::AttackReturnCase_NormalAttack;
     attackReturn.success=false;
     PlayerMonster *otherMonster;
     if(!wildMonsters.isEmpty())
@@ -2428,6 +2435,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
 {
     Skill::AttackReturn attackReturn;
     attackReturn.doByTheCurrentMonster=true;
+    attackReturn.attackReturnCase=Skill::AttackReturnCase_NormalAttack;
     attackReturn.attack=skill;
     attackReturn.success=false;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
