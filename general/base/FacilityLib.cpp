@@ -109,17 +109,17 @@ QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &p
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)publicPlayerMonster.monster;
-    out << (quint8)publicPlayerMonster.level;
-    out << (quint32)publicPlayerMonster.hp;
-    out << (quint32)publicPlayerMonster.catched_with;
+    out << publicPlayerMonster.monster;
+    out << publicPlayerMonster.level;
+    out << publicPlayerMonster.hp;
+    out << publicPlayerMonster.catched_with;
     out << (quint8)publicPlayerMonster.gender;
     out << (quint32)publicPlayerMonster.buffs.size();
     int index=0;
     while(index<publicPlayerMonster.buffs.size())
     {
-        out << (quint32)publicPlayerMonster.buffs.at(index).buff;
-        out << (quint8)publicPlayerMonster.buffs.at(index).level;
+        out << publicPlayerMonster.buffs.at(index).buff;
+        out << publicPlayerMonster.buffs.at(index).level;
         index++;
     }
     return outputData;
@@ -130,17 +130,17 @@ QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)playerMonster.monster;
-    out << (quint8)playerMonster.level;
-    out << (quint32)playerMonster.hp;
-    out << (quint32)playerMonster.catched_with;
+    out << playerMonster.monster;
+    out << playerMonster.level;
+    out << playerMonster.hp;
+    out << playerMonster.catched_with;
     out << (quint8)playerMonster.gender;
     out << (quint32)playerMonster.buffs.size();
     int index=0;
     while(index<playerMonster.buffs.size())
     {
-        out << (quint32)playerMonster.buffs.at(index).buff;
-        out << (quint8)playerMonster.buffs.at(index).level;
+        out << playerMonster.buffs.at(index).buff;
+        out << playerMonster.buffs.at(index).level;
         index++;
     }
     return outputData;
@@ -225,23 +225,23 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
 
-    out << (quint32)monster.id;
-    out << (quint16)monster.monster;
-    out << (quint8)monster.level;
-    out << (quint32)monster.remaining_xp;
-    out << (quint32)monster.hp;
-    out << (quint32)monster.sp;
-    out << (quint16)monster.catched_with;
+    out << monster.id;
+    out << monster.monster;
+    out << monster.level;
+    out << monster.remaining_xp;
+    out << monster.hp;
+    out << monster.sp;
+    out << monster.catched_with;
     out << (quint8)monster.gender;
-    out << (quint32)monster.egg_step;
-    out << (quint32)monster.character_origin;
+    out << monster.egg_step;
+    out << monster.character_origin;
     int sub_index=0;
     int sub_size=monster.buffs.size();
     out << (quint8)sub_size;
     while(sub_index<sub_size)
     {
-        out << (quint8)monster.buffs.at(sub_index).buff;
-        out << (quint8)monster.buffs.at(sub_index).level;
+        out << monster.buffs.at(sub_index).buff;
+        out << monster.buffs.at(sub_index).level;
         sub_index++;
     }
     sub_index=0;
@@ -249,9 +249,9 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     out << (quint16)sub_size;
     while(sub_index<sub_size)
     {
-        out << (quint16)monster.skills.at(sub_index).skill;
-        out << (quint8)monster.skills.at(sub_index).level;
-        out << (quint8)monster.skills.at(sub_index).endurance;
+        out << monster.skills.at(sub_index).skill;
+        out << monster.skills.at(sub_index).level;
+        out << monster.skills.at(sub_index).endurance;
         sub_index++;
     }
     return outputData;
