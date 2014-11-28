@@ -28,6 +28,7 @@
 
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_objectgroup.h"
+#include "../../client/base/render/MapVisualiserThread.h"
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/CommonMap.h"

@@ -173,13 +173,14 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
     foreach (Layer *layer, map->layers()) {
         if (TileLayer *tileLayer = layer->asTileLayer()) {
             TileLayerItem *item=new TileLayerItem(tileLayer, renderer, this);
-            item->setZValue(index++);
+            item->setZValue(index);
             displayed_layer.insert(map,item);
         } else if (ObjectGroup *objectGroup = layer->asObjectGroup()) {
             ObjectGroupItem *item=new ObjectGroupItem(objectGroup, renderer, this);
-            item->setZValue(index++);
+            item->setZValue(index);
             displayed_layer.insert(map,item);
         }
+        index++;
     }
 }
 
@@ -286,62 +287,27 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     {
         mLastError=reader.errorString();
         qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
+        delete tempMapObject;
         return QString();
     }
+
+    {
+        MapVisualiserThread::Map_full *tempMapObjectFull=new MapVisualiserThread::Map_full();
+        tempMapObjectFull->tiledMap=tempMapObject->tiledMap;
+
+        //do the object group to move the player on it
+        tempMapObjectFull->objectGroup = new Tiled::ObjectGroup(MapVisualiserThread::text_Dyna_management,0,0,tempMapObjectFull->tiledMap->width(),tempMapObjectFull->tiledMap->height());
+        tempMapObjectFull->objectGroup->setName("objectGroup for player layer");
+
+        MapVisualiserThread::layerChangeLevelAndTagsChange(tempMapObjectFull,hideTheDoors);
+
+        tempMapObject->objectGroup=tempMapObjectFull->objectGroup;
+        tempMapObject->tiledMap=tempMapObjectFull->tiledMap;
+    }
+
     int index=0;
     while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(tempMapObject->tiledMap->layerAt(index)->name()==Map2Png::text_Moving && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
-        {
-            QList<MapObject *> objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
-            int index2=0;
-            while(index2<objects.size())
-            {
-                if(objects.at(index2)->type()==Map2Png::text_door)
-                {
-                    if(hideTheDoors)
-                        tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
-                    else
-                    {
-                        const Tiled::Tile *tile=objects.at(index2)->cell().tile;
-                        if(tile!=NULL)
-                        {
-                            const QString &animation=tile->property(Map2Png::text_animation);
-                            if(!animation.isEmpty())
-                            {
-                                const QStringList &animationList=animation.split(Map2Png::text_dotcomma);
-                                if(animationList.size()==2)
-                                {
-                                    if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
-                                    {
-                                        QString msString=animationList.at(0);
-                                        QString framesString=animationList.at(1);
-                                        msString.remove(Map2Png::text_ms);
-                                        framesString.remove(Map2Png::text_frames);
-                                        quint16 ms=msString.toUShort();
-                                        quint8 frames=framesString.toUShort();
-                                        if(ms>0 && frames>1)
-                                        {
-                                        }
-                                        else
-                                            qDebug() << "ms is 0 or frame is <=1";
-                                    }
-                                    else
-                                        qDebug() << "Wrong animation tile args regex match";
-                                }
-                                else
-                                    qDebug() << "Wrong animation tile args count";
-                            }
-                            else
-                                tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
-                        }
-                    }
-                }
-                else
-                    tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
-                index2++;
-            }
-        }
         if(tempMapObject->tiledMap->layerAt(index)->name()==Map2Png::text_Object && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
         {
             QList<MapObject *> objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
@@ -385,7 +351,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                             objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
                             tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
                             MapObject *object=new MapObject(Map2Png::text_empty,Map2Png::text_empty,position,QSizeF(1,1));
-                            tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->addObject(object);
+                            tempMapObject->objectGroup->addObject(object);
                             objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
                             index2--;
                             Cell cell=object->cell();
@@ -454,19 +420,6 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     default:
         tempMapObject->tiledRender = new OrthogonalRenderer(tempMapObject->tiledMap);
         break;
-    }
-
-    //do the object group to move the player on it
-    tempMapObject->objectGroup = new ObjectGroup();
-    index=0;
-    while(index<tempMapObject->tiledMap->layerCount())
-    {
-        if(tempMapObject->tiledMap->layerAt(index)->name()==Map2Png::text_Collisions)
-        {
-            tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
-            break;
-        }
-        index++;
     }
 
     other_map[resolvedFileName]=tempMapObject;
