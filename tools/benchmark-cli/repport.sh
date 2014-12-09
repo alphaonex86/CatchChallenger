@@ -75,7 +75,7 @@ do
             then
                 echo 'catchchallenger-server-cli-epoll rsync'
                 /usr/bin/rsync -art --delete ${SERVERPROPERTIES} ${TMPFOLDER}/server/
-                /usr/bin/rsync -art --delete ${CATCHCHALLENGERDATAPACK} ${TMPFOLDER}/server/datapack/
+                /usr/bin/rsync -art --delete ${CATCHCHALLENGERDATAPACK}/ ${TMPFOLDER}/server/datapack/
                 if [ -e ${TMPFOLDER}/tools/benchmark-cli/ ] && [ -e ${TMPFOLDER}/tools/benchmark-cli/repport.sh ]
                 then
                     echo 'benchmark-cli start'
