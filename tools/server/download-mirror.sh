@@ -1,7 +1,7 @@
 #!/bin/bash
 rm -Rf /home/first-world.info/pkmn-i2p/*
 cp /home/first-world.info/catchchallenger/pkmn-i2p-index.html /home/first-world.info/pkmn-i2p/index.html
-/usr/bin/curl http://su5632hf2vso4ogg6a5xnr5k44k2nnirn27edn5j2jydfz5v4wua.b32.i2p/site.tar.xz --socks4a 127.0.0.1:15612 -o /home/first-world.info/pkmn-i2p/site.tar.xz
+/usr/bin/curl http://e2u26adqfhstjbg3avmz3fxffqq3oybix7utrxdkdo2jr4cjklfq/site.tar.xz --socks4a 127.0.0.1:15612 -o /home/first-world.info/pkmn-i2p/site.tar.xz
 RETURNCODE=$?
 if [ ${RETURNCODE} -ne 0 ]
 then
@@ -19,7 +19,7 @@ find ./ -exec touch -t 19700102$(( ( RANDOM % 14 )  + 10 ))$(( ( RANDOM % 50 )  
 mkdir -p datapack/
 cd datapack/
 mkdir -p pack/
-/usr/bin/curl http://su5632hf2vso4ogg6a5xnr5k44k2nnirn27edn5j2jydfz5v4wua.b32.i2p/datapack/pack/datapack.tar.xz --socks4a 127.0.0.1:15612 -o /home/first-world.info/pkmn-i2p/datapack/pack/datapack.tar.xz
+/usr/bin/curl http://e2u26adqfhstjbg3avmz3fxffqq3oybix7utrxdkdo2jr4cjklfq/datapack/pack/datapack.tar.xz --socks4a 127.0.0.1:15612 -o /home/first-world.info/pkmn-i2p/datapack/pack/datapack.tar.xz
 RETURNCODE=$?
 if [ ${RETURNCODE} -ne 0 ]
 then
