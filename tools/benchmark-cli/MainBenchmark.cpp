@@ -6,7 +6,7 @@
 MainBenchmark::MainBenchmark() :
     inClosing(false),
     systemItem(-1),
-    multipleConnexion(480),
+    multipleConnexion(100),
     connectBySeconds(99),
     maxDiffConnectedSelected(20),
     benchmarkStep(0)
@@ -62,18 +62,21 @@ MainBenchmark::MainBenchmark() :
     }
     {
         const int &indexOfServer=args.indexOf(QStringLiteral("--multipleConnexion"));
-        if(indexOfServer!=-1 && args.size()>(indexOfServer+1))
+        bool haveArgs=indexOfServer!=-1 && args.size()>(indexOfServer+1);
+        if(haveArgs)
             multipleConnexion=args.at(indexOfServer+1).toUInt();
-        if(multipleConnexion==0)
+        if(multipleConnexion==0 || !haveArgs)
         {
             if(settings.contains(QStringLiteral("multipleConnexion")) && settings.value(QStringLiteral("multipleConnexion")).toUInt()>0)
                 multipleConnexion=settings.value(QStringLiteral("multipleConnexion")).toUInt();
             else
             {
-                multipleConnexion=480;
-                settings.setValue(QStringLiteral("multipleConnexion"),QStringLiteral("480"));
+                multipleConnexion=100;
+                settings.setValue(QStringLiteral("multipleConnexion"),QStringLiteral("100"));
             }
         }
+        if(multipleConnexion==0)
+            multipleConnexion=100;
     }
 
     if(settings.contains(QStringLiteral("connectBySeconds")))
