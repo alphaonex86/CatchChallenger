@@ -23,26 +23,43 @@ Compiling
 
 Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvlc for the client, Qt5
 For the server: db, db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
+
 For the Gui server:
 cd server/
 qmake catchchallenger-server-gui.pro
 make
 git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+mv CatchChallenger-datapack/datapack/ datapack/
+
 For the CLI server:
 cd server/
 qmake catchchallenger-server-cli.pro
 make
 git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+mv CatchChallenger-datapack/datapack/ datapack/
+
 For the Epoll server (linux only):
 cd server/
 qmake catchchallenger-server-epoll.pro
 make
 git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+mv CatchChallenger-datapack/datapack/ datapack/
+
 For the game solo:
 cd client/single-player/
 qmake *.pro
 make
 git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+mv CatchChallenger-datapack/datapack/ datapack/
+
+For the game version ultimate:
+cd client/ultimate/
+qmake *.pro
+make
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
+mkdir -p datapack/
+mv CatchChallenger-datapack/datapack/ datapack/internal/
+
 For the MMORPG game:
 cd client/single-server/
 qmake *.pro
