@@ -183,7 +183,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
 
     settings->beginGroup(QLatin1Literal("db"));
     if(!settings->contains(QLatin1Literal("type")))
-        settings->setValue(QLatin1Literal("type"),QLatin1Literal("mysql"));
+        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
     if(!settings->contains(QLatin1Literal("mysql_host")))
         settings->setValue(QLatin1Literal("mysql_host"),QLatin1Literal("localhost"));
     if(!settings->contains(QLatin1Literal("mysql_login")))
