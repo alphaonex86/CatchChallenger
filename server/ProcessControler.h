@@ -23,6 +23,7 @@ private:
     QString adaptString(float size);
     QSettings *settings;
     void send_settings();
+    void haveQuitForCriticalDatabaseQueryFailed();
 private slots:
     void server_is_started(bool is_started);
     void server_need_be_stopped();

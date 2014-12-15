@@ -10,6 +10,7 @@ ProcessControler::ProcessControler()
     connect(&server,&CatchChallenger::NormalServer::need_be_stopped,this,&ProcessControler::server_need_be_stopped);
     connect(&server,&CatchChallenger::NormalServer::need_be_restarted,this,&ProcessControler::server_need_be_restarted);
     connect(&server,&CatchChallenger::NormalServer::error,this,&ProcessControler::error);
+    connect(&server,&CatchChallenger::NormalServer::haveQuitForCriticalDatabaseQueryFailed,               this,&ProcessControler::haveQuitForCriticalDatabaseQueryFailed);
     need_be_restarted=false;
     need_be_closed=false;
 
@@ -331,4 +332,10 @@ QString ProcessControler::adaptString(float size)
         return QString::number(size,'f',0);
     else
         return QString::number(size,'g',3);
+}
+
+void ProcessControler::haveQuitForCriticalDatabaseQueryFailed()
+{
+    qDebug() << "Unable to do critical database query to initialise the server";
+    QCoreApplication::quit();
 }

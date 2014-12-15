@@ -28,6 +28,7 @@ public:
     void loadAndFixSettings();
     void preload_finish();
     bool isReady();
+    void quitForCriticalDatabaseQueryFailed();
 private:
     int sfd;
     SSL_CTX *ctx;
