@@ -69,7 +69,11 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
     if(!settings->contains(QLatin1Literal("datapackCache")))
         settings->setValue(QLatin1Literal("datapackCache"),-1);
     if(!settings->contains(QLatin1Literal("useSsl")))
-        settings->setValue(QLatin1Literal("useSsl"),true);
+    #ifdef Q_OS_LINUX
+        settings->setValue(QLatin1Literal("useSsl"),false);
+    #else
+        settings->setValue(QLatin1Literal("useSsl"),false);
+    #endif
     if(!settings->contains(QLatin1Literal("maxPlayerMonsters")))
         settings->setValue(QLatin1Literal("maxPlayerMonsters"),8);
     if(!settings->contains(QLatin1Literal("maxWarehousePlayerMonsters")))

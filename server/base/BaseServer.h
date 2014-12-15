@@ -48,7 +48,7 @@ protected:
     //init, constructor, destructor
     void initAll();//call before all
     //remove all finished client
-    void load_next_city_capture();
+    bool load_next_city_capture();
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     void closeDB();
@@ -77,12 +77,12 @@ protected:
     void preload_the_events();
     void preload_the_randomData();
     void preload_the_ddos();
-    void preload_zone();
+    bool preload_zone();
     void preload_industries();
     void preload_market_monsters();
     void preload_market_items();
-    void preload_the_city_capture();
-    void preload_the_map();
+    bool preload_the_city_capture();
+    bool preload_the_map();
     void preload_the_skin();
     void preload_the_datapack();
     void preload_the_players();
@@ -104,9 +104,11 @@ protected:
     static void load_monsters_market_max_id_static(void *object);
     void load_monsters_market_max_id_return();
     QHash<quint16,MonsterDrops> loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters);
+    virtual void criticalDatabaseQueryFailed();
+    virtual void quitForCriticalDatabaseQueryFailed() = 0;
 
     static void preload_zone_static(void *object);
-    void preload_zone_init();
+    bool preload_zone_init();
     void preload_zone_sql();
     void preload_zone_return();
     static void preload_industries_static(void *object);

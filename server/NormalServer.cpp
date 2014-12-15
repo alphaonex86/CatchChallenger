@@ -116,7 +116,7 @@ void NormalServer::start_internal_server()
                     << "-keyout" << QCoreApplication::applicationDirPath()+"/server.key" << "-subj" << "/C=FR/ST=South-West/L=Paris/O=Catchchallenger/OU=Developer Department/CN=*"
                     << "-extensions usr_cert";
             #ifdef Q_OS_WIN32
-            QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl.exe";
+            QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl/openssl.exe";
             #else
             QString opensslAppPath="/usr/bin/openssl";
             #endif

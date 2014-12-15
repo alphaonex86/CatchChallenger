@@ -45,6 +45,11 @@ bool EpollSslServer::isReady()
     return ready;
 }
 
+void EpollSslServer::quitForCriticalDatabaseQueryFailed()
+{
+    abort();
+}
+
 //Graph: create SSL_METHOD and create SSL_CTX
 SSL_CTX* EpollSslServer::InitServerCTX()
 {

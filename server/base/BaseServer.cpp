@@ -332,7 +332,7 @@ void BaseServer::preload_the_ddos()
     Client::privateChatDropNewValue=0;
 }
 
-void BaseServer::preload_zone_init()
+bool BaseServer::preload_zone_init()
 {
     const int &listsize=entryListZone.size();
     int index=0;
@@ -429,6 +429,7 @@ void BaseServer::preload_zone_init()
     }
 
     qDebug() << QStringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
+    return true;
 }
 
 void BaseServer::preload_zone_sql()
@@ -455,7 +456,7 @@ void BaseServer::preload_zone_sql()
         if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static)==NULL)
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-            abort();//stop because can't do the first db access
+            criticalDatabaseQueryFailed();return;//stop because can't do the first db access
             entryListIndex++;
             load_monsters_max_id();
             return;
@@ -485,7 +486,7 @@ void BaseServer::preload_itemOnMap_sql()
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_itemOnMap_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        abort();//stop because can't do the first db access
+        criticalDatabaseQueryFailed();return;//stop because can't do the first db access
 
         preload_the_map();
         preload_the_visibility_algorithm();
@@ -552,10 +553,13 @@ void BaseServer::preload_itemOnMap_return()
     {
         DebugClass::debugConsole(QStringLiteral("%1 SQL item on map dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_item.size()));
 
-        preload_the_map();
+        if(!preload_the_map())
+            return;
         preload_the_visibility_algorithm();
-        preload_the_city_capture();
-        preload_zone();
+        if(!preload_the_city_capture())
+            return;
+        if(!preload_zone())
+            return;
         qDebug() << QStringLiteral("Loaded the server static datapack into %1ms").arg(timeDatapack.elapsed());
         timeDatapack.restart();
 
@@ -583,7 +587,7 @@ void BaseServer::preload_dictionary_allow()
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_allow_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        abort();//stop because can't resolv the name
+        criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
 
@@ -642,7 +646,7 @@ void BaseServer::preload_dictionary_allow_return()
         if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
         {
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-            abort();//stop because can't resolv the name
+            criticalDatabaseQueryFailed();return;//stop because can't resolv the name
         }
         while(GlobalServerData::serverPrivateVariables.dictionary_allow.size()<lastId)
             GlobalServerData::serverPrivateVariables.dictionary_allow << ActionAllow_Nothing;
@@ -671,7 +675,7 @@ void BaseServer::preload_dictionary_map()
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_map_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        abort();//stop because can't resolv the name
+        criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
 
@@ -735,7 +739,7 @@ void BaseServer::preload_dictionary_map_return()
             if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
             {
                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-                abort();//stop because can't resolv the name
+                criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
             while(GlobalServerData::serverPrivateVariables.dictionary_map.size()<=lastId)
                 GlobalServerData::serverPrivateVariables.dictionary_map << NULL;
@@ -774,7 +778,7 @@ void BaseServer::preload_dictionary_reputation()
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_reputation_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        abort();//stop because can't resolv the name
+        criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
 
@@ -842,7 +846,7 @@ void BaseServer::preload_dictionary_reputation_return()
             if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
             {
                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-                abort();//stop because can't resolv the name
+                criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
             while(GlobalServerData::serverPrivateVariables.dictionary_reputation.size()<=lastId)
                 GlobalServerData::serverPrivateVariables.dictionary_reputation << -1;
@@ -875,7 +879,7 @@ void BaseServer::preload_dictionary_skin()
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_skin_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        abort();//stop because can't resolv the name
+        criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
 
@@ -943,7 +947,7 @@ void BaseServer::preload_dictionary_skin_return()
             if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
             {
                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-                abort();//stop because can't resolv the name
+                criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
             while(GlobalServerData::serverPrivateVariables.dictionary_skin.size()<lastId)
                 GlobalServerData::serverPrivateVariables.dictionary_skin << 0;
@@ -1021,12 +1025,12 @@ void BaseServer::preload_profile()
     preload_finish();
 }
 
-void BaseServer::preload_zone()
+bool BaseServer::preload_zone()
 {
     //open and quick check the file
     entryListZone=QFileInfoList(QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot));
     entryListIndex=0;
-    preload_zone_init();
+    return preload_zone_init();
 }
 
 void BaseServer::preload_zone_static(void *object)
@@ -1672,7 +1676,7 @@ void BaseServer::loadMonsterSkills_return()
     loadMonsterSkills(entryListIndex+1);
 }
 
-void BaseServer::preload_the_city_capture()
+bool BaseServer::preload_the_city_capture()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
@@ -1680,10 +1684,10 @@ void BaseServer::preload_the_city_capture()
     GlobalServerData::serverPrivateVariables.timer_city_capture=new QTimer();
     GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);
     #endif
-    load_next_city_capture();
+    return load_next_city_capture();
 }
 
-void BaseServer::preload_the_map()
+bool BaseServer::preload_the_map()
 {
     GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MAP;
     #ifdef DEBUG_MESSAGE_MAP_LOAD
@@ -1785,7 +1789,7 @@ void BaseServer::preload_the_map()
                             if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
                             {
                                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-                                abort();//stop because can't resolv the name
+                                criticalDatabaseQueryFailed();return false;//stop because can't resolv the name
                             }
                             while(GlobalServerData::serverPrivateVariables.dictionary_item_reverse.size()<GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
                                 GlobalServerData::serverPrivateVariables.dictionary_item_reverse << 255/*-1*/;
@@ -2114,6 +2118,13 @@ void BaseServer::preload_the_map()
     DebugClass::debugConsole(QStringLiteral("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
 
     botFiles.clear();
+    return true;
+}
+
+void BaseServer::criticalDatabaseQueryFailed()
+{
+    unload_the_data();
+    quitForCriticalDatabaseQueryFailed();
 }
 
 void BaseServer::preload_the_skin()
@@ -2477,13 +2488,14 @@ void BaseServer::preload_finish()
     qDebug() << QStringLiteral("Loaded the server SQL datapack into %1ms").arg(timeDatapack.elapsed());
 }
 
-void BaseServer::load_next_city_capture()
+bool BaseServer::load_next_city_capture()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
     const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
     GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
     #endif
+    return true;
 }
 
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
@@ -3186,8 +3198,11 @@ void BaseServer::unload_the_players()
 void BaseServer::unload_the_randomData()
 {
     #ifdef Q_OS_LINUX
-    fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
-    GlobalServerData::serverPrivateVariables.fpRandomFile=NULL;
+    if(GlobalServerData::serverPrivateVariables.fpRandomFile!=NULL)
+    {
+        fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
+        GlobalServerData::serverPrivateVariables.fpRandomFile=NULL;
+    }
     #endif
     GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
     GlobalServerData::serverPrivateVariables.randomData.clear();

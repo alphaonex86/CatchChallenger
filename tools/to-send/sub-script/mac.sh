@@ -10,7 +10,7 @@ cd ${TEMP_PATH}/
 
 IPMAC="192.168.158.34"
 SSHUSER="user"
-QTVERSION="5.1.1"
+QTVERSION="5.4.0"
 
 function compil {
     cd ${TEMP_PATH}/
@@ -118,6 +118,7 @@ function compilserver {
         ssh ${SSHUSER}@${IPMAC} "mkdir /Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/"
         
         rsync -art ${DATAPACK_SOURCE} ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/
+        rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/server/databases/catchchallenger.db.sqlite ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/macdeployqt ${BASEAPPNAME}/ -dmg"
         rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.dmg ${TEMP_PATH}/${FINAL_ARCHIVE}
         if [ ! -e ${FINAL_ARCHIVE} ]; then

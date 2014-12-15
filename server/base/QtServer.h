@@ -26,6 +26,7 @@ public:
     bool check_if_now_stopped();//return true if can be stopped
     void stop_internal_server();
     void preload_finish();
+    void quitForCriticalDatabaseQueryFailed();
 signals:
     void try_initAll() const;
     void try_stop_server() const;
@@ -33,6 +34,8 @@ signals:
     //stat
     void is_started(const bool &) const;
     void error(const QString &error) const;
+
+    void haveQuitForCriticalDatabaseQueryFailed();
 private:
     QSet<Client *> client_list;
 };
