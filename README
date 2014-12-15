@@ -49,7 +49,7 @@ qmake *.pro
 make
 
 Assemble it, for the SERVER AND GAME SOLO put the datapack from:
-https://github.com/alphaonex86/datapack
+https://github.com/alphaonex86/CatchChallenger-datapack
 near the application, you nead have then: CatchChallenger-application(.exe), the datapack -> then datapack/informations.xml
 See the compiled example for windows, you need follow the same organisation for the other OS.
 Under linux I have for the server:
