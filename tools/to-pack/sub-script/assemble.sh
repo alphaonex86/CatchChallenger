@@ -106,11 +106,12 @@ function assembleserver {
 #       cp -Rf ${CATCHCHALLENGERSOURCESPATH}/README ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/README.txt
 #       cp -Rf ${CATCHCHALLENGERSOURCESPATH}/COPYING ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/COPYING.txt
         upx --lzma -9 ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/catchchallenger*.exe > /dev/null 2>&1
-        cp -Rf ${BASE_PWD}/data/windows-${ARCHITECTURE}/dll-qt/lib* ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
-        cp -Rf ${BASE_PWD}/data/windows-${ARCHITECTURE}/dll-qt/* ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
+        cp -Rf ${BASE_PWD}/data/windows-${ARCHITECTURE}/server/lib* ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
+        cp -Rf ${BASE_PWD}/data/windows-${ARCHITECTURE}/server/* ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
         rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/client/
         rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/tools/
         rsync -aqrt ${CATCHCHALLENGERSOURCESPATH}/../datapack/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/datapack/
+        rsync -aqrt ${CATCHCHALLENGERSOURCESPATH}/server/databases/catchchallenger.db.sqlite ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -iname "*.ts" -exec rm {} \; > /dev/null 2>&1
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -type d -empty -delete > /dev/null 2>&1
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -type d -empty -delete > /dev/null 2>&1

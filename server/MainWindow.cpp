@@ -563,7 +563,7 @@ void MainWindow::load_settings()
     else if(db_type==QLatin1Literal("postgresql"))
         ui->db_type->setCurrentIndex(2);
     else
-        ui->db_type->setCurrentIndex(0);
+        ui->db_type->setCurrentIndex(1);
     ui->db_mysql_host->setText(db_mysql_host);
     ui->db_mysql_login->setText(db_mysql_login);
     ui->db_mysql_pass->setText(db_mysql_pass);
