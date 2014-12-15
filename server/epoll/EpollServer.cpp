@@ -44,6 +44,11 @@ bool EpollServer::isReady()
     return ready;
 }
 
+void EpollServer::quitForCriticalDatabaseQueryFailed()
+{
+    abort();
+}
+
 bool EpollServer::tryListen()
 {
     struct addrinfo hints;

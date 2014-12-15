@@ -186,3 +186,9 @@ void QtServer::stop_internal_server()
 
     check_if_now_stopped();
 }
+
+void QtServer::quitForCriticalDatabaseQueryFailed()
+{
+    emit haveQuitForCriticalDatabaseQueryFailed();
+    stop_internal_server();
+}

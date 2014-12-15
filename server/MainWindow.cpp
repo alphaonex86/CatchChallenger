@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&server,&NormalServer::player_is_disconnected,this,&MainWindow::player_is_disconnected);
     connect(&server,&NormalServer::new_chat_message,    this,&MainWindow::new_chat_message);
     connect(&server,&NormalServer::error,               this,&MainWindow::server_error);
+    connect(&server,&NormalServer::haveQuitForCriticalDatabaseQueryFailed,               this,&MainWindow::haveQuitForCriticalDatabaseQueryFailed);
     connect(&timer_update_the_info,&QTimer::timeout,    this,&MainWindow::update_the_info);
     connect(&check_latency,&QTimer::timeout,            this,&MainWindow::start_calculate_latency);
     connect(this,&MainWindow::record_latency,           this,&MainWindow::stop_calculate_latency,Qt::QueuedConnection);
@@ -202,12 +203,17 @@ void MainWindow::new_chat_message(QString pseudo,Chat_type type,QString text)
         }
         index++;
     }
-    QMessageBox::information(this,"warning","unable to locate the player");
+    QMessageBox::information(this,"Warning","unable to locate the player");
 }
 
 void MainWindow::server_error(QString error)
 {
-    QMessageBox::information(this,"warning",error);
+    QMessageBox::information(this,"Warning",error);
+}
+
+void MainWindow::haveQuitForCriticalDatabaseQueryFailed()
+{
+    QMessageBox::information(this,"Warning","Unable to do critical database query to initialise the server");
 }
 
 void MainWindow::update_the_info()

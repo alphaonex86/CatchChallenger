@@ -57,6 +57,7 @@ private slots:
     void player_is_disconnected(QString pseudo);
     void new_chat_message(QString pseudo,Chat_type type,QString text);
     void server_error(QString error);
+    void haveQuitForCriticalDatabaseQueryFailed();
     void update_the_info();
     void start_calculate_latency();
     void stop_calculate_latency();
