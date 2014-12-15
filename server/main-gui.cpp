@@ -1,4 +1,6 @@
 #include <QApplication>
+#include <QMessageBox>
+#include <QString>
 #include "MainWindow.h"
 
 int main(int argc, char *argv[])
@@ -8,7 +10,8 @@ int main(int argc, char *argv[])
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));
     if(!datapackFolder.isFile())
     {
-        qDebug() << "No datapack found into: " << datapackFolder.absoluteFilePath();
+        QMessageBox::critical(NULL,"Critical error",QString("No datapack found, look at file: ")+datapackFolder.absoluteFilePath());
+        qDebug() << "No datapack found, look at file: " << datapackFolder.absoluteFilePath();
         return EXIT_FAILURE;
     }
 
