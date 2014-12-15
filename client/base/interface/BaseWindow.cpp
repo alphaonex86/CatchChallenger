@@ -45,6 +45,11 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
+
+    qRegisterMetaType<Chat_type>("Chat_type");
+    qRegisterMetaType<Player_type>("Player_type");
+    qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
+
     qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
     qRegisterMetaType<QHash<quint32,quint32> >("CatchChallenger::Plant_collect");
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
