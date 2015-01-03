@@ -43,7 +43,8 @@ HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/DatapackGeneralLoader.h \
     $$PWD/base/CommonDatapack.h \
     $$PWD/fight/CommonFightEngine.h \
-    $$PWD/base/CommonSettings.h
+    $$PWD/base/CommonSettings.h \
+    $$PWD/base/GeneralType.h
 
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 mac:INCLUDEPATH += /usr/local/include/

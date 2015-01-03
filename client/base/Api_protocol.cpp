@@ -15,6 +15,7 @@ const unsigned char protocolHeaderToMatch[] = PROTOCOL_HEADER;
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonSettings.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/GeneralType.h"
 
 #include <QCoreApplication>
 
@@ -1260,7 +1261,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
                     }
-                    QHash<quint16,quint32> items;
+                    QHash<CATCHCHALLENGER_TYPE_ITEM,quint32> items;
                     quint16 inventorySize,id;
                     quint32 quantity;
                     in >> inventorySize;
