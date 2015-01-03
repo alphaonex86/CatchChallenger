@@ -1,6 +1,7 @@
 #include "Client.h"
 #include "GlobalServerData.h"
 #include "../../general/base/QFakeSocket.h"
+#include "../../general/base/GeneralType.h"
 
 using namespace CatchChallenger;
 
