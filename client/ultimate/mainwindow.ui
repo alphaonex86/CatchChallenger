@@ -43,7 +43,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -408,6 +408,16 @@ color: rgb(0, 0, 0);</string>
                    <widget class="QPushButton" name="server_add">
                     <property name="text">
                      <string>Add</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="server_edit">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="text">
+                     <string>Edit</string>
                     </property>
                    </widget>
                   </item>

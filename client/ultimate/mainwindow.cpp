@@ -638,11 +638,12 @@ void MainWindow::serverListEntryEnvoluedUpdate()
     }
     ui->server_select->setEnabled(selectedServer!=NULL);
     ui->server_remove->setEnabled(selectedServer!=NULL && customServerConnexion.contains(selectedServer));
+    ui->server_edit->setEnabled(selectedServer!=NULL && customServerConnexion.contains(selectedServer));
 }
 
 void MainWindow::on_server_add_clicked()
 {
-    AddServer addServer(this);
+    AddOrEditServer addServer(this);
     addServer.exec();
     if(!addServer.isOk())
         return;
@@ -1831,5 +1832,56 @@ void MainWindow::readForFirstHeader()
         }
         else
             connectTheExternalSocket();
+    }
+}
+
+void MainWindow::on_server_edit_clicked()
+{
+    if(selectedServer==NULL)
+        return;
+    if(!customServerConnexion.contains(selectedServer))
+        return;
+    int index=0;
+    while(index<mergedConnexionInfoList.size())
+    {
+        ConnexionInfo * connexionInfo=serverConnexion.value(selectedServer);
+        if(connexionInfo==&mergedConnexionInfoList.at(index))
+        {
+            AddOrEditServer editServer(this);
+            editServer.setServer(connexionInfo->host);
+            editServer.setPort(connexionInfo->port);
+            editServer.setName(connexionInfo->name);
+            editServer.setProxyServer(connexionInfo->proxyHost);
+            editServer.setProxyPort(connexionInfo->proxyPort);
+            editServer.exec();
+            if(!editServer.isOk())
+                return;
+            if(!editServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+$")))
+            {
+                QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
+                return;
+            }
+            if(customServerName.contains(editServer.name()) && editServer.name()!=connexionInfo->name)
+            {
+                QMessageBox::warning(this,tr("Error"),tr("The name is already taken"));
+                return;
+            }
+            if(editServer.name()!=connexionInfo->name)
+            {
+                customServerName.remove(connexionInfo->name);
+                customServerName << editServer.name();
+            }
+
+            connexionInfo->host=editServer.server();
+            connexionInfo->name=editServer.name();
+            connexionInfo->port=editServer.port();
+            connexionInfo->proxyHost=editServer.proxyServer();
+            connexionInfo->proxyPort=editServer.proxyPort();
+
+            saveConnexionInfoList();
+            displayServerList();
+            break;
+        }
+        index++;
     }
 }
