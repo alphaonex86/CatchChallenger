@@ -12,6 +12,15 @@ CATCHCHALLENGERDATAPACK="/home/user/Desktop/CatchChallenger/build-catchchallenge
 TMPFOLDER="/tmp/benchmarkcatchchallenger/"
 DOCPULOAD=1
 
+if [ ! -x ${QTQMAKE} ]
+then
+    echo "${QTQMAKE} don't exist for qmake"
+fi
+if [ ! -e ${CATCHCHALLENGERDATAPACK} ]
+then
+    echo "${CATCHCHALLENGERDATAPACK} don't exist for datapack"
+fi
+
 cd ${GITFOLDER}
 killall -s 9 yes > /dev/null 2>&1
 CPUCOUNT=`grep -c ^processor /proc/cpuinfo`

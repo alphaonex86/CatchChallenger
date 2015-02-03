@@ -116,6 +116,8 @@ private slots:
     void sslHandcheckIsFinished();
     void readForFirstHeader();
     static void vlcevent(const libvlc_event_t* event, void* ptr);
+    void on_server_edit_clicked();
+
 private:
     enum ServerMode
     {

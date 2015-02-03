@@ -3,7 +3,7 @@
 
 #include <QMessageBox>
 
-AddServer::AddServer(QWidget *parent) :
+AddOrEditServer::AddOrEditServer(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AddServer)
 {
@@ -11,14 +11,20 @@ AddServer::AddServer(QWidget *parent) :
     ok=false;
 }
 
-AddServer::~AddServer()
+AddOrEditServer::~AddOrEditServer()
 {
     delete ui;
 }
 
-void AddServer::on_ok_clicked()
+void AddOrEditServer::setEdit(const bool &edit)
 {
-    if(ui->name->text()=="Internal" || ui->name->text()=="internal")
+    if(edit)
+        ui->ok->setText(tr("Save"));
+}
+
+void AddOrEditServer::on_ok_clicked()
+{
+    if(ui->name->text()==QStringLiteral("Internal") || ui->name->text()==QStringLiteral("internal"))
     {
         QMessageBox::warning(this,tr("Error"),tr("The name can't be \"internal\""));
         return;
@@ -27,34 +33,59 @@ void AddServer::on_ok_clicked()
     close();
 }
 
-QString AddServer::server() const
+QString AddOrEditServer::server() const
 {
     return ui->server->text();
 }
 
-quint16 AddServer::port() const
+quint16 AddOrEditServer::port() const
 {
     return ui->port->value();
 }
 
-QString AddServer::proxyServer() const
+QString AddOrEditServer::proxyServer() const
 {
     if(!ui->proxy->isChecked())
         return QString();
     return ui->proxyServer->text();
 }
 
-quint16 AddServer::proxyPort() const
+quint16 AddOrEditServer::proxyPort() const
 {
     return ui->proxyPort->value();
 }
 
-QString AddServer::name() const
+QString AddOrEditServer::name() const
 {
     return ui->name->text();
 }
 
-bool AddServer::isOk() const
+void AddOrEditServer::setServer(const QString &server)
+{
+    ui->server->setText(server);
+}
+
+void AddOrEditServer::setPort(const quint16 &port)
+{
+    ui->port->setValue(port);
+}
+
+void AddOrEditServer::setName(const QString &name)
+{
+    ui->name->setText(name);
+}
+
+void AddOrEditServer::setProxyServer(const QString &proxyServer)
+{
+    ui->proxyServer->setText(proxyServer);
+}
+
+void AddOrEditServer::setProxyPort(const quint16 &proxyPort)
+{
+    ui->proxyPort->setValue(proxyPort);
+}
+
+bool AddOrEditServer::isOk() const
 {
     return ok;
 }
