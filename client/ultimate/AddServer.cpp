@@ -45,8 +45,6 @@ quint16 AddOrEditServer::port() const
 
 QString AddOrEditServer::proxyServer() const
 {
-    if(!ui->proxy->isChecked())
-        return QString();
     return ui->proxyServer->text();
 }
 

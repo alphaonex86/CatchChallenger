@@ -62,25 +62,12 @@ CREATE TABLE IF NOT EXISTS `character` (
   `account` int(11) NOT NULL,
   `pseudo` varchar(20) NOT NULL,
   `skin` int(11) NOT NULL,
-  `x` tinyint(3) unsigned NOT NULL,
-  `y` tinyint(3) unsigned NOT NULL,
-  `orientation` smallint(6) NOT NULL,
-  `map` text NOT NULL,
   `type` smallint(6) NOT NULL,
   `clan` int(11) NOT NULL,
-  `rescue_map` text NOT NULL,
-  `rescue_x` tinyint(3) unsigned NOT NULL,
-  `rescue_y` tinyint(3) unsigned NOT NULL,
-  `rescue_orientation` smallint(6) NOT NULL,
-  `unvalidated_rescue_map` text NOT NULL,
-  `unvalidated_rescue_x` tinyint(3) unsigned NOT NULL,
-  `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
-  `unvalidated_rescue_orientation` smallint(6) NOT NULL,
   `clan_leader` tinyint(1) NOT NULL,
   `date` int(11) unsigned NOT NULL,
   `cash` bigint(20) unsigned NOT NULL,
   `warehouse_cash` bigint(20) unsigned NOT NULL,
-  `market_cash` bigint(20) unsigned NOT NULL,
   `time_to_delete` int(11) unsigned NOT NULL,
   `played_time` int(11) unsigned NOT NULL,
   `last_connect` int(11) unsigned NOT NULL,
@@ -103,6 +90,35 @@ CREATE TABLE IF NOT EXISTS `character_allow` (
   `allow` smallint(6) NOT NULL,
   KEY `character` (`character`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `character_forserver`
+--
+
+CREATE TABLE IF NOT EXISTS `character_forserver` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `character` int(11) NOT NULL,
+  `x` tinyint(3) unsigned NOT NULL,
+  `y` tinyint(3) unsigned NOT NULL,
+  `orientation` smallint(6) NOT NULL,
+  `map` int(11) NOT NULL,
+  `rescue_map` int(11) NOT NULL,
+  `rescue_x` tinyint(3) unsigned NOT NULL,
+  `rescue_y` tinyint(3) unsigned NOT NULL,
+  `rescue_orientation` smallint(6) NOT NULL,
+  `unvalidated_rescue_map` int(11) NOT NULL,
+  `unvalidated_rescue_x` tinyint(3) unsigned NOT NULL,
+  `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
+  `unvalidated_rescue_orientation` smallint(6) NOT NULL,
+  `date` int(11) unsigned NOT NULL,
+  `market_cash` bigint(20) unsigned NOT NULL,
+  `played_time` int(11) unsigned NOT NULL,
+  `last_connect` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `account` (`character`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 

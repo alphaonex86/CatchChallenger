@@ -99,7 +99,7 @@ void Client::savePosition()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             updateMapPositionQuery=QStringLiteral("UPDATE `character` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,%5 WHERE `id`=%6")
                 .arg(map_file_database_id)
                 .arg(x)
@@ -118,7 +118,7 @@ void Client::savePosition()
                 )
                 .arg(character_id);
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             updateMapPositionQuery=QStringLiteral("UPDATE character SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
                 .arg(map_file_database_id)
                 .arg(x)
@@ -137,7 +137,7 @@ void Client::savePosition()
                 )
                 .arg(character_id);
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             updateMapPositionQuery=QStringLiteral("UPDATE character SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
                 .arg(map_file_database_id)
                 .arg(x)
@@ -851,7 +851,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
         }
     }
     if(!depositeMonsters.isEmpty() || !withdrawMonsters.isEmpty())
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
+        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheDisconnexion)
             saveMonsterStat(public_and_private_informations.playerMonster.last());
 }
 
@@ -2896,7 +2896,7 @@ void Client::insertIntoAClan(const quint32 &clanId)
 {
     //add into db
     QString clan_leader;
-    if(GlobalServerData::serverSettings.database.type!=ServerSettings::Database::DatabaseType_PostgreSQL)
+    if(GlobalServerData::serverSettings.database.type!=GameServerSettings::Database::DatabaseType_PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
             clan_leader=Client::text_1;

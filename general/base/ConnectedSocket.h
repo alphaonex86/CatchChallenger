@@ -1,14 +1,14 @@
 #ifndef CATCHCHALLENGER_CONNECTEDSOCKET_H
 #define CATCHCHALLENGER_CONNECTEDSOCKET_H
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
+
 #include <QIODevice>
 #include <QSslSocket>
 #include <QAbstractSocket>
 #include <QObject>
 #include <QHostAddress>
 #include <QByteArray>
-
-#ifndef EPOLLCATCHCHALLENGERSERVER
 
 #include "QFakeSocket.h"
 
