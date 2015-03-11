@@ -12,42 +12,6 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: account; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE account (
-    id integer NOT NULL,
-    login character varying(56),
-    password character varying(56),
-    date integer,
-    email text
-);
-
-
---
--- Name: account_register; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE account_register (
-    login character varying(128),
-    password character varying(128),
-    email character varying(64),
-    key text,
-    date integer
-);
-
-
---
--- Name: bot_already_beaten; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE bot_already_beaten (
-    "character" integer,
-    botfight_id smallint
-);
-
-
---
 -- Name: character; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -70,57 +34,12 @@ CREATE TABLE "character" (
 
 
 --
--- Name: character_forserver; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE "character_forserver" (
-    character integer NOT NULL,
-    x smallint,
-    y smallint,
-    orientation smallint,
-    map smallint,
-    rescue_map smallint,
-    rescue_x smallint,
-    rescue_y smallint,
-    rescue_orientation smallint,
-    unvalidated_rescue_map smallint,
-    unvalidated_rescue_x smallint,
-    unvalidated_rescue_y smallint,
-    unvalidated_rescue_orientation smallint,
-    date integer,
-    market_cash bigint,
-    played_time integer,
-    last_connect integer
-);
-
-
---
 -- Name: character_allow; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE character_allow (
     "character" integer,
     allow smallint
-);
-
-
---
--- Name: character_itemOnMap; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE "character_itemonmap" (
-    "character" integer,
-    "itemOnMap" smallint
-);
-
-
---
--- Name: city; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE city (
-    city character varying(64) NOT NULL,
-    clan integer
 );
 
 
@@ -147,28 +66,6 @@ CREATE TABLE dictionary_allow (
 
 
 --
--- Name: dictionary_itemOnMap; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE "dictionary_itemonmap" (
-    id integer NOT NULL,
-    map text,
-    x smallint,
-    y smallint
-);
-
-
---
--- Name: dictionary_map; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE dictionary_map (
-    id integer NOT NULL,
-    map text
-);
-
-
---
 -- Name: dictionary_reputation; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -189,18 +86,6 @@ CREATE TABLE dictionary_skin (
 
 
 --
--- Name: factory; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE factory (
-    id integer NOT NULL,
-    resources text,
-    products text,
-    last_update integer
-);
-
-
---
 -- Name: item; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -208,18 +93,6 @@ CREATE TABLE item (
     item smallint,
     "character" integer,
     quantity integer
-);
-
-
---
--- Name: item_market; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE item_market (
-    item smallint,
-    "character" integer,
-    quantity integer,
-    market_price bigint
 );
 
 
@@ -266,26 +139,6 @@ CREATE TABLE monster_buff (
 
 
 --
--- Name: monster_market; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE monster_market (
-    id integer,
-    hp smallint,
-    "character" integer,
-    monster smallint,
-    level smallint,
-    xp integer,
-    sp integer,
-    captured_with smallint,
-    gender smallint,
-    egg_step integer,
-    character_origin integer,
-    market_price bigint
-);
-
-
---
 -- Name: monster_skill; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -318,33 +171,6 @@ CREATE TABLE monster_warehouse (
 
 
 --
--- Name: plant; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE plant (
-    id integer NOT NULL,
-    map smallint,
-    x smallint,
-    y smallint,
-    plant smallint,
-    "character" integer,
-    plant_timestamps integer
-);
-
-
---
--- Name: quest; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE quest (
-    "character" integer,
-    quest smallint,
-    finish_one_time boolean,
-    step smallint
-);
-
-
---
 -- Name: recipe; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -367,50 +193,11 @@ CREATE TABLE reputation (
 
 
 --
--- Name: account_login_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY account
-    ADD CONSTRAINT account_login_key UNIQUE (login);
-
-
---
--- Name: account_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY account
-    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
-
-
---
--- Name: account_register_login_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY account_register
-    ADD CONSTRAINT account_register_login_key UNIQUE (login);
-
-
---
 -- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY "character"
     ADD CONSTRAINT character_pkey PRIMARY KEY (id);
-
---
--- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY "character_forserver"
-    ADD CONSTRAINT character_forserver_pkey PRIMARY KEY (character);
-
---
--- Name: city_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY city
-    ADD CONSTRAINT city_pkey PRIMARY KEY (city);
-
 
 --
 -- Name: clan_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
@@ -429,22 +216,6 @@ ALTER TABLE ONLY dictionary_allow
 
 
 --
--- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY "dictionary_itemonmap"
-    ADD CONSTRAINT "dictionary_itemOnMap_pkey" PRIMARY KEY (id);
-
-
---
--- Name: dictionary_map_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY dictionary_map
-    ADD CONSTRAINT dictionary_map_pkey PRIMARY KEY (id);
-
-
---
 -- Name: dictionary_reputation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -458,36 +229,6 @@ ALTER TABLE ONLY dictionary_reputation
 
 ALTER TABLE ONLY dictionary_skin
     ADD CONSTRAINT dictionary_skin_pkey PRIMARY KEY (id);
-
-
---
--- Name: factory_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY factory
-    ADD CONSTRAINT factory_pkey PRIMARY KEY (id);
-
-
---
--- Name: plant_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY plant
-    ADD CONSTRAINT plant_pkey PRIMARY KEY (id);
-
-
---
--- Name: bot_already_beaten_by_character; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX bot_already_beaten_by_character ON bot_already_beaten USING btree ("character");
-
-
---
--- Name: bot_already_beaten_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE UNIQUE INDEX bot_already_beaten_unique ON bot_already_beaten USING btree ("character", botfight_id);
 
 
 --
@@ -526,24 +267,10 @@ CREATE INDEX character_clan ON "character" USING btree (clan);
 
 
 --
--- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX "character_itemOnMap_index" ON "character_itemonmap" USING btree ("character");
-
-
---
 -- Name: item_by_char; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX item_by_char ON item USING btree ("character");
-
-
---
--- Name: item_market_uniqueindex; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE UNIQUE INDEX item_market_uniqueindex ON item_market USING btree (item, "character");
 
 
 --
@@ -572,13 +299,6 @@ CREATE UNIQUE INDEX item_warehouse_uniqueindex ON item_warehouse USING btree (it
 --
 
 CREATE INDEX monster_bychar ON monster USING btree ("character");
-
-
---
--- Name: monster_market_uniqueid; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE UNIQUE INDEX monster_market_uniqueid ON monster_market USING btree (id);
 
 
 --
@@ -628,20 +348,6 @@ CREATE INDEX monsterskill_bymonster ON monster_skill USING btree (monster);
 --
 
 CREATE UNIQUE INDEX monsterskill_unique ON monster_skill USING btree (monster, skill);
-
-
---
--- Name: quest_bychar; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX quest_bychar ON quest USING btree ("character");
-
-
---
--- Name: quest_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE UNIQUE INDEX quest_unique ON quest USING btree ("character", quest);
 
 
 --
