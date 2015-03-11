@@ -7,50 +7,6 @@ SET client_min_messages = warning;
 
 SET search_path = public, pg_catalog;
 
---
--- Name: gender; Type: TYPE; Schema: public; Owner: root
---
-
-CREATE TYPE gender AS ENUM (
-    'unknown',
-    'male',
-    'female'
-);
-
---
--- Name: orientation; Type: TYPE; Schema: public; Owner: root
---
-
-CREATE TYPE orientation AS ENUM (
-    'top',
-    'bottom',
-    'left',
-    'right'
-);
-
-
---
--- Name: place; Type: TYPE; Schema: public; Owner: root
---
-
-CREATE TYPE place AS ENUM (
-    'wear',
-    'warehouse',
-    'market'
-);
-
---
--- Name: player_type; Type: TYPE; Schema: public; Owner: root
---
-
-CREATE TYPE player_type AS ENUM (
-    'normal',
-    'premium',
-    'gm',
-    'dev'
-);
-
-
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -100,12 +56,29 @@ CREATE TABLE "character" (
     account integer,
     pseudo character varying(20),
     skin smallint,
+    type smallint,
+    clan integer,
+    clan_leader boolean,
+    date integer,
+    cash bigint,
+    warehouse_cash bigint,
+    time_to_delete integer,
+    played_time integer,
+    last_connect integer,
+    starter smallint
+);
+
+
+--
+-- Name: character_forserver; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE "character_forserver" (
+    character integer NOT NULL,
     x smallint,
     y smallint,
     orientation smallint,
     map smallint,
-    type smallint,
-    clan integer,
     rescue_map smallint,
     rescue_x smallint,
     rescue_y smallint,
@@ -114,15 +87,10 @@ CREATE TABLE "character" (
     unvalidated_rescue_x smallint,
     unvalidated_rescue_y smallint,
     unvalidated_rescue_orientation smallint,
-    clan_leader boolean,
     date integer,
-    cash bigint,
-    warehouse_cash bigint,
     market_cash bigint,
-    time_to_delete integer,
     played_time integer,
-    last_connect integer,
-    starter smallint
+    last_connect integer
 );
 
 
@@ -137,7 +105,7 @@ CREATE TABLE character_allow (
 
 
 --
--- Name: character_itemOnMap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+-- Name: character_itemOnMap; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE "character_itemonmap" (
@@ -179,7 +147,7 @@ CREATE TABLE dictionary_allow (
 
 
 --
--- Name: dictionary_itemOnMap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+-- Name: dictionary_itemOnMap; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
 CREATE TABLE "dictionary_itemonmap" (
@@ -429,6 +397,12 @@ ALTER TABLE ONLY account_register
 ALTER TABLE ONLY "character"
     ADD CONSTRAINT character_pkey PRIMARY KEY (id);
 
+--
+-- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY "character_forserver"
+    ADD CONSTRAINT character_forserver_pkey PRIMARY KEY (character);
 
 --
 -- Name: city_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
@@ -455,7 +429,7 @@ ALTER TABLE ONLY dictionary_allow
 
 
 --
--- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+-- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
 ALTER TABLE ONLY "dictionary_itemonmap"
@@ -552,7 +526,7 @@ CREATE INDEX character_clan ON "character" USING btree (clan);
 
 
 --
--- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: root; Tablespace: 
+-- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
 --
 
 CREATE INDEX "character_itemOnMap_index" ON "character_itemonmap" USING btree ("character");

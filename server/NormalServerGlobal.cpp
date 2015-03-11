@@ -22,6 +22,8 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
 
     if(!settings->contains(QLatin1Literal("max-players")))
         settings->setValue(QLatin1Literal("max-players"),200);
+    if(!settings->contains(QLatin1Literal("announce")))
+        settings->setValue(QLatin1Literal("announce"),false);
     if(!settings->contains(QLatin1Literal("server-ip")))
         settings->setValue(QLatin1Literal("server-ip"),QString());
     if(!settings->contains(QLatin1Literal("pvp")))

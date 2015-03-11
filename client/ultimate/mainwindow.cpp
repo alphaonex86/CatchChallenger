@@ -1644,7 +1644,7 @@ void MainWindow::saveTime()
 
 void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
 {
-    CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
+    CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
 
     CommonSettings::commonSettings.waitBeforeConnectAfterKick=0;
     CommonSettings::commonSettings.max_character=1;
@@ -1656,22 +1656,22 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.sendPlayerNumber = false;
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
-    formatedServerSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+    formatedServerSettings.database.type=CatchChallenger::GameServerSettings::Database::DatabaseType_SQLite;
     formatedServerSettings.database.sqlite.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
     formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
 
     {
-        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
+        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList[QStringLiteral("day")][QStringLiteral("day")];
         event.cycle=60;
         event.offset=0;
-        event.value="day";
+        event.value=QStringLiteral("day");
     }
     {
-        CatchChallenger::ServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["night"];
+        CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList[QStringLiteral("day")][QStringLiteral("night")];
         event.cycle=60;
         event.offset=30;
-        event.value="night";
+        event.value=QStringLiteral("night");
     }
 
     internalServer->setSettings(formatedServerSettings);

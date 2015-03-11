@@ -305,6 +305,7 @@ void MainWindow::load_settings()
 {
     // --------------------------------------------------
     ui->max_player->setValue(settings->value(QLatin1Literal("max-players")).toUInt());
+    ui->announce->setChecked(settings->value(QLatin1Literal("announce")).toBool());
     ui->server_ip->setText(settings->value(QLatin1Literal("server-ip")).toString());
     ui->pvp->setChecked(settings->value(QLatin1Literal("pvp")).toBool());
     ui->sendPlayerNumber->setChecked(settings->value(QLatin1Literal("sendPlayerNumber")).toBool());
@@ -379,7 +380,7 @@ void MainWindow::load_settings()
                         settings->beginGroup(groupName);
                         if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
                         {
-                            ServerSettings::ProgrammedEvent event;
+                            GameServerSettings::ProgrammedEvent event;
                             event.value=settings->value(QLatin1Literal("value")).toString();
                             bool ok;
                             event.cycle=settings->value(QLatin1Literal("cycle")).toUInt(&ok);
@@ -640,7 +641,7 @@ void MainWindow::load_settings()
 
 void MainWindow::send_settings()
 {
-    ServerSettings formatedServerSettings=server.getSettings();
+    GameServerSettings formatedServerSettings=server.getSettings();
     NormalServerSettings formatedServerNormalSettings=server.getNormalSettings();
 
     //common var
@@ -654,6 +655,7 @@ void MainWindow::send_settings()
     else
         CommonSettings::commonSettings.forcedSpeed					= ui->speed->value();
     formatedServerSettings.dontSendPlayerType                       = ui->dontSendPlayerType->isChecked();
+    //formatedServerSettings.announce                                 = ui->announce->isChecked();
     CommonSettings::commonSettings.dontSendPseudo					= ui->dontSendPseudo->isChecked();
     CommonSettings::commonSettings.forceClientToSendAtMapChange		= ui->forceClientToSendAtMapChange->isChecked();
     CommonSettings::commonSettings.useSP                            = ui->useSP->isChecked();
@@ -730,35 +732,35 @@ void MainWindow::send_settings()
     {
         default:
         case 0:
-            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_Mysql;
+            formatedServerSettings.database.type					= GameServerSettings::Database::DatabaseType_Mysql;
         break;
         case 1:
-            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_SQLite;
+            formatedServerSettings.database.type					= GameServerSettings::Database::DatabaseType_SQLite;
         break;
         case 2:
-            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_PostgreSQL;
+            formatedServerSettings.database.type					= GameServerSettings::Database::DatabaseType_PostgreSQL;
         break;
     }
     switch(formatedServerSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
             formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
             formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
             formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             formatedServerSettings.database.sqlite.file				= ui->db_sqlite_file->text();
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
             formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
             formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
             formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
         break;
     }
-    formatedServerSettings.database.fightSync                       = (ServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();
+    formatedServerSettings.database.fightSync                       = (GameServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();
     formatedServerSettings.database.positionTeleportSync=ui->positionTeleportSync->isChecked();
     formatedServerSettings.database.secondToPositionSync=ui->secondToPositionSync->value();
     formatedServerSettings.database.tryInterval=ui->tryInterval->value();
@@ -1333,8 +1335,8 @@ void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int
         return;
     if(programmedEventList.contains(selectedEvent))
     {
-        const QHash<QString,ServerSettings::ProgrammedEvent> &list=programmedEventList.value(selectedEvent);
-        QHashIterator<QString,ServerSettings::ProgrammedEvent> i(list);
+        const QHash<QString,GameServerSettings::ProgrammedEvent> &list=programmedEventList.value(selectedEvent);
+        QHashIterator<QString,GameServerSettings::ProgrammedEvent> i(list);
         while (i.hasNext()) {
             i.next();
             QListWidgetItem *listWidgetItem=new QListWidgetItem(
@@ -1361,7 +1363,7 @@ void CatchChallenger::MainWindow::on_programmedEventAdd_clicked()
     const QString &selectedEvent=ui->programmedEventType->currentText();
     if(selectedEvent.isEmpty())
         return;
-    ServerSettings::ProgrammedEvent programmedEvent;
+    GameServerSettings::ProgrammedEvent programmedEvent;
     bool ok;
     const QString &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,QString(),&ok);
     if(!ok)
@@ -1401,7 +1403,7 @@ void CatchChallenger::MainWindow::on_programmedEventEdit_clicked()
     const QString &selectedEvent=ui->programmedEventType->currentText();
     if(selectedEvent.isEmpty())
         return;
-    ServerSettings::ProgrammedEvent programmedEvent;
+    GameServerSettings::ProgrammedEvent programmedEvent;
     bool ok;
     const QString &oldName=selectedItems.first()->data(99).toString();
     const QString &name=QInputDialog::getText(this,tr("Name"),tr("Name:"),QLineEdit::Normal,oldName,&ok);
@@ -1500,4 +1502,9 @@ void CatchChallenger::MainWindow::on_considerDownAfterNumberOfTry_editingFinishe
     settings->beginGroup(QLatin1Literal("db"));
     settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),ui->considerDownAfterNumberOfTry->value());
     settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_announce_toggled(bool checked)
+{
+    //settings->setValue(QLatin1Literal("announce"),ui->announce->value());
 }
