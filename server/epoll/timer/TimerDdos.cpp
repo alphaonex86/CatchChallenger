@@ -9,6 +9,7 @@
 #include "../../../general/base/GeneralVariable.h"
 
 #include <iostream>
+#include <QDebug>
 
 TimerDdos::TimerDdos()
 {

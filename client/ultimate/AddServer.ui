@@ -101,9 +101,9 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <widget class="QCheckBox" name="proxy">
+      <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Proxy</string>
+        <string>Proxy:</string>
        </property>
       </widget>
      </item>

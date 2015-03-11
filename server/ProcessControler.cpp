@@ -27,7 +27,7 @@ ProcessControler::~ProcessControler()
 
 void ProcessControler::send_settings()
 {
-    CatchChallenger::ServerSettings formatedServerSettings=server.getSettings();
+    CatchChallenger::GameServerSettings formatedServerSettings=server.getSettings();
     NormalServerSettings formatedServerNormalSettings=server.getNormalSettings();
 
     //common var
@@ -114,7 +114,7 @@ void ProcessControler::send_settings()
                         settings->beginGroup(groupName);
                         if(settings->contains(QLatin1Literal("value")) && settings->contains(QLatin1Literal("cycle")) && settings->contains(QLatin1Literal("offset")))
                         {
-                            ServerSettings::ProgrammedEvent event;
+                            GameServerSettings::ProgrammedEvent event;
                             event.value=settings->value(QLatin1Literal("value")).toString();
                             bool ok;
                             event.cycle=settings->value(QLatin1Literal("cycle")).toUInt(&ok);
@@ -146,26 +146,26 @@ void ProcessControler::send_settings()
 
     settings->beginGroup(QLatin1Literal("db"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
-        formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_Mysql;
+        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
-        formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_SQLite;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
-        formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_PostgreSQL;
+        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_PostgreSQL;
     else
-        formatedServerSettings.database.type					= CatchChallenger::ServerSettings::Database::DatabaseType_Mysql;
+        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_Mysql;
     switch(formatedServerSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             formatedServerSettings.database.mysql.host				= settings->value(QLatin1Literal("mysql_host")).toString();
             formatedServerSettings.database.mysql.db				= settings->value(QLatin1Literal("mysql_db")).toString();
             formatedServerSettings.database.mysql.login				= settings->value(QLatin1Literal("mysql_login")).toString();
             formatedServerSettings.database.mysql.pass				= settings->value(QLatin1Literal("mysql_pass")).toString();
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             formatedServerSettings.database.sqlite.file				= settings->value(QLatin1Literal("file")).toString();
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             formatedServerSettings.database.mysql.host				= settings->value(QLatin1Literal("mysql_host")).toString();
             formatedServerSettings.database.mysql.db				= settings->value(QLatin1Literal("mysql_db")).toString();
             formatedServerSettings.database.mysql.login				= settings->value(QLatin1Literal("mysql_login")).toString();
@@ -173,11 +173,11 @@ void ProcessControler::send_settings()
         break;
     }
     if(settings->value(QLatin1Literal("db_fight_sync")).toString()==QLatin1Literal("FightSync_AtEachTurn"))
-        formatedServerSettings.database.fightSync                       = CatchChallenger::ServerSettings::Database::FightSync_AtEachTurn;
+        formatedServerSettings.database.fightSync                       = CatchChallenger::GameServerSettings::Database::FightSync_AtEachTurn;
     else if(settings->value(QLatin1Literal("db_fight_sync")).toString()==QLatin1Literal("FightSync_AtTheDisconnexion"))
-        formatedServerSettings.database.fightSync                       = CatchChallenger::ServerSettings::Database::FightSync_AtTheDisconnexion;
+        formatedServerSettings.database.fightSync                       = CatchChallenger::GameServerSettings::Database::FightSync_AtTheDisconnexion;
     else
-        formatedServerSettings.database.fightSync                       = CatchChallenger::ServerSettings::Database::FightSync_AtTheEndOfBattle;
+        formatedServerSettings.database.fightSync                       = CatchChallenger::GameServerSettings::Database::FightSync_AtTheEndOfBattle;
     formatedServerSettings.database.positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
     formatedServerSettings.database.secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
     formatedServerSettings.database.tryInterval=settings->value(QLatin1Literal("tryInterval")).toUInt();

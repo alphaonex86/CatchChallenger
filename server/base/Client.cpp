@@ -3,6 +3,8 @@
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/GeneralType.h"
 
+#include <QCryptographicHash>
+
 using namespace CatchChallenger;
 
 /// \warning never cross the signals from and to the different client, complexity ^2
@@ -227,9 +229,9 @@ void Client::disconnectClient()
         if(addTime>5)
             dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(character_id).arg(addTime));
         //save the monster
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && isInFight())
+        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle && isInFight())
             saveCurrentMonsterStat();
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
+        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheDisconnexion)
         {
             int index=0;
             const int &size=public_and_private_informations.playerMonster.size();

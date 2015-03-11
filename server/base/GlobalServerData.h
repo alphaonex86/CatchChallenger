@@ -8,7 +8,7 @@ class GlobalServerData
 {
 public:
     //shared into all the program
-    static ServerSettings serverSettings;
+    static GameServerSettings serverSettings;
     static ServerPrivateVariables serverPrivateVariables;
 };
 }
