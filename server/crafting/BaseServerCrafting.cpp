@@ -10,7 +10,6 @@
 #include "../base/SqlFunction.h"
 #include "../base/GlobalServerData.h"
 
-#include <QSqlError>
 #include <QFile>
 #include <QByteArray>
 #include <QDomDocument>
@@ -26,13 +25,13 @@ void BaseServer::preload_the_plant_on_map()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps` FROM `plant`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }

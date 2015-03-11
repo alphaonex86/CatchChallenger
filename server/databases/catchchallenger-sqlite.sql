@@ -118,20 +118,8 @@ CREATE TABLE character (
     "id" INTEGER,
     "pseudo" TEXT NOT NULL,
     "skin" INTEGER,
-    "x" INTEGER,
-    "y" INTEGER,
-    "orientation" INTEGER,
-    "map" INTEGER,
     "type" INTEGER,
     "clan" INTEGER,
-    "rescue_map" INTEGER,
-    "rescue_x" INTEGER,
-    "rescue_y" INTEGER,
-    "rescue_orientation" INTEGER,
-    "unvalidated_rescue_map" INTEGER,
-    "unvalidated_rescue_x" INTEGER,
-    "unvalidated_rescue_y" INTEGER,
-    "unvalidated_rescue_orientation" INTEGER,
     "clan_leader" INTEGER,
     "date" INTEGER,
     "account" INTEGER,
@@ -140,9 +128,27 @@ CREATE TABLE character (
     "time_to_delete" INTEGER,
     "played_time" INTEGER,
     "last_connect" INTEGER,
-    "market_cash" INTEGER
-, "starter" INTEGER);
+    "starter" INTEGER);
 CREATE UNIQUE INDEX "id" on "character" (id ASC);
+CREATE TABLE character_forserver (
+    "character" INTEGER,
+    "x" INTEGER,
+    "y" INTEGER,
+    "orientation" INTEGER,
+    "map" INTEGER,
+    "rescue_map" INTEGER,
+    "rescue_x" INTEGER,
+    "rescue_y" INTEGER,
+    "rescue_orientation" INTEGER,
+    "unvalidated_rescue_map" INTEGER,
+    "unvalidated_rescue_x" INTEGER,
+    "unvalidated_rescue_y" INTEGER,
+    "unvalidated_rescue_orientation" INTEGER,
+    "date" INTEGER,
+    "played_time" INTEGER,
+    "last_connect" INTEGER,
+    "market_cash" INTEGER);
+CREATE UNIQUE INDEX "idcharacter_forserver" on "character_forserver" (character ASC);
 CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on "character" (clan ASC);
 CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);

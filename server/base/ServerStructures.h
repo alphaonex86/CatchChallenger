@@ -1,13 +1,14 @@
 #ifndef CATCHCHALLENGER_SERVER_STRUCTURES_H
 #define CATCHCHALLENGER_SERVER_STRUCTURES_H
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QTimer>
+#endif
+
 #include <QObject>
 #include <QList>
 #include <QStringList>
 #include <QString>
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QTimer>
-#endif
 #include <QMutex>
 #include <QHash>
 #include <QVariant>
@@ -101,7 +102,12 @@ struct NormalServerSettings
     #endif
 };
 
-struct ServerSettings
+struct LoginServerSettings
+{
+    bool announce;
+};
+
+struct GameServerSettings
 {
     CompressionType compressionType;
     bool sendPlayerNumber;

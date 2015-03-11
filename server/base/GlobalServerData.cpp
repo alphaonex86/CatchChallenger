@@ -2,5 +2,5 @@
 
 using namespace CatchChallenger;
 
-ServerSettings GlobalServerData::serverSettings;
+GameServerSettings GlobalServerData::serverSettings;
 ServerPrivateVariables GlobalServerData::serverPrivateVariables;

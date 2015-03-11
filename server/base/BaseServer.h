@@ -8,11 +8,14 @@
 #include <QCoreApplication>
 #include <QList>
 #include <QByteArray>
-#include <QSqlDatabase>
 #include <QDir>
 #include <QSemaphore>
 #include <QString>
 #include <QRegularExpression>
+
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QSqlDatabase>
+#endif
 
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/Map_loader.h"
@@ -29,8 +32,8 @@ class BaseServer
 public:
     explicit BaseServer();
     virtual ~BaseServer();
-    void setSettings(const ServerSettings &settings);
-    ServerSettings getSettings() const;
+    void setSettings(const GameServerSettings &settings);
+    GameServerSettings getSettings() const;
     static void initialize_the_database_prepared_query();
 
     void load_clan_max_id();

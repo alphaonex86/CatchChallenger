@@ -69,7 +69,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     }
     #endif
     //save into the db
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle)
     {
         if(CommonSettings::commonSettings.useSP)
             dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_xp_hp_level
@@ -218,7 +218,7 @@ void Client::fightFinished()
 
 void Client::syncForEndOfTurn()
 {
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtEachTurn)
         saveStat();
 }
 
@@ -754,7 +754,7 @@ void Client::sendBattleMonsterChange()
 bool Client::giveXPSP(int xp,int sp)
 {
     const bool &haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtEachTurn)
     {
         if(CommonSettings::commonSettings.useSP)
         {
@@ -914,7 +914,7 @@ bool Client::dropKOOtherMonster()
         battleReturn=otherPlayerBattle->dropKOCurrentMonster();
     else
     {
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle)
         {
             if(!isInFight())
                 saveCurrentMonsterStat();
@@ -1093,7 +1093,7 @@ bool Client::moveUpMonster(const quint8 &number)
 {
     if(!CommonFightEngine::moveUpMonster(number))
         return false;
-    if(GlobalServerData::serverSettings.database.fightSync!=ServerSettings::Database::FightSync_AtTheDisconnexion)
+    if(GlobalServerData::serverSettings.database.fightSync!=GameServerSettings::Database::FightSync_AtTheDisconnexion)
     {
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number-1).id,number);
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number).id,number+1);
@@ -1108,7 +1108,7 @@ bool Client::moveDownMonster(const quint8 &number)
         errorOutput("Move monster have failed");
         return false;
     }
-    if(GlobalServerData::serverSettings.database.fightSync!=ServerSettings::Database::FightSync_AtTheDisconnexion)
+    if(GlobalServerData::serverSettings.database.fightSync!=GameServerSettings::Database::FightSync_AtTheDisconnexion)
     {
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number).id,number+1);
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number+1).id,number+2);
@@ -1216,7 +1216,7 @@ quint8 Client::decreaseSkillEndurance(const quint32 &skill)
         return 0;
     }
     const quint8 &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtEachTurn)
     {
         dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster_skill
                      .arg(newEndurance)
@@ -1226,7 +1226,7 @@ quint8 Client::decreaseSkillEndurance(const quint32 &skill)
     }
     else
     {
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle)
             deferedEndurance[currentMonster->id][skill]=newEndurance;
     }
     return newEndurance;

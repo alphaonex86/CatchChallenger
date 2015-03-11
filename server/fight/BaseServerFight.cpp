@@ -12,7 +12,6 @@
 #include <QByteArray>
 #include <QDomDocument>
 #include <QDomElement>
-#include <QSqlError>
 
 using namespace CatchChallenger;
 
@@ -32,13 +31,13 @@ void BaseServer::load_monsters_max_id()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -80,13 +79,13 @@ void BaseServer::load_monsters_warehouse_max_id()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id` FROM `monster_warehouse` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -128,13 +127,13 @@ void BaseServer::load_monsters_market_max_id()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id` FROM `monster_market` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 1;");
         break;
     }

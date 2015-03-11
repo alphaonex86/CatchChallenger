@@ -16,6 +16,7 @@
 #include <QByteArray>
 #include <QDateTime>
 #include <QTime>
+#include <QCryptographicHash>
 #include <time.h>
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
@@ -99,7 +100,7 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.pvp                                    = true;
     GlobalServerData::serverSettings.benchmark                              = false;
 
-    GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+    GlobalServerData::serverSettings.database.type                              = CatchChallenger::GameServerSettings::Database::DatabaseType_SQLite;
     GlobalServerData::serverSettings.database.sqlite.file                       = QString();
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
     GlobalServerData::serverSettings.datapackCache                              = -1;
@@ -131,8 +132,8 @@ BaseServer::BaseServer() :
     CommonSettings::commonSettings.factoryPriceChange     = 20;
     CommonSettings::commonSettings.character_delete_time  = 604800; // 7 day
     CommonSettings::commonSettings.waitBeforeConnectAfterKick=30;
-    GlobalServerData::serverSettings.database.type                              = ServerSettings::Database::DatabaseType_Mysql;
-    GlobalServerData::serverSettings.database.fightSync                         = ServerSettings::Database::FightSync_AtTheEndOfBattle;
+    GlobalServerData::serverSettings.database.type                              = GameServerSettings::Database::DatabaseType_Mysql;
+    GlobalServerData::serverSettings.database.fightSync                         = GameServerSettings::Database::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.database.positionTeleportSync              = true;
     GlobalServerData::serverSettings.database.secondToPositionSync              = 0;
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithmSelection_Simple;
@@ -229,7 +230,7 @@ void BaseServer::preload_the_events()
         index++;
     }
     {
-        QHashIterator<QString,QHash<QString,ServerSettings::ProgrammedEvent> > i(GlobalServerData::serverSettings.programmedEventList);
+        QHashIterator<QString,QHash<QString,GameServerSettings::ProgrammedEvent> > i(GlobalServerData::serverSettings.programmedEventList);
         while (i.hasNext()) {
             i.next();
             int index=0;
@@ -238,7 +239,7 @@ void BaseServer::preload_the_events()
                 const Event &event=CommonDatapack::commonDatapack.events.at(index);
                 if(event.name==i.key())
                 {
-                    QHashIterator<QString,ServerSettings::ProgrammedEvent> j(i.value());
+                    QHashIterator<QString,GameServerSettings::ProgrammedEvent> j(i.value());
                     while (j.hasNext()) {
                         j.next();
                         const int &sub_index=event.values.indexOf(j.value().value);
@@ -443,13 +444,13 @@ void BaseServer::preload_zone_sql()
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
-            case ServerSettings::Database::DatabaseType_Mysql:
+            case GameServerSettings::Database::DatabaseType_Mysql:
                 queryText=QStringLiteral("SELECT `clan` FROM `city` WHERE `city`='%1';").arg(zoneCodeName);
             break;
-            case ServerSettings::Database::DatabaseType_SQLite:
+            case GameServerSettings::Database::DatabaseType_SQLite:
                 queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
             break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
+            case GameServerSettings::Database::DatabaseType_PostgreSQL:
                 queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
             break;
         }
@@ -473,13 +474,13 @@ void BaseServer::preload_itemOnMap_sql()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y` FROM `dictionary_itemonmap` ORDER BY `map`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_itemonmap ORDER BY map");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_itemonmap ORDER BY map");
         break;
     }
@@ -574,13 +575,13 @@ void BaseServer::preload_dictionary_allow()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `id`,`allow` FROM `dictionary_allow` ORDER BY `allow`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT id,allow FROM dictionary_allow ORDER BY allow");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT id,allow FROM dictionary_allow ORDER BY allow");
         break;
     }
@@ -633,13 +634,13 @@ void BaseServer::preload_dictionary_allow_return()
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
-            case ServerSettings::Database::DatabaseType_Mysql:
+            case GameServerSettings::Database::DatabaseType_Mysql:
                 queryText=QStringLiteral("INSERT INTO `dictionary_allow`(`id`,`allow`) VALUES(%1,'clan');").arg(lastId);
             break;
-            case ServerSettings::Database::DatabaseType_SQLite:
+            case GameServerSettings::Database::DatabaseType_SQLite:
                 queryText=QStringLiteral("INSERT INTO dictionary_allow(id,allow) VALUES(%1,'clan');").arg(lastId);
             break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
+            case GameServerSettings::Database::DatabaseType_PostgreSQL:
                 queryText=QStringLiteral("INSERT INTO dictionary_allow(id,allow) VALUES(%1,'clan');").arg(lastId);
             break;
         }
@@ -662,13 +663,13 @@ void BaseServer::preload_dictionary_map()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `id`,`map` FROM `dictionary_map` ORDER BY `map`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT id,map FROM dictionary_map ORDER BY map");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT id,map FROM dictionary_map ORDER BY map");
         break;
     }
@@ -726,13 +727,13 @@ void BaseServer::preload_dictionary_map_return()
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
-                case ServerSettings::Database::DatabaseType_Mysql:
+                case GameServerSettings::Database::DatabaseType_Mysql:
                     queryText=QStringLiteral("INSERT INTO `dictionary_map`(`id`,`map`) VALUES(%1,'%2');").arg(lastId).arg(map);
                 break;
-                case ServerSettings::Database::DatabaseType_SQLite:
+                case GameServerSettings::Database::DatabaseType_SQLite:
                     queryText=QStringLiteral("INSERT INTO dictionary_map(id,map) VALUES(%1,'%2');").arg(lastId).arg(map);
                 break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                case GameServerSettings::Database::DatabaseType_PostgreSQL:
                     queryText=QStringLiteral("INSERT INTO dictionary_map(id,map) VALUES(%1,'%2');").arg(lastId).arg(map);
                 break;
             }
@@ -765,13 +766,13 @@ void BaseServer::preload_dictionary_reputation()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `id`,`reputation` FROM `dictionary_reputation` ORDER BY `reputation`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT id,reputation FROM dictionary_reputation ORDER BY reputation");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT id,reputation FROM dictionary_reputation ORDER BY reputation");
         break;
     }
@@ -833,13 +834,13 @@ void BaseServer::preload_dictionary_reputation_return()
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
-                case ServerSettings::Database::DatabaseType_Mysql:
+                case GameServerSettings::Database::DatabaseType_Mysql:
                     queryText=QStringLiteral("INSERT INTO `dictionary_reputation`(`id`,`reputation`) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
-                case ServerSettings::Database::DatabaseType_SQLite:
+                case GameServerSettings::Database::DatabaseType_SQLite:
                     queryText=QStringLiteral("INSERT INTO dictionary_reputation(id,reputation) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                case GameServerSettings::Database::DatabaseType_PostgreSQL:
                     queryText=QStringLiteral("INSERT INTO dictionary_reputation(id,reputation) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
             }
@@ -866,13 +867,13 @@ void BaseServer::preload_dictionary_skin()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `id`,`skin` FROM `dictionary_skin` ORDER BY `skin`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT id,skin FROM dictionary_skin ORDER BY skin");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT id,skin FROM dictionary_skin ORDER BY skin");
         break;
     }
@@ -934,13 +935,13 @@ void BaseServer::preload_dictionary_skin_return()
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
-                case ServerSettings::Database::DatabaseType_Mysql:
+                case GameServerSettings::Database::DatabaseType_Mysql:
                     queryText=QStringLiteral("INSERT INTO `dictionary_skin`(`id`,`skin`) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
-                case ServerSettings::Database::DatabaseType_SQLite:
+                case GameServerSettings::Database::DatabaseType_SQLite:
                     queryText=QStringLiteral("INSERT INTO dictionary_skin(id,skin) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                case GameServerSettings::Database::DatabaseType_PostgreSQL:
                     queryText=QStringLiteral("INSERT INTO dictionary_skin(id,skin) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
             }
@@ -975,7 +976,7 @@ void BaseServer::preload_profile()
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
-                case ServerSettings::Database::DatabaseType_Mysql:
+                case GameServerSettings::Database::DatabaseType_Mysql:
                     serverProfile.preparedQuery << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
                     serverProfile.preparedQuery << QLatin1String(",");
                     serverProfile.preparedQuery << QLatin1String(",'");
@@ -988,7 +989,7 @@ void BaseServer::preload_profile()
                             QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,0,0,0,0,")+
                             QString::number(index)+QLatin1String(");");
                 break;
-                case ServerSettings::Database::DatabaseType_SQLite:
+                case GameServerSettings::Database::DatabaseType_SQLite:
                     serverProfile.preparedQuery << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                     serverProfile.preparedQuery << QLatin1String(",");
                     serverProfile.preparedQuery << QLatin1String(",'");
@@ -1001,7 +1002,7 @@ void BaseServer::preload_profile()
                             QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,0,0,0,0,")+
                             QString::number(index)+QLatin1String(");");
                 break;
-                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                case GameServerSettings::Database::DatabaseType_PostgreSQL:
                     serverProfile.preparedQuery << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                     serverProfile.preparedQuery << QLatin1String(",");
                     serverProfile.preparedQuery << QLatin1String(",'");
@@ -1068,13 +1069,13 @@ void BaseServer::preload_industries()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
     }
@@ -1234,13 +1235,13 @@ void BaseServer::preload_market_monsters()
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
-            case ServerSettings::Database::DatabaseType_Mysql:
+            case GameServerSettings::Database::DatabaseType_Mysql:
                 queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster_market` ORDER BY `id`");
             break;
-            case ServerSettings::Database::DatabaseType_SQLite:
+            case GameServerSettings::Database::DatabaseType_SQLite:
                 queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
             break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
+            case GameServerSettings::Database::DatabaseType_PostgreSQL:
                 queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
             break;
         }
@@ -1248,13 +1249,13 @@ void BaseServer::preload_market_monsters()
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
-            case ServerSettings::Database::DatabaseType_Mysql:
+            case GameServerSettings::Database::DatabaseType_Mysql:
                 queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster_market` ORDER BY `id`");
             break;
-            case ServerSettings::Database::DatabaseType_SQLite:
+            case GameServerSettings::Database::DatabaseType_SQLite:
                 queryText=QLatin1String("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
             break;
-            case ServerSettings::Database::DatabaseType_PostgreSQL:
+            case GameServerSettings::Database::DatabaseType_PostgreSQL:
                 queryText=QLatin1String("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
             break;
         }
@@ -1431,13 +1432,13 @@ void BaseServer::preload_market_items()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `item`,`quantity`,`character`,`market_price` FROM `item_market` ORDER BY `item`");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
         break;
     }
@@ -1518,13 +1519,13 @@ void BaseServer::loadMonsterBuffs(const quint32 &index)
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1 ORDER BY `buff`").arg(index);
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff").arg(index);
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff").arg(index);
         break;
     }
@@ -1600,13 +1601,13 @@ void BaseServer::loadMonsterSkills(const quint32 &index)
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1 ORDER BY `skill`").arg(index);
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill").arg(index);
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill").arg(index);
         break;
     }
@@ -1761,7 +1762,7 @@ bool BaseServer::preload_the_map()
                             switch(GlobalServerData::serverSettings.database.type)
                             {
                                 default:
-                                case ServerSettings::Database::DatabaseType_Mysql:
+                                case GameServerSettings::Database::DatabaseType_Mysql:
                                     queryText=QStringLiteral("INSERT INTO `dictionary_itemonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
                                             .arg(GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
                                             .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
@@ -1769,7 +1770,7 @@ bool BaseServer::preload_the_map()
                                             .arg(item.point.y)
                                             ;
                                 break;
-                                case ServerSettings::Database::DatabaseType_SQLite:
+                                case GameServerSettings::Database::DatabaseType_SQLite:
                                     queryText=QStringLiteral("INSERT INTO dictionary_itemonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                             .arg(GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
                                             .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
@@ -1777,7 +1778,7 @@ bool BaseServer::preload_the_map()
                                             .arg(item.point.y)
                                             ;
                                 break;
-                                case ServerSettings::Database::DatabaseType_PostgreSQL:
+                                case GameServerSettings::Database::DatabaseType_PostgreSQL:
                                     queryText=QStringLiteral("INSERT INTO dictionary_itemonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                             .arg(GlobalServerData::serverPrivateVariables.dictionary_item_maxId)
                                             .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
@@ -2518,7 +2519,7 @@ bool BaseServer::initialize_the_database()
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
         if(!GlobalServerData::serverPrivateVariables.db.syncConnectMysql(
                     GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
                     GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
@@ -2536,7 +2537,7 @@ bool BaseServer::initialize_the_database()
         GlobalServerData::serverPrivateVariables.db_type_string=QLatin1Literal("mysql");
         break;
 
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
         if(!GlobalServerData::serverPrivateVariables.db.syncConnectSqlite(GlobalServerData::serverSettings.database.sqlite.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
@@ -2548,7 +2549,7 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
 
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db.syncConnectPostgresql(
                     GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
@@ -2586,7 +2587,7 @@ void BaseServer::initialize_the_database_prepared_query()
         default:
         return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT `allow` FROM `character_allow` WHERE `character`=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)");
@@ -2713,7 +2714,7 @@ void BaseServer::initialize_the_database_prepared_query()
 
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
@@ -2837,7 +2838,7 @@ void BaseServer::initialize_the_database_prepared_query()
         break;
         #endif
 
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
         GlobalServerData::serverPrivateVariables.db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         GlobalServerData::serverPrivateVariables.db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         GlobalServerData::serverPrivateVariables.db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
@@ -3208,7 +3209,7 @@ void BaseServer::unload_the_randomData()
     GlobalServerData::serverPrivateVariables.randomData.clear();
 }
 
-void BaseServer::setSettings(const ServerSettings &settings)
+void BaseServer::setSettings(const GameServerSettings &settings)
 {
     //load it
     GlobalServerData::serverSettings=settings;
@@ -3216,7 +3217,7 @@ void BaseServer::setSettings(const ServerSettings &settings)
     loadAndFixSettings();
 }
 
-ServerSettings BaseServer::getSettings() const
+GameServerSettings BaseServer::getSettings() const
 {
     return GlobalServerData::serverSettings;
 }
@@ -3382,9 +3383,9 @@ void BaseServer::loadAndFixSettings()
 
     switch(GlobalServerData::serverSettings.database.type)
     {
-        case CatchChallenger::ServerSettings::Database::DatabaseType_SQLite:
-        case CatchChallenger::ServerSettings::Database::DatabaseType_Mysql:
-        case CatchChallenger::ServerSettings::Database::DatabaseType_PostgreSQL:
+        case CatchChallenger::GameServerSettings::Database::DatabaseType_SQLite:
+        case CatchChallenger::GameServerSettings::Database::DatabaseType_Mysql:
+        case CatchChallenger::GameServerSettings::Database::DatabaseType_PostgreSQL:
         break;
         default:
             qDebug() << "Wrong db type";
@@ -3463,13 +3464,13 @@ void BaseServer::load_clan_max_id()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -3508,13 +3509,13 @@ void BaseServer::load_account_max_id()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -3559,13 +3560,13 @@ void BaseServer::load_character_max_id()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        case ServerSettings::Database::DatabaseType_Mysql:
+        case GameServerSettings::Database::DatabaseType_Mysql:
             queryText=QLatin1String("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_SQLite:
+        case GameServerSettings::Database::DatabaseType_SQLite:
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
         break;
-        case ServerSettings::Database::DatabaseType_PostgreSQL:
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
         break;
     }

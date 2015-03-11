@@ -44,7 +44,7 @@ private:
     QTime time_latency;
     quint16 internal_currentLatency;
     QList<Event> events;
-    QHash<QString,QHash<QString,ServerSettings::ProgrammedEvent> > programmedEventList;
+    QHash<QString,QHash<QString,GameServerSettings::ProgrammedEvent> > programmedEventList;
     QString sizeToString(double size);
     QString adaptString(float size);
 private slots:
@@ -137,6 +137,8 @@ private slots:
     void on_maxWarehousePlayerItems_editingFinished();
     void on_tryInterval_editingFinished();
     void on_considerDownAfterNumberOfTry_editingFinished();
+    void on_announce_toggled(bool checked);
+
 signals:
     void record_latency();
 };
