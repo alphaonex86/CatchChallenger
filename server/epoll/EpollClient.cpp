@@ -10,7 +10,6 @@
 #include <cstring>
 #include <errno.h>
 #include <string.h>
-#include "../base/GlobalServerData.h"
 #include "Epoll.h"
 #include "EpollSocket.h"
 

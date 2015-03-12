@@ -4,8 +4,8 @@
 #include <QSet>
 #include <QHash>
 #include <QByteArray>
+#include <QDebug>
 
-#include "GeneralStructures.h"
 #include "GeneralVariable.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
     #ifdef SERVERSSL
@@ -38,15 +38,32 @@ class ProtocolParsingCheck;
 class ProtocolParsing
 {
 public:
+    /// \brief Define the mode of transmission: client or server
+    enum PacketModeTransmission
+    {
+        PacketModeTransmission_Server=0x00,
+        PacketModeTransmission_Client=0x01
+    };
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     enum CompressionType
     {
         CompressionType_None,
         CompressionType_Zlib,
         CompressionType_Xz
     };
+    #endif
+    enum InitialiseTheVariableType
+    {
+        AllInOne,
+        LoginServer,
+        GameServer,
+        MasterServer
+    };
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static CompressionType compressionType;
+    #endif
     ProtocolParsing();
-    static void initialiseTheVariable();
+    static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
     static void setMaxPlayers(const quint16 &maxPlayers);
 protected:
     /********************** static *********************/
@@ -73,12 +90,14 @@ protected:
     static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacketServerToClient;
 
     //compression not found single main code because is reserved to fast/small message
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static QHash<quint8,QSet<quint16> > compressionMultipleCodePacketClientToServer;
     static QHash<quint8,QSet<quint16> > compressionMultipleCodePacketServerToClient;
     static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketClientToServer;
     static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketServerToClient;
     static QSet<quint8> replyComressionOnlyMainCodePacketClientToServer;
     static QSet<quint8> replyComressionOnlyMainCodePacketServerToClient;
+    #endif
 protected:
     virtual void errorParsingLayer(const QString &error) = 0;
     virtual void messageParsingLayer(const QString &message) const = 0;
@@ -144,7 +163,9 @@ public:
     //reply to the query
     QHash<quint8,quint8> waitedReply_mainCodeType;
     QHash<quint8,quint16> waitedReply_subCodeType;
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     QSet<quint8> replyOutputCompression;
+    #endif
     QHash<quint8,quint16> replyOutputSize;
 public:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
@@ -188,7 +209,9 @@ public:
     //send reply
     int computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size);
     //compression
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static QByteArray computeCompression(const QByteArray &data);
+    #endif
 private:
     bool internalPackOutcommingData(const char *data,const int &size);
     static qint8 encodeSize(char *data,const quint32 &size);
