@@ -41,7 +41,9 @@ SOURCES += main-epoll.cpp \
     epoll/timer/TimerPositionSync.cpp \
     epoll/timer/TimerDdos.cpp \
     epoll/timer/TimerEvents.cpp \
-    NormalServerGlobal.cpp
+    NormalServerGlobal.cpp \
+    epoll/EpollGenericServer.cpp \
+    epoll/EpollGenericSslServer.cpp
 
 HEADERS += epoll/EpollSocket.h \
     epoll/EpollClient.h \
@@ -61,5 +63,7 @@ HEADERS += epoll/EpollSocket.h \
     epoll/timer/TimerSendInsertMoveRemove.h \
     epoll/timer/TimerDdos.h \
     epoll/timer/TimerEvents.h \
-    NormalServerGlobal.h
+    NormalServerGlobal.h \
+    epoll/EpollGenericServer.h \
+    epoll/EpollGenericSslServer.h
 

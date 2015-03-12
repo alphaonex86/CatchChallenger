@@ -626,7 +626,7 @@ private:
     void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
     void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
 
-    void parseError(const QString &errorString);
+    void parseNetworkReadError(const QString &errorString);
 
     // ------------------------------
     bool sendFile(const QString &fileName);

@@ -3,23 +3,16 @@
 
 #ifndef SERVERSSL
 
-#include <sys/socket.h>
-
-#include "BaseClassSwitch.h"
+#include "EpollGenericServer.h"
 #include "../base/BaseServer.h"
 #include "../base/ServerStructures.h"
 
 namespace CatchChallenger {
-class EpollServer : public BaseClassSwitch, public CatchChallenger::BaseServer
+class EpollServer : public CatchChallenger::EpollGenericServer, public CatchChallenger::BaseServer
 {
 public:
     EpollServer();
-    ~EpollServer();
     bool tryListen();
-    void close();
-    int accept(sockaddr *in_addr,socklen_t *in_len);
-    int getSfd();
-    Type getType() const;
     void preload_the_data();
     void unload_the_data();
     void setNormalSettings(const NormalServerSettings &settings);
@@ -29,7 +22,6 @@ public:
     bool isReady();
     void quitForCriticalDatabaseQueryFailed();
 private:
-    int sfd;
     NormalServerSettings normalServerSettings;
     int yes;
     bool ready;

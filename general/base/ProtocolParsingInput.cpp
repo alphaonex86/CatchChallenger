@@ -12,7 +12,7 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const int &size)
     {}
     else
     {
-        DebugClass::debugConsole(QStringLiteral("Socket open in read only!"));
+        messageParsingLayer(QStringLiteral("Socket open in read only!"));
         disconnectClient();
         return false;
     }
@@ -41,7 +41,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * data, const int &size)
     {}
     else
     {
-        DebugClass::debugConsole(QStringLiteral("Socket open in write only!"));
+        messageParsingLayer(QStringLiteral("Socket open in write only!"));
         disconnectClient();
         return false;
     }
@@ -57,9 +57,9 @@ ssize_t ProtocolParsingInputOutput::write(const char * data, const int &size)
     if(Q_UNLIKELY(size!=byteWriten))
     {
         #ifdef EPOLLCATCHCHALLENGERSERVER
-        DebugClass::debugConsole(QStringLiteral("All the bytes have not be written byteWriten: %1, size: %2").arg(byteWriten).arg(size));
+        messageParsingLayer(QStringLiteral("All the bytes have not be written byteWriten: %1, size: %2").arg(byteWriten).arg(size));
         #else
-        DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+        messageParsingLayer(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
         #endif
     }
     else
@@ -568,12 +568,14 @@ bool ProtocolParsingBase::parseQueryNumber(const char *commonBuffer,const quint3
                     {
                         if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
                         {
+                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                             {
                                 errorParsingLayer("Can't be compressed and fixed size");
                                 return false;
                             }
+                            #endif
                             #endif
                             dataSize=replySizeOnlyMainCodePacketServerToClient.value(mainCodeType);
                             haveData_dataSize=true;
@@ -584,12 +586,14 @@ bool ProtocolParsingBase::parseQueryNumber(const char *commonBuffer,const quint3
                     {
                         if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
                         {
+                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
                             {
                                 errorParsingLayer("Can't be compressed and fixed size");
                                 return false;
                             }
+                            #endif
                             #endif
                             dataSize=replySizeOnlyMainCodePacketClientToServer.value(mainCodeType);
                             haveData_dataSize=true;
@@ -606,12 +610,14 @@ bool ProtocolParsingBase::parseQueryNumber(const char *commonBuffer,const quint3
                         {
                             if(replySizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                             {
+                                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                                 {
                                     errorParsingLayer("Can't be compressed and fixed size");
                                     return false;
                                 }
+                                #endif
                                 #endif
                                 dataSize=replySizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType);
                                 haveData_dataSize=true;
@@ -625,12 +631,14 @@ bool ProtocolParsingBase::parseQueryNumber(const char *commonBuffer,const quint3
                         {
                             if(replySizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                             {
+                                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                                 {
                                     errorParsingLayer("Can't be compressed and fixed size");
                                     return false;
                                 }
+                                #endif
                                 #endif
                                 dataSize=replySizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType);
                                 haveData_dataSize=true;
@@ -954,6 +962,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             if(isClient)
             {
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                     {
@@ -988,6 +997,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                         }
                         return true;
                     }
+                #endif
                 parseFullMessage(mainCodeType,subCodeType,data,size);
                 return true;
             }
@@ -997,6 +1007,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                 #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
                     parseFullMessage(mainCodeType,subCodeType,data,size);
                 #else
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     {
@@ -1031,6 +1042,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                         }
                         return true;
                     }
+                #endif
                 parseFullMessage(mainCodeType,subCodeType,data,size);
                 return true;
                 #endif
@@ -1067,6 +1079,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 if(isClient)
                 {
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                         if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                         {
@@ -1101,6 +1114,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                             }
                             return true;
                         }
+                    #endif
                     parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
                     return true;
                 }
@@ -1110,6 +1124,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
                         parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
                     #else
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                         if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                         {
@@ -1144,6 +1159,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                             }
                             return true;
                         }
+                    #endif
                     parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
                     return true;
                     #endif
@@ -1166,6 +1182,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 if(isClient)
                 {
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                     {
                         switch(compressionType)
@@ -1199,6 +1216,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                         }
                         return true;
                     }
+                    #endif
                     parseReplyData(mainCodeType,queryNumber,data,size);
                     return true;
                 }
@@ -1208,6 +1226,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
                         parseReplyData(mainCodeType,queryNumber,data,size);
                     #else
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
                     {
                         switch(compressionType)
@@ -1241,6 +1260,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                         }
                         return true;
                     }
+                    #endif
                     parseReplyData(mainCodeType,queryNumber,data,size);
                     return true;
                     #endif
@@ -1260,6 +1280,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 if(isClient)
                 {
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                         if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                         {
@@ -1294,6 +1315,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                             }
                             return true;
                         }
+                    #endif
                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
                     return true;
                 }
@@ -1303,6 +1325,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
                         parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
                     #else
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                         if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                         {
@@ -1337,6 +1360,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                             }
                             return true;
                         }
+                    #endif
                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
                     return true;
                     #endif
@@ -1414,6 +1438,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
         #endif
         if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                 messageParsingLayer(
@@ -1422,11 +1447,13 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
                             #endif
                 QStringLiteral(" storeInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
             #endif
+            #endif
             //register the size of the reply to send
             replyOutputSize[queryNumber]=replySizeOnlyMainCodePacketServerToClient.value(mainCodeType);
         }
         else
         {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
             {
                 #ifdef PROTOCOLPARSINGDEBUG
@@ -1439,6 +1466,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
                 //register the compression of the reply to send
                 replyOutputCompression << queryNumber;
             }
+            #endif
         }
     }
     else
@@ -1457,6 +1485,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
         #endif
         if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
                 messageParsingLayer(
@@ -1465,11 +1494,13 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
                             #endif
                 QStringLiteral(" storeInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
             #endif
+            #endif
             //register the size of the reply to send
             replyOutputSize[queryNumber]=replySizeOnlyMainCodePacketClientToServer.value(mainCodeType);
         }
         else
         {
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
             {
                 #ifdef PROTOCOLPARSINGDEBUG
@@ -1482,6 +1513,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
                 //register the compression of the reply to send
                 replyOutputCompression << queryNumber;
             }
+            #endif
         }
     }
 }
@@ -1527,6 +1559,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                             #endif
                 QStringLiteral(" storeInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
@@ -1535,6 +1568,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                                     QString::number(isClient)+
                                     #endif
                         QStringLiteral(" storeInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 #endif
                 replyOutputSize[queryNumber]=replySizeMultipleCodePacketClientToServer.value(mainCodeType).value(subCodeType);
             }
@@ -1547,6 +1581,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                             #endif
                 QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     {
@@ -1560,6 +1595,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                         //register the compression of the reply to send
                         replyOutputCompression << queryNumber;
                     }
+                #endif
             }
         }
         else
@@ -1571,6 +1607,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                         #endif
             QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                 {
@@ -1584,6 +1621,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                     //register the compression of the reply to send
                     replyOutputCompression << queryNumber;
                 }
+            #endif
         }
     }
     else
@@ -1611,6 +1649,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                             #endif
                 QStringLiteral(" storeInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
@@ -1619,6 +1658,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                                     QString::number(isClient)+
                                     #endif
                         QStringLiteral(" storeInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 #endif
                 replyOutputSize[queryNumber]=replySizeMultipleCodePacketServerToClient.value(mainCodeType).value(subCodeType);
             }
@@ -1631,6 +1671,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                             #endif
                 QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                     {
@@ -1644,6 +1685,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                         //register the compression of the reply to send
                         replyOutputCompression << queryNumber;
                     }
+                #endif
             }
         }
         else
@@ -1655,6 +1697,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                         #endif
             QStringLiteral(" storeInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                 {
@@ -1668,6 +1711,7 @@ void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,
                     //register the compression of the reply to send
                     replyOutputCompression << queryNumber;
                }
+            #endif
         }
     }
 }
