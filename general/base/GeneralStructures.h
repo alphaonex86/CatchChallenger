@@ -353,13 +353,6 @@ struct Player_private_and_public_informations
     QList<quint8> itemOnMap;
 };
 
-/// \brief Define the mode of transmission: client or server
-enum PacketModeTransmission
-{
-    PacketModeTransmission_Server=0x00,
-    PacketModeTransmission_Client=0x01
-};
-
 struct CharacterEntry
 {
     quint32 character_id;

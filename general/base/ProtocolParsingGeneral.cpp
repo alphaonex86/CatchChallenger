@@ -3,7 +3,9 @@
 #include "GeneralVariable.h"
 #include "ProtocolParsingCheck.h"
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include <lzma.h>
+#endif
 
 using namespace CatchChallenger;
 
@@ -28,7 +30,9 @@ QSet<quint8> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub c
 #endif
 
 quint8                              ProtocolParsing::replyCodeClientToServer;
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 ProtocolParsing::CompressionType    ProtocolParsing::compressionType=CompressionType_None;
+#endif
 //predefined size
 QHash<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
@@ -45,13 +49,16 @@ QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketSer
 QHash<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 QHash<quint8,QSet<quint16> >    ProtocolParsing::compressionMultipleCodePacketClientToServer;
 QHash<quint8,QSet<quint16> >    ProtocolParsing::compressionMultipleCodePacketServerToClient;
 QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
 QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
 QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
 QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
+#endif
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 /* read/write buffer sizes */
 #define IN_BUF_MAX  409600
 #define OUT_BUF_MAX 409600
@@ -154,115 +161,150 @@ QByteArray ProtocolParsingBase::lzmaUncompress(QByteArray data)
     lzma_end (&strm);
     return arr;
 }
+#endif
 
 ProtocolParsing::ProtocolParsing()
 {
 }
 
 /// \note Nomination is: function, direction
-void ProtocolParsing::initialiseTheVariable()
+void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType)
 {
-    if(!mainCodeWithoutSubCodeTypeClientToServer.isEmpty())
-        return;
-
-    #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
-    memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
-    #endif
-    compressionType=CompressionType_Zlib;
-
-    //def query without the sub code
-    mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
-    mainCodeWithoutSubCodeTypeClientToServer << 0x03 << 0x04 << 0x05 << 0x40 << 0x41 << 0x43 << 0x61;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    toDebugValidMainCodeServerToClient << 0x79 << 0xC2 << 0x90 << 0xE0 << 0xD0 << 0x80 << 0xF0;
-    toDebugValidMainCodeClientToServer << 0x02 << 0x42 << 0x60 << 0x50 << 0x6a;
-    #endif
-
-    //define the size of direct query
+    switch(initialiseTheVariableType)
     {
-        //default like is was more than 255 players
-        sizeOnlyMainCodePacketServerToClient[0xC3]=2;
+        case InitialiseTheVariableType::MasterServer:
+            if(!mainCode_IsQueryClientToServer.isEmpty())
+                return;
+
+            #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+            memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+            #endif
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            compressionType=CompressionType_None;
+            #endif
+
+            sizeOnlyMainCodePacketClientToServer[0x01]=8+64;
+            replySizeOnlyMainCodePacketServerToClient[0x01]=1;
+
+            //reply code
+            ProtocolParsing::replyCodeServerToClient=0xC1;
+            ProtocolParsing::replyCodeClientToServer=0x41;
+
+            //main code for query with reply
+            ProtocolParsing::mainCode_IsQueryClientToServer << 0x01 << 0x02 << 0x03 << 0x04;
+            mainCodeWithoutSubCodeTypeClientToServer << 0x01 << 0x02 << 0x03 << 0x04;
+        break;
+        case InitialiseTheVariableType::AllInOne:
+        default:
+            if(!mainCodeWithoutSubCodeTypeClientToServer.isEmpty())
+                return;
+
+            #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
+            memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+            #endif
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            compressionType=CompressionType_Zlib;
+            #endif
+
+            //reply code
+            ProtocolParsing::replyCodeServerToClient=0xC1;
+            ProtocolParsing::replyCodeClientToServer=0x41;
+
+            //def query without the sub code
+            mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
+            mainCodeWithoutSubCodeTypeClientToServer << 0x03 << 0x04 << 0x05 << 0x40 << 0x43 << 0x61;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            toDebugValidMainCodeServerToClient << 0x79 << 0xC2 << 0x90 << 0xE0 << 0xD0 << 0x80 << 0xF0;
+            toDebugValidMainCodeClientToServer << 0x02 << 0x42 << 0x60 << 0x50 << 0x6a;
+            #endif
+
+            //define the size of direct query
+            {
+                //default like is was more than 255 players
+                sizeOnlyMainCodePacketServerToClient[0xC3]=2;
+            }
+            sizeOnlyMainCodePacketServerToClient[0xC4]=0;
+            sizeOnlyMainCodePacketClientToServer[0x40]=2;
+            sizeOnlyMainCodePacketClientToServer[0x03]=5;
+            sizeOnlyMainCodePacketClientToServer[0x04]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
+            sizeOnlyMainCodePacketClientToServer[0x05]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
+            sizeOnlyMainCodePacketClientToServer[0x61]=2;
+            sizeMultipleCodePacketClientToServer[0x02][0x0004]=4;
+            sizeMultipleCodePacketClientToServer[0x02][0x0005]=4;
+            sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
+            sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
+            sizeMultipleCodePacketClientToServer[0x10][0x0008]=2;
+            sizeMultipleCodePacketClientToServer[0x10][0x0009]=2;
+            sizeMultipleCodePacketClientToServer[0x10][0x000A]=2;
+            sizeMultipleCodePacketClientToServer[0x10][0x000B]=2*2+2*4;
+            sizeMultipleCodePacketClientToServer[0x10][0x000C]=2*2+2*4;
+            sizeMultipleCodePacketClientToServer[0x10][0x000D]=2;
+            sizeMultipleCodePacketClientToServer[0x10][0x000E]=2*2+2*4;
+            sizeMultipleCodePacketClientToServer[0x10][0x000F]=2*2+2*4;
+            sizeMultipleCodePacketClientToServer[0x10][0x0010]=0;
+            sizeMultipleCodePacketClientToServer[0x10][0x0013]=0;
+            sizeMultipleCodePacketClientToServer[0x50][0x0002]=2+4;
+            sizeMultipleCodePacketClientToServer[0x50][0x0004]=0;
+            sizeMultipleCodePacketClientToServer[0x50][0x0005]=0;
+            sizeMultipleCodePacketClientToServer[0x50][0x0007]=0;
+            sizeMultipleCodePacketClientToServer[0x60][0x0002]=0;
+            sizeMultipleCodePacketClientToServer[0x60][0x0003]=1;
+            sizeMultipleCodePacketClientToServer[0x60][0x0004]=4+2;
+            sizeMultipleCodePacketClientToServer[0x60][0x0006]=0;
+            sizeMultipleCodePacketClientToServer[0x60][0x0007]=2;
+            sizeMultipleCodePacketClientToServer[0x60][0x0008]=2;
+            sizeMultipleCodePacketClientToServer[0x60][0x0009]=4;//monster id in db
+            sizeMultipleCodePacketClientToServer[0x6a][0x0001]=2;
+            sizeMultipleCodePacketClientToServer[0x6a][0x0002]=2;
+            sizeMultipleCodePacketClientToServer[0x6a][0x0003]=2;
+            sizeMultipleCodePacketClientToServer[0x6a][0x0004]=2;
+            sizeMultipleCodePacketClientToServer[0x6a][0x0005]=1;
+            sizeMultipleCodePacketClientToServer[0x42][0x0004]=1;
+
+            sizeMultipleCodePacketServerToClient[0xC2][0x0009]=0;
+            sizeMultipleCodePacketServerToClient[0xD0][0x0006]=0;
+            sizeMultipleCodePacketServerToClient[0xD0][0x0007]=0;
+            sizeMultipleCodePacketServerToClient[0xD0][0x0008]=0;
+            sizeMultipleCodePacketServerToClient[0xE0][0x0007]=0;
+            sizeMultipleCodePacketServerToClient[0x79][0x0002]=2;
+            //define the size of the reply
+            /** \note previously send by: sizeMultipleCodePacketServerToClient */
+            replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
+            replySizeMultipleCodePacketClientToServer[0x79][0x0002]=0;
+            /** \note previously send by: sizeMultipleCodePacketClientToServer */
+            replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;
+            replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
+            replySizeMultipleCodePacketServerToClient[0x80][0x0001]=1;
+
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x0004;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x000D;
+            //define the compression of the reply
+            /** \note previously send by: sizeMultipleCodePacketClientToServer */
+            replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
+            replyComressionMultipleCodePacketServerToClient[0x02] << 0x0002;
+            replyComressionMultipleCodePacketServerToClient[0x02] << 0x0005;
+            #endif
+
+            //main code for query with reply
+            ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x03 << 0x04 << 0x05 << 0x10 << 0x20 << 0x30;//replySizeMultipleCodePacketServerToClient
+            ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x80 << 0x90 << 0xA0;//replySizeMultipleCodePacketClientToServer
+
+            //register meta type
+            #ifndef EPOLLCATCHCHALLENGERSERVER
+            qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
+            qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<QList<Skill::AttackReturn> >("QList<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+            qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
+            qRegisterMetaType<QList<CharacterEntry> >("QList<CharacterEntry>");
+            qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
+            #endif
+        break;
     }
-    sizeOnlyMainCodePacketServerToClient[0xC4]=0;
-    sizeOnlyMainCodePacketClientToServer[0x40]=2;
-    sizeOnlyMainCodePacketClientToServer[0x03]=5;
-    sizeOnlyMainCodePacketClientToServer[0x04]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
-    sizeOnlyMainCodePacketClientToServer[0x05]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
-    sizeOnlyMainCodePacketClientToServer[0x61]=2;
-    sizeMultipleCodePacketClientToServer[0x02][0x0004]=4;
-    sizeMultipleCodePacketClientToServer[0x02][0x0005]=4;
-    sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
-    sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
-    sizeMultipleCodePacketClientToServer[0x10][0x0008]=2;
-    sizeMultipleCodePacketClientToServer[0x10][0x0009]=2;
-    sizeMultipleCodePacketClientToServer[0x10][0x000A]=2;
-    sizeMultipleCodePacketClientToServer[0x10][0x000B]=2*2+2*4;
-    sizeMultipleCodePacketClientToServer[0x10][0x000C]=2*2+2*4;
-    sizeMultipleCodePacketClientToServer[0x10][0x000D]=2;
-    sizeMultipleCodePacketClientToServer[0x10][0x000E]=2*2+2*4;
-    sizeMultipleCodePacketClientToServer[0x10][0x000F]=2*2+2*4;
-    sizeMultipleCodePacketClientToServer[0x10][0x0010]=0;
-    sizeMultipleCodePacketClientToServer[0x10][0x0013]=0;
-    sizeMultipleCodePacketClientToServer[0x50][0x0002]=2+4;
-    sizeMultipleCodePacketClientToServer[0x50][0x0004]=0;
-    sizeMultipleCodePacketClientToServer[0x50][0x0005]=0;
-    sizeMultipleCodePacketClientToServer[0x50][0x0007]=0;
-    sizeMultipleCodePacketClientToServer[0x60][0x0002]=0;
-    sizeMultipleCodePacketClientToServer[0x60][0x0003]=1;
-    sizeMultipleCodePacketClientToServer[0x60][0x0004]=4+2;
-    sizeMultipleCodePacketClientToServer[0x60][0x0006]=0;
-    sizeMultipleCodePacketClientToServer[0x60][0x0007]=2;
-    sizeMultipleCodePacketClientToServer[0x60][0x0008]=2;
-    sizeMultipleCodePacketClientToServer[0x60][0x0009]=4;//monster id in db
-    sizeMultipleCodePacketClientToServer[0x6a][0x0001]=2;
-    sizeMultipleCodePacketClientToServer[0x6a][0x0002]=2;
-    sizeMultipleCodePacketClientToServer[0x6a][0x0003]=2;
-    sizeMultipleCodePacketClientToServer[0x6a][0x0004]=2;
-    sizeMultipleCodePacketClientToServer[0x6a][0x0005]=1;
-    sizeMultipleCodePacketClientToServer[0x42][0x0004]=1;
-
-    sizeMultipleCodePacketServerToClient[0xC2][0x0009]=0;
-    sizeMultipleCodePacketServerToClient[0xD0][0x0006]=0;
-    sizeMultipleCodePacketServerToClient[0xD0][0x0007]=0;
-    sizeMultipleCodePacketServerToClient[0xD0][0x0008]=0;
-    sizeMultipleCodePacketServerToClient[0xE0][0x0007]=0;
-    sizeMultipleCodePacketServerToClient[0x79][0x0002]=2;
-    //define the size of the reply
-    /** \note previously send by: sizeMultipleCodePacketServerToClient */
-    replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
-    replySizeMultipleCodePacketClientToServer[0x79][0x0002]=0;
-    /** \note previously send by: sizeMultipleCodePacketClientToServer */
-    replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;
-    replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
-    replySizeMultipleCodePacketServerToClient[0x80][0x0001]=1;
-
-    compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
-    compressionMultipleCodePacketServerToClient[0xC2] << 0x0004;
-    compressionMultipleCodePacketServerToClient[0xC2] << 0x000D;
-    //define the compression of the reply
-    /** \note previously send by: sizeMultipleCodePacketClientToServer */
-    replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
-    replyComressionMultipleCodePacketServerToClient[0x02] << 0x0002;
-    replyComressionMultipleCodePacketServerToClient[0x02] << 0x0005;
-
-    //main code for query with reply
-    ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x03 << 0x04 << 0x05 << 0x10 << 0x20 << 0x30;//replySizeMultipleCodePacketServerToClient
-    ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x80 << 0x90 << 0xA0;//replySizeMultipleCodePacketClientToServer
-
-    //reply code
-    ProtocolParsing::replyCodeServerToClient=0xC1;
-    ProtocolParsing::replyCodeClientToServer=0x41;
-
-    //register meta type
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
-    qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-    qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
-    qRegisterMetaType<QList<Skill::AttackReturn> >("QList<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-    qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
-    qRegisterMetaType<QList<CharacterEntry> >("QList<CharacterEntry>");
-    qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
-    #endif
+    mainCodeWithoutSubCodeTypeServerToClient << ProtocolParsing::replyCodeServerToClient;
+    mainCodeWithoutSubCodeTypeClientToServer << ProtocolParsing::replyCodeClientToServer;
 }
 
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
@@ -309,7 +351,7 @@ ProtocolParsingBase::ProtocolParsingBase(
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInputOutput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
-    //    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
+    //    messageParsingLayer(QString::number(isClient)+QStringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
@@ -368,7 +410,9 @@ void ProtocolParsingBase::reset()
 {
     waitedReply_mainCodeType.clear();
     waitedReply_subCodeType.clear();
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     replyOutputCompression.clear();
+    #endif
     replyOutputSize.clear();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queryReceived.clear();

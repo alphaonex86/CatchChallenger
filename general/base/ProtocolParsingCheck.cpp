@@ -1,7 +1,6 @@
 #include "ProtocolParsingCheck.h"
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 
-#include "GeneralStructures.h"
 #include <QDebug>
 
 using namespace CatchChallenger;
