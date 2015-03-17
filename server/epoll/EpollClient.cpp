@@ -126,9 +126,9 @@ ssize_t EpollClient::write(const char *buffer, const size_t &bufferSize)
         return size;
 }
 
+#ifndef SERVERNOBUFFER
 void EpollClient::flush()
 {
-    #ifndef SERVERNOBUFFER
     if(bufferSize>0)
     {
         char buf[512];
@@ -151,8 +151,8 @@ void EpollClient::flush()
             memmove(buffer,buffer+size,bufferSize);
         }
     }
-    #endif
 }
+#endif
 
 BaseClassSwitch::Type EpollClient::getType() const
 {

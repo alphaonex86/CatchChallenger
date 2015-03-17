@@ -7,6 +7,7 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 
 #LIBS += -lssl -lcrypto
+LIBS    += -lpq
 
 CONFIG += c++11
 
@@ -28,9 +29,11 @@ SOURCES += \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
     ../../general/base/ProtocolParsingOutput.cpp \
-    EpollClientLoginMasterProtocolParsning.cpp \
     EpollClientLoginMasterStaticVar.cpp \
-    ../epoll/EpollSslClient.cpp
+    ../epoll/EpollSslClient.cpp \
+    ../base/DatabaseBase.cpp \
+    ../epoll/db/EpollPostgresql.cpp \
+    EpollClientLoginMasterProtocolParsing.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -42,4 +45,6 @@ HEADERS += \
     ../epoll/EpollSocket.h \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/ProtocolParsingCheck.h \
-    ../epoll/EpollSslClient.h
+    ../epoll/EpollSslClient.h \
+    ../base/DatabaseBase.h \
+    ../epoll/db/EpollPostgresql.h

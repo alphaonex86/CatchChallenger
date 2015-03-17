@@ -1,0 +1,499 @@
+#include "PreparedDBQuery.h"
+
+using namespace CatchChallenger;
+
+char * PreparedDBQuery::db_type_string=NULL;
+
+//query
+char * PreparedDBQuery::db_query_select_allow=NULL;
+char * PreparedDBQuery::db_query_login=NULL;
+char * PreparedDBQuery::db_query_insert_login=NULL;
+char * PreparedDBQuery::db_query_characters=NULL;
+char * PreparedDBQuery::db_query_played_time=NULL;
+char * PreparedDBQuery::db_query_monster_skill=NULL;
+char * PreparedDBQuery::db_query_monster=NULL;
+char * PreparedDBQuery::db_query_character_by_id=NULL;
+char * PreparedDBQuery::db_query_update_character_time_to_delete=NULL;
+char * PreparedDBQuery::db_query_update_character_last_connect=NULL;
+char * PreparedDBQuery::db_query_clan=NULL;
+
+char * PreparedDBQuery::db_query_monster_by_character_id=NULL;
+char * PreparedDBQuery::db_query_delete_monster_buff=NULL;
+char * PreparedDBQuery::db_query_delete_monster_specific_buff=NULL;
+char * PreparedDBQuery::db_query_delete_monster_skill=NULL;
+char * PreparedDBQuery::db_query_delete_bot_already_beaten=NULL;
+char * PreparedDBQuery::db_query_delete_character=NULL;
+char * PreparedDBQuery::db_query_delete_all_item=NULL;
+char * PreparedDBQuery::db_query_delete_all_item_warehouse=NULL;
+char * PreparedDBQuery::db_query_delete_all_item_market=NULL;
+char * PreparedDBQuery::db_query_delete_monster_by_character=NULL;
+char * PreparedDBQuery::db_query_delete_monster_warehouse_by_character=NULL;
+char * PreparedDBQuery::db_query_delete_monster_market_by_character=NULL;
+char * PreparedDBQuery::db_query_delete_monster_by_id=NULL;
+char * PreparedDBQuery::db_query_delete_monster_warehouse_by_id=NULL;
+char * PreparedDBQuery::db_query_delete_monster_market_by_id=NULL;
+char * PreparedDBQuery::db_query_delete_plant=NULL;
+char * PreparedDBQuery::db_query_delete_plant_by_id=NULL;
+char * PreparedDBQuery::db_query_delete_quest=NULL;
+char * PreparedDBQuery::db_query_delete_recipes=NULL;
+char * PreparedDBQuery::db_query_delete_reputation=NULL;
+char * PreparedDBQuery::db_query_delete_allow=NULL;
+
+char * PreparedDBQuery::db_query_select_clan_by_name=NULL;
+char * PreparedDBQuery::db_query_select_character_by_pseudo=NULL;
+char * PreparedDBQuery::db_query_insert_monster=NULL;
+char * PreparedDBQuery::db_query_insert_monster_full=NULL;
+char * PreparedDBQuery::db_query_insert_warehouse_monster_full=NULL;
+char * PreparedDBQuery::db_query_insert_monster_skill=NULL;
+char * PreparedDBQuery::db_query_insert_reputation=NULL;
+char * PreparedDBQuery::db_query_insert_item=NULL;
+char * PreparedDBQuery::db_query_insert_item_warehouse=NULL;
+char * PreparedDBQuery::db_query_insert_item_market=NULL;
+char * PreparedDBQuery::db_query_account_time_to_delete_character_by_id=NULL;
+char * PreparedDBQuery::db_query_update_character_time_to_delete_by_id=NULL;
+char * PreparedDBQuery::db_query_select_reputation_by_id=NULL;
+char * PreparedDBQuery::db_query_select_quest_by_id=NULL;
+char * PreparedDBQuery::db_query_select_recipes_by_player_id=NULL;
+char * PreparedDBQuery::db_query_select_items_by_player_id=NULL;
+char * PreparedDBQuery::db_query_select_items_warehouse_by_player_id=NULL;
+char * PreparedDBQuery::db_query_select_monsters_by_player_id=NULL;
+char * PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=NULL;
+char * PreparedDBQuery::db_query_select_monstersSkill_by_id=NULL;
+char * PreparedDBQuery::db_query_select_monstersBuff_by_id=NULL;
+char * PreparedDBQuery::db_query_select_bot_beaten=NULL;
+char * PreparedDBQuery::db_query_select_itemOnMap=NULL;
+char * PreparedDBQuery::db_query_insert_itemonmap=NULL;
+char * PreparedDBQuery::db_query_change_right=NULL;
+char * PreparedDBQuery::db_query_update_item=NULL;
+char * PreparedDBQuery::db_query_update_item_warehouse=NULL;
+char * PreparedDBQuery::db_query_delete_item=NULL;
+char * PreparedDBQuery::db_query_delete_item_warehouse=NULL;
+char * PreparedDBQuery::db_query_update_cash=NULL;
+char * PreparedDBQuery::db_query_update_warehouse_cash=NULL;
+char * PreparedDBQuery::db_query_insert_recipe=NULL;
+char * PreparedDBQuery::db_query_insert_factory=NULL;
+char * PreparedDBQuery::db_query_update_factory=NULL;
+char * PreparedDBQuery::db_query_insert_character_allow=NULL;
+char * PreparedDBQuery::db_query_delete_character_allow=NULL;
+char * PreparedDBQuery::db_query_update_reputation=NULL;
+char * PreparedDBQuery::db_query_update_character_clan=NULL;
+char * PreparedDBQuery::db_query_update_character_clan_and_leader=NULL;
+char * PreparedDBQuery::db_query_delete_clan=NULL;
+char * PreparedDBQuery::db_query_delete_city=NULL;
+char * PreparedDBQuery::db_query_update_character_clan_by_pseudo=NULL;
+char * PreparedDBQuery::db_query_update_monster_xp_hp_level=NULL;
+char * PreparedDBQuery::db_query_update_monster_hp_only=NULL;
+char * PreparedDBQuery::db_query_update_monster_sp_only=NULL;
+char * PreparedDBQuery::db_query_update_monster_skill_level=NULL;
+char * PreparedDBQuery::db_query_insert_monster_catch=NULL;
+char * PreparedDBQuery::db_query_update_monster_xp=NULL;
+char * PreparedDBQuery::db_query_insert_bot_already_beaten=NULL;
+char * PreparedDBQuery::db_query_insert_monster_buff=NULL;
+char * PreparedDBQuery::db_query_update_monster_level=NULL;
+char * PreparedDBQuery::db_query_update_monster_position=NULL;
+char * PreparedDBQuery::db_query_update_monster_and_hp=NULL;
+char * PreparedDBQuery::db_query_update_monster_level_only=NULL;
+char * PreparedDBQuery::db_query_delete_monster_specific_skill=NULL;
+char * PreparedDBQuery::db_query_insert_clan=NULL;
+char * PreparedDBQuery::db_query_insert_plant=NULL;
+char * PreparedDBQuery::db_query_update_monster_owner=NULL;
+char * PreparedDBQuery::db_query_update_quest_finish=NULL;
+char * PreparedDBQuery::db_query_update_quest_step=NULL;
+char * PreparedDBQuery::db_query_update_quest_restart=NULL;
+char * PreparedDBQuery::db_query_insert_quest=NULL;
+char * PreparedDBQuery::db_query_update_city_clan=NULL;
+char * PreparedDBQuery::db_query_insert_city=NULL;
+char * PreparedDBQuery::db_query_delete_item_market=NULL;
+char * PreparedDBQuery::db_query_update_item_market=NULL;
+char * PreparedDBQuery::db_query_update_item_market_and_price=NULL;
+char * PreparedDBQuery::db_query_update_charaters_market_cash=NULL;
+char * PreparedDBQuery::db_query_insert_monster_market=NULL;
+char * PreparedDBQuery::db_query_get_market_cash=NULL;
+
+PreparedDBQuery::PreparedDBQuery()
+{
+}
+
+PreparedDBQuery::initDatabaseQuery(const DatabaseBase::Type &type,const bool &useSP)
+{
+    switch(type)
+    {
+        default:
+        return;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::Type::Mysql:
+        PreparedDBQuery::db_query_select_allow=QStringLiteral("SELECT `allow` FROM `character_allow` WHERE `character`=%1");
+        PreparedDBQuery::db_query_login=QStringLiteral("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')");
+        PreparedDBQuery::db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)");
+        PreparedDBQuery::db_query_characters=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 ORDER BY `played_time` LIMIT 0,%2");
+        PreparedDBQuery::db_query_played_time=QStringLiteral("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1");
+        PreparedDBQuery::db_query_monster_skill=QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3");
+        PreparedDBQuery::db_query_character_by_id=QStringLiteral("SELECT `account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`warehouse_cash`,`clan_leader`,`market_cash`,`time_to_delete` FROM `character` WHERE `id`=%1");
+        PreparedDBQuery::db_query_update_character_time_to_delete=QStringLiteral("UPDATE `character` SET `time_to_delete`=0 WHERE `id`=%1");
+        PreparedDBQuery::db_query_update_character_last_connect=QStringLiteral("UPDATE `character` SET `last_connect`=%2 WHERE `id`=%1");
+        PreparedDBQuery::db_query_clan=QStringLiteral("SELECT `name`,`cash` FROM `clan` WHERE `id`=%1");
+
+        PreparedDBQuery::db_query_monster_by_character_id=QStringLiteral("SELECT `id` FROM `monster` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_monster_buff=QStringLiteral("DELETE FROM `monster_buff` WHERE monster=%1");
+        PreparedDBQuery::db_query_delete_monster_skill=QStringLiteral("DELETE FROM `monster_skill` WHERE monster=%1");
+        PreparedDBQuery::db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM `bot_already_beaten` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_character=QStringLiteral("DELETE FROM `character` WHERE `id`=%1");
+        PreparedDBQuery::db_query_delete_all_item=QStringLiteral("DELETE FROM `item` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_all_item_warehouse=QStringLiteral("DELETE FROM `item_warehouse` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_all_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_monster_by_character=QStringLiteral("DELETE FROM `monster` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_monster_warehouse_by_character=QStringLiteral("DELETE FROM `monster_warehouse` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM `monster_market` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_monster_by_id=QStringLiteral("DELETE FROM `monster` WHERE `id`=%1");
+        PreparedDBQuery::db_query_delete_monster_warehouse_by_id=QStringLiteral("DELETE FROM `monster_warehouse` WHERE `id`=%1");
+        PreparedDBQuery::db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM `monster_market` WHERE `id`=%1");
+        PreparedDBQuery::db_query_delete_plant=QStringLiteral("DELETE FROM `plant` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_plant_by_id=QStringLiteral("DELETE FROM `plant` WHERE `id`=%1");
+        PreparedDBQuery::db_query_delete_quest=QStringLiteral("DELETE FROM `quest` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_recipes=QStringLiteral("DELETE FROM `recipe` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_reputation=QStringLiteral("DELETE FROM `reputation` WHERE `character`=%1");
+        PreparedDBQuery::db_query_delete_allow=QStringLiteral("DELETE FROM `character_allow` WHERE `character`=%1");
+
+        PreparedDBQuery::db_query_select_character_by_pseudo=QStringLiteral("SELECT `id` FROM `character` WHERE `pseudo`='%1'");
+        PreparedDBQuery::db_query_select_clan_by_name=QStringLiteral("SELECT `id` FROM `clan` WHERE `name`='%1'");
+        if(useSP)
+        {
+            PreparedDBQuery::db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1");
+            PreparedDBQuery::db_query_insert_monster=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8)");
+            PreparedDBQuery::db_query_insert_monster_full=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO `monster_warehouse`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_monster_market=QStringLiteral("INSERT INTO `monster_market`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`market_price`) VALUES(%1,%2);");
+            PreparedDBQuery::db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
+            PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
+            PreparedDBQuery::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4,`sp`=%5 WHERE `id`=%1");
+            PreparedDBQuery::db_query_insert_monster_catch=QStringLiteral("INSERT INTO `%3`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2,`sp`=%3 WHERE `id`=%1");
+        }
+        else
+        {
+            PreparedDBQuery::db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`position`=%6 WHERE `id`=%1");
+            PreparedDBQuery::db_query_insert_monster=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8)");
+            PreparedDBQuery::db_query_insert_monster_full=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO `monster_warehouse`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_monster_market=QStringLiteral("INSERT INTO `monster_market`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`market_price`) VALUES(%1,%2);");
+            PreparedDBQuery::db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC");
+            PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster_warehouse` WHERE `character`=%1 ORDER BY `position` ASC");
+            PreparedDBQuery::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4 WHERE `id`=%1");
+            PreparedDBQuery::db_query_insert_monster_catch=QStringLiteral("INSERT INTO `%3`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2 WHERE `id`=%1");
+        }
+        PreparedDBQuery::db_query_insert_monster_skill=QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4)");
+        PreparedDBQuery::db_query_insert_item=QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_insert_item_warehouse=QStringLiteral("INSERT INTO `item_warehouse`(`item`,`character`,`quantity`) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_insert_item_market=QStringLiteral("INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4)");
+        PreparedDBQuery::db_query_account_time_to_delete_character_by_id=QStringLiteral("SELECT `account`,`time_to_delete` FROM `character` WHERE `id`=%1");
+        PreparedDBQuery::db_query_update_character_time_to_delete_by_id=QStringLiteral("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1");
+        PreparedDBQuery::db_query_select_reputation_by_id=QStringLiteral("SELECT `type`,`point`,`level` FROM `reputation` WHERE `character`=%1 ORDER BY `type`");
+        PreparedDBQuery::db_query_select_quest_by_id=QStringLiteral("SELECT `quest`,`finish_one_time`,`step` FROM `quest` WHERE `character`=%1 ORDER BY `quest`");
+        PreparedDBQuery::db_query_select_recipes_by_player_id=QStringLiteral("SELECT `recipe` FROM `recipe` WHERE `character`=%1 ORDER BY `recipe`");
+        PreparedDBQuery::db_query_select_items_by_player_id=QStringLiteral("SELECT `item`,`quantity` FROM `item` WHERE `character`=%1 ORDER BY `item`");
+        PreparedDBQuery::db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT `item`,`quantity` FROM `item_warehouse` WHERE `character`=%1 ORDER BY `item`");
+        PreparedDBQuery::db_query_select_monstersSkill_by_id=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1 ORDER BY `skill`");
+        PreparedDBQuery::db_query_select_monstersBuff_by_id=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1 ORDER BY `buff`");
+        PreparedDBQuery::db_query_select_bot_beaten=QStringLiteral("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1 ORDER BY `botfight_id`");
+        PreparedDBQuery::db_query_select_itemOnMap=QStringLiteral("SELECT `itemOnMap` FROM `character_itemonmap` WHERE `character`=%1 ORDER BY `itemOnMap`");
+        PreparedDBQuery::db_query_insert_itemonmap=QStringLiteral("INSERT INTO `character_itemonmap`(`character`,`itemOnMap`) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_change_right=QStringLiteral("UPDATE `character` SET `type`=%2 WHERE `id`=%1");
+        PreparedDBQuery::db_query_update_item=QStringLiteral("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
+        PreparedDBQuery::db_query_update_item_warehouse=QStringLiteral("UPDATE `item_warehouse` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
+        PreparedDBQuery::db_query_delete_item=QStringLiteral("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2");
+        PreparedDBQuery::db_query_delete_item_warehouse=QStringLiteral("DELETE FROM `item_warehouse` WHERE `item`=%1 AND `character`=%2");
+        PreparedDBQuery::db_query_update_cash=QStringLiteral("UPDATE `character` SET `cash`=%1 WHERE `id`=%2");
+        PreparedDBQuery::db_query_update_warehouse_cash=QStringLiteral("UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2");
+        PreparedDBQuery::db_query_insert_recipe=QStringLiteral("INSERT INTO `recipe`(`character`,`recipe`) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_insert_factory=QStringLiteral("INSERT INTO `factory`(`id`,`resources`,`products`,`last_update`) VALUES(%1,'%2','%3',%4)");
+        PreparedDBQuery::db_query_update_factory=QStringLiteral("UPDATE `factory` SET `resources`='%2',`products`='%3',`last_update`=%4 WHERE `id`=%1");
+        PreparedDBQuery::db_query_insert_character_allow=QStringLiteral("INSERT INTO `character_allow`(`character`,`allow`) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_delete_character_allow=QStringLiteral("DELETE FROM `character_allow` WHERE `character`=%1 AND `allow`=%2");
+        PreparedDBQuery::db_query_insert_reputation=QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4)");
+        PreparedDBQuery::db_query_update_reputation=QStringLiteral("UPDATE `reputation` SET `point`=%3,`level`=%4 WHERE `character`=%1 AND `type`='%2'");
+        PreparedDBQuery::db_query_update_character_clan=QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `id`=%1");
+        PreparedDBQuery::db_query_update_character_clan_and_leader=QStringLiteral("UPDATE `character` SET `clan`=%1,`clan_leader`=%2 WHERE `id`=%3;");
+        PreparedDBQuery::db_query_delete_clan=QStringLiteral("DELETE FROM `clan` WHERE `id`=%1");
+        PreparedDBQuery::db_query_delete_city=QStringLiteral("DELETE FROM `city` WHERE `city`='%1'");
+        PreparedDBQuery::db_query_update_character_clan_by_pseudo=QStringLiteral("UPDATE `character` SET `clan`=0 WHERE `pseudo`=%1 AND `clan`=%2");
+        PreparedDBQuery::db_query_update_monster_hp_only=QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2");
+        PreparedDBQuery::db_query_update_monster_sp_only=QStringLiteral("UPDATE `monster` SET `sp`=%1 WHERE `id`=%2");
+        PreparedDBQuery::db_query_update_monster_skill_level=QStringLiteral("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3");
+        PreparedDBQuery::db_query_insert_bot_already_beaten=QStringLiteral("INSERT INTO `bot_already_beaten`(`character`,`botfight_id`) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_insert_monster_buff=QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_update_monster_level=QStringLiteral("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND `buff`=%2");
+        PreparedDBQuery::db_query_update_monster_position=QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2");
+        PreparedDBQuery::db_query_update_monster_and_hp=QStringLiteral("UPDATE `monster` SET `hp`=%1,`monster`=%2 WHERE `id`=%3");
+        PreparedDBQuery::db_query_delete_monster_specific_buff=QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2");
+        PreparedDBQuery::db_query_update_monster_level_only=QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2");
+        PreparedDBQuery::db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM `monster_skill` WHERE `monster`=%1 AND `skill`=%2");
+        PreparedDBQuery::db_query_insert_clan=QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);");
+        PreparedDBQuery::db_query_insert_plant=QStringLiteral("INSERT INTO `plant`(`id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES(%1,%2,%3,%4,%5,%6,%7);");
+        PreparedDBQuery::db_query_update_monster_owner=QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;");
+        PreparedDBQuery::db_query_update_quest_finish=QStringLiteral("UPDATE `quest` SET `step`=0,`finish_one_time`=1 WHERE `character`=%1 AND `quest`=%2;");
+        PreparedDBQuery::db_query_update_quest_step=QStringLiteral("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND `quest`=%2;");
+        PreparedDBQuery::db_query_update_quest_restart=QStringLiteral("UPDATE `quest` SET `step`=1 WHERE `character`=%1 AND `quest`=%2;");
+        PreparedDBQuery::db_query_insert_quest=QStringLiteral("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,0,%3);");
+        PreparedDBQuery::db_query_update_city_clan=QStringLiteral("UPDATE `city` SET `clan`=%1 WHERE `city`='%2';");
+        PreparedDBQuery::db_query_insert_city=QStringLiteral("INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');");
+        PreparedDBQuery::db_query_delete_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2");
+        PreparedDBQuery::db_query_update_item_market=QStringLiteral("UPDATE `item_market` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
+        PreparedDBQuery::db_query_update_item_market_and_price=QStringLiteral("UPDATE `item_market` SET `quantity`=%1,`market_price`=%2 WHERE `item`=%3 AND `character`=%4;");
+        PreparedDBQuery::db_query_update_charaters_market_cash=QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2");
+        PreparedDBQuery::db_query_get_market_cash=QStringLiteral("UPDATE `character` SET `cash`=%1,`market_cash`=0 WHERE `id`=%2;");
+        break;
+        #endif
+
+
+
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::Type::SQLite:
+        PreparedDBQuery::db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
+        PreparedDBQuery::db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
+        PreparedDBQuery::db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
+        PreparedDBQuery::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 ORDER BY played_time LIMIT 0,%2");
+        PreparedDBQuery::db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
+        PreparedDBQuery::db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
+        PreparedDBQuery::db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,clan_leader,market_cash,time_to_delete FROM character WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_time_to_delete=QStringLiteral("UPDATE character SET time_to_delete=0 WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_last_connect=QStringLiteral("UPDATE character SET last_connect=%2 WHERE id=%1");
+        PreparedDBQuery::db_query_clan=QStringLiteral("SELECT name,cash FROM clan WHERE id=%1");
+
+        PreparedDBQuery::db_query_monster_by_character_id=QStringLiteral("SELECT id FROM monster WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1");
+        PreparedDBQuery::db_query_delete_monster_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1");
+        PreparedDBQuery::db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
+        PreparedDBQuery::db_query_delete_character=QStringLiteral("DELETE FROM character WHERE id=%1");
+        PreparedDBQuery::db_query_delete_all_item=QStringLiteral("DELETE FROM item WHERE character=%1");
+        PreparedDBQuery::db_query_delete_all_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
+        PreparedDBQuery::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_warehouse_by_character=QStringLiteral("DELETE FROM monster_warehouse WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM monster_market WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_by_character=QStringLiteral("DELETE FROM monster WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_warehouse_by_id=QStringLiteral("DELETE FROM monster_warehouse WHERE id=%1");
+        PreparedDBQuery::db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM monster_market WHERE id=%1");
+        PreparedDBQuery::db_query_delete_monster_by_id=QStringLiteral("DELETE FROM monster WHERE id=%1");
+        PreparedDBQuery::db_query_delete_plant=QStringLiteral("DELETE FROM plant WHERE character=%1");
+        PreparedDBQuery::db_query_delete_plant_by_id=QStringLiteral("DELETE FROM plant WHERE id=%1");
+        PreparedDBQuery::db_query_delete_quest=QStringLiteral("DELETE FROM quest WHERE character=%1");
+        PreparedDBQuery::db_query_delete_recipes=QStringLiteral("DELETE FROM recipe WHERE character=%1");
+        PreparedDBQuery::db_query_delete_reputation=QStringLiteral("DELETE FROM reputation WHERE character=%1");
+        PreparedDBQuery::db_query_delete_allow=QStringLiteral("DELETE FROM character_allow WHERE character=%1");
+
+        PreparedDBQuery::db_query_select_clan_by_name=QStringLiteral("SELECT id FROM clan WHERE name='%1'");
+        PreparedDBQuery::db_query_select_character_by_pseudo=QStringLiteral("SELECT id FROM character WHERE pseudo='%1'");
+        if(useSP)
+        {
+            PreparedDBQuery::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
+            PreparedDBQuery::db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8)");
+            PreparedDBQuery::db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_monster_market=QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,market_price) VALUES(%1,%2);");
+            PreparedDBQuery::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
+            PreparedDBQuery::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
+        }
+        else
+        {
+            PreparedDBQuery::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
+            PreparedDBQuery::db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8)");
+            PreparedDBQuery::db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_monster_market=QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,market_price) VALUES(%1,%2);");
+            PreparedDBQuery::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
+            PreparedDBQuery::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
+        }
+        PreparedDBQuery::db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)");
+        PreparedDBQuery::db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_insert_item_warehouse=QStringLiteral("INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
+        PreparedDBQuery::db_query_account_time_to_delete_character_by_id=QStringLiteral("SELECT account,time_to_delete FROM character WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_time_to_delete_by_id=QStringLiteral("UPDATE character SET time_to_delete=%2 WHERE id=%1");
+        PreparedDBQuery::db_query_select_reputation_by_id=QStringLiteral("SELECT type,point,level FROM reputation WHERE character=%1 ORDER BY type");
+        PreparedDBQuery::db_query_select_quest_by_id=QStringLiteral("SELECT quest,finish_one_time,step FROM quest WHERE character=%1 ORDER BY quest");
+        PreparedDBQuery::db_query_select_recipes_by_player_id=QStringLiteral("SELECT recipe FROM recipe WHERE character=%1 ORDER BY recipe");
+        PreparedDBQuery::db_query_select_items_by_player_id=QStringLiteral("SELECT item,quantity FROM item WHERE character=%1 ORDER BY item");
+        PreparedDBQuery::db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT item,quantity FROM item_warehouse WHERE character=%1 ORDER BY item");
+        PreparedDBQuery::db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill");
+        PreparedDBQuery::db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff");
+        PreparedDBQuery::db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1 ORDER BY bot_already_beaten");
+        PreparedDBQuery::db_query_select_itemOnMap=QStringLiteral("SELECT \"itemOnMap\" FROM \"character_itemonmap\" WHERE character=%1 ORDER BY \"itemOnMap\"");
+        PreparedDBQuery::db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2)");
+        PreparedDBQuery::db_query_change_right=QStringLiteral("UPDATE \"character\" SET \"type\"=%2 WHERE \"id\"=%1");
+        PreparedDBQuery::db_query_update_item=QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3");
+        PreparedDBQuery::db_query_update_item_warehouse=QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3");
+        PreparedDBQuery::db_query_delete_item=QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2");
+        PreparedDBQuery::db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE item=%1 AND character=%2");
+        PreparedDBQuery::db_query_update_cash=QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_warehouse_cash=QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_insert_recipe=QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_insert_factory=QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)");
+        PreparedDBQuery::db_query_update_factory=QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1");
+        PreparedDBQuery::db_query_insert_character_allow=QStringLiteral("INSERT INTO character_allow(character,allow) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_delete_character_allow=QStringLiteral("DELETE FROM character_allow WHERE character=%1 AND allow=%2");
+        PreparedDBQuery::db_query_insert_reputation=QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4)");
+        PreparedDBQuery::db_query_update_reputation=QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2'");
+        PreparedDBQuery::db_query_update_character_clan=QStringLiteral("UPDATE character SET clan=0 WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_clan_and_leader=QStringLiteral("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;");
+        PreparedDBQuery::db_query_delete_clan=QStringLiteral("DELETE FROM clan WHERE id=%1");
+        PreparedDBQuery::db_query_delete_city=QStringLiteral("DELETE FROM city WHERE city='%1'");
+        PreparedDBQuery::db_query_update_character_clan_by_pseudo=QStringLiteral("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2");
+        PreparedDBQuery::db_query_update_monster_hp_only=QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_monster_sp_only=QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_monster_skill_level=QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3");
+        PreparedDBQuery::db_query_insert_bot_already_beaten=QStringLiteral("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_insert_monster_buff=QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_update_monster_level=QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2");
+        PreparedDBQuery::db_query_update_monster_position=QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_monster_and_hp=QStringLiteral("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3");
+        PreparedDBQuery::db_query_delete_monster_specific_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        PreparedDBQuery::db_query_update_monster_level_only=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        PreparedDBQuery::db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2");
+        PreparedDBQuery::db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
+        PreparedDBQuery::db_query_insert_plant=QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);");
+        PreparedDBQuery::db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
+        PreparedDBQuery::db_query_update_quest_finish=QStringLiteral("UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;");
+        PreparedDBQuery::db_query_update_quest_step=QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;");
+        PreparedDBQuery::db_query_update_quest_restart=QStringLiteral("UPDATE quest SET step=1 WHERE character=%1 AND quest=%2;");
+        PreparedDBQuery::db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,0,%3);");
+        PreparedDBQuery::db_query_update_city_clan=QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';");
+        PreparedDBQuery::db_query_insert_city=QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');");
+        PreparedDBQuery::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
+        PreparedDBQuery::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");
+        PreparedDBQuery::db_query_update_item_market_and_price=QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;");
+        PreparedDBQuery::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2");
+        PreparedDBQuery::db_query_get_market_cash=QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;");
+        break;
+        #endif
+
+        case DatabaseBase::Type::PostgreSQL:
+        PreparedDBQuery::db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
+        PreparedDBQuery::db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
+        PreparedDBQuery::db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
+        PreparedDBQuery::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 ORDER BY played_time LIMIT %2");
+        PreparedDBQuery::db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
+        PreparedDBQuery::db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
+        PreparedDBQuery::db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,clan_leader,market_cash,time_to_delete FROM character WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_time_to_delete=QStringLiteral("UPDATE character SET time_to_delete=0 WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_last_connect=QStringLiteral("UPDATE character SET last_connect=%2 WHERE id=%1");
+        PreparedDBQuery::db_query_clan=QStringLiteral("SELECT name,cash FROM clan WHERE id=%1");
+
+        PreparedDBQuery::db_query_monster_by_character_id=QStringLiteral("SELECT id FROM monster WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1");
+        PreparedDBQuery::db_query_delete_monster_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1");
+        PreparedDBQuery::db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
+        PreparedDBQuery::db_query_delete_character=QStringLiteral("DELETE FROM character WHERE id=%1");
+        PreparedDBQuery::db_query_delete_all_item=QStringLiteral("DELETE FROM item WHERE character=%1");
+        PreparedDBQuery::db_query_delete_all_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
+        PreparedDBQuery::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_warehouse_by_character=QStringLiteral("DELETE FROM monster_warehouse WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM monster_market WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_by_character=QStringLiteral("DELETE FROM monster WHERE character=%1");
+        PreparedDBQuery::db_query_delete_monster_warehouse_by_id=QStringLiteral("DELETE FROM monster_warehouse WHERE id=%1");
+        PreparedDBQuery::db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM monster_market WHERE id=%1");
+        PreparedDBQuery::db_query_delete_monster_by_id=QStringLiteral("DELETE FROM monster WHERE id=%1");
+        PreparedDBQuery::db_query_delete_plant=QStringLiteral("DELETE FROM plant WHERE character=%1");
+        PreparedDBQuery::db_query_delete_plant_by_id=QStringLiteral("DELETE FROM plant WHERE id=%1");
+        PreparedDBQuery::db_query_delete_quest=QStringLiteral("DELETE FROM quest WHERE character=%1");
+        PreparedDBQuery::db_query_delete_recipes=QStringLiteral("DELETE FROM recipe WHERE character=%1");
+        PreparedDBQuery::db_query_delete_reputation=QStringLiteral("DELETE FROM reputation WHERE character=%1");
+        PreparedDBQuery::db_query_delete_allow=QStringLiteral("DELETE FROM character_allow WHERE character=%1");
+
+        PreparedDBQuery::db_query_select_clan_by_name=QStringLiteral("SELECT id FROM clan WHERE name='%1'");
+        PreparedDBQuery::db_query_select_character_by_pseudo=QStringLiteral("SELECT id FROM character WHERE pseudo='%1'");
+        if(useSP)
+        {
+            PreparedDBQuery::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
+            PreparedDBQuery::db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8)");
+            PreparedDBQuery::db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_monster_market=QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,market_price) VALUES(%1,%2);");
+            PreparedDBQuery::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
+            PreparedDBQuery::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
+        }
+        else
+        {
+            PreparedDBQuery::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
+            PreparedDBQuery::db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2,%3,%4,%5,0,%6,%7,0,%3,%8)");
+            PreparedDBQuery::db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster_warehouse(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_insert_monster_market=QStringLiteral("INSERT INTO monster_market(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,market_price) VALUES(%1,%2);");
+            PreparedDBQuery::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
+            PreparedDBQuery::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster_warehouse WHERE character=%1 ORDER BY position ASC");
+            PreparedDBQuery::db_query_insert_monster_catch=QStringLiteral("INSERT INTO %3(id,hp,character,monster,level,xp,captured_with,gender,egg_step,character_origin,position) VALUES(%1,%2)");
+            PreparedDBQuery::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
+        }
+        PreparedDBQuery::db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)");
+        PreparedDBQuery::db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_insert_item_warehouse=QStringLiteral("INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
+        PreparedDBQuery::db_query_account_time_to_delete_character_by_id=QStringLiteral("SELECT account,time_to_delete FROM character WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_time_to_delete_by_id=QStringLiteral("UPDATE character SET time_to_delete=%2 WHERE id=%1");
+        PreparedDBQuery::db_query_select_reputation_by_id=QStringLiteral("SELECT type,point,level FROM reputation WHERE character=%1 ORDER BY type");
+        PreparedDBQuery::db_query_select_quest_by_id=QStringLiteral("SELECT quest,finish_one_time,step FROM quest WHERE character=%1 ORDER BY quest");
+        PreparedDBQuery::db_query_select_recipes_by_player_id=QStringLiteral("SELECT recipe FROM recipe WHERE character=%1 ORDER BY recipe");
+        PreparedDBQuery::db_query_select_items_by_player_id=QStringLiteral("SELECT item,quantity FROM item WHERE character=%1 ORDER BY item");
+        PreparedDBQuery::db_query_select_items_warehouse_by_player_id=QStringLiteral("SELECT item,quantity FROM item_warehouse WHERE character=%1 ORDER BY item");
+        PreparedDBQuery::db_query_select_monstersSkill_by_id=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill");
+        PreparedDBQuery::db_query_select_monstersBuff_by_id=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff");
+        PreparedDBQuery::db_query_select_bot_beaten=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1 ORDER BY bot_already_beaten");
+        PreparedDBQuery::db_query_select_itemOnMap=QStringLiteral("SELECT \"itemOnMap\" FROM \"character_itemonmap\" WHERE character=%1 ORDER BY \"itemOnMap\"");
+        PreparedDBQuery::db_query_insert_itemonmap=QStringLiteral("INSERT INTO \"character_itemonmap\"(character,\"itemOnMap\") VALUES(%1,%2)");
+        PreparedDBQuery::db_query_change_right=QStringLiteral("UPDATE \"character\" SET \"type\"=%2 WHERE \"id\"=%1");
+        PreparedDBQuery::db_query_update_item=QStringLiteral("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3");
+        PreparedDBQuery::db_query_update_item_warehouse=QStringLiteral("UPDATE item_warehouse SET quantity=%1 WHERE item=%2 AND character=%3");
+        PreparedDBQuery::db_query_delete_item=QStringLiteral("DELETE FROM item WHERE item=%1 AND character=%2");
+        PreparedDBQuery::db_query_delete_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE item=%1 AND character=%2");
+        PreparedDBQuery::db_query_update_cash=QStringLiteral("UPDATE character SET cash=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_warehouse_cash=QStringLiteral("UPDATE character SET warehouse_cash=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_insert_recipe=QStringLiteral("INSERT INTO recipe(character,recipe) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_insert_factory=QStringLiteral("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)");
+        PreparedDBQuery::db_query_update_factory=QStringLiteral("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1");
+        PreparedDBQuery::db_query_insert_character_allow=QStringLiteral("INSERT INTO character_allow(character,allow) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_delete_character_allow=QStringLiteral("DELETE FROM character_allow WHERE character=%1 AND allow=%2");
+        PreparedDBQuery::db_query_insert_reputation=QStringLiteral("INSERT INTO reputation(character,type,point,level) VALUES(%1,'%2',%3,%4)");
+        PreparedDBQuery::db_query_update_reputation=QStringLiteral("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type='%2'");
+        PreparedDBQuery::db_query_update_character_clan=QStringLiteral("UPDATE character SET clan=0 WHERE id=%1");
+        PreparedDBQuery::db_query_update_character_clan_and_leader=QStringLiteral("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;");
+        PreparedDBQuery::db_query_delete_clan=QStringLiteral("DELETE FROM clan WHERE id=%1");
+        PreparedDBQuery::db_query_delete_city=QStringLiteral("DELETE FROM city WHERE city='%1'");
+        PreparedDBQuery::db_query_update_character_clan_by_pseudo=QStringLiteral("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2");
+        PreparedDBQuery::db_query_update_monster_hp_only=QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_monster_sp_only=QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_monster_skill_level=QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3");
+        PreparedDBQuery::db_query_insert_bot_already_beaten=QStringLiteral("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2)");
+        PreparedDBQuery::db_query_insert_monster_buff=QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3)");
+        PreparedDBQuery::db_query_update_monster_level=QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2");
+        PreparedDBQuery::db_query_update_monster_position=QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2");
+        PreparedDBQuery::db_query_update_monster_and_hp=QStringLiteral("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3");
+        PreparedDBQuery::db_query_delete_monster_specific_buff=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        PreparedDBQuery::db_query_update_monster_level_only=QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2");
+        PreparedDBQuery::db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2");
+        PreparedDBQuery::db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
+        PreparedDBQuery::db_query_insert_plant=QStringLiteral("INSERT INTO plant(id,map,x,y,plant,character,plant_timestamps) VALUES(%1,%2,%3,%4,%5,%6,%7);");
+        PreparedDBQuery::db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
+        PreparedDBQuery::db_query_update_quest_finish=QStringLiteral("UPDATE quest SET step=0,finish_one_time=TRUE WHERE character=%1 AND quest=%2;");
+        PreparedDBQuery::db_query_update_quest_step=QStringLiteral("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;");
+        PreparedDBQuery::db_query_update_quest_restart=QStringLiteral("UPDATE quest SET step=1 WHERE character=%1 AND quest=%2;");
+        PreparedDBQuery::db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,FALSE,%3);");
+        PreparedDBQuery::db_query_update_city_clan=QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';");
+        PreparedDBQuery::db_query_insert_city=QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');");
+        PreparedDBQuery::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
+        PreparedDBQuery::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");
+        PreparedDBQuery::db_query_update_item_market_and_price=QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;");
+        PreparedDBQuery::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2");
+        PreparedDBQuery::db_query_get_market_cash=QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;");
+        break;
+    }
+}
+

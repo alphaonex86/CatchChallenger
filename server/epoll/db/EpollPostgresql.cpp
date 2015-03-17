@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include "../Epoll.h"
 #include "../../../general/base/GeneralVariable.h"
-#include "../../base/GlobalServerData.h"
 
 char EpollPostgresql::emptyString[]={'\0'};
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
@@ -54,7 +53,12 @@ bool EpollPostgresql::isConnected() const
     return conn!=NULL && started;
 }
 
-bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const char * user, const char * password)
+EpollPostgresql::DatabaseBase::Type EpollPostgresql::databaseType() const
+{
+    return EpollPostgresql::DatabaseBase::Type::PostgreSQL;
+}
+
+bool EpollPostgresql::syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password)
 {
     if(conn!=NULL)
     {
@@ -87,7 +91,7 @@ bool EpollPostgresql::syncConnect(const char * host, const char * dbname, const 
     return syncConnect(strCoPG);
 }
 
-bool EpollPostgresql::syncConnect(const char * fullConenctString)
+bool EpollPostgresql::syncConnect(const char * const fullConenctString)
 {
     conn=PQconnectdb(fullConenctString);
     ConnStatusType connStatusType=PQstatus(conn);
@@ -95,9 +99,9 @@ bool EpollPostgresql::syncConnect(const char * fullConenctString)
     {
        std::cerr << "pg connexion not OK, retrying..." << std::endl;
        unsigned int index=0;
-       while(index<CatchChallenger::GlobalServerData::serverSettings.database.considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
+       while(index<considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
        {
-           sleep(CatchChallenger::GlobalServerData::serverSettings.database.tryInterval);
+           sleep(tryInterval);
            //std::cerr << "Connecting to postgresql ... (" << (index+1) << ")" << std::endl;
            conn=PQconnectdb(strCoPG);
            connStatusType=PQstatus(conn);
@@ -162,7 +166,7 @@ void EpollPostgresql::syncDisconnect()
     PQfinish(conn);
 }
 
-CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const char *query,void * returnObject, CallBackDatabase method)
+CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const char * const query,void * returnObject, CallBackDatabase method)
 {
     if(conn==NULL)
     {
@@ -195,7 +199,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const char 
     return &queue.last();
 }
 
-bool EpollPostgresql::asyncWrite(const char *query)
+bool EpollPostgresql::asyncWrite(const char * const query)
 {
     if(conn==NULL)
     {
@@ -355,7 +359,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
     return true;
 }
 
-const char *EpollPostgresql::errorMessage() const
+const char * EpollPostgresql::errorMessage() const
 {
     return PQerrorMessage(conn);
 }
@@ -376,7 +380,7 @@ bool EpollPostgresql::next()
     }
 }
 
-const char *EpollPostgresql::value(const int &value) const
+const char * EpollPostgresql::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0)
         return emptyString;

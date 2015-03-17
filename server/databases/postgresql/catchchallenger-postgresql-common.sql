@@ -1,3 +1,7 @@
+--
+-- PostgreSQL database dump
+--
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -12,7 +16,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: character; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE "character" (
@@ -33,8 +37,9 @@ CREATE TABLE "character" (
 );
 
 
+
 --
--- Name: character_allow; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_allow; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE character_allow (
@@ -43,8 +48,9 @@ CREATE TABLE character_allow (
 );
 
 
+
 --
--- Name: clan; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: clan; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE clan (
@@ -55,8 +61,9 @@ CREATE TABLE clan (
 );
 
 
+
 --
--- Name: dictionary_allow; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_allow; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE dictionary_allow (
@@ -65,8 +72,9 @@ CREATE TABLE dictionary_allow (
 );
 
 
+
 --
--- Name: dictionary_reputation; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_reputation; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE dictionary_reputation (
@@ -75,8 +83,9 @@ CREATE TABLE dictionary_reputation (
 );
 
 
+
 --
--- Name: dictionary_skin; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_skin; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE dictionary_skin (
@@ -85,8 +94,20 @@ CREATE TABLE dictionary_skin (
 );
 
 
+
 --
--- Name: item; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_starter; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE dictionary_starter (
+    id integer NOT NULL,
+    starter text
+);
+
+
+
+--
+-- Name: item; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE item (
@@ -96,8 +117,9 @@ CREATE TABLE item (
 );
 
 
+
 --
--- Name: item_warehouse; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: item_warehouse; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE item_warehouse (
@@ -107,8 +129,9 @@ CREATE TABLE item_warehouse (
 );
 
 
+
 --
--- Name: monster; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monster; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE monster (
@@ -123,12 +146,14 @@ CREATE TABLE monster (
     gender smallint,
     egg_step integer,
     character_origin integer,
-    "position" smallint
+    "position" smallint,
+    place smallint
 );
 
 
+
 --
--- Name: monster_buff; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monster_buff; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE monster_buff (
@@ -138,8 +163,9 @@ CREATE TABLE monster_buff (
 );
 
 
+
 --
--- Name: monster_skill; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monster_skill; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE monster_skill (
@@ -150,28 +176,9 @@ CREATE TABLE monster_skill (
 );
 
 
---
--- Name: monster_warehouse; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE monster_warehouse (
-    id integer,
-    hp smallint,
-    "character" integer,
-    monster smallint,
-    level smallint,
-    xp integer,
-    sp integer,
-    captured_with smallint,
-    gender smallint,
-    egg_step integer,
-    character_origin integer,
-    "position" smallint
-);
-
 
 --
--- Name: recipe; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: recipe; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE recipe (
@@ -180,8 +187,9 @@ CREATE TABLE recipe (
 );
 
 
+
 --
--- Name: reputation; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: reputation; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE reputation (
@@ -192,15 +200,17 @@ CREATE TABLE reputation (
 );
 
 
+
 --
--- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY "character"
     ADD CONSTRAINT character_pkey PRIMARY KEY (id);
 
+
 --
--- Name: clan_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: clan_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY clan
@@ -208,7 +218,7 @@ ALTER TABLE ONLY clan
 
 
 --
--- Name: dictionary_allow_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_allow_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY dictionary_allow
@@ -216,7 +226,7 @@ ALTER TABLE ONLY dictionary_allow
 
 
 --
--- Name: dictionary_reputation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_reputation_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY dictionary_reputation
@@ -224,7 +234,7 @@ ALTER TABLE ONLY dictionary_reputation
 
 
 --
--- Name: dictionary_skin_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_skin_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY dictionary_skin
@@ -232,147 +242,141 @@ ALTER TABLE ONLY dictionary_skin
 
 
 --
--- Name: character_account; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_starter_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY dictionary_starter
+    ADD CONSTRAINT dictionary_starter_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: character_account; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX character_account ON "character" USING btree (account);
 
 
 --
--- Name: character_allow_by_character; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_allow_by_character; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX character_allow_by_character ON character_allow USING btree ("character");
 
 
 --
--- Name: character_bypseudo; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_bypseudo; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX character_bypseudo ON "character" USING btree (pseudo);
 
 
 --
--- Name: character_bypseudoandclan; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_bypseudoandclan; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX character_bypseudoandclan ON "character" USING btree (pseudo, clan);
 
 
 --
--- Name: character_clan; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_clan; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX character_clan ON "character" USING btree (clan);
 
 
 --
--- Name: item_by_char; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: item_by_char; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX item_by_char ON item USING btree ("character");
 
 
 --
--- Name: item_uniqueindex; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: item_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX item_uniqueindex ON item USING btree (item, "character");
 
 
 --
--- Name: item_warehouse_by_char; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: item_warehouse_by_char; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX item_warehouse_by_char ON item_warehouse USING btree ("character");
 
 
 --
--- Name: item_warehouse_uniqueindex; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: item_warehouse_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX item_warehouse_uniqueindex ON item_warehouse USING btree (item, "character");
 
 
 --
--- Name: monster_bychar; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monster_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX monster_bychar ON monster USING btree ("character");
 
 
 --
--- Name: monster_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monster_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX monster_unique ON monster USING btree (id);
 
 
 --
--- Name: monster_warehouse_bychar; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX monster_warehouse_bychar ON monster_warehouse USING btree ("character");
-
-
---
--- Name: monster_warehouse_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE UNIQUE INDEX monster_warehouse_unique ON monster_warehouse USING btree (id);
-
-
---
--- Name: monsterbuff_bymonster; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monsterbuff_bymonster; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX monsterbuff_bymonster ON monster_buff USING btree (monster);
 
 
 --
--- Name: monsterbuff_bymonsterandbuff; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monsterbuff_bymonsterandbuff; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX monsterbuff_bymonsterandbuff ON monster_buff USING btree (monster, buff);
 
 
 --
--- Name: monsterskill_bymonster; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monsterskill_bymonster; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX monsterskill_bymonster ON monster_skill USING btree (monster);
 
 
 --
--- Name: monsterskill_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monsterskill_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX monsterskill_unique ON monster_skill USING btree (monster, skill);
 
 
 --
--- Name: recipe_bychar; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: recipe_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX recipe_bychar ON recipe USING btree ("character");
 
 
 --
--- Name: recipe_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: recipe_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX recipe_unique ON recipe USING btree ("character", recipe);
 
 
 --
--- Name: reputation_bychar; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: reputation_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX reputation_bychar ON reputation USING btree ("character");
 
 
 --
--- Name: reputation_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: reputation_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX reputation_unique ON reputation USING btree ("character", type);

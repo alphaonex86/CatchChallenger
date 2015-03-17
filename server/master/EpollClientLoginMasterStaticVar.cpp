@@ -12,3 +12,11 @@ unsigned char EpollClientLoginMaster::protocolReplyWrongAuth[]={0xC1/*reply serv
 unsigned char EpollClientLoginMaster::protocolReplyCompressionNone[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x04/*return code*/};
 unsigned char EpollClientLoginMaster::protocolReplyCompresssionZlib[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x05/*return code*/};
 unsigned char EpollClientLoginMaster::protocolReplyCompressionXz[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x06/*return code*/};
+unsigned char EpollClientLoginMaster::replyToRegisterLoginServer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/};
+unsigned char EpollClientLoginMaster::replyToIdListBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/};
+
+//start to 0 due to pre incrementation before use
+quint32 EpollClientLoginMaster::maxClanId=0;
+quint32 EpollClientLoginMaster::maxAccountId=0;
+quint32 EpollClientLoginMaster::maxCharacterId=0;
+quint32 EpollClientLoginMaster::maxMonsterId=0;

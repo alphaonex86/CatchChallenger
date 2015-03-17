@@ -2,7 +2,7 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 --
--- Database: `catchchallenger`
+-- Database: `catchchallenger_common`
 --
 
 -- --------------------------------------------------------
@@ -92,6 +92,18 @@ CREATE TABLE IF NOT EXISTS `dictionary_reputation` (
 CREATE TABLE IF NOT EXISTS `dictionary_skin` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `skin` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dictionary_starter`
+--
+
+CREATE TABLE IF NOT EXISTS `dictionary_starter` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `starter` text NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

@@ -122,16 +122,11 @@ struct GameServerSettings
     QString server_message;
     bool dontSendPlayerType;
     qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
+    ServerPreparedDBQuery preparedDBQuery;
 
     struct Database
     {
-        enum Type
-        {
-            DatabaseType_Mysql,
-            DatabaseType_SQLite,
-            DatabaseType_PostgreSQL
-        };
-        Type type;
+        DatabaseBase::Type type;
 
         enum FightSync
         {
@@ -142,9 +137,6 @@ struct GameServerSettings
         FightSync fightSync;
         bool positionTeleportSync;
         quint32 secondToPositionSync;//0 is disabled
-        //sync mode then prefer tryInterval*considerDownAfterNumberOfTry < 20s
-        quint32 tryInterval;//second
-        quint32 considerDownAfterNumberOfTry;
 
         struct Mysql
         {
@@ -280,113 +272,6 @@ struct ServerPrivateVariables
     QtDatabase db;
     QList<QtTimerEvents *> timerEvents;
     #endif
-    QString db_type_string;
-
-    //query
-    QString db_query_select_allow;
-    QString db_query_login;
-    QString db_query_insert_login;
-    QString db_query_characters;
-    QString db_query_played_time;
-    QString db_query_monster_skill;
-    QString db_query_monster;
-    QString db_query_character_by_id;
-    QString db_query_update_character_time_to_delete;
-    QString db_query_update_character_last_connect;
-    QString db_query_clan;
-
-    QString db_query_monster_by_character_id;
-    QString db_query_delete_monster_buff;
-    QString db_query_delete_monster_specific_buff;
-    QString db_query_delete_monster_skill;
-    QString db_query_delete_bot_already_beaten;
-    QString db_query_delete_character;
-    QString db_query_delete_all_item;
-    QString db_query_delete_all_item_warehouse;
-    QString db_query_delete_all_item_market;
-    QString db_query_delete_monster_by_character;
-    QString db_query_delete_monster_warehouse_by_character;
-    QString db_query_delete_monster_market_by_character;
-    QString db_query_delete_monster_by_id;
-    QString db_query_delete_monster_warehouse_by_id;
-    QString db_query_delete_monster_market_by_id;
-    QString db_query_delete_plant;
-    QString db_query_delete_plant_by_id;
-    QString db_query_delete_quest;
-    QString db_query_delete_recipes;
-    QString db_query_delete_reputation;
-    QString db_query_delete_allow;
-
-    QString db_query_select_clan_by_name;
-    QString db_query_select_character_by_pseudo;
-    QString db_query_insert_monster;
-    QString db_query_insert_monster_full;
-    QString db_query_insert_warehouse_monster_full;
-    QString db_query_insert_monster_skill;
-    QString db_query_insert_reputation;
-    QString db_query_insert_item;
-    QString db_query_insert_item_warehouse;
-    QString db_query_insert_item_market;
-    QString db_query_account_time_to_delete_character_by_id;
-    QString db_query_update_character_time_to_delete_by_id;
-    QString db_query_select_reputation_by_id;
-    QString db_query_select_quest_by_id;
-    QString db_query_select_recipes_by_player_id;
-    QString db_query_select_items_by_player_id;
-    QString db_query_select_items_warehouse_by_player_id;
-    QString db_query_select_monsters_by_player_id;
-    QString db_query_select_monsters_warehouse_by_player_id;
-    QString db_query_select_monstersSkill_by_id;
-    QString db_query_select_monstersBuff_by_id;
-    QString db_query_select_bot_beaten;
-    QString db_query_select_itemOnMap;
-    QString db_query_insert_itemonmap;
-    QString db_query_change_right;
-    QString db_query_update_item;
-    QString db_query_update_item_warehouse;
-    QString db_query_delete_item;
-    QString db_query_delete_item_warehouse;
-    QString db_query_update_cash;
-    QString db_query_update_warehouse_cash;
-    QString db_query_insert_recipe;
-    QString db_query_insert_factory;
-    QString db_query_update_factory;
-    QString db_query_insert_character_allow;
-    QString db_query_delete_character_allow;
-    QString db_query_update_reputation;
-    QString db_query_update_character_clan;
-    QString db_query_update_character_clan_and_leader;
-    QString db_query_delete_clan;
-    QString db_query_delete_city;
-    QString db_query_update_character_clan_by_pseudo;
-    QString db_query_update_monster_xp_hp_level;
-    QString db_query_update_monster_hp_only;
-    QString db_query_update_monster_sp_only;
-    QString db_query_update_monster_skill_level;
-    QString db_query_insert_monster_catch;
-    QString db_query_update_monster_xp;
-    QString db_query_insert_bot_already_beaten;
-    QString db_query_insert_monster_buff;
-    QString db_query_update_monster_level;
-    QString db_query_update_monster_position;
-    QString db_query_update_monster_and_hp;
-    QString db_query_update_monster_level_only;
-    QString db_query_delete_monster_specific_skill;
-    QString db_query_insert_clan;
-    QString db_query_insert_plant;
-    QString db_query_update_monster_owner;
-    QString db_query_update_quest_finish;
-    QString db_query_update_quest_step;
-    QString db_query_update_quest_restart;
-    QString db_query_insert_quest;
-    QString db_query_update_city_clan;
-    QString db_query_insert_city;
-    QString db_query_delete_item_market;
-    QString db_query_update_item_market;
-    QString db_query_update_item_market_and_price;
-    QString db_query_update_charaters_market_cash;
-    QString db_query_insert_monster_market;
-    QString db_query_get_market_cash;
 
     QList<ServerProfile> serverProfileList;
 
