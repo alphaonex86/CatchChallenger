@@ -26,7 +26,8 @@ void BaseServer::load_monsters_max_id()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL city loaded").arg(GlobalServerData::serverPrivateVariables.cityStatusList.size()));
 
-    GlobalServerData::serverPrivateVariables.maxMonsterId=1;
+    //start to 0 due to pre incrementation before use
+    GlobalServerData::serverPrivateVariables.maxMonsterId=0;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -60,6 +61,7 @@ void BaseServer::load_monsters_max_id_return()
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
+        //not +1 because incremented before use
         const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
@@ -108,6 +110,7 @@ void BaseServer::load_monsters_warehouse_max_id_return()
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
+        //not +1 because incremented before use
         const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {
@@ -156,6 +159,7 @@ void BaseServer::load_monsters_market_max_id_return()
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
         bool ok;
+        //not +1 because incremented before use
         const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(!ok)
         {

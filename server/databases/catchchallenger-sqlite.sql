@@ -71,49 +71,6 @@ CREATE TABLE reputation (
     "point" INTEGER,
     "level" INTEGER
 );
-CREATE TABLE monster (
-    "id" INTEGER,
-    "hp" INTEGER,
-    "character" INTEGER,
-    "monster" INTEGER,
-    "level" INTEGER,
-    "xp" INTEGER,
-    "sp" INTEGER,
-    "captured_with" INTEGER,
-    "gender" INTEGER,
-    "egg_step" INTEGER,
-    "character_origin" INTEGER,
-    "position" INTEGER
-);
-CREATE TABLE monster_warehouse (
-    "id" INTEGER,
-    "hp" INTEGER,
-    "character" INTEGER,
-    "monster" INTEGER,
-    "level" INTEGER,
-    "xp" INTEGER,
-    "sp" INTEGER,
-    "captured_with" INTEGER,
-    "gender" INTEGER,
-    "egg_step" INTEGER,
-    "character_origin" INTEGER,
-    "position" INTEGER
-);
-CREATE TABLE monster_market (
-    "id" INTEGER,
-    "hp" INTEGER,
-    "character" INTEGER,
-    "monster" INTEGER,
-    "level" INTEGER,
-    "xp" INTEGER,
-    "sp" INTEGER,
-    "captured_with" INTEGER,
-    "gender" INTEGER,
-    "egg_step" INTEGER,
-    "character_origin" INTEGER,
-    "market_price" INTEGER
-);
-CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
 CREATE TABLE character (
     "id" INTEGER,
     "pseudo" TEXT NOT NULL,
@@ -192,4 +149,27 @@ CREATE TABLE dictionary_itemonmap (
     "map" TEXT,
     "x" INTEGER,
     "y" INTEGER
+);
+CREATE TABLE "dictionary_starter" (
+    "id" INTEGER PRIMARY KEY NOT NULL,
+    "starter" TEXT
+);
+CREATE TABLE monster (
+    "id" INTEGER,
+    "hp" INTEGER,
+    "character" INTEGER,
+    "monster" INTEGER,
+    "level" INTEGER,
+    "xp" INTEGER,
+    "sp" INTEGER,
+    "captured_with" INTEGER,
+    "gender" INTEGER,
+    "egg_step" INTEGER,
+    "character_origin" INTEGER,
+    "position" INTEGER
+, "place" INTEGER);
+CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
+CREATE TABLE "monster_market_price" (
+    "id" INTEGER PRIMARY KEY,
+    "market_price" INTEGER
 );

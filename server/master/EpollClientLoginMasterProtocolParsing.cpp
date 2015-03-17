@@ -110,6 +110,28 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
     }
     switch(mainCodeType)
     {
+        case 0x08:
+        {
+            if(stat!=EpollClientLoginMasterStat::Logged)
+            {
+                parseNetworkReadError("stat!=EpollClientLoginMasterStat::Logged: "+QString::number(stat)+" to register as login server");
+                return;
+            }
+            EpollClientLoginMaster::replyToRegisterLoginServer[0x01]=queryNumber;
+            int index=0;
+            while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+            {
+                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+10+(CATCHCHALLENGER_SERVER_MAXIDBLOCK*0+index)*4/*size of int*/)=(quint32)htobe32(maxAccountId+1+index);
+                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+10+(CATCHCHALLENGER_SERVER_MAXIDBLOCK*1+index)*4/*size of int*/)=(quint32)htobe32(maxCharacterId+1+index);
+                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+10+(CATCHCHALLENGER_SERVER_MAXIDBLOCK*2+index)*4/*size of int*/)=(quint32)htobe32(maxMonsterId+1+index);
+                index++;
+            }
+            maxAccountId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+            maxCharacterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+            maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToRegisterLoginServer),sizeof(EpollClientLoginMaster::replyToRegisterLoginServer));
+        }
+        break;
         default:
             parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
             return;
@@ -123,8 +145,79 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
     (void)queryNumber;
     (void)rawData;
     (void)size;
+    if(stat==EpollClientLoginMasterStat::None)
+    {
+        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()");
+        return;
+    }
     switch(mainCodeType)
     {
+        case 0x11:
+            if(stat!=EpollClientLoginMasterStat::LoginServer)
+            {
+                parseNetworkReadError("stat!=EpollClientLoginMasterStat::LoginServer: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery(): "+QString::number(mainCodeType));
+                return;
+            }
+            switch(subCodeType)
+            {
+                case 0x01:
+                {
+                    EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htobe32(maxAccountId+1+index);
+                        index++;
+                    }
+                    maxAccountId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
+                }
+                break;
+                case 0x02:
+                {
+                    EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htobe32(maxCharacterId+1+index);
+                        index++;
+                    }
+                    maxCharacterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
+                }
+                break;
+                case 0x03:
+                {
+                    EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htobe32(maxMonsterId+1+index);
+                        index++;
+                    }
+                    maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
+                }
+                break;
+                case 0x04:
+                {
+                    EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htobe32(maxClanId+1+index);
+                        index++;
+                    }
+                    maxClanId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
+                }
+                break;
+                default:
+                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+                    return;
+                break;
+            }
+        break;
         default:
             parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
             return;

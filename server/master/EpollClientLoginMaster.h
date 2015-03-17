@@ -9,6 +9,7 @@
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 #define TOKEN_SIZE 64
+#define CATCHCHALLENGER_SERVER_MAXIDBLOCK 50
 
 namespace CatchChallenger {
 class EpollClientLoginMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
@@ -41,8 +42,15 @@ public:
     static unsigned char protocolReplyCompressionNone[3];
     static unsigned char protocolReplyCompresssionZlib[3];
     static unsigned char protocolReplyCompressionXz[3];
+    static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
+    +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK];
+    static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK];
 
     BaseClassSwitch::Type getType() const;
+    static quint32 maxClanId;
+    static quint32 maxAccountId;
+    static quint32 maxCharacterId;
+    static quint32 maxMonsterId;
 private:
     void parseNetworkReadError(const QString &errorString);
 

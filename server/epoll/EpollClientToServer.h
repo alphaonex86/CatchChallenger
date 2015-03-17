@@ -9,25 +9,19 @@
 #define BUFFER_MAX_SIZE 4096
 
 namespace CatchChallenger {
-class EpollClient : public BaseClassSwitch
+class EpollClientToServer : public BaseClassSwitch
 {
 public:
-    EpollClient(const int &infd);
-    ~EpollClient();
+    EpollClientToServer(const int &infd);
+    ~EpollClientToServer();
     void close();
     ssize_t read(char *buffer,const size_t &bufferSize);
     ssize_t write(const char *buffer,const size_t &bufferSize);
-    #ifndef SERVERNOBUFFER
     void flush();
-    #endif
     Type getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
 private:
-    #ifndef SERVERNOBUFFER
-    char buffer[BUFFER_MAX_SIZE];
-    size_t bufferSize;
-    #endif
     int infd;
 };
 }
