@@ -15,7 +15,9 @@
 
 using namespace CatchChallenger;
 
+#ifndef SERVERNOBUFFER
 char EpollSslClient::rawbuf[4096];
+#endif
 
 EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     #ifndef SERVERNOBUFFER

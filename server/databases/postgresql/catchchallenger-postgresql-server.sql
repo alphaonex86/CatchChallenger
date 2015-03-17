@@ -1,3 +1,7 @@
+--
+-- PostgreSQL database dump
+--
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -12,7 +16,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: bot_already_beaten; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: bot_already_beaten; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE bot_already_beaten (
@@ -21,12 +25,13 @@ CREATE TABLE bot_already_beaten (
 );
 
 
+
 --
--- Name: character_forserver; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_forserver; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE TABLE "character_forserver" (
-    character integer NOT NULL,
+CREATE TABLE character_forserver (
+    "character" integer NOT NULL,
     x smallint,
     y smallint,
     orientation smallint,
@@ -46,18 +51,20 @@ CREATE TABLE "character_forserver" (
 );
 
 
+
 --
--- Name: character_itemOnMap; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_itemonmap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE TABLE "character_itemonmap" (
+CREATE TABLE character_itemonmap (
     "character" integer,
     "itemOnMap" smallint
 );
 
 
+
 --
--- Name: city; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: city; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE city (
@@ -66,11 +73,12 @@ CREATE TABLE city (
 );
 
 
+
 --
--- Name: dictionary_itemOnMap; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_itemonmap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE TABLE "dictionary_itemonmap" (
+CREATE TABLE dictionary_itemonmap (
     id integer NOT NULL,
     map text,
     x smallint,
@@ -78,8 +86,9 @@ CREATE TABLE "dictionary_itemonmap" (
 );
 
 
+
 --
--- Name: dictionary_map; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_map; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE dictionary_map (
@@ -88,8 +97,9 @@ CREATE TABLE dictionary_map (
 );
 
 
+
 --
--- Name: factory; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: factory; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE factory (
@@ -100,8 +110,9 @@ CREATE TABLE factory (
 );
 
 
+
 --
--- Name: item_market; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: item_market; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE item_market (
@@ -112,28 +123,20 @@ CREATE TABLE item_market (
 );
 
 
+
 --
--- Name: monster_market; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monster_market_price; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE TABLE monster_market (
-    id integer,
-    hp smallint,
-    "character" integer,
-    monster smallint,
-    level smallint,
-    xp integer,
-    sp integer,
-    captured_with smallint,
-    gender smallint,
-    egg_step integer,
-    character_origin integer,
-    market_price bigint
+CREATE TABLE monster_market_price (
+    id integer NOT NULL,
+    market_price integer
 );
 
 
+
 --
--- Name: plant; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: plant; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE plant (
@@ -147,8 +150,9 @@ CREATE TABLE plant (
 );
 
 
+
 --
--- Name: quest; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+-- Name: quest; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE TABLE quest (
@@ -159,19 +163,25 @@ CREATE TABLE quest (
 );
 
 
-ALTER TABLE ONLY "character_forserver"
-    ADD CONSTRAINT character_forserver_pkey PRIMARY KEY (character);
 
 --
--- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_forserver_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
-ALTER TABLE ONLY "dictionary_itemonmap"
+ALTER TABLE ONLY character_forserver
+    ADD CONSTRAINT character_forserver_pkey PRIMARY KEY ("character");
+
+
+--
+-- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY dictionary_itemonmap
     ADD CONSTRAINT "dictionary_itemOnMap_pkey" PRIMARY KEY (id);
 
 
 --
--- Name: dictionary_map_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: dictionary_map_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY dictionary_map
@@ -179,7 +189,7 @@ ALTER TABLE ONLY dictionary_map
 
 
 --
--- Name: factory_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: factory_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY factory
@@ -187,7 +197,15 @@ ALTER TABLE ONLY factory
 
 
 --
--- Name: plant_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+-- Name: monster_market_price_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY monster_market_price
+    ADD CONSTRAINT monster_market_price_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: plant_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY plant
@@ -195,56 +213,49 @@ ALTER TABLE ONLY plant
 
 
 --
--- Name: bot_already_beaten_by_character; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: bot_already_beaten_by_character; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX bot_already_beaten_by_character ON bot_already_beaten USING btree ("character");
 
 
 --
--- Name: bot_already_beaten_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: bot_already_beaten_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX bot_already_beaten_unique ON bot_already_beaten USING btree ("character", botfight_id);
 
 
 --
--- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_character_forserver_index; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE INDEX "character_itemOnMap_index" ON "character_itemonmap" USING btree ("character");
-
-
---
--- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE INDEX "character_character_forserver_index" ON "character_forserver" USING btree ("character");
+CREATE INDEX character_character_forserver_index ON character_forserver USING btree ("character");
 
 
 --
--- Name: item_market_uniqueindex; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: character_itemOnMap_index; Type: INDEX; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE INDEX "character_itemOnMap_index" ON character_itemonmap USING btree ("character");
+
+
+--
+-- Name: item_market_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX item_market_uniqueindex ON item_market USING btree (item, "character");
 
 
 --
--- Name: monster_market_uniqueid; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE UNIQUE INDEX monster_market_uniqueid ON monster_market USING btree (id);
-
-
---
--- Name: quest_bychar; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: quest_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE INDEX quest_bychar ON quest USING btree ("character");
 
 
 --
--- Name: quest_unique; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+-- Name: quest_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
 CREATE UNIQUE INDEX quest_unique ON quest USING btree ("character", quest);

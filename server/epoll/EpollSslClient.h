@@ -26,8 +26,10 @@ public:
     Type getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
+    #ifndef SERVERNOBUFFER
 private:
     static char rawbuf[BUFFER_MAX_SIZE];
+    #endif
 private:
     #ifndef SERVERNOBUFFER
     char bufferClearToOutput[BUFFER_MAX_SIZE];
