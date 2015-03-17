@@ -15,13 +15,13 @@ class EpollPostgresql : public BaseClassSwitch, public CatchChallenger::Database
 public:
     EpollPostgresql();
     ~EpollPostgresql();
-    Type getType() const;
-    bool syncConnect(const char * host, const char * dbname, const char * user, const char * password);
-    bool syncConnect(const char * fullConenctString);
+    BaseClassSwitch::Type getType() const;
+    bool syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password);
+    bool syncConnect(const char * const fullConenctString);
     void syncDisconnect();
     void syncReconnect();
-    CallBack * asyncRead(const char *query,void * returnObject,CallBackDatabase method);
-    bool asyncWrite(const char *query);
+    CallBack * asyncRead(const char * const query,void * returnObject,CallBackDatabase method);
+    bool asyncWrite(const char * const query);
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
     bool epollEvent(const uint32_t &events);
@@ -30,6 +30,7 @@ public:
     bool next();
     const char * value(const int &value) const;
     bool isConnected() const;
+    DatabaseBase::Type databaseType() const;
 private:
     PGconn *conn;
     int tuleIndex;

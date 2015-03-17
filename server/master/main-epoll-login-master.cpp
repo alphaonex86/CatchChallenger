@@ -34,9 +34,6 @@ int main(int argc, char *argv[])
 
     EpollServerLoginMaster *server=new EpollServerLoginMaster();
 
-    if(!server->tryListen())
-        return EPOLLERR;
-
     ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::MasterServer);
     #ifndef SERVERNOBUFFER
     #ifdef SERVERSSL
@@ -65,7 +62,8 @@ int main(int argc, char *argv[])
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
         for(i = 0; i < number_of_events; i++)
         {
-            switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
+            const BaseClassSwitch::Type &baseClassSwitchType=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
+            switch(baseClassSwitchType)
             {
                 case BaseClassSwitch::Type::Server:
                 {
@@ -205,6 +203,19 @@ int main(int argc, char *argv[])
                 {
                     /*static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();*/
+                }
+                break;
+                case BaseClassSwitch::Type::Database:
+                {
+                    EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
+                    db->epollEvent(events[i].events);
+                    /*if(server->ready)
+                        server->try listen*/
+                    if(!db->isConnected())
+                    {
+                        std::cerr << "database disconnect, quit now" << std::endl;
+                        return EXIT_FAILURE;
+                    }
                 }
                 break;
                 default:

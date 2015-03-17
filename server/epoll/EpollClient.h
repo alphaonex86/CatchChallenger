@@ -17,7 +17,9 @@ public:
     void close();
     ssize_t read(char *buffer,const size_t &bufferSize);
     ssize_t write(const char *buffer,const size_t &bufferSize);
+    #ifndef SERVERNOBUFFER
     void flush();
+    #endif
     Type getType() const;
     bool isValid() const;
     long int bytesAvailable() const;

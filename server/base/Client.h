@@ -99,18 +99,18 @@ protected:
     bool character_loaded,character_loaded_in_progress;
     QList<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 
+    struct ClanActionParam
+    {
+        quint8 query_id;
+        quint8 action;
+        QString text;
+    };
     struct AddCharacterParam
     {
         quint8 query_id;
         quint8 profileIndex;
         QString pseudo;
         quint8 skinId;
-    };
-    struct ClanActionParam
-    {
-        quint8 query_id;
-        quint8 action;
-        QString text;
     };
     struct RemoveCharacterParam
     {
