@@ -37,7 +37,14 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         return false;
     }
 
-    for(rp = result; rp != NULL; rp = rp->ai_next)
+    sfd=-1;
+    rp = result;
+    if(rp == NULL)
+    {
+        std::cerr << "rp == NULL, can't bind" << std::endl;
+        return false;
+    }
+    while(rp != NULL)
     {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if(sfd == -1)
@@ -49,8 +56,13 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             /* We managed to bind successfully! */
             break;
         }
-
         ::close(sfd);
+        rp = rp->ai_next;
+    }
+    if(sfd==-1)
+    {
+        std::cerr << "Leave without bind" << std::endl;
+        return false;
     }
 
     if(rp == NULL)

@@ -2,7 +2,7 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 --
--- Database: `catchchallenger`
+-- Database: `catchchallenger_server`
 --
 
 -- --------------------------------------------------------
@@ -41,8 +41,6 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
   `date` int(11) unsigned NOT NULL,
   `market_cash` bigint(20) unsigned NOT NULL,
-  `played_time` int(11) unsigned NOT NULL,
-  `last_connect` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `account` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -128,22 +126,12 @@ CREATE TABLE IF NOT EXISTS `item_market` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `monster_market`
+-- Table structure for table `monster_market_price`
 --
 
-CREATE TABLE IF NOT EXISTS `monster_market` (
-  `id` int(11) NOT NULL,
-  `hp` smallint(6) NOT NULL,
-  `character` int(11) NOT NULL,
-  `monster` smallint(6) NOT NULL,
-  `level` smallint(6) NOT NULL,
-  `xp` int(11) NOT NULL,
-  `sp` int(11) NOT NULL,
-  `captured_with` smallint(6) NOT NULL,
-  `gender` smallint(6) NOT NULL,
-  `egg_step` int(11) NOT NULL,
-  `character_origin` int(11) NOT NULL,
-  `market_price` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `monster_market_price` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `market_price` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

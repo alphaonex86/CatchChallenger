@@ -3,7 +3,7 @@
 using namespace CatchChallenger;
 
 /* not use mainCodeWithoutSubCodeTypeServerToClient because the reply have unknow code */
-void Client::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+void Client::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
@@ -15,7 +15,7 @@ void Client::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeTyp
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("sendPacket(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
     #endif
-    if(!ProtocolParsingBase::packFullOutcommingData(mainCodeType,subCodeType,data.constData(),data.size()))
+    if(!ProtocolParsingBase::packFullOutcommingData(mainCodeType,subCodeType,data,size))
         return;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!socket->isValid())
@@ -26,7 +26,7 @@ void Client::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeTyp
     #endif
 }
 
-void Client::sendPacket(const quint8 &mainCodeType,const QByteArray &data)
+void Client::sendPacket(const quint8 &mainCodeType,const char *data,const int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
@@ -38,7 +38,7 @@ void Client::sendPacket(const quint8 &mainCodeType,const QByteArray &data)
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("sendPacket(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
     #endif
-    if(!ProtocolParsingBase::packOutcommingData(mainCodeType,data.constData(),data.size()))
+    if(!ProtocolParsingBase::packOutcommingData(mainCodeType,data,size))
         return;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!socket->isValid())
@@ -72,30 +72,7 @@ void Client::sendRawSmallPacket(const char *data,const int &size)
     #endif
 }
 
-void Client::sendRawSmallPacket(const QByteArray &data)
-{
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(!isConnected)
-    {
-        normalOutput(QStringLiteral("sendRawSmallPacket(%1) when is not connected").arg(QString(data.toHex())));
-        return;
-    }
-    #endif
-    #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    normalOutput(QStringLiteral("sendRawSmallPacket(%1)").arg(QString(data.toHex())));
-    #endif
-    if(!ProtocolParsingBase::internalSendRawSmallPacket(data.constData(),data.size()))
-        return;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(!socket->isValid())
-    {
-        errorOutput("device is not valid at sendPacket(mainCodeType)");
-        return;
-    }
-    #endif
-}
-
-void Client::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data)
+void Client::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const char *data,const int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
@@ -107,7 +84,7 @@ void Client::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const qui
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("sendQuery(%1,%2,%3)").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
     #endif
-    if(!ProtocolParsingBase::packFullOutcommingQuery(mainIdent,subIdent,queryNumber,data.constData(),data.size()))
+    if(!ProtocolParsingBase::packFullOutcommingQuery(mainIdent,subIdent,queryNumber,data,size))
         return;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!socket->isValid())
@@ -119,10 +96,6 @@ void Client::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const qui
 }
 
 //send reply
-void Client::postReply(const quint8 &queryNumber,const QByteArray &data)
-{
-    postReply(queryNumber,data.constData(),data.size());
-}
 
 void Client::postReply(const quint8 &queryNumber,const char *data,const int &size)
 {
