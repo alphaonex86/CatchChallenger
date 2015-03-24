@@ -31,7 +31,8 @@ QSet<quint8> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub c
 
 quint8                              ProtocolParsing::replyCodeClientToServer;
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-ProtocolParsing::CompressionType    ProtocolParsing::compressionType=CompressionType_None;
+ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeClient=CompressionType::None;
+ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=CompressionType::None;
 #endif
 //predefined size
 QHash<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
@@ -183,7 +184,8 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
             #endif
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            compressionType=CompressionType_Zlib;
+            compressionTypeServer=CompressionType::Zlib;
+            compressionTypeClient=CompressionType::Zlib;
             #endif
 
             //reply code
@@ -255,7 +257,6 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeMultipleCodePacketServerToClient[0x79][0x0002]=2;
             //define the size of the reply
             replySizeOnlyMainCodePacketServerToClient[0x01]=1;
-            replySizeOnlyMainCodePacketServerToClient[0x08]=8+50*4+50*4+50*4;
             /** \note previously send by: sizeMultipleCodePacketServerToClient */
             replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
             replySizeMultipleCodePacketClientToServer[0x79][0x0002]=0;
@@ -272,6 +273,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
             compressionMultipleCodePacketServerToClient[0xC2] << 0x0004;
             compressionMultipleCodePacketServerToClient[0xC2] << 0x000D;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x000E;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x000F;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x0010;
             //define the compression of the reply
             /** \note previously send by: sizeMultipleCodePacketClientToServer */
             replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
@@ -359,7 +363,7 @@ bool ProtocolParsingBase::checkStringIntegrity(const QByteArray &data)
     return checkStringIntegrity(data.constData(),data.size());
 }
 
-bool ProtocolParsingBase::checkStringIntegrity(const char *data, const unsigned int &size)
+bool ProtocolParsingBase::checkStringIntegrity(const char * const data, const unsigned int &size)
 {
     if(size<(int)sizeof(unsigned int))
     {

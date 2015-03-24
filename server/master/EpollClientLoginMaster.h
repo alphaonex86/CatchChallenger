@@ -1,9 +1,8 @@
 #ifndef EPOLLCLIENTLOGINMASTER_H
 #define EPOLLCLIENTLOGINMASTER_H
 
-#include "../epoll/EpollClient.h"
-#include "../epoll/EpollSslClient.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "CharactersGroup.h"
 
 #include <QString>
 
@@ -35,6 +34,7 @@ public:
     char *socketString;
     int socketStringSize;
 
+    static bool automatic_account_creation;
     static char private_token[TOKEN_SIZE];
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];
     static unsigned char protocolReplyProtocolNotSupported[3];
@@ -43,14 +43,21 @@ public:
     static unsigned char protocolReplyCompresssionZlib[3];
     static unsigned char protocolReplyCompressionXz[3];
     static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
-    +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK];
+    +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
+    +1000];
+    static unsigned char replyToRegisterLoginServerBaseOffset;
+    static char loginSettingsAndCharactersGroup[256*1024];
+    static int loginSettingsAndCharactersGroupSize;
+    static char serverServerList[256*1024];
+    static int serverServerListSize;
+    static char serverLogicalGroupList[256*1024];
+    static int serverLogicalGroupListSize;
+    static char loginPreviousToReplyCache[256*1024*3];
+    static int loginPreviousToReplyCacheSize;
     static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK];
 
     BaseClassSwitch::Type getType() const;
-    static quint32 maxClanId;
     static quint32 maxAccountId;
-    static quint32 maxCharacterId;
-    static quint32 maxMonsterId;
 private:
     void parseNetworkReadError(const QString &errorString);
 

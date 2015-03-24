@@ -33,7 +33,9 @@ SOURCES += \
     ../epoll/EpollSslClient.cpp \
     ../base/DatabaseBase.cpp \
     ../epoll/db/EpollPostgresql.cpp \
-    EpollClientLoginMasterProtocolParsing.cpp
+    EpollClientLoginMasterProtocolParsing.cpp \
+    CharactersGroup.cpp \
+    ../../general/base/FacilityLibGeneral.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -47,4 +49,6 @@ HEADERS += \
     ../../general/base/ProtocolParsingCheck.h \
     ../epoll/EpollSslClient.h \
     ../base/DatabaseBase.h \
-    ../epoll/db/EpollPostgresql.h
+    ../epoll/db/EpollPostgresql.h \
+    CharactersGroup.h \
+    ../../general/base/FacilityLibGeneral.h

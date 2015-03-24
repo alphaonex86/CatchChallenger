@@ -16,82 +16,6 @@ QString FacilityLib::text_unknown=QLatin1Literal("unknown");
 QString FacilityLib::text_clan=QLatin1Literal("clan");
 QString FacilityLib::text_dotcomma=QLatin1Literal(";");
 
-QByteArray FacilityLib::toUTF8WithHeader(const QString &text)
-{
-    if(text.isEmpty() || text.size()>255)
-        return UTF8EmptyData;
-    QByteArray returnedData,data;
-    data=text.toUtf8();
-    if(data.size()==0 || data.size()>255)
-        return UTF8EmptyData;
-    returnedData[0]=data.size();
-    returnedData+=data;
-    return returnedData;
-}
-
-QStringList FacilityLib::listFolder(const QString& folder,const QString& suffix)
-{
-    QStringList returnList;
-    QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);//possible wait time here
-    int sizeEntryList=entryList.size();
-    for (int index=0;index<sizeEntryList;++index)
-    {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
-            returnList+=listFolder(folder,suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
-        else if(fileInfo.isFile())
-            returnList+=suffix+fileInfo.fileName();
-    }
-    return returnList;
-}
-
-QString FacilityLib::randomPassword(const QString& string,const quint8& length)
-{
-    if(string.size()<2)
-        return QString();
-    QString randomPassword;
-    int index=0;
-    while(index<length)
-    {
-        randomPassword+=string.at(rand()%string.size());
-        index++;
-    }
-    return randomPassword;
-}
-
-QStringList FacilityLib::skinIdList(const QString& skinPath)
-{
-    const QString &slashbackpng=QStringLiteral("/back.png");
-    const QString &slashfrontpng=QStringLiteral("/front.png");
-    const QString &slashtrainerpng=QStringLiteral("/trainer.png");
-    QStringList skinFolderList;
-    QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
-    int sizeEntryList=entryList.size();
-    for (int index=0;index<sizeEntryList;++index)
-    {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
-            if(QFile(fileInfo.absoluteFilePath()+slashbackpng).exists() && QFile(fileInfo.absoluteFilePath()+slashfrontpng).exists() && QFile(fileInfo.absoluteFilePath()+slashtrainerpng).exists())
-                skinFolderList << fileInfo.fileName();
-    }
-    skinFolderList.sort();
-    while(skinFolderList.size()>255)
-        skinFolderList.removeLast();
-    return skinFolderList;
-}
-
-QString FacilityLib::secondsToString(const quint64 &seconds)
-{
-    if(seconds<60)
-        return QObject::tr("%n second(s)","",seconds);
-    else if(seconds<60*60)
-        return QObject::tr("%n minute(s)","",seconds/60);
-    else if(seconds<60*60*24)
-        return QObject::tr("%n hour(s)","",seconds/(60*60));
-    else
-        return QObject::tr("%n day(s)","",seconds/(60*60*24));
-}
-
 PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster)
 {
     PublicPlayerMonster returnVar;
@@ -160,24 +84,6 @@ PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFig
     tempPlayerMonster.skills=botFightMonster.attacks;
     tempPlayerMonster.sp=0;
     return tempPlayerMonster;
-}
-
-bool FacilityLib::rectTouch(QRect r1,QRect r2)
-{
-    if (r1.isNull() || r2.isNull())
-        return false;
-
-    if((r1.x()+r1.width())<r2.x())
-        return false;
-    if((r2.x()+r2.width())<r1.x())
-        return false;
-
-    if((r1.y()+r1.height())<r2.y())
-        return false;
-    if((r2.y()+r2.height())<r1.y())
-        return false;
-
-    return true;
 }
 
 QString FacilityLib::genderToString(const Gender &gender)
@@ -255,33 +161,6 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
         sub_index++;
     }
     return outputData;
-}
-
-bool FacilityLib::rmpath(const QDir &dir)
-{
-    if(!dir.exists())
-        return true;
-    bool allHaveWork=true;
-    QFileInfoList list = dir.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);
-    for (int i = 0; i < list.size(); ++i)
-    {
-        QFileInfo fileInfo(list.at(i));
-        if(!fileInfo.isDir())
-        {
-            if(!QFile(fileInfo.absoluteFilePath()).remove())
-                allHaveWork=false;
-        }
-        else
-        {
-            //return the fonction for scan the new folder
-            if(!FacilityLib::rmpath(dir.absolutePath()+FacilityLib::text_slash+fileInfo.fileName()+FacilityLib::text_slash))
-                allHaveWork=false;
-        }
-    }
-    if(!allHaveWork)
-        return false;
-    allHaveWork=dir.rmdir(dir.absolutePath());
-    return allHaveWork;
 }
 
 //apply on after FacilityLib::industryStatusWithCurrentTime()
@@ -399,19 +278,6 @@ quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, cons
     else
         price_temp_change=((max_items-quantityInStock)*CommonSettings::commonSettings.factoryPriceChange*2)/max_items;
     return CommonDatapack::commonDatapack.items.item.value(product.item).price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
-}
-
-
-QString FacilityLib::timeToString(const quint32 &time)
-{
-    if(time>=3600*24*10)
-        return QObject::tr("%n day(s)","",time/(3600*24));
-    else if(time>=3600*24)
-        return QObject::tr("%n day(s) and %1","",time/(3600*24)).arg(QObject::tr("%n hour(s)","",(time%(3600*24))/3600));
-    else if(time>=3600)
-        return QObject::tr("%n hour(s) and %1","",time/3600).arg(QObject::tr("%n minute(s)","",(time%3600)/60));
-    else
-        return QObject::tr("%n minute(s) and %1","",time/60).arg(QObject::tr("%n second(s)","",time%60));
 }
 
 //reputation

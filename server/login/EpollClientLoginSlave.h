@@ -5,6 +5,7 @@
 #include "../epoll/EpollSslClient.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../epoll/db/EpollPostgresql.h"
+#include "LoginLinkToMaster.h"
 
 #include <QString>
 
@@ -84,18 +85,21 @@ public:
     char *socketString;
     int socketStringSize;
 
+    static LoginLinkToMaster *linkToMaster;
     static char private_token[TOKEN_SIZE];
     static QList<unsigned int> maxAccountIdList;
     static QList<unsigned int> maxCharacterIdList;
     static QList<unsigned int> maxClanIdList;
     static bool maxAccountIdRequested;
     static bool maxCharacterIdRequested;
-    static bool maxClanIdRequested;
+    static bool maxMonsterIdRequested;
     static char maxAccountIdRequest[4];
     static char maxCharacterIdRequest[4];
-    static char maxClanIdRequest[4];
+    static char maxMonsterIdRequest[4];
+    static char replyToRegisterLoginServer[1024];
+    static int replyToRegisterLoginServerBaseOffset;
 private:
-    QList<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
+    QList<DatabaseBase::CallBack *> callbackRegistred;
     QList<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     QStringList paramToPassToCallBackType;
@@ -145,9 +149,9 @@ private:
     static void createAccount_static(void *object);
     void createAccount_object();
     void createAccount_return(AskLoginParam *askLoginParam);
-    static void character_static(void *object);
-    void character_object();
-    void character_return(const quint8 &query_id);
+    static void character_list_static(void *object);
+    void character_list_object();
+    void character_list_return(const quint8 &query_id);
     void deleteCharacterNow(const quint32 &characterId);
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
@@ -162,6 +166,12 @@ private:
     void removeCharacter_return(const quint8 &query_id,const quint32 &characterId);
     void dbQueryWriteLogin(const char * const queryText);
     void dbQueryWriteCommon(const char * const queryText);
+
+    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const char *data=NULL,const int &size=0);
+    void sendPacket(const quint8 &mainIdent,const char *data=NULL,const int &size=0);
+    void sendRawSmallPacket(const char *data,const int &size);
+    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const char *data=NULL,const int &size=0);
+    void postReply(const quint8 &queryNumber,const char *data=NULL,const int &size=0);
 
     void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
 private:

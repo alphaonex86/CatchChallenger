@@ -5,15 +5,16 @@
 using namespace CatchChallenger;
 
 char EpollClientLoginSlave::private_token[TOKEN_SIZE];
+LoginLinkToMaster *EpollClientLoginSlave::linkToMaster=NULL;
 QList<unsigned int> EpollClientLoginSlave::maxAccountIdList;
 QList<unsigned int> EpollClientLoginSlave::maxCharacterIdList;
 QList<unsigned int> EpollClientLoginSlave::maxClanIdList;
 bool EpollClientLoginSlave::maxAccountIdRequested=false;
 bool EpollClientLoginSlave::maxCharacterIdRequested=false;
-bool EpollClientLoginSlave::maxClanIdRequested=false;
+bool EpollClientLoginSlave::maxMonsterIdRequested=false;
 char EpollClientLoginSlave::maxAccountIdRequest[]={0x11/*reply server to client*/,0x00,0x01/*query id*/,0x00/*the init reply query number*/};
 char EpollClientLoginSlave::maxCharacterIdRequest[]={0x11/*reply server to client*/,0x00,0x02/*query id*/,0x00/*the init reply query number*/};
-char EpollClientLoginSlave::maxClanIdRequest[]={0x11/*reply server to client*/,0x00,0x03/*query id*/,0x00/*the init reply query number*/};
+char EpollClientLoginSlave::maxMonsterIdRequest[]={0x11/*reply server to client*/,0x00,0x03/*query id*/,0x00/*the init reply query number*/};
 
 unsigned char EpollClientLoginSlave::protocolReplyProtocolNotSupported[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x02/*return code*/};
 unsigned char EpollClientLoginSlave::protocolReplyServerFull[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x03/*return code*/};
@@ -26,11 +27,14 @@ unsigned char EpollClientLoginSlave::loginIsWrongBuffer[]={0xC1/*reply server to
 
 const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER;
 
-bool EpollClientLoginSlave::automatic_account_creation;
-unsigned int EpollClientLoginSlave::character_delete_time;
+bool EpollClientLoginSlave::automatic_account_creation=false;
+unsigned int EpollClientLoginSlave::character_delete_time=3600*24;
 QString EpollClientLoginSlave::httpDatapackMirror;
-unsigned int EpollClientLoginSlave::min_character;
-unsigned int EpollClientLoginSlave::max_character;
-unsigned int EpollClientLoginSlave::max_pseudo_size;
+unsigned int EpollClientLoginSlave::min_character=0;
+unsigned int EpollClientLoginSlave::max_character=3;
+unsigned int EpollClientLoginSlave::max_pseudo_size=20;
 EpollPostgresql EpollClientLoginSlave::databaseBaseLogin;
 EpollPostgresql EpollClientLoginSlave::databaseBaseCommon;
+
+char EpollClientLoginSlave::replyToRegisterLoginServer[1024];
+int EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset=0;

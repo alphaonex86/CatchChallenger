@@ -212,7 +212,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         }
     }
     const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_characters.arg(account_id).arg(CommonSettings::commonSettings.max_character*2);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::character_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::character_list_static);
     if(callback==NULL)
     {
         account_id=0;
@@ -344,13 +344,13 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("Login already used: %1").arg(QString(askLoginParam->login.toHex())));
 }
 
-void Client::character_static(void *object)
+void Client::character_list_static(void *object)
 {
     if(object!=NULL)
-        static_cast<Client *>(object)->character_object();
+        static_cast<Client *>(object)->character_list_object();
 }
 
-void Client::character_object()
+void Client::character_list_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
@@ -364,11 +364,11 @@ void Client::character_object()
     if(askLoginParam==NULL)
         abort();
     #endif
-    character_return(askLoginParam->query_id);
+    character_list_return(askLoginParam->query_id);
     delete askLoginParam;
 }
 
-void Client::character_return(const quint8 &query_id)
+void Client::character_list_return(const quint8 &query_id)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))

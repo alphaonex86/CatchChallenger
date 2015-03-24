@@ -2,6 +2,7 @@
 #include "../base/PreparedDBQuery.h"
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -171,7 +172,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         }
     }
     const QString &queryText=QString(PreparedDBQuery::db_query_characters).arg(account_id).arg(max_character*2);
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::character_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::character_list_static);
     if(callback==NULL)
     {
         account_id=0;
@@ -300,13 +301,25 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("maxAccountIdList is empty"));
             return;
         }
-        int maxAccountId=maxAccountIdList.takeFirst();
         if(maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !EpollClientLoginSlave::maxAccountIdRequested)
         {
             EpollClientLoginSlave::maxAccountIdRequested=true;
-            send you request
+            if(linkToMaster->queryNumberList.empty())
+            {
+                errorParsingLayer("Unable to get query id at createAccount_return");
+                return;
+            }
+            const quint8 &queryNumber=linkToMaster->queryNumberList.back();
+            linkToMaster->queryNumberList.pop_back();
+            EpollClientLoginSlave::maxAccountIdRequest[0x03]=queryNumber;
+            if(!internalSendRawSmallPacket(EpollClientLoginSlave::maxAccountIdRequest,sizeof(EpollClientLoginSlave::maxAccountIdRequest)))
+            {
+                errorParsingLayer("Unable to send at createAccount_return");
+                return;
+            }
+            linkToMaster->newFullOutputQuery(0x11,0x0001,queryNumber);
         }
-        account_id=maxAccountId;
+        account_id=maxAccountIdList.takeFirst();
         dbQueryWriteLogin(QString(PreparedDBQuery::db_query_insert_login).arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()).toUtf8().constData());
         //send the network reply
         QByteArray outputData;
@@ -318,13 +331,13 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("Login already used: %1").arg(QString(askLoginParam->login.toHex())));
 }
 
-void EpollClientLoginSlave::character_static(void *object)
+void EpollClientLoginSlave::character_list_static(void *object)
 {
     if(object!=NULL)
-        static_cast<EpollClientLoginSlave *>(object)->character_object();
+        static_cast<EpollClientLoginSlave *>(object)->character_list_object();
 }
 
-void EpollClientLoginSlave::character_object()
+void EpollClientLoginSlave::character_list_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
@@ -338,11 +351,11 @@ void EpollClientLoginSlave::character_object()
     if(askLoginParam==NULL)
         abort();
     #endif
-    character_return(askLoginParam->query_id);
+    character_list_return(askLoginParam->query_id);
     delete askLoginParam;
 }
 
-void EpollClientLoginSlave::character_return(const quint8 &query_id)
+void EpollClientLoginSlave::character_list_return(const quint8 &query_id)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))
@@ -354,7 +367,7 @@ void EpollClientLoginSlave::character_return(const quint8 &query_id)
     callbackRegistred.removeFirst();
     //send signals into the server
     #ifndef SERVERBENCHMARK
-    normalOutput(QStringLiteral("Logged the account %1").arg(account_id));
+    std::cout << "Logged the account: " << account_id << std::endl;
     #endif
     //send the network reply
     QByteArray outputData;

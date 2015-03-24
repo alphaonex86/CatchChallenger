@@ -154,7 +154,7 @@ void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const qu
     waitedReply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char *data,const int &size)
+bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -180,25 +180,25 @@ bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char *d
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data)
+QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data,const CompressionType &compressionType)
 {
     switch(compressionType)
     {
-        case CompressionType_Xz:
+        case CompressionType::Xz:
             return lzmaCompress(data);
         break;
-        case CompressionType_Zlib:
+        case CompressionType::Zlib:
         default:
             return qCompress(data,9);
         break;
-        case CompressionType_None:
+        case CompressionType::None:
             return data;
         break;
     }
 }
 #endif
 
-bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -233,7 +233,7 @@ bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,cons
     #endif
 }
 
-bool ProtocolParsingBase::packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size)
+bool ProtocolParsingBase::packOutcommingData(const quint8 &mainCodeType,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -268,7 +268,7 @@ bool ProtocolParsingBase::packOutcommingData(const quint8 &mainCodeType,const ch
     #endif
 }
 
-bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -305,7 +305,7 @@ bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const q
     #endif
 }
 
-bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -343,7 +343,7 @@ bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,con
     #endif
 }
 
-bool ProtocolParsingBase::internalPackOutcommingData(const char *data,const int &size)
+bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size<=0)
@@ -395,7 +395,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char *data,const int 
 }
 
 //no control to be more fast
-bool ProtocolParsingBase::internalSendRawSmallPacket(const char *data,const int &size)
+bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size<=0)
@@ -456,7 +456,7 @@ int ProtocolParsingBase::computeOutcommingData(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const char *data,const int &size)
+        const quint8 &mainCodeType,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
 
@@ -601,7 +601,7 @@ int ProtocolParsingBase::computeOutcommingQuery(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+        const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
     buffer[1]=queryNumber;
@@ -747,7 +747,7 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+        const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
     const quint16 &tempSubCodeType=htobe16(subCodeType);
@@ -790,13 +790,13 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 #endif
                     QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeClient)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -818,7 +818,7 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 4+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -856,13 +856,13 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 #endif
                     QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeClient)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -884,7 +884,7 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 4+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -976,13 +976,13 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 #endif
                     QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeServer)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -1004,7 +1004,7 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 4+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -1042,13 +1042,13 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 #endif
                     QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeServer)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(size==0)
                             {
@@ -1070,7 +1070,7 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 4+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -1133,7 +1133,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
+        const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
     const quint16 &tempSubCodeType=htobe16(subCodeType);
@@ -1175,13 +1175,13 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 #endif
                     QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeClient)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -1203,7 +1203,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 3+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -1241,13 +1241,13 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 #endif
                     QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeClient)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeClient));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -1269,7 +1269,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 3+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -1361,13 +1361,13 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 #endif
                     QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeServer)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -1389,7 +1389,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 3+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -1427,13 +1427,13 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 #endif
                     QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    switch(compressionType)
+                    switch(compressionTypeServer)
                     {
-                        case CompressionType_Xz:
-                        case CompressionType_Zlib:
+                        case CompressionType::Xz:
+                        case CompressionType::Zlib:
                         default:
                         {
-                            const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                            const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionTypeServer));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(compressedData.size()==0)
                             {
@@ -1455,7 +1455,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 3+newSize;
                         }
                         break;
-                        case CompressionType_None:
+                        case CompressionType::None:
                         break;
                     }
                 }
@@ -1520,7 +1520,7 @@ bool ProtocolParsingBase::removeFromQueryReceived(const quint8 &queryNumber)
 }
 #endif
 
-int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size)
+int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char * const data, const int &size)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!queryReceived.contains(queryNumber))
@@ -1556,13 +1556,20 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
                         #endif
             QStringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
             #endif
+            CompressionType compressionType;
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            if(isClient)
+                compressionType=compressionTypeClient;
+            else
+            #endif
+                compressionType=compressionTypeServer;
             switch(compressionType)
             {
-                case CompressionType_Xz:
-                case CompressionType_Zlib:
+                case CompressionType::Xz:
+                case CompressionType::Zlib:
                 default:
                 {
-                    const QByteArray &compressedData(computeCompression(QByteArray(data,size)));
+                    const QByteArray &compressedData(computeCompression(QByteArray(data,size),compressionType));
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(compressedData.size()==0)
                     {
@@ -1584,7 +1591,7 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
                         return fullSize;
                 }
                 break;
-                case CompressionType_None:
+                case CompressionType::None:
                 break;
             }
             replyOutputCompression.remove(queryNumber);

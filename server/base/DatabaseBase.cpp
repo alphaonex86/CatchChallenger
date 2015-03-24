@@ -3,7 +3,7 @@
 using namespace CatchChallenger;
 
 DatabaseBase::DatabaseBase() :
-    tryInterval(5),
-    considerDownAfterNumberOfTry(3)
+    tryInterval(1),
+    considerDownAfterNumberOfTry(30)
 {
 }

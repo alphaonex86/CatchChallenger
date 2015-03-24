@@ -61,10 +61,9 @@ public:
     static void startTheCityCapture();
     static void setEvent(const quint8 &event, const quint8 &new_value);
 
-    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
-    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
+    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const char *data=NULL,const int &size=0);
+    void sendPacket(const quint8 &mainIdent,const char *data=NULL,const int &size=0);
     void sendRawSmallPacket(const char *data,const int &size);
-    void sendRawSmallPacket(const QByteArray &data);
 
     static QList<int> generalChatDrop;
     static int generalChatDropTotalCache;
@@ -318,9 +317,9 @@ private:
     static void askLogin_static(void *object);
     void askLogin_object();
     void askLogin_return(AskLoginParam *askLoginParam);
-    static void character_static(void *object);
-    void character_object();
-    void character_return(const quint8 &query_id);
+    static void character_list_static(void *object);
+    void character_list_object();
+    void character_list_return(const quint8 &query_id);
     void deleteCharacterNow(const quint32 &characterId);
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
@@ -593,10 +592,8 @@ private:
     quint32 getClanId() const;
     bool haveAClan() const;
 
-    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data=QByteArray());
-    //send reply
-    void postReply(const quint8 &queryNumber,const QByteArray &data);
-    void postReply(const quint8 &queryNumber,const char *data,const int &size);
+    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const char *data=NULL,const int &size=0);
+    void postReply(const quint8 &queryNumber,const char *data=NULL,const int &size=0);
 
     void insertClientOnMap(CommonMap *map);
     void removeClientOnMap(CommonMap *map,const bool &withDestroy=false);
