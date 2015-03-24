@@ -38,9 +38,15 @@ EpollPostgresql::EpollPostgresql() :
 EpollPostgresql::~EpollPostgresql()
 {
     if(result!=NULL)
+    {
         PQclear(result);
+        result=NULL;
+    }
     if(conn!=NULL)
+    {
         PQfinish(conn);
+        conn=NULL;
+    }
 }
 
 BaseClassSwitch::Type EpollPostgresql::getType() const
@@ -164,6 +170,7 @@ void EpollPostgresql::syncDisconnect()
        return;
     }
     PQfinish(conn);
+    conn=NULL;
 }
 
 CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const char * const query,void * returnObject, CallBackDatabase method)

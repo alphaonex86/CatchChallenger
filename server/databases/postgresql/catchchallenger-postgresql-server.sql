@@ -45,9 +45,7 @@ CREATE TABLE character_forserver (
     unvalidated_rescue_y smallint,
     unvalidated_rescue_orientation smallint,
     date integer,
-    market_cash bigint,
-    played_time integer,
-    last_connect integer
+    market_cash bigint
 );
 
 

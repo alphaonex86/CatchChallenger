@@ -34,7 +34,7 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const int &size)
     #endif
 }
 
-ssize_t ProtocolParsingInputOutput::write(const char * data, const int &size)
+ssize_t ProtocolParsingInputOutput::write(const char * const data, const int &size)
 {
     #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket->openMode()|QIODevice::WriteOnly)
@@ -184,7 +184,7 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
     #endif
 }
 
-bool ProtocolParsingBase::parseIncommingDataRaw(const char *commonBuffer, const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const quint32 &size, quint32 &cursor)
 {
     if(!parseHeader(commonBuffer,size,cursor))
     {
@@ -240,7 +240,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char *commonBuffer, const 
     return true;
 }
 
-bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quint32 &size,quint32 &cursor)
 {
     if(!haveData)
     {
@@ -536,7 +536,7 @@ bool ProtocolParsingBase::parseHeader(const char *commonBuffer,const quint32 &si
     return true;
 }
 
-bool ProtocolParsingBase::parseQueryNumber(const char *commonBuffer,const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,const quint32 &size,quint32 &cursor)
 {
     if(!have_query_number && need_query_number)
     {
@@ -672,7 +672,7 @@ bool ProtocolParsingBase::parseQueryNumber(const char *commonBuffer,const quint3
     return true;
 }
 
-bool ProtocolParsingBase::parseDataSize(const char *commonBuffer, const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const quint32 &size,quint32 &cursor)
 {
     if(!haveData_dataSize)
     {
@@ -845,7 +845,7 @@ bool ProtocolParsingBase::parseDataSize(const char *commonBuffer, const quint32 
     return true;
 }
 
-bool ProtocolParsingBase::parseData(const char *commonBuffer, const quint32 &size,quint32 &cursor)
+bool ProtocolParsingBase::parseData(const char * const commonBuffer, const quint32 &size,quint32 &cursor)
 {
     if(dataSize==0)
         return parseDispatch(NULL,0);
@@ -910,7 +910,7 @@ bool ProtocolParsingBase::parseData(const char *commonBuffer, const quint32 &siz
     }
 }
 
-bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
+bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size)
 {
     #ifdef ProtocolParsingInputOutputDEBUG
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -966,9 +966,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                 if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                     {
-                        switch(compressionType)
+                        switch(compressionTypeClient)
                         {
-                            case CompressionType_Xz:
+                            case CompressionType::Xz:
                             {
                                 const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                 if(newData.isEmpty())
@@ -979,7 +979,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_Zlib:
+                            case CompressionType::Zlib:
                             default:
                             {
                                 const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -991,7 +991,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_None:
+                            case CompressionType::None:
                                 parseFullMessage(mainCodeType,subCodeType,data,size);
                             break;
                         }
@@ -1011,9 +1011,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                 if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     {
-                        switch(compressionType)
+                        switch(compressionTypeServer)
                         {
-                            case CompressionType_Xz:
+                            case CompressionType::Xz:
                             {
                                 const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                 if(newData.isEmpty())
@@ -1024,7 +1024,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_Zlib:
+                            case CompressionType::Zlib:
                             default:
                             {
                                 const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -1036,7 +1036,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseFullMessage(mainCodeType,subCodeType,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_None:
+                            case CompressionType::None:
                                 parseFullMessage(mainCodeType,subCodeType,data,size);
                             break;
                         }
@@ -1083,9 +1083,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                         if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionType)
+                            switch(compressionTypeClient)
                             {
-                                case CompressionType_Xz:
+                                case CompressionType::Xz:
                                 {
                                     const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                     if(newData.isEmpty())
@@ -1096,7 +1096,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_Zlib:
+                                case CompressionType::Zlib:
                                 default:
                                 {
                                     const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -1108,7 +1108,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_None:
+                                case CompressionType::None:
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                             }
@@ -1128,9 +1128,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                         if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionType)
+                            switch(compressionTypeServer)
                             {
-                                case CompressionType_Xz:
+                                case CompressionType::Xz:
                                 {
                                     const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                     if(newData.isEmpty())
@@ -1141,7 +1141,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_Zlib:
+                                case CompressionType::Zlib:
                                 default:
                                 {
                                     const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -1153,7 +1153,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_None:
+                                case CompressionType::None:
                                     parseFullQuery(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                             }
@@ -1185,9 +1185,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                     {
-                        switch(compressionType)
+                        switch(compressionTypeClient)
                         {
-                            case CompressionType_Xz:
+                            case CompressionType::Xz:
                             {
                                 const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                 if(newData.isEmpty())
@@ -1198,7 +1198,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_Zlib:
+                            case CompressionType::Zlib:
                             default:
                             {
                                 const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -1210,7 +1210,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_None:
+                            case CompressionType::None:
                                 parseReplyData(mainCodeType,queryNumber,data,size);
                             break;
                         }
@@ -1229,9 +1229,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
                     {
-                        switch(compressionType)
+                        switch(compressionTypeServer)
                         {
-                            case CompressionType_Xz:
+                            case CompressionType::Xz:
                             {
                                 const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                 if(newData.isEmpty())
@@ -1242,7 +1242,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_Zlib:
+                            case CompressionType::Zlib:
                             default:
                             {
                                 const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -1254,7 +1254,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                 parseReplyData(mainCodeType,queryNumber,newData.constData(),newData.size());
                             }
                             break;
-                            case CompressionType_None:
+                            case CompressionType::None:
                                 parseReplyData(mainCodeType,queryNumber,data,size);
                             break;
                         }
@@ -1284,9 +1284,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                         if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionType)
+                            switch(compressionTypeClient)
                             {
-                                case CompressionType_Xz:
+                                case CompressionType::Xz:
                                 {
                                     const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                     if(newData.isEmpty())
@@ -1297,7 +1297,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_Zlib:
+                                case CompressionType::Zlib:
                                 default:
                                 {
                                     const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -1309,7 +1309,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_None:
+                                case CompressionType::None:
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                             }
@@ -1329,9 +1329,9 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                     if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                         if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionType)
+                            switch(compressionTypeServer)
                             {
-                                case CompressionType_Xz:
+                                case CompressionType::Xz:
                                 {
                                     const QByteArray &newData=lzmaUncompress(QByteArray(data,size));
                                     if(newData.isEmpty())
@@ -1342,7 +1342,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_Zlib:
+                                case CompressionType::Zlib:
                                 default:
                                 {
                                     const QByteArray &newData=qUncompress(QByteArray(data,size));
@@ -1354,7 +1354,7 @@ bool ProtocolParsingBase::parseDispatch(const char *data, const int &size)
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,newData.constData(),newData.size());
                                 }
                                 break;
-                                case CompressionType_None:
+                                case CompressionType::None:
                                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,data,size);
                                 break;
                             }
