@@ -1,14 +1,14 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
 CREATE TABLE "monster_buff" (
     "monster" INTEGER,
     "buff" INTEGER,
     "level" INTEGER
 );
-CREATE UNIQUE INDEX "monster_buff_2" on monster_buff (monster ASC, buff ASC);
 CREATE TABLE "city" (
     "city" TEXT,
     "clan" INTEGER
 );
-CREATE UNIQUE INDEX "cityindex" on city (city ASC);
 CREATE TABLE factory (
     "id" INTEGER,
     "resources" TEXT,
@@ -20,21 +20,17 @@ CREATE TABLE clan (
     "name" TEXT,
     "cash" INTEGER
 , "date" INTEGER);
-CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
 CREATE TABLE monster_skill (
     "monster" INTEGER,
     "skill" INTEGER,
     "level" INTEGER
 , "endurance" INTEGER);
-CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
 CREATE TABLE account (
     "id" INTEGER NOT NULL,
     "login" TEXT,
     "password" TEXT,
     "date" INTEGER
 );
-CREATE UNIQUE INDEX "index_account" on account (id ASC);
-CREATE UNIQUE INDEX "login_account" on account (login ASC);
 CREATE TABLE bot_already_beaten (
     "character" INTEGER,
     "botfight_id" INTEGER
@@ -86,30 +82,6 @@ CREATE TABLE character (
     "played_time" INTEGER,
     "last_connect" INTEGER,
     "starter" INTEGER);
-CREATE UNIQUE INDEX "id" on "character" (id ASC);
-CREATE TABLE character_forserver (
-    "character" INTEGER,
-    "x" INTEGER,
-    "y" INTEGER,
-    "orientation" INTEGER,
-    "map" INTEGER,
-    "rescue_map" INTEGER,
-    "rescue_x" INTEGER,
-    "rescue_y" INTEGER,
-    "rescue_orientation" INTEGER,
-    "unvalidated_rescue_map" INTEGER,
-    "unvalidated_rescue_x" INTEGER,
-    "unvalidated_rescue_y" INTEGER,
-    "unvalidated_rescue_orientation" INTEGER,
-    "date" INTEGER,
-    "played_time" INTEGER,
-    "last_connect" INTEGER,
-    "market_cash" INTEGER);
-CREATE UNIQUE INDEX "idcharacter_forserver" on "character_forserver" (character ASC);
-CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
-CREATE INDEX "byclan" on "character" (clan ASC);
-CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
-CREATE INDEX "player_link_account" on "character" (account ASC);
 CREATE TABLE plant (
     "map" INTEGER,
     "x" INTEGER,
@@ -118,7 +90,6 @@ CREATE TABLE plant (
     "character" INTEGER,
     "plant_timestamps" INTEGER
 , "id" INTEGER);
-CREATE UNIQUE INDEX "plant_primarykey" on plant (id ASC);
 CREATE TABLE dictionary_allow (
     "id" INTEGER,
     "allow" TEXT
@@ -143,7 +114,6 @@ CREATE TABLE "character_itemOnMap" (
     "character" INTEGER,
     "itemOnMap" INTEGER
 );
-CREATE INDEX "character_itemOnMap_index" on character_itemonmap (character ASC);
 CREATE TABLE dictionary_itemonmap (
     "id" INTEGER,
     "map" TEXT,
@@ -168,8 +138,51 @@ CREATE TABLE monster (
     "character_origin" INTEGER,
     "position" INTEGER
 , "place" INTEGER);
-CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
 CREATE TABLE "monster_market_price" (
     "id" INTEGER PRIMARY KEY,
     "market_price" INTEGER
 );
+CREATE TABLE character_forserver (
+    "character" INTEGER,
+    "x" INTEGER,
+    "y" INTEGER,
+    "orientation" INTEGER,
+    "map" INTEGER,
+    "rescue_map" INTEGER,
+    "rescue_x" INTEGER,
+    "rescue_y" INTEGER,
+    "rescue_orientation" INTEGER,
+    "unvalidated_rescue_map" INTEGER,
+    "unvalidated_rescue_x" INTEGER,
+    "unvalidated_rescue_y" INTEGER,
+    "unvalidated_rescue_orientation" INTEGER,
+    "date" INTEGER,
+    "market_cash" INTEGER
+);
+CREATE TABLE "dictionary_server" (
+    "id" INTEGER PRIMARY KEY,
+    "key" TEXT
+);
+CREATE TABLE "server_time" (
+    "server" INTEGER,
+    "account" INTEGER,
+    "played_time" INTEGER,
+    "last_connect" INTEGER
+);
+CREATE UNIQUE INDEX "monster_buff_2" on monster_buff (monster ASC, buff ASC);
+CREATE UNIQUE INDEX "cityindex" on city (city ASC);
+CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
+CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
+CREATE UNIQUE INDEX "index_account" on account (id ASC);
+CREATE UNIQUE INDEX "login_account" on account (login ASC);
+CREATE UNIQUE INDEX "id" on "character" (id ASC);
+CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
+CREATE INDEX "byclan" on "character" (clan ASC);
+CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
+CREATE INDEX "player_link_account" on "character" (account ASC);
+CREATE UNIQUE INDEX "plant_primarykey" on plant (id ASC);
+CREATE INDEX "character_itemOnMap_index" on character_itemonmap (character ASC);
+CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
+CREATE UNIQUE INDEX "idcharacter_forserver" on "character_forserver" (character ASC);
+CREATE UNIQUE INDEX "server_time_index" on server_time (server ASC, account ASC);
+COMMIT;

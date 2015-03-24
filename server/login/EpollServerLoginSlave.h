@@ -10,12 +10,13 @@
 #include <QSettings>
 
 namespace CatchChallenger {
-class EpollServerLoginSlave : public CatchChallenger::EpollGenericServer, public CatchChallenger::BaseServerCommon
+class EpollServerLoginSlave : public EpollGenericServer, public BaseServerCommon
 {
 public:
     EpollServerLoginSlave();
     ~EpollServerLoginSlave();
     bool tryListen();
+    void close();
 public:
     bool tcpNodelay,tcpCork;
     bool serverReady;

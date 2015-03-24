@@ -40,7 +40,9 @@ SOURCES += \
     LoginLinkToMasterProtocolParsing.cpp \
     EpollClientLoginSlaveProtocolParsing.cpp \
     ../epoll/EpollClientToServer.cpp \
-    ../epoll/EpollSslClientToServer.cpp
+    ../epoll/EpollSslClientToServer.cpp \
+    EpollClientLoginSlaveWrite.cpp \
+    CharactersGroupForLogin.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -58,4 +60,5 @@ HEADERS += \
     ../base/PreparedDBQuery.h \
     LoginLinkToMaster.h \
     ../epoll/EpollClientToServer.h \
-    ../epoll/EpollSslClientToServer.h
+    ../epoll/EpollSslClientToServer.h \
+    CharactersGroupForLogin.h

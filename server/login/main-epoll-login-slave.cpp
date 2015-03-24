@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     EpollServerLoginSlave *server=new EpollServerLoginSlave();
 
     if(!server->tryListen())
-        return EPOLLERR;
+        return -99;
 
     ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::LoginServer);
     #ifndef SERVERNOBUFFER
@@ -187,12 +187,6 @@ int main(int argc, char *argv[])
                     //ready to read
                     if(events[i].events & EPOLLIN)
                         client->parseIncommingData();
-                    #ifndef SERVERNOBUFFER
-                    //ready to write
-                    if(events[i].events & EPOLLOUT)
-                        if(!closed)
-                            client->flush();
-                    #endif
                     if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
                     {
                         numberOfConnectedClient--;

@@ -86,6 +86,18 @@ CREATE TABLE IF NOT EXISTS `dictionary_reputation` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `dictionary_server`
+--
+
+CREATE TABLE IF NOT EXISTS `dictionary_server` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `key` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `dictionary_skin`
 --
 
@@ -192,29 +204,6 @@ CREATE TABLE IF NOT EXISTS `monster_skill` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `monster_warehouse`
---
-
-CREATE TABLE IF NOT EXISTS `monster_warehouse` (
-  `id` int(11) NOT NULL,
-  `hp` smallint(6) NOT NULL,
-  `character` int(11) NOT NULL,
-  `monster` smallint(6) NOT NULL,
-  `level` smallint(6) NOT NULL,
-  `xp` int(11) NOT NULL,
-  `sp` int(11) NOT NULL,
-  `captured_with` smallint(6) NOT NULL,
-  `gender` smallint(6) NOT NULL,
-  `egg_step` int(11) NOT NULL,
-  `character_origin` int(11) NOT NULL,
-  `position` smallint(6) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `character` (`character`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `recipe`
 --
 
@@ -239,3 +228,17 @@ CREATE TABLE IF NOT EXISTS `reputation` (
   PRIMARY KEY (`character`,`type`),
   KEY `character` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `server_time`
+--
+
+CREATE TABLE IF NOT EXISTS `server_time` (
+  `server` smallint(6) NOT NULL,
+  `account` int(11) NOT NULL,
+  `played_time` int(11) NOT NULL,
+  `last_connect` int(11) NOT NULL,
+  PRIMARY KEY (`server`,`account`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

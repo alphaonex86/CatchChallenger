@@ -47,9 +47,9 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     enum CompressionType
     {
-        CompressionType_None,
-        CompressionType_Zlib,
-        CompressionType_Xz
+        None,
+        Zlib,
+        Xz
     };
     #endif
     enum InitialiseTheVariableType
@@ -60,7 +60,8 @@ public:
         MasterServer
     };
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static CompressionType compressionType;
+    static CompressionType compressionTypeClient;
+    static CompressionType compressionTypeServer;
     #endif
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
@@ -116,35 +117,35 @@ public:
     virtual ~ProtocolParsingBase();
     friend class ProtocolParsing;
     friend class ProtocolParsingCheck;
-    bool checkStringIntegrity(const char *data, const unsigned int &size);
+    bool checkStringIntegrity(const char * const data, const unsigned int &size);
     bool checkStringIntegrity(const QByteArray &data);
     virtual ssize_t read(char * data, const int &size) = 0;
-    virtual ssize_t write(const char * data, const int &size) = 0;
+    virtual ssize_t write(const char * const data, const int &size) = 0;
 public:
-    bool parseIncommingDataRaw(const char *commonBuffer, const quint32 &size,quint32 &cursor);
+    bool parseIncommingDataRaw(const char * const commonBuffer, const quint32 &size,quint32 &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
     QStringList getQueryRunningList();
     #endif
 protected:
-    bool parseHeader(const char *commonBuffer, const quint32 &size, quint32 &cursor);
-    bool parseQueryNumber(const char *commonBuffer, const quint32 &size,quint32 &cursor);
-    bool parseDataSize(const char *commonBuffer, const quint32 &size,quint32 &cursor);
-    bool parseData(const char *commonBuffer, const quint32 &size,quint32 &cursor);
-    bool parseDispatch(const char * data,const int &size);
+    bool parseHeader(const char * const commonBuffer, const quint32 &size, quint32 &cursor);
+    bool parseQueryNumber(const char * const commonBuffer, const quint32 &size,quint32 &cursor);
+    bool parseDataSize(const char * const commonBuffer, const quint32 &size,quint32 &cursor);
+    bool parseData(const char * const commonBuffer, const quint32 &size,quint32 &cursor);
+    bool parseDispatch(const char * const data,const int &size);
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     bool isClient;
     #endif
     QByteArray header_cut;
 protected:
     //have message without reply
-    virtual void parseMessage(const quint8 &mainCodeType,const char *data,const int &size) = 0;
-    virtual void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size) = 0;
+    virtual void parseMessage(const quint8 &mainCodeType,const char * const data,const int &size) = 0;
+    virtual void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size) = 0;
     //have query with reply
-    virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size) = 0;
-    virtual void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size) = 0;
+    virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
+    virtual void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
     //send reply
-    virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size) = 0;
-    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size) = 0;
+    virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
+    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
 
     virtual void reset();
 private:
@@ -171,13 +172,13 @@ public:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
     //send message without reply
-    bool packOutcommingData(const quint8 &mainCodeType,const char *data,const int &size);
-    bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size);
+    bool packOutcommingData(const quint8 &mainCodeType,const char * const data,const int &size);
+    bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size);
     //send query with reply
-    bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-    bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size);
+    bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size);
     //send reply
-    bool postReplyData(const quint8 &queryNumber, const char *data,const int &size);
+    bool postReplyData(const quint8 &queryNumber, const char * const data,const int &size);
 
     //compute some packet
     //send message without reply
@@ -186,34 +187,34 @@ public:
             const bool &isClient,
             #endif
             char *buffer,
-            const quint8 &mainCodeType,const char *data,const int &size);
+            const quint8 &mainCodeType,const char * const data,const int &size);
     static int computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
             char *buffer,
-            const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size);
+            const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size);
     //send query with reply
     static int computeOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
             char *buffer,
-            const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
+            const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size);
     static int computeFullOutcommingQuery(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             const bool &isClient,
             #endif
             char *buffer,
-            const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+            const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size);
     //send reply
-    int computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char *data, const int &size);
+    int computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char * const data, const int &size);
     //compression
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static QByteArray computeCompression(const QByteArray &data);
+    static QByteArray computeCompression(const QByteArray &data, const CompressionType &compressionType);
     #endif
 private:
-    bool internalPackOutcommingData(const char *data,const int &size);
+    bool internalPackOutcommingData(const char * const data,const int &size);
     static qint8 encodeSize(char *data,const quint32 &size);
 
     // for data
@@ -235,7 +236,7 @@ protected:
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     #endif
-    bool internalSendRawSmallPacket(const char *data,const int &size);
+    bool internalSendRawSmallPacket(const char * const data,const int &size);
     virtual void disconnectClient() = 0;
 };
 
@@ -278,7 +279,7 @@ protected:
         ConnectedSocket *socket;
     #endif
     ssize_t read(char * data, const int &size);
-    ssize_t write(const char * data, const int &size);
+    ssize_t write(const char * const data, const int &size);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ProtocolParsingCheck *protocolParsingCheck;
     #endif
