@@ -284,5 +284,103 @@ void BaseServerCommon::preload_dictionary_skin_return()
             GlobalServerData::serverPrivateVariables.dictionary_skin_reverse[i.value()]=lastId;
         }
     }
+    preload_dictionary_starter();
+}
+
+void BaseServerCommon::preload_dictionary_starter()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case GameServerSettings::Database::DatabaseType_Mysql:
+            queryText=QStringLiteral("SELECT `id`,`starter` FROM `dictionary_starter` ORDER BY `starter`");
+        break;
+        case GameServerSettings::Database::DatabaseType_SQLite:
+            queryText=QStringLiteral("SELECT id,starter FROM dictionary_starter ORDER BY starter");
+        break;
+        case GameServerSettings::Database::DatabaseType_PostgreSQL:
+            queryText=QStringLiteral("SELECT id,starter FROM dictionary_starter ORDER BY starter");
+        break;
+    }
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_starter_static)==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        criticalDatabaseQueryFailed();return;//stop because can't resolv the name
+    }
+}
+
+void BaseServerCommon::preload_dictionary_starter_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_dictionary_starter_return();
+}
+
+void BaseServerCommon::preload_dictionary_starter_return()
+{
+    {
+        int index=0;
+        while(index<GlobalServerData::serverPrivateVariables.starterList.size())
+        {
+            GlobalServerData::serverPrivateVariables.dictionary_starter_reverse << 0;
+            index++;
+        }
+    }
+    QSet<QString> foundstarter;
+    int lastId=0;
+    while(GlobalServerData::serverPrivateVariables.db.next())
+    {
+        bool ok;
+        lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        const QString &starter=QString(GlobalServerData::serverPrivateVariables.db.value(1));
+        if(GlobalServerData::serverPrivateVariables.dictionary_starter.size()<=lastId)
+        {
+            int index=GlobalServerData::serverPrivateVariables.dictionary_starter.size();
+            while(index<=lastId)
+            {
+                GlobalServerData::serverPrivateVariables.dictionary_starter << 0;
+                index++;
+            }
+        }
+        if(GlobalServerData::serverPrivateVariables.starterList.contains(starter))
+        {
+            const quint8 &internalValue=GlobalServerData::serverPrivateVariables.starterList.value(starter);
+            GlobalServerData::serverPrivateVariables.dictionary_starter[lastId]=internalValue;
+            GlobalServerData::serverPrivateVariables.dictionary_starter_reverse[internalValue]=lastId;
+            foundstarter << starter;
+        }
+    }
+    GlobalServerData::serverPrivateVariables.db.clear();
+    QHashIterator<QString,quint8> i(GlobalServerData::serverPrivateVariables.starterList);
+    while (i.hasNext()) {
+        i.next();
+        const QString &starter=i.key();
+        if(!foundstarter.contains(starter))
+        {
+            lastId++;
+            QString queryText;
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case GameServerSettings::Database::DatabaseType_Mysql:
+                    queryText=QStringLiteral("INSERT INTO `dictionary_starter`(`id`,`starter`) VALUES(%1,'%2');").arg(lastId).arg(starter);
+                break;
+                case GameServerSettings::Database::DatabaseType_SQLite:
+                    queryText=QStringLiteral("INSERT INTO dictionary_starter(id,starter) VALUES(%1,'%2');").arg(lastId).arg(starter);
+                break;
+                case GameServerSettings::Database::DatabaseType_PostgreSQL:
+                    queryText=QStringLiteral("INSERT INTO dictionary_starter(id,starter) VALUES(%1,'%2');").arg(lastId).arg(starter);
+                break;
+            }
+            if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
+            {
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+                criticalDatabaseQueryFailed();return;//stop because can't resolv the name
+            }
+            while(GlobalServerData::serverPrivateVariables.dictionary_starter.size()<lastId)
+                GlobalServerData::serverPrivateVariables.dictionary_starter << 0;
+            GlobalServerData::serverPrivateVariables.dictionary_starter << i.value();
+            GlobalServerData::serverPrivateVariables.dictionary_starter_reverse[i.value()]=lastId;
+        }
+    }
     SQL_common_load_finish();
 }

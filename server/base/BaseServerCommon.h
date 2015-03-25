@@ -11,7 +11,7 @@ public:
     void SQL_common_load_start();
 private:
     virtual void SQL_common_load_finish() = 0;
-    
+
     void preload_dictionary_allow();
     void preload_dictionary_allow_static(void *object);
     void preload_dictionary_allow_return();
@@ -21,6 +21,9 @@ private:
     void preload_dictionary_skin();
     void preload_dictionary_skin_static(void *object);
     void preload_dictionary_skin_return();
+    void preload_dictionary_starter();
+    void preload_dictionary_starter_static(void *object);
+    void preload_dictionary_starter_return();
 };
 }
 
