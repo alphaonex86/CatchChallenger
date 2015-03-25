@@ -80,6 +80,13 @@ public:
         void * client;
         char value[CATCHCHALLENGER_TOKENSIZE];
     };
+    enum ProxyMode
+    {
+        Direct,
+        Proxy
+    };
+    static ProxyMode proxyMode;
+
     void parseIncommingData();
 
     char *socketString;
@@ -96,8 +103,15 @@ public:
     static char maxAccountIdRequest[4];
     static char maxCharacterIdRequest[4];
     static char maxMonsterIdRequest[4];
-    static char replyToRegisterLoginServer[1024];
-    static int replyToRegisterLoginServerBaseOffset;
+    static char replyToRegisterLoginServerCharactersGroup[1024];
+    static int replyToRegisterLoginServerCharactersGroupSize;
+
+    static char serverServerList[256*1024];
+    static int serverServerListSize;
+    static char serverLogicalGroupList[256*1024];
+    static int serverLogicalGroupListSize;
+    static char serverLogicalGroupAndServerList[512*1024];
+    static int serverLogicalGroupAndServerListSize;
 private:
     QList<DatabaseBase::CallBack *> callbackRegistred;
     QList<void *> paramToPassToCallBack;

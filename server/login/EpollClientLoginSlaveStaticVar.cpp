@@ -25,6 +25,14 @@ unsigned char EpollClientLoginSlave::protocolReplyCompressionXz[]={0xC1/*reply s
 unsigned char EpollClientLoginSlave::loginInProgressBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x06/*return code*/};
 unsigned char EpollClientLoginSlave::loginIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 
+char EpollClientLoginSlave::serverServerList[];
+int EpollClientLoginSlave::serverServerListSize=0;
+char EpollClientLoginSlave::serverLogicalGroupList[];
+int EpollClientLoginSlave::serverLogicalGroupListSize=0;
+char EpollClientLoginSlave::serverLogicalGroupAndServerList[];
+int EpollClientLoginSlave::serverLogicalGroupAndServerListSize=0;
+EpollClientLoginSlave::ProxyMode EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Direct;
+
 const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER;
 
 bool EpollClientLoginSlave::automatic_account_creation=false;
@@ -36,5 +44,5 @@ unsigned int EpollClientLoginSlave::max_pseudo_size=20;
 EpollPostgresql EpollClientLoginSlave::databaseBaseLogin;
 EpollPostgresql EpollClientLoginSlave::databaseBaseCommon;
 
-char EpollClientLoginSlave::replyToRegisterLoginServer[1024];
-int EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset=0;
+char EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[1024];
+int EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize=0;

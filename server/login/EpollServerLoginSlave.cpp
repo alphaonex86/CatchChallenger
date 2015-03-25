@@ -23,6 +23,12 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 {
     QSettings settings("login_slave.conf",QSettings::IniFormat);
 
+    {
+        memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));
+        memset(EpollClientLoginSlave::serverLogicalGroupList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupList));
+        memset(EpollClientLoginSlave::serverLogicalGroupAndServerList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupAndServerList));
+    }
+
     srand(time(NULL));
 
     if(!settings.contains(QStringLiteral("ip")))
@@ -46,6 +52,21 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
     memcpy(EpollClientLoginSlave::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE);
+    {
+        if(!settings.contains(QStringLiteral("mode")))
+            settings.setValue(QStringLiteral("mode"),QStringLiteral("direct"));//or proxy
+        QString mode=settings.value(QStringLiteral("mode")).toString();
+        if(mode!=QStringLiteral("direct") && mode!=QStringLiteral("proxy"))
+        {
+            mode=QStringLiteral("direct");
+            settings.setValue(QStringLiteral("mode"),mode);
+        }
+        if(mode==QStringLiteral("direct"))
+            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Direct;
+        else
+            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
+    }
+
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -191,8 +212,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     {
         charactersGroupForLoginList.sort();
-        EpollClientLoginSlave::replyToRegisterLoginServer[EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset]=(unsigned char)charactersGroupForLoginList.size();
-        EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset+=sizeof(unsigned char);
+        EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=(unsigned char)charactersGroupForLoginList.size();
+        EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=sizeof(unsigned char);
         int index=0;
         while(index<charactersGroupForLoginList.size())
         {
@@ -203,10 +224,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
                 abort();
             }
-            EpollClientLoginSlave::replyToRegisterLoginServer[EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset]=(unsigned char)data.size();
-            EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset+=sizeof(unsigned char);
-            memcpy(EpollClientLoginSlave::replyToRegisterLoginServer+EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset,data.constData(),data.size());
-            EpollClientLoginSlave::replyToRegisterLoginServerBaseOffset+=data.size();
+            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=(unsigned char)data.size();
+            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=sizeof(unsigned char);
+            memcpy(EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup+EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize,data.constData(),data.size());
+            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=data.size();
             index++;
         }
     }
@@ -253,6 +274,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         #endif
         settings.endGroup();
     }
+
+    settings.sync();
 }
 
 EpollServerLoginSlave::~EpollServerLoginSlave()
