@@ -27,3 +27,13 @@ unsigned char EpollClientLoginMaster::replyToIdListBuffer[]={0xC1/*reply server 
 
 //start to 0 due to pre incrementation before use
 quint32 EpollClientLoginMaster::maxAccountId=0;
+
+QSet<QString> EpollClientLoginMaster::compressedExtension;
+QSet<QString> EpollClientLoginMaster::extensionAllowed;
+QByteArray EpollClientLoginMaster::rawFiles;
+QByteArray EpollClientLoginMaster::compressedFiles;
+int EpollClientLoginMaster::rawFilesCount;
+int EpollClientLoginMaster::compressedFilesCount;
+QHash<QString,quint32> EpollClientLoginMaster::datapack_file_list_cache;
+QHash<QString,EpollClientLoginMaster::DatapackCacheFile> EpollClientLoginMaster::datapack_file_hash_cache;
+QRegularExpression EpollClientLoginMaster::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));

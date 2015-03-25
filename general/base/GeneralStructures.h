@@ -844,8 +844,6 @@ struct Profile
         quint32 id;
         quint32 quantity;
     };
-    QString map;
-    quint8 x,y;
     QStringList forcedskinTemp;
     QList<quint8> forcedskin;
     quint64 cash;

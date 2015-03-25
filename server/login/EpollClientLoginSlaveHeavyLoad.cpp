@@ -369,6 +369,10 @@ void EpollClientLoginSlave::character_list_return(const quint8 &query_id)
     #ifndef SERVERBENCHMARK
     std::cout << "Logged the account: " << account_id << std::endl;
     #endif
+
+    if(!internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::serverLogicalGroupAndServerList),EpollClientLoginSlave::serverLogicalGroupAndServerListSize))
+        return;
+
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);

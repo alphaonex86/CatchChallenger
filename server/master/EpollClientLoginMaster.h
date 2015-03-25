@@ -58,6 +58,19 @@ public:
 
     BaseClassSwitch::Type getType() const;
     static quint32 maxAccountId;
+
+    static QSet<QString> compressedExtension;
+    static QSet<QString> extensionAllowed;
+    static QByteArray rawFiles,compressedFiles;
+    static int rawFilesCount,compressedFilesCount;
+    struct DatapackCacheFile
+    {
+        quint32 mtime;
+        quint32 partialHash;
+    };
+    static QHash<QString,quint32> datapack_file_list_cache;
+    static QHash<QString,DatapackCacheFile> datapack_file_hash_cache;
+    static QRegularExpression fileNameStartStringRegex;
 private:
     void parseNetworkReadError(const QString &errorString);
 

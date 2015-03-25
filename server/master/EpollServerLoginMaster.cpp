@@ -1,15 +1,25 @@
 #include "EpollServerLoginMaster.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/CommonDatapack.h"
+#include "../VariableServer.h"
 
 using namespace CatchChallenger;
 
 #include <QFile>
 #include <QByteArray>
+#include <QCryptographicHash>
+#include <QRegularExpression>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 #include <iostream>
+
+// 1) max account id
+// 2) common datapack
+// 3) sql dictionary
+// 4) datapack sum and cache
+// 5) compose reply cache
 
 /// \todo the back id get
 
@@ -18,19 +28,71 @@ using namespace CatchChallenger;
 EpollServerLoginMaster::EpollServerLoginMaster() :
     server_ip(NULL),
     server_port(NULL),
-    databaseBaseLogin(NULL)
+    rawServerListForC20011(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
+    rawServerListForC20011Size(0),
+    databaseBaseLogin(NULL),
+    character_delete_time(3600),
+    min_character(0),
+    max_character(3),
+    max_pseudo_size(20)
 {
     {
         //empty buffer
         memset(EpollClientLoginMaster::replyToRegisterLoginServer+2,0x00,sizeof(EpollClientLoginMaster::replyToRegisterLoginServer)-2);
         memset(EpollClientLoginMaster::serverServerList,0x00,sizeof(EpollClientLoginMaster::serverServerList));
         memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
+        memset(rawServerListForC20011,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
     QSettings settings("login_master.conf",QSettings::IniFormat);
 
     srand(time(NULL));
 
+    loadLoginSettings(settings);
+    loadDBLoginSettings(settings);
+    QStringList charactersGroupList=loadCharactersGroup(settings);
+    charactersGroupListReply(charactersGroupList);
+    doTheLogicalGroup(settings);
+    doTheServerList();
+    doTheReplyCache();
+    loadTheProfile();
+}
+
+EpollServerLoginMaster::~EpollServerLoginMaster()
+{
+    if(EpollClientLoginMaster::private_token!=NULL)
+        memset(EpollClientLoginMaster::private_token,0x00,TOKEN_SIZE);
+    if(server_ip!=NULL)
+    {
+        delete server_ip;
+        server_ip=NULL;
+    }
+    if(server_port!=NULL)
+    {
+        delete server_port;
+        server_port=NULL;
+    }
+    if(databaseBaseLogin!=NULL)
+    {
+        delete databaseBaseLogin;
+        databaseBaseLogin=NULL;
+    }
+    if(rawServerListForC20011!=NULL)
+    {
+        delete rawServerListForC20011;
+        rawServerListForC20011=NULL;
+        rawServerListForC20011Size=0;
+    }
+    QHash<QString,CharactersGroup *>::const_iterator i = CharactersGroup::charactersGroupHash.constBegin();
+    while (i != CharactersGroup::charactersGroupHash.constEnd()) {
+        delete i.value();
+        ++i;
+    }
+    CharactersGroup::charactersGroupHash.clear();
+}
+
+void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
+{
     if(!settings.contains(QStringLiteral("ip")))
         settings.setValue(QStringLiteral("ip"),QString());
     const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
@@ -75,14 +137,14 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     if(!settings.contains(QStringLiteral("min_character")))
         settings.setValue(QStringLiteral("min_character"),1);
     EpollClientLoginMaster::automatic_account_creation=settings.value(QStringLiteral("automatic_account_creation")).toBool();
-    const quint32 &character_delete_time=settings.value(QStringLiteral("character_delete_time")).toUInt();
+    character_delete_time=settings.value(QStringLiteral("character_delete_time")).toUInt();
     if(character_delete_time==0)
     {
         std::cerr << "character_delete_time==0 (abort)" << std::endl;
         abort();
     }
-    const quint8 &min_character=settings.value(QStringLiteral("min_character")).toUInt();
-    const quint8 &max_character=settings.value(QStringLiteral("max_character")).toUInt();
+    min_character=settings.value(QStringLiteral("min_character")).toUInt();
+    max_character=settings.value(QStringLiteral("max_character")).toUInt();
     if(max_character<=0)
     {
         std::cerr << "max_character<=0 (abort)" << std::endl;
@@ -93,13 +155,16 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         std::cerr << "max_character<min_character (abort)" << std::endl;
         abort();
     }
-    const quint8 &max_pseudo_size=settings.value(QStringLiteral("max_pseudo_size")).toUInt();
+    max_pseudo_size=settings.value(QStringLiteral("max_pseudo_size")).toUInt();
     if(max_pseudo_size==0)
     {
         std::cerr << "max_pseudo_size==0 (abort)" << std::endl;
         abort();
     }
+}
 
+void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
+{
     QString mysql_db;
     QString mysql_host;
     QString mysql_login;
@@ -159,6 +224,16 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         settings.endGroup();
         load_account_max_id();
     }
+}
+
+QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
+{
+    QString mysql_db;
+    QString mysql_host;
+    QString mysql_login;
+    QString mysql_pass;
+    QString type;
+    bool ok;
 
     QStringList charactersGroupList;
     bool continueCharactersGroupSettings=true;
@@ -227,243 +302,207 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
             continueCharactersGroupSettings=false;
         settings.endGroup();
     }
+    return charactersGroupList;
+}
 
+void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGroupList)
+{
+    charactersGroupList.sort();
+
+    rawServerListForC20011[0x00]=EpollClientLoginMaster::automatic_account_creation;
+    *reinterpret_cast<quint32 *>(rawServerListForC20011+0x03)=(quint32)htobe32((quint32)character_delete_time);
+    rawServerListForC20011[0x05]=min_character;
+    rawServerListForC20011[0x06]=max_character;
+    rawServerListForC20011[0x07]=max_pseudo_size;
+    rawServerListForC20011Size=0x08;
+    //do the Characters group
+    rawServerListForC20011[rawServerListForC20011Size]=(unsigned char)charactersGroupList.size();
+    rawServerListForC20011Size+=sizeof(unsigned char);
+    int index=0;
+    while(index<charactersGroupList.size())
     {
-        charactersGroupList.sort();
-
-        char rawServerList[sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)];
-        memset(rawServerList,0x00,sizeof(rawServerList));
-
-        rawServerList[0x00]=EpollClientLoginMaster::automatic_account_creation;
-        *reinterpret_cast<quint32 *>(rawServerList+0x03)=(quint32)htobe32((quint32)character_delete_time);
-        rawServerList[0x05]=min_character;
-        rawServerList[0x06]=max_character;
-        rawServerList[0x07]=max_pseudo_size;
-        int rawServerListSize=0x08;
-        //do the Characters group
-        rawServerList[rawServerListSize]=(unsigned char)charactersGroupList.size();
-        rawServerListSize+=sizeof(unsigned char);
-        int index=0;
-        while(index<charactersGroupList.size())
+        const QString &charactersGroupName=charactersGroupList.at(index);
+        const int &newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerListForC20011);
+        if(newSize==0 || charactersGroupName.size()>20)
         {
-            const QString &charactersGroupName=charactersGroupList.at(index);
-            const int &newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerList);
-            if(newSize==0 || charactersGroupName.size()>20)
-            {
-                std::cerr << "charactersGroupName to hurge, null or unable to translate in utf8 (abort)" << std::endl;
-                abort();
-            }
-            rawServerListSize+=newSize;
-            index++;
-            CharactersGroup::charactersGroupList << CharactersGroup::charactersGroupHash.value(charactersGroupName);
-        }
-        EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=ProtocolParsingBase::computeFullOutcommingData(
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                false,
-                #endif
-                EpollClientLoginMaster::loginSettingsAndCharactersGroup,
-                0xC2,0x0011,rawServerList,rawServerListSize);
-        if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
-        {
-            std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
+            std::cerr << "charactersGroupName to hurge, null or unable to translate in utf8 (abort)" << std::endl;
             abort();
         }
+        rawServerListForC20011Size+=newSize;
+        index++;
+        CharactersGroup::charactersGroupList << CharactersGroup::charactersGroupHash.value(charactersGroupName);
     }
+}
 
+void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
+{
+    //do the LogicalGroup
+    char rawServerList[sizeof(EpollClientLoginMaster::serverLogicalGroupList)];
+    memset(rawServerList,0x00,sizeof(rawServerList));
+    int rawServerListSize=0x01;
+
+    QString textToConvert;
+    int logicalGroup=0;
+    bool logicalGroupContinue=true;
+    while(logicalGroupContinue)
     {
-        //do the LogicalGroup
-        char rawServerList[sizeof(EpollClientLoginMaster::serverLogicalGroupList)];
-        memset(rawServerList,0x00,sizeof(rawServerList));
-        int rawServerListSize=0x01;
-
-        QString textToConvert;
-        int logicalGroup=0;
-        bool logicalGroupContinue=true;
-        while(logicalGroupContinue)
+        settings.beginGroup(QStringLiteral("logical-group-")+QString::number(logicalGroup));
+        logicalGroupContinue=settings.contains(QStringLiteral("path")) && settings.contains(QStringLiteral("translation")) && logicalGroup<255;
+        if(logicalGroupContinue)
         {
-            settings.beginGroup(QStringLiteral("logical-group-")+QString::number(logicalGroup));
-            logicalGroupContinue=settings.contains(QStringLiteral("path")) && settings.contains(QStringLiteral("translation")) && logicalGroup<255;
-            if(logicalGroupContinue)
+            //path
+            textToConvert=settings.value(QStringLiteral("path")).toString();
+            if(textToConvert.size()>20)
             {
-                //path
-                textToConvert=settings.value(QStringLiteral("path")).toString();
-                if(textToConvert.size()>20)
-                {
-                    std::cerr << "path too hurge (abort)" << std::endl;
-                    abort();
-                }
-                int newSize=FacilityLibGeneral::toUTF8WithHeader(textToConvert,rawServerList+rawServerListSize);
-                if(newSize==0)
-                {
-                    std::cerr << "path null or unable to translate in utf8 (abort)" << std::endl;
-                    abort();
-                }
-                rawServerListSize+=newSize;
-                //translation
-                textToConvert=settings.value(QStringLiteral("translation")).toString();
-                if(textToConvert.size()>4*1024)
-                {
-                    std::cerr << "translation too hurge (abort)" << std::endl;
-                    abort();
-                }
-                newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,rawServerList+rawServerListSize);
-                if(newSize==0)
-                {
-                    std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
-                    abort();
-                }
-                rawServerListSize+=newSize;
-            }
-            logicalGroup++;
-            settings.endGroup();
-        }
-        rawServerList[0x00]=logicalGroup;
-
-        EpollClientLoginMaster::serverLogicalGroupListSize=ProtocolParsingBase::computeFullOutcommingData(
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                false,
-                #endif
-                EpollClientLoginMaster::serverLogicalGroupList,
-                0xC2,0x000F,rawServerList,rawServerListSize);
-        if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
-        {
-            std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
-            abort();
-        }
-    }
-
-    {
-        //do the server list
-        char rawServerList[sizeof(EpollClientLoginMaster::serverServerList)];
-        memset(rawServerList,0x00,sizeof(rawServerList));
-        int rawServerListSize=0x00;
-
-        const int &serverListSize=0x01;
-        rawServerList[rawServerListSize]=serverListSize;
-        rawServerListSize+=1;
-        int serverListIndex=0;
-        while(serverListIndex<serverListSize)
-        {
-            const QString &charactersGroup="Test";
-            const char key[]={0x00,0x00,0x00,0x00};
-            const QString &host="localhost";
-            const unsigned short int port=9999;
-            const QString &metaData="<name>Server test 4</name><name lang=\"fr\">Serveur de teste 4</name><description>Description in english</description><description lang=\"fr\">Description en français</description> (xml attached)";
-            const QString &logicalGroup="folder/path (group)";
-
-            //charactersGroup
-            if(charactersGroup.size()>20)
-            {
-                std::cerr << "charactersGroup too hurge (abort)" << std::endl;
+                std::cerr << "path too hurge (abort)" << std::endl;
                 abort();
             }
-            int newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,rawServerList+rawServerListSize);
+            int newSize=FacilityLibGeneral::toUTF8WithHeader(textToConvert,rawServerList+rawServerListSize);
             if(newSize==0)
             {
-                std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
+                std::cerr << "path null or unable to translate in utf8 (abort)" << std::endl;
                 abort();
             }
             rawServerListSize+=newSize;
-            //key
-            memcpy(rawServerList+rawServerListSize,key,sizeof(key));
-            rawServerListSize+=sizeof(key);
-            //host
-            newSize=FacilityLibGeneral::toUTF8WithHeader(host,rawServerList+rawServerListSize);
-            if(newSize==0)
+            //translation
+            textToConvert=settings.value(QStringLiteral("translation")).toString();
+            if(textToConvert.size()>4*1024)
             {
-                std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
+                std::cerr << "translation too hurge (abort)" << std::endl;
                 abort();
             }
-            rawServerListSize+=newSize;
-            //port
-            *reinterpret_cast<unsigned short int *>(rawServerList+rawServerListSize)=(unsigned short int)htobe16((unsigned short int)port);
-            rawServerListSize+=sizeof(unsigned short int);
-            //metaData
-            if(metaData.size()>4*1024)
-            {
-                std::cerr << "metaData too hurge (abort)" << std::endl;
-                abort();
-            }
-            newSize=FacilityLibGeneral::toUTF8With16BitsHeader(metaData,rawServerList+rawServerListSize);
+            newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,rawServerList+rawServerListSize);
             if(newSize==0)
             {
                 std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
                 abort();
             }
             rawServerListSize+=newSize;
-            //logicalGroup
-            if(logicalGroup.size()>20)
-            {
-                std::cerr << "logicalGroup too hurge (abort)" << std::endl;
-                abort();
-            }
-            newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,rawServerList+rawServerListSize);
-            if(newSize==0)
-            {
-                std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
-                abort();
-            }
-            rawServerListSize+=newSize;
-
-            serverListIndex++;
         }
-
-        EpollClientLoginMaster::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
-                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                false,
-                #endif
-                EpollClientLoginMaster::serverServerList,
-                0xC2,0x0010,rawServerList,rawServerListSize);
-        if(EpollClientLoginMaster::serverServerListSize==0)
-        {
-            std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
-            abort();
-        }
+        logicalGroup++;
+        settings.endGroup();
     }
+    rawServerList[0x00]=logicalGroup;
 
+    EpollClientLoginMaster::serverLogicalGroupListSize=ProtocolParsingBase::computeFullOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            false,
+            #endif
+            EpollClientLoginMaster::serverLogicalGroupList,
+            0xC2,0x000F,rawServerList,rawServerListSize);
+    if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
     {
-        //do the reply cache
-        EpollClientLoginMaster::loginPreviousToReplyCacheSize=0;
-        memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
-               EpollClientLoginMaster::loginSettingsAndCharactersGroup,
-               EpollClientLoginMaster::loginSettingsAndCharactersGroupSize);
-        EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::loginSettingsAndCharactersGroupSize;
-        memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
-               EpollClientLoginMaster::serverLogicalGroupList,
-               EpollClientLoginMaster::serverLogicalGroupListSize);
-        EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverLogicalGroupListSize;
-        memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
-               EpollClientLoginMaster::serverServerList,
-               EpollClientLoginMaster::serverServerListSize);
-        EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverServerListSize;
+        std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
+        abort();
     }
 }
 
-EpollServerLoginMaster::~EpollServerLoginMaster()
+void EpollServerLoginMaster::doTheServerList()
 {
-    if(EpollClientLoginMaster::private_token!=NULL)
-        memset(EpollClientLoginMaster::private_token,0x00,TOKEN_SIZE);
-    if(server_ip!=NULL)
+    //do the server list
+    char rawServerList[sizeof(EpollClientLoginMaster::serverServerList)];
+    memset(rawServerList,0x00,sizeof(rawServerList));
+    int rawServerListSize=0x00;
+
+    const int &serverListSize=0x01;
+    rawServerList[rawServerListSize]=serverListSize;
+    rawServerListSize+=1;
+    int serverListIndex=0;
+    while(serverListIndex<serverListSize)
     {
-        delete server_ip;
-        server_ip=NULL;
+        const QString &charactersGroup="Test";
+        const char key[]={0x00,0x00,0x00,0x00};
+        const QString &host="localhost";
+        const unsigned short int port=9999;
+        const QString &metaData="<name>Server test 4</name><name lang=\"fr\">Serveur de teste 4</name><description>Description in english</description><description lang=\"fr\">Description en français</description> (xml attached)";
+        const QString &logicalGroup="folder/path (group)";
+
+        //charactersGroup
+        if(charactersGroup.size()>20)
+        {
+            std::cerr << "charactersGroup too hurge (abort)" << std::endl;
+            abort();
+        }
+        int newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,rawServerList+rawServerListSize);
+        if(newSize==0)
+        {
+            std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
+            abort();
+        }
+        rawServerListSize+=newSize;
+        //key
+        memcpy(rawServerList+rawServerListSize,key,sizeof(key));
+        rawServerListSize+=sizeof(key);
+        //host
+        newSize=FacilityLibGeneral::toUTF8WithHeader(host,rawServerList+rawServerListSize);
+        if(newSize==0)
+        {
+            std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
+            abort();
+        }
+        rawServerListSize+=newSize;
+        //port
+        *reinterpret_cast<unsigned short int *>(rawServerList+rawServerListSize)=(unsigned short int)htobe16((unsigned short int)port);
+        rawServerListSize+=sizeof(unsigned short int);
+        //metaData
+        if(metaData.size()>4*1024)
+        {
+            std::cerr << "metaData too hurge (abort)" << std::endl;
+            abort();
+        }
+        newSize=FacilityLibGeneral::toUTF8With16BitsHeader(metaData,rawServerList+rawServerListSize);
+        if(newSize==0)
+        {
+            std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
+            abort();
+        }
+        rawServerListSize+=newSize;
+        //logicalGroup
+        if(logicalGroup.size()>20)
+        {
+            std::cerr << "logicalGroup too hurge (abort)" << std::endl;
+            abort();
+        }
+        newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,rawServerList+rawServerListSize);
+        if(newSize==0)
+        {
+            std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
+            abort();
+        }
+        rawServerListSize+=newSize;
+
+        serverListIndex++;
     }
-    if(server_port!=NULL)
+
+    EpollClientLoginMaster::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            false,
+            #endif
+            EpollClientLoginMaster::serverServerList,
+            0xC2,0x0010,rawServerList,rawServerListSize);
+    if(EpollClientLoginMaster::serverServerListSize==0)
     {
-        delete server_port;
-        server_port=NULL;
+        std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
+        abort();
     }
-    if(databaseBaseLogin!=NULL)
-    {
-        delete databaseBaseLogin;
-        databaseBaseLogin=NULL;
-    }
-    QHash<QString,CharactersGroup *>::const_iterator i = CharactersGroup::charactersGroupHash.constBegin();
-    while (i != CharactersGroup::charactersGroupHash.constEnd()) {
-        delete i.value();
-        ++i;
-    }
-    CharactersGroup::charactersGroupHash.clear();
+}
+
+void EpollServerLoginMaster::doTheReplyCache()
+{
+    //do the reply cache
+    EpollClientLoginMaster::loginPreviousToReplyCacheSize=0;
+    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
+           EpollClientLoginMaster::loginSettingsAndCharactersGroup,
+           EpollClientLoginMaster::loginSettingsAndCharactersGroupSize);
+    EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::loginSettingsAndCharactersGroupSize;
+    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
+           EpollClientLoginMaster::serverLogicalGroupList,
+           EpollClientLoginMaster::serverLogicalGroupListSize);
+    EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverLogicalGroupListSize;
+    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
+           EpollClientLoginMaster::serverServerList,
+           EpollClientLoginMaster::serverServerListSize);
+    EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverServerListSize;
 }
 
 bool EpollServerLoginMaster::tryListen()
@@ -553,7 +592,139 @@ void EpollServerLoginMaster::load_account_max_id_return()
             abort();
         }
     }
-    databaseBaseLogin->syncDisconnect();
+    loadTheDatapack();
+    /*databaseBaseLogin->syncDisconnect();
     databaseBaseLogin=NULL;
-    CharactersGroup::serverWaitedToBeReady--;
+    CharactersGroup::serverWaitedToBeReady--;*/
+}
+
+void EpollServerLoginMaster::loadTheDatapack()
+{
+    QTime time;
+    time.restart();
+    CommonDatapack::commonDatapack.parseDatapack("datapack/");
+    qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
+
+    SQL_common_load_start();
+}
+
+void EpollServerLoginMaster::SQL_common_load_finish()
+{
+    loadTheDatapackFileList();
+}
+
+void EpollServerLoginMaster::loadTheDatapackFileList()
+{
+    QStringList extensionAllowedTemp=(QString(CATCHCHALLENGER_EXTENSION_ALLOWED)+QString(";")+QString(CATCHCHALLENGER_EXTENSION_COMPRESSED)).split(";");
+    EpollClientLoginMaster::extensionAllowed=extensionAllowedTemp.toSet();
+    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
+    EpollClientLoginMaster::compressedExtension=compressedExtensionAllowedTemp.toSet();
+    EpollClientLoginMaster::datapack_file_list_cache=datapack_file_list();
+    QRegularExpression datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
+
+    QCryptographicHash hash(QCryptographicHash::Sha224);
+    QStringList datapack_file_temp=EpollClientLoginMaster::datapack_file_list_cache.keys();
+    datapack_file_temp.sort();
+    int index=0;
+    while(index<datapack_file_temp.size()) {
+        QFile file("datapack/"+datapack_file_temp.at(index));
+        if(datapack_file_temp.at(index).contains(datapack_rightFileName))
+        {
+            if(file.open(QIODevice::ReadOnly))
+            {
+                const QByteArray &data=file.readAll();
+                {
+                    QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                    hashFile.addData(data);
+                    EpollClientLoginMaster::DatapackCacheFile cacheFile;
+                    cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
+                    cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                    EpollClientLoginMaster::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                }
+                hash.addData(data);
+                file.close();
+            }
+            else
+            {
+                std::cerr << "Stop now! Unable to open the file " << file.fileName().toStdString() << " to do the datapack checksum for the mirror" << std::endl;
+                abort();
+            }
+        }
+        else
+            std::cerr << "File excluded because don't match the regex: " << file.fileName() << std::endl;
+        index++;
+    }
+    datapackHash=hash.result();
+    std::cout << datapack_file_temp.size() << "file for datapack loaded" << std::endl;
+
+    loadTheProfile();
+}
+
+QHash<QString,quint32> EpollServerLoginMaster::datapack_file_list()
+{
+    QHash<QString,quint32> filesList;
+
+    const QStringList &returnList=FacilityLibGeneral::listFolder("datapack/");
+    int index=0;
+    const int &size=returnList.size();
+    while(index<size)
+    {
+        #ifdef Q_OS_WIN32
+        QString fileName=returnList.at(index);
+        #else
+        const QString &fileName=returnList.at(index);
+        #endif
+        if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        {
+            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            {
+                QFile file("datapack/"+returnList.at(index));
+                if(file.size()<=8*1024*1024)
+                {
+                    if(file.open(QIODevice::ReadOnly))
+                    {
+                        #ifdef Q_OS_WIN32
+                        fileName.replace(EpollClientLoginMaster::text_antislash,EpollClientLoginMaster::text_slash);//remplace if is under windows server
+                        #endif
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(file.readAll());
+                        filesList[fileName]=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        file.close();
+                    }
+                }
+            }
+        }
+        index++;
+    }
+    return filesList;
+}
+
+void EpollServerLoginMaster::loadTheProfile()
+{
+
+
+    //profile list size
+    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.profileList.size();
+    rawServerListForC20011Size+=1;
+
+    put in cache the reply
+
+    EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=ProtocolParsingBase::computeFullOutcommingData(
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            false,
+            #endif
+            EpollClientLoginMaster::loginSettingsAndCharactersGroup,
+            0xC2,0x0011,rawServerListForC20011,rawServerListForC20011Size);
+    if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
+    {
+        std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
+        abort();
+    }
+
+    if(rawServerListForC20011!=NULL)
+    {
+        delete rawServerListForC20011;
+        rawServerListForC20011=NULL;
+        rawServerListForC20011Size=0;
+    }
 }

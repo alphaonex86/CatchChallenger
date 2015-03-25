@@ -16,6 +16,15 @@ public:
         #endif
             );
     ~LoginLinkToMaster();
+    enum Stat
+    {
+        None,
+        ProtocolGood,
+        LoginInProgress,
+        Logged,
+    };
+    Stat stat;
+
     std::vector<quint8> queryNumberList;
     BaseClassSwitch::Type getType() const;
     void parseIncommingData();
