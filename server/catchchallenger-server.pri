@@ -6,6 +6,7 @@ SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
+    $$PWD/base/BaseServerCommon.cpp \
     $$PWD/base/LocalClientHandler.cpp \
     $$PWD/base/LocalClientHandlerWithoutSender.cpp \
     $$PWD/base/LocalClientHandlerQuest.cpp \

@@ -1,4 +1,5 @@
-QT       -= gui widgets network sql xml
+QT       -= gui widgets network sql
+QT       += xml
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
@@ -35,7 +36,9 @@ SOURCES += \
     ../epoll/db/EpollPostgresql.cpp \
     EpollClientLoginMasterProtocolParsing.cpp \
     CharactersGroup.cpp \
-    ../../general/base/FacilityLibGeneral.cpp
+    ../../general/base/FacilityLibGeneral.cpp \
+    ../../general/base/CommonDatapack.cpp \
+    ../base/BaseServerCommon.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -51,4 +54,7 @@ HEADERS += \
     ../base/DatabaseBase.h \
     ../epoll/db/EpollPostgresql.h \
     CharactersGroup.h \
-    ../../general/base/FacilityLibGeneral.h
+    ../../general/base/FacilityLibGeneral.h \
+    ../../general/base/CommonDatapack.h \
+    ../base/BaseServerCommon.h \
+    ../VariableServer.h

@@ -19,8 +19,7 @@ LoginLinkToMaster::LoginLinkToMaster(
             ,PacketModeTransmission_Client
             #endif
             ),
-        have_send_protocol(false),
-        is_logging_in_progess(false)
+        stat(Stat::None)
 {
     int index=0;
     while(index<10)

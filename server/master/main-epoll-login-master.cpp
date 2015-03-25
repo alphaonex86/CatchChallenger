@@ -235,5 +235,6 @@ int main(int argc, char *argv[])
     }
     server->close();
     delete server;
+    server=NULL;
     return EXIT_SUCCESS;
 }
