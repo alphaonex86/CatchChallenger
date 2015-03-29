@@ -184,7 +184,7 @@ void Client::sendInventory()
     //network send
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     out << (quint16)public_and_private_informations.items.size();
     QHashIterator<quint16,quint32> i(public_and_private_informations.items);
@@ -201,5 +201,5 @@ void Client::sendInventory()
         out << (quint32)j.value();
     }
     //send the items
-    sendFullPacket(0xD0,0x0001,outputData);
+    sendFullPacket(0xD0,0x01,outputData);
 }

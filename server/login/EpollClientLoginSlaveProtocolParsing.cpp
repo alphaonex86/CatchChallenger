@@ -229,7 +229,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
+                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                 quint8 profileIndex;
                 QString pseudo;
                 quint8 skinId;
@@ -276,7 +276,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                     return;
                 }
                 #endif
-                const quint32 &characterId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
                 removeCharacter(queryNumber,characterId);
             }
             break;

@@ -32,7 +32,7 @@ QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &p
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << publicPlayerMonster.monster;
     out << publicPlayerMonster.level;
     out << publicPlayerMonster.hp;
@@ -53,7 +53,7 @@ QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << playerMonster.monster;
     out << playerMonster.level;
     out << playerMonster.hp;
@@ -129,7 +129,7 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     out << monster.id;
     out << monster.monster;

@@ -12,7 +12,7 @@ void Client::sendSystemMessage(const QString &text,const bool &important)
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         if(important)
             out << (quint8)0x08;
         else
@@ -103,7 +103,7 @@ void Client::receiveChatText(const Chat_type &chatType,const QString &text,const
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)chatType;
     {
         const QByteArray &tempText=text.toUtf8();
@@ -131,7 +131,7 @@ void Client::receiveSystemText(const QString &text,const bool &important)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(important)
         out << (quint8)Chat_type_system_important;
     else
@@ -171,7 +171,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
             {
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);
+                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                 out << (quint8)chatType;
                 {
                     const QByteArray &tempText=text.toUtf8();
@@ -228,7 +228,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
         {
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)chatType;
             {
                 const QByteArray &tempText=text.toUtf8();

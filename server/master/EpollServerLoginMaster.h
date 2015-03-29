@@ -32,6 +32,8 @@ private:
     quint8 max_pseudo_size;
 
     QByteArray datapackHash;
+
+    static QRegularExpression datapack_rightFileName;
 private:
     void generateToken(QSettings &settings);
 
@@ -41,7 +43,6 @@ private:
 
     void loadTheDatapack();
     void loadTheDatapackFileList();
-    QHash<QString,quint32> datapack_file_list();
     void loadLoginSettings(QSettings &settings);
     void loadDBLoginSettings(QSettings &settings);
     QStringList loadCharactersGroup(QSettings &settings);

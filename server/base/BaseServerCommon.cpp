@@ -1,4 +1,5 @@
 #include "BaseServerCommon.h"
+#include "../../general/base/CommonDatapack.h"
 
 using namespace CatchChallenger;
 
@@ -18,9 +19,9 @@ void BaseServerCommon::preload_dictionary_allow()
             queryText=QStringLiteral("SELECT id,allow FROM dictionary_allow ORDER BY allow");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_allow_static)==NULL)
+    if(db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_allow_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
@@ -32,34 +33,34 @@ void BaseServerCommon::preload_dictionary_allow_static(void *object)
 
 void BaseServerCommon::preload_dictionary_allow_return()
 {
-    GlobalServerData::serverPrivateVariables.dictionary_allow_reverse << 0x00 << 0x00;
+    dictionary_allow_internal_to_database << 0x00 << 0x00;
     bool haveAllowClan=false;
     QString allowClan(QStringLiteral("clan"));
     int lastId=0;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(db.next())
     {
         bool ok;
-        lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
-        const QString &allow=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_allow.size()<=lastId)
+        lastId=QString(db.value(0)).toUInt(&ok);
+        const QString &allow=QString(db.value(1));
+        if(dictionary_allow_database_to_internal.size()<=lastId)
         {
-            int index=GlobalServerData::serverPrivateVariables.dictionary_allow.size();
+            int index=dictionary_allow_database_to_internal.size();
             while(index<=lastId)
             {
-                GlobalServerData::serverPrivateVariables.dictionary_allow << ActionAllow_Nothing;
+                dictionary_allow_database_to_internal << ActionAllow_Nothing;
                 index++;
             }
         }
         if(allow==allowClan)
         {
             haveAllowClan=true;
-            GlobalServerData::serverPrivateVariables.dictionary_allow[lastId]=ActionAllow_Clan;
-            GlobalServerData::serverPrivateVariables.dictionary_allow_reverse[ActionAllow_Clan]=lastId;
+            dictionary_allow_database_to_internal[lastId]=ActionAllow_Clan;
+            dictionary_allow_internal_to_database[ActionAllow_Clan]=lastId;
         }
         else
-            GlobalServerData::serverPrivateVariables.dictionary_allow << ActionAllow_Nothing;
+            dictionary_allow_database_to_internal << ActionAllow_Nothing;
     }
-    GlobalServerData::serverPrivateVariables.db.clear();
+    db.clear();
     if(!haveAllowClan)
     {
         lastId++;
@@ -77,15 +78,15 @@ void BaseServerCommon::preload_dictionary_allow_return()
                 queryText=QStringLiteral("INSERT INTO dictionary_allow(id,allow) VALUES(%1,'clan');").arg(lastId);
             break;
         }
-        if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
+        if(!db.asyncWrite(queryText.toLatin1()))
         {
-            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
             criticalDatabaseQueryFailed();return;//stop because can't resolv the name
         }
-        while(GlobalServerData::serverPrivateVariables.dictionary_allow.size()<lastId)
-            GlobalServerData::serverPrivateVariables.dictionary_allow << ActionAllow_Nothing;
-        GlobalServerData::serverPrivateVariables.dictionary_allow << ActionAllow_Clan;
-        GlobalServerData::serverPrivateVariables.dictionary_allow_reverse[ActionAllow_Clan]=lastId;
+        while(dictionary_allow_database_to_internal.size()<lastId)
+            dictionary_allow_database_to_internal << ActionAllow_Nothing;
+        dictionary_allow_database_to_internal << ActionAllow_Clan;
+        dictionary_allow_internal_to_database[ActionAllow_Clan]=lastId;
     }
     preload_dictionary_reputation();
 }
@@ -106,9 +107,9 @@ void BaseServerCommon::preload_dictionary_reputation()
             queryText=QStringLiteral("SELECT id,reputation FROM dictionary_reputation ORDER BY reputation");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_reputation_static)==NULL)
+    if(db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_reputation_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
@@ -131,28 +132,28 @@ void BaseServerCommon::preload_dictionary_reputation_return()
     }
     QSet<QString> foundReputation;
     int lastId=0;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(db.next())
     {
         bool ok;
-        lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
-        const QString &reputation=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_reputation.size()<=lastId)
+        lastId=QString(db.value(0)).toUInt(&ok);
+        const QString &reputation=QString(db.value(1));
+        if(dictionary_reputation_database_to_internal.size()<=lastId)
         {
-            int index=GlobalServerData::serverPrivateVariables.dictionary_reputation.size();
+            int index=dictionary_reputation_database_to_internal.size();
             while(index<=lastId)
             {
-                GlobalServerData::serverPrivateVariables.dictionary_reputation << -1;
+                dictionary_reputation_database_to_internal << -1;
                 index++;
             }
         }
         if(reputationResolution.contains(reputation))
         {
-            GlobalServerData::serverPrivateVariables.dictionary_reputation[lastId]=reputationResolution.value(reputation);
+            dictionary_reputation_database_to_internal[lastId]=reputationResolution.value(reputation);
             foundReputation << reputation;
             CommonDatapack::commonDatapack.reputation[reputationResolution.value(reputation)].reverse_database_id=lastId;
         }
     }
-    GlobalServerData::serverPrivateVariables.db.clear();
+    db.clear();
     int index=0;
     while(index<CommonDatapack::commonDatapack.reputation.size())
     {
@@ -174,14 +175,14 @@ void BaseServerCommon::preload_dictionary_reputation_return()
                     queryText=QStringLiteral("INSERT INTO dictionary_reputation(id,reputation) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
             }
-            if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
+            if(!db.asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
-            while(GlobalServerData::serverPrivateVariables.dictionary_reputation.size()<=lastId)
-                GlobalServerData::serverPrivateVariables.dictionary_reputation << -1;
-            GlobalServerData::serverPrivateVariables.dictionary_reputation[lastId]=index;
+            while(dictionary_reputation_database_to_internal.size()<=lastId)
+                dictionary_reputation_database_to_internal << -1;
+            dictionary_reputation_database_to_internal[lastId]=index;
             CommonDatapack::commonDatapack.reputation[index].reverse_database_id=lastId;
         }
         index++;
@@ -205,9 +206,9 @@ void BaseServerCommon::preload_dictionary_skin()
             queryText=QStringLiteral("SELECT id,skin FROM dictionary_skin ORDER BY skin");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_skin_static)==NULL)
+    if(db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_skin_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
@@ -221,38 +222,38 @@ void BaseServerCommon::preload_dictionary_skin_return()
 {
     {
         int index=0;
-        while(index<GlobalServerData::serverPrivateVariables.skinList.size())
+        while(index<skinList.size())
         {
-            GlobalServerData::serverPrivateVariables.dictionary_skin_reverse << 0;
+            dictionary_skin_internal_to_database << 0;
             index++;
         }
     }
     QSet<QString> foundSkin;
     int lastId=0;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(db.next())
     {
         bool ok;
-        lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
-        const QString &skin=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_skin.size()<=lastId)
+        lastId=QString(db.value(0)).toUInt(&ok);
+        const QString &skin=QString(db.value(1));
+        if(dictionary_skin_database_to_internal.size()<=lastId)
         {
-            int index=GlobalServerData::serverPrivateVariables.dictionary_skin.size();
+            int index=dictionary_skin_database_to_internal.size();
             while(index<=lastId)
             {
-                GlobalServerData::serverPrivateVariables.dictionary_skin << 0;
+                dictionary_skin_database_to_internal << 0;
                 index++;
             }
         }
-        if(GlobalServerData::serverPrivateVariables.skinList.contains(skin))
+        if(skinList.contains(skin))
         {
-            const quint8 &internalValue=GlobalServerData::serverPrivateVariables.skinList.value(skin);
-            GlobalServerData::serverPrivateVariables.dictionary_skin[lastId]=internalValue;
-            GlobalServerData::serverPrivateVariables.dictionary_skin_reverse[internalValue]=lastId;
+            const quint8 &internalValue=skinList.value(skin);
+            dictionary_skin_database_to_internal[lastId]=internalValue;
+            dictionary_skin_internal_to_database[internalValue]=lastId;
             foundSkin << skin;
         }
     }
-    GlobalServerData::serverPrivateVariables.db.clear();
-    QHashIterator<QString,quint8> i(GlobalServerData::serverPrivateVariables.skinList);
+    db.clear();
+    QHashIterator<QString,quint8> i(skinList);
     while (i.hasNext()) {
         i.next();
         const QString &skin=i.key();
@@ -273,15 +274,15 @@ void BaseServerCommon::preload_dictionary_skin_return()
                     queryText=QStringLiteral("INSERT INTO dictionary_skin(id,skin) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
             }
-            if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
+            if(!db.asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
-            while(GlobalServerData::serverPrivateVariables.dictionary_skin.size()<lastId)
-                GlobalServerData::serverPrivateVariables.dictionary_skin << 0;
-            GlobalServerData::serverPrivateVariables.dictionary_skin << i.value();
-            GlobalServerData::serverPrivateVariables.dictionary_skin_reverse[i.value()]=lastId;
+            while(dictionary_skin_database_to_internal.size()<lastId)
+                dictionary_skin_database_to_internal << 0;
+            dictionary_skin_database_to_internal << i.value();
+            dictionary_skin_internal_to_database[i.value()]=lastId;
         }
     }
     preload_dictionary_starter();
@@ -303,9 +304,9 @@ void BaseServerCommon::preload_dictionary_starter()
             queryText=QStringLiteral("SELECT id,starter FROM dictionary_starter ORDER BY starter");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_starter_static)==NULL)
+    if(db.asyncRead(queryText.toLatin1(),this,&BaseServerCommon::preload_dictionary_starter_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
@@ -319,38 +320,38 @@ void BaseServerCommon::preload_dictionary_starter_return()
 {
     {
         int index=0;
-        while(index<GlobalServerData::serverPrivateVariables.starterList.size())
+        while(index<starterList.size())
         {
-            GlobalServerData::serverPrivateVariables.dictionary_starter_reverse << 0;
+            dictionary_starter_reverse << 0;
             index++;
         }
     }
     QSet<QString> foundstarter;
     int lastId=0;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(db.next())
     {
         bool ok;
-        lastId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
-        const QString &starter=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_starter.size()<=lastId)
+        lastId=QString(db.value(0)).toUInt(&ok);
+        const QString &starter=QString(db.value(1));
+        if(dictionary_starter.size()<=lastId)
         {
-            int index=GlobalServerData::serverPrivateVariables.dictionary_starter.size();
+            int index=dictionary_starter.size();
             while(index<=lastId)
             {
-                GlobalServerData::serverPrivateVariables.dictionary_starter << 0;
+                dictionary_starter << 0;
                 index++;
             }
         }
-        if(GlobalServerData::serverPrivateVariables.starterList.contains(starter))
+        if(starterList.contains(starter))
         {
-            const quint8 &internalValue=GlobalServerData::serverPrivateVariables.starterList.value(starter);
-            GlobalServerData::serverPrivateVariables.dictionary_starter[lastId]=internalValue;
-            GlobalServerData::serverPrivateVariables.dictionary_starter_reverse[internalValue]=lastId;
+            const quint8 &internalValue=starterList.value(starter);
+            dictionary_starter[lastId]=internalValue;
+            dictionary_starter_reverse[internalValue]=lastId;
             foundstarter << starter;
         }
     }
-    GlobalServerData::serverPrivateVariables.db.clear();
-    QHashIterator<QString,quint8> i(GlobalServerData::serverPrivateVariables.starterList);
+    db.clear();
+    QHashIterator<QString,quint8> i(starterList);
     while (i.hasNext()) {
         i.next();
         const QString &starter=i.key();
@@ -371,16 +372,27 @@ void BaseServerCommon::preload_dictionary_starter_return()
                     queryText=QStringLiteral("INSERT INTO dictionary_starter(id,starter) VALUES(%1,'%2');").arg(lastId).arg(starter);
                 break;
             }
-            if(!GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toLatin1()))
+            if(!db.asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(db.errorMessage());
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
-            while(GlobalServerData::serverPrivateVariables.dictionary_starter.size()<lastId)
-                GlobalServerData::serverPrivateVariables.dictionary_starter << 0;
-            GlobalServerData::serverPrivateVariables.dictionary_starter << i.value();
-            GlobalServerData::serverPrivateVariables.dictionary_starter_reverse[i.value()]=lastId;
+            while(dictionary_starter.size()<lastId)
+                dictionary_starter << 0;
+            dictionary_starter << i.value();
+            dictionary_starter_reverse[i.value()]=lastId;
         }
     }
     SQL_common_load_finish();
+}
+
+void BaseServerCommon::unload()
+{
+    dictionary_starter.clear();
+    dictionary_starter_reverse.clear();
+    dictionary_skin_database_to_internal.clear();
+    dictionary_skin_internal_to_database.clear();
+    dictionary_reputation_database_to_internal.clear();
+    dictionary_allow_database_to_internal.clear();
+    dictionary_allow_internal_to_database.clear();
 }

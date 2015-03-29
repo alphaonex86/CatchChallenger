@@ -22,7 +22,7 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
     this->otherPlayerTrade=otherPlayerTrade;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << otherPlayerTrade->public_and_private_informations.public_informations.skinId;
     sendTradeRequest(otherPlayerTrade->rawPseudo+outputData);
 }
@@ -116,8 +116,8 @@ void Client::tradeFinished()
         otherPlayerTrade->addExistingMonster(tradeMonster);
         addExistingMonster(otherPlayerTrade->tradeMonster);
 
-        otherPlayerTrade->sendFullPacket(0xD0,0x0008);
-        sendFullPacket(0xD0,0x0008);
+        otherPlayerTrade->sendFullPacket(0xD0,0x08);
+        sendFullPacket(0xD0,0x08);
         otherPlayerTrade->resetTheTrade();
         resetTheTrade();
     }
@@ -126,7 +126,7 @@ void Client::tradeFinished()
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput(QLatin1String("Trade freezed"));
         #endif
-        otherPlayerTrade->sendFullPacket(0xD0,0x0007);
+        otherPlayerTrade->sendFullPacket(0xD0,0x07);
     }
 }
 
@@ -181,10 +181,10 @@ void Client::tradeAddTradeCash(const quint64 &cash)
     public_and_private_informations.cash-=cash;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x01;
     out << cash;
-    otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
+    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData);
 }
 
 void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
@@ -221,11 +221,11 @@ void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
         public_and_private_informations.items.remove(item);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x02;
     out << item;
     out << quantity;
-    otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
+    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData);
 }
 
 void Client::tradeAddTradeMonster(const quint32 &monsterId)
@@ -268,7 +268,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             updateCanDoFight();
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)0x03;
             const PlayerMonster &monster=tradeMonster.last();
             out << monster.id;
@@ -300,7 +300,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
                 out << monster.skills.at(sub_index).level;
                 sub_index++;
             }
-            otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
+            otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData);
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
@@ -345,7 +345,7 @@ void Client::internalTradeCanceled(const bool &send)
     if(send)
     {
         if(tradeIsValidated)
-            sendFullPacket(0xD0,0x0006);
+            sendFullPacket(0xD0,0x06);
         else
             receiveSystemText(QLatin1String("Trade declined"));
     }
@@ -374,8 +374,8 @@ void Client::internalTradeAccepted(const bool &send)
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << otherPlayerTrade->public_and_private_informations.public_informations.skinId;
-        sendFullPacket(0xD0,0x0005,otherPlayerTrade->rawPseudo+outputData);
+        sendFullPacket(0xD0,0x05,otherPlayerTrade->rawPseudo+outputData);
     }
 }

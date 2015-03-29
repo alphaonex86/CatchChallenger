@@ -39,7 +39,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         //prepare the data
         {
             QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
             //////////////////////////// insert //////////////////////////
             /* can be only this map with this algo, then 1 map */
@@ -117,7 +117,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             {
                 {
                     QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);
+                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                     //////////////////////////// insert //////////////////////////
                     /* can be only this map with this algo, then 1 map */
@@ -197,7 +197,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 {
                     QByteArray purgeBuffer_outputData;
                     QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);
+                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                     //////////////////////////// insert //////////////////////////
                     /* can be only this map with this algo, then 1 map */
@@ -290,11 +290,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         {
             if((sizeof(quint16)+to_send_remove.size()*sizeof(quint16))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
-                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)to_send_remove.size());
+                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)to_send_remove.size());
                 int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
-                    *reinterpret_cast<quint16 *>(buffer+sizeof(quint16)+index_subindex*sizeof(quint16))=(quint16)htobe16((quint16)to_send_remove.at(index_subindex));
+                    *reinterpret_cast<quint16 *>(buffer+sizeof(quint16)+index_subindex*sizeof(quint16))=(quint16)htole16((quint16)to_send_remove.at(index_subindex));
                     index_subindex++;
                 }
                 index_subindex=0;
@@ -346,7 +346,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     else
                     {
-                        *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)real_reinsert_count);
+                        *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)real_reinsert_count);
                         bufferCursor=sizeof(quint16);
                     }
                     index_subindex=0;
@@ -368,7 +368,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
                             {
-                                *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htole16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
                                 buffer[bufferCursor+sizeof(quint16)+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
                                 buffer[bufferCursor+sizeof(quint16)+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
                                 buffer[bufferCursor+sizeof(quint16)+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();
@@ -456,12 +456,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             if(temp_reinsert>0)
                             {
                                 index_subindex=0;
-                                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)temp_reinsert);
+                                *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)temp_reinsert);
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
                                     if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
                                     {
-                                        *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
+                                        *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htole16((quint16)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
                                         buffer[bufferCursor+sizeof(quint16)+0]=(quint8)clientsToSendDataOldClients[index_subindex]->getX();
                                         buffer[bufferCursor+sizeof(quint16)+1]=(quint8)clientsToSendDataOldClients[index_subindex]->getY();
                                         buffer[bufferCursor+sizeof(quint16)+2]=(quint8)clientsToSendDataOldClients[index_subindex]->getLastDirection();

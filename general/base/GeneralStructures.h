@@ -12,6 +12,8 @@
 #include <QDomElement>
 #include <QMultiHash>
 
+#include "GeneralType.h"
+
 #define COORD_TYPE quint8
 #define SIMPLIFIED_PLAYER_ID_TYPE quint16
 #define CLAN_ID_TYPE quint32
@@ -174,10 +176,10 @@ struct ItemFull
 {
     QMultiHash<quint16, MonsterItemEffect> monsterItemEffect;
     QMultiHash<quint16, MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight;
-    QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > evolutionItem;
-    QHash<quint16/*item*/, QSet<quint16/*monster*/> > itemToLearn;
+    QHash<CATCHCHALLENGER_TYPE_ITEM/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > evolutionItem;
+    QHash<CATCHCHALLENGER_TYPE_ITEM/*item*/, QSet<quint16/*monster*/> > itemToLearn;
     QHash<quint16, quint32> repel;
-    QHash<quint16, Item> item;
+    QHash<CATCHCHALLENGER_TYPE_ITEM, Item> item;
     QHash<quint16, Trap> trap;
 };
 
@@ -207,12 +209,12 @@ struct Industry
     quint32 cycletobefull;
     struct Resource
     {
-        quint16 item;
+        CATCHCHALLENGER_TYPE_ITEM item;
         quint32 quantity;
     };
     struct Product
     {
-        quint16 item;
+        CATCHCHALLENGER_TYPE_ITEM item;
         quint32 quantity;
     };
     QList<Resource> resources;
@@ -337,7 +339,7 @@ struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
     quint64 cash,warehouse_cash;
-    QHash<quint16,quint32> items,warehouse_items;
+    QHash<CATCHCHALLENGER_TYPE_ITEM,quint32/*quantity*/> items,warehouse_items;
     //crafting
     QSet<quint16> recipes;
     QMap<quint8,PlayerReputation> reputation;
@@ -491,7 +493,7 @@ struct Map_to_send
     struct ItemOnMap_Semi
     {
         Map_Point point;
-        quint16 item;
+        CATCHCHALLENGER_TYPE_ITEM item;
         bool visible;
         bool infinite;
     };
@@ -505,13 +507,13 @@ struct Map_to_send
 
 struct CrafingRecipe
 {
-    quint16 itemToLearn;
-    quint16 doItemId;
+    CATCHCHALLENGER_TYPE_ITEM itemToLearn;
+    CATCHCHALLENGER_TYPE_ITEM doItemId;
     quint16 quantity;
     quint8 success;//0-100
     struct Material
     {
-        quint16 item;
+        CATCHCHALLENGER_TYPE_ITEM item;
         quint32 quantity;
     };
     QList<Material> materials;
@@ -530,7 +532,7 @@ struct CrafingRecipe
 struct Shop
 {
     QList<quint32> prices;
-    QList<quint16> items;
+    QList<CATCHCHALLENGER_TYPE_ITEM> items;
 };
 
 enum QuantityType
@@ -626,7 +628,7 @@ struct Skill
         PublicPlayerMonster publicPlayerMonster;
         //use objet on monster if item!=0
         bool on_current_monster;
-        quint16 item;
+        CATCHCHALLENGER_TYPE_ITEM item;
     };
     struct Buff
     {
@@ -695,13 +697,13 @@ struct Monster
         quint8 learnSkillLevel;
     };
     QList<AttackToLearn> learn;
-    QHash<quint16/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
+    QHash<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
     QList<Evolution> evolutions;
 };
 
 struct ItemToSellOrBuy
 {
-    quint16 object;
+    CATCHCHALLENGER_TYPE_ITEM object;
     quint32 price;
     quint32 quantity;
 };
@@ -710,12 +712,12 @@ struct Quest
 {
     struct Item
     {
-        quint16 item;
+        CATCHCHALLENGER_TYPE_ITEM item;
         quint32 quantity;
     };
     struct ItemMonster
     {
-        quint16 item;
+        CATCHCHALLENGER_TYPE_ITEM item;
         QList<quint16> monsters;
         quint8 rate;
     };
@@ -797,7 +799,7 @@ struct BotFight
     quint32 cash;
     struct Item
     {
-        quint32 id;
+        CATCHCHALLENGER_TYPE_ITEM id;
         quint32 quantity;
     };
     QList<Item> items;
@@ -829,7 +831,7 @@ struct Profile
 {
     struct Reputation
     {
-        quint8 reputationId;
+        quint8 reputationId;//datapack order, can can need the dicionary to db resolv
         qint8 level;
         qint32 point;
     };
@@ -841,10 +843,9 @@ struct Profile
     };
     struct Item
     {
-        quint32 id;
+        CATCHCHALLENGER_TYPE_ITEM id;
         quint32 quantity;
     };
-    QStringList forcedskinTemp;
     QList<quint8> forcedskin;
     quint64 cash;
     QList<Monster> monsters;
@@ -861,7 +862,7 @@ enum MonstersCollisionType
 struct MonstersCollision
 {
     MonstersCollisionType type;
-    quint16 item;
+    CATCHCHALLENGER_TYPE_ITEM item;
     QString tile;
     QString layer;
     QStringList monsterTypeList;

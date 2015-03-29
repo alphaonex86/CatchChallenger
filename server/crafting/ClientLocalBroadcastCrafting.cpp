@@ -192,7 +192,7 @@ void Client::seedValidated()
             //Insert plant on map
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint16)1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
                 out << (quint8)map->id;
@@ -240,7 +240,7 @@ void Client::sendNearPlant()
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << plant_list_size;
     int index=0;
     while(index<plant_list_size)
@@ -289,7 +289,7 @@ void Client::removeNearPlant()
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << plant_list_size;
     int index=0;
     while(index<plant_list_size)
@@ -423,7 +423,7 @@ void Client::collectPlant(const quint8 &query_id)
                     //Remove plant on map
                     QByteArray outputData;
                     QDataStream out(&outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);
+                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                     out << (quint16)1;
                     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
                         out << (quint8)map->id;
