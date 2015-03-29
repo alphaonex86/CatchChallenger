@@ -657,7 +657,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
 
     purgeBuffer_outputData.clear();
     QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     ///////////////////////// group by map ///////////////////////
     QHash<CommonMap*, QList<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> >	send_insert_by_map;
@@ -751,7 +751,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
 
     purgeBuffer_outputData.clear();
     QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     //////////////////////////// move //////////////////////////
     purgeBuffer_list_size_internal=0;
@@ -802,7 +802,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
 
     purgeBuffer_outputData.clear();
     QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     //////////////////////////// remove //////////////////////////
     i_remove = to_send_remove.constBegin();
@@ -841,7 +841,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
 
     purgeBuffer_outputData.clear();
     QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     //////////////////////////// re-insert //////////////////////////
     if(GlobalServerData::serverSettings.max_players<=255)

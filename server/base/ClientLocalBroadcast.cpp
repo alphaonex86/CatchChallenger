@@ -20,7 +20,7 @@ void Client::sendLocalChatText(const QString &text)
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)Chat_type_local;
         {
             const QByteArray &tempText=text.toUtf8();

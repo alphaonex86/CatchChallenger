@@ -636,12 +636,12 @@ void Client::generateRandomNumber()
     if((randomIndex+randomSize)<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
         //can send the next block
-        sendFullPacket(0xE0,0x0009,GlobalServerData::serverPrivateVariables.randomData.mid(randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
+        sendFullPacket(0xE0,0x09,GlobalServerData::serverPrivateVariables.randomData.mid(randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
     }
     else
     {
         //need return to the first block
-        sendFullPacket(0xE0,0x0009,GlobalServerData::serverPrivateVariables.randomData.mid(0,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
+        sendFullPacket(0xE0,0x09,GlobalServerData::serverPrivateVariables.randomData.mid(0,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
     }
     randomSize+=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
 }

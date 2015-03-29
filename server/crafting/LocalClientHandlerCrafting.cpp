@@ -68,7 +68,7 @@ void Client::useRecipe(const quint8 &query_id,const quint32 &recipe_id)
     //send the reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(success)
         out << (quint8)RecipeUsage_ok;
     else

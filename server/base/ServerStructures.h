@@ -353,15 +353,10 @@ struct ServerPrivateVariables
         quint32 a,b,c,d;
     };
 
-    QList<ActionAllow> dictionary_allow;
-    QList<quint8> dictionary_allow_reverse;
     QList<CommonMap *> dictionary_map;
-    QList<int> dictionary_reputation;//negative == not found
-    QList<quint8> dictionary_skin;
-    QList<quint32> dictionary_skin_reverse;
-    QHash<QString,QHash<QPair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/> > dictionary_item;
-    quint16 dictionary_item_maxId;
-    QList<quint8> dictionary_item_reverse;
+    QHash<QString,QHash<QPair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/> > dictionary_item_on_map;
+    quint16 dictionary_item_on_map_maxId;
+    QList<quint8> dictionary_item_on_map_reverse;
     //datapack
     QHash<QString,quint8> skinList;
 };

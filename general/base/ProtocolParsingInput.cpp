@@ -415,14 +415,8 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                         #endif
             QStringLiteral(" parseIncommingData(): need_subCodeType"));
             #endif
-            if((size-cursor)<sizeof(quint16))//ignore because first int is cuted!
-            {
-                if((size-cursor)>0)
-                    header_cut.append(commonBuffer+cursor,(size-cursor));
-                return false;
-            }
-            subCodeType=be16toh(*reinterpret_cast<const quint16 *>(commonBuffer+cursor));
-            cursor+=sizeof(quint16);
+            subCodeType=commonBuffer+cursor;
+            cursor+=sizeof(quint8);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(cursor==0 && !haveData)
             {
@@ -744,7 +738,7 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
                     temp_size_8Bits=*(commonBuffer+cursor);
                     if(temp_size_8Bits!=0x00)
                     {
-                        temp_size_16Bits=be16toh(*(reinterpret_cast<const quint16 *>(commonBuffer+cursor)));
+                        temp_size_16Bits=le16toh(*(reinterpret_cast<const quint16 *>(commonBuffer+cursor)));
                         cursor+=sizeof(quint16);
 
                         dataSize=temp_size_16Bits;
@@ -792,7 +786,7 @@ bool ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const q
                             header_cut.append(commonBuffer+cursor,(size-cursor));
                         return false;
                     }
-                    temp_size_32Bits=be32toh(*reinterpret_cast<const quint32 *>(commonBuffer+cursor));
+                    temp_size_32Bits=le32toh(*reinterpret_cast<const quint32 *>(commonBuffer+cursor));
                     cursor+=sizeof(quint32);
 
                     if(temp_size_32Bits!=0x00000000)
@@ -1400,7 +1394,7 @@ void ProtocolParsingBase::storeInputQuery(const quint8 &mainCodeType,const quint
     Q_UNUSED(queryNumber);
 }
 
-void ProtocolParsingBase::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::storeFullInputQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(subCodeType);
@@ -1518,7 +1512,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const quint8 &mainCodeType,cons
     }
 }
 
-void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingInputOutput::storeFullInputQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     protocolParsingCheck->waitedReply_mainCodeType[queryNumber]=mainCodeType;

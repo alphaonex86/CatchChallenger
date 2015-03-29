@@ -44,7 +44,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
         {
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             if(GlobalServerData::serverSettings.max_players<=255)
                 out << (qint8)connected_players;
             else
