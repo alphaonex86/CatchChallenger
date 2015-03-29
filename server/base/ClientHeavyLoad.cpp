@@ -385,7 +385,7 @@ void Client::character_list_return(const quint8 &query_id)
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     out << (quint8)01;
     if(GlobalServerData::serverSettings.sendPlayerNumber)
@@ -738,7 +738,7 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         qDebug() << QStringLiteral("Skin list is empty, unable to add charaters");
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         out << (quint32)0x00000000;
         postReply(query_id,outputData);
@@ -789,7 +789,7 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
 
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         out << (quint32)0x00000000;
         postReply(query_id,outputData);
@@ -846,7 +846,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x01;
         out << (quint32)0x00000000;
         postReply(query_id,outputData);
@@ -877,29 +877,14 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
                     gender=Gender_Male;
             }
             CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profile.monsters.at(index).level);
-            QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
-            QList<CatchChallenger::Monster::AttackToLearn> attack=monster.learn;
-            int sub_index=0;
-            while(sub_index<attack.size())
-            {
-                if(attack.value(sub_index).learnAtLevel<=profile.monsters.at(index).level)
-                {
-                    CatchChallenger::PlayerMonster::PlayerSkill temp;
-                    temp.level=attack.value(sub_index).learnSkillLevel;
-                    temp.skill=attack.value(sub_index).learnSkill;
-                    temp.endurance=0;
-                    skills << temp;
-                }
-                sub_index++;
-            }
+            const QList<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngine::generateWildSkill(monster,profile.monsters.at(index).level);
+
             quint32 monster_id;
             {
                 QMutexLocker(&GlobalServerData::serverPrivateVariables.monsterIdMutex);
                 GlobalServerData::serverPrivateVariables.maxMonsterId++;
                 monster_id=GlobalServerData::serverPrivateVariables.maxMonsterId;
             }
-            while(skills.size()>4)
-                skills.removeFirst();
             {
                 dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_monster
                    .arg(monster_id)
@@ -961,7 +946,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x00;
     out << characterId;
     postReply(query_id,outputData);
@@ -992,7 +977,7 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         postReply(query_id,outputData);
         delete removeCharacterParam;
@@ -1068,7 +1053,7 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
     dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete_by_id.arg(characterId).arg(CommonSettings::commonSettings.character_delete_time));
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x02;
     postReply(query_id,outputData);
 }
@@ -1276,7 +1261,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         }
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint32)datapckFileNumber;
         out << (quint32)datapckFileSize;
         sendFullPacket(0xC2,0x000C,outputData);
@@ -1325,7 +1310,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         if(!fileToSendList.isEmpty())
         {
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out.device()->seek(out.device()->size());
             out << (quint32)fileToSendList.size();
             quint32 index=0;
@@ -1471,9 +1456,9 @@ void Client::sendFileContent()
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)rawFilesCount;
-        sendFullPacket(0xC2,0x0003,outputData+rawFiles);
+        sendFullPacket(0xC2,0x03,outputData+rawFiles);
         rawFiles.clear();
         rawFilesCount=0;
     }
@@ -1485,9 +1470,9 @@ void Client::sendCompressedFileContent()
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)compressedFilesCount;
-        sendFullPacket(0xC2,0x0004,outputData+compressedFiles);
+        sendFullPacket(0xC2,0x04,outputData+compressedFiles);
         compressedFiles.clear();
         compressedFilesCount=0;
     }
@@ -1506,7 +1491,7 @@ bool Client::sendFile(const QString &fileName)
         const QByteArray &content=file.readAll();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint32)content.size();
         if(compressedExtension.contains(QFileInfo(file).suffix()) && ProtocolParsing::compressionType!=ProtocolParsing::CompressionType_None && content.size()<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024)
         {
@@ -1531,7 +1516,7 @@ bool Client::sendFile(const QString &fileName)
             {
                 QByteArray outputData2;
                 outputData2[0x00]=0x01;
-                sendFullPacket(0xC2,0x0003,outputData2+fileNameRaw+outputData+content);
+                sendFullPacket(0xC2,0x03,outputData2+fileNameRaw+outputData+content);
             }
             else
             {

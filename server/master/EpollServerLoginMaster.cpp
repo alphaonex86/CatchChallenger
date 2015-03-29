@@ -2,6 +2,7 @@
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../VariableServer.h"
+#include "../../general/fight/CommonFightEngine.h"
 
 using namespace CatchChallenger;
 
@@ -24,6 +25,8 @@ using namespace CatchChallenger;
 /// \todo the back id get
 
 #include "EpollClientLoginMaster.h"
+
+QRegularExpression EpollServerLoginMaster::datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
 
 EpollServerLoginMaster::EpollServerLoginMaster() :
     server_ip(NULL),
@@ -310,7 +313,7 @@ void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGro
     charactersGroupList.sort();
 
     rawServerListForC20011[0x00]=EpollClientLoginMaster::automatic_account_creation;
-    *reinterpret_cast<quint32 *>(rawServerListForC20011+0x03)=(quint32)htobe32((quint32)character_delete_time);
+    *reinterpret_cast<quint32 *>(rawServerListForC20011+0x03)=(quint32)htole32((quint32)character_delete_time);
     rawServerListForC20011[0x05]=min_character;
     rawServerListForC20011[0x06]=max_character;
     rawServerListForC20011[0x07]=max_pseudo_size;
@@ -442,7 +445,7 @@ void EpollServerLoginMaster::doTheServerList()
         }
         rawServerListSize+=newSize;
         //port
-        *reinterpret_cast<unsigned short int *>(rawServerList+rawServerListSize)=(unsigned short int)htobe16((unsigned short int)port);
+        *reinterpret_cast<unsigned short int *>(rawServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)port);
         rawServerListSize+=sizeof(unsigned short int);
         //metaData
         if(metaData.size()>4*1024)
@@ -479,7 +482,7 @@ void EpollServerLoginMaster::doTheServerList()
             false,
             #endif
             EpollClientLoginMaster::serverServerList,
-            0xC2,0x0010,rawServerList,rawServerListSize);
+            0xC2,0x10,rawServerList,rawServerListSize);
     if(EpollClientLoginMaster::serverServerListSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
@@ -619,102 +622,199 @@ void EpollServerLoginMaster::loadTheDatapackFileList()
     EpollClientLoginMaster::extensionAllowed=extensionAllowedTemp.toSet();
     QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
     EpollClientLoginMaster::compressedExtension=compressedExtensionAllowedTemp.toSet();
-    EpollClientLoginMaster::datapack_file_list_cache=datapack_file_list();
-    QRegularExpression datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
+
+    QString text_datapack("datapack/");
+    QString text_exclude("map/main/");
 
     QCryptographicHash hash(QCryptographicHash::Sha224);
-    QStringList datapack_file_temp=EpollClientLoginMaster::datapack_file_list_cache.keys();
+    QStringList datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
     datapack_file_temp.sort();
+
     int index=0;
     while(index<datapack_file_temp.size()) {
-        QFile file("datapack/"+datapack_file_temp.at(index));
-        if(datapack_file_temp.at(index).contains(datapack_rightFileName))
+        QFile file(text_datapack+datapack_file_temp.at(index));
+        if(datapack_file_temp.at(index).contains(datapack_rightFileName) && !datapack_file_temp.at(index).startsWith(text_exclude))
         {
-            if(file.open(QIODevice::ReadOnly))
+            if(file.size()<=8*1024*1024)
             {
-                const QByteArray &data=file.readAll();
+                if(file.open(QIODevice::ReadOnly))
                 {
-                    QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                    hashFile.addData(data);
-                    EpollClientLoginMaster::DatapackCacheFile cacheFile;
-                    cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
-                    cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                    EpollClientLoginMaster::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                    const QByteArray &data=file.readAll();
+                    {
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(data);
+                        EpollClientLoginMaster::DatapackCacheFile cacheFile;
+                        cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
+                        cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        EpollClientLoginMaster::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                    }
+                    hash.addData(data);
+                    file.close();
                 }
-                hash.addData(data);
-                file.close();
+                else
+                {
+                    std::cerr << "Stop now! Unable to open the file " << file.fileName().toStdString() << " to do the datapack checksum for the mirror" << std::endl;
+                    abort();
+                }
             }
             else
-            {
-                std::cerr << "Stop now! Unable to open the file " << file.fileName().toStdString() << " to do the datapack checksum for the mirror" << std::endl;
-                abort();
-            }
+                std::cerr << "File to big: " << datapack_file_temp.at(index).toStdString() << " size: " << file.size() << std::endl;
         }
         else
-            std::cerr << "File excluded because don't match the regex: " << file.fileName() << std::endl;
+            std::cerr << "File excluded because don't match the regex: " << file.fileName().toStdString() << std::endl;
         index++;
     }
+
     datapackHash=hash.result();
     std::cout << datapack_file_temp.size() << "file for datapack loaded" << std::endl;
 
     loadTheProfile();
 }
 
-QHash<QString,quint32> EpollServerLoginMaster::datapack_file_list()
+void EpollServerLoginMaster::loadTheProfile()
 {
-    QHash<QString,quint32> filesList;
-
-    const QStringList &returnList=FacilityLibGeneral::listFolder("datapack/");
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
+    //send skin
+    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.skins.size();
+    rawServerListForC20011Size+=1;
+    int skinId=0;
+    while(skinId<CommonDatapack::commonDatapack.skins.size())
     {
-        #ifdef Q_OS_WIN32
-        QString fileName=returnList.at(index);
-        #else
-        const QString &fileName=returnList.at(index);
-        #endif
-        if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        rawServerListForC20011[rawServerListForC20011Size]=skinId;
+        rawServerListForC20011Size+=1;
+        *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(BaseServerCommon::dictionary_skin_internal_to_database.value(skinId));
+        rawServerListForC20011Size+=2;
+        skinId++;
+    }
+
+    //profile list size
+    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.profileList.size();
+    rawServerListForC20011Size+=1;
+    int index=0;
+    while(index<CommonDatapack::commonDatapack.profileList.size())
+    {
+        const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            //skin
+            rawServerListForC20011[rawServerListForC20011Size]=profile.forcedskin.size();
+            rawServerListForC20011Size+=1;
             {
-                QFile file("datapack/"+returnList.at(index));
-                if(file.size()<=8*1024*1024)
+                int skinListIndex=0;
+                while(skinListIndex<profile.forcedskin.size())
                 {
-                    if(file.open(QIODevice::ReadOnly))
+                    rawServerListForC20011[rawServerListForC20011Size]=profile.forcedskin.at(skinListIndex);
+                    rawServerListForC20011Size+=1;
+                    skinListIndex++;
+                }
+            }
+            //cash
+            *reinterpret_cast<quint64 *>(rawServerListForC20011+rawServerListForC20011Size)=htole64(profile.cash);
+            rawServerListForC20011Size+=sizeof(quint64);
+
+            //monster
+            rawServerListForC20011[rawServerListForC20011Size]=profile.monsters.size();
+            rawServerListForC20011Size+=1;
+            {
+                int monsterListIndex=0;
+                while(monsterListIndex<profile.monsters.size())
+                {
+                    const Profile::Monster &playerMonster=profile.monsters.at(monsterListIndex);
+
+                    //monster
+                    *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(playerMonster.id);
+                    rawServerListForC20011Size+=sizeof(quint16);
+                    //level
+                    rawServerListForC20011[rawServerListForC20011Size]=playerMonster.level;
+                    rawServerListForC20011Size+=1;
+                    //captured with
+                    *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(playerMonster.captured_with);
+                    rawServerListForC20011Size+=sizeof(quint16);
+
+                    const Monster &monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.id);
+                    const Monster::Stat &monsterStat=CommonFightEngine::getStat(monster,playerMonster.level);
+                    const QList<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngine::generateWildSkill(monster,playerMonster.level);
+
+                    //hp
+                    *reinterpret_cast<quint32 *>(rawServerListForC20011+rawServerListForC20011Size)=htole32(monsterStat.hp);
+                    rawServerListForC20011Size+=sizeof(quint32);
+                    //gender
+                    rawServerListForC20011[rawServerListForC20011Size]=monster.gender;
+                    rawServerListForC20011Size+=sizeof(quint8);
+
+                    //skill list
+                    rawServerListForC20011[rawServerListForC20011Size]=skills.size();
+                    rawServerListForC20011Size+=1;
+                    int skillListIndex=0;
+                    while(skillListIndex<skills.size())
                     {
-                        #ifdef Q_OS_WIN32
-                        fileName.replace(EpollClientLoginMaster::text_antislash,EpollClientLoginMaster::text_slash);//remplace if is under windows server
-                        #endif
-                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(file.readAll());
-                        filesList[fileName]=*reinterpret_cast<const int *>(hashFile.result().constData());
-                        file.close();
+                        const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
+                        //skill
+                        *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(skill.skill);
+                        rawServerListForC20011Size+=sizeof(quint16);
+                        //skill level
+                        rawServerListForC20011[rawServerListForC20011Size]=skill.level;
+                        rawServerListForC20011Size+=sizeof(quint8);
+                        //skill endurance
+                        rawServerListForC20011[rawServerListForC20011Size]=skill.endurance;
+                        rawServerListForC20011Size+=sizeof(quint8);
+                        skillListIndex++;
                     }
+
+                    monsterListIndex++;
+                }
+            }
+
+            {
+                //reputation
+                rawServerListForC20011[rawServerListForC20011Size]=profile.reputation.size();
+                rawServerListForC20011Size+=sizeof(quint8);
+                int reputationIndex=0;
+                while(reputationIndex<profile.reputation.size())
+                {
+                    const Profile::Reputation &reputation=profile.reputation.at(reputationIndex);
+                    //type
+                    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.reputation[reputation.reputationId].reverse_database_id;
+                    rawServerListForC20011Size+=sizeof(quint8);
+                    //level
+                    rawServerListForC20011[rawServerListForC20011Size]=reputation.level;
+                    rawServerListForC20011Size+=sizeof(quint8);
+                    //point
+                    *reinterpret_cast<quint32 *>(rawServerListForC20011+rawServerListForC20011Size)=htole32(reputation.point);
+                    rawServerListForC20011Size+=sizeof(quint32);
+                    reputationIndex++;
+                }
+            }
+
+            {
+                //item
+                rawServerListForC20011[rawServerListForC20011Size]=profile.items.size();
+                rawServerListForC20011Size+=sizeof(quint8);
+                int reputationIndex=0;
+                while(reputationIndex<profile.items.size())
+                {
+                    const Profile::Item &reputation=profile.items.at(reputationIndex);
+                    //item id
+                    *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(reputation.id);
+                    rawServerListForC20011Size+=sizeof(quint16);
+                    //quantity
+                    *reinterpret_cast<quint32 *>(rawServerListForC20011+rawServerListForC20011Size)=htole32(reputation.quantity);
+                    rawServerListForC20011Size+=sizeof(quint32);
+                    reputationIndex++;
                 }
             }
         }
         index++;
     }
-    return filesList;
-}
 
-void EpollServerLoginMaster::loadTheProfile()
-{
-
-
-    //profile list size
-    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.profileList.size();
-    rawServerListForC20011Size+=1;
-
-    put in cache the reply
+    memcpy(rawServerListForC20011,datapackHash.constData(),datapackHash.size());
+    rawServerListForC20011Size+=datapackHash.size();
+    datapackHash.clear();
 
     EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=ProtocolParsingBase::computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
             EpollClientLoginMaster::loginSettingsAndCharactersGroup,
-            0xC2,0x0011,rawServerListForC20011,rawServerListForC20011Size);
+            0xC2,0x11,rawServerListForC20011,rawServerListForC20011Size);
     if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
@@ -727,4 +827,7 @@ void EpollServerLoginMaster::loadTheProfile()
         rawServerListForC20011=NULL;
         rawServerListForC20011Size=0;
     }
+
+    CommonDatapack::unload();
+    BaseServerCommon::unload();
 }

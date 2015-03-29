@@ -55,7 +55,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 }
                 else
                 {
-                    *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)real_move_count);
+                    *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)real_move_count);
                     bufferCursor+=sizeof(quint16);
                 }
                 index_subindex=0;
@@ -71,7 +71,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                         }
                         else
                         {
-                            *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
+                            *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htole16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
                             bufferCursor+=sizeof(quint16);
                         }
                         buffer[bufferCursor]=(quint8)client.to_send_move_size;
@@ -142,7 +142,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                     }
                     else
                     {
-                        *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htobe16((quint16)real_move_count);
+                        *reinterpret_cast<quint16 *>(buffer+0)=(quint16)htole16((quint16)real_move_count);
                         bufferCursor+=sizeof(quint16);
                     }
                     index_subindex=0;
@@ -158,7 +158,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                             }
                             else
                             {
-                                *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htobe16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
+                                *reinterpret_cast<quint16 *>(buffer+bufferCursor)=(quint16)htole16((quint16)client.public_and_private_informations.public_informations.simplifiedId);
                                 bufferCursor+=sizeof(quint16);
                             }
                             buffer[bufferCursor]=(quint8)client.to_send_move_size;
@@ -182,7 +182,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
         //prepare the data
         {
             QDataStream out(&purgeBuffer, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
             //////////////////////////// insert //////////////////////////
             // can be only this map with this algo, then 1 map
@@ -250,7 +250,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
         //prepare the data
         {
             QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
             //////////////////////////// insert //////////////////////////
             // can be only this map with this algo, then 1 map
@@ -314,7 +314,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             {
                 QByteArray purgeBuffer_outputData;
                 QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);
+                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                 //////////////////////////// insert //////////////////////////
                 // can be only this map with this algo, then 1 map
@@ -406,7 +406,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
         //prepare the data
         {
             QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
             //////////////////////////// insert //////////////////////////
             if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
@@ -451,7 +451,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             {
                 QByteArray purgeBuffer_outputData;
                 QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);
+                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                 //////////////////////////// insert //////////////////////////
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
@@ -501,7 +501,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 {
                     QByteArray purgeBuffer_outputData;
                     QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);
+                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
                     //////////////////////////// insert //////////////////////////
                     if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)

@@ -78,7 +78,7 @@ void ProtocolParsingBase::newOutputQuery(const quint8 &mainCodeType,const quint8
     waitedReply_mainCodeType[queryNumber]=mainCodeType;
 }
 
-void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber)
 {
     if(waitedReply_mainCodeType.contains(queryNumber))
     {
@@ -198,7 +198,7 @@ QByteArray ProtocolParsingBase::computeCompression(const QByteArray &data,const 
 }
 #endif
 
-bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingData(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -305,7 +305,7 @@ bool ProtocolParsingBase::packOutcommingQuery(const quint8 &mainCodeType,const q
     #endif
 }
 
-bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+bool ProtocolParsingBase::packFullOutcommingQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -437,14 +437,14 @@ qint8 ProtocolParsingBase::encodeSize(char *data,const quint32 &size)
     }
     else if(size<=0xFFFF)
     {
-        const quint16 &newSize=htobe16(size);
+        const quint16 &newSize=htole16(size);
         memcpy(data,&ProtocolParsingBase::sizeHeaderNullquint16,sizeof(quint8));
         memcpy(data+sizeof(quint8),&newSize,sizeof(newSize));
         return sizeof(quint8)+sizeof(quint16);
     }
     else
     {
-        const quint32 &newSize=htobe32(size);
+        const quint32 &newSize=htole32(size);
         memcpy(data,&ProtocolParsingBase::sizeHeaderNullquint16,sizeof(quint16));
         memcpy(data+sizeof(quint16),&newSize,sizeof(newSize));
         return sizeof(quint16)+sizeof(quint32);
@@ -747,10 +747,10 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+        const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
-    const quint16 &tempSubCodeType=htobe16(subCodeType);
+    const quint16 &tempSubCodeType=htole16(subCodeType);
     memcpy(buffer+1,&tempSubCodeType,sizeof(subCodeType));
     buffer[3]=queryNumber;
 
@@ -1133,10 +1133,10 @@ int ProtocolParsingBase::computeFullOutcommingData(
         const bool &isClient,
         #endif
         char *buffer,
-        const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size)
+        const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
-    const quint16 &tempSubCodeType=htobe16(subCodeType);
+    const quint16 &tempSubCodeType=htole16(subCodeType);
     memcpy(buffer+1,&tempSubCodeType,sizeof(subCodeType));
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT

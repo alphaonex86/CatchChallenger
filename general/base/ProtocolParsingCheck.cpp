@@ -24,7 +24,7 @@ void ProtocolParsingCheck::parseMessage(const quint8 &mainCodeType,const char * 
     valid=true;
 }
 
-void ProtocolParsingCheck::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char * const data,const int &size)
+void ProtocolParsingCheck::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(subCodeType);
@@ -52,7 +52,7 @@ void ProtocolParsingCheck::parseQuery(const quint8 &mainCodeType,const quint8 &q
     valid=true;
 }
 
-void ProtocolParsingCheck::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void ProtocolParsingCheck::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(subCodeType);
@@ -81,7 +81,7 @@ void ProtocolParsingCheck::parseReplyData(const quint8 &mainCodeType,const quint
     valid=true;
 }
 
-void ProtocolParsingCheck::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void ProtocolParsingCheck::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(subCodeType);

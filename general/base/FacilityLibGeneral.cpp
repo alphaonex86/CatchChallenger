@@ -48,7 +48,7 @@ int FacilityLibGeneral::toUTF8With16BitsHeader(const QString &text,char * const 
     utf8data=text.toUtf8();
     if(utf8data.size()==0 || utf8data.size()>65535)
         return 0;
-    *reinterpret_cast<quint16 *>(data+0)=(quint16)htobe16((quint16)utf8data.size());
+    *reinterpret_cast<quint16 *>(data+0)=(quint16)htole16((quint16)utf8data.size());
     memcpy(data+2,utf8data.constData(),utf8data.size());
     return 2+utf8data.size();
 }

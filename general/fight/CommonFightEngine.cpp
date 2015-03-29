@@ -421,31 +421,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     messageFightEngine(QStringLiteral("do skill while: playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER: %1<%2").arg(playerMonster.skills.size()).arg(CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER));
     #endif
-    {
-        index=monsterDef.learn.size()-1;
-        QList<quint16> learnedSkill;
-        while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
-        {
-            const Monster::AttackToLearn &attackToLearn=monsterDef.learn.at(index);
-            //attackToLearn.learnAtLevel -> need be sorted at load
-            if(attackToLearn.learnAtLevel<=playerMonster.level)
-            {
-                //have already learned the best level because start to learn the highther skill, else if it's new skill
-                if(!learnedSkill.contains(attackToLearn.learnSkill))
-                {
-                    PlayerMonster::PlayerSkill temp;
-                    temp.level=attackToLearn.learnSkillLevel;
-                    temp.skill=attackToLearn.learnSkill;
-                    temp.endurance=CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
-                    learnedSkill << attackToLearn.learnSkill;
-                    playerMonster.skills << temp;
-                }
-            }
-            /*else
-                break;-->start with wrong value, then never break*/
-            index--;
-        }
-    }
+    playerMonster.skills=CommonFightEngine::generateWildSkill(monsterDef,playerMonster.level);
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     {
         if(playerMonster.skills.isEmpty())
@@ -482,6 +458,33 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     #endif
     *ok=true;
     return playerMonster;
+}
+
+QList<PlayerMonster::PlayerSkill> CommonFightEngine::generateWildSkill(const Monster &monster, const quint8 &level)
+{
+    index=monsterDef.learn.size()-1;
+    QList<quint16> learnedSkill;
+    while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
+    {
+        const Monster::AttackToLearn &attackToLearn=monsterDef.learn.at(index);
+        //attackToLearn.learnAtLevel -> need be sorted at load
+        if(attackToLearn.learnAtLevel<=playerMonster.level)
+        {
+            //have already learned the best level because start to learn the highther skill, else if it's new skill
+            if(!learnedSkill.contains(attackToLearn.learnSkill))
+            {
+                PlayerMonster::PlayerSkill temp;
+                temp.level=attackToLearn.learnSkillLevel;
+                temp.skill=attackToLearn.learnSkill;
+                temp.endurance=CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.at(temp.level-1).endurance;
+                learnedSkill << attackToLearn.learnSkill;
+                playerMonster.skills << temp;
+            }
+        }
+        /*else
+            break;-->start with wrong value, then never break*/
+        index--;
+    }
 }
 
 /// \warning you need check before the input data

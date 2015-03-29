@@ -110,7 +110,7 @@ void Client::sendNewEvent(const QByteArray &data)
         errorOutput(QStringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
         return;
     }
-    sendQuery(0x79,0x0002,queryNumberList.first(),data);
+    sendQuery(0x79,0x02,queryNumberList.first(),data);
     queryNumberList.removeFirst();
 }
 
@@ -129,7 +129,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COO
     lastTeleportation << teleportationPoint;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
         out << (quint8)map->id;
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
@@ -139,7 +139,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COO
     out << (COORD_TYPE)x;
     out << (COORD_TYPE)y;
     out << (quint8)orientation;
-    sendQuery(0x79,0x0001,queryNumberList.first(),outputData);
+    sendQuery(0x79,0x01,queryNumberList.first(),outputData);
     queryNumberList.removeFirst();
 }
 
@@ -150,7 +150,7 @@ void Client::sendTradeRequest(const QByteArray &data)
         errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
         return;
     }
-    sendQuery(0x80,0x0001,queryNumberList.first(),data);
+    sendQuery(0x80,0x01,queryNumberList.first(),data);
     queryNumberList.removeFirst();
 }
 
@@ -161,7 +161,7 @@ void Client::sendBattleRequest(const QByteArray &data)
         errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
         return;
     }
-    sendQuery(0x90,0x0001,queryNumberList.first(),data);
+    sendQuery(0x90,0x01,queryNumberList.first(),data);
     queryNumberList.removeFirst();
 }
 
@@ -404,7 +404,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int 
         {
             QByteArray newData(data,size);
             QDataStream in(newData);
-            in.setVersion(QDataStream::Qt_4_4);
+            in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
             if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
             {
                 errorOutput("Too many chat in sort time, check DDOS limit");
@@ -642,7 +642,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int 
                 parseNetworkReadError("Wrong size in move packet");
                 return;
             }
-            useSkill(be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data))));
+            useSkill(le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data))));
             return;
         }
         break;
@@ -669,7 +669,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
         //parseError(QStringLiteral("is not logged, parsenormalOutput(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
     }
-    if(mainCodeType!=0x42 && subCodeType!=0x0003)
+    if(mainCodeType!=0x42 && subCodeType!=0x03)
     {
         if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
         {
@@ -731,8 +731,8 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         parseNetworkReadError("wrong remaining size for destroy item id");
                         return;
                     }
-                    const quint16 &itemId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                    const quint32 &quantity=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                    const quint16 &itemId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16))));
                     destroyObject(itemId,quantity);
                     return;
                 }
@@ -742,7 +742,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                 {
                     QByteArray data(rawData,size);
                     QDataStream in(data);
-                    in.setVersion(QDataStream::Qt_4_4);
+                    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                     if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
                     {
                         parseNetworkReadError("wrong remaining size for trade add type");
@@ -829,7 +829,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                 {
                     QByteArray data(rawData,size);
                     QDataStream in(data);
-                    in.setVersion(QDataStream::Qt_4_4);
+                    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                     qint64 cash;
                     QList<QPair<quint16, qint32> > items;
                     QList<quint32> withdrawMonsters;
@@ -945,8 +945,8 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         parseNetworkReadError("wrong remaining size for learn skill");
                         return;
                     }
-                    const quint32 &monsterId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
-                    const quint16 &skill=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint32))));
+                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const quint16 &skill=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint32))));
                     learnSkill(monsterId,skill);
                     return;
                 }
@@ -963,7 +963,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         parseNetworkReadError("wrong remaining size for request bot fight");
                         return;
                     }
-                    const quint16 &fightId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const quint16 &fightId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     requestFight(fightId);
                     return;
                 }
@@ -1003,7 +1003,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         parseNetworkReadError("wrong remaining size for monster in fight");
                         return;
                     }
-                    const quint32 &monsterId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
                     changeOfMonsterInFight(monsterId);
                     return;
                 }
@@ -1017,7 +1017,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         parseNetworkReadError("wrong remaining size for monster evolution validated");
                         return;
                     }
-                    const quint32 &monsterId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
                     confirmEvolution(monsterId);
                     return;
                 }
@@ -1030,8 +1030,8 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         parseNetworkReadError("wrong remaining size for use object on monster");
                         return;
                     }
-                    const quint16 &item=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                    const quint32 &monsterId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                    const quint16 &item=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const quint32 &monsterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16))));
                     useObjectOnMonster(item,monsterId);
                     return;
                 }
@@ -1056,7 +1056,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         return;
                     }
                     #endif
-                    const quint16 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const quint16 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Start,questId);
                     return;
                 }
@@ -1071,7 +1071,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         return;
                     }
                     #endif
-                    const quint16 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const quint16 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Finish,questId);
                     return;
                 }
@@ -1086,7 +1086,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         return;
                     }
                     #endif
-                    const quint16 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const quint16 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_Cancel,questId);
                     return;
                 }
@@ -1101,7 +1101,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
                         return;
                     }
                     #endif
-                    const quint32 &questId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                    const quint32 &questId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                     newQuestAction(QuestAction_NextStep,questId);
                     return;
                 }
@@ -1207,7 +1207,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
+                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                 quint8 profileIndex;
                 QString pseudo;
                 quint8 skinId;
@@ -1254,7 +1254,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint32 &characterId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
                 removeCharacter(queryNumber,characterId);
             }
             break;
@@ -1268,7 +1268,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint32 &characterId=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
                 selectCharacter(queryNumber,characterId);
             }
             break;
@@ -1282,7 +1282,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                 }
                 QByteArray data(rawData,size);
                 QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
+                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -1338,7 +1338,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
+                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -1422,7 +1422,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &recipe_id=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &recipe_id=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                 useRecipe(queryNumber,recipe_id);
                 return;
             }
@@ -1437,7 +1437,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &objectId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                 useObject(queryNumber,objectId);
                 return;
             }
@@ -1452,7 +1452,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &shopId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &shopId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                 getShopList(queryNumber,shopId);
                 return;
             }
@@ -1467,10 +1467,10 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &shopId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const quint16 &shopId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
+                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
                 buyObject(queryNumber,shopId,objectId,quantity,price);
                 return;
             }
@@ -1485,10 +1485,10 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &shopId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const quint16 &shopId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
+                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
                 sellObject(queryNumber,shopId,objectId,quantity,price);
                 return;
             }
@@ -1502,7 +1502,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &factoryId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &factoryId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                 getFactoryList(queryNumber,factoryId);
                 return;
             }
@@ -1516,10 +1516,10 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &factoryId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const quint16 &factoryId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
+                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
                 buyFactoryProduct(queryNumber,factoryId,objectId,quantity,price);
                 return;
             }
@@ -1533,10 +1533,10 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint16 &factoryId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
-                const quint16 &objectId=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
-                const quint32 &quantity=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
-                const quint32 &price=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
+                const quint16 &factoryId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                const quint16 &objectId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+sizeof(quint16))));
+                const quint32 &quantity=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2)));
+                const quint32 &price=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+sizeof(quint16)*2+sizeof(quint32))));
                 sellFactoryResource(queryNumber,factoryId,objectId,quantity,price);
                 return;
             }
@@ -1549,7 +1549,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
+                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -1613,7 +1613,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
+                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -1705,7 +1705,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
+                in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));

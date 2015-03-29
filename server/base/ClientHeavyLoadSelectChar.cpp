@@ -16,7 +16,7 @@ void Client::characterSelectionIsWrong(const quint8 &query_id,const quint8 &retu
     //network send
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)returnCode;
     postReply(query_id,outputData);
 
@@ -660,7 +660,7 @@ void Client::loginIsRightFinalStep()
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)01;
     if(GlobalServerData::serverSettings.max_players<=255)
         out << (quint8)public_and_private_informations.public_informations.simplifiedId;

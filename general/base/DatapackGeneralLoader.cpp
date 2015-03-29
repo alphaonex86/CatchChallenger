@@ -3,6 +3,7 @@
 #include "GeneralVariable.h"
 #include "CommonDatapack.h"
 #include "FacilityLib.h"
+#include "FacilityLibGeneral.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -2053,12 +2054,14 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             index++;
         }
     }
+    QStringList defaultforcedskinList;
     QHash<QString,quint8> skinNameToId;
     {
         int index=0;
         while(index<CommonDatapack::commonDatapack.skins.size())
         {
             skinNameToId[CommonDatapack::commonDatapack.skins.at(index)]=index;
+            defaultforcedskinList << CommonDatapack::commonDatapack.skins.at(index);
             index++;
         }
     }
@@ -2139,32 +2142,39 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 continue;
             }
             const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
+
+            QStringList forcedskinList;
             if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
+                forcedskinList=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
+            else
+                forcedskinList=defaultforcedskinList;
             {
-                const QStringList &forcedskinList=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
-                {
-                    int index=0;
-                    while(index<forcedskinList.size())
-                    {
-                        if(skinNameToId.contains(forcedskinList.at(index)))
-                            profile.forcedskin << skinNameToId.value(forcedskinList.at(index));
-                        else
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(forcedskinList.at(index)));
-                        index++;
-                    }
-                }
                 int index=0;
-                while(index<profile.forcedskin.size())
+                while(index<forcedskinList.size())
                 {
-                    if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
+                    if(skinNameToId.contains(forcedskinList.at(index)))
                     {
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists into: %5: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(profile.forcedskin.at(index)).arg(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))));
-                        profile.forcedskin.removeAt(index);
+                        profile.forcedskinTemp << forcedskinList.at(index);
+                        profile.forcedskin << skinNameToId.value(forcedskinList.at(index));
                     }
                     else
-                        index++;
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(forcedskinList.at(index)));
+                    index++;
                 }
             }
+            int index=0;
+            while(index<profile.forcedskin.size())
+            {
+                if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
+                {
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists into: %5: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(profile.forcedskin.at(index)).arg(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))));
+                    profile.forcedskinTemp.removeAt(index);
+                    profile.forcedskin.removeAt(index);
+                }
+                else
+                    index++;
+            }
+
             profile.cash=0;
             const QDomElement &cash = startItem.firstChildElement(DatapackGeneralLoader::text_cash);
             if(!cash.isNull() && cash.isElement() && cash.hasAttribute(DatapackGeneralLoader::text_value))

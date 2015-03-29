@@ -376,7 +376,7 @@ bool ProtocolParsingBase::checkStringIntegrity(const char * const data, const un
         //null string
         return true;
     }
-    const quint32 &stringSize=be32toh(tempInt);
+    const quint32 &stringSize=le32toh(tempInt);
     if(stringSize>65535)
     {
         errorParsingLayer(QStringLiteral("String size is wrong: %1").arg(stringSize));

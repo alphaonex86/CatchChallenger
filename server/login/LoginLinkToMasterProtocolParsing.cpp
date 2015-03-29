@@ -39,7 +39,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint1
     if(stat!=Stat::Logged)
     {
         if(stat==Stat::ProtocolGood && mainCodeType==0xC2 &&
-                (subCodeType==0x000F || subCodeType==0x0010 || subCodeType==0x0011)
+                (subCodeType==0x000F || subCodeType==0x0010 || subCodeType==0x11)
                 )
         {}
         else
@@ -144,7 +144,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint1
                                     std::cerr << "C20010 size xmlString 16Bits header too small (abort) in " << __LINE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                const quint16 &xmlStringSize=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
+                                const quint16 &xmlStringSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
                                 if((size-pos)<(xmlStringSize+2))
                                 {
                                     std::cerr << "C20010 size xmlString + size 16Bits header too small (abort) in " << __LINE__ << ":" <<__LINE__ << std::endl;
@@ -231,7 +231,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint1
                                     std::cerr << "C20010 size xmlString 16Bits header too small (abort) in " << __LINE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                const quint16 &xmlStringSize=be16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
+                                const quint16 &xmlStringSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
                                 if((size-pos)<(xmlStringSize+2))
                                 {
                                     std::cerr << "C20010 size xmlString + size 16Bits header too small (abort) in " << __LINE__ << ":" <<__LINE__ << std::endl;
@@ -301,7 +301,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint1
                         abort();
                     }
                     EpollClientLoginSlave::automatic_account_creation=rawData[0x00];
-                    EpollClientLoginSlave::character_delete_time=be32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
+                    EpollClientLoginSlave::character_delete_time=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
                     EpollClientLoginSlave::min_character=rawData[0x05];
                     EpollClientLoginSlave::max_character=rawData[0x06];
                     EpollClientLoginSlave::max_pseudo_size=rawData[0x07];

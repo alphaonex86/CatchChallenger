@@ -63,7 +63,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
         querySendTime.remove(queryNumber);
     }
     QDataStream in(data);
-    in.setVersion(QDataStream::Qt_4_4);
+    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     switch(mainCodeType)
     {
         case 0x02:
@@ -411,7 +411,7 @@ void Api_client_real::datapackChecksumDone(const QStringList &datapackFilesList,
         quint8 datapack_content_query_number=queryNumber();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint32)datapackFilesList.size();
         int index=0;
         while(index<datapackFilesList.size())

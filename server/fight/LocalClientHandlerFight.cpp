@@ -478,7 +478,7 @@ void Client::registerBattleRequest(Client *otherPlayerBattle)
     otherPlayerBattle->otherPlayerBattle=this;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << otherPlayerBattle->public_and_private_informations.public_informations.skinId;
     sendBattleRequest(otherPlayerBattle->rawPseudo+outputData);
 }
@@ -562,7 +562,7 @@ void Client::internalBattleCanceled(const bool &send)
     otherPlayerBattle=NULL;
     if(send)
     {
-            sendFullPacket(0xE0,0x0007);
+            sendFullPacket(0xE0,0x07);
             receiveSystemText(QLatin1String("Battle declined"));
     }
     battleIsValidated=false;
@@ -606,7 +606,7 @@ void Client::internalBattleAccepted(const bool &send)
         QList<PlayerMonster> playerMonstersPreview=otherPlayerBattle->public_and_private_informations.playerMonster;
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << otherPlayerBattle->public_and_private_informations.public_informations.skinId;
         out << (quint8)playerMonstersPreview.size();
         int index=0;
@@ -620,7 +620,7 @@ void Client::internalBattleAccepted(const bool &send)
         }
         out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
         QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
-        sendFullPacket(0xE0,0x0008,otherPlayerBattle->rawPseudo+outputData+firstValidOtherPlayerMonster);
+        sendFullPacket(0xE0,0x08,otherPlayerBattle->rawPseudo+outputData+firstValidOtherPlayerMonster);
     }
 }
 
@@ -677,7 +677,7 @@ void Client::sendBattleReturn()
     int index,master_index;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     out << (quint8)attackReturn.size();
     master_index=0;
@@ -735,7 +735,7 @@ void Client::sendBattleReturn()
     }
     attackReturn.clear();
 
-    sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
+    sendFullPacket(0xE0,0x06,outputData+binarypublicPlayerMonster);
 }
 
 void Client::sendBattleMonsterChange()
@@ -743,11 +743,11 @@ void Client::sendBattleMonsterChange()
     QByteArray binarypublicPlayerMonster;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0;
     out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
     binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
-    sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
+    sendFullPacket(0xE0,0x06,outputData+binarypublicPlayerMonster);
 }
 
 //return true if change level, multiplicator do at datapack loading

@@ -181,7 +181,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     //send to the client the position of the player
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     out << (quint8)0x01;
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
@@ -492,11 +492,11 @@ void Client::addObjectAndSend(const quint16 &item,const quint32 &quantity)
     //add into the inventory
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint16)1;
     out << (quint16)item;
     out << (quint32)quantity;
-    sendFullPacket(0xD0,0x0002,outputData);
+    sendFullPacket(0xD0,0x02,outputData);
 }
 
 void Client::addObject(const quint16 &item,const quint32 &quantity)
@@ -630,11 +630,11 @@ void Client::sendRemoveObject(const quint16 &item,const quint32 &quantity)
     //add into the inventory
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint32)1;
     out << (quint16)item;
     out << (quint32)quantity;
-    sendFullPacket(0xD0,0x0003,outputData);
+    sendFullPacket(0xD0,0x03,outputData);
 }
 
 quint32 Client::objectQuantity(const quint16 &item)
@@ -1252,7 +1252,7 @@ void Client::setEvent(const quint8 &event, const quint8 &new_value)
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << event;
     out << new_value;
     int index=0;
@@ -1425,7 +1425,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)ObjectUsage_correctlyUsed;
         postReply(query_id,outputData);
         //add into db
@@ -1451,7 +1451,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)ObjectUsage_correctlyUsed;
         if(maxMonsterId>0)
             out << (quint32)maxMonsterId;
@@ -1466,7 +1466,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)ObjectUsage_correctlyUsed;
         postReply(query_id,outputData);
     }
@@ -1600,7 +1600,7 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
     const Shop &shop=CommonDatapack::commonDatapack.shops.value(shopId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     QByteArray outputData2;
     QDataStream out2(&outputData2, QIODevice::WriteOnly);
     out2.setVersion(QDataStream::Qt_4_4);
@@ -1716,7 +1716,7 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
     const int &priceIndex=CommonDatapack::commonDatapack.shops.value(shopId).items.indexOf(objectId);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(priceIndex==-1)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
@@ -1845,7 +1845,7 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
     //send the shop items (no taxes from now)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
         errorOutput(QStringLiteral("this item don't exists"));
@@ -1946,7 +1946,7 @@ void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
     //send the shop items (no taxes from now)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
         out << (quint32)0;
@@ -2065,7 +2065,7 @@ void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,c
     quint32 actualPrice=0;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     Industry::Product product;
     //get the right product
     {
@@ -2185,7 +2185,7 @@ void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId
         industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.value(factoryId),industry);
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     quint32 resourcePrice;
     //check if not overfull
     {
@@ -2559,7 +2559,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
 
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);
+                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                 out << (quint8)0x02;
                 postReply(query_id,outputData);
                 delete clanActionParam;
@@ -2594,7 +2594,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)0x01;
             postReply(query_id,outputData);
             //update the db
@@ -2623,7 +2623,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)0x01;
             postReply(query_id,outputData);
             //update the db
@@ -2676,7 +2676,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             if(isFound && !haveAClan)
             {
                 if(playerByPseudo.value(text)->inviteToClan(public_and_private_informations.clan))
@@ -2721,7 +2721,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             if(isFound && isIntoTheClan)
                 out << (quint8)0x01;
             else
@@ -2784,7 +2784,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         postReply(query_id,outputData);
         return;
@@ -2797,7 +2797,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x01;
     out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
     postReply(query_id,outputData);
@@ -2834,7 +2834,7 @@ void Client::sendClanInfo()
     normalOutput(QStringLiteral("Send the clan info: %1, clanId: %2, get the info").arg(clan->name).arg(public_and_private_informations.clan));
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << clan->name;
     sendFullPacket(0xC2,0x000A,outputData);
 }
@@ -2845,8 +2845,8 @@ void Client::dissolvedClan()
     clan=NULL;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    sendFullPacket(0xC2,0x0009,QByteArray());
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    sendFullPacket(0xC2,0x09,QByteArray());
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
 
@@ -2859,7 +2859,7 @@ bool Client::inviteToClan(const quint32 &clanId)
     inviteToClanList << clanId;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint32)clanId;
     out << clan->name;
     sendFullPacket(0xC2,0x000B,outputData);
@@ -3030,9 +3030,9 @@ void Client::waitingForCityCaputre(const bool &cancel)
             {
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);
+                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                 out << (quint8)0x01;
-                sendFullPacket(0xF0,0x0001,outputData);
+                sendFullPacket(0xF0,0x01,outputData);
                 return;
             }
         }
@@ -3045,10 +3045,10 @@ void Client::waitingForCityCaputre(const bool &cancel)
         {
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)0x02;
             out << clan->captureCityInProgress;
-            sendFullPacket(0xF0,0x0001,outputData);
+            sendFullPacket(0xF0,0x01,outputData);
             return;
         }
         if(captureCity.count(zoneName)>0)
@@ -3338,52 +3338,52 @@ void Client::cityCaptureBattle(const quint16 &number_of_player,const quint16 &nu
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x04;
     out << (quint16)number_of_player;
     out << (quint16)number_of_clan;
-    sendFullPacket(0xF0,0x0001,outputData);
+    sendFullPacket(0xF0,0x01,outputData);
 }
 
 void Client::cityCaptureBotFight(const quint16 &number_of_player,const quint16 &number_of_clan,const quint32 &fightId)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x04;
     out << (quint16)number_of_player;
     out << (quint16)number_of_clan;
     out << (quint32)fightId;
-    sendFullPacket(0xF0,0x0001,outputData);
+    sendFullPacket(0xF0,0x01,outputData);
 }
 
 void Client::cityCaptureInWait(const quint16 &number_of_player,const quint16 &number_of_clan)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x05;
     out << (quint16)number_of_player;
     out << (quint16)number_of_clan;
-    sendFullPacket(0xF0,0x0001,outputData);
+    sendFullPacket(0xF0,0x01,outputData);
 }
 
 void Client::cityCaptureWin()
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x06;
-    sendFullPacket(0xF0,0x0001,outputData);
+    sendFullPacket(0xF0,0x01,outputData);
 }
 
 void Client::previousCityCaptureNotFinished()
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x02;
-    sendFullPacket(0xF0,0x0003,outputData);
+    sendFullPacket(0xF0,0x03,outputData);
 }
 
 void Client::moveMonster(const bool &up,const quint8 &number)
@@ -3403,7 +3403,7 @@ void Client::getMarketList(const quint32 &query_id)
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint64)market_cash;
     int index;
     QList<MarketItem> marketItemList,marketOwnItemList;
@@ -3496,7 +3496,7 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     //search into the market
     int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
@@ -3562,7 +3562,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(public_and_private_informations.playerMonster.size()>=CommonSettings::commonSettings.maxPlayerMonsters)
     {
         out << (quint8)0x02;
@@ -3657,7 +3657,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     if(objectQuantity(objectId)<quantity)
     {
         out << (quint8)0x02;
@@ -3722,7 +3722,7 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     int index=0;
     while(index<public_and_private_informations.playerMonster.size())
     {
@@ -3812,7 +3812,7 @@ void Client::recoverMarketCash(const quint32 &query_id)
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint64)market_cash;
     public_and_private_informations.cash+=market_cash;
     market_cash=0;
@@ -3837,7 +3837,7 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
     {
@@ -3895,7 +3895,7 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     int index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {

@@ -20,6 +20,7 @@ public:
     bool isInFightWithWild() const;
     bool getAbleToFight() const;
     bool haveMonsters() const;
+    QList<PlayerSkill> generateWildSkill(const Monster &monster, const quint8 &level);
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
     PlayerMonster *getCurrentMonster();
     virtual PublicPlayerMonster *getOtherMonster();

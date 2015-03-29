@@ -317,7 +317,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
                 errorParsingLayer("Unable to send at createAccount_return");
                 return;
             }
-            linkToMaster->newFullOutputQuery(0x11,0x0001,queryNumber);
+            linkToMaster->newFullOutputQuery(0x11,0x01,queryNumber);
         }
         account_id=maxAccountIdList.takeFirst();
         dbQueryWriteLogin(QString(PreparedDBQuery::db_query_insert_login).arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()).toUtf8().constData());
@@ -376,7 +376,7 @@ void EpollClientLoginSlave::character_list_return(const quint8 &query_id)
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
 
     out << (quint8)01;
     if(sendPlayerNumber)
@@ -709,7 +709,7 @@ void EpollClientLoginSlave::addCharacter(const quint8 &query_id, const quint8 &p
         qDebug() << QStringLiteral("Skin list is empty, unable to add charaters");
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         out << (quint32)0x00000000;
         postReply(query_id,outputData);
@@ -760,7 +760,7 @@ void EpollClientLoginSlave::addCharacter(const quint8 &query_id, const quint8 &p
 
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         out << (quint32)0x00000000;
         postReply(query_id,outputData);
@@ -817,7 +817,7 @@ void EpollClientLoginSlave::addCharacter_return(const quint8 &query_id,const qui
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x01;
         out << (quint32)0x00000000;
         postReply(query_id,outputData);
@@ -932,7 +932,7 @@ void EpollClientLoginSlave::addCharacter_return(const quint8 &query_id,const qui
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x00;
     out << characterId;
     postReply(query_id,outputData);
@@ -958,7 +958,7 @@ void EpollClientLoginSlave::removeCharacter(const quint8 &query_id, const quint3
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon.errorMessage());
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         postReply(query_id,outputData);
         delete removeCharacterParam;
@@ -1034,7 +1034,7 @@ void EpollClientLoginSlave::removeCharacter_return(const quint8 &query_id,const 
     dbQueryWrite(PreparedDBQuery::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(character_delete_time).toUtf8().constData());
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x02;
     postReply(query_id,outputData);
 }
