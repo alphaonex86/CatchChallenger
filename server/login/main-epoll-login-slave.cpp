@@ -33,9 +33,9 @@ int main(int argc, char *argv[])
         return EPOLLERR;
 
     //blocking due to db connexion
-    EpollServerLoginSlave *server=new EpollServerLoginSlave();
+    EpollServerLoginSlave::epollServerLoginSlave=new EpollServerLoginSlave();
 
-    if(!server->tryListen())
+    if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
         return -99;
 
     ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::LoginServer);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
                     {
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
-                        const int &infd = server->accept(&in_addr, &in_len);
+                        const int &infd = EpollServerLoginSlave::epollServerLoginSlave->accept(&in_addr, &in_len);
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||
@@ -115,14 +115,14 @@ int main(int argc, char *argv[])
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else
                         {
-                            if(server->tcpCork)
+                            if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
                             {
                                 //set cork for CatchChallener because don't have real time part
                                 int state = 1;
                                 if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
                                     std::cerr << "Unable to apply tcp cork" << std::endl;
                             }
-                            else if(server->tcpNodelay)
+                            else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
                             {
                                 //set no delay to don't try group the packet and improve the performance
                                 int state = 1;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 
                             EpollClientLoginSlave *client=new EpollClientLoginSlave(infd
                                                #ifdef SERVERSSL
-                                               ,server->getCtx()
+                                               ,EpollServerLoginSlave::epollServerLoginSlave->getCtx()
                                                #endif
                                 );
                             //just for informations
@@ -206,7 +206,8 @@ int main(int argc, char *argv[])
             }
         }
     }
-    server->close();
-    delete server;
+    EpollServerLoginSlave::epollServerLoginSlave->close();
+    delete EpollServerLoginSlave::epollServerLoginSlave;
+    EpollServerLoginSlave::epollServerLoginSlave=NULL;
     return EXIT_SUCCESS;
 }

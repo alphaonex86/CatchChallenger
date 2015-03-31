@@ -7,3 +7,7 @@ DatabaseBase::DatabaseBase() :
     considerDownAfterNumberOfTry(30)
 {
 }
+
+void DatabaseBase::clear()
+{
+}

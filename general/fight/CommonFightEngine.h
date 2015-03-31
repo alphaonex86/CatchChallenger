@@ -8,10 +8,11 @@
 #include "../base/GeneralStructures.h"
 #include "../base/ClientBase.h"
 #include "../../general/base/CommonMap.h"
+#include "CommonFightEngineBase.h"
 
 namespace CatchChallenger {
 //only the logique here, store nothing
-class CommonFightEngine : public ClientBase
+class CommonFightEngine : public ClientBase, public CommonFightEngineBase
 {
 public:
     CommonFightEngine();
@@ -20,8 +21,6 @@ public:
     bool isInFightWithWild() const;
     bool getAbleToFight() const;
     bool haveMonsters() const;
-    QList<PlayerSkill> generateWildSkill(const Monster &monster, const quint8 &level);
-    static Monster::Stat getStat(const Monster &monster, const quint8 &level);
     PlayerMonster *getCurrentMonster();
     virtual PublicPlayerMonster *getOtherMonster();
     virtual Skill::AttackReturn generateOtherAttack();
@@ -60,7 +59,6 @@ public:
     bool haveMoreEndurance();
     QList<Skill::LifeEffectReturn> applyBuffLifeEffect(PublicPlayerMonster * playerMonster);
     QList<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
-    static bool buffIsValid(const Skill::BuffEffect &buffEffect);
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
     virtual bool generateWildFightIfCollision(CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y, const QHash<quint16, quint32> &items, const QList<quint8> &events);
