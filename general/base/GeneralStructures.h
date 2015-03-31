@@ -838,8 +838,8 @@ struct Profile
     struct Monster
     {
         quint16 id;
-        qint8 level;
-        qint32 captured_with;
+        quint8 level;
+        quint16 captured_with;
     };
     struct Item
     {
@@ -851,6 +851,7 @@ struct Profile
     QList<Monster> monsters;
     QList<Reputation> reputation;
     QList<Item> items;
+    QString id;
 };
 
 enum MonstersCollisionType
