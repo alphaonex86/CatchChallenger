@@ -3,6 +3,7 @@
 
 #include "../epoll/BaseClassSwitch.h"
 #include "../epoll/db/EpollPostgresql.h"
+#include "EpollClientLoginSlave.h"
 #include <QString>
 #include <QHash>
 #include <vector>
@@ -15,12 +16,15 @@ public:
     ~CharactersGroupForLogin();
     BaseClassSwitch::Type getType() const;
 
-    std::vector<quint32> maxClanId;
+    void clearServerPair();
+    void setServerPair(const quint8 &index,const quint16 &databaseId);
+
     std::vector<quint32> maxCharacterId;
     std::vector<quint32> maxMonsterId;
+    quint8 index;
 
-    static int serverWaitedToBeReady;
-    static QHash<QString,CharactersGroupForLogin *> databaseBaseCommonList;
+    static QHash<QString,CharactersGroupForLogin *> hash;
+    static QList<CharactersGroupForLogin *> list;
 private:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);
@@ -31,9 +35,11 @@ private:
     void load_clan_max_id();
     static void load_clan_max_id_static(void *object);
     void load_clan_max_id_return();
-
 private:
     EpollPostgresql *databaseBaseCommon;
+    QList<qint16/*allow -1 to not found*/> dictionary_server_database_to_index;
+    QList<quint32> dictionary_server_index_to_database;
+    QList<EpollClientLoginSlave * const> clientQueryForReadReturn;
 };
 }
 

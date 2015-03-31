@@ -27,8 +27,28 @@ EpollClientLoginSlave::EpollClientLoginSlave(
         accountCharatersCount(0),
         have_send_protocol(false),
         is_logging_in_progess(false),
-        account_id(0)
+        account_id(0),
+        characterListForReplyInSuspend(0),
+        serverListForReplyRawData(NULL),
+        serverListForReplyRawDataSize(0),
+        serverListForReplyInSuspend(0),
+        serverPlayedTimeCount(0)
 {
+}
+
+EpollClientLoginSlave::~EpollClientLoginSlave()
+{
+    if(socketString!=NULL)
+        delete socketString;
+    {
+        int index=0;
+        while(index<callbackRegistred.size())
+        {
+            callbackRegistred.at(index)->object=NULL;
+            index++;
+        }
+        unregister on CharactersGroupForLogin too
+    }
 }
 
 void EpollClientLoginSlave::disconnectClient()

@@ -3,6 +3,8 @@
 #include <netdb.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <cstring>
 #include <chrono>
 #include <ctime>
@@ -23,6 +25,27 @@ using namespace CatchChallenger;
 
 int main(int argc, char *argv[])
 {
+    {
+        DIR* dir = opendir("datapack/");
+        if (dir)
+        {
+            /* Directory exists. */
+            closedir(dir);
+        }
+        else if (ENOENT == errno)
+        {
+            /* Directory does not exist. */
+            std::cerr << "Directory does not exist (abort)" << std::endl;
+            abort();
+        }
+        else
+        {
+            /* opendir() failed for some other reason. */
+            std::cerr << "opendir(\"datapack/\") failed for some other reason. (abort)" << std::endl;
+            abort();
+        }
+    }
+
     QCoreApplication a(argc, argv);
     Q_UNUSED(a);
 

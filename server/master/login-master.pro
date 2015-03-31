@@ -38,9 +38,11 @@ SOURCES += \
     CharactersGroup.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
     ../../general/base/CommonDatapack.cpp \
-    ../base/BaseServerCommon.cpp \
     ../../general/base/DatapackGeneralLoader.cpp \
-    ../../general/fight/CommonFightEngine.cpp
+    ../../general/fight/CommonFightEngineBase.cpp \
+    ../base/BaseServerLogin.cpp \
+    ../../general/fight/FightLoader.cpp \
+    ../../general/base/CommonSettings.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -58,9 +60,11 @@ HEADERS += \
     CharactersGroup.h \
     ../../general/base/FacilityLibGeneral.h \
     ../../general/base/CommonDatapack.h \
-    ../base/BaseServerCommon.h \
     ../VariableServer.h \
     ../../general/base/DatapackGeneralLoader.h \
-    ../../general/fight/CommonFightEngine.h \
+    ../../general/fight/CommonFightEngineBase.h \
     ../../general/base/GeneralStructures.h \
-    ../../general/base/GeneralType.h
+    ../../general/base/GeneralType.h \
+    ../base/BaseServerLogin.h \
+    ../../general/fight/FightLoader.h \
+    ../../general/base/CommonSettings.h

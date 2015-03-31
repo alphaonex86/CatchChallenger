@@ -2,7 +2,7 @@
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../VariableServer.h"
-#include "../../general/fight/CommonFightEngine.h"
+#include "../../general/fight/CommonFightEngineBase.h"
 
 using namespace CatchChallenger;
 
@@ -26,13 +26,11 @@ using namespace CatchChallenger;
 
 #include "EpollClientLoginMaster.h"
 
-QRegularExpression EpollServerLoginMaster::datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
-
 EpollServerLoginMaster::EpollServerLoginMaster() :
     server_ip(NULL),
     server_port(NULL),
-    rawServerListForC20011(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
-    rawServerListForC20011Size(0),
+    rawServerListForC211(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
+    rawServerListForC211Size(0),
     databaseBaseLogin(NULL),
     character_delete_time(3600),
     min_character(0),
@@ -44,7 +42,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         memset(EpollClientLoginMaster::replyToRegisterLoginServer+2,0x00,sizeof(EpollClientLoginMaster::replyToRegisterLoginServer)-2);
         memset(EpollClientLoginMaster::serverServerList,0x00,sizeof(EpollClientLoginMaster::serverServerList));
         memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
-        memset(rawServerListForC20011,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
+        memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
     QSettings settings("login_master.conf",QSettings::IniFormat);
@@ -58,7 +56,6 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     doTheLogicalGroup(settings);
     doTheServerList();
     doTheReplyCache();
-    loadTheProfile();
 }
 
 EpollServerLoginMaster::~EpollServerLoginMaster()
@@ -77,14 +74,15 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
     }
     if(databaseBaseLogin!=NULL)
     {
-        delete databaseBaseLogin;
+        EpollPostgresql *databaseBasePg=static_cast<EpollPostgresql *>(databaseBaseLogin);
+        delete databaseBasePg;
         databaseBaseLogin=NULL;
     }
-    if(rawServerListForC20011!=NULL)
+    if(rawServerListForC211!=NULL)
     {
-        delete rawServerListForC20011;
-        rawServerListForC20011=NULL;
-        rawServerListForC20011Size=0;
+        delete rawServerListForC211;
+        rawServerListForC211=NULL;
+        rawServerListForC211Size=0;
     }
     QHash<QString,CharactersGroup *>::const_iterator i = CharactersGroup::charactersGroupHash.constBegin();
     while (i != CharactersGroup::charactersGroupHash.constEnd()) {
@@ -312,26 +310,33 @@ void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGro
 {
     charactersGroupList.sort();
 
-    rawServerListForC20011[0x00]=EpollClientLoginMaster::automatic_account_creation;
-    *reinterpret_cast<quint32 *>(rawServerListForC20011+0x03)=(quint32)htole32((quint32)character_delete_time);
-    rawServerListForC20011[0x05]=min_character;
-    rawServerListForC20011[0x06]=max_character;
-    rawServerListForC20011[0x07]=max_pseudo_size;
-    rawServerListForC20011Size=0x08;
+    rawServerListForC211[0x00]=EpollClientLoginMaster::automatic_account_creation;
+    *reinterpret_cast<quint32 *>(rawServerListForC211+0x03)=(quint32)htole32((quint32)character_delete_time);
+    rawServerListForC211[0x05]=min_character;
+    rawServerListForC211[0x06]=max_character;
+    rawServerListForC211[0x07]=max_pseudo_size;
+    rawServerListForC211Size=0x08;
     //do the Characters group
-    rawServerListForC20011[rawServerListForC20011Size]=(unsigned char)charactersGroupList.size();
-    rawServerListForC20011Size+=sizeof(unsigned char);
+    rawServerListForC211[rawServerListForC211Size]=(unsigned char)charactersGroupList.size();
+    rawServerListForC211Size+=sizeof(unsigned char);
     int index=0;
     while(index<charactersGroupList.size())
     {
         const QString &charactersGroupName=charactersGroupList.at(index);
-        const int &newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerListForC20011);
+        int newSize=0;
+        if(!charactersGroupName.isEmpty())
+            newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerListForC211+rawServerListForC211Size);
+        else
+        {
+            rawServerListForC211[rawServerListForC211Size]=0x00;
+            newSize=1;
+        }
         if(newSize==0 || charactersGroupName.size()>20)
         {
             std::cerr << "charactersGroupName to hurge, null or unable to translate in utf8 (abort)" << std::endl;
             abort();
         }
-        rawServerListForC20011Size+=newSize;
+        rawServerListForC211Size+=newSize;
         index++;
         CharactersGroup::charactersGroupList << CharactersGroup::charactersGroupHash.value(charactersGroupName);
     }
@@ -403,12 +408,12 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
 void EpollServerLoginMaster::doTheServerList()
 {
     //do the server list
-    char rawServerList[sizeof(EpollClientLoginMaster::serverServerList)];
-    memset(rawServerList,0x00,sizeof(rawServerList));
+    EpollClientLoginMaster::serverPartialServerListSize=0;
+    memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));
     int rawServerListSize=0x00;
 
     const int &serverListSize=0x01;
-    rawServerList[rawServerListSize]=serverListSize;
+    EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=serverListSize;
     rawServerListSize+=1;
     int serverListIndex=0;
     while(serverListIndex<serverListSize)
@@ -426,7 +431,7 @@ void EpollServerLoginMaster::doTheServerList()
             std::cerr << "charactersGroup too hurge (abort)" << std::endl;
             abort();
         }
-        int newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,rawServerList+rawServerListSize);
+        int newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
         if(newSize==0)
         {
             std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
@@ -434,10 +439,10 @@ void EpollServerLoginMaster::doTheServerList()
         }
         rawServerListSize+=newSize;
         //key
-        memcpy(rawServerList+rawServerListSize,key,sizeof(key));
+        memcpy(EpollClientLoginMaster::serverPartialServerList+rawServerListSize,key,sizeof(key));
         rawServerListSize+=sizeof(key);
         //host
-        newSize=FacilityLibGeneral::toUTF8WithHeader(host,rawServerList+rawServerListSize);
+        newSize=FacilityLibGeneral::toUTF8WithHeader(host,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
         if(newSize==0)
         {
             std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
@@ -445,7 +450,7 @@ void EpollServerLoginMaster::doTheServerList()
         }
         rawServerListSize+=newSize;
         //port
-        *reinterpret_cast<unsigned short int *>(rawServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)port);
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)port);
         rawServerListSize+=sizeof(unsigned short int);
         //metaData
         if(metaData.size()>4*1024)
@@ -453,7 +458,7 @@ void EpollServerLoginMaster::doTheServerList()
             std::cerr << "metaData too hurge (abort)" << std::endl;
             abort();
         }
-        newSize=FacilityLibGeneral::toUTF8With16BitsHeader(metaData,rawServerList+rawServerListSize);
+        newSize=FacilityLibGeneral::toUTF8With16BitsHeader(metaData,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
         if(newSize==0)
         {
             std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
@@ -466,7 +471,7 @@ void EpollServerLoginMaster::doTheServerList()
             std::cerr << "logicalGroup too hurge (abort)" << std::endl;
             abort();
         }
-        newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,rawServerList+rawServerListSize);
+        newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroup,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
         if(newSize==0)
         {
             std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
@@ -476,13 +481,28 @@ void EpollServerLoginMaster::doTheServerList()
 
         serverListIndex++;
     }
+    EpollClientLoginMaster::serverPartialServerListSize=rawServerListSize;
+
+    //Second list part with same size
+    serverListIndex=0;
+    while(serverListIndex<serverListSize)
+    {
+        //max player
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)0);
+        rawServerListSize+=sizeof(unsigned short int);
+        //connected player
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)0);
+        rawServerListSize+=sizeof(unsigned short int);
+
+        serverListIndex++;
+    }
 
     EpollClientLoginMaster::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
             EpollClientLoginMaster::serverServerList,
-            0xC2,0x10,rawServerList,rawServerListSize);
+            0xC2,0x10,EpollClientLoginMaster::serverPartialServerList,rawServerListSize);
     if(EpollClientLoginMaster::serverServerListSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
@@ -608,111 +628,63 @@ void EpollServerLoginMaster::loadTheDatapack()
     CommonDatapack::commonDatapack.parseDatapack("datapack/");
     qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
 
-    SQL_common_load_start();
+    load(databaseBaseLogin,"datapack/");
 }
 
 void EpollServerLoginMaster::SQL_common_load_finish()
 {
-    loadTheDatapackFileList();
-}
-
-void EpollServerLoginMaster::loadTheDatapackFileList()
-{
-    QStringList extensionAllowedTemp=(QString(CATCHCHALLENGER_EXTENSION_ALLOWED)+QString(";")+QString(CATCHCHALLENGER_EXTENSION_COMPRESSED)).split(";");
-    EpollClientLoginMaster::extensionAllowed=extensionAllowedTemp.toSet();
-    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
-    EpollClientLoginMaster::compressedExtension=compressedExtensionAllowedTemp.toSet();
-
-    QString text_datapack("datapack/");
-    QString text_exclude("map/main/");
-
-    QCryptographicHash hash(QCryptographicHash::Sha224);
-    QStringList datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
-    datapack_file_temp.sort();
-
-    int index=0;
-    while(index<datapack_file_temp.size()) {
-        QFile file(text_datapack+datapack_file_temp.at(index));
-        if(datapack_file_temp.at(index).contains(datapack_rightFileName) && !datapack_file_temp.at(index).startsWith(text_exclude))
-        {
-            if(file.size()<=8*1024*1024)
-            {
-                if(file.open(QIODevice::ReadOnly))
-                {
-                    const QByteArray &data=file.readAll();
-                    {
-                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(data);
-                        EpollClientLoginMaster::DatapackCacheFile cacheFile;
-                        cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
-                        cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                        EpollClientLoginMaster::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
-                    }
-                    hash.addData(data);
-                    file.close();
-                }
-                else
-                {
-                    std::cerr << "Stop now! Unable to open the file " << file.fileName().toStdString() << " to do the datapack checksum for the mirror" << std::endl;
-                    abort();
-                }
-            }
-            else
-                std::cerr << "File to big: " << datapack_file_temp.at(index).toStdString() << " size: " << file.size() << std::endl;
-        }
-        else
-            std::cerr << "File excluded because don't match the regex: " << file.fileName().toStdString() << std::endl;
-        index++;
-    }
-
-    datapackHash=hash.result();
-    std::cout << datapack_file_temp.size() << "file for datapack loaded" << std::endl;
-
     loadTheProfile();
 }
 
 void EpollServerLoginMaster::loadTheProfile()
 {
+    if(rawServerListForC211==NULL)
+    {
+        std::cerr << "EpollServerLoginMaster::loadTheProfile(): rawServerListForC20011==NULL (abort)" << std::endl;
+        abort();
+    }
+
     //send skin
-    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.skins.size();
-    rawServerListForC20011Size+=1;
+    rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.skins.size();
+    rawServerListForC211Size+=1;
     int skinId=0;
     while(skinId<CommonDatapack::commonDatapack.skins.size())
     {
-        rawServerListForC20011[rawServerListForC20011Size]=skinId;
-        rawServerListForC20011Size+=1;
-        *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(BaseServerCommon::dictionary_skin_internal_to_database.value(skinId));
-        rawServerListForC20011Size+=2;
+        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerLogin::dictionary_skin_internal_to_database.value(skinId));
+        rawServerListForC211Size+=2;
         skinId++;
     }
 
     //profile list size
-    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.profileList.size();
-    rawServerListForC20011Size+=1;
+    rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.profileList.size();
+    rawServerListForC211Size+=1;
     int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
         {
+            //database id
+            *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(dictionary_starter_internal_to_database.at(index));
+            rawServerListForC211Size+=sizeof(quint16);
             //skin
-            rawServerListForC20011[rawServerListForC20011Size]=profile.forcedskin.size();
-            rawServerListForC20011Size+=1;
+            rawServerListForC211[rawServerListForC211Size]=profile.forcedskin.size();
+            rawServerListForC211Size+=1;
             {
                 int skinListIndex=0;
                 while(skinListIndex<profile.forcedskin.size())
                 {
-                    rawServerListForC20011[rawServerListForC20011Size]=profile.forcedskin.at(skinListIndex);
-                    rawServerListForC20011Size+=1;
+                    rawServerListForC211[rawServerListForC211Size]=profile.forcedskin.at(skinListIndex);
+                    rawServerListForC211Size+=1;
                     skinListIndex++;
                 }
             }
             //cash
-            *reinterpret_cast<quint64 *>(rawServerListForC20011+rawServerListForC20011Size)=htole64(profile.cash);
-            rawServerListForC20011Size+=sizeof(quint64);
+            *reinterpret_cast<quint64 *>(rawServerListForC211+rawServerListForC211Size)=htole64(profile.cash);
+            rawServerListForC211Size+=sizeof(quint64);
 
             //monster
-            rawServerListForC20011[rawServerListForC20011Size]=profile.monsters.size();
-            rawServerListForC20011Size+=1;
+            rawServerListForC211[rawServerListForC211Size]=profile.monsters.size();
+            rawServerListForC211Size+=1;
             {
                 int monsterListIndex=0;
                 while(monsterListIndex<profile.monsters.size())
@@ -720,42 +692,42 @@ void EpollServerLoginMaster::loadTheProfile()
                     const Profile::Monster &playerMonster=profile.monsters.at(monsterListIndex);
 
                     //monster
-                    *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(playerMonster.id);
-                    rawServerListForC20011Size+=sizeof(quint16);
+                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.id);
+                    rawServerListForC211Size+=sizeof(quint16);
                     //level
-                    rawServerListForC20011[rawServerListForC20011Size]=playerMonster.level;
-                    rawServerListForC20011Size+=1;
+                    rawServerListForC211[rawServerListForC211Size]=playerMonster.level;
+                    rawServerListForC211Size+=1;
                     //captured with
-                    *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(playerMonster.captured_with);
-                    rawServerListForC20011Size+=sizeof(quint16);
+                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
+                    rawServerListForC211Size+=sizeof(quint16);
 
                     const Monster &monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.id);
-                    const Monster::Stat &monsterStat=CommonFightEngine::getStat(monster,playerMonster.level);
-                    const QList<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngine::generateWildSkill(monster,playerMonster.level);
+                    const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
+                    const QList<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
                     //hp
-                    *reinterpret_cast<quint32 *>(rawServerListForC20011+rawServerListForC20011Size)=htole32(monsterStat.hp);
-                    rawServerListForC20011Size+=sizeof(quint32);
+                    *reinterpret_cast<quint32 *>(rawServerListForC211+rawServerListForC211Size)=htole32(monsterStat.hp);
+                    rawServerListForC211Size+=sizeof(quint32);
                     //gender
-                    rawServerListForC20011[rawServerListForC20011Size]=monster.gender;
-                    rawServerListForC20011Size+=sizeof(quint8);
+                    rawServerListForC211[rawServerListForC211Size]=(qint8)monster.ratio_gender;
+                    rawServerListForC211Size+=sizeof(quint8);
 
                     //skill list
-                    rawServerListForC20011[rawServerListForC20011Size]=skills.size();
-                    rawServerListForC20011Size+=1;
+                    rawServerListForC211[rawServerListForC211Size]=skills.size();
+                    rawServerListForC211Size+=1;
                     int skillListIndex=0;
                     while(skillListIndex<skills.size())
                     {
                         const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
                         //skill
-                        *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(skill.skill);
-                        rawServerListForC20011Size+=sizeof(quint16);
+                        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(skill.skill);
+                        rawServerListForC211Size+=sizeof(quint16);
                         //skill level
-                        rawServerListForC20011[rawServerListForC20011Size]=skill.level;
-                        rawServerListForC20011Size+=sizeof(quint8);
+                        rawServerListForC211[rawServerListForC211Size]=skill.level;
+                        rawServerListForC211Size+=sizeof(quint8);
                         //skill endurance
-                        rawServerListForC20011[rawServerListForC20011Size]=skill.endurance;
-                        rawServerListForC20011Size+=sizeof(quint8);
+                        rawServerListForC211[rawServerListForC211Size]=skill.endurance;
+                        rawServerListForC211Size+=sizeof(quint8);
                         skillListIndex++;
                     }
 
@@ -765,39 +737,39 @@ void EpollServerLoginMaster::loadTheProfile()
 
             {
                 //reputation
-                rawServerListForC20011[rawServerListForC20011Size]=profile.reputation.size();
-                rawServerListForC20011Size+=sizeof(quint8);
+                rawServerListForC211[rawServerListForC211Size]=profile.reputation.size();
+                rawServerListForC211Size+=sizeof(quint8);
                 int reputationIndex=0;
                 while(reputationIndex<profile.reputation.size())
                 {
                     const Profile::Reputation &reputation=profile.reputation.at(reputationIndex);
                     //type
-                    rawServerListForC20011[rawServerListForC20011Size]=CommonDatapack::commonDatapack.reputation[reputation.reputationId].reverse_database_id;
-                    rawServerListForC20011Size+=sizeof(quint8);
+                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation[reputation.reputationId].reverse_database_id);
+                    rawServerListForC211Size+=sizeof(quint16);
                     //level
-                    rawServerListForC20011[rawServerListForC20011Size]=reputation.level;
-                    rawServerListForC20011Size+=sizeof(quint8);
+                    rawServerListForC211[rawServerListForC211Size]=reputation.level;
+                    rawServerListForC211Size+=sizeof(quint8);
                     //point
-                    *reinterpret_cast<quint32 *>(rawServerListForC20011+rawServerListForC20011Size)=htole32(reputation.point);
-                    rawServerListForC20011Size+=sizeof(quint32);
+                    *reinterpret_cast<quint32 *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.point);
+                    rawServerListForC211Size+=sizeof(quint32);
                     reputationIndex++;
                 }
             }
 
             {
                 //item
-                rawServerListForC20011[rawServerListForC20011Size]=profile.items.size();
-                rawServerListForC20011Size+=sizeof(quint8);
+                rawServerListForC211[rawServerListForC211Size]=profile.items.size();
+                rawServerListForC211Size+=sizeof(quint8);
                 int reputationIndex=0;
                 while(reputationIndex<profile.items.size())
                 {
                     const Profile::Item &reputation=profile.items.at(reputationIndex);
                     //item id
-                    *reinterpret_cast<quint16 *>(rawServerListForC20011+rawServerListForC20011Size)=htole16(reputation.id);
-                    rawServerListForC20011Size+=sizeof(quint16);
+                    *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(reputation.id);
+                    rawServerListForC211Size+=sizeof(quint16);
                     //quantity
-                    *reinterpret_cast<quint32 *>(rawServerListForC20011+rawServerListForC20011Size)=htole32(reputation.quantity);
-                    rawServerListForC20011Size+=sizeof(quint32);
+                    *reinterpret_cast<quint32 *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.quantity);
+                    rawServerListForC211Size+=sizeof(quint32);
                     reputationIndex++;
                 }
             }
@@ -805,29 +777,22 @@ void EpollServerLoginMaster::loadTheProfile()
         index++;
     }
 
-    memcpy(rawServerListForC20011,datapackHash.constData(),datapackHash.size());
-    rawServerListForC20011Size+=datapackHash.size();
-    datapackHash.clear();
+    memcpy(rawServerListForC211,datapackBaseHash.constData(),datapackBaseHash.size());
+    rawServerListForC211Size+=datapackBaseHash.size();
+    datapackBaseHash.clear();
 
     EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=ProtocolParsingBase::computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
             EpollClientLoginMaster::loginSettingsAndCharactersGroup,
-            0xC2,0x11,rawServerListForC20011,rawServerListForC20011Size);
+            0xC2,0x11,rawServerListForC211,rawServerListForC211Size);
     if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
         abort();
     }
 
-    if(rawServerListForC20011!=NULL)
-    {
-        delete rawServerListForC20011;
-        rawServerListForC20011=NULL;
-        rawServerListForC20011Size=0;
-    }
-
-    CommonDatapack::unload();
-    BaseServerCommon::unload();
+    CommonDatapack::commonDatapack.unload();
+    BaseServerLogin::unload();
 }

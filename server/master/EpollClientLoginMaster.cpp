@@ -26,6 +26,12 @@ EpollClientLoginMaster::EpollClientLoginMaster(
 {
 }
 
+EpollClientLoginMaster::~EpollClientLoginMaster()
+{
+    if(socketString!=NULL)
+        delete socketString;
+}
+
 void EpollClientLoginMaster::disconnectClient()
 {
     epollSocket.close();

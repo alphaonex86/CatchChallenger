@@ -5,6 +5,7 @@
 #include "CharactersGroup.h"
 
 #include <QString>
+#include <QRegularExpression>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 #define TOKEN_SIZE 64
@@ -29,6 +30,7 @@ public:
         GameServer,
         LoginServer,
     };
+    ~EpollClientLoginMaster();
 
     EpollClientLoginMasterStat stat;
     char *socketString;
@@ -48,6 +50,8 @@ public:
     static unsigned char replyToRegisterLoginServerBaseOffset;
     static char loginSettingsAndCharactersGroup[256*1024];
     static int loginSettingsAndCharactersGroupSize;
+    static char serverPartialServerList[256*1024];
+    static int serverPartialServerListSize;
     static char serverServerList[256*1024];
     static int serverServerListSize;
     static char serverLogicalGroupList[256*1024];
@@ -58,19 +62,6 @@ public:
 
     BaseClassSwitch::Type getType() const;
     static quint32 maxAccountId;
-
-    static QSet<QString> compressedExtension;
-    static QSet<QString> extensionAllowed;
-    static QByteArray rawFiles,compressedFiles;
-    static int rawFilesCount,compressedFilesCount;
-    struct DatapackCacheFile
-    {
-        quint32 mtime;
-        quint32 partialHash;
-    };
-    static QHash<QString,quint32> datapack_file_list_cache;
-    static QHash<QString,DatapackCacheFile> datapack_file_hash_cache;
-    static QRegularExpression fileNameStartStringRegex;
 private:
     void parseNetworkReadError(const QString &errorString);
 

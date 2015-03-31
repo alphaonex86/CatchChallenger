@@ -7,12 +7,12 @@
 #include "EpollClientLoginMaster.h"
 #include "CharactersGroup.h"
 #include "../epoll/db/EpollPostgresql.h"
-#include "../base/BaseServerCommon.h"
+#include "../base/BaseServerLogin.h"
 
 #include <QSettings>
 
 namespace CatchChallenger {
-class EpollServerLoginMaster : public EpollGenericServer, public BaseServerCommon
+class EpollServerLoginMaster : public EpollGenericServer, public BaseServerLogin
 {
 public:
     EpollServerLoginMaster();
@@ -21,19 +21,17 @@ public:
 private:
     char * server_ip;
     char * server_port;
-    char * rawServerListForC20011;
-    int rawServerListForC20011Size;
+    char * rawServerListForC211;
+    int rawServerListForC211Size;
 
-    EpollPostgresql *databaseBaseLogin;
+    CatchChallenger::DatabaseBase *databaseBaseLogin;
 
     quint32 character_delete_time;
     quint8 min_character;
     quint8 max_character;
     quint8 max_pseudo_size;
 
-    QByteArray datapackHash;
-
-    static QRegularExpression datapack_rightFileName;
+    QByteArray datapackBaseHash;
 private:
     void generateToken(QSettings &settings);
 

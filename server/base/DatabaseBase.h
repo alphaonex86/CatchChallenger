@@ -31,6 +31,7 @@ class DatabaseBase
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
         virtual DatabaseBase::Type databaseType() const = 0;
+        virtual void clear();
 };
 }
 

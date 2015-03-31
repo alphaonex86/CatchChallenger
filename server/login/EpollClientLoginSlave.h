@@ -44,6 +44,7 @@ public:
             const int &infd
         #endif
         );
+    ~EpollClientLoginSlave();
     struct AddCharacterParam
     {
         quint8 query_id;
@@ -105,7 +106,12 @@ public:
     static char maxMonsterIdRequest[4];
     static char replyToRegisterLoginServerCharactersGroup[1024];
     static int replyToRegisterLoginServerCharactersGroupSize;
+    static char baseDatapackSum[28];
+    static char loginGood[256*1024];
+    static char loginGoodSize;
 
+    static char serverPartialServerList[256*1024];
+    static int serverPartialServerListSize;
     static char serverServerList[256*1024];
     static int serverServerListSize;
     static char serverLogicalGroupList[256*1024];
@@ -132,6 +138,7 @@ private:
 
     static unsigned char loginInProgressBuffer[4];
     static unsigned char loginIsWrongBuffer[4];
+    static char loginCharacterList[1024];
 
     static const unsigned char protocolHeaderToMatch[5];
     BaseClassSwitch::Type getType() const;
@@ -181,6 +188,9 @@ private:
     void dbQueryWriteLogin(const char * const queryText);
     void dbQueryWriteCommon(const char * const queryText);
 
+    void character_list_return(const quint8 &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize);
+    void server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize);
+
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const char *data=NULL,const int &size=0);
     void sendPacket(const quint8 &mainIdent,const char *data=NULL,const int &size=0);
     void sendRawSmallPacket(const char *data,const int &size);
@@ -193,6 +203,19 @@ private:
     static FILE *fpRandomFile;
     static TokenLink tokenForAuth[CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION];
     static quint32 tokenForAuthSize;
+
+    struct CharacterListForReply
+    {
+        char *rawData;
+        int rawDataSize;
+    };
+    QMap<quint8,CharacterListForReply> characterTempListForReply;
+    quint8 characterListForReplyInSuspend;
+
+    char *serverListForReplyRawData;
+    int serverListForReplyRawDataSize;
+    quint8 serverListForReplyInSuspend;
+    quint8 serverPlayedTimeCount;
 public:
     static bool automatic_account_creation;
     static unsigned int character_delete_time;
@@ -200,6 +223,10 @@ public:
     static unsigned int min_character;
     static unsigned int max_character;
     static unsigned int max_pseudo_size;
+    static quint8 max_player_monsters;// \warning Never put number greater than 10 here
+    static quint16 max_warehouse_player_monsters;
+    static quint8 max_player_items;
+    static quint16 max_warehouse_player_items;
     static EpollPostgresql databaseBaseLogin;
     static EpollPostgresql databaseBaseCommon;
 };

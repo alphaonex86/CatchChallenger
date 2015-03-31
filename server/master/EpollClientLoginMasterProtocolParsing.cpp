@@ -85,7 +85,7 @@ void EpollClientLoginMaster::parseMessage(const quint8 &mainCodeType,const char 
     }
 }
 
-void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char * const rawData,const int &size)
+void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const int &size)
 {
     (void)rawData;
     (void)size;
@@ -163,7 +163,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
     }
 }
 
-void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const rawData,const int &size)
+void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -320,7 +320,7 @@ void EpollClientLoginMaster::parseReplyData(const quint8 &mainCodeType,const qui
     return;
 }
 
-void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     (void)data;
     (void)size;
