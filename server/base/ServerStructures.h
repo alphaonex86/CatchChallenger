@@ -126,8 +126,6 @@ struct GameServerSettings
 
     struct Database
     {
-        DatabaseBase::Type type;
-
         enum FightSync
         {
             FightSync_AtEachTurn=0x00,

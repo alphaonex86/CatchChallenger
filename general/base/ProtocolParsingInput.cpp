@@ -415,7 +415,7 @@ bool ProtocolParsingBase::parseHeader(const char * const commonBuffer,const quin
                         #endif
             QStringLiteral(" parseIncommingData(): need_subCodeType"));
             #endif
-            subCodeType=commonBuffer+cursor;
+            subCodeType=commonBuffer[cursor];
             cursor+=sizeof(quint8);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(cursor==0 && !haveData)

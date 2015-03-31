@@ -42,7 +42,9 @@ SOURCES += \
     ../epoll/EpollClientToServer.cpp \
     ../epoll/EpollSslClientToServer.cpp \
     EpollClientLoginSlaveWrite.cpp \
-    CharactersGroupForLogin.cpp
+    CharactersGroupForLogin.cpp \
+    CharactersGroupClient.cpp \
+    ../base/BaseServerLogin.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -61,4 +63,5 @@ HEADERS += \
     LoginLinkToMaster.h \
     ../epoll/EpollClientToServer.h \
     ../epoll/EpollSslClientToServer.h \
-    CharactersGroupForLogin.h
+    CharactersGroupForLogin.h \
+    ../base/BaseServerLogin.h

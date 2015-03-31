@@ -4,19 +4,63 @@
 #ifndef SERVERSSL
 
 #include "../epoll/EpollGenericServer.h"
-#include "../base/BaseServerCommon.h"
+#include "../base/BaseServerLogin.h"
 #include "EpollClientLoginSlave.h"
 
 #include <QSettings>
+#include <string>
+#include <vector>
 
 namespace CatchChallenger {
-class EpollServerLoginSlave : public EpollGenericServer, public BaseServerCommon
+class EpollServerLoginSlave : public EpollGenericServer, public BaseServerLogin
 {
 public:
     EpollServerLoginSlave();
     ~EpollServerLoginSlave();
     bool tryListen();
     void close();
+    void setSkinPair(const quint8 &internalId,const quint16 &databaseId);
+    void setProfilePair(const quint8 &internalId,const quint16 &databaseId);
+    void compose04Reply();
+public:
+    struct LoginProfile
+    {
+        struct Reputation
+        {
+            quint16 reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
+            qint8 level;
+            qint32 point;
+        };
+        struct Monster
+        {
+            struct Skill
+            {
+                quint16 id;
+                quint8 level;
+                quint8 endurance;
+            };
+            quint16 id;
+            quint8 level;
+            quint16 captured_with;
+            quint32 hp;
+            qint8 ratio_gender;
+            std::vector<Skill> skills;
+        };
+        struct Item
+        {
+            CATCHCHALLENGER_TYPE_ITEM id;
+            quint32 quantity;
+        };
+        quint16 databaseId;
+        std::vector<quint8> forcedskin;
+        quint64 cash;
+        std::vector<Monster> monsters;
+        std::vector<Reputation> reputation;
+        std::vector<Item> items;
+    };
+    std::vector<LoginProfile> loginProfileList;
+
+    static EpollServerLoginSlave *epollServerLoginSlave;
 public:
     bool tcpNodelay,tcpCork;
     bool serverReady;

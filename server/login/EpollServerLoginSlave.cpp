@@ -14,6 +14,8 @@ using namespace CatchChallenger;
 #include "EpollClientLoginSlave.h"
 #include "../../general/base/ProtocolParsing.h"
 
+EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
+
 EpollServerLoginSlave::EpollServerLoginSlave() :
     tcpNodelay(false),
     tcpCork(false),
@@ -67,6 +69,38 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
     }
 
+    if(!settings.contains(QStringLiteral("httpDatapackMirror")))
+        settings.setValue(QStringLiteral("httpDatapackMirror"),QString());
+    EpollClientLoginSlave::linkToMaster->httpDatapackMirror=settings.value(QStringLiteral("httpDatapackMirror")).toString();
+    if(EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty())
+    {
+        #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
+        qDebug() << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input";
+        return EXIT_FAILURE;
+        #endif
+    }
+    else
+    {
+        QStringList newMirrorList;
+        QRegularExpression httpMatch("^https?://.+$");
+        const QStringList &mirrorList=EpollClientLoginSlave::linkToMaster->httpDatapackMirror.split(";");
+        int index=0;
+        while(index<mirrorList.size())
+        {
+            const QString &mirror=mirrorList.at(index);
+            if(!mirror.contains(httpMatch))
+            {
+                qDebug() << "Mirror wrong: " << mirror.toLocal8Bit();
+                return EXIT_FAILURE;
+            }
+            if(mirror.endsWith("/"))
+                newMirrorList << mirror;
+            else
+                newMirrorList << mirror+"/";
+            index++;
+        }
+        EpollClientLoginSlave::linkToMaster->httpDatapackMirror=newMirrorList.join(";");
+    }
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -173,7 +207,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(settings.contains(QStringLiteral("mysql_login")))
         {
             const QString &charactersGroup=settings.value(QStringLiteral("CharactersGroupForLogin")).toString();
-            if(!CharactersGroupForLogin::databaseBaseCommonList.contains(charactersGroup))
+            if(!CharactersGroupForLogin::hash.contains(charactersGroup))
             {
                 CharactersGroupForLogin::serverWaitedToBeReady++;
                 const quint8 &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
@@ -198,7 +232,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
                 }
-                CharactersGroupForLogin::databaseBaseCommonList[charactersGroup]=new CharactersGroupForLogin(mysql_db.toUtf8().constData(),mysql_host.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
+                CharactersGroupForLogin::list << new CharactersGroupForLogin(mysql_db.toUtf8().constData(),mysql_host.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
+                CharactersGroupForLogin::hash[charactersGroup]=CharactersGroupForLogin::list.last();
+                CharactersGroupForLogin::list.last()->index=CharactersGroupForLogin::list.size()-1;
                 charactersGroupForLoginList << charactersGroup;
             }
             else
@@ -355,3 +391,49 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
     fclose(fpRandomFile);
 }
 
+void EpollServerLoginSlave::setSkinPair(const quint8 &internalId,const quint16 &databaseId)
+{
+    while(dictionary_skin_database_to_internal.size()<(databaseId+1))
+        dictionary_skin_database_to_internal << 0;
+    while(dictionary_skin_internal_to_database.size()<(internalId+1))
+        dictionary_skin_internal_to_database << 0;
+    dictionary_skin_internal_to_database[internalId]=databaseId;
+    dictionary_skin_database_to_internal[databaseId]=internalId;
+}
+
+void EpollServerLoginSlave::setProfilePair(const quint8 &internalId,const quint16 &databaseId)
+{
+    while(dictionary_starter_database_to_internal.size()<(databaseId+1))
+        dictionary_starter_database_to_internal << 0;
+    while(dictionary_starter_internal_to_database.size()<(internalId+1))
+        dictionary_starter_internal_to_database << 0;
+    dictionary_starter_internal_to_database[internalId]=databaseId;
+    dictionary_starter_database_to_internal[databaseId]=internalId;
+}
+
+void EpollServerLoginSlave::compose04Reply()
+{
+    EpollClientLoginSlave::loginGood[0x00]=0x01;//good
+
+    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::loginGood+0x01)=htole32(EpollClientLoginSlave::character_delete_time);
+    EpollClientLoginSlave::loginGood[0x05]=EpollClientLoginSlave::min_character;
+    EpollClientLoginSlave::loginGood[0x06]=EpollClientLoginSlave::max_character;
+    EpollClientLoginSlave::loginGood[0x07]=EpollClientLoginSlave::max_pseudo_size;
+    EpollClientLoginSlave::loginGood[0x08]=EpollClientLoginSlave::max_player_monsters;
+    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x09)=EpollClientLoginSlave::max_warehouse_player_monsters=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+)));
+    EpollClientLoginSlave::loginGood[0x0B]=EpollClientLoginSlave::max_player_items;
+    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=EpollClientLoginSlave::max_warehouse_player_items=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+)));
+    EpollClientLoginSlave::loginGoodSize=0x0E;
+
+    memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
+    EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
+
+    const QByteArray &httpDatapackMirrorData=EpollClientLoginSlave::linkToMaster->httpDatapackMirror.toUtf8();
+    if(httpDatapackMirror.size()>255)
+    {
+        std::cerr << "httpDatapackMirrorData size>255 (abort)" << std::endl;
+        abort();
+    }
+    memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),sizeof(httpDatapackMirrorData.size()));
+    EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();
+}

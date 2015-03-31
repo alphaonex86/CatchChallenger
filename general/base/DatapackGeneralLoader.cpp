@@ -118,7 +118,7 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
         QFile itemsFile(file);
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString()));
             return reputation;
         }
         const QByteArray &xmlContent=itemsFile.readAll();
@@ -127,7 +127,7 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            qDebug() << (QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return reputation;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -137,7 +137,7 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
-        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, \"list\" root balise not found for reputation of the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the file: %1, \"list\" root balise not found for reputation of the xml file").arg(file));
         return reputation;
     }
 
@@ -173,7 +173,7 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                                     {
                                         if(point_list_positive.at(index)==point)
                                         {
-                                            DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                            qDebug() << (QStringLiteral("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                             found=true;
                                             ok=false;
                                             break;
@@ -199,7 +199,7 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                                     {
                                         if(point_list_negative.at(index)==point)
                                         {
-                                            DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                            qDebug() << (QStringLiteral("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                             found=true;
                                             ok=false;
                                             break;
@@ -221,11 +221,11 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                                 }
                             }
                             else
-                                DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, point is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                qDebug() << (QStringLiteral("Unable to open the file: %1, point is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
                     }
                     else
-                        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     level = level.nextSiblingElement(DatapackGeneralLoader::text_level);
                 }
                 qSort(point_list_positive);
@@ -233,19 +233,19 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                 if(ok)
                     if(point_list_positive.size()<2)
                     {
-                        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, reputation have to few level: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the file: %1, reputation have to few level: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         ok=false;
                     }
                 if(ok)
                     if(!point_list_positive.contains(0))
                     {
-                        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, no starting level for the positive: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the positive: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         ok=false;
                     }
                 if(ok)
                     if(!point_list_negative.empty() && !point_list_negative.contains(-1))
                     {
-                        //DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, no starting level for the negative, first level need start with -1, fix by change range: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        //qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the negative, first level need start with -1, fix by change range: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         QList<qint32> point_list_negative_new;
                         int lastValue=-1;
                         int index=0;
@@ -260,7 +260,7 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                 if(ok)
                     if(!item.attribute(DatapackGeneralLoader::text_type).contains(typeRegex))
                     {
-                        DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(DatapackGeneralLoader::text_type)));
+                        qDebug() << (QStringLiteral("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(DatapackGeneralLoader::text_type)));
                         ok=false;
                     }
                 if(ok)
@@ -277,10 +277,10 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                qDebug() << (QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
-            DebugClass::debugConsole(QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+            qDebug() << (QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement(DatapackGeneralLoader::text_reputation);
     }
 
@@ -321,7 +321,7 @@ QHash<quint16, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
             }
         }
         else
-            DebugClass::debugConsole(QStringLiteral("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName()));
+            qDebug() << (QStringLiteral("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName()));
         index++;
     }
     return quests;
@@ -1738,7 +1738,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
 {
     ItemFull items;
     QDir dir(folder);
-    const QStringList &fileList=FacilityLib::listFolder(dir.absolutePath()+DatapackGeneralLoader::text_slash);
+    const QStringList &fileList=FacilityLibGeneral::listFolder(dir.absolutePath()+DatapackGeneralLoader::text_slash);
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -2040,7 +2040,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
 
 QList<QString> DatapackGeneralLoader::loadSkins(const QString &folder)
 {
-    return FacilityLib::skinIdList(folder);
+    return FacilityLibGeneral::skinIdList(folder);
 }
 
 QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations)
@@ -2077,7 +2077,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2086,7 +2086,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2096,7 +2096,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_list)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
     }
 
@@ -2108,6 +2108,8 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
         if(startItem.isElement())
         {
             Profile profile;
+
+            /* on server part
             const QDomElement &map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
             if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
             {
@@ -2116,31 +2118,36 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                     profile.map+=DatapackGeneralLoader::text_dottmx;
                 if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+profile.map))
                 {
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
                 profile.x=map.attribute(DatapackGeneralLoader::text_x).toUShort(&ok);
                 if(!ok)
                 {
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
                 profile.y=map.attribute(DatapackGeneralLoader::text_y).toUShort(&ok);
                 if(!ok)
                 {
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
             }
             else
             {
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, no correct map configuration: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, no correct map configuration: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                 startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                 continue;
             }
+            */
+
+            if(startItem.hasAttribute(DatapackGeneralLoader::text_id))
+                profile.id=startItem.attribute(DatapackGeneralLoader::text_id);
+
             const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
 
             QStringList forcedskinList;
@@ -2153,12 +2160,9 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 while(index<forcedskinList.size())
                 {
                     if(skinNameToId.contains(forcedskinList.at(index)))
-                    {
-                        profile.forcedskinTemp << forcedskinList.at(index);
                         profile.forcedskin << skinNameToId.value(forcedskinList.at(index));
-                    }
                     else
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(forcedskinList.at(index)));
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(forcedskinList.at(index)));
                     index++;
                 }
             }
@@ -2167,8 +2171,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             {
                 if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
                 {
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists into: %5: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(profile.forcedskin.at(index)).arg(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))));
-                    profile.forcedskinTemp.removeAt(index);
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists into: %5: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(profile.forcedskin.at(index)).arg(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))));
                     profile.forcedskin.removeAt(index);
                 }
                 else
@@ -2182,7 +2185,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 profile.cash=cash.attribute(DatapackGeneralLoader::text_value).toULongLong(&ok);
                 if(!ok)
                 {
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, cash is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, cash is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     profile.cash=0;
                 }
             }
@@ -2194,36 +2197,36 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 {
                     monster.id=monstersElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                     if(!ok)
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     if(ok)
                     {
                         monster.level=monstersElement.attribute(DatapackGeneralLoader::text_level).toUShort(&ok);
                         if(!ok)
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
                     if(ok)
                     {
                         if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, monster level is not into the range: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster level is not into the range: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
                     if(ok)
                     {
                         monster.captured_with=monstersElement.attribute(DatapackGeneralLoader::text_captured_with).toUInt(&ok);
                         if(!ok)
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     }
                     if(ok)
                     {
                         if(!monsters.contains(monster.id))
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, starter don't found the monster %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, starter don't found the monster %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
                             ok=false;
                         }
                     }
                     if(ok)
                     {
                         if(!items.contains(monster.captured_with))
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, starter don't found the monster capture item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, starter don't found the monster capture item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
                     }
                     if(ok)
                         profile.monsters << monster;
@@ -2232,7 +2235,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             }
             if(profile.monsters.empty())
             {
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, not monster to load: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, not monster to load: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                 startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                 continue;
             }
@@ -2244,12 +2247,12 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 {
                     reputationTemp.level=reputationElement.attribute(DatapackGeneralLoader::text_level).toShort(&ok);
                     if(!ok)
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     if(ok)
                     {
                         if(!reputationNameToId.contains(reputationElement.attribute(DatapackGeneralLoader::text_type)))
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
                             ok=false;
                         }
                         if(ok)
@@ -2257,14 +2260,14 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                             reputationTemp.reputationId=reputationNameToId.value(reputationElement.attribute(DatapackGeneralLoader::text_type));
                             if(reputationTemp.level==0)
                             {
-                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is useless if level 0: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is useless if level 0: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                 ok=false;
                             }
                             else if(reputationTemp.level<0)
                             {
                                 if((-reputationTemp.level)>reputations.value(reputationTemp.reputationId).reputation_negative.size())
                                 {
-                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
                                     ok=false;
                                 }
                             }
@@ -2272,7 +2275,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                             {
                                 if((reputationTemp.level)>=reputations.value(reputationTemp.reputationId).reputation_positive.size())
                                 {
-                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
                                     ok=false;
                                 }
                             }
@@ -2283,11 +2286,11 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                             if(reputationElement.hasAttribute(DatapackGeneralLoader::text_point))
                             {
                                 reputationTemp.point=reputationElement.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
-                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                 if(ok)
                                 {
                                     if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
-                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, reputation point is not negative/positive like the level: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation point is not negative/positive like the level: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                 }
                             }
                         }
@@ -2305,7 +2308,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                 {
                     itemTemp.id=itemElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
                     if(!ok)
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     if(ok)
                     {
                         itemTemp.quantity=0;
@@ -2313,12 +2316,12 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                         {
                             itemTemp.quantity=itemElement.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
                             if(!ok)
-                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                             if(ok)
                             {
                                 if(itemTemp.quantity==0)
                                 {
-                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item quantity is null: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, item quantity is null: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                     ok=false;
                                 }
                             }
@@ -2326,7 +2329,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                             {
                                 if(!items.contains(itemTemp.id))
                                 {
-                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item not found as know item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(itemTemp.id));
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, item not found as know item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(itemTemp.id));
                                     ok=false;
                                 }
                             }
@@ -2342,7 +2345,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
 
         }
         else
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
         startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
     }
     return returnVar;
@@ -2380,7 +2383,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2389,7 +2392,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2399,7 +2402,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
     const QDomElement &root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_layers)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
     }
 
@@ -2411,9 +2414,9 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
         if(monstersCollisionItem.isElement())
         {
             if(!monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_type))
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute type, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                qDebug() << (QStringLiteral("Have not the attribute type, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
             else if(!monstersCollisionItem.hasAttribute(DatapackGeneralLoader::text_monsterType))
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute monsterType, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                qDebug() << (QStringLiteral("Have not the attribute monsterType, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
             else
             {
                 ok=true;
@@ -2425,7 +2428,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                 else
                 {
                     ok=false;
-                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("type is not walkOn or actionOn, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                    qDebug() << (QStringLiteral("type is not walkOn or actionOn, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
                 }
                 if(ok)
                 {
@@ -2437,7 +2440,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                     if(monstersCollision.layer.isEmpty() && monstersCollision.type!=MonstersCollisionType_WalkOn)//need specific layer name to do that's
                     {
                         ok=false;
-                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("To have blocking layer by item, have specific layer name, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                        qDebug() << (QStringLiteral("To have blocking layer by item, have specific layer name, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
                     }
                     else
                     {
@@ -2446,11 +2449,11 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                         {
                             monstersCollision.item=monstersCollisionItem.attribute(DatapackGeneralLoader::text_item).toUInt(&ok);
                             if(!ok)
-                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("item attribute is not a number, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                                qDebug() << (QStringLiteral("item attribute is not a number, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
                             else if(!items.contains(monstersCollision.item))
                             {
                                 ok=false;
-                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("item is not into item list, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                                qDebug() << (QStringLiteral("item is not into item list, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
                             }
                         }
                     }
@@ -2500,16 +2503,16 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                                                 }
                                             }
                                             else
-                                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("monsterType is empty, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                                                qDebug() << (QStringLiteral("monsterType is empty, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
                                         }
                                         else
-                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("event value not found, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                                            qDebug() << (QStringLiteral("event value not found, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
                                     }
                                     else
-                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("event not found, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                                        qDebug() << (QStringLiteral("event not found, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("event have missing attribute, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                                    qDebug() << (QStringLiteral("event have missing attribute, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
                             }
                             eventItem = eventItem.nextSiblingElement(DatapackGeneralLoader::text_event);
                         }
@@ -2522,13 +2525,13 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
                     {
                         if(returnVar.at(index).type==monstersCollision.type && returnVar.at(index).layer==monstersCollision.layer && returnVar.at(index).item==monstersCollision.item)
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("similar monstersCollision previously found, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                            qDebug() << (QStringLiteral("similar monstersCollision previously found, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
                             ok=false;
                             break;
                         }
                         if(monstersCollision.type==MonstersCollisionType_WalkOn && returnVar.at(index).layer==monstersCollision.layer)
                         {
-                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("You can't have different item for same layer in walkOn mode, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
+                            qDebug() << (QStringLiteral("You can't have different item for same layer in walkOn mode, into: %1 at line %2").arg(file).arg(monstersCollisionItem.lineNumber()));
                             ok=false;
                             break;
                         }
@@ -2572,7 +2575,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2581,7 +2584,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2591,7 +2594,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_layers)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
     }
     if(root.hasAttribute(QLatin1Literal("zoom")))
@@ -2601,14 +2604,14 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
         if(!ok)
         {
             returnVar.zoom=2;
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, zoom is not a number").arg(file));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, zoom is not a number").arg(file));
         }
         else
         {
             if(returnVar.zoom<1 || returnVar.zoom>4)
             {
                 returnVar.zoom=2;
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, zoom out of range 1-4").arg(file));
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, zoom out of range 1-4").arg(file));
             }
         }
     }
@@ -2631,7 +2634,7 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2640,7 +2643,7 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return returnVar;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2650,7 +2653,7 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_events)
     {
-        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return returnVar;
     }
 
@@ -2661,9 +2664,9 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
         if(eventItem.isElement())
         {
             if(!eventItem.hasAttribute(DatapackGeneralLoader::text_id))
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have not the attribute id, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                qDebug() << (QStringLiteral("Have not the attribute id, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
             else if(eventItem.attribute(DatapackGeneralLoader::text_id).isEmpty())
-                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Have id empty, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
+                qDebug() << (QStringLiteral("Have id empty, into: %1 at line %2").arg(file).arg(eventItem.lineNumber()));
             else
             {
                 Event event;
@@ -2700,7 +2703,7 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
         QByteArray xmlContent;
         if(!shopFile.open(QIODevice::ReadOnly))
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, error: %2").arg(file).arg(shopFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the shops file: %1, error: %2").arg(file).arg(shopFile.errorString()));
             return shops;
         }
         xmlContent=shopFile.readAll();
@@ -2709,7 +2712,7 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            qDebug() << (QStringLiteral("Unable to open the shops file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return shops;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2718,7 +2721,7 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=DatapackGeneralLoader::text_shops)
     {
-        DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, \"shops\" root balise not found for the xml file").arg(file));
+        qDebug() << (QStringLiteral("Unable to open the shops file: %1, \"shops\" root balise not found for the xml file").arg(file));
         return shops;
     }
 
@@ -2746,11 +2749,11 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
                                 {
                                     quint32 itemId=product.attribute(DatapackGeneralLoader::text_itemId).toUInt(&ok);
                                     if(!ok)
-                                        DebugClass::debugConsole(QStringLiteral("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                        qDebug() << (QStringLiteral("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                     else
                                     {
                                         if(!items.contains(itemId))
-                                            DebugClass::debugConsole(QStringLiteral("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                            qDebug() << (QStringLiteral("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                         else
                                         {
                                             quint32 price=items.value(itemId).price;
@@ -2761,7 +2764,7 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
                                                     price=items.value(itemId).price;
                                             }
                                             if(price==0)
-                                                DebugClass::debugConsole(QStringLiteral("preload_shop() item can't be into the shop with price == 0' for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                                qDebug() << (QStringLiteral("preload_shop() item can't be into the shop with price == 0' for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                             else
                                             {
                                                 shop.prices << price;
@@ -2771,25 +2774,25 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
                                     }
                                 }
                                 else
-                                    DebugClass::debugConsole(QStringLiteral("preload_shop() material have not attribute itemId for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                    qDebug() << (QStringLiteral("preload_shop() material have not attribute itemId for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                             }
                             else
-                                DebugClass::debugConsole(QStringLiteral("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                qDebug() << (QStringLiteral("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                             product = product.nextSiblingElement(DatapackGeneralLoader::text_product);
                         }
                         shops[id]=shop;
                     }
                     else
-                        DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the shops file: %1, child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                 }
                 else
-                    DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the shops file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
             }
             else
-                DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, have not the shops id: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                qDebug() << (QStringLiteral("Unable to open the shops file: %1, have not the shops id: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
         }
         else
-            DebugClass::debugConsole(QStringLiteral("Unable to open the shops file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+            qDebug() << (QStringLiteral("Unable to open the shops file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
         shopItem = shopItem.nextSiblingElement(DatapackGeneralLoader::text_shop);
     }
     return shops;

@@ -19,13 +19,13 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         bool parseIncommingDataRaw(const char *commonBuffer, const quint32 &size,quint32 &cursor);
     private:
         void parseMessage(const quint8 &mainCodeType,const char *data,const int &size);
-        void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size);
+        void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *data,const int &size);
         //have query with reply
         void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-        void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+        void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
         //send reply
         void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-        void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+        void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
         //message
         void errorParsingLayer(const QString &error);
         void messageParsingLayer(const QString &message) const;
