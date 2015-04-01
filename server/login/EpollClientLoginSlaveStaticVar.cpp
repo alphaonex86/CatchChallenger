@@ -12,9 +12,10 @@ QList<unsigned int> EpollClientLoginSlave::maxClanIdList;
 bool EpollClientLoginSlave::maxAccountIdRequested=false;
 bool EpollClientLoginSlave::maxCharacterIdRequested=false;
 bool EpollClientLoginSlave::maxMonsterIdRequested=false;
-char EpollClientLoginSlave::maxAccountIdRequest[]={0x11/*reply server to client*/,0x00,0x01/*query id*/,0x00/*the init reply query number*/};
-char EpollClientLoginSlave::maxCharacterIdRequest[]={0x11/*reply server to client*/,0x00,0x02/*query id*/,0x00/*the init reply query number*/};
-char EpollClientLoginSlave::maxMonsterIdRequest[]={0x11/*reply server to client*/,0x00,0x03/*query id*/,0x00/*the init reply query number*/};
+char EpollClientLoginSlave::maxAccountIdRequest[]={0x11/*reply server to client*/,0x01/*query id*/,0x00/*the init reply query number*/};
+char EpollClientLoginSlave::maxCharacterIdRequest[]={0x11/*reply server to client*/,0x02/*query id*/,0x00/*the init reply query number*/};
+char EpollClientLoginSlave::maxMonsterIdRequest[]={0x11/*reply server to client*/,0x03/*query id*/,0x00/*the init reply query number*/};
+char EpollClientLoginSlave::selectCharaterRequest[]={0x02/*reply server to client*/,0x05/*query id*/,0x00/*the init reply query number*/};
 
 unsigned char EpollClientLoginSlave::protocolReplyProtocolNotSupported[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x02/*return code*/};
 unsigned char EpollClientLoginSlave::protocolReplyServerFull[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x03/*return code*/};

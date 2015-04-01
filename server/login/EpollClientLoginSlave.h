@@ -101,9 +101,10 @@ public:
     static bool maxAccountIdRequested;
     static bool maxCharacterIdRequested;
     static bool maxMonsterIdRequested;
-    static char maxAccountIdRequest[4];
-    static char maxCharacterIdRequest[4];
-    static char maxMonsterIdRequest[4];
+    static char maxAccountIdRequest[3];
+    static char maxCharacterIdRequest[3];
+    static char maxMonsterIdRequest[3];
+    static char selectCharaterRequest[3+4+1+4];
     static char replyToRegisterLoginServerCharactersGroup[1024];
     static int replyToRegisterLoginServerCharactersGroupSize;
     static char baseDatapackSum[28];
@@ -198,6 +199,10 @@ private:
     void postReply(const quint8 &queryNumber,const char *data=NULL,const int &size=0);
 
     void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
+    void selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
+
+    void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
+    void selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
 private:
     //connection
     static FILE *fpRandomFile;

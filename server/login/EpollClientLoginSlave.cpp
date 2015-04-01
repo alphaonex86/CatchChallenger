@@ -47,7 +47,13 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
             callbackRegistred.at(index)->object=NULL;
             index++;
         }
-        unregister on CharactersGroupForLogin too
+        unregister on CharactersGroupForLogin too;
+        QHashIterator<quint8/*queryNumber*/,LoginLinkToMaster::DataForSelectedCharacterReturn> i(EpollClientLoginSlave::linkToMaster->selectCharacterClients);
+        while (i.hasNext()) {
+            i.next();
+            if(i.value().client==this)
+                i.value().client=NULL;
+        }
     }
 }
 
