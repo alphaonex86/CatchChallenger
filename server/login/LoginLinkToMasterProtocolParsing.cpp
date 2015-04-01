@@ -128,6 +128,11 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     abort();
                                 }
                                 memcpy(rawServerList,rawData+pos,4);
+                                if(!CharactersGroupForLogin::hash.contains(charactersGroupString))
+                                {
+                                    std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
                                 pos+=4;
                                 rawServerListSize+=4;
                             }
@@ -145,6 +150,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size charactersGroupString + size 8Bits header + port too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
+                                CharactersGroupForLogin::hash[charactersGroupString]->setServerUniqueKey(rawData+pos,4,rawData+1,hostStringSize,le16toh(*reinterpret_cast<quint16 *>(rawData+1+hostStringSize)));
                                 pos+=1+hostStringSize+2;
                             }
 
@@ -229,14 +235,22 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 rawServerListSize+=1+charactersGroupStringSize;
                             }
 
-                            //skip the key
+                            //copy the key
                             {
                                 if((size-pos)<4)
                                 {
                                     std::cerr << "C210 size key 32Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
+                                memcpy(rawServerList,rawData+pos,4);
+                                if(!CharactersGroupForLogin::hash.contains(charactersGroupString))
+                                {
+                                    std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
+                                CharactersGroupForLogin::hash[charactersGroupString]->setServerUniqueKey(rawData+pos,4);
                                 pos+=4;
+                                rawServerListSize+=4;
                             }
 
                             //copy the host + port
@@ -750,7 +764,40 @@ void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quin
     (void)data;
     (void)size;
     queryNumberList.push_back(queryNumber);
-    Q_UNUSED(data);
+    //do the work here
+    switch(mainCodeType)
+    {
+        case 0x02:
+            switch(subCodeType)
+            {
+                case 0x05:
+                {
+                    if(selectCharacterClients.contains(queryNumber))
+                    {
+                        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.value(queryNumber);
+                        if(size==32/*256/8*/)
+                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data[0]);
+                        else if(size==1)
+                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
+                        else
+                            parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0205 wrong");
+                        selectCharacterClients.remove(queryNumber);
+                    }
+                    else
+                        std::cerr << "parseFullReplyData() !selectCharacterClients.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
+                }
+                break;
+                default:
+                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType));
+                    return;
+                break;
+            }
+        break;
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
     parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 

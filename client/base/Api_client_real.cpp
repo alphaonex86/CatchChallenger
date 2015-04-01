@@ -494,10 +494,10 @@ void Api_client_real::test_mirror()
     else
     {
         if(index_mirror>=httpDatapackMirrorList.size())
-            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list.txt, and only after that's quit */
+            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/base.txt, and only after that's quit */
             return;
 
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("datapack-list.txt"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("datapack-list/base.txt"));
         reply = qnam.get(networkRequest);
     }
     if(reply->error()==QNetworkReply::NoError)
