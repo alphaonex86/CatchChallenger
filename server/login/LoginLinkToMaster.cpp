@@ -1,4 +1,5 @@
 #include "LoginLinkToMaster.h"
+#include "EpollClientLoginSlave.h"
 
 using namespace CatchChallenger;
 
@@ -136,4 +137,26 @@ BaseClassSwitch::Type LoginLinkToMaster::getType() const
 void LoginLinkToMaster::parseIncommingData()
 {
     ProtocolParsingInputOutput::parseIncommingData();
+}
+
+bool LoginLinkToMaster::trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
+{
+    if(queryNumberList.empty())
+        return false;
+    DataForSelectedCharacterReturn dataForSelectedCharacterReturn;
+    dataForSelectedCharacterReturn.client=client;
+    dataForSelectedCharacterReturn.client_query_id=client_query_id;
+    dataForSelectedCharacterReturn.serverUniqueKey=serverUniqueKey;
+    dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
+    selectCharacterClients[queryNumberList.back()];
+    //register it
+    newFullOutputQuery(0x02,0x05,queryNumberList.back());
+    //the data
+    EpollClientLoginSlave::selectCharaterRequest[0x02]=queryNumberList.back();
+    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequest+0x03)=serverUniqueKey;
+    EpollClientLoginSlave::selectCharaterRequest[0x07]=charactersGroupIndex;
+    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequest+0x08)=htole32(characterId);
+
+    queryNumberList.pop_back();
+    return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::selectCharaterRequest),sizeof(EpollClientLoginSlave::selectCharaterRequest));
 }

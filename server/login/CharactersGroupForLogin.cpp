@@ -33,6 +33,7 @@ void CharactersGroupForLogin::clearServerPair()
 {
     dictionary_server_database_to_index.clear();
     dictionary_server_index_to_database.clear();
+    servers.clear();
 }
 
 void CharactersGroupForLogin::setServerPair(const quint8 &index, const quint16 &databaseId)
@@ -43,6 +44,19 @@ void CharactersGroupForLogin::setServerPair(const quint8 &index, const quint16 &
         dictionary_server_index_to_database << 0;
     dictionary_server_index_to_database[index]=databaseId;
     dictionary_server_database_to_index[databaseId]=index;
+}
+
+void CharactersGroupForLogin::setServerUniqueKey(const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port)
+{
+    InternalLoginServer tempServer;
+    tempServer.host=QString::fromUtf8(hostData,hostDataSize);
+    tempServer.port=port;
+    servers[serverUniqueKey]=tempServer;
+}
+
+bool CharactersGroupForLogin::containsServerUniqueKey(const quint32 &serverUniqueKey) const
+{
+    return servers.contains(QByteArray(serverUniqueKey,keyDataSize));
 }
 
 BaseClassSwitch::Type CharactersGroupForLogin::getType() const
