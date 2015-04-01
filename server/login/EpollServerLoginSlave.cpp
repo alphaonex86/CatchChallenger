@@ -347,7 +347,13 @@ void EpollServerLoginSlave::close()
 
 void EpollServerLoginSlave::SQL_common_load_finish()
 {
-    serverReady=true;
+    if(!EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty())
+        serverReady=true;
+    else
+    {
+        std::cerr << "!httpDatapackMirror.isEmpty() (abort)" << std::endl;
+        abort();
+    }
 }
 
 bool EpollServerLoginSlave::tryListen()

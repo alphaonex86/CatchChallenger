@@ -18,6 +18,8 @@ public:
 
     void clearServerPair();
     void setServerPair(const quint8 &index,const quint16 &databaseId);
+    void setServerUniqueKey(const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port);
+    bool containsServerUniqueKey(const quint32 &serverUniqueKey) const;
 
     std::vector<quint32> maxCharacterId;
     std::vector<quint32> maxMonsterId;
@@ -35,11 +37,18 @@ private:
     void load_clan_max_id();
     static void load_clan_max_id_static(void *object);
     void load_clan_max_id_return();
+
+    struct InternalLoginServer
+    {
+        QString host;
+        quint16 port;
+    };
 private:
     EpollPostgresql *databaseBaseCommon;
     QList<qint16/*allow -1 to not found*/> dictionary_server_database_to_index;
     QList<quint32> dictionary_server_index_to_database;
     QList<EpollClientLoginSlave * const> clientQueryForReadReturn;
+    QHash<quint32,InternalLoginServer> servers;
 };
 }
 

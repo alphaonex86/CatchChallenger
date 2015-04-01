@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.h"
+#include "CharactersGroupForLogin.h"
 #include "../base/PreparedDBQuery.h"
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -75,6 +76,13 @@ void EpollClientLoginSlave::character_list_return(const quint8 &characterGroupIn
     characterTempListForReply[characterGroupIndex].rawData=tempRawData;
     characterTempListForReply[characterGroupIndex].rawDataSize=tempRawDataSize;
     characterListForReplyInSuspend--;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
+    {
+        qDebug() << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__;
+        abort();
+    }
+    #endif
 }
 
 void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize)
@@ -85,8 +93,24 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
     serverListForReplyInSuspend--;
     if(serverListForReplyInSuspend==0)
     {
-EpollClientLoginSlave::loginGood
-        and the previous reply
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
+        {
+            qDebug() << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__;
+            abort();
+        }
+        #endif
+        tempSize=EpollClientLoginSlave::loginGoodSize;
+        QMapIterator<quint8,CharacterListForReply> i(characterTempListForReply);
+        while (i.hasNext()) {
+            i.next();
+            memcpy(EpollClientLoginSlave::loginGood+tempSize,i.value().rawData,i.value().rawDataSize);
+            tempSize+=i.value().rawDataSize;
+        }
+        memcpy(EpollClientLoginSlave::loginGood+tempSize,serverListForReplyRawData,serverListForReplyRawDataSize);
+        tempSize+=serverListForReplyRawDataSize;
+
+        postReply(askLoginParam->query_id,serverListForReplyRawData,serverListForReplyRawDataSize);
     }
 }
 
@@ -267,10 +291,48 @@ void EpollClientLoginSlave::loginIsWrong(const quint8 &query_id, const quint8 &r
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
     #endif
-    *(Client::loginIsWrongBuffer+1)=query_id;
-    *(Client::loginIsWrongBuffer+3)=returnCode;
+    EpollClientLoginSlave::loginIsWrongBuffer[1]=query_id;
+    EpollClientLoginSlave::loginIsWrongBuffer[3]=returnCode;
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
 
     //send to server to stop the connection
     errorOutput(debugMessage);
+}
+
+void EpollClientLoginSlave::selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
+{
+    if(charactersGroupIndex<=CharactersGroupForLogin::list.size())
+    {
+        errorOutput("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
+        return;
+    }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    removeFromQueryReceived(query_id);
+    #endif
+    if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey));
+    {
+        EpollClientLoginSlave::loginIsWrongBuffer[1]=query_id;
+        EpollClientLoginSlave::loginIsWrongBuffer[3]=0x05;
+        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
+        return;
+    }
+    if(!EpollClientLoginSlave::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
+    {
+        EpollClientLoginSlave::loginIsWrongBuffer[1]=query_id;
+        EpollClientLoginSlave::loginIsWrongBuffer[3]=0x04;
+        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
+        errorOutput("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
+        return;
+    }
+}
+
+void EpollClientLoginSlave::selectCharacter_ReturnToken(const quint8 &query_id,const char * const token)
+{
+}
+
+void EpollClientLoginSlave::selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode)
+{
+    postReplyData(query_id,&errorCode,1);
+    errorOutput("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+QString::number(errorCode));
+    return;
 }
