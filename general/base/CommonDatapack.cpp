@@ -24,9 +24,9 @@ CommonDatapack::CommonDatapack()
 
 void CommonDatapack::parseDatapack(const QString &datapackPath)
 {
-    QMutexLocker mutexLocker(&inProgress);
     if(isParsed)
         return;
+    QMutexLocker mutexLocker(&inProgress);
 
     this->datapackPath=datapackPath;
     parseSkins();
@@ -41,17 +41,9 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseMonsters();
     parseMonstersEvolutionItems();
     parseMonstersItemToLearn();
-    parseQuests();
-    parseBotFights();
     parseIndustries();
     parseProfileList();
-    parseMonstersCollision();
     parseLayersOptions();
-    parseShop();
-
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    teleportConditionsUnparsed.clear();
-    #endif
 
     isParsed=true;
 }
@@ -98,12 +90,6 @@ void CommonDatapack::parsePlants()
     qDebug() << QStringLiteral("%1 plant(s) loaded").arg(plants.size());
 }
 
-void CommonDatapack::parseQuests()
-{
-    quests=DatapackGeneralLoader::loadQuests(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS));
-    qDebug() << QStringLiteral("%1 quest(s) loaded").arg(quests.size());
-}
-
 void CommonDatapack::parseReputation()
 {
     reputation=DatapackGeneralLoader::loadReputation(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("reputation.xml"));
@@ -146,28 +132,10 @@ void CommonDatapack::parseMonstersItemToLearn()
     qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(items.itemToLearn.size());
 }
 
-void CommonDatapack::parseShop()
-{
-    shops=DatapackGeneralLoader::preload_shop(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SHOP)+QStringLiteral("shop.xml"),items.item);
-    qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(shops.size());
-}
-
-void CommonDatapack::parseBotFights()
-{
-    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT), monsters, monsterSkills,items.item);
-    qDebug() << QStringLiteral("%1 bot fight(s) loaded").arg(botFights.size());
-}
-
 void CommonDatapack::parseProfileList()
 {
     profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml"),items.item,monsters,reputation).second;
     qDebug() << QStringLiteral("%1 profile(s) loaded").arg(profileList.size());
-}
-
-void CommonDatapack::parseMonstersCollision()
-{
-    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("layers.xml"),items.item,events);
-    qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
 }
 
 void CommonDatapack::parseLayersOptions()
@@ -181,11 +149,9 @@ void CommonDatapack::unload()
     QMutexLocker mutexLocker(&inProgress);
     if(!isParsed)
         return;
-    botFights.clear();
     plants.clear();
     crafingRecipes.clear();
     reputation.clear();
-    quests.clear();
     events.clear();
     monsters.clear();
     monsterSkills.clear();
@@ -202,9 +168,6 @@ void CommonDatapack::unload()
     #ifndef EPOLLCATCHCHALLENGERSERVER
     xmlLoadedFile.clear();
     #endif
-    teleportConditionsUnparsed.clear();
-    monstersCollision.clear();
     skins.clear();
-    shops.clear();
     isParsed=false;
 }

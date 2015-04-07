@@ -270,55 +270,6 @@ void BaseServer::preload_the_events()
     }
 }
 
-void BaseServer::preload_the_randomData()
-{
-    GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
-    GlobalServerData::serverPrivateVariables.randomData.clear();
-
-    if(GlobalServerData::serverSettings.benchmark)
-    {
-        srand(0);
-        QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
-        randomDataStream.setVersion(QDataStream::Qt_4_4);
-        int index=0;
-        while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
-        {
-            randomDataStream << quint8(rand()%256);
-            index++;
-        }
-    }
-
-    #ifdef Q_OS_LINUX
-    if(GlobalServerData::serverPrivateVariables.fpRandomFile!=NULL)
-        fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
-    GlobalServerData::serverPrivateVariables.fpRandomFile = fopen("/dev/urandom","rb");
-    if(GlobalServerData::serverPrivateVariables.fpRandomFile==NULL)
-        qDebug() << "Unable to open /dev/urandom to have trusted number generator";
-    //fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);-> used later into ./base/ClientNetworkRead.cpp for token
-    GlobalServerData::serverPrivateVariables.randomData.resize(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
-    const int &returnedSize=fread(GlobalServerData::serverPrivateVariables.randomData.data(),1,CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE,GlobalServerData::serverPrivateVariables.fpRandomFile);
-    if(returnedSize!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
-    {
-        qDebug() << QStringLiteral("CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE don't match with urandom size: %1").arg(returnedSize);
-        abort();
-    }
-    if(GlobalServerData::serverPrivateVariables.randomData.size()!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
-    {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.randomData.size() don't match with urandom size");
-        abort();
-    }
-    #else
-    QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
-    randomDataStream.setVersion(QDataStream::Qt_4_4);
-    int index=0;
-    while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
-    {
-        randomDataStream << quint8(rand()%256);
-        index++;
-    }
-    #endif
-}
-
 void BaseServer::preload_the_ddos()
 {
     unload_the_ddos();
@@ -2534,19 +2485,6 @@ void BaseServer::unload_the_datapack()
 void BaseServer::unload_the_players()
 {
     Client::simplifiedIdList.clear();
-}
-
-void BaseServer::unload_the_randomData()
-{
-    #ifdef Q_OS_LINUX
-    if(GlobalServerData::serverPrivateVariables.fpRandomFile!=NULL)
-    {
-        fclose(GlobalServerData::serverPrivateVariables.fpRandomFile);
-        GlobalServerData::serverPrivateVariables.fpRandomFile=NULL;
-    }
-    #endif
-    GlobalServerData::serverPrivateVariables.tokenForAuthSize=0;
-    GlobalServerData::serverPrivateVariables.randomData.clear();
 }
 
 void BaseServer::setSettings(const GameServerSettings &settings)

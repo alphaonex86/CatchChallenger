@@ -119,8 +119,8 @@ public:
     friend class ProtocolParsingCheck;
     bool checkStringIntegrity(const char * const data, const unsigned int &size);
     bool checkStringIntegrity(const QByteArray &data);
-    virtual ssize_t read(char * data, const int &size) = 0;
-    virtual ssize_t write(const char * const data, const int &size) = 0;
+    virtual ssize_t read(char * data, const size_t &size) = 0;
+    virtual ssize_t write(const char * const data, const size_t &size) = 0;
 public:
     bool parseIncommingDataRaw(const char * const commonBuffer, const quint32 &size,quint32 &cursor);
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -138,14 +138,14 @@ protected:
     QByteArray header_cut;
 protected:
     //have message without reply
-    virtual void parseMessage(const quint8 &mainCodeType,const char * const data,const int &size) = 0;
-    virtual void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size) = 0;
+    virtual void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size) = 0;
+    virtual void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size) = 0;
     //have query with reply
-    virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
-    virtual void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
+    virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size) = 0;
+    virtual void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size) = 0;
     //send reply
-    virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
-    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size) = 0;
+    virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size) = 0;
+    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size) = 0;
 
     virtual void reset();
 private:
@@ -278,8 +278,8 @@ protected:
     #else
         ConnectedSocket *socket;
     #endif
-    ssize_t read(char * data, const int &size);
-    ssize_t write(const char * const data, const int &size);
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ProtocolParsingCheck *protocolParsingCheck;
     #endif

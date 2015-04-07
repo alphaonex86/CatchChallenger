@@ -40,7 +40,7 @@ SOURCES += \
     ../../general/base/CommonDatapack.cpp \
     ../../general/base/DatapackGeneralLoader.cpp \
     ../../general/fight/CommonFightEngineBase.cpp \
-    ../base/BaseServerLogin.cpp \
+    ../base/BaseServerMaster.cpp \
     ../../general/fight/FightLoader.cpp \
     ../../general/base/CommonSettings.cpp
 
@@ -65,6 +65,6 @@ HEADERS += \
     ../../general/fight/CommonFightEngineBase.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/GeneralType.h \
-    ../base/BaseServerLogin.h \
+    ../base/BaseServerMaster.h \
     ../../general/fight/FightLoader.h \
     ../../general/base/CommonSettings.h

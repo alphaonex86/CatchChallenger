@@ -7,12 +7,12 @@
 #include "EpollClientLoginMaster.h"
 #include "CharactersGroup.h"
 #include "../epoll/db/EpollPostgresql.h"
-#include "../base/BaseServerLogin.h"
+#include "../base/BaseServerMaster.h"
 
 #include <QSettings>
 
 namespace CatchChallenger {
-class EpollServerLoginMaster : public EpollGenericServer, public BaseServerLogin
+class EpollServerLoginMaster : public EpollGenericServer, public BaseServerMaster
 {
 public:
     EpollServerLoginMaster();
