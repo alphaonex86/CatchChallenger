@@ -5,8 +5,8 @@
 using namespace CatchChallenger;
 
 int CharactersGroup::serverWaitedToBeReady=0;
-QHash<QString,CharactersGroup *> CharactersGroup::charactersGroupHash;
-QList<CharactersGroup *> CharactersGroup::charactersGroupList;
+QHash<QString,CharactersGroup *> CharactersGroup::hash;
+QList<CharactersGroup *> CharactersGroup::list;
 
 CharactersGroup::CharactersGroup(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval) :
     databaseBaseCommon(new EpollPostgresql())
@@ -174,4 +174,18 @@ void CharactersGroup::load_monsters_max_id_return()
 BaseClassSwitch::Type CharactersGroup::getType() const
 {
     return BaseClassSwitch::Type::Client;
+}
+
+void CharactersGroup::setServerUniqueKey(void * const link,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port)
+{
+    InternalLoginServer tempServer;
+    tempServer.host=QString::fromUtf8(hostData,hostDataSize);
+    tempServer.port=port;
+    tempServer.link=link;
+    gameServers[serverUniqueKey]=tempServer;
+}
+
+bool CharactersGroup::containsServerUniqueKey(const quint32 &serverUniqueKey) const
+{
+    return gameServers.contains(serverUniqueKey);
 }

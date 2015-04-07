@@ -226,6 +226,13 @@ ALTER TABLE ONLY server_time
 
 
 --
+-- Name: server_time_by_account; Type: INDEX; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE INDEX server_time_by_account ON server_time USING btree (account);
+
+
+--
 -- Name: character_account; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 

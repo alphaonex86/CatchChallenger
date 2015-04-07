@@ -26,13 +26,14 @@ public:
     Stat stat;
     struct DataForSelectedCharacterReturn
     {
-        void * const client;
+        void * client;
         quint8 client_query_id;
         quint32 serverUniqueKey;
         quint8 charactersGroupIndex;
     };
 
     QString httpDatapackMirror;
+    //to unordered reply
     QHash<quint8/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
 
     std::vector<quint8> queryNumberList;
@@ -46,16 +47,21 @@ protected:
     void messageParsingLayer(const QString &message) const;
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
+    void parseNetworkReadError(const QString &errorString);
 
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char *data,const int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *data,const int &size);
+    void parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size);
+    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+
+    void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+private:
+    bool have_send_protocol_and_registred;
 };
 }
 

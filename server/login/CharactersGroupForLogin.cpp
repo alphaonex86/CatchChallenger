@@ -4,7 +4,6 @@
 
 using namespace CatchChallenger;
 
-int CharactersGroupForLogin::serverWaitedToBeReady=0;
 QHash<QString,CharactersGroupForLogin *> CharactersGroupForLogin::hash;
 QList<CharactersGroupForLogin *> CharactersGroupForLogin::list;
 
@@ -56,7 +55,7 @@ void CharactersGroupForLogin::setServerUniqueKey(const quint32 &serverUniqueKey,
 
 bool CharactersGroupForLogin::containsServerUniqueKey(const quint32 &serverUniqueKey) const
 {
-    return servers.contains(QByteArray(serverUniqueKey,keyDataSize));
+    return servers.contains(serverUniqueKey);
 }
 
 BaseClassSwitch::Type CharactersGroupForLogin::getType() const

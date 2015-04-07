@@ -5,7 +5,7 @@
 
 using namespace CatchChallenger;
 
-ssize_t ProtocolParsingInputOutput::read(char * data, const int &size)
+ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
 {
     #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket->openMode()|QIODevice::WriteOnly)
@@ -34,7 +34,7 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const int &size)
     #endif
 }
 
-ssize_t ProtocolParsingInputOutput::write(const char * const data, const int &size)
+ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t &size)
 {
     #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket->openMode()|QIODevice::WriteOnly)
@@ -54,7 +54,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const int &si
     #ifndef EPOLLCATCHCHALLENGERSERVER
     TXSize+=byteWriten;
     #endif
-    if(Q_UNLIKELY(size!=byteWriten))
+    if(Q_UNLIKELY((ssize_t)size!=byteWriten))
     {
         #ifdef EPOLLCATCHCHALLENGERSERVER
         messageParsingLayer(QStringLiteral("All the bytes have not be written byteWriten: %1, size: %2").arg(byteWriten).arg(size));

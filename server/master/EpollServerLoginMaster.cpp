@@ -84,12 +84,12 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         rawServerListForC211=NULL;
         rawServerListForC211Size=0;
     }
-    QHash<QString,CharactersGroup *>::const_iterator i = CharactersGroup::charactersGroupHash.constBegin();
-    while (i != CharactersGroup::charactersGroupHash.constEnd()) {
+    QHash<QString,CharactersGroup *>::const_iterator i = CharactersGroup::hash.constBegin();
+    while (i != CharactersGroup::hash.constEnd()) {
         delete i.value();
         ++i;
     }
-    CharactersGroup::charactersGroupHash.clear();
+    CharactersGroup::hash.clear();
 }
 
 void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
@@ -267,7 +267,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
         if(settings.contains(QStringLiteral("mysql_login")))
         {
             const QString &charactersGroup=settings.value(QStringLiteral("charactersGroup")).toString();
-            if(!CharactersGroup::charactersGroupHash.contains(charactersGroup))
+            if(!CharactersGroup::hash.contains(charactersGroup))
             {
                 CharactersGroup::serverWaitedToBeReady++;
                 const quint8 &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
@@ -292,7 +292,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
                 }
-                CharactersGroup::charactersGroupHash[charactersGroup]=new CharactersGroup(mysql_db.toUtf8().constData(),mysql_host.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
+                CharactersGroup::hash[charactersGroup]=new CharactersGroup(mysql_db.toUtf8().constData(),mysql_host.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
                 charactersGroupList << charactersGroup;
             }
             else
@@ -338,7 +338,7 @@ void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGro
         }
         rawServerListForC211Size+=newSize;
         index++;
-        CharactersGroup::charactersGroupList << CharactersGroup::charactersGroupHash.value(charactersGroupName);
+        CharactersGroup::list << CharactersGroup::hash.value(charactersGroupName);
     }
 }
 
@@ -650,7 +650,7 @@ void EpollServerLoginMaster::loadTheProfile()
     int skinId=0;
     while(skinId<CommonDatapack::commonDatapack.skins.size())
     {
-        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerLogin::dictionary_skin_internal_to_database.value(skinId));
+        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMaster::dictionary_skin_internal_to_database.value(skinId));
         rawServerListForC211Size+=2;
         skinId++;
     }
@@ -794,5 +794,5 @@ void EpollServerLoginMaster::loadTheProfile()
     }
 
     CommonDatapack::commonDatapack.unload();
-    BaseServerLogin::unload();
+    BaseServerMaster::unload();
 }

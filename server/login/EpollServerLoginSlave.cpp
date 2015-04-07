@@ -66,7 +66,12 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(mode==QStringLiteral("direct"))
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Direct;
         else
+        {
+            std::cerr << "proxy mode in the settings but not supported from now (abort)" << std::endl;
+            abort();
+
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
+        }
     }
 
     if(!settings.contains(QStringLiteral("httpDatapackMirror")))
@@ -90,8 +95,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             const QString &mirror=mirrorList.at(index);
             if(!mirror.contains(httpMatch))
             {
-                qDebug() << "Mirror wrong: " << mirror.toLocal8Bit();
-                return EXIT_FAILURE;
+                std::cerr << "Mirror wrong: " << mirror.toStdString() << std::endl;
+                abort();
             }
             if(mirror.endsWith("/"))
                 newMirrorList << mirror;
@@ -209,7 +214,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             const QString &charactersGroup=settings.value(QStringLiteral("CharactersGroupForLogin")).toString();
             if(!CharactersGroupForLogin::hash.contains(charactersGroup))
             {
-                CharactersGroupForLogin::serverWaitedToBeReady++;
                 const quint8 &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
                 if(considerDownAfterNumberOfTry==0 || !ok)
                 {
@@ -426,16 +430,16 @@ void EpollServerLoginSlave::compose04Reply()
     EpollClientLoginSlave::loginGood[0x06]=EpollClientLoginSlave::max_character;
     EpollClientLoginSlave::loginGood[0x07]=EpollClientLoginSlave::max_pseudo_size;
     EpollClientLoginSlave::loginGood[0x08]=EpollClientLoginSlave::max_player_monsters;
-    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x09)=EpollClientLoginSlave::max_warehouse_player_monsters=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+)));
+    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x09)=htole16(EpollClientLoginSlave::max_warehouse_player_monsters);
     EpollClientLoginSlave::loginGood[0x0B]=EpollClientLoginSlave::max_player_items;
-    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=EpollClientLoginSlave::max_warehouse_player_items=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+)));
+    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(EpollClientLoginSlave::max_warehouse_player_items);
     EpollClientLoginSlave::loginGoodSize=0x0E;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
     EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
 
     const QByteArray &httpDatapackMirrorData=EpollClientLoginSlave::linkToMaster->httpDatapackMirror.toUtf8();
-    if(httpDatapackMirror.size()>255)
+    if(httpDatapackMirrorData.size()>255)
     {
         std::cerr << "httpDatapackMirrorData size>255 (abort)" << std::endl;
         abort();

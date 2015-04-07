@@ -11,7 +11,7 @@ ProtocolParsingCheck::ProtocolParsingCheck(const PacketModeTransmission &packetM
 {
 }
 
-void ProtocolParsingCheck::parseMessage(const quint8 &mainCodeType,const char * const data,const int &size)
+void ProtocolParsingCheck::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(data);
@@ -24,39 +24,10 @@ void ProtocolParsingCheck::parseMessage(const quint8 &mainCodeType,const char * 
     valid=true;
 }
 
-void ProtocolParsingCheck::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size)
-{
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(subCodeType);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    if(valid)
-    {
-        qDebug() << "Double valid call!";
-        abort();
-    }
-    valid=true;
-}
-
-void ProtocolParsingCheck::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
-{
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
-    if(valid)
-    {
-        qDebug() << "Double valid call!";
-        abort();
-    }
-    valid=true;
-}
-
-void ProtocolParsingCheck::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void ProtocolParsingCheck::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(subCodeType);
-    Q_UNUSED(queryNumber);
     Q_UNUSED(data);
     Q_UNUSED(size);
     if(valid)
@@ -67,7 +38,7 @@ void ProtocolParsingCheck::parseFullQuery(const quint8 &mainCodeType,const quint
     valid=true;
 }
 
-void ProtocolParsingCheck::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void ProtocolParsingCheck::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(queryNumber);
@@ -81,7 +52,36 @@ void ProtocolParsingCheck::parseReplyData(const quint8 &mainCodeType,const quint
     valid=true;
 }
 
-void ProtocolParsingCheck::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void ProtocolParsingCheck::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+{
+    Q_UNUSED(mainCodeType);
+    Q_UNUSED(subCodeType);
+    Q_UNUSED(queryNumber);
+    Q_UNUSED(data);
+    Q_UNUSED(size);
+    if(valid)
+    {
+        qDebug() << "Double valid call!";
+        abort();
+    }
+    valid=true;
+}
+
+void ProtocolParsingCheck::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+{
+    Q_UNUSED(mainCodeType);
+    Q_UNUSED(queryNumber);
+    Q_UNUSED(data);
+    Q_UNUSED(size);
+    if(valid)
+    {
+        qDebug() << "Double valid call!";
+        abort();
+    }
+    valid=true;
+}
+
+void ProtocolParsingCheck::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(mainCodeType);
     Q_UNUSED(subCodeType);
@@ -113,7 +113,7 @@ void ProtocolParsingCheck::disconnectClient()
     abort();
 }
 
-ssize_t ProtocolParsingCheck::read(char * data, const int &size)
+ssize_t ProtocolParsingCheck::read(char * data, const size_t &size)
 {
     Q_UNUSED(data);
     Q_UNUSED(size);
@@ -121,7 +121,7 @@ ssize_t ProtocolParsingCheck::read(char * data, const int &size)
     abort();
 }
 
-ssize_t ProtocolParsingCheck::write(const char * const data, const int &size)
+ssize_t ProtocolParsingCheck::write(const char * const data, const size_t &size)
 {
     Q_UNUSED(data);
     Q_UNUSED(size);

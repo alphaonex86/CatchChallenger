@@ -1,5 +1,12 @@
 #include "LoginLinkToMaster.h"
 #include "EpollClientLoginSlave.h"
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <iostream>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
+#include <unistd.h>
 
 using namespace CatchChallenger;
 
@@ -20,12 +27,14 @@ LoginLinkToMaster::LoginLinkToMaster(
             ,PacketModeTransmission_Client
             #endif
             ),
-        stat(Stat::None)
+        stat(Stat::None),
+        have_send_protocol_and_registred(false)
 {
-    int index=0;
-    while(index<10)
+    queryNumberList.resize(30);
+    unsigned int index=0;
+    while(index<queryNumberList.size())
     {
-        queryNumberList << index;
+        queryNumberList[index]=index;
         index++;
     }
 }
@@ -67,7 +76,7 @@ int LoginLinkToMaster::tryConnect(const char * const host, const quint16 &port,c
         unsigned int index=0;
         while(index<considerDownAfterNumberOfTry && connStatusType<0)
         {
-            sleep(tryInterval);
+            std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
             connStatusType=::connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
         }
         if(connStatusType<0)
@@ -109,24 +118,24 @@ void LoginLinkToMaster::disconnectClient()
 //input/ouput layer
 void LoginLinkToMaster::errorParsingLayer(const QString &error)
 {
-    std::cerr << socketString << ": " << error.toLocal8Bit().constData() << std::endl;
+    std::cerr << error.toLocal8Bit().constData() << std::endl;
     disconnectClient();
 }
 
 void LoginLinkToMaster::messageParsingLayer(const QString &message) const
 {
-    std::cout << socketString << ": " << message.toLocal8Bit().constData() << std::endl;
+    std::cout << message.toLocal8Bit().constData() << std::endl;
 }
 
 void LoginLinkToMaster::errorParsingLayer(const char * const error)
 {
-    std::cerr << socketString << ": " << error << std::endl;
+    std::cerr << error << std::endl;
     disconnectClient();
 }
 
 void LoginLinkToMaster::messageParsingLayer(const char * const message) const
 {
-    std::cout << socketString << ": " << message << std::endl;
+    std::cout << message << std::endl;
 }
 
 BaseClassSwitch::Type LoginLinkToMaster::getType() const
@@ -148,7 +157,7 @@ bool LoginLinkToMaster::trySelectCharacter(void * const client,const quint8 &cli
     dataForSelectedCharacterReturn.client_query_id=client_query_id;
     dataForSelectedCharacterReturn.serverUniqueKey=serverUniqueKey;
     dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
-    selectCharacterClients[queryNumberList.back()];
+    selectCharacterClients[queryNumberList.back()]=dataForSelectedCharacterReturn;
     //register it
     newFullOutputQuery(0x02,0x05,queryNumberList.back());
     //the data

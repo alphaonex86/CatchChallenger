@@ -100,6 +100,11 @@ void Client::askLogin_object()
         qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
+    if(paramToPassToCallBack.size()!=1)
+    {
+        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
+        abort();
+    }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -305,6 +310,11 @@ void Client::createAccount_object()
         qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
         abort();
     }
+    if(paramToPassToCallBack.size()!=1)
+    {
+        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
+        abort();
+    }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -356,6 +366,11 @@ void Client::character_list_object()
     if(paramToPassToCallBack.isEmpty())
     {
         qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        abort();
+    }
+    if(paramToPassToCallBack.size()!=1)
+    {
+        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
         abort();
     }
     #endif
