@@ -64,4 +64,5 @@ HEADERS += \
     ../epoll/EpollClientToServer.h \
     ../epoll/EpollSslClientToServer.h \
     CharactersGroupForLogin.h \
-    ../base/BaseServerLogin.h
+    ../base/BaseServerLogin.h \
+    ../../general/base/GeneralStructures.h

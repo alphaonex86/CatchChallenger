@@ -192,5 +192,6 @@ CREATE TABLE IF NOT EXISTS `server_time` (
   `account` int(11) NOT NULL,
   `played_time` int(11) NOT NULL,
   `last_connect` int(11) NOT NULL,
-  PRIMARY KEY (`server`,`account`)
+  PRIMARY KEY (`server`,`account`),
+  KEY `account` (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

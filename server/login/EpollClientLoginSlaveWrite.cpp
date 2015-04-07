@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.h"
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -32,7 +33,7 @@ void EpollClientLoginSlave::postReply(const quint8 &queryNumber,const char *data
 {
     if(!ProtocolParsingBase::postReplyData(queryNumber,data,size))
     {
-        normalOutput(QStringLiteral("can't' send reply: postReply(%1,%2)").arg(queryNumber).arg(QString(QByteArray(data,size).toHex())));
+        std::cerr << "can't' send reply: postReply(" << queryNumber << "," << QByteArray(data,size).toHex().constData() << ")" << std::endl;
         return;
     }
 }
