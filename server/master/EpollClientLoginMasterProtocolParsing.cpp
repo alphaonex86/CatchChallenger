@@ -4,7 +4,7 @@
 
 using namespace CatchChallenger;
 
-void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(size);
     switch(mainCodeType)
@@ -72,7 +72,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
     }
 }
 
-void EpollClientLoginMaster::parseMessage(const quint8 &mainCodeType,const char * const data,const int &size)
+void EpollClientLoginMaster::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
 {
     (void)data;
     (void)size;
@@ -85,7 +85,7 @@ void EpollClientLoginMaster::parseMessage(const quint8 &mainCodeType,const char 
     }
 }
 
-void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const int &size)
+void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
 {
     (void)rawData;
     (void)size;
@@ -100,7 +100,7 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
 }
 
 //have query with reply
-void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat==EpollClientLoginMasterStat::None)
@@ -118,6 +118,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 return;
             }
             stat=EpollClientLoginMasterStat::LoginServer;
+            EpollClientLoginMaster::loginServers << this;
             //send logical group list + Raw server list master to login + Login settings and Characters group
             if(EpollClientLoginMaster::loginPreviousToReplyCacheSize!=0)
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginPreviousToReplyCache),sizeof(EpollClientLoginMaster::loginPreviousToReplyCacheSize));
@@ -132,9 +133,9 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             maxAccountId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
             {
                 int charactersGroupIndex=0;
-                while(charactersGroupIndex<CharactersGroup::charactersGroupList.size())
+                while(charactersGroupIndex<CharactersGroup::list.size())
                 {
-                    CharactersGroup *charactersGroup=CharactersGroup::charactersGroupList.at(charactersGroupIndex);
+                    CharactersGroup *charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
@@ -163,7 +164,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
     }
 }
 
-void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const int &size)
+void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -176,6 +177,28 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
     }
     switch(mainCodeType)
     {
+        case 0x02:
+            if(stat!=EpollClientLoginMasterStat::LoginServer)
+            {
+                parseNetworkReadError("stat!=EpollClientLoginMasterStat::LoginServer: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery(): "+QString::number(mainCodeType));
+                return;
+            }
+            switch(subCodeType)
+            {
+                case 0x05:
+                {
+                    const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+0)));
+                    const quint8 &charactersGroupIndex=rawData[4];
+                    const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+5)));
+                    selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId);
+                }
+                break;
+                default:
+                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    return;
+                break;
+            }
+        break;
         case 0x11:
             if(stat!=EpollClientLoginMasterStat::LoginServer)
             {
@@ -220,12 +243,12 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                         return;
                     }
                     const unsigned char &charactersGroupIndex=*rawData;
-                    if(charactersGroupIndex>=CharactersGroup::charactersGroupList.size())
+                    if(charactersGroupIndex>=CharactersGroup::list.size())
                     {
                         parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;
                     }
-                    CharactersGroup * const charactersGroup=CharactersGroup::charactersGroupList.at(charactersGroupIndex);
+                    CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
                     EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
@@ -250,12 +273,12 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                         return;
                     }
                     const unsigned char &charactersGroupIndex=*rawData;
-                    if(charactersGroupIndex>=CharactersGroup::charactersGroupList.size())
+                    if(charactersGroupIndex>=CharactersGroup::list.size())
                     {
                         parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;
                     }
-                    CharactersGroup * const charactersGroup=CharactersGroup::charactersGroupList.at(charactersGroupIndex);
+                    CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
                     EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
@@ -280,12 +303,12 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                         return;
                     }
                     const unsigned char &charactersGroupIndex=*rawData;
-                    if(charactersGroupIndex>=CharactersGroup::charactersGroupList.size())
+                    if(charactersGroupIndex>=CharactersGroup::list.size())
                     {
                         parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;
                     }
-                    CharactersGroup * const charactersGroup=CharactersGroup::charactersGroupList.at(charactersGroupIndex);
+                    CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
                     EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
@@ -298,7 +321,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                 }
                 break;
                 default:
-                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
                     return;
                 break;
             }
@@ -311,7 +334,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
 }
 
 //send reply
-void EpollClientLoginMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void EpollClientLoginMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     //queryNumberList << queryNumber;
     Q_UNUSED(data);
@@ -320,12 +343,50 @@ void EpollClientLoginMaster::parseReplyData(const quint8 &mainCodeType,const qui
     return;
 }
 
-void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
+void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     (void)data;
     (void)size;
     //queryNumberList << queryNumber;
-    Q_UNUSED(data);
+    //do the work here
+    switch(mainCodeType)
+    {
+        case 0x02:
+            switch(subCodeType)
+            {
+                case 0x05:
+                {
+                    if(stat!=EpollClientLoginMasterStat::GameServer)
+                    {
+                        parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    //orderned mode if(loginServerReturnForCharaterSelect.contains(queryNumber))
+                    {
+                        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=loginServerReturnForCharaterSelect.value(queryNumber);
+                        if(size==32/*256/8*/)
+                            dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
+                        else if(size==1)
+                            dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0],dataForSelectedCharacterReturn.characterId);
+                        else
+                            parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0205 wrong");
+                        loginServerReturnForCharaterSelect.removeFirst();
+                    }
+                    /*orderned mode else
+                        std::cerr << "parseFullReplyData() !loginServerReturnForCharaterSelect.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;*/
+                }
+                break;
+                default:
+                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType));
+                    return;
+                break;
+            }
+        break;
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
     parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 

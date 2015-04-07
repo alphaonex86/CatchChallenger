@@ -4,6 +4,7 @@
 #include "../epoll/EpollClient.h"
 #include "../epoll/EpollSslClient.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../VariableServer.h"
 #include "../epoll/db/EpollPostgresql.h"
 #include "LoginLinkToMaster.h"
 
@@ -11,7 +12,6 @@
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 #define TOKEN_SIZE 64
-#define CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION 50 //smaller = more performance, but less simmulaneous connexion try, this number * (CATCHCHALLENGER_TOKENSIZE+pointer)
 #define CATCHCHALLENGER_SERVER_MINIDBLOCK 20
 #define CATCHCHALLENGER_SERVER_MAXIDBLOCK 50
 
@@ -76,11 +76,6 @@ public:
     {
         quint32 index;
     };
-    struct TokenLink
-    {
-        void * client;
-        char value[CATCHCHALLENGER_TOKENSIZE];
-    };
     enum ProxyMode
     {
         Direct,
@@ -90,8 +85,16 @@ public:
 
     void parseIncommingData();
 
+    void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
+    void selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
+    void addCharacter_ReturnOk(const quint8 &query_id,const quint32 &characterId);
+    void addCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
+    void removeCharacter_ReturnOk(const quint8 &query_id);
+    void removeCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
+
     char *socketString;
     int socketStringSize;
+    unsigned int account_id;
 
     static LoginLinkToMaster *linkToMaster;
     static char private_token[TOKEN_SIZE];
@@ -129,7 +132,6 @@ private:
     quint8 accountCharatersCount;
     bool have_send_protocol;
     bool is_logging_in_progess;
-    unsigned int account_id;
 
     static unsigned char protocolReplyProtocolNotSupported[4];
     static unsigned char protocolReplyServerFull[4];
@@ -140,6 +142,8 @@ private:
     static unsigned char loginInProgressBuffer[4];
     static unsigned char loginIsWrongBuffer[4];
     static char loginCharacterList[1024];
+    static unsigned char addCharacterReply[3+1+4];
+    static unsigned char removeCharacterReply[3+1];
 
     static const unsigned char protocolHeaderToMatch[5];
     BaseClassSwitch::Type getType() const;
@@ -151,18 +155,20 @@ private:
     void errorParsingLayer(const char * const error);
     void messageParsingLayer(const char * const message) const;
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char *data,const int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size);
+    void parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size);
+    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
     void disconnectClient();
 
+public:
+    void askLogin_cancel();
     void askLogin(const quint8 &query_id,const char *rawdata);
     static void askLogin_static(void *object);
     void askLogin_object();
@@ -174,23 +180,14 @@ private:
     static void character_list_static(void *object);
     void character_list_object();
     void character_list_return(const quint8 &query_id);
-    void deleteCharacterNow(const quint32 &characterId);
-    static void deleteCharacterNow_static(void *object);
-    void deleteCharacterNow_object();
-    void deleteCharacterNow_return(const quint32 &characterId);
-    void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
-    static void addCharacter_static(void *object);
-    void addCharacter_object();
-    void addCharacter_return(const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
-    void removeCharacter(const quint8 &query_id, const quint32 &characterId);
-    static void removeCharacter_static(void *object);
-    void removeCharacter_object();
-    void removeCharacter_return(const quint8 &query_id,const quint32 &characterId);
-    void dbQueryWriteLogin(const char * const queryText);
-    void dbQueryWriteCommon(const char * const queryText);
 
     void character_list_return(const quint8 &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize);
     void server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize);
+private:
+    void deleteCharacterNow(const quint32 &characterId);
+    void addCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
+    void removeCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint32 &characterId);
+    void dbQueryWriteLogin(const char * const queryText);
 
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const char *data=NULL,const int &size=0);
     void sendPacket(const quint8 &mainIdent,const char *data=NULL,const int &size=0);
@@ -200,15 +197,7 @@ private:
 
     void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
     void selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
-
-    void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
-    void selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
 private:
-    //connection
-    static FILE *fpRandomFile;
-    static TokenLink tokenForAuth[CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION];
-    static quint32 tokenForAuthSize;
-
     struct CharacterListForReply
     {
         char *rawData;
@@ -221,6 +210,7 @@ private:
     int serverListForReplyRawDataSize;
     quint8 serverListForReplyInSuspend;
     quint8 serverPlayedTimeCount;
+    AskLoginParam *askLoginParam;
 public:
     static bool automatic_account_creation;
     static unsigned int character_delete_time;

@@ -27,12 +27,10 @@ public:
     void unload();
     void parseDatapack(const QString &datapackPath);
 public:
-    QHash<quint16,BotFight> botFights;
     QHash<quint8,Plant> plants;
     QHash<quint16,CrafingRecipe> crafingRecipes;
     QHash<quint16,quint16> itemToCrafingRecipes;
     QList<Reputation> reputation;
-    QHash<quint16,Quest> quests;
     QHash<quint16,Monster> monsters;
     QHash<quint16,Skill> monsterSkills;
     QHash<quint8,Buff> monsterBuffs;
@@ -44,12 +42,9 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVER
     QHash<QString/*file*/, QDomDocument> xmlLoadedFile;
     #endif
-    QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
-    QList<MonstersCollision> monstersCollision;
     LayersOptions layersOptions;
     QList<Event> events;
     QList<QString> skins;
-    QHash<quint32,Shop> shops;
 private:
     QMutex inProgress;
     bool isParsed;
@@ -58,7 +53,6 @@ private:
     void parseTypes();
     void parseItems();
     void parseIndustries();
-    void parseQuests();
     void parsePlants();
     void parseCraftingRecipes();
     void parseBuff();
@@ -68,12 +62,9 @@ private:
     void parseMonstersEvolutionItems();
     void parseMonstersItemToLearn();
     void parseReputation();
-    void parseBotFights();
     void parseProfileList();
-    void parseMonstersCollision();
     void parseLayersOptions();
     void parseSkins();
-    void parseShop();
 };
 }
 

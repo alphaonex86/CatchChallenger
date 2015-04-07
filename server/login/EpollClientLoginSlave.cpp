@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.h"
+#include "CharactersGroupForLogin.h"
 
 #include <iostream>
 #include <QString>
@@ -24,15 +25,16 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             ),
         socketString(NULL),
         socketStringSize(0),
+        account_id(0),
         accountCharatersCount(0),
         have_send_protocol(false),
         is_logging_in_progess(false),
-        account_id(0),
         characterListForReplyInSuspend(0),
         serverListForReplyRawData(NULL),
         serverListForReplyRawDataSize(0),
         serverListForReplyInSuspend(0),
-        serverPlayedTimeCount(0)
+        serverPlayedTimeCount(0),
+        askLoginParam(NULL)
 {
 }
 
@@ -41,18 +43,51 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
     if(socketString!=NULL)
         delete socketString;
     {
+        //SQL
         int index=0;
         while(index<callbackRegistred.size())
         {
             callbackRegistred.at(index)->object=NULL;
             index++;
         }
-        unregister on CharactersGroupForLogin too;
-        QHashIterator<quint8/*queryNumber*/,LoginLinkToMaster::DataForSelectedCharacterReturn> i(EpollClientLoginSlave::linkToMaster->selectCharacterClients);
-        while (i.hasNext()) {
-            i.next();
-            if(i.value().client==this)
-                i.value().client=NULL;
+
+        //from master
+        index=0;
+        while(index<CharactersGroupForLogin::list.size())
+        {
+            CharactersGroupForLogin * const charactersGroupForLogin=CharactersGroupForLogin::list.at(index);
+
+            int sub_index=0;
+            while(sub_index<charactersGroupForLogin->clientQueryForReadReturn.size())
+            {
+                if(charactersGroupForLogin->clientQueryForReadReturn.at(sub_index)==this)
+                    charactersGroupForLogin->clientQueryForReadReturn[sub_index]=NULL;
+                sub_index++;
+            }
+            sub_index=0;
+            while(sub_index<charactersGroupForLogin->addCharacterParamList.size())
+            {
+                if(charactersGroupForLogin->addCharacterParamList.at(sub_index).client==this)
+                    charactersGroupForLogin->addCharacterParamList[sub_index].client=NULL;
+                sub_index++;
+            }
+            sub_index=0;
+            while(sub_index<charactersGroupForLogin->removeCharacterParamList.size())
+            {
+                if(charactersGroupForLogin->removeCharacterParamList.at(sub_index).client==this)
+                    charactersGroupForLogin->removeCharacterParamList[sub_index].client=NULL;
+                sub_index++;
+            }
+
+            index++;
+        }
+
+        //selected char
+        QHash<quint8/*queryNumber*/,LoginLinkToMaster::DataForSelectedCharacterReturn>::const_iterator j = EpollClientLoginSlave::linkToMaster->selectCharacterClients.constBegin();
+        while (j != EpollClientLoginSlave::linkToMaster->selectCharacterClients.constEnd()) {
+            if(j.value().client==this)
+                EpollClientLoginSlave::linkToMaster->selectCharacterClients[j.key()].client=NULL;
+            ++j;
         }
     }
 }
