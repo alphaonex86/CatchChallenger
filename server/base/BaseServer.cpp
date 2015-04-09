@@ -626,6 +626,9 @@ void BaseServer::preload_dictionary_map_return()
     preload_the_plant_on_map();
 }
 
+/** 
+ * into the BaseServerLogin
+ * 
 void BaseServer::preload_profile()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL skin dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_skin.size()));
@@ -691,7 +694,7 @@ void BaseServer::preload_profile()
 
     DebugClass::debugConsole(QStringLiteral("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileList.size()));
     preload_finish();
-}
+}*/
 
 bool BaseServer::preload_zone()
 {
