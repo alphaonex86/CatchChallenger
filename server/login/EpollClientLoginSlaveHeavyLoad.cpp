@@ -179,23 +179,13 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         }
     }
 
-    const QString &queryText=PreparedDBQuery::db_query_characters.arg(account_id).arg(EpollClientLoginSlave::max_character*2);
-    CatchChallenger::DatabaseBase::CallBack *callback=EpollServerLoginSlave::epollServerLoginSlave->databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::character_list_static);
-    if(callback==NULL)
     {
-        account_id=0;
-        loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(EpollServerLoginSlave::epollServerLoginSlave->databaseBaseLogin->errorMessage()));
-        delete askLoginParam;
-        askLoginParam=NULL;
-        return;
-    }
-    else
-    {
-        paramToPassToCallBack << askLoginParam;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << QStringLiteral("AskLoginParam");
-        #endif
-        callbackRegistred << callback;
+        int index=0;
+        while(index<CharactersGroupForLogin::list.size())
+        {
+            CharactersGroupForLogin::list.at(index)->character_list(this,account_id);
+            index++;
+        }
     }
 }
 
@@ -494,12 +484,17 @@ void EpollClientLoginSlave::addCharacter(const quint8 &query_id, const quint8 &c
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
-    if(!CharactersGroupForLogin::list.at(characterGroupIndex)->addCharacter(this,query_id,characterGroupIndex,profileIndex,pseudo,skinId))
+    const qint8 &addCharacter=CharactersGroupForLogin::list.at(characterGroupIndex)->addCharacter(this,query_id,profileIndex,pseudo,skinId);
+    if(addCharacter!=0)
     {
-        EpollClientLoginSlave::loginIsWrongBuffer[1]=query_id;
-        EpollClientLoginSlave::loginIsWrongBuffer[3]=0x04;
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
+        if(addCharacter>0 && addCharacter<=3)
+        {
+            EpollClientLoginSlave::addCharacterIsWrongBuffer[1]=query_id;
+            EpollClientLoginSlave::addCharacterIsWrongBuffer[3]=0x02;
+            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
+        }
+        if(addCharacter<0)
+            errorParsingLayer("EpollClientLoginSlave::selectCharacter() hack detected");
         return;
     }
 }
@@ -511,10 +506,10 @@ void EpollClientLoginSlave::removeCharacter(const quint8 &query_id, const quint8
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
-    if(!CharactersGroupForLogin::list.at(characterGroupIndex)->removeCharacter(this,query_id,characterGroupIndex,characterId))
+    if(!CharactersGroupForLogin::list.at(characterGroupIndex)->removeCharacter(this,query_id,characterId))
     {
         EpollClientLoginSlave::loginIsWrongBuffer[1]=query_id;
-        EpollClientLoginSlave::loginIsWrongBuffer[3]=0x04;
+        EpollClientLoginSlave::loginIsWrongBuffer[3]=0x02;
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
         return;
@@ -551,4 +546,14 @@ void EpollClientLoginSlave::removeCharacter_ReturnFailed(const quint8 &query_id,
     EpollClientLoginSlave::removeCharacterReply[3]=errorCode;
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::removeCharacterReply),sizeof(EpollClientLoginSlave::removeCharacterReply));
     errorParsingLayer("EpollClientLoginSlave::removeCharacter() out of query for request the master server");
+}
+
+void EpollClientLoginSlave::characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage)
+{
+    EpollClientLoginSlave::loginIsWrongBuffer[1]=query_id;
+    EpollClientLoginSlave::loginIsWrongBuffer[3]=returnCode;
+    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
+
+    //send to server to stop the connection
+    errorParsingLayer(debugMessage);
 }

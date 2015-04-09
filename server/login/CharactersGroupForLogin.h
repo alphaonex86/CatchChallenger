@@ -49,14 +49,14 @@ public:
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const quint32 &characterId);
-    bool addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
+    qint8 addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     static void addCharacter_static(void *object);
     void addCharacter_object();
-    void addCharacter_return(const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
+    void addCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
     bool removeCharacter(void * const client,const quint8 &query_id, const quint32 &characterId);
     static void removeCharacter_static(void *object);
     void removeCharacter_object();
-    void removeCharacter_return(const quint8 &query_id,const quint32 &characterId);
+    void removeCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint32 &characterId);
 
     void character_list(EpollClientLoginSlave * const client,const quint32 &account_id);
     static void character_list_static(void *object);
@@ -64,6 +64,7 @@ public:
     void server_list(EpollClientLoginSlave * const client,const quint32 &account_id);
     static void server_list_static(void *object);
     void server_list_object();
+    DatabaseBase::Type databaseType() const;
 private:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);
@@ -90,6 +91,8 @@ private:
     QList<void * const> clientAddReturnList;
     QList<void * const> clientRemoveReturnList;
     QList<quint32> deleteCharacterNowCharacterIdList;
+
+    static char tempBuffer[4096];
 };
 }
 
