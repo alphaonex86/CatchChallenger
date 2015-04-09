@@ -95,6 +95,7 @@ public:
     char *socketString;
     int socketStringSize;
     unsigned int account_id;
+    quint8 accountCharatersCount;
 
     static LoginLinkToMaster *linkToMaster;
     static char private_token[TOKEN_SIZE];
@@ -129,7 +130,6 @@ private:
     QStringList paramToPassToCallBackType;
     #endif
 
-    quint8 accountCharatersCount;
     bool have_send_protocol;
     bool is_logging_in_progess;
 
@@ -141,6 +141,7 @@ private:
 
     static unsigned char loginInProgressBuffer[4];
     static unsigned char loginIsWrongBuffer[4];
+    static unsigned char addCharacterIsWrongBuffer[8];
     static char loginCharacterList[1024];
     static unsigned char addCharacterReply[3+1+4];
     static unsigned char removeCharacterReply[3+1];
@@ -177,23 +178,21 @@ public:
     static void createAccount_static(void *object);
     void createAccount_object();
     void createAccount_return(AskLoginParam *askLoginParam);
-    static void character_list_static(void *object);
-    void character_list_object();
-    void character_list_return(const quint8 &query_id);
 
     void character_list_return(const quint8 &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize);
     void server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize);
-private:
-    void deleteCharacterNow(const quint32 &characterId);
-    void addCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
-    void removeCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint32 &characterId);
-    void dbQueryWriteLogin(const char * const queryText);
 
     void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const char *data=NULL,const int &size=0);
     void sendPacket(const quint8 &mainIdent,const char *data=NULL,const int &size=0);
     void sendRawSmallPacket(const char *data,const int &size);
     void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const char *data=NULL,const int &size=0);
     void postReply(const quint8 &queryNumber,const char *data=NULL,const int &size=0);
+    void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
+private:
+    void deleteCharacterNow(const quint32 &characterId);
+    void addCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
+    void removeCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint32 &characterId);
+    void dbQueryWriteLogin(const char * const queryText);
 
     void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
     void selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);

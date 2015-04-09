@@ -468,6 +468,18 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                         {
                             EpollServerLoginSlave::LoginProfile profile;
 
+                            //cache query to compose
+                            profile.preparedQueryChar=NULL;
+                            {
+                                unsigned int index=0;
+                                while(index<sizeof(profile.preparedQueryPos))
+                                {
+                                    profile.preparedQueryPos[index]=0;
+                                    profile.preparedQuerySize[index]=0;
+                                    index++;
+                                }
+                            }
+
                             //database id
                             if((size-cursor)<(int)sizeof(quint16))
                             {
@@ -675,6 +687,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 itemListIndex++;
                             }
 
+                            EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.push_back(profile);
                             profileListIndex++;
                         }
                     }
