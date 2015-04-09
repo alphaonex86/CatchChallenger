@@ -337,6 +337,13 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
         delete EpollClientLoginSlave::linkToMaster;
         EpollClientLoginSlave::linkToMaster=NULL;
     }
+    unsigned int index=0;
+    while(index<EpollServerLoginSlave::loginProfileList.size())
+    {
+        EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[index];
+        delete profile.preparedQueryChar;
+        index++;
+    }
 }
 
 void EpollServerLoginSlave::close()
@@ -367,6 +374,10 @@ bool EpollServerLoginSlave::tryListen()
     #else
         const bool &returnedValue=tryListenInternal(server_ip, server_port);
     #endif
+
+    preload_the_randomData();
+    preload_profile();
+
     if(server_ip!=NULL)
     {
         std::cout << "Listen on " << server_ip << ":" << server_port << std::endl;
@@ -446,4 +457,80 @@ void EpollServerLoginSlave::compose04Reply()
     }
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),sizeof(httpDatapackMirrorData.size()));
     EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();
+}
+
+void EpollServerLoginSlave::preload_profile()
+{
+    if(CharactersGroupForLogin::list.isEmpty())
+    {
+        std::cerr << "EpollServerLoginSlave::preload_profile() CharactersGroupForLogin::list.isEmpty() (abort)" << std::endl;
+        abort();
+    }
+    const DatabaseBase::Type &type=CharactersGroupForLogin::list.at(0)->databaseType();
+    QStringList tempStringList;
+
+    unsigned int index=0;
+    while(index<EpollServerLoginSlave::loginProfileList.size())
+    {
+        EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[index];
+        //assume here all is the same type
+        switch(type)
+        {
+            default:
+            case DatabaseBase::Type::Mysql:
+                tempStringList << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                tempStringList << QLatin1String(",");
+                tempStringList << QLatin1String(",'");
+                tempStringList << QLatin1String("',");
+                tempStringList << QLatin1String(",0,0,")+
+                        QString::number(profile.cash)+QLatin1String(",0,");
+                tempStringList << QLatin1String(",0,0,0,0,0,")+
+                        QString::number(profile.databaseId)+QLatin1String(");");
+            break;
+            case DatabaseBase::Type::SQLite:
+                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << QLatin1String(",");
+                tempStringList << QLatin1String(",'");
+                tempStringList << QLatin1String("',");
+                tempStringList << QLatin1String(",0,0,")+
+                        QString::number(profile.cash)+QLatin1String(",0,");
+                tempStringList << QLatin1String(",0,0,0,0,0,")+
+                        QString::number(index)+QLatin1String(");");
+            break;
+            case DatabaseBase::Type::PostgreSQL:
+                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << QLatin1String(",");
+                tempStringList << QLatin1String(",'");
+                tempStringList << QLatin1String("',");
+                tempStringList << QLatin1String(",0,0,")+
+                        QString::number(profile.cash)+QLatin1String(",0,");
+                tempStringList << QLatin1String(",0,FALSE,0,0,0,")+
+                        QString::number(index)+QLatin1String(");");
+            break;
+        }
+        unsigned int preparedQueryCharTempSize=0;
+        int sub_index=0;
+        while(sub_index<tempStringList.size())
+        {
+            const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
+            preparedQueryCharTempSize+=tempStringData.size();
+            sub_index++;
+        }
+        profile.preparedQueryChar=(char *)malloc(preparedQueryCharTempSize);
+        sub_index=0;
+        while(sub_index<tempStringList.size())
+        {
+            const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
+            profile.preparedQuerySize[sub_index]=tempStringData.size();
+            if(index>0)
+                profile.preparedQueryPos[sub_index]=profile.preparedQueryPos[sub_index-1]+profile.preparedQuerySize[sub_index-1];
+            memcpy(profile.preparedQueryChar+profile.preparedQueryPos[sub_index],tempStringData.constData(),tempStringData.size());
+            sub_index++;
+        }
+        tempStringList.clear();
+
+        index++;
+    }
+
+    std::cout << EpollServerLoginSlave::loginProfileList.size() << " profile loaded" << std::endl;
 }

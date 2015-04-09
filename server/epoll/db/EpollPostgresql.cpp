@@ -61,7 +61,7 @@ bool EpollPostgresql::isConnected() const
 
 EpollPostgresql::DatabaseBase::Type EpollPostgresql::databaseType() const
 {
-    return EpollPostgresql::DatabaseBase::Type::PostgreSQL;
+    return DatabaseBase::Type::PostgreSQL;
 }
 
 bool EpollPostgresql::syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password)

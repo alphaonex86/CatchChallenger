@@ -57,6 +57,9 @@ public:
         std::vector<Monster> monsters;
         std::vector<Reputation> reputation;
         std::vector<Item> items;
+        char * preparedQueryChar;
+        quint8 preparedQueryPos[6];
+        quint8 preparedQuerySize[6];
     };
     std::vector<LoginProfile> loginProfileList;
 
@@ -68,6 +71,7 @@ private:
     char * server_ip;
     char * server_port;
 private:
+    void preload_profile();
     void generateToken(QSettings &settings);
     void SQL_common_load_finish();
 };

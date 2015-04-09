@@ -7,7 +7,7 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 #DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 
 #LIBS += -lssl -lcrypto
-LIBS    += -lpq
+LIBS    += -lpq -llzma
 
 CONFIG += c++11
 
@@ -44,7 +44,9 @@ SOURCES += \
     EpollClientLoginSlaveWrite.cpp \
     CharactersGroupForLogin.cpp \
     CharactersGroupClient.cpp \
-    ../base/BaseServerLogin.cpp
+    ../base/BaseServerLogin.cpp \
+    ../../general/base/FacilityLibGeneral.cpp \
+    ../base/SqlFunction.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -65,4 +67,6 @@ HEADERS += \
     ../epoll/EpollSslClientToServer.h \
     CharactersGroupForLogin.h \
     ../base/BaseServerLogin.h \
-    ../../general/base/GeneralStructures.h
+    ../../general/base/GeneralStructures.h \
+    ../../general/base/FacilityLibGeneral.h \
+    ../base/SqlFunction.h

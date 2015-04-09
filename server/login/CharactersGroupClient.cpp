@@ -1,6 +1,7 @@
 #include "CharactersGroupForLogin.h"
 #include "EpollServerLoginSlave.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../base/SqlFunction.h"
 #include "../base/PreparedDBQuery.h"
 #include <iostream>
 #include <QDebug>
@@ -10,7 +11,7 @@ using namespace CatchChallenger;
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const quint32 &account_id)
 {
     const QString &queryText=QString(PreparedDBQuery::db_query_characters).arg(account_id).arg(EpollClientLoginSlave::max_character*2);
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::character_list_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::character_list_static);
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
@@ -117,6 +118,7 @@ void CharactersGroupForLogin::character_list_object()
             qDebug() << (QStringLiteral("Character id is not number: %1 for %2").arg(databaseBaseCommon->value(0)).arg(character_id));
     }
     tempRawData[0]=validCharaterCount;
+    static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount=validCharaterCount;
 
     client->character_list_return(this->index,tempRawData,tempRawDataSize);
     delete tempRawData;
@@ -313,87 +315,66 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const quint32 &character
     dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_allow).arg(characterId).toUtf8().constData());
 }
 
-bool CharactersGroupForLogin::addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
+qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQuery::db_query_select_character_by_pseudo==NULL)
     {
         qDebug() << (QStringLiteral("addCharacter() Query is empty, bug"));
-        return false;
+        return 0x03;
     }
     #endif
-    if(skinList.isEmpty())
+    if(EpollServerLoginSlave::epollServerLoginSlave->dictionary_skin_internal_to_database.isEmpty())
     {
         qDebug() << QStringLiteral("Skin list is empty, unable to add charaters");
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)0x02;
-        out << (quint32)0x00000000;
-        postReply(query_id,outputData);
-        return false;
+        //char tempData[1+4]={0x02,0x00,0x00,0x00,0x00};/* not htole32 because inverted is the same */
+        //static_cast<EpollClientLoginSlave *>(client)->postReply(query_id,tempData,sizeof(tempData));
+        return 0x03;
     }
-    if(number_of_character>=EpollClientLoginSlave::max_character)
+    if(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount>=EpollClientLoginSlave::max_character)
     {
-        qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(number_of_character).arg(EpollClientLoginSlave::max_character));
-        return false;
+        qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount).arg(EpollClientLoginSlave::max_character));
+        return -1;
     }
-    if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    if(profileIndex>=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size())
     {
-        qDebug() << (QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
-        return false;
+        qDebug() << (QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size()));
+        return -1;
     }
-    if(!serverProfileList.at(profileIndex).valid)
+    if((quint32)pseudo.size()>EpollClientLoginSlave::max_pseudo_size)
     {
-        qDebug() << (QStringLiteral("profile index: %1 profil not valid").arg(profileIndex));
-        return false;
+        qDebug() << (QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(EpollClientLoginSlave::max_pseudo_size));
+        return -1;
     }
-    if(pseudo.size()>max_pseudo_size)
-    {
-        qDebug() << (QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(max_pseudo_size));
-        return false;
-    }
-    if(skinId>=skinList.size())
+    if(skinId>=EpollServerLoginSlave::epollServerLoginSlave->dictionary_skin_internal_to_database.size())
     {
         qDebug() << (QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
-        return false;
+        return -1;
     }
-    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
-    if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skinId))
+    const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
+    if(std::find(profile.forcedskin.begin(),profile.forcedskin.end(),skinId)==profile.forcedskin.end())
     {
         qDebug() << (QStringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
-        return false;
+        return -1;
     }
-    AddCharacterParam *addCharacterParam=new AddCharacterParam();
-    addCharacterParam->query_id=query_id;
-    addCharacterParam->profileIndex=profileIndex;
-    addCharacterParam->pseudo=pseudo;
-    addCharacterParam->skinId=skinId;
-    addCharacterParam->client=client;
+    AddCharacterParam addCharacterParam;
+    addCharacterParam.query_id=query_id;
+    addCharacterParam.profileIndex=profileIndex;
+    addCharacterParam.pseudo=pseudo;
+    addCharacterParam.skinId=skinId;
+    addCharacterParam.client=client;
 
     const QString &queryText=QString(PreparedDBQuery::db_query_select_character_by_pseudo).arg(SqlFunction::quoteSqlVariable(pseudo));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::addCharacter_static);
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
-
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)0x02;
-        out << (quint32)0x00000000;
-        postReply(query_id,outputData);
-        delete addCharacterParam;
-        return false;
+        return 0x02;
     }
     else
     {
         addCharacterParamList << addCharacterParam;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << QStringLiteral("AddCharacterParam");
-        #endif
-        callbackRegistred << callback;
-        return true;
+        return 0x00;
     }
 }
 
@@ -405,135 +386,117 @@ void CharactersGroupForLogin::addCharacter_static(void *object)
 
 void CharactersGroupForLogin::addCharacter_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.isEmpty())
-    {
-        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
-        abort();
-    }
-    #endif
-    AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.takeFirst());
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(addCharacterParam==NULL)
-        abort();
-    #endif
-    addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skinId);
-    delete addCharacterParam;
+    AddCharacterParam addCharacterParam=addCharacterParamList.takeFirst();
+    addCharacter_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacter_return(const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
+void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AddCharacterParam"))
-    {
-        qDebug() << "is not AddCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
-        abort();
-    }
-    #endif
-    callbackRegistred.removeFirst();
     if(databaseBaseCommon->next())
     {
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)0x01;
-        out << (quint32)0x00000000;
-        postReply(query_id,outputData);
+        client->addCharacter_ReturnFailed(query_id,0x01);
         return;
     }
-    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
-    const ServerProfile &serverProfile=serverProfileList.at(profileIndex);
+    const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
 
-    number_of_character++;
-    maxCharacterId++;
+    client->accountCharatersCount++;
 
-    const quint32 &characterId=maxCharacterId;
-    int index=0;
+    const quint32 &characterId=maxCharacterId.back();
+    maxCharacterId.pop_back();
+    unsigned int index=0;
     int monster_position=1;
-    dbQueryWriteCommon(serverProfile.preparedQuery.at(0)+QString::number(characterId)+serverProfile.preparedQuery.at(1)+QString::number(account_id)+serverProfile.preparedQuery.at(2)+pseudo+serverProfile.preparedQuery.at(3)+QString::number(dictionary_skin_reverse.at(skinId))+serverProfile.preparedQuery.at(4).toUtf8().constData());
+    int tempBufferSize=0;
+    QByteArray numberBuffer;
+
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[0],profile.preparedQuerySize[0]);
+    tempBufferSize+=profile.preparedQueryPos[0];
+
+    numberBuffer=QString::number(characterId).toLatin1();
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
+    tempBufferSize+=numberBuffer.size();
+
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[1],profile.preparedQuerySize[1]);
+    tempBufferSize+=profile.preparedQueryPos[1];
+
+    numberBuffer=QString::number(client->account_id).toLatin1();
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
+    tempBufferSize+=numberBuffer.size();
+
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[2],profile.preparedQuerySize[2]);
+    tempBufferSize+=profile.preparedQueryPos[2];
+
+    numberBuffer=SqlFunction::quoteSqlVariable(pseudo).toUtf8();
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
+    tempBufferSize+=numberBuffer.size();
+
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[3],profile.preparedQuerySize[3]);
+    tempBufferSize+=profile.preparedQueryPos[3];
+
+    numberBuffer=QString::number(EpollServerLoginSlave::epollServerLoginSlave->dictionary_skin_internal_to_database.at(skinId)).toLatin1();
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
+    tempBufferSize+=numberBuffer.size();
+
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
+    tempBufferSize+=profile.preparedQueryPos[4];
+
+    CharactersGroupForLogin::tempBuffer[tempBufferSize]='\0';
+
+    dbQueryWriteCommon(CharactersGroupForLogin::tempBuffer);
     while(index<profile.monsters.size())
     {
-        const quint32 &monsterId=profile.monsters.at(index).id;
-        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monsterId))
+        const EpollServerLoginSlave::LoginProfile::Monster &monster=profile.monsters.at(index);
+        quint32 gender=Gender_Unknown;
+        if(monster.ratio_gender!=-1)
         {
-            const Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.monsters.value(monsterId);
-            quint32 gender=Gender_Unknown;
-            if(monster.ratio_gender!=-1)
-            {
-                if(rand()%101<monster.ratio_gender)
-                    gender=Gender_Female;
-                else
-                    gender=Gender_Male;
-            }
-            CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profile.monsters.at(index).level);
-            QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
-            QList<CatchChallenger::Monster::AttackToLearn> attack=monster.learn;
-            int sub_index=0;
-            while(sub_index<attack.size())
-            {
-                if(attack.value(sub_index).learnAtLevel<=profile.monsters.at(index).level)
-                {
-                    CatchChallenger::PlayerMonster::PlayerSkill temp;
-                    temp.level=attack.value(sub_index).learnSkillLevel;
-                    temp.skill=attack.value(sub_index).learnSkill;
-                    temp.endurance=0;
-                    skills << temp;
-                }
-                sub_index++;
-            }
-            quint32 monster_id;
-            {
-                QMutexLocker(&monsterIdMutex);
-                maxMonsterId++;
-                monster_id=maxMonsterId;
-            }
-            while(skills.size()>4)
-                skills.removeFirst();
-            {
-                dbQueryWriteCommon(PreparedDBQuery::db_query_insert_monster
-                   .arg(monster_id)
-                   .arg(stat.hp)
-                   .arg(characterId)
-                   .arg(monsterId)
-                   .arg(profile.monsters.at(index).level)
-                   .arg(profile.monsters.at(index).captured_with)
-                   .arg(gender)
-                   .arg(monster_position)
-                   .toUtf8().constData());
-                monster_position++;
-            }
-            sub_index=0;
-            while(sub_index<skills.size())
-            {
-                quint8 endurance=0;
-                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills.value(sub_index).skill))
-                    if(skills.value(sub_index).level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.size() && skills.value(sub_index).level>0)
-                        endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(skills.value(sub_index).skill).level.at(skills.value(sub_index).level-1).endurance;
-                dbQueryWriteCommon(PreparedDBQuery::db_query_insert_monster_skill
-                   .arg(monster_id)
-                   .arg(skills.value(sub_index).skill)
-                   .arg(skills.value(sub_index).level)
-                   .arg(endurance)
-                   .toUtf8().constData());
-                sub_index++;
-            }
-            index++;
+            if(rand()%101<monster.ratio_gender)
+                gender=Gender_Female;
+            else
+                gender=Gender_Male;
         }
-        else
+
+        quint32 monster_id=maxMonsterId.back();
+        maxMonsterId.pop_back();
+
+        //insert the monster is db
         {
-            qDebug() << (QStringLiteral("monster not found to start: %1 is not into profile forced skin list: %2").arg(monsterId));
-            return;
+            dbQueryWriteCommon(PreparedDBQuery::db_query_insert_monster
+               .arg(monster_id)
+               .arg(monster.hp)
+               .arg(characterId)
+               .arg(monster.id)
+               .arg(monster.level)
+               .arg(monster.captured_with)
+               .arg(gender)
+               .arg(monster_position)
+               .toUtf8().constData());
+            monster_position++;
         }
+
+        //insert the skill
+        unsigned int sub_index=0;
+        while(sub_index<monster.skills.size())
+        {
+            const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
+            dbQueryWriteCommon(PreparedDBQuery::db_query_insert_monster_skill
+               .arg(monster_id)
+               .arg(skill.id)
+               .arg(skill.level)
+               .arg(skill.endurance)
+               .toUtf8().constData());
+            sub_index++;
+        }
+        index++;
     }
     index=0;
     while(index<profile.reputation.size())
     {
+        const EpollServerLoginSlave::LoginProfile::Reputation &reputation=profile.reputation.at(index);
         dbQueryWriteCommon(PreparedDBQuery::db_query_insert_reputation
            .arg(characterId)
-           .arg(CommonDatapack::commonDatapack.reputation.at(profile.reputation.at(index).reputationId).reverse_database_id)
-           .arg(profile.reputation.at(index).point)
-           .arg(profile.reputation.at(index).level)
+           .arg(reputation.reputationDatabaseId)
+           .arg(reputation.point)
+           .arg(reputation.level)
            .toUtf8().constData());
         index++;
     }
@@ -549,48 +512,36 @@ void CharactersGroupForLogin::addCharacter_return(const quint8 &query_id,const q
     }
 
     //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x00;
-    out << characterId;
-    postReply(query_id,outputData);
+    CharactersGroupForLogin::tempBuffer[0]=0x00;
+    *reinterpret_cast<quint32 *>(CharactersGroupForLogin::tempBuffer+1)=htole32(characterId);
+    client->postReply(query_id,CharactersGroupForLogin::tempBuffer,1+4);
 }
 
-void CharactersGroupForLogin::removeCharacter(void * const client,const quint8 &query_id, const quint32 &characterId)
+bool CharactersGroupForLogin::removeCharacter(void * const client,const quint8 &query_id, const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQuery::db_query_account_time_to_delete_character_by_id==NULL)
     {
         qDebug() << (QStringLiteral("removeCharacter() Query is empty, bug"));
-        return;
+        return false;
     }
     #endif
-    RemoveCharacterParam *removeCharacterParam=new RemoveCharacterParam;
-    removeCharacterParam->query_id=query_id;
-    removeCharacterParam->characterId=characterId;
-    removeCharacterParam->client=client;
+    RemoveCharacterParam removeCharacterParam;
+    removeCharacterParam.query_id=query_id;
+    removeCharacterParam.characterId=characterId;
+    removeCharacterParam.client=client;
 
     const QString &queryText=PreparedDBQuery::db_query_account_time_to_delete_character_by_id.arg(characterId);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::removeCharacter_static);
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
-        QByteArray outputData;
-        QDataStream out(&outputData, QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)0x02;
-        postReply(query_id,outputData);
-        delete removeCharacterParam;
-        return;
+        return false;
     }
     else
     {
-        callbackRegistred << callback;
         removeCharacterParamList << removeCharacterParam;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType << QStringLiteral("RemoveCharacterParam");
-        #endif
+        return true;
     }
 }
 
@@ -602,50 +553,39 @@ void CharactersGroupForLogin::removeCharacter_static(void *object)
 
 void CharactersGroupForLogin::removeCharacter_object()
 {
-    RemoveCharacterParam *removeCharacterParam=static_cast<RemoveCharacterParam *>(paramToPassToCallBack.takeFirst());
-    removeCharacter_return(removeCharacterParam->query_id,removeCharacterParam->characterId);
-    delete removeCharacterParam;
+    RemoveCharacterParam removeCharacterParam=removeCharacterParamList.takeFirst();
+    removeCharacter_return(static_cast<EpollClientLoginSlave *>(removeCharacterParam.client),removeCharacterParam.query_id,removeCharacterParam.characterId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::removeCharacter_return(const quint8 &query_id,const quint32 &characterId)
+void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint32 &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("RemoveCharacterParam"))
-    {
-        qDebug() << "is not RemoveCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
-        abort();
-    }
-    #endif
     if(!databaseBaseCommon->next())
     {
-        characterSelectionIsWrong(query_id,0x02,"Result return query to remove wrong");
+        client->characterSelectionIsWrong(query_id,0x02,"Result return query to remove wrong");
         return;
     }
     bool ok;
     const quint32 &account_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(databaseBaseCommon->value(0)));
+        client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(databaseBaseCommon->value(0)));
         return;
     }
-    if(this->account_id!=account_id)
+    if(client->account_id!=account_id)
     {
-        characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
+        client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
         return;
     }
     const quint32 &time_to_delete=QString(databaseBaseCommon->value(1)).toUInt(&ok);
     if(ok && time_to_delete>0)
     {
-        characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
+        client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    dbQueryWriteCommon(PreparedDBQuery::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(character_delete_time).toUtf8().constData());
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)0x02;
-    postReply(query_id,outputData);
+    dbQueryWriteCommon(PreparedDBQuery::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(EpollClientLoginSlave::character_delete_time).toUtf8().constData());
+    CharactersGroupForLogin::tempBuffer[0]=0x02;
+    client->postReply(query_id,CharactersGroupForLogin::tempBuffer,1);
 }
 
 void CharactersGroupForLogin::dbQueryWriteCommon(const char * const queryText)

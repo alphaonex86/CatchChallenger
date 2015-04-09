@@ -6,6 +6,7 @@ using namespace CatchChallenger;
 
 QHash<QString,CharactersGroupForLogin *> CharactersGroupForLogin::hash;
 QList<CharactersGroupForLogin *> CharactersGroupForLogin::list;
+char CharactersGroupForLogin::tempBuffer[4096];
 
 CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval) :
     databaseBaseCommon(new EpollPostgresql())
@@ -61,4 +62,9 @@ bool CharactersGroupForLogin::containsServerUniqueKey(const quint32 &serverUniqu
 BaseClassSwitch::Type CharactersGroupForLogin::getType() const
 {
     return BaseClassSwitch::Type::Client;
+}
+
+DatabaseBase::Type CharactersGroupForLogin::databaseType() const
+{
+    return databaseBaseCommon->databaseType();
 }

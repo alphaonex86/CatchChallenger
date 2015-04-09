@@ -35,9 +35,8 @@ public:
     QList<quint32> dictionary_skin_internal_to_database;
     QList<quint8> dictionary_starter_database_to_internal;
     QList<quint32> dictionary_starter_internal_to_database;
-private:
-    void preload_the_randomData();
 protected:
+    void preload_the_randomData();
     void unload();
     void unload_the_randomData();
 };

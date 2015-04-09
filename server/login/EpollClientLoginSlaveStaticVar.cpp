@@ -25,6 +25,7 @@ unsigned char EpollClientLoginSlave::protocolReplyCompressionXz[]={0xC1/*reply s
 
 unsigned char EpollClientLoginSlave::loginInProgressBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x06/*return code*/};
 unsigned char EpollClientLoginSlave::loginIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
+unsigned char EpollClientLoginSlave::addCharacterIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00};
 unsigned char EpollClientLoginSlave::addCharacterReply[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x05/*reply size*/,0x00/*temp return code*/};
 unsigned char EpollClientLoginSlave::removeCharacterReply[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 char EpollClientLoginSlave::baseDatapackSum[];
