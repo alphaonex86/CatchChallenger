@@ -171,30 +171,33 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
     QString mysql_login;
     QString mysql_pass;
     QString type;
+    
+    settings.beginGroup(QStringLiteral("db-login"));
+    if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
+        settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
+    if(!settings.contains(QStringLiteral("tryInterval")))
+        settings.setValue(QStringLiteral("tryInterval"),1);
+    if(!settings.contains(QStringLiteral("mysql_db")))
+        settings.setValue(QStringLiteral("mysql_db"),QStringLiteral("catchchallenger_login"));
+    if(!settings.contains(QStringLiteral("mysql_host")))
+        settings.setValue(QStringLiteral("mysql_host"),QStringLiteral("localhost"));
+    if(!settings.contains(QStringLiteral("mysql_login")))
+        settings.setValue(QStringLiteral("mysql_login"),QStringLiteral("root"));
+    if(!settings.contains(QStringLiteral("mysql_pass")))
+        settings.setValue(QStringLiteral("mysql_pass"),QStringLiteral("root"));
+    if(!settings.contains(QStringLiteral("type")))
+        settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
+    if(!settings.contains(QStringLiteral("comment")))
+        settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
+    settings.sync();
+        
     bool ok;
     if(EpollClientLoginMaster::automatic_account_creation)
     {
         CharactersGroup::serverWaitedToBeReady++;
         databaseBaseLogin=new EpollPostgresql();
         //here to have by login server an auth
-        settings.beginGroup(QStringLiteral("db-login"));
-        if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
-        if(!settings.contains(QStringLiteral("tryInterval")))
-            settings.setValue(QStringLiteral("tryInterval"),1);
-        if(!settings.contains(QStringLiteral("mysql_db")))
-            settings.setValue(QStringLiteral("mysql_db"),QStringLiteral("catchchallenger_login"));
-        if(!settings.contains(QStringLiteral("mysql_host")))
-            settings.setValue(QStringLiteral("mysql_host"),QStringLiteral("localhost"));
-        if(!settings.contains(QStringLiteral("mysql_login")))
-            settings.setValue(QStringLiteral("mysql_login"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("mysql_pass")))
-            settings.setValue(QStringLiteral("mysql_pass"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("type")))
-            settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
-        if(!settings.contains(QStringLiteral("comment")))
-            settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
-        settings.sync();
+        
         databaseBaseLogin->considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
         if(databaseBaseLogin->considerDownAfterNumberOfTry==0 || !ok)
         {
@@ -222,9 +225,9 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             std::cerr << "Connect to login database failed:" << databaseBaseLogin->errorMessage() << std::endl;
             abort();
         }
-        settings.endGroup();
         load_account_max_id();
     }
+    settings.endGroup();
 }
 
 QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
