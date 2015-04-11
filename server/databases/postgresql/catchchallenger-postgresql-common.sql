@@ -37,8 +37,6 @@ CREATE TABLE "character" (
 );
 
 
-ALTER TABLE public."character" OWNER TO root;
-
 --
 -- Name: character_allow; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -48,8 +46,6 @@ CREATE TABLE character_allow (
     allow smallint
 );
 
-
-ALTER TABLE public.character_allow OWNER TO root;
 
 --
 -- Name: clan; Type: TABLE; Schema: public; Owner: root; Tablespace: 
@@ -63,8 +59,6 @@ CREATE TABLE clan (
 );
 
 
-ALTER TABLE public.clan OWNER TO root;
-
 --
 -- Name: dictionary_server; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -74,8 +68,6 @@ CREATE TABLE dictionary_server (
     key text
 );
 
-
-ALTER TABLE public.dictionary_server OWNER TO root;
 
 --
 -- Name: item; Type: TABLE; Schema: public; Owner: root; Tablespace: 
@@ -88,8 +80,6 @@ CREATE TABLE item (
 );
 
 
-ALTER TABLE public.item OWNER TO root;
-
 --
 -- Name: item_warehouse; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -100,8 +90,6 @@ CREATE TABLE item_warehouse (
     quantity integer
 );
 
-
-ALTER TABLE public.item_warehouse OWNER TO root;
 
 --
 -- Name: monster; Type: TABLE; Schema: public; Owner: root; Tablespace: 
@@ -124,8 +112,6 @@ CREATE TABLE monster (
 );
 
 
-ALTER TABLE public.monster OWNER TO root;
-
 --
 -- Name: monster_buff; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -136,8 +122,6 @@ CREATE TABLE monster_buff (
     level smallint
 );
 
-
-ALTER TABLE public.monster_buff OWNER TO root;
 
 --
 -- Name: monster_skill; Type: TABLE; Schema: public; Owner: root; Tablespace: 
@@ -151,8 +135,6 @@ CREATE TABLE monster_skill (
 );
 
 
-ALTER TABLE public.monster_skill OWNER TO root;
-
 --
 -- Name: recipe; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -162,8 +144,6 @@ CREATE TABLE recipe (
     recipe smallint
 );
 
-
-ALTER TABLE public.recipe OWNER TO root;
 
 --
 -- Name: reputation; Type: TABLE; Schema: public; Owner: root; Tablespace: 
@@ -177,8 +157,6 @@ CREATE TABLE reputation (
 );
 
 
-ALTER TABLE public.reputation OWNER TO root;
-
 --
 -- Name: server_time; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -190,8 +168,6 @@ CREATE TABLE server_time (
     last_connect integer
 );
 
-
-ALTER TABLE public.server_time OWNER TO root;
 
 --
 -- Name: character_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
