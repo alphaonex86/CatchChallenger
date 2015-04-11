@@ -4,6 +4,7 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonMap.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/ProtocolParsingCheck.h"
@@ -259,9 +260,9 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
         return;
     }
     #endif
-    if(accountCharatersCount>=CommonSettings::commonSettings.max_character)
+    if(number_of_character>=CommonSettings::commonSettings.max_character)
     {
-        loginIsWrong(query_id,0x03,QStringLiteral("Have already the max charaters: %1/%2").arg(accountCharatersCount).arg(CommonSettings::commonSettings.max_character));
+        loginIsWrong(query_id,0x03,QStringLiteral("Have already the max charaters: %1/%2").arg(number_of_character).arg(CommonSettings::commonSettings.max_character));
         return;
     }
     QByteArray login;
@@ -286,7 +287,7 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
     }
     else
     {
-        accountCharatersCount++;
+        number_of_character++;
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AskLoginParam");
@@ -379,8 +380,11 @@ void Client::character_list_object()
     if(askLoginParam==NULL)
         abort();
     #endif
-    character_list_return(askLoginParam->query_id);
-    delete askLoginParam;
+    askLoginParam->tempOutputData=character_list_return(askLoginParam->query_id);
+    //re use
+    //delete askLoginParam;
+    if(server_list())
+        paramToPassToCallBack<< askLoginParam;
 }
 
 void Client::character_list_return(const quint8 &query_id)
@@ -464,7 +468,6 @@ void Client::character_list_return(const quint8 &query_id)
         int validCharaterCount=0;
         while(GlobalServerData::serverPrivateVariables.db.next() && validCharaterCount<CommonSettings::commonSettings.max_character)
         {
-            accountCharatersCount++;
             CharacterEntry characterEntry;
             characterEntry.character_id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
             if(ok)
@@ -566,17 +569,191 @@ void Client::character_list_return(const quint8 &query_id)
         {
             const CharacterEntry &characterEntry=characterEntryList.at(index);
             out << (quint32)characterEntry.character_id;
+            put into utf8
             out << characterEntry.pseudo;
             out << (quint8)characterEntry.skinId;
             out << (quint32)characterEntry.delete_time_left;
             out << (quint32)characterEntry.played_time;
             out << (quint32)characterEntry.last_connect;
-            out << (qint32)characterEntry.mapId;
             index++;
         }
     }
 
-    postReply(query_id,outputData);
+    return outputData;
+}
+
+bool Client::server_list()
+{
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(GlobalServerData::serverPrivateVariables.db_query_select_server.arg(character_id).toLatin1(),this,&Client::server_list_static);
+    if(callback==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(GlobalServerData::serverPrivateVariables.db_query_select_allow).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        errorOutput("Unable to get the server list");
+        return false;
+    }
+    else
+    {
+        callbackRegistred << callback;
+        return true;
+    }
+}
+
+void Client::server_list_static(void *object)
+{
+    if(object!=NULL)
+        static_cast<Client *>(object)->server_list_object();
+}
+
+void Client::server_list_object()
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+    {
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        abort();
+    }
+    if(paramToPassToCallBack.size()!=1)
+    {
+        qDebug() << "paramToPassToCallBack.size()!=1" << __FILE__ << __LINE__;
+        abort();
+    }
+    #endif
+    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(askLoginParam==NULL)
+        abort();
+    #endif
+    askLoginParam->tempOutputData=server_list_return(askLoginParam->query_id,askLoginParam->tempOutputData);
+    delete askLoginParam;
+}
+
+void Client::server_list_return(const quint8 &query_id, const QByteArray &previousData)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))
+    {
+        qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+        abort();
+    }
+    #endif
+    callbackRegistred.removeFirst();
+    //send signals into the server
+    #ifndef SERVERBENCHMARK
+    normalOutput(QStringLiteral("Logged the account %1").arg(account_id));
+    #endif
+
+    //C20F
+    {
+        //no logical group
+        QByteArray outputData;
+        outputData[0]=0x01;
+        outputData[1]=0x00;
+        outputData[2]=0x00;
+        sendFullPacket(0xC2,0x0F,outputData.constData(),outputData.size());
+    }
+    //C20E
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+        out << (quint8)0x02;//Server mode, unique then proxy
+        out << (quint8)0x01;//server list size, only this alone server
+        out << (quint8)0x00;//charactersgroup empty
+        out << (quint32)0x00000000;//unique key, useless here
+        out << (quint16)0x0000;//description is empty
+        out << (quint8)0x00;//logical group empty
+        if(GlobalServerData::serverSettings.sendPlayerNumber)
+        {
+            out << (quint16)GlobalServerData::serverSettings.max_players;
+            out << (quint16)Client::clientBroadCastList.size();//charactersgroup empty
+        }
+        else
+        {
+            if(GlobalServerData::serverSettings.max_players<=255)
+                out << (quint16)255;
+            else
+                out << (quint16)65535;
+            out << (quint16)0x0000;//current player
+        }
+        sendFullPacket(0xC2,0x0E,outputData.constData(),outputData.size());
+    }
+    //send the network reply
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+
+    out << (quint8)0x01;//all is good
+    out << (quint32)CommonSettings::commonSettings.character_delete_time;
+    out << (quint8)CommonSettings::commonSettings.max_character;
+    out << (quint8)CommonSettings::commonSettings.min_character;
+    out << (quint8)CommonSettings::commonSettings.max_pseudo_size;
+
+    out << (quint8)CommonSettings::commonSettings.maxPlayerMonsters;
+    out << (quint16)CommonSettings::commonSettings.maxWarehousePlayerMonsters;
+    out << (quint8)CommonSettings::commonSettings.maxPlayerItems;
+    out << (quint16)CommonSettings::commonSettings.maxWarehousePlayerItems;
+
+    outputData+=CommonSettings::commonSettings.datapackHash;
+    out.device()->seek(out.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
+    {
+        QByteArray httpDatapackMirrorData;
+        httpDatapackMirrorData.resize(300);
+        httpDatapackMirrorData.resize(FacilityLibGeneral::toUTF8WithHeader(CommonSettings::commonSettings.httpDatapackMirror,httpDatapackMirrorData.data()));
+        outputData+=httpDatapackMirrorData;
+        out.device()->seek(out.device()->pos()+httpDatapackMirrorData.size());
+    }
+
+    char * const tempRawData=new char[4*1024];
+    //memset(tempRawData,0x00,sizeof(4*1024));
+    int tempRawDataSize=0x01;
+
+    const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
+    bool ok;
+    quint8 validServerCount=0;
+    while(databaseBaseCommon->next() && validServerCount<EpollClientLoginSlave::max_character)
+    {
+        unsigned int server_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+        if(ok)
+        {
+            qint16 serverIndex=-1;
+            if(server_id<(unsigned int)CharactersGroupForLogin::dictionary_server_database_to_index.size())
+                if(CharactersGroupForLogin::dictionary_server_database_to_index.at(server_id)!=-1)
+                    serverIndex=CharactersGroupForLogin::dictionary_server_database_to_index.at(server_id);
+            if(serverIndex!=-1)
+            {
+                //server index
+                tempRawData[tempRawDataSize]=serverIndex;
+                tempRawDataSize+=1;
+
+                //played_time
+                unsigned int played_time=QString(databaseBaseCommon->value(1)).toUInt(&ok);
+                if(!ok)
+                {
+                    qDebug() << (QStringLiteral("played_time is not number: %1 fixed by 0").arg(databaseBaseCommon->value(4)));
+                    played_time=0;
+                }
+                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(played_time);
+                tempRawDataSize+=sizeof(quint32);
+
+                //last_connect
+                unsigned int last_connect=QString(databaseBaseCommon->value(2)).toUInt(&ok);
+                if(!ok)
+                {
+                    qDebug() << (QStringLiteral("last_connect is not number: %1 fixed by 0").arg(databaseBaseCommon->value(5)));
+                    last_connect=current_time;
+                }
+                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(last_connect);
+                tempRawDataSize+=sizeof(quint32);
+
+                validServerCount++;
+            }
+        }
+        else
+            qDebug() << (QStringLiteral("Character id is not number: %1").arg(databaseBaseCommon->value(0)));
+    }
+    tempRawData[0]=validServerCount;
+
+    postReply(query_id,previousData+outputData+QByteArray(tempRawData,tempRawDataSize));
 }
 
 void Client::deleteCharacterNow(const quint32 &characterId)

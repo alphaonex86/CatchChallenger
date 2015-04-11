@@ -21,9 +21,9 @@ public:
     int waitBeforeConnectAfterKick;
     QByteArray datapackHash;
     quint8 maxPlayerMonsters;
-    quint8 maxWarehousePlayerMonsters;
+    quint16 maxWarehousePlayerMonsters;
     quint8 maxPlayerItems;
-    quint8 maxWarehousePlayerItems;
+    quint16 maxWarehousePlayerItems;
 
     //rates
     float rates_xp;
