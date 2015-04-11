@@ -125,6 +125,7 @@ protected:
         quint8 query_id;
         QByteArray login;
         QByteArray pass;
+        QByteArray tempOutputData;
     };
     struct SelectCharacterParam
     {
@@ -145,7 +146,7 @@ private:
     bool isConnected;
     #endif
     quint16 randomIndex,randomSize;
-    quint8 accountCharatersCount;
+    quint8 number_of_character;
 
     PlayerOnMap map_entry;
     PlayerOnMap rescue;
@@ -320,6 +321,10 @@ private:
     static void character_list_static(void *object);
     void character_list_object();
     void character_list_return(const quint8 &query_id);
+    bool server_list();
+    static void server_list_static(void *object);
+    void server_list_object();
+    void server_list_return(const quint8 &query_id,const QByteArray &previousData);
     void deleteCharacterNow(const quint32 &characterId);
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();

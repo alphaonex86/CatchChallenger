@@ -440,6 +440,13 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
     tempBufferSize+=profile.preparedQueryPos[4];
 
+    numberBuffer=QString::number(QDateTime::currentMSecsSinceEpoch()/1000).toLatin1();
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
+    tempBufferSize+=numberBuffer.size();
+
+    memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[5],profile.preparedQuerySize[5]);
+    tempBufferSize+=profile.preparedQueryPos[5];
+
     CharactersGroupForLogin::tempBuffer[tempBufferSize]='\0';
 
     dbQueryWriteCommon(CharactersGroupForLogin::tempBuffer);
