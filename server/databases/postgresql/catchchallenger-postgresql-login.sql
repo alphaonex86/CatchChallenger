@@ -46,8 +46,6 @@ CREATE TABLE dictionary_allow (
 );
 
 
-ALTER TABLE public.dictionary_allow OWNER TO root;
-
 --
 -- Name: dictionary_reputation; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -58,7 +56,6 @@ CREATE TABLE dictionary_reputation (
 );
 
 
-ALTER TABLE public.dictionary_reputation OWNER TO root;
 --
 -- Name: dictionary_skin; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -69,8 +66,6 @@ CREATE TABLE dictionary_skin (
 );
 
 
-ALTER TABLE public.dictionary_skin OWNER TO root;
-
 --
 -- Name: dictionary_starter; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -80,8 +75,6 @@ CREATE TABLE dictionary_starter (
     starter text
 );
 
-
-ALTER TABLE public.dictionary_starter OWNER TO root;
 
 --
 -- Name: account_login_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 

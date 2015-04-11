@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_EPOLLPOSTGRESQL_H
 #define CATCHCHALLENGER_EPOLLPOSTGRESQL_H
 
-#include <postgresql-9.3/libpq-fe.h>
+#include <postgresql/libpq-fe.h>
 #include <QList>
 #include <QString>
 
