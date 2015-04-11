@@ -1,3 +1,3 @@
-#include "CommonSettingsLogin.h"
+#include "CommonSettingsCommon.h"
 
-CommonSettingsLogin CommonSettingsLogin::commonSettingsLogin;
+CommonSettingsCommon CommonSettingsCommon::commonSettingsCommon;
