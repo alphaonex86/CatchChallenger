@@ -362,7 +362,6 @@ struct CharacterEntry
     quint32 delete_time_left;
     quint32 played_time;
     quint32 last_connect;
-    qint32 mapId;
 };
 
 /* mpa related */

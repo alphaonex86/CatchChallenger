@@ -122,7 +122,6 @@ struct GameServerSettings
     QString server_message;
     bool dontSendPlayerType;
     qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
-    ServerPreparedDBQuery preparedDBQuery;
 
     struct Database
     {

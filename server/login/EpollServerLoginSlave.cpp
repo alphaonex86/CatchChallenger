@@ -5,6 +5,7 @@ using namespace CatchChallenger;
 
 #include <QFile>
 #include <QByteArray>
+#include <QCoreApplication>
 
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
@@ -23,7 +24,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     server_ip(NULL),
     server_port(NULL)
 {
-    QSettings settings("login_slave.conf",QSettings::IniFormat);
+    QSettings settings(QCoreApplication::applicationDirPath()+"/login_slave.conf",QSettings::IniFormat);
 
     {
         memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));
@@ -76,8 +77,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     if(!settings.contains(QStringLiteral("httpDatapackMirror")))
         settings.setValue(QStringLiteral("httpDatapackMirror"),QString());
-    EpollClientLoginSlave::linkToMaster->httpDatapackMirror=settings.value(QStringLiteral("httpDatapackMirror")).toString();
-    if(EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty())
+    QString httpDatapackMirror=settings.value(QStringLiteral("httpDatapackMirror")).toString();
+    httpDatapackMirror=settings.value(QStringLiteral("httpDatapackMirror")).toString();
+    if(httpDatapackMirror.isEmpty())
     {
         #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
         qDebug() << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input";
@@ -88,7 +90,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     {
         QStringList newMirrorList;
         QRegularExpression httpMatch("^https?://.+$");
-        const QStringList &mirrorList=EpollClientLoginSlave::linkToMaster->httpDatapackMirror.split(";");
+        const QStringList &mirrorList=httpDatapackMirror.split(";");
         int index=0;
         while(index<mirrorList.size())
         {
@@ -104,7 +106,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 newMirrorList << mirror+"/";
             index++;
         }
-        EpollClientLoginSlave::linkToMaster->httpDatapackMirror=newMirrorList.join(";");
+        httpDatapackMirror=newMirrorList.join(";");
     }
 
     //connection
@@ -127,6 +129,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     tcpCork=settings.value(QStringLiteral("tcpCork")).toBool();
     tcpNodelay=settings.value(QStringLiteral("tcpNodelay")).toBool();
     settings.endGroup();
+    settings.sync();
 
     QString mysql_db;
     QString mysql_host;
@@ -151,6 +154,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             settings.setValue(QStringLiteral("mysql_pass"),QStringLiteral("root"));
         if(!settings.contains(QStringLiteral("type")))
             settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
+        settings.sync();
         EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry==0 || !ok)
         {
@@ -179,6 +183,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             abort();
         }
         settings.endGroup();
+        settings.sync();
     }
 
     QStringList charactersGroupForLoginList;
@@ -282,6 +287,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
         if(!settings.contains(QStringLiteral("tryInterval")))
             settings.setValue(QStringLiteral("tryInterval"),1);
+        settings.sync();
         const QString &host=settings.value(QStringLiteral("host")).toString();
         const quint16 &port=settings.value(QStringLiteral("port")).toUInt(&ok);
         if(port==0 || !ok)
@@ -308,14 +314,13 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             abort();
         }
         #ifdef SERVERSSL
-            EpollClientLoginSlave::linkToMaster=new LoginLinkToMaster(linkfd,ctx);
+        EpollClientLoginSlave::linkToMaster=new LoginLinkToMaster(linkfd,ctx);
         #else
-            EpollClientLoginSlave::linkToMaster=new LoginLinkToMaster(linkfd);
+        EpollClientLoginSlave::linkToMaster=new LoginLinkToMaster(linkfd);
         #endif
+        EpollClientLoginSlave::linkToMaster->httpDatapackMirror=httpDatapackMirror;
         settings.endGroup();
     }
-
-    settings.sync();
 }
 
 EpollServerLoginSlave::~EpollServerLoginSlave()
@@ -455,6 +460,8 @@ void EpollServerLoginSlave::compose04Reply()
         std::cerr << "httpDatapackMirrorData size>255 (abort)" << std::endl;
         abort();
     }
+    EpollClientLoginSlave::loginGood[EpollClientLoginSlave::loginGoodSize]=httpDatapackMirrorData.size();
+    EpollClientLoginSlave::loginGoodSize+=1;
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),sizeof(httpDatapackMirrorData.size()));
     EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();
 }
@@ -478,7 +485,7 @@ void EpollServerLoginSlave::preload_profile()
         {
             default:
             case DatabaseBase::Type::Mysql:
-                tempStringList << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                tempStringList << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`market_cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
@@ -488,7 +495,7 @@ void EpollServerLoginSlave::preload_profile()
                         QString::number(profile.databaseId)+QLatin1String(");");
             break;
             case DatabaseBase::Type::SQLite:
-                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
@@ -498,7 +505,7 @@ void EpollServerLoginSlave::preload_profile()
                         QString::number(index)+QLatin1String(");");
             break;
             case DatabaseBase::Type::PostgreSQL:
-                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
