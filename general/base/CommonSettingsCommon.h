@@ -1,10 +1,10 @@
-#ifndef COMMMONSETTINGSLOGIN_H
-#define COMMMONSETTINGSLOGIN_H
+#ifndef COMMMONSETTINGSCOMMON_H
+#define COMMMONSETTINGSCOMMON_H
 
 #include <QtGlobal>
 #include <QString>
 
-class CommonSettingsLogin
+class CommonSettingsCommon
 {
 public:
     QString httpDatapackMirrorBase;
@@ -18,7 +18,7 @@ public:
     quint8 maxPlayerItems;
     quint16 maxWarehousePlayerItems;
 
-    static CommonSettingsLogin commonSettingsLogin;
+    static CommonSettingsCommon commonSettingsCommon;
 };
 
-#endif // COMMMONSETTINGSLOGIN_H
+#endif // COMMMONSETTINGSCOMMON_H
