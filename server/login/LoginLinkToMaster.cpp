@@ -78,6 +78,7 @@ int LoginLinkToMaster::tryConnect(const char * const host, const quint16 &port,c
         {
             std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
             connStatusType=::connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+            index++;
         }
         if(connStatusType<0)
         {
