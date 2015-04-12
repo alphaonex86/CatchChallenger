@@ -1736,6 +1736,9 @@ QHash<quint16,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const QStr
 
 ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quint8,Buff> &monsterBuffs)
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+    (void)monsterBuffs;
+    #endif
     ItemFull items;
     QDir dir(folder);
     const QStringList &fileList=FacilityLibGeneral::listFolder(dir.absolutePath()+DatapackGeneralLoader::text_slash);
@@ -1941,6 +1944,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                         hpItem = hpItem.nextSiblingElement(DatapackGeneralLoader::text_hp);
                                     }
                                 }
+                                #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                                 {
                                     QDomElement buffItem = item.firstChildElement(DatapackGeneralLoader::text_buff);
                                     while(!buffItem.isNull())
@@ -1987,6 +1991,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                         buffItem = buffItem.nextSiblingElement(DatapackGeneralLoader::text_buff);
                                     }
                                 }
+                                #endif
                                 if(items.monsterItemEffect.contains(id))
                                     haveAnEffect=true;
                             }

@@ -233,20 +233,17 @@ int main(int argc, char *argv[])
                     EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                     db->epollEvent(events[i].events);
 
+                    //disconnected after finish of use
                     if(!db->isConnected())
                     {
-                        if(false)
-                        {
-                            std::cerr << "database disconnect, quit now" << std::endl;
-                            return EXIT_FAILURE;
-                        }
-                        else
-                        {
-                            delete db;
-                            if(CharactersGroup::serverWaitedToBeReady==0)
-                                if(!server->tryListen())
-                                    abort();
-                        }
+                        /*std::cerr << "database disconnect, quit now" << std::endl;
+                        return EXIT_FAILURE;*/
+                    }
+                    if(CharactersGroup::serverWaitedToBeReady==0)
+                    {
+                        if(!server->tryListen())
+                            abort();
+                        CharactersGroup::serverWaitedToBeReady--;
                     }
                 }
                 break;

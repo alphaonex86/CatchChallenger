@@ -245,6 +245,12 @@ void EpollPostgresql::clear()
 
 bool EpollPostgresql::epollEvent(const uint32_t &events)
 {
+    if(conn==NULL)
+    {
+        std::cerr << "epollEvent() conn==NULL" << std::endl;
+        return false;
+    }
+
     const ConnStatusType &connStatusType=PQstatus(conn);
     if(connStatusType!=CONNECTION_OK)
     {
@@ -332,20 +338,14 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 }
                 if(result!=NULL)
                     clear();
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(!queriesList.isEmpty())
                     queriesList.removeFirst();
-                #endif
                 if(!queriesList.isEmpty())
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     const int &query_id=PQsendQuery(conn,queriesList.first().toUtf8());
-                    #else
-                    const int &query_id=PQsendQuery(conn,queriesList.takeFirst().toUtf8());
-                    #endif
                     if(query_id==0)
                     {
-                        std::cerr << "query async send failed: " << errorMessage() << std::endl;
+                        std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << queriesList.join(";").toStdString() << std::endl;
                         return false;
                     }
                 }

@@ -53,6 +53,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     loadDBLoginSettings(settings);
     QStringList charactersGroupList=loadCharactersGroup(settings);
     charactersGroupListReply(charactersGroupList);
+    loadTheDatapack();
     doTheLogicalGroup(settings);
     doTheServerList();
     doTheReplyCache();
@@ -171,7 +172,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
     QString mysql_login;
     QString mysql_pass;
     QString type;
-    
+
     settings.beginGroup(QStringLiteral("db-login"));
     if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
         settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
@@ -190,14 +191,13 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
     if(!settings.contains(QStringLiteral("comment")))
         settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
     settings.sync();
-        
+
     bool ok;
-    if(EpollClientLoginMaster::automatic_account_creation)
+    //to load the dictionary
     {
-        CharactersGroup::serverWaitedToBeReady++;
         databaseBaseLogin=new EpollPostgresql();
         //here to have by login server an auth
-        
+
         databaseBaseLogin->considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
         if(databaseBaseLogin->considerDownAfterNumberOfTry==0 || !ok)
         {
@@ -225,6 +225,11 @@ void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
             std::cerr << "Connect to login database failed:" << databaseBaseLogin->errorMessage() << std::endl;
             abort();
         }
+    }
+
+    if(EpollClientLoginMaster::automatic_account_creation)
+    {
+        CharactersGroup::serverWaitedToBeReady++;
         load_account_max_id();
     }
     settings.endGroup();
@@ -618,10 +623,7 @@ void EpollServerLoginMaster::load_account_max_id_return()
             abort();
         }
     }
-    loadTheDatapack();
-    /*databaseBaseLogin->syncDisconnect();
-    databaseBaseLogin=NULL;
-    CharactersGroup::serverWaitedToBeReady--;*/
+    //will jump to SQL_common_load_finish()
 }
 
 void EpollServerLoginMaster::loadTheDatapack()
@@ -631,11 +633,22 @@ void EpollServerLoginMaster::loadTheDatapack()
     CommonDatapack::commonDatapack.parseDatapack("datapack/");
     qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
 
+    if(databaseBaseLogin==NULL)
+    {
+        std::cerr << "Login databases need be connected to load the dictionary" << std::endl;
+        abort();
+    }
+
     load(databaseBaseLogin,"datapack/");
 }
 
 void EpollServerLoginMaster::SQL_common_load_finish()
 {
+    //INSERT INTO dictionary in suspend can't close
+    /*databaseBaseLogin->syncDisconnect();
+    databaseBaseLogin=NULL;*/
+    CharactersGroup::serverWaitedToBeReady--;
+
     loadTheProfile();
 }
 

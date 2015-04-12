@@ -1,6 +1,6 @@
 #include "CommonFightEngineBase.h"
 #include "../base/CommonDatapack.h"
-#include "../base/CommonSettings.h"
+#include "../base/CommonSettingsCommon.h"
 #include "../base/GeneralVariable.h"
 
 #include <QtMath>

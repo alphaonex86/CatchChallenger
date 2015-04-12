@@ -1,0 +1,7 @@
+createuser -P login -U postgres
+echo 'CREATE DATABASE catchchallenger_common;' | psql postgres login
+echo 'CREATE DATABASE catchchallenger_login;' | psql postgres login
+echo 'CREATE DATABASE catchchallenger_server;' | psql postgres login
+psql catchchallenger_common login < catchchallenger-postgresql-common.sql
+psql catchchallenger_login login < catchchallenger-postgresql-login.sql
+psql catchchallenger_server login < catchchallenger-postgresql-server.sql
