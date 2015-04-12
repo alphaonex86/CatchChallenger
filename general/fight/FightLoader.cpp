@@ -1,7 +1,7 @@
 #include "FightLoader.h"
 #include "../base/DebugClass.h"
 #include "../base/GeneralVariable.h"
-#include "../base/CommonSettings.h"
+#include "../base/CommonSettingsCommon.h"
 #include "../base/CommonDatapack.h"
 
 #include <QFile>
@@ -437,7 +437,9 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                 }
                             }
                         }
+                        #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         pow=qPow(pow,CommonSettings::commonSettings.rates_xp_pow);
+                        #endif
                         if(ok)
                         {
                             monster.egg_step=item.attribute(FightLoader::text_egg_step).toUInt(&ok);
@@ -486,6 +488,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                             if(!ok)
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, speed is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
+                        #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         if(ok)
                         {
                             monster.give_xp=item.attribute(FightLoader::text_give_xp).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
@@ -498,6 +501,10 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                             if(!ok)
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, give_sp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
+                        #else
+                        monster.give_xp=0;
+                        monster.give_sp=0;
+                        #endif
                         if(ok)
                         {
                             if(item.hasAttribute(FightLoader::text_ratio_gender))
@@ -799,10 +806,12 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                             }
                             qDebug() << (QStringLiteral("monster.level_to_xp.size(): %1").arg(monster.level_to_xp.size()));
                             #endif
+                            #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(monster.give_xp!=0)
                                 if((monster.xp_for_max_level*CommonSettings::commonSettings.rates_xp/monster.give_xp)>150)
                                     qDebug() << (QStringLiteral("Warning: you need more than %1 monster(s) to pass the last level, prefer do that's with the rate for the monster id: %2").arg(monster.xp_for_max_level/monster.give_xp).arg(id));
+                            #endif
                             #endif
                             monsters[id]=monster;
                         }
@@ -876,6 +885,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
     return monsters;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
 QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > FightLoader::loadMonsterEvolutionItems(const QHash<quint16,Monster> &monsters)
 {
     QHash<quint16, QHash<quint16,quint16> > evolutionItem;
@@ -893,7 +903,9 @@ QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > FightLoad
     }
     return evolutionItem;
 }
+#endif
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
 QHash<quint16/*item*/, QSet<quint16/*monster*/> > FightLoader::loadMonsterItemToLearn(const QHash<quint16,Monster> &monsters,const QHash<quint16/*item*/, QHash<quint16/*monster*/,quint16/*evolveTo*/> > &evolutionItem)
 {
     QHash<quint16/*item*/, QSet<quint16/*monster*/> > learnItem;
@@ -913,6 +925,7 @@ QHash<quint16/*item*/, QSet<quint16/*monster*/> > FightLoader::loadMonsterItemTo
     }
     return learnItem;
 }
+#endif
 
 QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint16 &monsterId,const quint8 &level, const QHash<quint16,Monster> &monsters, const QHash<quint16, Skill> &monsterSkills)
 {
@@ -939,6 +952,7 @@ QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint16 &
     return skills;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
 QHash<quint16,BotFight> FightLoader::loadFight(const QString &folder, const QHash<quint16,Monster> &monsters, const QHash<quint16, Skill> &monsterSkills, const QHash<quint16, Item> &items)
 {
     QHash<quint16,BotFight> botFightList;
@@ -1175,6 +1189,7 @@ QHash<quint16,BotFight> FightLoader::loadFight(const QString &folder, const QHas
     }
     return botFightList;
 }
+#endif
 
 QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const QHash<quint8, Buff> &monsterBuffs, const QList<Type> &types)
 {
@@ -1544,6 +1559,7 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
     return monsterSkills;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
 QHash<quint8,Buff> FightLoader::loadMonsterBuff(const QString &folder)
 {
     QHash<quint8,Buff> monsterBuffs;
@@ -1863,4 +1879,4 @@ QHash<quint8,Buff> FightLoader::loadMonsterBuff(const QString &folder)
     }
     return monsterBuffs;
 }
-
+#endif
