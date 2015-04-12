@@ -4,6 +4,7 @@
 #include <postgresql/libpq-fe.h>
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 #include "../../base/DatabaseBase.h"
 #include "../BaseClassSwitch.h"
@@ -37,7 +38,7 @@ private:
     int ntuples;
     PGresult *result;
     QList<CallBack> queue;
-    QList<QString> queriesList;
+    QStringList queriesList;
     bool started;
     static char emptyString[1];
     static CallBack emptyCallback;
