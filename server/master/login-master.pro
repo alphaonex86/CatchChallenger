@@ -6,6 +6,7 @@ DEFINES += SERVERNOBUFFER
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+DEFINES += EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
 
 #LIBS += -lssl -lcrypto
 LIBS    += -lpq
@@ -42,7 +43,7 @@ SOURCES += \
     ../../general/fight/CommonFightEngineBase.cpp \
     ../base/BaseServerMaster.cpp \
     ../../general/fight/FightLoader.cpp \
-    ../../general/base/CommonSettings.cpp
+    ../../general/base/CommonSettingsCommon.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -67,4 +68,4 @@ HEADERS += \
     ../../general/base/GeneralType.h \
     ../base/BaseServerMaster.h \
     ../../general/fight/FightLoader.h \
-    ../../general/base/CommonSettings.h
+    ../../general/base/CommonSettingsCommon.h

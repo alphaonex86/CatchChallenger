@@ -98,8 +98,10 @@ void CommonDatapack::parseReputation()
 
 void CommonDatapack::parseBuff()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_BUFF));
     qDebug() << QStringLiteral("%1 monster buff(s) loaded").arg(monsterBuffs.size());
+    #endif
 }
 
 void CommonDatapack::parseSkills()
@@ -122,14 +124,18 @@ void CommonDatapack::parseMonsters()
 
 void CommonDatapack::parseMonstersEvolutionItems()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     items.evolutionItem=FightLoader::loadMonsterEvolutionItems(monsters);
     qDebug() << QStringLiteral("%1 monster evolution items(s) loaded").arg(items.evolutionItem.size());
+    #endif
 }
 
 void CommonDatapack::parseMonstersItemToLearn()
 {
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     items.itemToLearn=FightLoader::loadMonsterItemToLearn(monsters,items.evolutionItem);
     qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(items.itemToLearn.size());
+    #endif
 }
 
 void CommonDatapack::parseProfileList()

@@ -144,7 +144,6 @@ void CharactersGroup::load_monsters_max_id()
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
         abort();//stop because can't do the first db access
     }
-    return;
 }
 
 void CharactersGroup::load_monsters_max_id_static(void *object)
@@ -166,8 +165,9 @@ void CharactersGroup::load_monsters_max_id_return()
         }
     }
 
+    /*to register new connected game server
     databaseBaseCommon->syncDisconnect();
-    databaseBaseCommon=NULL;
+    databaseBaseCommon=NULL;*/
     CharactersGroup::serverWaitedToBeReady--;
 }
 
