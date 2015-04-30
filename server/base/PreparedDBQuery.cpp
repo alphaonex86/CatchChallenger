@@ -2,8 +2,6 @@
 
 using namespace CatchChallenger;
 
-QString PreparedDBQuery::db_type_string=NULL;
-
 //query
 QString PreparedDBQuery::db_query_select_allow=NULL;
 QString PreparedDBQuery::db_query_login=NULL;

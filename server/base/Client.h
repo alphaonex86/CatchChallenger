@@ -12,6 +12,8 @@
 #include "BroadCastWithoutSender.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/fight/CommonFightEngine.h"
+#include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../VariableServer.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER

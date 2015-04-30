@@ -10,6 +10,7 @@
 #include "SqlFunction.h"
 #include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
+#include "DictionaryServer.h"
 
 using namespace CatchChallenger;
 
@@ -268,12 +269,12 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id is not a number"));
         return;
     }
-    if(map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.size())
+    if(map_database_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id out of range"));
         return;
     }
-    CommonMap * const map=static_cast<CommonMap *>(GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.at(map_database_id));
+    CommonMap * const map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
     if(map==NULL)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id have not reverse"));
@@ -331,13 +332,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_map_database_id>=(quint32)DictionaryLogin::dictionary_map.size())
+    if(rescue_map_database_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput(QLatin1String("rescue_map_database_id out of range"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(DictionaryLogin::dictionary_map.at(rescue_map_database_id)==NULL)
+    if(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id)==NULL)
     {
         normalOutput(QLatin1String("rescue_map_database_id have not reverse"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -350,13 +351,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_map_database_id>=(quint32)DictionaryLogin::dictionary_map.size())
+    if(unvalidated_rescue_map_database_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput(QLatin1String("unvalidated_rescue_map_database_id out of range"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(DictionaryLogin::dictionary_map.at(unvalidated_rescue_map_database_id)==NULL)
+    if(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id)==NULL)
     {
         normalOutput(QLatin1String("unvalidated_rescue_map_database_id have not reverse"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -369,13 +370,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_map_id>=(quint32)DictionaryLogin::dictionary_map.size())
+    if(rescue_map_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput(QStringLiteral("rescue map, not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    CommonMap *rescue_map_final=DictionaryLogin::dictionary_map.at(rescue_map_id);
+    CommonMap *rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_id);
     if(rescue_map_final==NULL)
     {
         normalOutput(QStringLiteral("rescue map not resolved"));
@@ -432,13 +433,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_map_id>=(quint32)DictionaryLogin::dictionary_map.size())
+    if(unvalidated_rescue_map_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput(QStringLiteral("unvalidated rescue map, not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    CommonMap *unvalidated_rescue_map_final=DictionaryLogin::dictionary_map.at(unvalidated_rescue_map_id);
+    CommonMap *unvalidated_rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_id);
     if(unvalidated_rescue_map_final==NULL)
     {
         normalOutput(QStringLiteral("unvalidated rescue map not resolved"));
@@ -631,17 +632,17 @@ void Client::loadItemOnMap_return()
             normalOutput(QStringLiteral("wrong value type for item on map, skip: %1").arg(itemDbCode));
             continue;
         }
-        if(itemDbCode>=DictionaryLogin::dictionary_item_reverse.size())
+        if(itemDbCode>=DictionaryServer::dictionary_itemOnMap_database_to_internal.size())
         {
             normalOutput(QStringLiteral("item on map is not into the map list (1), skip: %1").arg(itemDbCode));
             continue;
         }
-        if(DictionaryLogin::dictionary_item_reverse[itemDbCode]==255/*-1*/)
+        if(DictionaryServer::dictionary_itemOnMap_database_to_internal[itemDbCode]==255/*-1*/)
         {
             normalOutput(QStringLiteral("item on map is not into the map list (2), skip: %1").arg(itemDbCode));
             continue;
         }
-        public_and_private_informations.itemOnMap << DictionaryLogin::dictionary_item_reverse[itemDbCode];
+        public_and_private_informations.itemOnMap << DictionaryServer::dictionary_itemOnMap_database_to_internal[itemDbCode];
     }
     loginIsRightFinalStep();
 }
@@ -922,9 +923,9 @@ void Client::loadPlayerAllow_return()
         const quint32 &allowCode=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(ok)
         {
-            if(allowCode<(quint32)DictionaryLogin::dictionary_allow.size())
+            if(allowCode<(quint32)DictionaryLogin::dictionary_allow_database_to_internal.size())
             {
-                const ActionAllow &allow=DictionaryLogin::dictionary_allow.at(allowCode);
+                const ActionAllow &allow=DictionaryLogin::dictionary_allow_database_to_internal.at(allowCode);
                 if(allow!=ActionAllow_Nothing)
                     public_and_private_informations.allow << allow;
                 else

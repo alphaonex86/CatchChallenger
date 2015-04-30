@@ -1,4 +1,5 @@
 #include "CommonDatapackServerSpec.h"
+#include "CommonDatapack.h"
 #include "GeneralVariable.h"
 #include "FacilityLib.h"
 #include "../fight/FightLoader.h"
@@ -27,7 +28,7 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath)
         return;
     QMutexLocker mutexLocker(&inProgressSpec);
 
-    CommonDatapack::parseDatapack(datapackPath);
+    CommonDatapack::commonDatapack.parseDatapack(datapackPath);
 
     parseQuests();
     parseBotFights();
@@ -49,26 +50,26 @@ void CommonDatapackServerSpec::parseQuests()
 
 void CommonDatapackServerSpec::parseShop()
 {
-    shops=DatapackGeneralLoader::preload_shop(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SHOP)+QStringLiteral("shop.xml"),items.item);
+    shops=DatapackGeneralLoader::preload_shop(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SHOP)+QStringLiteral("shop.xml"),CommonDatapack::commonDatapack.items.item);
     qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(shops.size());
 }
 
 void CommonDatapackServerSpec::parseBotFights()
 {
-    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT), monsters, monsterSkills,items.item);
+    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT),CommonDatapack::commonDatapack.monsters,CommonDatapack::commonDatapack.monsterSkills,CommonDatapack::commonDatapack.items.item);
     qDebug() << QStringLiteral("%1 bot fight(s) loaded").arg(botFights.size());
 }
 
 void CommonDatapackServerSpec::parseMonstersCollision()
 {
-    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("layers.xml"),items.item,events);
+    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("layers.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
     qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
 }
 
 void CommonDatapackServerSpec::unload()
 {
-    QMutexLocker mutexLocker(&inProgress);
-    if(!isParsed)
+    QMutexLocker mutexLocker(&inProgressSpec);
+    if(!isParsedSpec)
         return;
     botFights.clear();
     quests.clear();
@@ -77,7 +78,7 @@ void CommonDatapackServerSpec::unload()
     teleportConditionsUnparsed.clear();
     #endif
     monstersCollision.clear();
-    skins.clear();
     shops.clear();
-    isParsed=false;
+    CommonDatapack::commonDatapack.unload();
+    isParsedSpec=false;
 }

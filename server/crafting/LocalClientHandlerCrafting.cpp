@@ -3,6 +3,7 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../base/GlobalServerData.h"
 #include "../base/MapServer.h"
+#include "../base/PreparedDBQuery.h"
 
 using namespace CatchChallenger;
 
@@ -166,6 +167,6 @@ void Client::takeAnObjectOnMap()
     public_and_private_informations.itemOnMap << item.itemIndexOnMap;
     //add get item from db
     if(!item.infinite)
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_itemonmap.arg(character_id).arg(item.itemDbCode));
+        dbQueryWrite(PreparedDBQuery::db_query_insert_itemonmap.arg(character_id).arg(item.itemDbCode));
     addObject(item.item);
 }

@@ -28,9 +28,6 @@ public:
 public:
     QHash<quint16,BotFight> botFights;
     QHash<quint16,Quest> quests;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
-    #endif
     QList<MonstersCollision> monstersCollision;
     QHash<quint32,Shop> shops;
     static CommonDatapackServerSpec commonDatapackServerSpec;
