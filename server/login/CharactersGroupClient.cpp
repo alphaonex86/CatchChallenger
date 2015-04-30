@@ -3,6 +3,7 @@
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../base/SqlFunction.h"
 #include "../base/PreparedDBQuery.h"
+#include "../base/DictionaryLogin.h"
 #include <iostream>
 #include <QDebug>
 
@@ -72,7 +73,7 @@ void CharactersGroupForLogin::character_list_object()
                 }
                 else
                 {
-                    if(tempRawData[tempRawDataSize]>=EpollServerLoginSlave::epollServerLoginSlave->dictionary_skin_internal_to_database.size())//out of range
+                    if(tempRawData[tempRawDataSize]>=DictionaryLogin::dictionary_skin_internal_to_database.size())//out of range
                     {
                         qDebug() << (QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
                         tempRawData[tempRawDataSize]=0;
@@ -115,7 +116,7 @@ void CharactersGroupForLogin::character_list_object()
                 deleteCharacterNow(character_id);
         }
         else
-            qDebug() << (QStringLiteral("Character id is not number: %1 for %2").arg(databaseBaseCommon->value(0)).arg(character_id));
+            qDebug() << (QStringLiteral("Server id is not number: %1 for %2").arg(databaseBaseCommon->value(0)).arg(character_id));
     }
     tempRawData[0]=validCharaterCount;
     static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount=validCharaterCount;
@@ -160,7 +161,7 @@ void CharactersGroupForLogin::server_list_object()
     quint8 validServerCount=0;
     while(databaseBaseCommon->next() && validServerCount<EpollClientLoginSlave::max_character)
     {
-        unsigned int server_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+        const unsigned int server_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
             qint16 serverIndex=-1;
@@ -324,7 +325,7 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
         return 0x03;
     }
     #endif
-    if(EpollServerLoginSlave::epollServerLoginSlave->dictionary_skin_internal_to_database.isEmpty())
+    if(DictionaryLogin::dictionary_skin_internal_to_database.isEmpty())
     {
         qDebug() << QStringLiteral("Skin list is empty, unable to add charaters");
         //char tempData[1+4]={0x02,0x00,0x00,0x00,0x00};/* not htole32 because inverted is the same */
@@ -346,7 +347,7 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
         qDebug() << (QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(EpollClientLoginSlave::max_pseudo_size));
         return -1;
     }
-    if(skinId>=EpollServerLoginSlave::epollServerLoginSlave->dictionary_skin_internal_to_database.size())
+    if(skinId>=DictionaryLogin::dictionary_skin_internal_to_database.size())
     {
         qDebug() << (QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
         return -1;
@@ -433,7 +434,7 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[3],profile.preparedQuerySize[3]);
     tempBufferSize+=profile.preparedQueryPos[3];
 
-    numberBuffer=QString::number(EpollServerLoginSlave::epollServerLoginSlave->dictionary_skin_internal_to_database.at(skinId)).toLatin1();
+    numberBuffer=QString::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 

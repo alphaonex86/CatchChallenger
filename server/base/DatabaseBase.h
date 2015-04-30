@@ -32,6 +32,7 @@ class DatabaseBase
         unsigned int considerDownAfterNumberOfTry;
         virtual DatabaseBase::Type databaseType() const = 0;
         virtual void clear();
+        static const char * databaseTypeToString(const DatabaseBase::Type &type);
 };
 }
 

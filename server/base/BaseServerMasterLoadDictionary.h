@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_BASESERVERLOGIN_H
-#define CATCHCHALLENGER_BASESERVERLOGIN_H
+#ifndef CATCHCHALLENGER_BASESERVERMASTERLOGINDICTIONARY_H
+#define CATCHCHALLENGER_BASESERVERMASTERLOGINDICTIONARY_H
 
 #include <QList>
 #include <QRegularExpression>
@@ -9,33 +9,13 @@
 #include "DatabaseBase.h"
 
 namespace CatchChallenger {
-class BaseServerMaster
+class BaseServerMasterLoadDictionary
 {
 public:
-    explicit BaseServerMaster();
-    virtual ~BaseServerMaster();
+    explicit BaseServerMasterLoadDictionary();
+    virtual ~BaseServerMasterLoadDictionary();
 
-    void load(CatchChallenger::DatabaseBase * const databaseBase,const QString &datapack_basePath);
-
-    static QSet<QString> compressedExtension;
-    static QSet<QString> extensionAllowed;
-    static QByteArray rawFiles,compressedFiles;
-    static int rawFilesCount,compressedFilesCount;
-    struct DatapackCacheFile
-    {
-        quint32 mtime;
-        quint32 partialHash;
-    };
-    static QHash<QString,quint32> datapack_file_list_cache;
-    static QHash<QString,DatapackCacheFile> datapack_file_hash_cache;
-    static QRegularExpression fileNameStartStringRegex;
-    static QByteArray datapackBaseHash;
-
-    struct TokenLink
-    {
-        void * client;
-        char value[CATCHCHALLENGER_TOKENSIZE];
-    };
+    void load(CatchChallenger::DatabaseBase * const databaseBase);
 public:
     DatabaseBase *databaseBaseLogin;
 
@@ -49,9 +29,6 @@ public:
 private:
     virtual void SQL_common_load_finish() = 0;
 
-    void preload_the_skin();
-    void loadTheDatapackFileList();
-
     void preload_dictionary_allow();
     static void preload_dictionary_allow_static(void *object);
     void preload_dictionary_allow_return();
@@ -64,10 +41,6 @@ private:
     void preload_dictionary_starter();
     static void preload_dictionary_starter_static(void *object);
     void preload_dictionary_starter_return();
-private:
-    QHash<QString,quint8> skinList;
-    //not global because all server don't need load the dictionary
-    QString datapack_basePathLogin;
 protected:
     void unload();
 };

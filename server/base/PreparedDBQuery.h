@@ -10,10 +10,8 @@ class PreparedDBQuery
 {
 public:
     PreparedDBQuery();
-    void initDatabaseQuery(const DatabaseBase::Type &type,const bool &useSP);
+    static void initDatabaseQuery(const DatabaseBase::Type &type,const bool &useSP);
 public:
-    static QString db_type_string;
-
     //query
     static QString db_query_select_allow;
     static QString db_query_login;
@@ -120,6 +118,8 @@ public:
     static QString db_query_update_charaters_market_cash;
     static QString db_query_insert_monster_market;
     static QString db_query_get_market_cash;
+
+    static QString db_query_select_server;
 };
 
 }

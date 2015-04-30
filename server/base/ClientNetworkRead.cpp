@@ -1211,12 +1211,19 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                 quint8 profileIndex;
                 QString pseudo;
                 quint8 skinId;
+                quint8 charactersGroupIndex;
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                     return;
                 }
                 in >> profileIndex;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                in >> charactersGroupIndex;
                 if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                 {
                     parseNetworkReadError(QStringLiteral("error to get pseudo with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -1254,7 +1261,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
                 removeCharacter(queryNumber,characterId);
             }
             break;
@@ -1268,7 +1275,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
                     return;
                 }
                 #endif
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4+1)));
                 selectCharacter(queryNumber,characterId);
             }
             break;

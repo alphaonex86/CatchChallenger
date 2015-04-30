@@ -639,7 +639,8 @@ void EpollServerLoginMaster::loadTheDatapack()
         abort();
     }
 
-    load(databaseBaseLogin,"datapack/");
+    baseServerMasterSendDatapack.load("datapack/");
+    load(databaseBaseLogin);
 }
 
 void EpollServerLoginMaster::SQL_common_load_finish()
@@ -666,7 +667,7 @@ void EpollServerLoginMaster::loadTheProfile()
     int skinId=0;
     while(skinId<CommonDatapack::commonDatapack.skins.size())
     {
-        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMaster::dictionary_skin_internal_to_database.value(skinId));
+        *reinterpret_cast<quint16 *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.value(skinId));
         rawServerListForC211Size+=2;
         skinId++;
     }
@@ -810,5 +811,6 @@ void EpollServerLoginMaster::loadTheProfile()
     }
 
     CommonDatapack::commonDatapack.unload();
-    BaseServerMaster::unload();
+    baseServerMasterSendDatapack.unload();
+    BaseServerMasterLoadDictionary::unload();
 }

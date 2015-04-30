@@ -8,6 +8,7 @@
 
 #include "DebugClass.h"
 #include "GeneralStructures.h"
+#include "GeneralStructuresXml.h"
 #include "CommonMap.h"
 
 namespace CatchChallenger {

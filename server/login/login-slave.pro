@@ -1,3 +1,6 @@
+#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
+#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
+
 QT       -= gui widgets network sql xml
 
 DEFINES += SERVERNOBUFFER
@@ -5,6 +8,7 @@ DEFINES += SERVERNOBUFFER
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 #DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+DEFINES += CATCHCHALLENGER_CLASS_LOGIN
 
 #LIBS += -lssl -lcrypto
 LIBS    += -lpq -llzma
@@ -46,7 +50,8 @@ SOURCES += \
     CharactersGroupClient.cpp \
     ../base/BaseServerLogin.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
-    ../base/SqlFunction.cpp
+    ../base/SqlFunction.cpp \
+    ../base/DictionaryLogin.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -69,4 +74,5 @@ HEADERS += \
     ../base/BaseServerLogin.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/FacilityLibGeneral.h \
-    ../base/SqlFunction.h
+    ../base/SqlFunction.h \
+    ../base/DictionaryLogin.h

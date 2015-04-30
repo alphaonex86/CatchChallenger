@@ -15,7 +15,7 @@
 
 using namespace CatchChallenger;
 
-CommonDatapackServerSpec CommonDatapackServerSpec::commonDatapack;
+CommonDatapackServerSpec CommonDatapackServerSpec::commonDatapackServerSpec;
 
 CommonDatapackServerSpec::CommonDatapackServerSpec()
 {
@@ -26,9 +26,9 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath)
     if(isParsedSpec)
         return;
     QMutexLocker mutexLocker(&inProgressSpec);
-    
+
     CommonDatapack::parseDatapack(datapackPath);
-    
+
     parseQuests();
     parseBotFights();
     parseMonstersCollision();
@@ -37,7 +37,7 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath)
 /*    #ifdef EPOLLCATCHCHALLENGERSERVER
     teleportConditionsUnparsed.clear();
     #endif*/
-    
+
     isParsedSpec=true;
 }
 

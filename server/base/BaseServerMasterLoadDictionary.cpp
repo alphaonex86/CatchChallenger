@@ -1,4 +1,5 @@
-#include "BaseServerMaster.h"
+#include "BaseServerMasterLoadDictionary.h"
+#include "BaseServerMasterSendDatapack.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/GeneralVariable.h"
@@ -11,106 +12,21 @@
 
 using namespace CatchChallenger;
 
-QSet<QString> BaseServerMaster::compressedExtension;
-QSet<QString> BaseServerMaster::extensionAllowed;
-QByteArray BaseServerMaster::rawFiles;
-QByteArray BaseServerMaster::compressedFiles;
-int BaseServerMaster::rawFilesCount;
-int BaseServerMaster::compressedFilesCount;
-QHash<QString,quint32> BaseServerMaster::datapack_file_list_cache;
-QHash<QString,BaseServerMaster::DatapackCacheFile> BaseServerMaster::datapack_file_hash_cache;
-QRegularExpression BaseServerMaster::fileNameStartStringRegex=QRegularExpression(QLatin1String("^[a-zA-Z]:/"));
-QByteArray BaseServerMaster::datapackBaseHash;
-
-BaseServerMaster::BaseServerMaster() :
+BaseServerMasterLoadDictionary::BaseServerMasterLoadDictionary() :
     databaseBaseLogin(NULL)
 {
 }
 
-BaseServerMaster::~BaseServerMaster()
+BaseServerMasterLoadDictionary::~BaseServerMasterLoadDictionary()
 {
 }
 
-void BaseServerMaster::load(DatabaseBase * const databaseBase, const QString &datapack_basePath)
+void BaseServerMasterLoadDictionary::load(DatabaseBase * const databaseBase)
 {
     this->databaseBaseLogin=databaseBase;
-    this->datapack_basePathLogin=datapack_basePath;
-    preload_the_skin();
 }
 
-void BaseServerMaster::preload_the_skin()
-{
-    const QStringList &skinFolderList=FacilityLibGeneral::skinIdList(datapack_basePathLogin+DATAPACK_BASE_PATH_SKIN);
-    int index=0;
-    const int &listsize=skinFolderList.size();
-    while(index<listsize)
-    {
-        skinList[skinFolderList.at(index)]=index;
-        index++;
-    }
-    loadTheDatapackFileList();
-}
-
-void BaseServerMaster::loadTheDatapackFileList()
-{
-    QStringList extensionAllowedTemp=(QString(CATCHCHALLENGER_EXTENSION_ALLOWED)+QString(";")+QString(CATCHCHALLENGER_EXTENSION_COMPRESSED)).split(";");
-    extensionAllowed=extensionAllowedTemp.toSet();
-    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
-    compressedExtension=compressedExtensionAllowedTemp.toSet();
-    QRegularExpression datapack_rightFileName = QRegularExpression(DATAPACK_FILE_REGEX);
-
-    QString text_datapack(datapack_basePathLogin);
-    QString text_exclude("map/main/");
-
-    QCryptographicHash baseHash(QCryptographicHash::Sha224);
-    QStringList datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
-    datapack_file_temp.sort();
-
-    int index=0;
-    while(index<datapack_file_temp.size()) {
-        QFile file(text_datapack+datapack_file_temp.at(index));
-        if(datapack_file_temp.at(index).contains(datapack_rightFileName))
-        {
-            if(file.size()<=8*1024*1024)
-            {
-                if(!datapack_file_temp.at(index).startsWith(text_exclude))
-                {
-                    if(file.open(QIODevice::ReadOnly))
-                    {
-                        const QByteArray &data=file.readAll();
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
-                            BaseServerMaster::DatapackCacheFile cacheFile;
-                            cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
-                            cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                            datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
-                        }
-                        baseHash.addData(data);
-                        file.close();
-                    }
-                    else
-                    {
-                        std::cerr << "Stop now! Unable to open the file " << file.fileName().toStdString() << " to do the datapack checksum for the mirror" << std::endl;
-                        abort();
-                    }
-                }
-            }
-            else
-                std::cerr << "File to big: " << datapack_file_temp.at(index).toStdString() << " size: " << file.size() << std::endl;
-        }
-        else
-            std::cerr << "File excluded because don't match the regex: " << file.fileName().toStdString() << std::endl;
-        index++;
-    }
-
-    datapackBaseHash=baseHash.result();
-    std::cout << datapack_file_temp.size() << " files for datapack loaded" << std::endl;
-
-    preload_dictionary_allow();
-}
-
-void BaseServerMaster::preload_dictionary_allow()
+void BaseServerMasterLoadDictionary::preload_dictionary_allow()
 {
     QString queryText;
     switch(databaseBaseLogin->databaseType())
@@ -126,19 +42,19 @@ void BaseServerMaster::preload_dictionary_allow()
             queryText=QStringLiteral("SELECT id,allow FROM dictionary_allow ORDER BY allow");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMaster::preload_dictionary_allow_static)==NULL)
+    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_allow_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
 
-void BaseServerMaster::preload_dictionary_allow_static(void *object)
+void BaseServerMasterLoadDictionary::preload_dictionary_allow_static(void *object)
 {
-    static_cast<BaseServerMaster *>(object)->preload_dictionary_allow_return();
+    static_cast<BaseServerMasterLoadDictionary *>(object)->preload_dictionary_allow_return();
 }
 
-void BaseServerMaster::preload_dictionary_allow_return()
+void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
 {
     dictionary_allow_internal_to_database << 0x00 << 0x00;
     bool haveAllowClan=false;
@@ -198,7 +114,7 @@ void BaseServerMaster::preload_dictionary_allow_return()
     preload_dictionary_reputation();
 }
 
-void BaseServerMaster::preload_dictionary_reputation()
+void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
 {
     QString queryText;
     switch(databaseBaseLogin->databaseType())
@@ -214,19 +130,19 @@ void BaseServerMaster::preload_dictionary_reputation()
             queryText=QStringLiteral("SELECT id,reputation FROM dictionary_reputation ORDER BY reputation");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMaster::preload_dictionary_reputation_static)==NULL)
+    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_reputation_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
 
-void BaseServerMaster::preload_dictionary_reputation_static(void *object)
+void BaseServerMasterLoadDictionary::preload_dictionary_reputation_static(void *object)
 {
-    static_cast<BaseServerMaster *>(object)->preload_dictionary_reputation_return();
+    static_cast<BaseServerMasterLoadDictionary *>(object)->preload_dictionary_reputation_return();
 }
 
-void BaseServerMaster::preload_dictionary_reputation_return()
+void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
 {
     QHash<QString,quint8> reputationResolution;
     {
@@ -297,7 +213,7 @@ void BaseServerMaster::preload_dictionary_reputation_return()
     preload_dictionary_skin();
 }
 
-void BaseServerMaster::preload_dictionary_skin()
+void BaseServerMasterLoadDictionary::preload_dictionary_skin()
 {
     QString queryText;
     switch(databaseBaseLogin->databaseType())
@@ -313,23 +229,23 @@ void BaseServerMaster::preload_dictionary_skin()
             queryText=QStringLiteral("SELECT id,skin FROM dictionary_skin ORDER BY skin");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMaster::preload_dictionary_skin_static)==NULL)
+    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_skin_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
 
-void BaseServerMaster::preload_dictionary_skin_static(void *object)
+void BaseServerMasterLoadDictionary::preload_dictionary_skin_static(void *object)
 {
-    static_cast<BaseServerMaster *>(object)->preload_dictionary_skin_return();
+    static_cast<BaseServerMasterLoadDictionary *>(object)->preload_dictionary_skin_return();
 }
 
-void BaseServerMaster::preload_dictionary_skin_return()
+void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
 {
     {
         int index=0;
-        while(index<skinList.size())
+        while(index<BaseServerMasterSendDatapack::skinList.size())
         {
             dictionary_skin_internal_to_database << 0;
             index++;
@@ -351,16 +267,16 @@ void BaseServerMaster::preload_dictionary_skin_return()
                 index++;
             }
         }
-        if(skinList.contains(skin))
+        if(BaseServerMasterSendDatapack::skinList.contains(skin))
         {
-            const quint8 &internalValue=skinList.value(skin);
+            const quint8 &internalValue=BaseServerMasterSendDatapack::skinList.value(skin);
             dictionary_skin_database_to_internal[lastId]=internalValue;
             dictionary_skin_internal_to_database[internalValue]=lastId;
             foundSkin << skin;
         }
     }
     databaseBaseLogin->clear();
-    QHashIterator<QString,quint8> i(skinList);
+    QHashIterator<QString,quint8> i(BaseServerMasterSendDatapack::skinList);
     while (i.hasNext()) {
         i.next();
         const QString &skin=i.key();
@@ -395,7 +311,7 @@ void BaseServerMaster::preload_dictionary_skin_return()
     preload_dictionary_starter();
 }
 
-void BaseServerMaster::preload_dictionary_starter()
+void BaseServerMasterLoadDictionary::preload_dictionary_starter()
 {
     QString queryText;
     switch(databaseBaseLogin->databaseType())
@@ -411,19 +327,19 @@ void BaseServerMaster::preload_dictionary_starter()
             queryText=QStringLiteral("SELECT id,starter FROM dictionary_starter ORDER BY starter");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMaster::preload_dictionary_starter_static)==NULL)
+    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_starter_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
 
-void BaseServerMaster::preload_dictionary_starter_static(void *object)
+void BaseServerMasterLoadDictionary::preload_dictionary_starter_static(void *object)
 {
-    static_cast<BaseServerMaster *>(object)->preload_dictionary_starter_return();
+    static_cast<BaseServerMasterLoadDictionary *>(object)->preload_dictionary_starter_return();
 }
 
-void BaseServerMaster::preload_dictionary_starter_return()
+void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
 {
     QHash<QString,quint8> profileNameToId;
     {
@@ -504,7 +420,7 @@ void BaseServerMaster::preload_dictionary_starter_return()
     SQL_common_load_finish();
 }
 
-void BaseServerMaster::unload()
+void BaseServerMasterLoadDictionary::unload()
 {
     dictionary_starter_database_to_internal.clear();
     dictionary_starter_internal_to_database.clear();
