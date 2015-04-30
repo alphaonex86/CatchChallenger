@@ -190,14 +190,14 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
     settings->beginGroup(QLatin1Literal("db"));
     if(!settings->contains(QLatin1Literal("type")))
         settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
-    if(!settings->contains(QLatin1Literal("mysql_host")))
-        settings->setValue(QLatin1Literal("mysql_host"),QLatin1Literal("localhost"));
-    if(!settings->contains(QLatin1Literal("mysql_login")))
-        settings->setValue(QLatin1Literal("mysql_login"),QLatin1Literal("catchchallenger-login"));
-    if(!settings->contains(QLatin1Literal("mysql_pass")))
-        settings->setValue(QLatin1Literal("mysql_pass"),QLatin1Literal("catchchallenger-pass"));
-    if(!settings->contains(QLatin1Literal("mysql_db")))
-        settings->setValue(QLatin1Literal("mysql_db"),QLatin1Literal("catchchallenger"));
+    if(!settings->contains(QLatin1Literal("host")))
+        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
+    if(!settings->contains(QLatin1Literal("login")))
+        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-login"));
+    if(!settings->contains(QLatin1Literal("pass")))
+        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
+    if(!settings->contains(QLatin1Literal("db")))
+        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger"));
     if(!settings->contains(QLatin1Literal("db_fight_sync")))
         settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtTheEndOfBattle"));
     if(!settings->contains(QLatin1Literal("secondToPositionSync")))

@@ -13,6 +13,7 @@
 #include "LocalClientHandlerWithoutSender.h"
 #include "ClientNetworkReadWithoutSender.h"
 #include "SqlFunction.h"
+#include "DictionaryServer.h"
 #include "PreparedDBQuery.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -502,12 +503,12 @@ void BaseServer::preload_itemOnMap_return()
                             qDebug() << QStringLiteral("preload_itemOnMap_return(): y out of range").arg(y);
                         else
                         {
-                            if(GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database.contains(map)
-                                    && GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database.value(map).contains(QPair<quint8/*x*/,quint8/*y*/>(x,y)))
+                            if(DictionaryServer::dictionary_itemOnMap_internal_to_database.contains(map)
+                                    && DictionaryServer::dictionary_itemOnMap_internal_to_database.value(map).contains(QPair<quint8/*x*/,quint8/*y*/>(x,y)))
                                 qDebug() << QStringLiteral("preload_itemOnMap_return(): duplicate entry: %1 %2 %3").arg(map).arg(x).arg(y);
                             else
                             {
-                                GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database[map][QPair<quint8/*x*/,quint8/*y*/>(x,y)]=id;
+                                DictionaryServer::dictionary_itemOnMap_internal_to_database[map][QPair<quint8/*x*/,quint8/*y*/>(x,y)]=id;
                                 dictionary_item_maxId=id;
                             }
                         }
@@ -518,7 +519,7 @@ void BaseServer::preload_itemOnMap_return()
     }
     GlobalServerData::serverPrivateVariables.db.clear();
     {
-        DebugClass::debugConsole(QStringLiteral("%1 SQL item on map dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database.size()));
+        DebugClass::debugConsole(QStringLiteral("%1 SQL item on map dictionary").arg(DictionaryServer::dictionary_itemOnMap_internal_to_database.size()));
 
         if(!preload_the_map())
             return;
@@ -573,18 +574,18 @@ void BaseServer::preload_dictionary_map_return()
         bool ok;
         databaseMapId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         const QString &map=QString(GlobalServerData::serverPrivateVariables.db.value(1));
-        if(GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.size()<=databaseMapId)
+        if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
         {
-            int index=GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.size();
+            int index=DictionaryServer::dictionary_map_database_to_internal.size();
             while(index<=databaseMapId)
             {
-                GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal << NULL;
+                DictionaryServer::dictionary_map_database_to_internal << NULL;
                 index++;
             }
         }
         if(GlobalServerData::serverPrivateVariables.map_list.contains(map))
         {
-            GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map));
+            DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map));
             foundMap << map;
             static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(map))->reverse_db_id=databaseMapId;
         }
@@ -620,9 +621,9 @@ void BaseServer::preload_dictionary_map_return()
                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
-            while(GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.size()<=databaseMapId)
-                GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal << NULL;
-            GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
+            while(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
+                DictionaryServer::dictionary_map_database_to_internal << NULL;
+            DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
             static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->reverse_db_id=databaseMapId;
         }
         index++;
@@ -630,7 +631,7 @@ void BaseServer::preload_dictionary_map_return()
 
     if(obsoleteMap)
         DebugClass::debugConsole(QStringLiteral("%1 SQL obsolete map dictionary").arg(obsoleteMap));
-    DebugClass::debugConsole(QStringLiteral("%1 SQL map dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 SQL map dictionary").arg(DictionaryServer::dictionary_map_database_to_internal.size()));
 
     plant_on_the_map=0;
     preload_the_plant_on_map();
@@ -641,7 +642,7 @@ void BaseServer::preload_dictionary_map_return()
  *
 void BaseServer::preload_profile()
 {
-    DebugClass::debugConsole(QStringLiteral("%1 SQL skin dictionary").arg(GlobalServerData::serverPrivateVariables.dictionary_skin.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 SQL skin dictionary").arg(DictionaryServer::dictionary_skin.size()));
 
     int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
@@ -1432,9 +1433,9 @@ bool BaseServer::preload_the_map()
                         const Map_to_send::ItemOnMap_Semi &item=map_temp.map_to_send.items.at(index);
 
                         quint16 itemDbCode;
-                        if(GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database.contains(sortFileName)
-                                && GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(item.point.x,item.point.y)))
-                            itemDbCode=GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(item.point.x,item.point.y));
+                        if(DictionaryServer::dictionary_itemOnMap_internal_to_database.contains(sortFileName)
+                                && DictionaryServer::dictionary_itemOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(item.point.x,item.point.y)))
+                            itemDbCode=DictionaryServer::dictionary_itemOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(item.point.x,item.point.y));
                         else
                         {
                             dictionary_item_maxId++;
@@ -1472,10 +1473,10 @@ bool BaseServer::preload_the_map()
                                 qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
                                 criticalDatabaseQueryFailed();return false;//stop because can't resolv the name
                             }
-                            while((quint32)GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_database_to_internal.size()<dictionary_item_maxId)
-                                GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_database_to_internal << 255/*-1*/;
-                            GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_database_to_internal << indexOfItemOnMap;
-                            GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(item.point.x,item.point.y)]=indexOfItemOnMap;
+                            while((quint32)DictionaryServer::dictionary_itemOnMap_database_to_internal.size()<dictionary_item_maxId)
+                                DictionaryServer::dictionary_itemOnMap_database_to_internal << 255/*-1*/;
+                            DictionaryServer::dictionary_itemOnMap_database_to_internal << indexOfItemOnMap;
+                            DictionaryServer::dictionary_itemOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(item.point.x,item.point.y)]=indexOfItemOnMap;
 
                             itemDbCode=dictionary_item_maxId;
                         }
@@ -1486,9 +1487,9 @@ bool BaseServer::preload_the_map()
                         itemOnMap.itemIndexOnMap=indexOfItemOnMap;
                         itemOnMap.itemDbCode=itemDbCode;
                         mapServer->itemsOnMap[QPair<quint8,quint8>(item.point.x,item.point.y)]=itemOnMap;
-                        while(GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_database_to_internal.size()<=itemOnMap.itemDbCode)
-                            GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_database_to_internal << 255/*-1*/;
-                        GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_database_to_internal[itemOnMap.itemDbCode]=indexOfItemOnMap;
+                        while(DictionaryServer::dictionary_itemOnMap_database_to_internal.size()<=itemOnMap.itemDbCode)
+                            DictionaryServer::dictionary_itemOnMap_database_to_internal << 255/*-1*/;
+                        DictionaryServer::dictionary_itemOnMap_database_to_internal[itemOnMap.itemDbCode]=indexOfItemOnMap;
                         indexOfItemOnMap++;
                         index++;
                     }
@@ -2243,7 +2244,7 @@ bool BaseServer::initialize_the_database()
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db.databaseType()))
-                                 .arg(GlobalServerData::serverSettings.database.mysql.host)
+                                 .arg(GlobalServerData::serverSettings.database.sql.host)
                                  );
         GlobalServerData::serverPrivateVariables.db.syncDisconnect();
     }
@@ -2293,10 +2294,10 @@ bool BaseServer::initialize_the_database()
                     ))
         #else
         if(!GlobalServerData::serverPrivateVariables.db.syncConnect(
-                    GlobalServerData::serverSettings.database.mysql.host.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.db.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.login.toLatin1(),
-                    GlobalServerData::serverSettings.database.mysql.pass.toLatin1()
+                    GlobalServerData::serverSettings.database.sql.host.toLatin1(),
+                    GlobalServerData::serverSettings.database.sql.db.toLatin1(),
+                    GlobalServerData::serverSettings.database.sql.login.toLatin1(),
+                    GlobalServerData::serverSettings.database.sql.pass.toLatin1()
                     ))
         #endif
         {
@@ -2306,7 +2307,7 @@ bool BaseServer::initialize_the_database()
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db.databaseType()))
-                                     .arg(GlobalServerData::serverSettings.database.mysql.host));
+                                     .arg(GlobalServerData::serverSettings.database.sql.host));
         break;
     }
     initialize_the_database_prepared_query();
@@ -2438,8 +2439,8 @@ void BaseServer::unload_dictionary()
 {
     BaseServerMasterLoadDictionary::unload();
     baseServerMasterSendDatapack.unload();
-    GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_internal_to_database.clear();
-    GlobalServerData::serverPrivateVariables.dictionary_itemOnMap_database_to_internal.clear();
+    DictionaryServer::dictionary_itemOnMap_internal_to_database.clear();
+    DictionaryServer::dictionary_itemOnMap_database_to_internal.clear();
 }
 
 void BaseServer::unload_the_static_data()
