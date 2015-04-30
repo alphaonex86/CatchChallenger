@@ -111,6 +111,8 @@ QString PreparedDBQuery::db_query_insert_monster_market=NULL;
 QString PreparedDBQuery::db_query_get_market_cash=NULL;
 QString PreparedDBQuery::db_query_servers=NULL;
 
+QString PreparedDBQuery::db_query_select_server=NULL;
+
 PreparedDBQuery::PreparedDBQuery()
 {
 }

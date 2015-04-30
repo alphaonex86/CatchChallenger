@@ -1,5 +1,6 @@
 #include "Client.h"
 #include "GlobalServerData.h"
+#include "../base/PreparedDBQuery.h"
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/GeneralType.h"
 
@@ -39,7 +40,6 @@ Client::Client(
     character_loaded(false),
     character_loaded_in_progress(false),
     account_id(0),
-    number_of_character(0),
     character_id(0),
     market_cash(0),
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -227,7 +227,7 @@ void Client::disconnectClient()
         leaveTheCityCapture();
         const quint32 &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
         if(addTime>5)
-            dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_played_time.arg(character_id).arg(addTime));
+            dbQueryWrite(PreparedDBQuery::db_query_played_time.arg(character_id).arg(addTime));
         //save the monster
         if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle && isInFight())
             saveCurrentMonsterStat();
@@ -238,8 +238,8 @@ void Client::disconnectClient()
             while(index<size)
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                if(CommonSettings::commonSettings.useSP)
-                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster
+                if(CommonSettingsServer::commonSettingsServer.useSP)
+                    dbQueryWrite(PreparedDBQuery::db_query_monster
                                  .arg(playerMonster.id)
                                  .arg(character_id)
                                  .arg(playerMonster.hp)
@@ -249,7 +249,7 @@ void Client::disconnectClient()
                                  .arg(index+1)
                                  );
                 else
-                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster
+                    dbQueryWrite(PreparedDBQuery::db_query_monster
                                  .arg(playerMonster.id)
                                  .arg(character_id)
                                  .arg(playerMonster.hp)
@@ -262,7 +262,7 @@ void Client::disconnectClient()
                 while(sub_index<sub_size)
                 {
                     const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
-                    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_monster_skill
+                    dbQueryWrite(PreparedDBQuery::db_query_monster_skill
                                  .arg(playerSkill.endurance)
                                  .arg(playerMonster.id)
                                  .arg(playerSkill.skill)

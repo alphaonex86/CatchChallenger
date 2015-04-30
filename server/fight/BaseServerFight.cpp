@@ -29,16 +29,16 @@ void BaseServer::load_monsters_max_id()
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxMonsterId=0;
     QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    switch(GlobalServerData::serverPrivateVariables.db.databaseType())
     {
         default:
-        case GameServerSettings::Database::DatabaseType_Mysql:
+        case DatabaseBase::Type::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case GameServerSettings::Database::DatabaseType_SQLite:
+        case DatabaseBase::Type::SQLite:
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
-        case GameServerSettings::Database::DatabaseType_PostgreSQL:
+        case DatabaseBase::Type::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -78,16 +78,16 @@ void BaseServer::load_monsters_max_id_return()
 void BaseServer::load_monsters_warehouse_max_id()
 {
     QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    switch(GlobalServerData::serverPrivateVariables.db.databaseType())
     {
         default:
-        case GameServerSettings::Database::DatabaseType_Mysql:
+        case DatabaseBase::Type::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `monster_warehouse` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case GameServerSettings::Database::DatabaseType_SQLite:
+        case DatabaseBase::Type::SQLite:
             queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 0,1;");
         break;
-        case GameServerSettings::Database::DatabaseType_PostgreSQL:
+        case DatabaseBase::Type::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -127,16 +127,16 @@ void BaseServer::load_monsters_warehouse_max_id_return()
 void BaseServer::load_monsters_market_max_id()
 {
     QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    switch(GlobalServerData::serverPrivateVariables.db.databaseType())
     {
         default:
-        case GameServerSettings::Database::DatabaseType_Mysql:
+        case DatabaseBase::Type::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `monster_market` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case GameServerSettings::Database::DatabaseType_SQLite:
+        case DatabaseBase::Type::SQLite:
             queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 0,1;");
         break;
-        case GameServerSettings::Database::DatabaseType_PostgreSQL:
+        case DatabaseBase::Type::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 1;");
         break;
     }
