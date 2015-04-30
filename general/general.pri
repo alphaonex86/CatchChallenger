@@ -22,6 +22,7 @@ SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/fight/FightLoader.cpp \
     $$PWD/base/DatapackGeneralLoader.cpp \
     $$PWD/base/CommonDatapack.cpp \
+    $$PWD/base/CommonDatapackServerSpec.cpp \
     $$PWD/fight/CommonFightEngine.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/CommonSettings.cpp
@@ -43,6 +44,7 @@ HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/fight/FightLoader.h \
     $$PWD/base/DatapackGeneralLoader.h \
     $$PWD/base/CommonDatapack.h \
+    $$PWD/base/CommonDatapackServerSpec.h \
     $$PWD/fight/CommonFightEngine.h \
     $$PWD/fight/CommonFightEngineBase.h \
     $$PWD/base/CommonSettings.h \

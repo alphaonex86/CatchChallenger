@@ -5,3 +5,6 @@ echo 'CREATE DATABASE catchchallenger_server;' | psql postgres login
 psql catchchallenger_common login < catchchallenger-postgresql-common.sql
 psql catchchallenger_login login < catchchallenger-postgresql-login.sql
 psql catchchallenger_server login < catchchallenger-postgresql-server.sql
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_login root
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_common root
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_server root

@@ -1,3 +1,6 @@
+#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
+#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
+
 QT       -= gui widgets network sql
 QT       += xml
 
@@ -6,7 +9,9 @@ DEFINES += SERVERNOBUFFER
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+//toremove
 DEFINES += EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+DEFINES += CATCHCHALLENGER_CLASS_MASTER
 
 #LIBS += -lssl -lcrypto
 LIBS    += -lpq
@@ -41,7 +46,8 @@ SOURCES += \
     ../../general/base/CommonDatapack.cpp \
     ../../general/base/DatapackGeneralLoader.cpp \
     ../../general/fight/CommonFightEngineBase.cpp \
-    ../base/BaseServerMaster.cpp \
+    ../base/BaseServerMasterLoadDictionary.cpp \
+    ../base/BaseServerMasterSendDatapack.cpp \
     ../../general/fight/FightLoader.cpp \
     ../../general/base/CommonSettingsCommon.cpp
 
@@ -66,6 +72,7 @@ HEADERS += \
     ../../general/fight/CommonFightEngineBase.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/GeneralType.h \
-    ../base/BaseServerMaster.h \
+    ../base/BaseServerMasterLoadDictionary.h \
+    ../base/BaseServerMasterSendDatapack.h \
     ../../general/fight/FightLoader.h \
     ../../general/base/CommonSettingsCommon.h

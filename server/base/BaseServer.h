@@ -25,9 +25,11 @@
 #include "ServerStructures.h"
 #include "Client.h"
 #include "MapServer.h"
+#include "BaseServerMasterLoadDictionary.h"
+#include "BaseServerMasterSendDatapack.h"
 
 namespace CatchChallenger {
-class BaseServer
+class BaseServer : public BaseServerMasterLoadDictionary
 {
 public:
     explicit BaseServer();
@@ -52,6 +54,7 @@ protected:
     void initAll();//call before all
     //remove all finished client
     bool load_next_city_capture();
+    void SQL_common_load_finish();
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     void closeDB();
@@ -176,6 +179,8 @@ protected:
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
     QSet<quint32> botIdLoaded;
     QTime timeDatapack;
+    unsigned int dictionary_item_maxId;
+    BaseServerMasterSendDatapack baseServerMasterSendDatapack;
 
     QFileInfoList entryListZone;
     int entryListIndex;

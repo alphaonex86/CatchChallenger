@@ -1,6 +1,8 @@
 #include "Client.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
+#include "../base/PreparedDBQuery.h"
 #include "GlobalServerData.h"
 
 using namespace CatchChallenger;
@@ -8,12 +10,12 @@ using namespace CatchChallenger;
 //quest
 void Client::newQuestAction(const QuestAction &action,const quint32 &questId)
 {
-    if(!CommonDatapack::commonDatapack.quests.contains(questId))
+    if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
     {
         errorOutput(QStringLiteral("unknown questId: %1").arg(questId));
         return;
     }
-    const Quest &quest=CommonDatapack::commonDatapack.quests.value(questId);
+    const Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
     switch(action)
     {
         case QuestAction_Start:
@@ -46,12 +48,12 @@ void Client::addQuestStepDrop(const quint32 &questId,const quint8 &questStep)
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput(QStringLiteral("addQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
-    if(!CommonDatapack::commonDatapack.quests.contains(questId))
+    if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
     {
         errorOutput("Quest not found for drops");
         return;
     }
-    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests.value(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
     if(questStep<=0 || questStep>quest.steps.size())
     {
         errorOutput("Quest step out of range for drops");
@@ -79,12 +81,12 @@ void Client::removeQuestStepDrop(const quint32 &questId,const quint8 &questStep)
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput(QStringLiteral("removeQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
-    if(!CommonDatapack::commonDatapack.quests.contains(questId))
+    if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
     {
         errorOutput("Quest not found for drops");
         return;
     }
-    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests.value(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
     if(questStep<=0 || questStep>quest.steps.size())
     {
         errorOutput("Quest step out of range for drops");
@@ -231,7 +233,7 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput(QStringLiteral("finish the quest: %1").arg(quest.id));
         #endif
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_quest_finish.arg(character_id).arg(quest.id));
+        dbQueryWrite(PreparedDBQuery::db_query_update_quest_finish.arg(character_id).arg(quest.id));
         public_and_private_informations.quests[quest.id].step=0;
         public_and_private_informations.quests[quest.id].finish_one_time=true;
         index=0;
@@ -258,7 +260,7 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput(QStringLiteral("next step in the quest: %1").arg(quest.id));
         #endif
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_quest_step
+        dbQueryWrite(PreparedDBQuery::db_query_update_quest_step
                      .arg(character_id)
                      .arg(quest.id)
                      .arg(public_and_private_informations.quests.value(quest.id).step)
@@ -272,7 +274,7 @@ bool Client::startQuest(const Quest &quest)
 {
     if(!public_and_private_informations.quests.contains(quest.id))
     {
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_quest
+        dbQueryWrite(PreparedDBQuery::db_query_insert_quest
                      .arg(character_id)
                      .arg(quest.id)
                      .arg(1)
@@ -282,7 +284,7 @@ bool Client::startQuest(const Quest &quest)
     }
     else
     {
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_quest_restart.arg(character_id).arg(quest.id));
+        dbQueryWrite(PreparedDBQuery::db_query_update_quest_restart.arg(character_id).arg(quest.id));
         public_and_private_informations.quests[quest.id].step=1;
     }
     addQuestStepDrop(quest.id,1);

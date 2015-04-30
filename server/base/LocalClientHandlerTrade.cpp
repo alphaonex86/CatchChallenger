@@ -1,5 +1,6 @@
 #include "Client.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../base/PreparedDBQuery.h"
 #include "GlobalServerData.h"
 
 using namespace CatchChallenger;
@@ -146,7 +147,7 @@ void Client::addExistingMonster(QList<PlayerMonster> tradeMonster)
     int index=0;
     while(index<tradeMonster.size())
     {
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_owner.arg(tradeMonster.at(index).id).arg(character_id));
+        dbQueryWrite(PreparedDBQuery::db_query_update_monster_owner.arg(tradeMonster.at(index).id).arg(character_id));
         index++;
     }
     public_and_private_informations.playerMonster << tradeMonster;
@@ -276,7 +277,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             out << monster.level;
             out << monster.remaining_xp;
             out << monster.hp;
-            if(CommonSettings::commonSettings.useSP)
+            if(CommonSettingsServer::commonSettingsServer.useSP)
                 out << monster.sp;
             out << monster.catched_with;
             out << (quint8)monster.gender;
@@ -304,7 +305,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_monster_position.arg(index+1).arg(playerMonster.id));
+                dbQueryWrite(PreparedDBQuery::db_query_update_monster_position.arg(index+1).arg(playerMonster.id));
                 index++;
             }
             return;

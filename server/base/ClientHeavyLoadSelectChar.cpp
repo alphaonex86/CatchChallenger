@@ -8,6 +8,8 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/ProtocolParsingCheck.h"
 #include "SqlFunction.h"
+#include "PreparedDBQuery.h"
+#include "DictionaryLogin.h"
 
 using namespace CatchChallenger;
 
@@ -27,17 +29,17 @@ void Client::characterSelectionIsWrong(const quint8 &query_id,const quint8 &retu
 void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_character_by_id.isEmpty())
+    if(PreparedDBQuery::db_query_character_by_id.isEmpty())
     {
         errorOutput(QStringLiteral("selectCharacter() Query is empty, bug"));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect.isEmpty())
+    if(PreparedDBQuery::db_query_update_character_last_connect.isEmpty())
     {
         errorOutput(QStringLiteral("selectCharacter() Query db_query_update_character_last_connect is empty, bug"));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.isEmpty())
+    if(PreparedDBQuery::db_query_update_character_time_to_delete.isEmpty())
     {
         errorOutput(QStringLiteral("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug"));
         return;
@@ -47,7 +49,7 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
 
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_character_by_id.arg(characterId);
+    const QString &queryText=PreparedDBQuery::db_query_character_by_id.arg(characterId);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::selectCharacter_static);
     if(callback==NULL)
     {
@@ -182,8 +184,8 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     #endif
     const quint32 &time_to_delete=QString(GlobalServerData::serverPrivateVariables.db.value(21)).toUInt(&ok);
     if(!ok || time_to_delete>0)
-        dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_time_to_delete.arg(characterId));
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
+        dbQueryWrite(PreparedDBQuery::db_query_update_character_time_to_delete.arg(characterId));
+    dbQueryWrite(PreparedDBQuery::db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
 
     const quint32 &skin_database_id=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
     if(!ok)
@@ -193,8 +195,8 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     }
     else
     {
-        if(skin_database_id<(quint32)GlobalServerData::serverPrivateVariables.dictionary_skin.size())
-            public_and_private_informations.public_informations.skinId=GlobalServerData::serverPrivateVariables.dictionary_skin.value(skin_database_id);
+        if(skin_database_id<(quint32)DictionaryLogin::dictionary_skin_database_to_internal.size())
+            public_and_private_informations.public_informations.skinId=DictionaryLogin::dictionary_skin_database_to_internal.value(skin_database_id);
         else
         {
             normalOutput(QStringLiteral("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
@@ -266,12 +268,12 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id is not a number"));
         return;
     }
-    if(map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+    if(map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.size())
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id out of range"));
         return;
     }
-    CommonMap *map=static_cast<CommonMap *>(GlobalServerData::serverPrivateVariables.dictionary_map.at(map_database_id));
+    CommonMap * const map=static_cast<CommonMap *>(GlobalServerData::serverPrivateVariables.dictionary_map_database_to_internal.at(map_database_id));
     if(map==NULL)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id have not reverse"));
@@ -329,13 +331,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+    if(rescue_map_database_id>=(quint32)DictionaryLogin::dictionary_map.size())
     {
         normalOutput(QLatin1String("rescue_map_database_id out of range"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.dictionary_map.at(rescue_map_database_id)==NULL)
+    if(DictionaryLogin::dictionary_map.at(rescue_map_database_id)==NULL)
     {
         normalOutput(QLatin1String("rescue_map_database_id have not reverse"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -348,13 +350,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+    if(unvalidated_rescue_map_database_id>=(quint32)DictionaryLogin::dictionary_map.size())
     {
         normalOutput(QLatin1String("unvalidated_rescue_map_database_id out of range"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.dictionary_map.at(unvalidated_rescue_map_database_id)==NULL)
+    if(DictionaryLogin::dictionary_map.at(unvalidated_rescue_map_database_id)==NULL)
     {
         normalOutput(QLatin1String("unvalidated_rescue_map_database_id have not reverse"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
@@ -367,13 +369,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(rescue_map_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+    if(rescue_map_id>=(quint32)DictionaryLogin::dictionary_map.size())
     {
         normalOutput(QStringLiteral("rescue map, not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    CommonMap *rescue_map_final=GlobalServerData::serverPrivateVariables.dictionary_map.at(rescue_map_id);
+    CommonMap *rescue_map_final=DictionaryLogin::dictionary_map.at(rescue_map_id);
     if(rescue_map_final==NULL)
     {
         normalOutput(QStringLiteral("rescue map not resolved"));
@@ -430,13 +432,13 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_map_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+    if(unvalidated_rescue_map_id>=(quint32)DictionaryLogin::dictionary_map.size())
     {
         normalOutput(QStringLiteral("unvalidated rescue map, not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    CommonMap *unvalidated_rescue_map_final=GlobalServerData::serverPrivateVariables.dictionary_map.at(unvalidated_rescue_map_id);
+    CommonMap *unvalidated_rescue_map_final=DictionaryLogin::dictionary_map.at(unvalidated_rescue_map_id);
     if(unvalidated_rescue_map_final==NULL)
     {
         normalOutput(QStringLiteral("unvalidated rescue map not resolved"));
@@ -503,7 +505,7 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
                   )
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_clan.isEmpty())
+    if(PreparedDBQuery::db_query_clan.isEmpty())
     {
         errorOutput(QStringLiteral("loginIsRightWithParsedRescue() Query is empty, bug"));
         return;
@@ -564,7 +566,7 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
         {
             normalOutput(QStringLiteral("First client of the clan: %1, get the info").arg(public_and_private_informations.clan));
             //do the query
-            const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_clan.arg(public_and_private_informations.clan);
+            const QString &queryText=PreparedDBQuery::db_query_clan.arg(public_and_private_informations.clan);
             CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::selectClan_static);
             if(callback==NULL)
             {
@@ -592,13 +594,13 @@ void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 charac
 void Client::loadItemOnMap()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap.isEmpty())
+    if(PreparedDBQuery::db_query_select_itemOnMap.isEmpty())
     {
         errorOutput(QStringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_itemOnMap.arg(character_id);
+    const QString &queryText=PreparedDBQuery::db_query_select_itemOnMap.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItemOnMap_static);
     if(callback==NULL)
     {
@@ -629,17 +631,17 @@ void Client::loadItemOnMap_return()
             normalOutput(QStringLiteral("wrong value type for item on map, skip: %1").arg(itemDbCode));
             continue;
         }
-        if(itemDbCode>=GlobalServerData::serverPrivateVariables.dictionary_item_reverse.size())
+        if(itemDbCode>=DictionaryLogin::dictionary_item_reverse.size())
         {
             normalOutput(QStringLiteral("item on map is not into the map list (1), skip: %1").arg(itemDbCode));
             continue;
         }
-        if(GlobalServerData::serverPrivateVariables.dictionary_item_reverse[itemDbCode]==255/*-1*/)
+        if(DictionaryLogin::dictionary_item_reverse[itemDbCode]==255/*-1*/)
         {
             normalOutput(QStringLiteral("item on map is not into the map list (2), skip: %1").arg(itemDbCode));
             continue;
         }
-        public_and_private_informations.itemOnMap << GlobalServerData::serverPrivateVariables.dictionary_item_reverse[itemDbCode];
+        public_and_private_informations.itemOnMap << DictionaryLogin::dictionary_item_reverse[itemDbCode];
     }
     loginIsRightFinalStep();
 }
@@ -889,12 +891,12 @@ void Client::loginIsWrong(const quint8 &query_id, const quint8 &returnCode, cons
 
 void Client::loadPlayerAllow()
 {
-    if(!GlobalServerData::serverPrivateVariables.db_query_select_allow.isEmpty())
+    if(!PreparedDBQuery::db_query_select_allow.isEmpty())
     {
-        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(GlobalServerData::serverPrivateVariables.db_query_select_allow.arg(character_id).toLatin1(),this,&Client::loadPlayerAllow_static);
+        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(PreparedDBQuery::db_query_select_allow.arg(character_id).toLatin1(),this,&Client::loadPlayerAllow_static);
         if(callback==NULL)
         {
-            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(GlobalServerData::serverPrivateVariables.db_query_select_allow).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(PreparedDBQuery::db_query_select_allow).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             loadItems();
             return;
         }
@@ -920,9 +922,9 @@ void Client::loadPlayerAllow_return()
         const quint32 &allowCode=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
         if(ok)
         {
-            if(allowCode<(quint32)GlobalServerData::serverPrivateVariables.dictionary_allow.size())
+            if(allowCode<(quint32)DictionaryLogin::dictionary_allow.size())
             {
-                const ActionAllow &allow=GlobalServerData::serverPrivateVariables.dictionary_allow.at(allowCode);
+                const ActionAllow &allow=DictionaryLogin::dictionary_allow.at(allowCode);
                 if(allow!=ActionAllow_Nothing)
                     public_and_private_informations.allow << allow;
                 else

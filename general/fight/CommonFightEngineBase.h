@@ -11,7 +11,7 @@
 
 namespace CatchChallenger {
 //only the logique here, store nothing
-class CommonFightEngineBase : public ClientBase
+class CommonFightEngineBase
 {
 public:
     static QList<PlayerMonster::PlayerSkill> generateWildSkill(const Monster &monster, const quint8 &level);

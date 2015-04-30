@@ -75,8 +75,6 @@ public:
     static int privateChatDropTotalCache;
     static int privateChatDropNewValue;
     static QList<quint16> marketObjectIdList;
-    static QSet<QString> compressedExtension;
-    static QSet<QString> extensionAllowed;
     static quint64 datapack_list_cache_timestamp;
     static QList<quint16> simplifiedIdList;
     static QHash<QString,Client *> playerByPseudo;
@@ -139,7 +137,6 @@ protected:
 private:
     //-------------------
     quint32 account_id;//0 if not logged
-    quint8 number_of_character;
     quint32 character_id;
     quint64 market_cash;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -250,8 +247,6 @@ private:
     static QByteArray tempDatapackListReplyArray;
     static quint8 tempDatapackListReply;
     static int tempDatapackListReplyTestCount;
-    static QByteArray rawFiles,compressedFiles;
-    static int rawFilesCount,compressedFilesCount;
     struct DatapackCacheFile
     {
         quint32 mtime;
@@ -320,7 +315,7 @@ private:
     void askLogin_return(AskLoginParam *askLoginParam);
     static void character_list_static(void *object);
     void character_list_object();
-    void character_list_return(const quint8 &query_id);
+    QByteArray character_list_return(const quint8 &query_id);
     bool server_list();
     static void server_list_static(void *object);
     void server_list_object();

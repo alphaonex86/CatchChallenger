@@ -4,14 +4,15 @@ include(../general/general.pri)
 QT       -= gui widgets network sql
 #QT       -= core xml
 
-#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
-#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
+#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
+#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 DEFINES += SERVERBENCHMARK
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
+DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 
 #LIBS += -lssl -lcrypto
 LIBS    += -lpq

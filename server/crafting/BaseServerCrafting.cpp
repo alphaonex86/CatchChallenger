@@ -22,16 +22,16 @@ void BaseServer::preload_the_plant_on_map()
     DebugClass::debugConsole(QStringLiteral("%1 SQL monster max id").arg(GlobalServerData::serverPrivateVariables.maxMonsterId));
 
     QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
+    switch(GlobalServerData::serverPrivateVariables.db.databaseType())
     {
         default:
-        case GameServerSettings::Database::DatabaseType_Mysql:
+        case DatabaseBase::Type::Mysql:
             queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps` FROM `plant`");
         break;
-        case GameServerSettings::Database::DatabaseType_SQLite:
+        case DatabaseBase::Type::SQLite:
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
-        case GameServerSettings::Database::DatabaseType_PostgreSQL:
+        case DatabaseBase::Type::PostgreSQL:
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }
@@ -83,17 +83,17 @@ void BaseServer::preload_the_plant_on_map_return()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map is not a number"));
             continue;
         }
-        if(map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map.size())
+        if(map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map_internal_to_database.size())
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists (out of range): %1").arg(map_database_id));
             continue;
         }
-        if(GlobalServerData::serverPrivateVariables.dictionary_map.at(map_database_id)==NULL)
+        if(GlobalServerData::serverPrivateVariables.dictionary_map_internal_to_database.at(map_database_id)==NULL)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists (not found): %1").arg(map_database_id));
             continue;
         }
-        MapServer *mapForPlantOnServer=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.dictionary_map.at(map_database_id));
+        MapServer *mapForPlantOnServer=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.dictionary_map_internal_to_database.at(map_database_id));
         if(mapForPlantOnServer->plants.size()>=255)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(mapForPlantOnServer->map_file));

@@ -30,7 +30,7 @@ unsigned char EpollClientLoginSlave::addCharacterReply[]={0xC1/*reply server to 
 unsigned char EpollClientLoginSlave::removeCharacterReply[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 char EpollClientLoginSlave::baseDatapackSum[];
 char EpollClientLoginSlave::loginGood[];
-char EpollClientLoginSlave::loginGoodSize=0;
+int EpollClientLoginSlave::loginGoodSize=0;
 
 char EpollClientLoginSlave::serverPartialServerList[];
 int EpollClientLoginSlave::serverPartialServerListSize=0;

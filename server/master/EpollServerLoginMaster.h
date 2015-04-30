@@ -7,12 +7,13 @@
 #include "EpollClientLoginMaster.h"
 #include "CharactersGroup.h"
 #include "../epoll/db/EpollPostgresql.h"
-#include "../base/BaseServerMaster.h"
+#include "../base/BaseServerMasterLoadDictionary.h"
+#include "../base/BaseServerMasterSendDatapack.h"
 
 #include <QSettings>
 
 namespace CatchChallenger {
-class EpollServerLoginMaster : public EpollGenericServer, public BaseServerMaster
+class EpollServerLoginMaster : public EpollGenericServer, public BaseServerMasterLoadDictionary
 {
 public:
     EpollServerLoginMaster();
@@ -32,6 +33,8 @@ private:
     quint8 max_pseudo_size;
 
     QByteArray datapackBaseHash;
+
+    BaseServerMasterSendDatapack baseServerMasterSendDatapack;
 private:
     void generateToken(QSettings &settings);
 
