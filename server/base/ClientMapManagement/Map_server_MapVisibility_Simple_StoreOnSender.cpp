@@ -67,10 +67,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     out << (quint8)((quint8)clients.at(index)->getLastDirection() | (quint8)Player_type_normal);
                 else
                     out << (quint8)((quint8)clients.at(index)->getLastDirection() | (quint8)clients.at(index)->public_and_private_informations.public_informations.type);
-                if(CommonSettings::commonSettings.forcedSpeed==0)
+                if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                     out << clients.at(index)->public_and_private_informations.public_informations.speed;
                 //pseudo
-                if(!CommonSettings::commonSettings.dontSendPseudo)
+                if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                 {
                     const QByteArray &rawPseudo=clients.at(index)->getRawPseudo();
                     purgeBuffer_outputData+=rawPseudo;
@@ -148,10 +148,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 out << (quint8)((quint8)client->getLastDirection() | (quint8)Player_type_normal);
                             else
                                 out << (quint8)((quint8)client->getLastDirection() | (quint8)client->public_and_private_informations.public_informations.type);
-                            if(CommonSettings::commonSettings.forcedSpeed==0)
+                            if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                                 out << client->public_and_private_informations.public_informations.speed;
                             //pseudo
-                            if(!CommonSettings::commonSettings.dontSendPseudo)
+                            if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                             {
                                 const QByteArray &rawPseudo=client->getRawPseudo();
                                 purgeBuffer_outputData+=rawPseudo;
@@ -228,10 +228,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 out << (quint8)((quint8)client->getLastDirection() | (quint8)Player_type_normal);
                             else
                                 out << (quint8)((quint8)client->getLastDirection() | (quint8)client->public_and_private_informations.public_informations.type);
-                            if(CommonSettings::commonSettings.forcedSpeed==0)
+                            if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                                 out << client->public_and_private_informations.public_informations.speed;
                             //pseudo
-                            if(!CommonSettings::commonSettings.dontSendPseudo)
+                            if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                             {
                                 const QByteArray &rawPseudo=client->getRawPseudo();
                                 purgeBuffer_outputData+=rawPseudo;

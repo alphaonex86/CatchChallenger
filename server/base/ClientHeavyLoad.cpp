@@ -1460,7 +1460,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         return;
     }
     qSort(fileToSendList);
-    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirror.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
     {
         //validate, remove or update the file actualy on the client
         if(tempDatapackListReplyTestCount!=files.size())
@@ -1483,7 +1483,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
     }
     else
     {
-        QByteArray outputData(FacilityLib::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirror));
+        QByteArray outputData(FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer));
         if(outputData.size()>255 || outputData.isEmpty())
         {
             errorOutput(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
@@ -1505,7 +1505,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
             const quint32 &fileHttpListNameSize=fileToSendList.size();
             while(index<fileHttpListNameSize)
             {
-                const QByteArray &rawFileName=FacilityLib::toUTF8WithHeader(fileToSendList.at(index).file);
+                const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(fileToSendList.at(index).file);
                 if(rawFileName.size()>255 || rawFileName.isEmpty())
                 {
                     errorOutput(QLatin1Literal("file path too big or not compatible with utf8"));
@@ -1640,29 +1640,29 @@ void Client::purgeDatapackListReply(const quint8 &query_id)
 
 void Client::sendFileContent()
 {
-    if(rawFilesBuffer.size()>0 && rawFilesBufferCount>0)
+    if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>0 && BaseServerMasterSendDatapack::rawFilesBufferCount>0)
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)rawFilesBufferCount;
-        sendFullPacket(0xC2,0x03,outputData+rawFilesBuffer);
-        rawFilesBuffer.clear();
-        rawFilesBufferCount=0;
+        out << (quint8)BaseServerMasterSendDatapack::rawFilesBufferCount;
+        sendFullPacket(0xC2,0x03,outputData+BaseServerMasterSendDatapack::rawFilesBuffer);
+        BaseServerMasterSendDatapack::rawFilesBuffer.clear();
+        BaseServerMasterSendDatapack::rawFilesBufferCount=0;
     }
 }
 
 void Client::sendCompressedFileContent()
 {
-    if(compressedFilesBuffer.size()>0 && compressedFilesBufferCount>0)
+    if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>0 && BaseServerMasterSendDatapack::compressedFilesBufferCount>0)
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint8)compressedFilesBufferCount;
-        sendFullPacket(0xC2,0x04,outputData+compressedFilesBuffer);
-        compressedFilesBuffer.clear();
-        compressedFilesBufferCount=0;
+        out << (quint8)BaseServerMasterSendDatapack::compressedFilesBufferCount;
+        sendFullPacket(0xC2,0x04,outputData+BaseServerMasterSendDatapack::compressedFilesBuffer);
+        BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
+        BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
     }
 }
 
@@ -1670,7 +1670,7 @@ bool Client::sendFile(const QString &fileName)
 {
     if(fileName.size()>255 || fileName.isEmpty())
         return false;
-    const QByteArray &fileNameRaw=FacilityLib::toUTF8WithHeader(fileName);
+    const QByteArray &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
     if(fileNameRaw.size()>255 || fileNameRaw.isEmpty())
         return false;
     QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
@@ -1681,19 +1681,21 @@ bool Client::sendFile(const QString &fileName)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint32)content.size();
-        if(compressedExtension.contains(QFileInfo(file).suffix()) && ProtocolParsing::compressionType!=ProtocolParsing::CompressionType_None && content.size()<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024)
+        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()) &&
+                ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
+                content.size()<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024)
         {
-            compressedFilesBuffer+=fileNameRaw+outputData+content;
-            compressedFilesBufferCount++;
-            switch(ProtocolParsing::compressionType)
+            BaseServerMasterSendDatapack::compressedFilesBuffer+=fileNameRaw+outputData+content;
+            BaseServerMasterSendDatapack::compressedFilesBufferCount++;
+            switch(ProtocolParsing::compressionTypeServer)
             {
-                case ProtocolParsing::CompressionType_Xz:
-                if(compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024 || compressedFilesBufferCount>=255)
+                case ProtocolParsing::CompressionType::Xz:
+                if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;
                 default:
-                case ProtocolParsing::CompressionType_Zlib:
-                if(compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || compressedFilesBufferCount>=255)
+                case ProtocolParsing::CompressionType::Zlib:
+                if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;
             }
@@ -1708,9 +1710,9 @@ bool Client::sendFile(const QString &fileName)
             }
             else
             {
-                rawFilesBuffer+=fileNameRaw+outputData+content;
-                rawFilesBufferCount++;
-                if(rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || rawFilesBufferCount>=255)
+                BaseServerMasterSendDatapack::rawFilesBuffer+=fileNameRaw+outputData+content;
+                BaseServerMasterSendDatapack::rawFilesBufferCount++;
+                if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || BaseServerMasterSendDatapack::rawFilesBufferCount>=255)
                     sendFileContent();
             }
         }
@@ -1793,62 +1795,62 @@ void Client::loadReputation_return()
             normalOutput(QStringLiteral("reputation level is <100 or >100, skip: %1").arg(type));
             continue;
         }
-        if(type>=Dictionary::dictionary_reputation.size())
+        if(type>=DictionaryLogin::dictionary_reputation_database_to_internal.size())
         {
             normalOutput(QStringLiteral("The reputation: %1 don't exist").arg(type));
             continue;
         }
-        if(Dictionary::dictionary_reputation.value(type)==-1)
+        if(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)==-1)
         {
             normalOutput(QStringLiteral("The reputation: %1 not resolved").arg(type));
             continue;
         }
         if(level>=0)
         {
-            if(level>=CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_positive.size())
+            if(level>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.size())
             {
-                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_positive.size()));
+                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.size()));
                 continue;
             }
         }
         else
         {
-            if((-level)>CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_negative.size())
+            if((-level)>CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.size())
             {
-                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_negative.size()));
+                normalOutput(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.size()));
                 continue;
             }
         }
         if(point>0)
         {
-            if(CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_positive.size()==(level+1))//start at level 0 in positive
+            if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.size()==(level+1))//start at level 0 in positive
             {
                 normalOutput(QStringLiteral("The reputation level is already at max, drop point"));
                 point=0;
             }
-            if(point>=CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_positive.at(level+1))//start at level 0 in positive
+            if(point>=CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.at(level+1))//start at level 0 in positive
             {
-                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_positive.at(level)));
+                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_positive.at(level)));
                 continue;
             }
         }
         else if(point<0)
         {
-            if(CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_negative.size()==-level)//start at level -1 in negative
+            if(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.size()==-level)//start at level -1 in negative
             {
                 normalOutput(QStringLiteral("The reputation level is already at min, drop point"));
                 point=0;
             }
-            if(point<CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_negative.at(-level))//start at level -1 in negative
+            if(point<CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.at(-level))//start at level -1 in negative
             {
-                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(Dictionary::dictionary_reputation.value(type)).reputation_negative.at(level)));
+                normalOutput(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation.at(DictionaryLogin::dictionary_reputation_database_to_internal.value(type)).reputation_negative.at(level)));
                 continue;
             }
         }
         PlayerReputation playerReputation;
         playerReputation.level=level;
         playerReputation.point=point;
-        public_and_private_informations.reputation.insert(Dictionary::dictionary_reputation.value(type),playerReputation);
+        public_and_private_informations.reputation.insert(DictionaryLogin::dictionary_reputation_database_to_internal.value(type),playerReputation);
     }
     loadQuests();
 }
@@ -1897,12 +1899,12 @@ void Client::loadQuests_return()
             normalOutput(QStringLiteral("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
-        if(!CommonDatapack::commonDatapack.quests.contains(id))
+        if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(id))
         {
             normalOutput(QStringLiteral("quest is not into the quests list, skip: %1").arg(id));
             continue;
         }
-        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapack::commonDatapack.quests.value(id).steps.size())
+        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(id).steps.size())
         {
             normalOutput(QStringLiteral("step out of quest range, skip: %1").arg(id));
             continue;

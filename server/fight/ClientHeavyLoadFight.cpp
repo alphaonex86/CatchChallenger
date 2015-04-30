@@ -1,4 +1,5 @@
 #include "../base/Client.h"
+#include "../base/PreparedDBQuery.h"
 #include "../base/GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
@@ -11,13 +12,13 @@ using namespace CatchChallenger;
 void Client::loadMonsters()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id.isEmpty())
+    if(PreparedDBQuery::db_query_select_monsters_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadMonsters() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_monsters_by_player_id.arg(character_id);
+    const QString &queryText=PreparedDBQuery::db_query_select_monsters_by_player_id.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadMonsters_static);
     if(callback==NULL)
     {
@@ -98,7 +99,7 @@ void Client::loadMonsters_return()
         }
         if(ok)
         {
-            if(CommonSettings::commonSettings.useSP)
+            if(CommonSettingsServer::commonSettingsServer.useSP)
             {
                 playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
                 if(!ok)
@@ -108,7 +109,7 @@ void Client::loadMonsters_return()
                 playerMonster.sp=0;
         }
         int sp_offset;
-        if(CommonSettings::commonSettings.useSP)
+        if(CommonSettingsServer::commonSettingsServer.useSP)
             sp_offset=0;
         else
             sp_offset=-1;
@@ -187,13 +188,13 @@ void Client::loadMonsters_return()
 void Client::loadMonstersWarehouse()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id.isEmpty())
+    if(PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadMonsters() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_monsters_warehouse_by_player_id.arg(character_id);
+    const QString &queryText=PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadMonstersWarehouse_static);
     if(callback==NULL)
     {
@@ -274,7 +275,7 @@ void Client::loadMonstersWarehouse_return()
         }
         if(ok)
         {
-            if(CommonSettings::commonSettings.useSP)
+            if(CommonSettingsServer::commonSettingsServer.useSP)
             {
                 playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
                 if(!ok)
@@ -284,7 +285,7 @@ void Client::loadMonstersWarehouse_return()
                 playerMonster.sp=0;
         }
         int sp_offset;
-        if(CommonSettings::commonSettings.useSP)
+        if(CommonSettingsServer::commonSettingsServer.useSP)
             sp_offset=0;
         else
             sp_offset=-1;
@@ -368,7 +369,7 @@ void Client::loadMonstersWarehouse_return()
 void Client::loadPlayerMonsterBuffs(const quint32 &index)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id.isEmpty())
+    if(PreparedDBQuery::db_query_select_monstersBuff_by_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadPlayerMonsterBuffs() Query is empty, bug"));
         loadPlayerMonsterSkills(0);
@@ -377,9 +378,9 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
     #endif
     QString queryText;
     if(index<(quint32)public_and_private_informations.playerMonster.size())
-        queryText=GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id.arg(public_and_private_informations.playerMonster.at(index).id);
+        queryText=PreparedDBQuery::db_query_select_monstersBuff_by_id.arg(public_and_private_informations.playerMonster.at(index).id);
     else if(index<(quint32)(public_and_private_informations.playerMonster.size()+public_and_private_informations.warehouse_playerMonster.size()))
-        queryText=GlobalServerData::serverPrivateVariables.db_query_select_monstersBuff_by_id.arg(public_and_private_informations.playerMonster.at(index-public_and_private_informations.playerMonster.size()).id);
+        queryText=PreparedDBQuery::db_query_select_monstersBuff_by_id.arg(public_and_private_informations.playerMonster.at(index-public_and_private_informations.playerMonster.size()).id);
     else
     {
         loadPlayerMonsterSkills(0);
@@ -503,7 +504,7 @@ void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
 void Client::loadPlayerMonsterSkills(const quint32 &index)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id.isEmpty())
+    if(PreparedDBQuery::db_query_select_monstersSkill_by_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadMonsterSkills() Query is empty, bug"));
         loadReputation();
@@ -512,9 +513,9 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
     #endif
     QString queryText;
     if(index<(quint32)public_and_private_informations.playerMonster.size())
-        queryText=GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id.arg(public_and_private_informations.playerMonster.at(index).id);
+        queryText=PreparedDBQuery::db_query_select_monstersSkill_by_id.arg(public_and_private_informations.playerMonster.at(index).id);
     else if(index<(quint32)(public_and_private_informations.playerMonster.size()+public_and_private_informations.warehouse_playerMonster.size()))
-        queryText=GlobalServerData::serverPrivateVariables.db_query_select_monstersSkill_by_id.arg(public_and_private_informations.playerMonster.at(index-public_and_private_informations.playerMonster.size()).id);
+        queryText=PreparedDBQuery::db_query_select_monstersSkill_by_id.arg(public_and_private_informations.playerMonster.at(index-public_and_private_informations.playerMonster.size()).id);
     else
     {
         loadReputation();
@@ -664,13 +665,13 @@ quint8 Client::getOneSeed(const quint8 &max)
 void Client::loadBotAlreadyBeaten()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten.isEmpty())
+    if(PreparedDBQuery::db_query_select_bot_beaten.isEmpty())
     {
         errorOutput(QStringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_bot_beaten.arg(character_id);
+    const QString &queryText=PreparedDBQuery::db_query_select_bot_beaten.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadBotAlreadyBeaten_static);
     if(callback==NULL)
     {
@@ -701,7 +702,7 @@ void Client::loadBotAlreadyBeaten_return()
             normalOutput(QStringLiteral("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
-        if(!CommonDatapack::commonDatapack.botFights.contains(id))
+        if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(id))
         {
             normalOutput(QStringLiteral("fights is not into the fights list, skip: %1").arg(id));
             continue;

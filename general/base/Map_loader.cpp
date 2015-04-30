@@ -1,5 +1,6 @@
 #include "Map_loader.h"
 #include "GeneralVariable.h"
+#include "CommonDatapackServerSpec.h"
 
 #include "CommonDatapack.h"
 
@@ -16,6 +17,8 @@
 #include <zlib.h>
 
 using namespace CatchChallenger;
+
+QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > Map_loader::teleportConditionsUnparsed;
 
 const QString Map_loader::text_map=QLatin1Literal("map");
 const QString Map_loader::text_width=QLatin1Literal("width");
@@ -210,8 +213,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
     else
     {
         #endif
@@ -231,7 +234,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
@@ -900,13 +903,13 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     if(!name.isEmpty() && rawSize==(quint32)data.size())
                     {
                         int index=0;
-                        while(index<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
+                        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.size())
                         {
-                            if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
+                            if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer==name)
                             {
                                 mapLayerContentForMonsterCollision[name]=data.constData();
                                 {
-                                    const QStringList &monsterTypeListText=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
+                                    const QStringList &monsterTypeListText=CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).monsterTypeList;
                                     int monsterTypeListIndex=0;
                                     while(monsterTypeListIndex<monsterTypeListText.size())
                                     {
@@ -1152,9 +1155,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     DebugClass::debugConsole(QStringLiteral("Have already monster at %1,%2 for %3, actual zone: %4 (%5), new zone: %6 (%7)")
                                              .arg(x).arg(y).arg(fileName)
                                              .arg(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
-                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer)
+                                             .arg(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer)
                                              .arg(zoneId)
-                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer)
+                                             .arg(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(zoneId).layer)
                                             );
                                     this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
                                 }
@@ -1282,8 +1285,8 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(fileName))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(fileName);
     else
     {
         #endif
@@ -1303,7 +1306,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[fileName]=domDocument;
     }
     #endif
     this->map_to_send.xmlRoot = domDocument.documentElement();
@@ -1317,11 +1320,11 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
     QStringList caveName;
     {
         int index=0;
-        while(index<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
+        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.size())
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer.isEmpty())
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer.isEmpty())
             {
-                caveName=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
+                caveName=CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).monsterTypeList;
                 break;
             }
             index++;
@@ -1350,9 +1353,9 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
     quint8 zoneNumberIndex=1;
     {
         int index=0;
-        while(index<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
+        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.size())
         {
-            const MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index);
+            const MonstersCollision &monstersCollision=CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index);
             const QStringList &searchList=monstersCollision.defautMonsterTypeList;
             int index_search=0;
             while(index_search<searchList.size())
@@ -1365,24 +1368,24 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
             {
                 quint8 tempZoneNumberIndex=0;
                 //cave
-                if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer.isEmpty())
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer.isEmpty())
                 {}
                 //not cave
-                else if(detectedMonsterCollisionLayer.contains(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
+                else if(detectedMonsterCollisionLayer.contains(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer))
                 {
-                    if(!zoneNumber.contains(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
+                    if(!zoneNumber.contains(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer))
                     {
-                        zoneNumber[CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer]=zoneNumberIndex;
+                        zoneNumber[CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer]=zoneNumberIndex;
                         this->map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//create
                         tempZoneNumberIndex=zoneNumberIndex;
                         zoneNumberIndex++;
                     }
                     else
-                        tempZoneNumberIndex=zoneNumber.value(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).layer);
+                        tempZoneNumberIndex=zoneNumber.value(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer);
                 }
                 {
                     MonstersCollisionValue *monstersCollisionValue=&this->map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
-                    if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
+                    if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
                     {
                         monstersCollisionValue->actionOn << index;
                         monstersCollisionValue->actionOnMonsters << monsterTypeList.value(searchList.at(index_search));
@@ -1450,7 +1453,7 @@ QList<MapMonster> Map_loader::loadSpecificMonster(const QString &fileName,const 
                         if(!ok)
                             qDebug() << QStringLiteral("id is not a number: child.tagName(): %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName);
                         if(ok)
-                            if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(mapMonster.id))
+                            if(!CommonDatapack::commonDatapack.monsters.contains(mapMonster.id))
                             {
                                 qDebug() << QStringLiteral("monster %4 not found into the monster list: %1 (at line: %2), file: %3").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(fileName).arg(mapMonster.id);
                                 ok=false;
@@ -1590,21 +1593,21 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
     #ifdef ONLYMAPRENDER
     return QDomElement();
     #endif
-    if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.contains(conditionFile))
+    if(teleportConditionsUnparsed.contains(conditionFile))
     {
-        if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
-            return CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).value(conditionId);
+        if(teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
+            return teleportConditionsUnparsed.value(conditionFile).value(conditionId);
         else
             return QDomElement();
     }
-    CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed[conditionFile][conditionId];
+    teleportConditionsUnparsed[conditionFile][conditionId];
     bool ok;
     QDomDocument domDocument;
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(conditionFile))
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(conditionFile);
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(conditionFile))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(conditionFile);
     else
     {
         #endif
@@ -1624,7 +1627,7 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
             return QDomElement();
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[conditionFile]=domDocument;
+        CommonDatapack::commonDatapack.xmlLoadedFile[conditionFile]=domDocument;
     }
     #endif
     const QDomElement &root = domDocument.documentElement();
@@ -1649,14 +1652,14 @@ QDomElement Map_loader::getXmlCondition(const QString &fileName,const QString &c
                 if(!ok)
                     qDebug() << QStringLiteral("\"condition\" balise have id is not a number (%1 at %2)").arg(conditionFile).arg(item.lineNumber());
                 else
-                    CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed[conditionFile][id]=item;
+                    teleportConditionsUnparsed[conditionFile][id]=item;
             }
         }
         item = item.nextSiblingElement(Map_loader::text_condition);
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.contains(conditionFile))
-        if(CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
-            return CatchChallenger::CommonDatapack::commonDatapack.teleportConditionsUnparsed.value(conditionFile).value(conditionId);
+    if(teleportConditionsUnparsed.contains(conditionFile))
+        if(teleportConditionsUnparsed.value(conditionFile).contains(conditionId))
+            return teleportConditionsUnparsed.value(conditionFile).value(conditionId);
     return QDomElement();
 }
 
@@ -1678,7 +1681,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             const quint32 &quest=conditionContent.attribute(Map_loader::text_quest).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
-            else if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(quest))
+            else if(!CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(quest))
                 qDebug() << QStringLiteral("\"condition\" balise have type=quest but quest id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else
             {
@@ -1696,7 +1699,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             const quint32 &item=conditionContent.attribute(Map_loader::text_item).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
-            else if(!CatchChallenger::CommonDatapack::commonDatapack.items.item.contains(item))
+            else if(!CommonDatapack::commonDatapack.items.item.contains(item))
                 qDebug() << QStringLiteral("\"condition\" balise have type=item but item id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else
             {
@@ -1714,7 +1717,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const QString &conditionFile
             const quint32 &fightBot=conditionContent.attribute(Map_loader::text_fightBot).toUInt(&ok);
             if(!ok)
                 qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
-            else if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightBot))
+            else if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightBot))
                 qDebug() << QStringLiteral("\"condition\" balise have type=fightBot but fightBot id is not found, item, clan or fightBot (%1 at %2)").arg(conditionFile).arg(conditionContent.lineNumber());
             else
             {

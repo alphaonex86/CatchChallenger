@@ -4,6 +4,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../base/GlobalServerData.h"
+#include "../base/PreparedDBQuery.h"
 
 #include <QDateTime>
 
@@ -174,7 +175,7 @@ void Client::seedValidated()
     plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
     const quint32 &map_database_id=static_cast<MapServer *>(plant_list_in_waiting.first().map)->reverse_db_id;
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_insert_plant
+    dbQueryWrite(PreparedDBQuery::db_query_insert_plant
                  .arg(plantOnMap.id)
                  .arg(map_database_id)
                  .arg(plantOnMap.x)
@@ -224,7 +225,7 @@ void Client::seedValidated()
         const quint16 &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
         while(index<size)
         {
-            static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData);
+            static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
             index++;
         }
     }
@@ -416,7 +417,7 @@ void Client::collectPlant(const quint8 &query_id)
                     )
             {
                 //remove plant from db
-                dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_delete_plant_by_id.arg(plant.id));
+                dbQueryWrite(PreparedDBQuery::db_query_delete_plant_by_id.arg(plant.id));
 
                 QByteArray finalData;
                 {
@@ -447,7 +448,7 @@ void Client::collectPlant(const quint8 &query_id)
                     const quint16 &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
                     while(sub_index<size)
                     {
-                        static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->sendRawSmallPacket(finalData);
+                        static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->sendRawSmallPacket(finalData.constData(),finalData.size());
                         sub_index++;
                     }
                 }

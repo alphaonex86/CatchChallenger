@@ -8,6 +8,7 @@
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/DatapackGeneralLoader.h"
 #include "../base/SqlFunction.h"
+#include "../base/DictionaryServer.h"
 #include "../base/GlobalServerData.h"
 
 #include <QFile>
@@ -83,17 +84,17 @@ void BaseServer::preload_the_plant_on_map_return()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map is not a number"));
             continue;
         }
-        if(map_database_id>=(quint32)GlobalServerData::serverPrivateVariables.dictionary_map_internal_to_database.size())
+        if(map_database_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists (out of range): %1").arg(map_database_id));
             continue;
         }
-        if(GlobalServerData::serverPrivateVariables.dictionary_map_internal_to_database.at(map_database_id)==NULL)
+        MapServer * const mapForPlantOnServer=static_cast<MapServer *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
+        if(mapForPlantOnServer==NULL)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map not exists (not found): %1").arg(map_database_id));
             continue;
         }
-        MapServer *mapForPlantOnServer=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.dictionary_map_internal_to_database.at(map_database_id));
         if(mapForPlantOnServer->plants.size()>=255)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(mapForPlantOnServer->map_file));

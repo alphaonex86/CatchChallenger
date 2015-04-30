@@ -25,7 +25,8 @@ SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/base/CommonDatapackServerSpec.cpp \
     $$PWD/fight/CommonFightEngine.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
-    $$PWD/base/CommonSettings.cpp
+    $$PWD/base/CommonSettingsCommon.cpp \
+    $$PWD/base/CommonSettingsServer.cpp
 
 HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/GeneralStructures.h \
@@ -47,7 +48,8 @@ HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/CommonDatapackServerSpec.h \
     $$PWD/fight/CommonFightEngine.h \
     $$PWD/fight/CommonFightEngineBase.h \
-    $$PWD/base/CommonSettings.h \
+    $$PWD/base/CommonSettingsCommon.h \
+    $$PWD/base/CommonSettingsServer.h \
     $$PWD/base/GeneralType.h
 
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc

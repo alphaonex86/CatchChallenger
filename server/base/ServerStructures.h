@@ -143,12 +143,16 @@ struct GameServerSettings
             QString login;
             QString pass;
         };
-        Mysql mysql;
+        Mysql sql;
         struct SQLite
         {
             QString file;
         };
         SQLite sqlite;
+
+        DatabaseBase::Type tryOpenType;
+        unsigned int tryInterval;//second
+        unsigned int considerDownAfterNumberOfTry;
     };
     Database database;
 
@@ -353,9 +357,6 @@ struct ServerPrivateVariables
         quint32 a,b,c,d;
     };
 
-    QList<CommonMap *> dictionary_map_database_to_internal;
-    QHash<QString,QHash<QPair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/> > dictionary_itemOnMap_internal_to_database;
-    QList<quint8> dictionary_itemOnMap_database_to_internal;
     //datapack
     QHash<QString,quint8> skinList;
 };

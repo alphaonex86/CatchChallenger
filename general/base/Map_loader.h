@@ -37,6 +37,7 @@ private:
     QByteArray decompress(const QByteArray &data, int expectedSize);
     QString error;
     QHash<QString,quint8> zoneNumber;
+    static QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
 
     static const QString text_map;
     static const QString text_width;

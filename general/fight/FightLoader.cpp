@@ -2,6 +2,7 @@
 #include "../base/DebugClass.h"
 #include "../base/GeneralVariable.h"
 #include "../base/CommonSettingsCommon.h"
+#include "../base/CommonSettingsServer.h"
 #include "../base/CommonDatapack.h"
 
 #include <QFile>
@@ -438,7 +439,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                             }
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-                        pow=qPow(pow,CommonSettings::commonSettings.rates_xp_pow);
+                        pow=qPow(pow,CommonSettingsServer::commonSettingsServer.rates_xp_pow);
                         #endif
                         if(ok)
                         {
@@ -491,13 +492,13 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         if(ok)
                         {
-                            monster.give_xp=item.attribute(FightLoader::text_give_xp).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
+                            monster.give_xp=item.attribute(FightLoader::text_give_xp).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, give_xp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
                         if(ok)
                         {
-                            monster.give_sp=item.attribute(FightLoader::text_give_sp).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
+                            monster.give_sp=item.attribute(FightLoader::text_give_sp).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
                             if(!ok)
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, give_sp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
@@ -809,7 +810,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                             #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(monster.give_xp!=0)
-                                if((monster.xp_for_max_level*CommonSettings::commonSettings.rates_xp/monster.give_xp)>150)
+                                if((monster.xp_for_max_level*CommonSettingsServer::commonSettingsServer.rates_xp/monster.give_xp)>150)
                                     qDebug() << (QStringLiteral("Warning: you need more than %1 monster(s) to pass the last level, prefer do that's with the rate for the monster id: %2").arg(monster.xp_for_max_level/monster.give_xp).arg(id));
                             #endif
                             #endif
@@ -1123,7 +1124,7 @@ QHash<quint16,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                     {
                                         if(gain.hasAttribute(FightLoader::text_cash))
                                         {
-                                            const quint32 &cash=gain.attribute(FightLoader::text_cash).toUInt(&ok)*CommonSettings::commonSettings.rates_gold;
+                                            const quint32 &cash=gain.attribute(FightLoader::text_cash).toUInt(&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
                                             if(ok)
                                                 botFight.cash+=cash;
                                             else

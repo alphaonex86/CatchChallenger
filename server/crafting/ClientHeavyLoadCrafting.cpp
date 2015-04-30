@@ -1,4 +1,5 @@
 #include "../base/Client.h"
+#include "../base/PreparedDBQuery.h"
 #include "../base/GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
@@ -11,13 +12,13 @@ void Client::loadRecipes()
 {
     //recipes
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id.isEmpty())
+    if(PreparedDBQuery::db_query_select_recipes_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadRecipes() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_recipes_by_player_id.arg(character_id);
+    const QString &queryText=PreparedDBQuery::db_query_select_recipes_by_player_id.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadRecipes_static);
     if(callback==NULL)
     {
@@ -59,13 +60,13 @@ void Client::loadItems()
 {
     //do the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id.isEmpty())
+    if(PreparedDBQuery::db_query_select_items_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadItems() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_items_by_player_id.arg(character_id);
+    const QString &queryText=PreparedDBQuery::db_query_select_items_by_player_id.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItems_static);
     if(callback==NULL)
     {
@@ -121,13 +122,13 @@ void Client::loadItemsWarehouse()
 {
     //do the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id.isEmpty())
+    if(PreparedDBQuery::db_query_select_items_warehouse_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadItems() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=GlobalServerData::serverPrivateVariables.db_query_select_items_warehouse_by_player_id.arg(character_id);
+    const QString &queryText=PreparedDBQuery::db_query_select_items_warehouse_by_player_id.arg(character_id);
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadItemsWarehouse_static);
     if(callback==NULL)
     {
