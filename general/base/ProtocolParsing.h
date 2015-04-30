@@ -60,7 +60,7 @@ public:
         MasterServer
     };
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    #ifdef CATCHCHALLENGER_CLASS_CLIENT
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     static CompressionType compressionTypeClient;
     #endif
     static CompressionType compressionTypeServer;

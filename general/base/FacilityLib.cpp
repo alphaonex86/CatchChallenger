@@ -1,6 +1,6 @@
 #include "FacilityLib.h"
 #include "CommonDatapack.h"
-#include "CommonSettings.h"
+#include "CommonSettingsServer.h"
 
 #include <QFileInfo>
 #include <QFileInfoList>
@@ -265,8 +265,8 @@ quint32 FacilityLib::getFactoryResourcePrice(const quint32 &quantityInStock,cons
     if(quantityInStock>=max_items)
         price_temp_change=0;
     else
-        price_temp_change=((max_items-quantityInStock)*CommonSettings::commonSettings.factoryPriceChange*2)/max_items;
-    return CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
+        price_temp_change=((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items;
+    return CommonDatapack::commonDatapack.items.item.value(resource.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
 quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, const Industry::Product &product, const Industry &industry)
@@ -276,8 +276,8 @@ quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, cons
     if(quantityInStock>=max_items)
         price_temp_change=0;
     else
-        price_temp_change=((max_items-quantityInStock)*CommonSettings::commonSettings.factoryPriceChange*2)/max_items;
-    return CommonDatapack::commonDatapack.items.item.value(product.item).price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
+        price_temp_change=((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items;
+    return CommonDatapack::commonDatapack.items.item.value(product.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
 //reputation

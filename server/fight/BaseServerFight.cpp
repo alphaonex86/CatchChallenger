@@ -330,9 +330,9 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                         }
                                         if(ok)
                                         {
-                                            if(CommonSettings::commonSettings.rates_drop!=1.0)
+                                            if(CommonSettingsServer::commonSettingsServer.rates_drop!=1.0)
                                             {
-                                                dropVar.luck=dropVar.luck*CommonSettings::commonSettings.rates_drop;
+                                                dropVar.luck=dropVar.luck*CommonSettingsServer::commonSettingsServer.rates_drop;
                                                 float targetAverage=((float)dropVar.quantity_min+(float)dropVar.quantity_max)/2.0;
                                                 targetAverage=(targetAverage*dropVar.luck)/100.0;
                                                 while(dropVar.luck>100)

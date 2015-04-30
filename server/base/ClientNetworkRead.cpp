@@ -249,7 +249,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
                     #endif
                 }
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                switch(ProtocolParsing::compressionType)
+                switch(ProtocolParsing::compressionTypeServer)
                 {
                     case CompressionType_None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
@@ -425,7 +425,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int 
             }
             if(chatType==Chat_type_pm)
             {
-                if(CommonSettings::commonSettings.chat_allow_private)
+                if(CommonSettingsServer::commonSettingsServer.chat_allow_private)
                 {
                     QString text;
                     {
@@ -495,7 +495,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int 
                 {
                     if(chatType==Chat_type_local)
                     {
-                        if(CommonSettings::commonSettings.chat_allow_local)
+                        if(CommonSettingsServer::commonSettingsServer.chat_allow_local)
                             sendLocalChatText(text);
                         else
                         {
@@ -505,7 +505,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int 
                     }
                     else
                     {
-                        if(CommonSettings::commonSettings.chat_allow_clan || CommonSettings::commonSettings.chat_allow_all)
+                        if(CommonSettingsServer::commonSettingsServer.chat_allow_clan || CommonSettingsServer::commonSettingsServer.chat_allow_all)
                             sendChatText((Chat_type)chatType,text);
                         else
                         {
@@ -1282,7 +1282,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
             //Send datapack file list
             case 0x000C:
             {
-                if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+                if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
                 {
                     errorOutput("Can't use because mirror is defined");
                     return;

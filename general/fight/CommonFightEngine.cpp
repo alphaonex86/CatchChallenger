@@ -1,6 +1,8 @@
 #include "CommonFightEngine.h"
 #include "../base/CommonDatapack.h"
-#include "../base/CommonSettings.h"
+#include "../base/CommonDatapackServerSpec.h"
+#include "../base/CommonSettingsServer.h"
+#include "../base/CommonSettingsCommon.h"
 #include "../base/GeneralVariable.h"
 
 #include <QtMath>
@@ -176,7 +178,7 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId, const quint32 &skil
                             errorFightEngine(QStringLiteral("Skill level to learn not found learnSkill() %2>%1").arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.size()).arg(learn.learnSkillLevel));
                             return false;
                         }
-                        if(CommonSettings::commonSettings.useSP)
+                        if(CommonSettingsServer::commonSettingsServer.useSP)
                         {
                             const quint32 &sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
                             if(sp>monster.sp)
@@ -1217,7 +1219,7 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
         newMonster.remaining_xp=0;
         newMonster.skills=wildMonsters.first().skills;
         newMonster.sp=0;
-        newMonster.id=catchAWild(public_and_private_informations.playerMonster.size()>=CommonSettings::commonSettings.maxPlayerMonsters,newMonster);
+        newMonster.id=catchAWild(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters,newMonster);
         return newMonster.id;
     }
     else
@@ -2212,7 +2214,7 @@ bool CommonFightEngine::generateWildFightIfCollision(CommonMap *map,const COORD_
     int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
-        const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+        const CatchChallenger::MonstersCollision &monstersCollision=CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
         if(monstersCollision.item==0 || items.contains(monstersCollision.item))
         {
             if(monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.isEmpty())

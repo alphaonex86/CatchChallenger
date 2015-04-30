@@ -2,6 +2,7 @@
 #include "GlobalServerData.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/FacilityLib.h"
+#include "PreparedDBQuery.h"
 
 using namespace CatchChallenger;
 
@@ -41,7 +42,7 @@ void Client::sendSystemMessage(const QString &text,const bool &important)
     while(index<size)
     {
         if(clientBroadCastList.at(index)!=this)
-            clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
+            clientBroadCastList.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
         index++;
     }
 }
@@ -206,7 +207,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
             while(index<size)
             {
                 if(playerWithSameClan.at(index)!=this)
-                    playerWithSameClan.at(index)->sendRawSmallPacket(finalData);
+                    playerWithSameClan.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
                 index++;
             }
         }
@@ -263,7 +264,7 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
         while(index<size)
         {
             if(clientBroadCastList.at(index)!=this)
-                clientBroadCastList.at(index)->sendRawSmallPacket(finalData);
+                clientBroadCastList.at(index)->sendRawSmallPacket(finalData.constData(),finalData.size());
             index++;
         }
         return;
@@ -277,7 +278,7 @@ void Client::receive_instant_player_number(const quint16 &connected_players,cons
     if(this->connected_players==connected_players)
         return;
     this->connected_players=connected_players;
-    sendRawSmallPacket(outputData);
+    sendRawSmallPacket(outputData.constData(),outputData.size());
 }
 
 void Client::sendBroadCastCommand(const QString &command,const QString &extraText)
@@ -395,5 +396,5 @@ void Client::setRights(const Player_type& type)
 {
     public_and_private_informations.public_informations.type=type;
     const int &newType=type/0x10-1;
-    dbQueryWrite(GlobalServerData::serverPrivateVariables.db_query_change_right.arg(account_id).arg(newType));
+    dbQueryWrite(PreparedDBQuery::db_query_change_right.arg(account_id).arg(newType));
 }

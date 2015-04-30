@@ -31,7 +31,9 @@ QSet<quint8> ProtocolParsing::toDebugValidMainCodeClientToServer;//if need sub c
 
 quint8                              ProtocolParsing::replyCodeClientToServer;
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGERSERVERDROPIFCLENT
 ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeClient=CompressionType::None;
+#endif
 ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=CompressionType::None;
 #endif
 //predefined size
@@ -185,7 +187,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #endif
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             compressionTypeServer=CompressionType::Zlib;
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             compressionTypeClient=CompressionType::Zlib;
+            #endif
             #endif
 
             //reply code

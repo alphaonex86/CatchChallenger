@@ -721,10 +721,10 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
                     out << (quint8)((quint8)client->getLastDirection() | (quint8)Player_type_normal);
                 else
                     out << (quint8)((quint8)client->getLastDirection() | (quint8)client->public_and_private_informations.public_informations.type);
-                if(CommonSettings::commonSettings.forcedSpeed==0)
+                if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                     out << client->public_and_private_informations.public_informations.speed;
                 //pseudo
-                if(!CommonSettings::commonSettings.dontSendPseudo)
+                if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                 {
                     purgeBuffer_outputData+=client->rawPseudo;
                     out.device()->seek(out.device()->pos()+client->rawPseudo.size());

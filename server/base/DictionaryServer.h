@@ -11,6 +11,8 @@ class DictionaryServer
 {
 public:
     static QList<MapServer *> dictionary_map_database_to_internal;
+    static QHash<QString,QHash<QPair<quint8/*x*/,quint8/*y*/>,quint16/*db code*/> > dictionary_itemOnMap_internal_to_database;
+    static QList<quint8> dictionary_itemOnMap_database_to_internal;
 };
 }
 
