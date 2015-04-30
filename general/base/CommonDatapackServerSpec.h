@@ -33,6 +33,7 @@ public:
     #endif
     QList<MonstersCollision> monstersCollision;
     QHash<quint32,Shop> shops;
+    static CommonDatapackServerSpec commonDatapackServerSpec;
 private:
     QMutex inProgressSpec;
     bool isParsedSpec;

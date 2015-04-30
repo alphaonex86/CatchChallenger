@@ -113,7 +113,7 @@ public:
     static int replyToRegisterLoginServerCharactersGroupSize;
     static char baseDatapackSum[28];
     static char loginGood[256*1024];
-    static char loginGoodSize;
+    static int loginGoodSize;
 
     static char serverPartialServerList[256*1024];
     static int serverPartialServerListSize;

@@ -6,7 +6,8 @@ SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
-    $$PWD/base/BaseServerCommon.cpp \
+    $$PWD/base/BaseServerMasterLoadDictionary.cpp \
+    $$PWD/base/BaseServerMasterSendDatapack.cpp \
     $$PWD/base/LocalClientHandler.cpp \
     $$PWD/base/LocalClientHandlerWithoutSender.cpp \
     $$PWD/base/LocalClientHandlerQuest.cpp \
@@ -32,18 +33,24 @@ SOURCES += \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.cpp \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.cpp \
     $$PWD/base/ClientMapManagement/MapBasicMove.cpp \
+    $$PWD/base/DictionaryLogin.cpp \
+    $$PWD/base/DictionaryServer.cpp \
     $$PWD/crafting/BaseServerCrafting.cpp \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \
     $$PWD/crafting/LocalClientHandlerCrafting.cpp \
     $$PWD/fight/LocalClientHandlerFight.cpp \
     $$PWD/fight/BaseServerFight.cpp \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
-    $$PWD/fight/ClientHeavyLoadFight.cpp
+    $$PWD/fight/ClientHeavyLoadFight.cpp \
+    $$PWD/base/PreparedDBQuery.cpp \
+    $$PWD/base/DatabaseBase.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
     $$PWD/base/SqlFunction.h \
     $$PWD/base/BaseServer.h \
+    $$PWD/base/BaseServerMasterLoadDictionary.h \
+    $$PWD/base/BaseServerMasterSendDatapack.h \
     $$PWD/base/LocalClientHandlerWithoutSender.h \
     $$PWD/VariableServer.h \
     $$PWD/base/ServerStructures.h \
@@ -61,7 +68,10 @@ HEADERS += \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h \
     $$PWD/base/ClientMapManagement/MapBasicMove.h \
+    $$PWD/base/DictionaryLogin.h \
+    $$PWD/base/DictionaryServer.h \
     $$PWD/crafting/MapServerCrafting.h \
+    $$PWD/base/PreparedDBQuery.h \
     $$PWD/base/DatabaseBase.h
 
 RESOURCES += \

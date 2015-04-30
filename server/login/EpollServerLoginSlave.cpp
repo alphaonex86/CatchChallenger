@@ -13,6 +13,7 @@ using namespace CatchChallenger;
 #include <iostream>
 
 #include "EpollClientLoginSlave.h"
+#include "../base/DictionaryLogin.h"
 #include "../../general/base/ProtocolParsing.h"
 
 EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
@@ -419,22 +420,22 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
 
 void EpollServerLoginSlave::setSkinPair(const quint8 &internalId,const quint16 &databaseId)
 {
-    while(dictionary_skin_database_to_internal.size()<(databaseId+1))
-        dictionary_skin_database_to_internal << 0;
-    while(dictionary_skin_internal_to_database.size()<(internalId+1))
-        dictionary_skin_internal_to_database << 0;
-    dictionary_skin_internal_to_database[internalId]=databaseId;
-    dictionary_skin_database_to_internal[databaseId]=internalId;
+    while(DictionaryLogin::dictionary_skin_database_to_internal.size()<(databaseId+1))
+        DictionaryLogin::dictionary_skin_database_to_internal << 0;
+    while(DictionaryLogin::dictionary_skin_internal_to_database.size()<(internalId+1))
+        DictionaryLogin::dictionary_skin_internal_to_database << 0;
+    DictionaryLogin::dictionary_skin_internal_to_database[internalId]=databaseId;
+    DictionaryLogin::dictionary_skin_database_to_internal[databaseId]=internalId;
 }
 
 void EpollServerLoginSlave::setProfilePair(const quint8 &internalId,const quint16 &databaseId)
 {
-    while(dictionary_starter_database_to_internal.size()<(databaseId+1))
-        dictionary_starter_database_to_internal << 0;
-    while(dictionary_starter_internal_to_database.size()<(internalId+1))
-        dictionary_starter_internal_to_database << 0;
-    dictionary_starter_internal_to_database[internalId]=databaseId;
-    dictionary_starter_database_to_internal[databaseId]=internalId;
+    while(DictionaryLogin::dictionary_starter_database_to_internal.size()<(databaseId+1))
+        DictionaryLogin::dictionary_starter_database_to_internal << 0;
+    while(DictionaryLogin::dictionary_starter_internal_to_database.size()<(internalId+1))
+        DictionaryLogin::dictionary_starter_internal_to_database << 0;
+    DictionaryLogin::dictionary_starter_internal_to_database[internalId]=databaseId;
+    DictionaryLogin::dictionary_starter_database_to_internal[databaseId]=internalId;
 }
 
 void EpollServerLoginSlave::compose04Reply()
@@ -460,7 +461,7 @@ void EpollServerLoginSlave::compose04Reply()
         std::cerr << "httpDatapackMirrorData size>255 (abort)" << std::endl;
         abort();
     }
-    EpollClientLoginSlave::loginGood[EpollClientLoginSlave::loginGoodSize]=httpDatapackMirrorData.size();
+    EpollClientLoginSlave::loginGood[EpollClientLoginSlave::loginGoodSize]=(quint8)httpDatapackMirrorData.size();
     EpollClientLoginSlave::loginGoodSize+=1;
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),sizeof(httpDatapackMirrorData.size()));
     EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();
