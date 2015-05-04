@@ -27,9 +27,10 @@
 #include "MapServer.h"
 #include "BaseServerMasterLoadDictionary.h"
 #include "BaseServerMasterSendDatapack.h"
+#include "BaseServerLogin.h"
 
 namespace CatchChallenger {
-class BaseServer : public BaseServerMasterLoadDictionary
+class BaseServer : public BaseServerMasterLoadDictionary, public BaseServerLogin
 {
 public:
     explicit BaseServer();
@@ -81,11 +82,10 @@ protected:
     };
     void preload_the_data();
     void preload_the_events();
-    void preload_the_randomData();
     void preload_the_ddos();
     bool preload_zone();
     void preload_industries();
-    void preload_market_monsters();
+    void preload_market_monsters_sql();
     void preload_market_items();
     bool preload_the_city_capture();
     bool preload_the_map();
@@ -96,17 +96,17 @@ protected:
     virtual void preload_the_visibility_algorithm();
     void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
     virtual void preload_finish();
-    void preload_the_plant_on_map();
-    static void preload_the_plant_on_map_static(void *object);
-    void preload_the_plant_on_map_return();
+    void preload_plant_on_map_sql();
+    static void preload_plant_on_map_static(void *object);
+    void preload_plant_on_map_return();
     void preload_monsters_drops();
-    void load_monsters_max_id();
+    void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    void load_monsters_warehouse_max_id();
+    void load_sql_monsters_warehouse_max_id();
     static void load_monsters_warehouse_max_id_static(void *object);
     void load_monsters_warehouse_max_id_return();
-    void load_monsters_market_max_id();
+    void load_sql_monsters_market_max_id();
     static void load_monsters_market_max_id_static(void *object);
     void load_monsters_market_max_id_return();
     QHash<quint16,MonsterDrops> loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters);
@@ -126,19 +126,9 @@ protected:
     void preload_itemOnMap_return();
     static void preload_itemOnMap_static(void *object);
     void preload_itemOnMap_sql();
-
-    void preload_dictionary_allow();
-    static void preload_dictionary_allow_static(void *object);
-    void preload_dictionary_allow_return();
     void preload_dictionary_map();
     static void preload_dictionary_map_static(void *object);
     void preload_dictionary_map_return();
-    void preload_dictionary_reputation();
-    static void preload_dictionary_reputation_static(void *object);
-    void preload_dictionary_reputation_return();
-    void preload_dictionary_skin();
-    static void preload_dictionary_skin_static(void *object);
-    void preload_dictionary_skin_return();
 
     void unload_industries();
     void unload_zone();
@@ -157,7 +147,6 @@ protected:
     void unload_the_plant_on_map();
     void unload_shop();
     void unload_monsters_drops();
-    void unload_the_randomData();
     void unload_dictionary();
     void unload_profile();
 
