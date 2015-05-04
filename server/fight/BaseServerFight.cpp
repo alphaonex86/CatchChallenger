@@ -17,12 +17,12 @@ using namespace CatchChallenger;
 
 void BaseServer::preload_monsters_drops()
 {
-    GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+QLatin1String(DATAPACK_BASE_PATH_MONSTERS)+QLatin1String("monster.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
+    GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("monster.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
 
     DebugClass::debugConsole(QStringLiteral("%1 monster drop(s) loaded").arg(CommonDatapack::commonDatapack.monsters.size()));
 }
 
-void BaseServer::load_monsters_max_id()
+void BaseServer::load_sql_monsters_max_id()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL city loaded").arg(GlobalServerData::serverPrivateVariables.cityStatusList.size()));
 
@@ -33,20 +33,20 @@ void BaseServer::load_monsters_max_id()
     {
         default:
         case DatabaseBase::Type::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case DatabaseBase::Type::SQLite:
-            queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
         case DatabaseBase::Type::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
+            queryText=QStringLiteral("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         abort();//stop because can't do the first db access
-        load_monsters_warehouse_max_id();
+        load_sql_monsters_warehouse_max_id();
     }
     return;
 }
@@ -72,30 +72,30 @@ void BaseServer::load_monsters_max_id_return()
             if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
                 GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
     }
-    load_monsters_warehouse_max_id();
+    load_sql_monsters_warehouse_max_id();
 }
 
-void BaseServer::load_monsters_warehouse_max_id()
+void BaseServer::load_sql_monsters_warehouse_max_id()
 {
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db.databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `monster_warehouse` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT `id` FROM `monster_warehouse` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case DatabaseBase::Type::SQLite:
-            queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 0,1;");
         break;
         case DatabaseBase::Type::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 1;");
+            queryText=QStringLiteral("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 1;");
         break;
     }
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_warehouse_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
         abort();//stop because can't do the first db access
-        load_monsters_market_max_id();
+        load_sql_monsters_market_max_id();
     }
     return;
 }
@@ -121,23 +121,23 @@ void BaseServer::load_monsters_warehouse_max_id_return()
             if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
                 GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
     }
-    load_monsters_market_max_id();
+    load_sql_monsters_market_max_id();
 }
 
-void BaseServer::load_monsters_market_max_id()
+void BaseServer::load_sql_monsters_market_max_id()
 {
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db.databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
-            queryText=QLatin1String("SELECT `id` FROM `monster_market` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT `id` FROM `monster_market` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case DatabaseBase::Type::SQLite:
-            queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT id FROM monster_market ORDER BY id DESC LIMIT 0,1;");
         break;
         case DatabaseBase::Type::PostgreSQL:
-            queryText=QLatin1String("SELECT id FROM monster_market ORDER BY id DESC LIMIT 1;");
+            queryText=QStringLiteral("SELECT id FROM monster_market ORDER BY id DESC LIMIT 1;");
         break;
     }
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_market_max_id_static)==NULL)
