@@ -18,7 +18,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_the_plant_on_map()
+void BaseServer::preload_plant_on_map_sql()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL monster max id").arg(GlobalServerData::serverPrivateVariables.maxMonsterId));
 
@@ -36,19 +36,19 @@ void BaseServer::preload_the_plant_on_map()
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_the_plant_on_map_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_plant_on_map_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        preload_dictionary_reputation();
+        preload_dictionary_map();
     }
 }
 
-void BaseServer::preload_the_plant_on_map_static(void *object)
+void BaseServer::preload_plant_on_map_static(void *object)
 {
-    static_cast<BaseServer *>(object)->preload_the_plant_on_map_return();
+    static_cast<BaseServer *>(object)->preload_plant_on_map_return();
 }
 
-void BaseServer::preload_the_plant_on_map_return()
+void BaseServer::preload_plant_on_map_return()
 {
     while(GlobalServerData::serverPrivateVariables.db.next())
     {
@@ -166,7 +166,7 @@ void BaseServer::preload_the_plant_on_map_return()
         plant_on_the_map++;
     }
 
-    preload_dictionary_reputation();
+    preload_dictionary_map();
 }
 
 void BaseServer::unload_the_plant_on_map()

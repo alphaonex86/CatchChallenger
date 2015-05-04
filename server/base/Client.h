@@ -614,16 +614,16 @@ private:
     };
     QList<PlantInWaiting> plant_list_in_waiting;
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data,const int &size);
+    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char *data,const int &size);
-    void parseFullMessage(const quint8 &mainCodeType, const quint16 &subCodeType, const char *rawData, const int &size);
+    void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
+    void parseFullMessage(const quint8 &mainCodeType, const quint8 &subCodeType, const char * const rawData, const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-    void parseFullQuery(const quint8 &mainCodeType, const quint16 &subCodeType, const quint8 &queryNumber, const char *rawData, const int &size);
+    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullQuery(const quint8 &mainCodeType, const quint8 &subCodeType, const quint8 &queryNumber, const char * const rawData, const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size);
+    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
 
     void parseNetworkReadError(const QString &errorString);
 
