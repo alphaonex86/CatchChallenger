@@ -43,7 +43,8 @@ SOURCES += \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
     $$PWD/fight/ClientHeavyLoadFight.cpp \
     $$PWD/base/PreparedDBQuery.cpp \
-    $$PWD/base/DatabaseBase.cpp
+    $$PWD/base/DatabaseBase.cpp \
+    $$PWD/base/BaseServerLogin.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
@@ -72,7 +73,8 @@ HEADERS += \
     $$PWD/base/DictionaryServer.h \
     $$PWD/crafting/MapServerCrafting.h \
     $$PWD/base/PreparedDBQuery.h \
-    $$PWD/base/DatabaseBase.h
+    $$PWD/base/DatabaseBase.h \
+    $$PWD/base/BaseServerLogin.h
 
 RESOURCES += \
     $$PWD/all-server-resources.qrc

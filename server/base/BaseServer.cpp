@@ -226,14 +226,35 @@ void BaseServer::preload_the_data()
     preload_the_players();
     preload_monsters_drops();
     baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
-    BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
+    preload_itemOnMap_sql();
+
+    /*
+     * Load order:
+    void preload_itemOnMap_sql();
+    void preload_zone_sql();
+    void preload_plant_on_map_sql();
+    void preload_dictionary_map();
+    void preload_market_monsters_sql();
+    void preload_market_items();
+
+    if(GlobalServerData::serverSettings.automatic_account_creation)
+        load_account_max_id();
+    else if(CommonSettingsCommon::commonSettingsCommon.max_character)
+        load_character_max_id();
+    else
+        BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
+
+    void load_sql_monsters_max_id();
+    void load_sql_monsters_warehouse_max_id();
+    void load_sql_monsters_market_max_id();
+    */
 }
 
 void BaseServer::SQL_common_load_finish()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL reputation dictionary").arg(dictionary_reputation_database_to_internal.size()));
 
-    preload_itemOnMap_sql();
+    load_sql_monsters_max_id();
 }
 
 void BaseServer::preload_the_events()
@@ -426,13 +447,13 @@ void BaseServer::preload_zone_sql()
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
             entryListIndex++;
-            load_monsters_max_id();
+            preload_plant_on_map_sql();
             return;
         }
         else
             return;
     }
-    load_monsters_max_id();
+    preload_plant_on_map_sql();
 }
 
 void BaseServer::preload_itemOnMap_sql()
@@ -634,7 +655,7 @@ void BaseServer::preload_dictionary_map_return()
     DebugClass::debugConsole(QStringLiteral("%1 SQL map dictionary").arg(DictionaryServer::dictionary_map_database_to_internal.size()));
 
     plant_on_the_map=0;
-    preload_the_plant_on_map();
+    preload_market_monsters_sql();
 }
 
 /**
@@ -739,7 +760,7 @@ void BaseServer::preload_zone_return()
     }
     GlobalServerData::serverPrivateVariables.db.clear();
     entryListIndex++;
-    preload_zone_sql();
+    preload_plant_on_map_sql();
 }
 
 void BaseServer::preload_industries()
@@ -763,7 +784,7 @@ void BaseServer::preload_industries()
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        preload_market_monsters();
+        preload_finish();
     }
 }
 
@@ -904,10 +925,10 @@ void BaseServer::preload_industries_return()
         if(ok)
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
     }
-    preload_market_monsters();
+    preload_finish();
 }
 
-void BaseServer::preload_market_monsters()
+void BaseServer::preload_market_monsters_sql()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL industrie loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size()));
 
@@ -1131,7 +1152,7 @@ void BaseServer::preload_market_items()
         else if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
-            preload_dictionary_allow();
+            BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
     }
 }
 
@@ -1185,7 +1206,7 @@ void BaseServer::preload_market_items_return()
     else if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
-        preload_dictionary_allow();
+        BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
 }
 
 void BaseServer::loadMonsterBuffs(const quint32 &index)
@@ -2425,7 +2446,7 @@ void BaseServer::unload_the_data()
     unload_the_static_data();
     unload_the_ddos();
     unload_the_events();
-    unload_the_randomData();
+    BaseServerLogin::unload();
 
     CommonDatapack::commonDatapack.unload();
 }
@@ -2870,7 +2891,7 @@ void BaseServer::load_account_max_id()
         if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
-            preload_dictionary_allow();
+            BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
@@ -2899,7 +2920,7 @@ void BaseServer::load_account_max_id_return()
     if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
-        preload_dictionary_allow();
+        BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
 }
 
 void BaseServer::load_character_max_id()
@@ -2921,7 +2942,7 @@ void BaseServer::load_character_max_id()
     if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
-        preload_dictionary_allow();
+        BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
@@ -2947,6 +2968,6 @@ void BaseServer::load_character_max_id_return()
             continue;
         }
     }
-    preload_dictionary_allow();
+    BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
 }
 

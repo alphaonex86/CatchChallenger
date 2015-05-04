@@ -18,6 +18,7 @@ SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/base/Map_loader.cpp \
     $$PWD/base/CommonMap.cpp \
     $$PWD/base/FacilityLib.cpp \
+    $$PWD/base/FacilityLibGeneral.cpp \
     $$PWD/base/ConnectedSocket.cpp \
     $$PWD/fight/FightLoader.cpp \
     $$PWD/base/DatapackGeneralLoader.cpp \
@@ -41,6 +42,7 @@ HEADERS  += $$PWD/base/DebugClass.h \
     $$PWD/base/GeneralVariable.h \
     $$PWD/base/QFakeSocket.h \
     $$PWD/base/FacilityLib.h \
+    $$PWD/base/FacilityLibGeneral.h \
     $$PWD/base/ConnectedSocket.h \
     $$PWD/fight/FightLoader.h \
     $$PWD/base/DatapackGeneralLoader.h \

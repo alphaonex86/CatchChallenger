@@ -165,7 +165,7 @@ void Client::sendBattleRequest(const QByteArray &data)
     queryNumberList.removeFirst();
 }
 
-void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
     Q_UNUSED(size);
     if(stopIt)
@@ -351,7 +351,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &quer
     }
 }
 
-void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int &size)
+void Client::parseMessage(const quint8 &mainCodeType,const char * const data,const int unsigned &size)
 {
     if(stopIt)
         return;
@@ -653,7 +653,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char *data,const int 
     }
 }
 
-void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char *rawData,const int &size)
+void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
 {
     if(stopIt)
         return;
@@ -1138,7 +1138,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeT
 }
 
 //have query with reply
-void Client::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Client::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stopIt)
         return;
@@ -1167,7 +1167,7 @@ void Client::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,con
     return;
 }
 
-void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *rawData,const int &size)
+void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
 {
     if(stopIt)
         return;
@@ -1786,7 +1786,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeTyp
 }
 
 //send reply
-void Client::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Client::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList << queryNumber;
     if(stopIt)
@@ -1807,7 +1807,7 @@ void Client::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber
     return;
 }
 
-void Client::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     queryNumberList << queryNumber;
     if(stopIt)
