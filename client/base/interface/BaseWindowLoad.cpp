@@ -2,6 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 #include "Chat.h"
@@ -184,11 +185,11 @@ void BaseWindow::logged(const QList<CharacterEntry> &characterEntryList)
     this->characterEntryList=characterEntryList;
     isLogged=true;
     updateConnectingStatus();
-    ui->character_add->setEnabled(characterEntryList.size()<CommonSettings::commonSettings.max_character);
-    ui->character_remove->setEnabled(characterEntryList.size()>CommonSettings::commonSettings.min_character);
+    ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
+    ui->character_remove->setEnabled(characterEntryList.size()>CommonSettingsCommon::commonSettingsCommon.min_character);
     if(characterEntryList.isEmpty())
     {
-        if(CommonSettings::commonSettings.max_character==0)
+        if(CommonSettingsCommon::commonSettingsCommon.max_character==0)
             emit message("Can't create character but the list is empty");
     }
 }
@@ -461,24 +462,24 @@ void BaseWindow::updateConnectingStatus()
         {
             ui->stackedWidget->setCurrentWidget(ui->page_character);
             updateCharacterList();
-            if(characterEntryList.isEmpty() && CommonSettings::commonSettings.max_character>0)
+            if(characterEntryList.isEmpty() && CommonSettingsCommon::commonSettingsCommon.max_character>0)
             {
-                if(CommonSettings::commonSettings.min_character>0)
+                if(CommonSettingsCommon::commonSettingsCommon.min_character>0)
                 {
                     ui->stackedWidget->setCurrentWidget(ui->page_init);
                     ui->label_connecting_status->setText(QString());
                 }
                 on_character_add_clicked();
             }
-            if(characterEntryList.size()==1 && CommonSettings::commonSettings.min_character>=characterEntryList.size() && CommonSettings::commonSettings.max_character<=characterEntryList.size())
+            if(characterEntryList.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterEntryList.size() && CommonSettingsCommon::commonSettingsCommon.max_character<=characterEntryList.size())
             {
-                if(!characterSelected && characterEntryList.first().mapId!=-1)
+                /*if(!characterSelected && characterEntryList.first().mapId!=-1)
                 {
                     qDebug() << characterEntryList.first().mapId;
                     characterSelected=true;
                     ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
                     on_character_select_clicked();
-                }
+                }*/
             }
         }
         return;
@@ -763,7 +764,7 @@ void BaseWindow::updateDisplayedQuests()
             {
                 #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
                 html+=QStringLiteral("<li>");
-                if(CommonDatapack::commonDatapack.quests.value(i.key()).repeatable)
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key()).repeatable)
                     html+=imagesInterfaceRepeatableString;
                 if(i.value().step>0)
                     html+=imagesInterfaceInProgressString;
@@ -811,7 +812,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(quests.value(questId).step-1)+"<br />";
     QString stepRequirements;
     {
-        QList<Quest::Item> items=CommonDatapack::commonDatapack.quests.value(questId).steps.value(quests.value(questId).step-1).requirements.items;
+        QList<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.value(quests.value(questId).step-1).requirements.items;
         QStringList objects;
         int index=0;
         while(index<items.size())
@@ -855,7 +856,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     {
         finalRewards+=tr("Final rewards: ");
         {
-            QList<Quest::Item> items=CommonDatapack::commonDatapack.quests.value(questId).rewards.items;
+            QList<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).rewards.items;
             QStringList objects;
             int index=0;
             while(index<items.size())
@@ -890,7 +891,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=objects.join(", ")+"<br />";
         }
         {
-            QList<ReputationRewards> reputationRewards=CommonDatapack::commonDatapack.quests.value(questId).rewards.reputation;
+            QList<ReputationRewards> reputationRewards=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).rewards.reputation;
             QStringList reputations;
             int index=0;
             while(index<reputationRewards.size())
@@ -913,7 +914,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=reputations.join(", ")+"<br />";
         }
         {
-            QList<ActionAllow> allowRewards=CommonDatapack::commonDatapack.quests.value(questId).rewards.allow;
+            QList<ActionAllow> allowRewards=CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).rewards.allow;
             QStringList allows;
             int index=0;
             while(index<allowRewards.size())

@@ -99,12 +99,16 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     int rawServerListSize=0x01;
 
                     const unsigned short int &serverListSize=rawData[0x00];
-                    EpollClientLoginSlave::serverPartialServerList[0x00]=serverListSize;
-                    int pos=0x01;
+                    int pos;
                     int serverListIndex=0;
                     quint32 serverUniqueKey;const char * hostData;quint8 hostDataSize;quint16 port;
 
                     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                    {
+                        EpollClientLoginSlave::serverPartialServerList[0x00]=0x02;//proxy mode
+                        EpollClientLoginSlave::serverPartialServerList[0x01]=0x00;//Skip server selection: no
+                        EpollClientLoginSlave::serverPartialServerList[0x02]=serverListSize;
+                        pos=0x02;
                         while(serverListIndex<serverListSize)
                         {
                             QString charactersGroupString;
@@ -224,7 +228,12 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
 
                             serverListIndex++;
                         }
+                    }
                     else
+                    {
+                        EpollClientLoginSlave::serverPartialServerList[0x00]=0x01;//Reconnect mode
+                        EpollClientLoginSlave::serverPartialServerList[0x01]=serverListSize;
+                        pos=0x02;
                         while(serverListIndex<serverListSize)
                         {
                             QString charactersGroupString;
@@ -345,6 +354,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
 
                             serverListIndex++;
                         }
+                    }
                     EpollClientLoginSlave::serverPartialServerListSize=rawServerListSize;
                     if((size-pos)<static_cast<unsigned int>(serverListSize*(sizeof(quint16)+sizeof(quint16))))
                     {
