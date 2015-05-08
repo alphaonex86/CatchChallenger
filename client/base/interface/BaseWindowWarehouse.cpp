@@ -3,7 +3,8 @@
 #include "DatapackClientLoader.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonSettings.h"
+#include "../../../general/base/CommonSettingsCommon.h"
+#include "../../../general/base/CommonSettingsServer.h"
 
 #include <QInputDialog>
 
@@ -191,7 +192,7 @@ void BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *
 {
     quint32 id=item->data(99).toUInt();
     QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
-    if(warehouseMonsterOnPlayerList.size()>CommonSettings::commonSettings.maxPlayerMonsters)
+    if(warehouseMonsterOnPlayerList.size()>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
         QMessageBox::warning(this,tr("Error"),tr("You can't wear more monster!"));
         return;
