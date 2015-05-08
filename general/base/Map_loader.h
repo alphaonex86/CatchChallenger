@@ -33,11 +33,11 @@ public:
     static QDomElement getXmlCondition(const QString &fileName,const QString &conditionFile,const quint32 &conditionId);
     static MapCondition xmlConditionToMapCondition(const QString &conditionFile, const QDomElement &item);
     QList<MapMonster> loadSpecificMonster(const QString &fileName,const QString &monsterType);
+    static QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
 private:
     QByteArray decompress(const QByteArray &data, int expectedSize);
     QString error;
     QHash<QString,quint8> zoneNumber;
-    static QHash<QString/*file*/, QHash<quint32/*id*/,QDomElement> > teleportConditionsUnparsed;
 
     static const QString text_map;
     static const QString text_width;

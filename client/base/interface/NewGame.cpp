@@ -1,6 +1,6 @@
 #include "NewGame.h"
 #include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/CommonSettings.h"
+#include "../../../general/base/CommonSettingsCommon.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "ui_NewGame.h"
 
@@ -32,7 +32,7 @@ NewGame::NewGame(const QString &skinPath,const QList<quint8> &forcedSkin,QWidget
         index++;
     }
 
-    ui->pseudo->setMaxLength(CommonSettings::commonSettings.max_pseudo_size);
+    ui->pseudo->setMaxLength(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size);
     ui->previousSkin->setVisible(skinList.size()>=2);
     ui->nextSkin->setVisible(skinList.size()>=2);
 

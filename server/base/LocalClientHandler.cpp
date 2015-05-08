@@ -99,7 +99,7 @@ void Client::savePosition()
     const quint32 &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
     const quint32 &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
     const quint32 &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
-    switch(GlobalServerData::serverPrivateVariables.db.databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -2513,10 +2513,10 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             clanActionParam->text=text;
 
             const QString &queryText=PreparedDBQuery::db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addClan_static);
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::addClan_static);
             if(callback==NULL)
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
 
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2713,7 +2713,7 @@ void Client::addClan_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->addClan_object();
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
 }
 
 void Client::addClan_object()
@@ -2741,7 +2741,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     #endif
     callbackRegistred.removeFirst();
     Q_UNUSED(action);
-    if(GlobalServerData::serverPrivateVariables.db.next())
+    if(GlobalServerData::serverPrivateVariables.db->next())
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2857,7 +2857,7 @@ void Client::insertIntoAClan(const quint32 &clanId)
 {
     //add into db
     QString clan_leader;
-    if(GlobalServerData::serverPrivateVariables.db.databaseType()!=DatabaseBase::Type::PostgreSQL)
+    if(GlobalServerData::serverPrivateVariables.db->databaseType()!=DatabaseBase::Type::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
             clan_leader=Client::text_1;
