@@ -8,6 +8,9 @@
 #include <QString>
 #include <QStringList>
 #include <QMultiHash>
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QDomDocument>
+#endif
 
 #include "GeneralStructures.h"
 
