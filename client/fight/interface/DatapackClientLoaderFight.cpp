@@ -5,6 +5,7 @@
 #include "../../../general/base/DebugClass.h"
 #include "../../../general/fight/FightLoader.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../fight/interface/ClientFightEngine.h"
 
 #include <QDomElement>
@@ -850,7 +851,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                         quint32 id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                         if(ok)
                         {
-                            if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(id))
+                            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(id))
                             {
                                 if(!botFightsExtra.contains(id))
                                 {
@@ -951,7 +952,7 @@ void DatapackClientLoader::parseBotFightsExtra()
         }
     }
 
-    QHashIterator<quint16,CatchChallenger::BotFight> i(CatchChallenger::CommonDatapack::commonDatapack.botFights);
+    QHashIterator<quint16,CatchChallenger::BotFight> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights);
     while(i.hasNext())
     {
         i.next();

@@ -2,6 +2,7 @@
 #include "MapItem.h"
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../tiled/tiled_mapobject.h"
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -695,7 +696,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                                 {
                                                                     const quint32 &fightid=step.attribute(MapVisualiserThread::text_fightid).toUInt(&ok);
                                                                     if(ok)
-                                                                        if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightid))
+                                                                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightid))
                                                                             parsedMap->logicalMap.botsFight.insert(QPair<quint8,quint8>(x,y),fightid);
                                                                 }
                                                             }

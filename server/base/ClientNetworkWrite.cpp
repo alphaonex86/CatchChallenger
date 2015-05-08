@@ -3,12 +3,12 @@
 using namespace CatchChallenger;
 
 /* not use mainCodeWithoutSubCodeTypeServerToClient because the reply have unknow code */
-void Client::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
+void Client::sendFullPacket(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(QStringLiteral("sendPacket(%1,%2,%3) when is not connected").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
+        normalOutput(QStringLiteral("sendPacket(%1,%2,%3) when is not connected").arg(mainCodeType).arg(subCodeType).arg(QString(QByteArray(data,size).toHex())));
         return;
     }
     #endif
@@ -26,12 +26,12 @@ void Client::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeTyp
     #endif
 }
 
-void Client::sendPacket(const quint8 &mainCodeType,const char *data,const int &size)
+void Client::sendPacket(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(QStringLiteral("sendPacket(%1,%2) when is not connected").arg(mainCodeType).arg(QString(data.toHex())));
+        normalOutput(QStringLiteral("sendPacket(%1,%2) when is not connected").arg(mainCodeType).arg(QString(QByteArray(data,size).toHex())));
         return;
     }
     #endif
@@ -49,7 +49,7 @@ void Client::sendPacket(const quint8 &mainCodeType,const char *data,const int &s
     #endif
 }
 
-void Client::sendRawSmallPacket(const char *data,const int &size)
+void Client::sendRawSmallPacket(const char * const data,const unsigned int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
@@ -72,12 +72,12 @@ void Client::sendRawSmallPacket(const char *data,const int &size)
     #endif
 }
 
-void Client::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const char *data,const int &size)
+void Client::sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
     {
-        normalOutput(QStringLiteral("sendQuery(%1,%2,%3,%4) when is not connected").arg(mainIdent).arg(subIdent).arg(queryNumber).arg(QString(data.toHex())));
+        normalOutput(QStringLiteral("sendQuery(%1,%2,%3,%4) when is not connected").arg(mainIdent).arg(subIdent).arg(queryNumber).arg(QString(QByteArray(data,size).toHex())));
         return;
     }
     #endif
@@ -97,7 +97,7 @@ void Client::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const qui
 
 //send reply
 
-void Client::postReply(const quint8 &queryNumber,const char *data,const int &size)
+void Client::postReply(const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(!isConnected)
