@@ -2,6 +2,7 @@
 #include "DatapackClientLoader.h"
 #include "../Api_client_real.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/GeneralStructures.h"
 
 MapController* MapController::mapController=NULL;
@@ -327,7 +328,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             quint32 fightid=stepBot.attribute(MapController::text_fightid).toUInt(&ok);
             if(ok)
             {
-                if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightid))
+                if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightid))
                 {
                     #ifdef DEBUG_CLIENT_BOT
                     CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));

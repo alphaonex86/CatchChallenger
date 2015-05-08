@@ -2,7 +2,9 @@
 
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonSettings.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../../../general/base/CommonSettingsCommon.h"
+#include "../../../general/base/CommonSettingsServer.h"
 #include "../interface/DatapackClientLoader.h"
 #include "../../../general/base/GeneralVariable.h"
 
@@ -604,7 +606,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
-            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || items->contains(monstersCollision.item))
             {
                 if(monstersCollision.tile!=lastTileset)
@@ -714,7 +716,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==0)
+            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && x==0)
                 emit send_player_direction(CatchChallenger::Direction_look_at_left);
             //startGrassAnimation(direction);
         }
@@ -740,7 +742,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==(current_map_pointer->logicalMap.width-1))
+            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && x==(current_map_pointer->logicalMap.width-1))
                 emit send_player_direction(CatchChallenger::Direction_look_at_right);
             //startGrassAnimation(direction);
         }
@@ -766,7 +768,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==0)
+            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && y==0)
                 emit send_player_direction(CatchChallenger::Direction_look_at_top);
             //startGrassAnimation(direction);
         }
@@ -792,7 +794,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==(current_map_pointer->logicalMap.height-1))
+            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && y==(current_map_pointer->logicalMap.height-1))
                 emit send_player_direction(CatchChallenger::Direction_look_at_bottom);
             //startGrassAnimation(direction);
         }

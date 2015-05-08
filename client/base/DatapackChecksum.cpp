@@ -10,6 +10,7 @@
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLibGeneral.h"
 
 using namespace CatchChallenger;
 
@@ -32,7 +33,7 @@ QByteArray DatapackChecksum::doChecksum(const QString &datapackPath, bool onlyFu
 
     const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
     QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
-    QStringList returnList=CatchChallenger::FacilityLib::listFolder(datapackPath);
+    QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
     returnList.sort();
     int index=0;
     const int &size=returnList.size();
@@ -79,7 +80,7 @@ void DatapackChecksum::doDifferedChecksum(const QString &datapackPath)
     {
         const QSet<QString> &extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
         QRegularExpression datapack_rightFileName=QRegularExpression(DATAPACK_FILE_REGEX);
-        QStringList returnList=CatchChallenger::FacilityLib::listFolder(datapackPath);
+        QStringList returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
         returnList.sort();
         int index=0;
         const int &size=returnList.size();

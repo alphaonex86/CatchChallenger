@@ -1,6 +1,8 @@
 #include "MapController.h"
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/FacilityLibGeneral.h"
+#include "../../../general/base/CommonSettingsServer.h"
 #include "DatapackClientLoader.h"
 #include "../ClientVariable.h"
 #include "../Api_client_real.h"
@@ -1068,7 +1070,7 @@ void MapControllerMP::datapackParsed()
 {
     MapVisualiserPlayer::datapackParsed();
 
-    skinFolderList=CatchChallenger::FacilityLib::skinIdList(datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN);
+    skinFolderList=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN);
 
     if(player_informations_is_set)
         reinject_signals();
@@ -1545,25 +1547,28 @@ bool MapControllerMP::nextPathStep()//true if have step
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            if(direction==CatchChallenger::Direction_move_at_bottom)
+            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange)
             {
-                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==(all_map.value(current_map)->logicalMap.height-1))
-                    emit send_player_direction(CatchChallenger::Direction_look_at_right);
-            }
-            if(direction==CatchChallenger::Direction_move_at_top)
-            {
-                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && y==0)
-                    emit send_player_direction(CatchChallenger::Direction_look_at_top);
-            }
-            if(direction==CatchChallenger::Direction_move_at_right)
-            {
-                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==(all_map.value(current_map)->logicalMap.width-1))
-                    emit send_player_direction(CatchChallenger::Direction_look_at_right);
-            }
-            if(direction==CatchChallenger::Direction_move_at_left)
-            {
-                if(CommonSettings::commonSettings.forceClientToSendAtMapChange && x==0)
-                    emit send_player_direction(CatchChallenger::Direction_look_at_left);
+                if(direction==CatchChallenger::Direction_move_at_bottom)
+                {
+                    if(y==(all_map.value(current_map)->logicalMap.height-1))
+                        emit send_player_direction(CatchChallenger::Direction_look_at_right);
+                }
+                if(direction==CatchChallenger::Direction_move_at_top)
+                {
+                    if(y==0)
+                        emit send_player_direction(CatchChallenger::Direction_look_at_top);
+                }
+                if(direction==CatchChallenger::Direction_move_at_right)
+                {
+                    if(x==(all_map.value(current_map)->logicalMap.width-1))
+                        emit send_player_direction(CatchChallenger::Direction_look_at_right);
+                }
+                if(direction==CatchChallenger::Direction_move_at_left)
+                {
+                    if(x==0)
+                        emit send_player_direction(CatchChallenger::Direction_look_at_left);
+                }
             }
             //startGrassAnimation(direction);
             return true;

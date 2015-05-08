@@ -13,7 +13,8 @@ const unsigned char protocolHeaderToMatch[] = PROTOCOL_HEADER;
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonSettings.h"
+#include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralType.h"
 
@@ -110,7 +111,7 @@ void Api_protocol::messageParsingLayer(const QString &message) const
 }
 
 //have message without reply
-void Api_protocol::parseMessage(const quint8 &mainCodeType,const char *data,const int &size)
+void Api_protocol::parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
 {
     parseMessage(mainCodeType,QByteArray(data,size));
 }
@@ -256,7 +257,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     public_informations.type=playerType;
 
                     //the speed
-                    if(CommonSettings::commonSettings.forcedSpeed==0)
+                    if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -266,9 +267,9 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                         in >> public_informations.speed;
                     }
                     else
-                        public_informations.speed=CommonSettings::commonSettings.forcedSpeed;
+                        public_informations.speed=CommonSettingsServer::commonSettingsServer.forcedSpeed;
 
-                    if(!CommonSettings::commonSettings.dontSendPseudo)
+                    if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                     {
                         //the pseudo
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -988,12 +989,12 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
     }
 }
 
-void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
+void Api_protocol::parseFullMessage(const quint8 &mainCodeType, const quint8 &subCodeType, const char * const data, const unsigned int &size)
 {
     parseFullMessage(mainCodeType,subCodeType,QByteArray(data,size));
 }
 
-void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const QByteArray &data)
 {
     if(!is_logged)
     {
@@ -1475,7 +1476,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                                 return;
                             }
                             in >> monster.hp;
-                            if(CommonSettings::commonSettings.useSP)
+                            if(CommonSettingsServer::commonSettingsServer.useSP)
                             {
                                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                                 {
@@ -2309,7 +2310,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
 }
 
 //have query with reply
-void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     parseQuery(mainCodeType,queryNumber,QByteArray(data,size));
 }
@@ -2322,12 +2323,12 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumb
     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("have not query of this type, mainCodeType: %1, queryNumber: %2").arg(mainCodeType).arg(queryNumber));
 }
 
-void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Api_protocol::parseFullQuery(const quint8 &mainCodeType, const quint8 &subCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size)
 {
     parseFullQuery(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
 }
 
-void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     if(!is_logged)
     {
@@ -2565,7 +2566,7 @@ void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subC
 }
 
 //send reply
-void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     parseReplyData(mainCodeType,queryNumber,QByteArray(data,size));
 }
@@ -2596,13 +2597,13 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 switch(returnCode)
                 {
                     case 0x04:
-                        ProtocolParsing::compressionType=ProtocolParsing::CompressionType_None;
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
                     break;
                     case 0x05:
-                        ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Zlib;
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
                     break;
                     case 0x06:
-                        ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Xz;
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
                     break;
                     default:
                         newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(queryNumber));
@@ -2712,7 +2713,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.waitBeforeConnectAfterKick;
+                in >> CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
                 {
                     quint8 tempForceClientToSendAtBorder;
                     in >> tempForceClientToSendAtBorder;
@@ -2721,54 +2722,54 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("forceClientToSendAtBorder have wrong value, line: %1").arg(__LINE__));
                         return;
                     }
-                    CommonSettings::commonSettings.forceClientToSendAtMapChange=(tempForceClientToSendAtBorder==1);
+                    CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange=(tempForceClientToSendAtBorder==1);
                 }
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.forcedSpeed;
+                in >> CommonSettingsServer::commonSettingsServer.forcedSpeed;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the forcedSpeed, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.useSP;
+                in >> CommonSettingsServer::commonSettingsServer.useSP;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the tcpCork, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.tcpCork;
+                in >> CommonSettingsServer::commonSettingsServer.tcpCork;
                 {
-                    socket->setTcpCork(CommonSettings::commonSettings.tcpCork);
+                    socket->setTcpCork(CommonSettingsServer::commonSettingsServer.tcpCork);
                 }
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.autoLearn;
+                in >> CommonSettingsServer::commonSettingsServer.autoLearn;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.dontSendPseudo;
+                in >> CommonSettingsServer::commonSettingsServer.dontSendPseudo;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.max_character;
+                in >> CommonSettingsCommon::commonSettingsCommon.max_character;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the min_character, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.min_character;
-                if(CommonSettings::commonSettings.max_character<CommonSettings::commonSettings.min_character)
+                in >> CommonSettingsCommon::commonSettingsCommon.min_character;
+                if(CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character)
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("max_character<min_character, line: %1").arg(__LINE__));
                     return;
@@ -2778,106 +2779,106 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_pseudo_size, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.max_pseudo_size;
+                in >> CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_pseudo_size, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.character_delete_time;
+                in >> CommonSettingsCommon::commonSettingsCommon.character_delete_time;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(float))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the rates_xp, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.rates_xp;
+                in >> CommonSettingsServer::commonSettingsServer.rates_xp;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(float))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the rates_gold, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.rates_gold;
+                in >> CommonSettingsServer::commonSettingsServer.rates_gold;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(float))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.rates_xp_pow;
+                in >> CommonSettingsServer::commonSettingsServer.rates_xp_pow;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(float))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the rates_gold, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.rates_drop;
+                in >> CommonSettingsServer::commonSettingsServer.rates_drop;
 
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.maxPlayerMonsters;
+                in >> CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.maxWarehousePlayerMonsters;
+                in >> CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.maxPlayerItems;
+                in >> CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.maxWarehousePlayerItems;
+                in >> CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems;
 
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.chat_allow_all;
+                in >> CommonSettingsServer::commonSettingsServer.chat_allow_all;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_local, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.chat_allow_local;
+                in >> CommonSettingsServer::commonSettingsServer.chat_allow_local;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_private, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.chat_allow_private;
+                in >> CommonSettingsServer::commonSettingsServer.chat_allow_private;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_clan, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.chat_allow_clan;
+                in >> CommonSettingsServer::commonSettingsServer.chat_allow_clan;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the factoryPriceChange, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.factoryPriceChange;
+                in >> CommonSettingsServer::commonSettingsServer.factoryPriceChange;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the httpDatapackMirror, line: %1").arg(__LINE__));
                     return;
                 }
-                in >> CommonSettings::commonSettings.httpDatapackMirror;
+                in >> CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(__LINE__));
                     return;
                 }
-                CommonSettings::commonSettings.datapackHash=data.mid(in.device()->pos(),28);
-                in.device()->seek(in.device()->pos()+CommonSettings::commonSettings.datapackHash.size());
+                CommonSettingsCommon::commonSettingsCommon.datapackHashBase=data.mid(in.device()->pos(),28);
+                in.device()->seek(in.device()->pos()+CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the number of map, line: %1").arg(__LINE__));
@@ -2934,12 +2935,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         return;
                     }
                     in >> characterEntry.last_connect;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    /*if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    in >> characterEntry.mapId;
+                    in >> characterEntry.mapId;*/
                     characterEntryList << characterEntry;
                     index++;
                 }
@@ -3001,12 +3002,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     }
 }
 
-void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const char *data,const int &size)
+void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     parseFullReplyData(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
 }
 
-void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     if(querySendTime.contains(queryNumber))
     {

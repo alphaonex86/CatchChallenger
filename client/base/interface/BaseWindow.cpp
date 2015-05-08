@@ -4,6 +4,7 @@
 #include "../ClientVariable.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 #include "DatapackClientLoader.h"
 #include "MapController.h"
 #include "Chat.h"
@@ -976,7 +977,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             load_inventory();
             if(!ok)
                 break;
-            if(warehouse_playerMonster.size()>=CommonSettings::commonSettings.maxWarehousePlayerMonsters)
+            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
             {
                 QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
                 break;
@@ -2094,7 +2095,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
-        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId);
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
         if(!quests.contains(botQuests.at(index)))
         {
             //quest not started
@@ -2105,7 +2106,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         }
         else
         {
-            if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(botQuests.at(index)))
+            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(botQuests.at(index)))
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -2145,7 +2146,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(i.key());
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key());
             QList<quint16> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
                 return true;//in progress, but not the starting bot
@@ -2170,7 +2171,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
-        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId);
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId);
         if(!quests.contains(botQuests.at(index)))
         {
             //quest not started
@@ -2191,7 +2192,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
         }
         else
         {
-            if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(botQuests.at(index)))
+            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(botQuests.at(index)))
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -2251,7 +2252,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests.value(i.key());
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(i.key());
             QList<quint16> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
             {
@@ -2326,7 +2327,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("Shop called but wrong id"));
             return;
         }
-        if(!CommonDatapack::commonDatapack.shops.contains(shopId))
+        if(!CommonDatapackServerSpec::commonDatapackServerSpec.shops.contains(shopId))
         {
             showTip(tr("Shop not found"));
             return;
@@ -2355,7 +2356,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         #else
         {
             QList<ItemToSellOrBuy> items;
-            const Shop &shop=CommonDatapack::commonDatapack.shops.value(shopId);
+            const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId);
             int index=0;
             while(index<shop.items.size())
             {
@@ -2652,7 +2653,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("Bot step wrong data type error, repport this error please"));
             return;
         }
-        if(!CommonDatapack::commonDatapack.botFights.contains(fightId))
+        if(!CommonDatapackServerSpec::commonDatapackServerSpec.botFights.contains(fightId))
         {
             showTip(tr("Bot fight not found"));
             return;
@@ -2951,7 +2952,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
                 index++;
                 continue;
             }
-            if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(questId))
+            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
             {
                 showTip(tr("Quest not found"));
                 index++;
@@ -3025,7 +3026,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
 
 bool BaseWindow::tryValidateQuestStep(bool silent)
 {
-    if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(questId))
+    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.contains(questId))
     {
         if(!silent)
             showTip(tr("Quest not found"));
@@ -3034,10 +3035,10 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
 
     if(!quests.contains(questId))
     {
-        if(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
+        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
+            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
             updateDisplayedQuests();
             return true;
         }
@@ -3050,10 +3051,10 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
     }
     else if(quests.value(questId).step==0)
     {
-        if(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
+        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.at(0).bots.contains(actualBot.botId) && haveStartQuestRequirement(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
+            startQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
             updateDisplayedQuests();
             return true;
         }
@@ -3064,29 +3065,29 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
             return false;
         }
     }
-    if(!haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
+    if(!haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
     {
         if(!silent)
             showTip(tr("You don't have the requirement to continue this quest"));
         return false;
     }
-    if(quests.value(questId).step>=(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.size()))
+    if(quests.value(questId).step>=(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.size()))
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
         CatchChallenger::Api_client_real::client->finishQuest(questId);
-        nextStepQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
+        nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
         updateDisplayedQuests();
         return true;
     }
-    if(!CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId).steps.at(quests.value(questId).step).bots.contains(actualBot.botId))
+    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId).steps.at(quests.value(questId).step).bots.contains(actualBot.botId))
     {
         if(!silent)
             showTip(tr("You need talk to another bot"));
         return false;
     }
     CatchChallenger::Api_client_real::client->nextQuestStep(questId);
-    nextStepQuest(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId));
+    nextStepQuest(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId));
     updateDisplayedQuests();
     return true;
 }
@@ -3141,7 +3142,7 @@ void BaseWindow::getTextEntryPoint()
             contents.replace("haveQuestStepRequirements()","false");
             haveNextStepQuestRequirementsVar=false;
         }
-        else if(haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests.value(questId)))
+        else if(haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(questId)))
         {
             contents.replace("haveQuestStepRequirements()","true");
             haveNextStepQuestRequirementsVar=true;
