@@ -23,7 +23,7 @@ void BaseServer::preload_plant_on_map_sql()
     DebugClass::debugConsole(QStringLiteral("%1 SQL monster max id").arg(GlobalServerData::serverPrivateVariables.maxMonsterId));
 
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db.databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -36,9 +36,9 @@ void BaseServer::preload_plant_on_map_sql()
             queryText=QStringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&BaseServer::preload_plant_on_map_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_plant_on_map_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         preload_dictionary_map();
     }
 }
@@ -50,13 +50,13 @@ void BaseServer::preload_plant_on_map_static(void *object)
 
 void BaseServer::preload_plant_on_map_return()
 {
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
         bool ok;
-        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QStringLiteral("Plant id ignored because is not a number: %1").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
+            DebugClass::debugConsole(QStringLiteral("Plant id ignored because is not a number: %1").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
             continue;
         }
         if(GlobalServerData::serverPrivateVariables.plantUsedId.contains(id))
@@ -78,7 +78,7 @@ void BaseServer::preload_plant_on_map_return()
             }
             GlobalServerData::serverPrivateVariables.maxPlantId=id;
         }
-        const quint32 &map_database_id=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+        const quint32 &map_database_id=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map is not a number"));
@@ -100,7 +100,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the map have 255 or more plant: %1").arg(mapForPlantOnServer->map_file));
             continue;
         }
-        const quint8 &x=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+        const quint8 &x=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x is not a number"));
@@ -111,7 +111,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the x>%1 for the map %2: %3").arg(mapForPlantOnServer->width).arg(mapForPlantOnServer->map_file).arg(x));
             continue;
         }
-        const quint8 &y=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
+        const quint8 &y=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y is not a number"));
@@ -122,7 +122,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because the y>%1 for the map %2: %3").arg(mapForPlantOnServer->height).arg(mapForPlantOnServer->map_file).arg(y));
             continue;
         }
-        const quint8 &plant=QString(GlobalServerData::serverPrivateVariables.db.value(4)).toUInt(&ok);
+        const quint8 &plant=QString(GlobalServerData::serverPrivateVariables.db->value(4)).toUInt(&ok);
         if(!ok)
             continue;
         if(!CommonDatapack::commonDatapack.plants.contains(plant))
@@ -130,7 +130,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(QStringLiteral("Plant dropped to not block the player, due to missing plant into the list: %1").arg(plant));
             continue;
         }
-        const quint32 &character=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
+        const quint32 &character=QString(GlobalServerData::serverPrivateVariables.db->value(5)).toUInt(&ok);
         if(!ok)
             continue;
         if(!MoveOnTheMap::isDirt(*mapForPlantOnServer,x,y))
@@ -138,7 +138,7 @@ void BaseServer::preload_plant_on_map_return()
             DebugClass::debugConsole(QStringLiteral("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(mapForPlantOnServer->map_file).arg(x).arg(y));
             continue;
         }
-        const quint64 &plant_timestamps=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toULongLong(&ok);
+        const quint64 &plant_timestamps=QString(GlobalServerData::serverPrivateVariables.db->value(6)).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Plant timestamps is not a number: %1 (%2,%3)").arg(mapForPlantOnServer->map_file).arg(x).arg(y));

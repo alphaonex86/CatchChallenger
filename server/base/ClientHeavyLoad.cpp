@@ -72,10 +72,10 @@ void Client::askLogin(const quint8 &query_id,const char *rawdata)
     askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     const QString &queryText=PreparedDBQuery::db_query_login.arg(QString(login.toHex()));
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::askLogin_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::askLogin_static);
     if(callback==NULL)
     {
-        loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+        loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage()));
         delete askLoginParam;
         return;
     }
@@ -93,7 +93,7 @@ void Client::askLogin_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->askLogin_object();
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
     //delete askLoginParam; -> not here because need reuse later
 }
 
@@ -132,7 +132,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     callbackRegistred.removeFirst();
     {
         bool ok;
-        if(!GlobalServerData::serverPrivateVariables.db.next())
+        if(!GlobalServerData::serverPrivateVariables.db->next())
         {
             if(GlobalServerData::serverSettings.automatic_account_creation)
             {
@@ -171,7 +171,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     const TokenLink &tokenLink=GlobalServerData::serverPrivateVariables.tokenForAuth[index];
                     if(tokenLink.client==this)
                     {
-                        const QString &secretToken(GlobalServerData::serverPrivateVariables.db.value(1));
+                        const QString &secretToken(GlobalServerData::serverPrivateVariables.db->value(1));
                         const QByteArray &secretTokenBinary=QByteArray::fromHex(secretToken.toLatin1());
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary);
@@ -210,7 +210,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                account_id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+                account_id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
                 if(!ok)
                 {
                     account_id=0;
@@ -222,11 +222,11 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         }
     }
     const QString &queryText=PreparedDBQuery::db_query_characters.arg(account_id).arg(CommonSettingsCommon::commonSettingsCommon.max_character*2);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::character_list_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::character_list_static);
     if(callback==NULL)
     {
         account_id=0;
-        loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+        loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage()));
         delete askLoginParam;
         return;
     }
@@ -281,11 +281,11 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
     askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
     const QString &queryText=PreparedDBQuery::db_query_login.arg(QString(login.toHex()));
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::createAccount_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::createAccount_static);
     if(callback==NULL)
     {
         is_logging_in_progess=false;
-        loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage()));
+        loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage()));
         delete askLoginParam;
         return;
     }
@@ -304,7 +304,7 @@ void Client::createAccount_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->createAccount_object();
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
 }
 
 void Client::createAccount_object()
@@ -340,7 +340,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     }
     #endif
     callbackRegistred.removeFirst();
-    if(!GlobalServerData::serverPrivateVariables.db.next())
+    if(!GlobalServerData::serverPrivateVariables.db->next())
     {
         //network send
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -483,28 +483,28 @@ QByteArray Client::character_list_return(const quint8 &query_id)
         const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
         QList<CharacterEntry> characterEntryList;
         bool ok;
-        while(GlobalServerData::serverPrivateVariables.db.next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
+        while(GlobalServerData::serverPrivateVariables.db->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
         {
             CharacterEntry characterEntry;
-            characterEntry.character_id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+            characterEntry.character_id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
             if(ok)
             {
-                quint32 time_to_delete=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
+                quint32 time_to_delete=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
                 if(!ok)
                 {
-                    normalOutput(QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(QString(GlobalServerData::serverPrivateVariables.db.value(3))).arg(account_id));
+                    normalOutput(QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(QString(GlobalServerData::serverPrivateVariables.db->value(3))).arg(account_id));
                     time_to_delete=0;
                 }
-                characterEntry.played_time=QString(GlobalServerData::serverPrivateVariables.db.value(4)).toUInt(&ok);
+                characterEntry.played_time=QString(GlobalServerData::serverPrivateVariables.db->value(4)).toUInt(&ok);
                 if(!ok)
                 {
-                    normalOutput(QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(4)).arg(account_id));
+                    normalOutput(QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(4)).arg(account_id));
                     characterEntry.played_time=0;
                 }
-                characterEntry.last_connect=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
+                characterEntry.last_connect=QString(GlobalServerData::serverPrivateVariables.db->value(5)).toUInt(&ok);
                 if(!ok)
                 {
-                    normalOutput(QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                    normalOutput(QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(5)).arg(account_id));
                     characterEntry.last_connect=current_time;
                 }
                 if(current_time>=time_to_delete && time_to_delete!=0)
@@ -515,11 +515,11 @@ QByteArray Client::character_list_return(const quint8 &query_id)
                         characterEntry.delete_time_left=0;
                     else
                         characterEntry.delete_time_left=time_to_delete-current_time;
-                    characterEntry.pseudo=GlobalServerData::serverPrivateVariables.db.value(1);
-                    const quint32 &skinIdTemp=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+                    characterEntry.pseudo=GlobalServerData::serverPrivateVariables.db->value(1);
+                    const quint32 &skinIdTemp=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
                     if(!ok)
                     {
-                        normalOutput(QStringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                        normalOutput(QStringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(5)).arg(account_id));
                         characterEntry.skinId=0;
                         ok=true;
                     }
@@ -527,7 +527,7 @@ QByteArray Client::character_list_return(const quint8 &query_id)
                     {
                         if(skinIdTemp>=(quint32)DictionaryLogin::dictionary_skin_database_to_internal.size())
                         {
-                            normalOutput(QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                            normalOutput(QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(5)).arg(account_id));
                             characterEntry.skinId=0;
                             ok=true;
                         }
@@ -536,14 +536,14 @@ QByteArray Client::character_list_return(const quint8 &query_id)
                     }
                     if(ok)
                     {
-                        /*characterEntry.mapId=QString(GlobalServerData::serverPrivateVariables.db.value(6)).toUInt(&ok);
+                        /*characterEntry.mapId=QString(GlobalServerData::serverPrivateVariables.db->value(6)).toUInt(&ok);
                         if(!ok)
-                            normalOutput(QStringLiteral("character return map is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                            normalOutput(QStringLiteral("character return map is not number: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(5)).arg(account_id));
                         else
                         {
                             if(characterEntry.mapId>=DictionaryServer::dictionary_map_database_to_internal.size())
                             {
-                                normalOutput(QStringLiteral("character return map id out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)).arg(account_id));
+                                normalOutput(QStringLiteral("character return map id out of range: %1 for %2 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(5)).arg(account_id));
                                 characterEntry.mapId=-1;
                                 //ok=false;
                             }
@@ -568,7 +568,7 @@ QByteArray Client::character_list_return(const quint8 &query_id)
                 }
             }
             else
-                normalOutput(QStringLiteral("Character id is not number: %1 for %2").arg(GlobalServerData::serverPrivateVariables.db.value(0)).arg(account_id));
+                normalOutput(QStringLiteral("Character id is not number: %1 for %2").arg(GlobalServerData::serverPrivateVariables.db->value(0)).arg(account_id));
         }
         if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.isEmpty())
         {
@@ -609,10 +609,10 @@ QByteArray Client::character_list_return(const quint8 &query_id)
 
 bool Client::server_list()
 {
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(PreparedDBQuery::db_query_servers.arg(account_id).toLatin1(),this,&Client::server_list_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(PreparedDBQuery::db_query_servers.arg(account_id).toLatin1(),this,&Client::server_list_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(PreparedDBQuery::db_query_select_allow).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(PreparedDBQuery::db_query_select_allow).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         errorOutput("Unable to get the server list");
         return false;
     }
@@ -714,27 +714,27 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
     const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
     quint8 validServerCount=0;
-    if(GlobalServerData::serverPrivateVariables.db.next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
+    if(GlobalServerData::serverPrivateVariables.db->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         //server index
         tempRawData[tempRawDataSize]=0;
         tempRawDataSize+=1;
 
         //played_time
-        unsigned int played_time=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+        unsigned int played_time=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
         if(!ok)
         {
-            qDebug() << (QStringLiteral("played_time is not number: %1 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(4)));
+            qDebug() << (QStringLiteral("played_time is not number: %1 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(4)));
             played_time=0;
         }
         *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(played_time);
         tempRawDataSize+=sizeof(quint32);
 
         //last_connect
-        unsigned int last_connect=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+        unsigned int last_connect=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
         if(!ok)
         {
-            qDebug() << (QStringLiteral("last_connect is not number: %1 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+            qDebug() << (QStringLiteral("last_connect is not number: %1 fixed by 0").arg(GlobalServerData::serverPrivateVariables.db->value(5)));
             last_connect=current_time;
         }
         *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(last_connect);
@@ -810,10 +810,10 @@ void Client::deleteCharacterNow(const quint32 &characterId)
     deleteCharacterNow->characterId=characterId;
 
     const QString &queryText=PreparedDBQuery::db_query_monster_by_character_id.arg(characterId);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::deleteCharacterNow_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::deleteCharacterNow_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         delete deleteCharacterNow;
         return;
     }
@@ -831,7 +831,7 @@ void Client::deleteCharacterNow_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->deleteCharacterNow_object();
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
 }
 
 void Client::deleteCharacterNow_object()
@@ -863,9 +863,9 @@ void Client::deleteCharacterNow_return(const quint32 &characterId)
     #endif
     callbackRegistred.removeFirst();
     bool ok;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
-        const quint32 &monsterId=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        const quint32 &monsterId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(ok)
         {
             dbQueryWrite(PreparedDBQuery::db_query_delete_monster_buff.arg(monsterId));
@@ -965,10 +965,10 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
     addCharacterParam->skinId=skinId;
 
     const QString &queryText=PreparedDBQuery::db_query_select_character_by_pseudo.arg(SqlFunction::quoteSqlVariable(pseudo));
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::addCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::addCharacter_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
 
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -993,7 +993,7 @@ void Client::addCharacter_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->addCharacter_object();
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
 }
 
 void Client::addCharacter_object()
@@ -1012,7 +1012,7 @@ void Client::addCharacter_object()
     #endif
     addCharacter_return(addCharacterParam->query_id,addCharacterParam->profileIndex,addCharacterParam->pseudo,addCharacterParam->skinId);
     delete addCharacterParam;
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
 }
 
 void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
@@ -1025,7 +1025,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     }
     #endif
     callbackRegistred.removeFirst();
-    if(GlobalServerData::serverPrivateVariables.db.next())
+    if(GlobalServerData::serverPrivateVariables.db->next())
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1154,10 +1154,10 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
     removeCharacterParam->characterId=characterId;
 
     const QString &queryText=PreparedDBQuery::db_query_account_time_to_delete_character_by_id.arg(characterId);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::removeCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::removeCharacter_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -1180,7 +1180,7 @@ void Client::removeCharacter_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->removeCharacter_object();
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
 }
 
 void Client::removeCharacter_object()
@@ -1210,16 +1210,16 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
         abort();
     }
     #endif
-    if(!GlobalServerData::serverPrivateVariables.db.next())
+    if(!GlobalServerData::serverPrivateVariables.db->next())
     {
         characterSelectionIsWrong(query_id,0x02,"Result return query to remove wrong");
         return;
     }
     bool ok;
-    const quint32 &account_id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+    const quint32 &account_id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
+        characterSelectionIsWrong(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
         return;
     }
     if(this->account_id!=account_id)
@@ -1227,7 +1227,7 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    const quint32 &time_to_delete=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+    const quint32 &time_to_delete=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
     if(ok && time_to_delete>0)
     {
         characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
@@ -1735,7 +1735,7 @@ void Client::dbQueryWrite(const QString &queryText)
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     normalOutput(QStringLiteral("Do db write: ")+queryText);
     #endif
-    GlobalServerData::serverPrivateVariables.db.asyncWrite(queryText.toUtf8());
+    GlobalServerData::serverPrivateVariables.db->asyncWrite(queryText.toUtf8());
 }
 
 void Client::loadReputation()
@@ -1748,10 +1748,10 @@ void Client::loadReputation()
     }
     #endif
     const QString &queryText=PreparedDBQuery::db_query_select_reputation_by_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadReputation_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadReputation_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         loadQuests();
         return;
     }
@@ -1770,21 +1770,21 @@ void Client::loadReputation_return()
     callbackRegistred.removeFirst();
     bool ok;
     //parse the result
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
-        const int &type=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        const int &type=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(!ok)
         {
             normalOutput(QStringLiteral("reputation type is not a number, skip: %1").arg(type));
             continue;
         }
-        qint32 point=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toInt(&ok);
+        qint32 point=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toInt(&ok);
         if(!ok)
         {
             normalOutput(QStringLiteral("reputation point is not a number, skip: %1").arg(type));
             continue;
         }
-        const qint32 &level=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toInt(&ok);
+        const qint32 &level=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toInt(&ok);
         if(!ok)
         {
             normalOutput(QStringLiteral("reputation level is not a number, skip: %1").arg(type));
@@ -1865,10 +1865,10 @@ void Client::loadQuests()
     }
     #endif
     const QString &queryText=PreparedDBQuery::db_query_select_quest_by_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadQuests_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadQuests_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         loadBotAlreadyBeaten();
         return;
     }
@@ -1888,12 +1888,12 @@ void Client::loadQuests_return()
     //do the query
     bool ok,ok2;
     //parse the result
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
         PlayerQuest playerQuest;
-        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
-        playerQuest.finish_one_time=QVariant(GlobalServerData::serverPrivateVariables.db.value(1)).toBool();
-        playerQuest.step=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok2);
+        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        playerQuest.finish_one_time=QVariant(GlobalServerData::serverPrivateVariables.db->value(1)).toBool();
+        playerQuest.step=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok2);
         if(!ok || !ok2)
         {
             normalOutput(QStringLiteral("wrong value type for quest, skip: %1").arg(id));

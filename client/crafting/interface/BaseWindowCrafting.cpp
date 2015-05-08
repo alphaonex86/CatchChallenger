@@ -2,6 +2,7 @@
 #include "../../base/interface/DatapackClientLoader.h"
 #include "../../base/Api_client_real.h"
 #include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/FacilityLibGeneral.h"
 #include "../../../general/base/GeneralStructures.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "ui_BaseWindow.h"
@@ -356,11 +357,11 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     ui->labelFloweringImage->setPixmap(contentExtra.tileset->tileAt(3)->image().scaled(32,64));
     ui->labelFruitsImage->setPixmap(contentExtra.tileset->tileAt(4)->image().scaled(32,64));
 
-    ui->labelPlantedText->setText(FacilityLib::secondsToString(0));
-    ui->labelSproutedText->setText(FacilityLib::secondsToString(plant.sprouted_seconds));
-    ui->labelTallerText->setText(FacilityLib::secondsToString(plant.taller_seconds));
-    ui->labelFloweringText->setText(FacilityLib::secondsToString(plant.flowering_seconds));
-    ui->labelFruitsText->setText(FacilityLib::secondsToString(plant.fruits_seconds));
+    ui->labelPlantedText->setText(FacilityLibGeneral::secondsToString(0));
+    ui->labelSproutedText->setText(FacilityLibGeneral::secondsToString(plant.sprouted_seconds));
+    ui->labelTallerText->setText(FacilityLibGeneral::secondsToString(plant.taller_seconds));
+    ui->labelFloweringText->setText(FacilityLibGeneral::secondsToString(plant.flowering_seconds));
+    ui->labelFruitsText->setText(FacilityLibGeneral::secondsToString(plant.fruits_seconds));
     ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((float)plant.fix_quantity+((float)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
 
     ui->plantUse->setVisible(inSelection);

@@ -1,5 +1,6 @@
 #include "ProcessControler.h"
 #include "base/ServerStructures.h"
+#include "../general/base/CommonSettingsCommon.h"
 
 using namespace CatchChallenger;
 
@@ -31,26 +32,26 @@ void ProcessControler::send_settings()
     NormalServerSettings formatedServerNormalSettings=server.getNormalSettings();
 
     //common var
-    CommonSettings::commonSettings.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
-    CommonSettings::commonSettings.max_character					= settings->value(QLatin1Literal("max_character")).toUInt();
-    CommonSettings::commonSettings.max_pseudo_size					= settings->value(QLatin1Literal("max_pseudo_size")).toUInt();
-    CommonSettings::commonSettings.character_delete_time            = settings->value(QLatin1Literal("character_delete_time")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.max_character					= settings->value(QLatin1Literal("max_character")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= settings->value(QLatin1Literal("max_pseudo_size")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time            = settings->value(QLatin1Literal("character_delete_time")).toUInt();
     if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("none"))
         formatedServerSettings.compressionType                                = CompressionType_None;
     else if(settings->value(QLatin1Literal("compression")).toString()==QStringLiteral("xz"))
         formatedServerSettings.compressionType                                = CompressionType_Xz;
     else
         formatedServerSettings.compressionType                                = CompressionType_Zlib;
-    CommonSettings::commonSettings.useSP                            = settings->value(QLatin1Literal("useSP")).toBool();
-    CommonSettings::commonSettings.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettings::commonSettings.useSP;
-    CommonSettings::commonSettings.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();
-    CommonSettings::commonSettings.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
-    CommonSettings::commonSettings.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
+    CommonSettingsServer::commonSettingsServer.useSP                            = settings->value(QLatin1Literal("useSP")).toBool();
+    CommonSettingsServer::commonSettingsServer.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettingsServer::commonSettingsServer.useSP;
+    CommonSettingsServer::commonSettingsServer.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();
+    CommonSettingsServer::commonSettingsServer.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
+    CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
     formatedServerSettings.dontSendPlayerType                       = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
-    CommonSettings::commonSettings.maxPlayerMonsters                = settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt();
-    CommonSettings::commonSettings.maxWarehousePlayerMonsters       = settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt();
-    CommonSettings::commonSettings.maxPlayerItems                   = settings->value(QLatin1Literal("maxPlayerItems")).toUInt();
-    CommonSettings::commonSettings.maxWarehousePlayerItems          = settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = settings->value(QLatin1Literal("maxPlayerItems")).toUInt();
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = settings->value(QLatin1Literal("maxWarehousePlayerItems")).toUInt();
 
     //the listen
     formatedServerNormalSettings.server_port			= settings->value(QLatin1Literal("server-port")).toUInt();
@@ -61,33 +62,34 @@ void ProcessControler::send_settings()
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
 
-    CommonSettings::commonSettings.httpDatapackMirror	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
+    CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();
+    CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
     formatedServerSettings.datapackCache				= settings->value(QLatin1Literal("datapackCache")).toInt();
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));
-    CommonSettings::commonSettings.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
+    CommonSettingsServer::commonSettingsServer.tcpCork		= settings->value(QLatin1Literal("tcpCork")).toBool();
     formatedServerNormalSettings.tcpNodelay     = settings->value(QLatin1Literal("tcpNodelay")).toBool();
     settings->endGroup();
     #endif
 
     //fight
-    //CommonSettings::commonSettings.pvp			= settings->value(QLatin1Literal("pvp")).toBool();
+    //CommonSettingsServer::commonSettingsServer.pvp			= settings->value(QLatin1Literal("pvp")).toBool();
     formatedServerSettings.sendPlayerNumber         = settings->value(QLatin1Literal("sendPlayerNumber")).toBool();
 
     //rates
     settings->beginGroup(QLatin1Literal("rates"));
-    CommonSettings::commonSettings.rates_xp             = settings->value(QLatin1Literal("xp_normal")).toReal();
-    CommonSettings::commonSettings.rates_gold			= settings->value(QLatin1Literal("gold_normal")).toReal();
-    CommonSettings::commonSettings.rates_xp_pow			= settings->value(QLatin1Literal("xp_pow_normal")).toReal();
-    CommonSettings::commonSettings.rates_drop			= settings->value(QLatin1Literal("drop_normal")).toReal();
+    CommonSettingsServer::commonSettingsServer.rates_xp             = settings->value(QLatin1Literal("xp_normal")).toReal();
+    CommonSettingsServer::commonSettingsServer.rates_gold			= settings->value(QLatin1Literal("gold_normal")).toReal();
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow			= settings->value(QLatin1Literal("xp_pow_normal")).toReal();
+    CommonSettingsServer::commonSettingsServer.rates_drop			= settings->value(QLatin1Literal("drop_normal")).toReal();
     //formatedServerSettings.rates_xp_premium                         = settings->value(QLatin1Literal("xp_premium")).toReal();
     //formatedServerSettings.rates_gold_premium                       = settings->value(QLatin1Literal("gold_premium")).toReal();
-    /*CommonSettings::commonSettings.rates_shiny		= settings->value(QLatin1Literal("shiny_normal")).toReal();
+    /*CommonSettingsServer::commonSettingsServer.rates_shiny		= settings->value(QLatin1Literal("shiny_normal")).toReal();
     formatedServerSettings.rates_shiny_premium                      = settings->value(QLatin1Literal("shiny_premium")).toReal();*/
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("DDOS"));
-    CommonSettings::commonSettings.waitBeforeConnectAfterKick         = settings->value(QLatin1Literal("waitBeforeConnectAfterKick")).toUInt();
+    CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick         = settings->value(QLatin1Literal("waitBeforeConnectAfterKick")).toUInt();
     formatedServerSettings.ddos.computeAverageValueNumberOfValue      = settings->value(QLatin1Literal("computeAverageValueNumberOfValue")).toUInt();
     formatedServerSettings.ddos.computeAverageValueTimeInterval       = settings->value(QLatin1Literal("computeAverageValueTimeInterval")).toUInt();
     formatedServerSettings.ddos.kickLimitMove                         = settings->value(QLatin1Literal("kickLimitMove")).toUInt();
@@ -137,39 +139,39 @@ void ProcessControler::send_settings()
 
     //chat allowed
     settings->beginGroup(QLatin1Literal("chat"));
-    CommonSettings::commonSettings.chat_allow_all         = settings->value(QLatin1Literal("allow-all")).toBool();
-    CommonSettings::commonSettings.chat_allow_local		= settings->value(QLatin1Literal("allow-local")).toBool();
-    CommonSettings::commonSettings.chat_allow_private		= settings->value(QLatin1Literal("allow-private")).toBool();
-    //CommonSettings::commonSettings.chat_allow_aliance		= settings->value(QLatin1Literal("allow-aliance")).toBool();
-    CommonSettings::commonSettings.chat_allow_clan		= settings->value(QLatin1Literal("allow-clan")).toBool();
+    CommonSettingsServer::commonSettingsServer.chat_allow_all         = settings->value(QLatin1Literal("allow-all")).toBool();
+    CommonSettingsServer::commonSettingsServer.chat_allow_local		= settings->value(QLatin1Literal("allow-local")).toBool();
+    CommonSettingsServer::commonSettingsServer.chat_allow_private		= settings->value(QLatin1Literal("allow-private")).toBool();
+    //CommonSettingsServer::commonSettingsServer.chat_allow_aliance		= settings->value(QLatin1Literal("allow-aliance")).toBool();
+    CommonSettingsServer::commonSettingsServer.chat_allow_clan		= settings->value(QLatin1Literal("allow-clan")).toBool();
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("db"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
-        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_Mysql;
+        formatedServerSettings.database.tryOpenType					= CatchChallenger::DatabaseBase::Type::Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
-        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_SQLite;
+        formatedServerSettings.database.tryOpenType					= CatchChallenger::DatabaseBase::Type::SQLite;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
-        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_PostgreSQL;
+        formatedServerSettings.database.tryOpenType					= CatchChallenger::DatabaseBase::Type::PostgreSQL;
     else
-        formatedServerSettings.database.type					= CatchChallenger::GameServerSettings::Database::DatabaseType_Mysql;
-    switch(formatedServerSettings.database.type)
+        formatedServerSettings.database.tryOpenType					= CatchChallenger::DatabaseBase::Type::Mysql;
+    switch(formatedServerSettings.database.tryOpenType)
     {
         default:
-        case GameServerSettings::Database::DatabaseType_Mysql:
-            formatedServerSettings.database.mysql.host				= settings->value(QLatin1Literal("mysql_host")).toString();
-            formatedServerSettings.database.mysql.db				= settings->value(QLatin1Literal("mysql_db")).toString();
-            formatedServerSettings.database.mysql.login				= settings->value(QLatin1Literal("mysql_login")).toString();
-            formatedServerSettings.database.mysql.pass				= settings->value(QLatin1Literal("mysql_pass")).toString();
+        case DatabaseBase::Type::Mysql:
+            formatedServerSettings.database.host				= settings->value(QLatin1Literal("mysql_host")).toString();
+            formatedServerSettings.database.db                  = settings->value(QLatin1Literal("mysql_db")).toString();
+            formatedServerSettings.database.login				= settings->value(QLatin1Literal("mysql_login")).toString();
+            formatedServerSettings.database.pass				= settings->value(QLatin1Literal("mysql_pass")).toString();
         break;
-        case GameServerSettings::Database::DatabaseType_SQLite:
-            formatedServerSettings.database.sqlite.file				= settings->value(QLatin1Literal("file")).toString();
+        case DatabaseBase::Type::SQLite:
+            formatedServerSettings.database.file				= settings->value(QLatin1Literal("file")).toString();
         break;
-        case GameServerSettings::Database::DatabaseType_PostgreSQL:
-            formatedServerSettings.database.mysql.host				= settings->value(QLatin1Literal("mysql_host")).toString();
-            formatedServerSettings.database.mysql.db				= settings->value(QLatin1Literal("mysql_db")).toString();
-            formatedServerSettings.database.mysql.login				= settings->value(QLatin1Literal("mysql_login")).toString();
-            formatedServerSettings.database.mysql.pass				= settings->value(QLatin1Literal("mysql_pass")).toString();
+        case DatabaseBase::Type::PostgreSQL:
+            formatedServerSettings.database.host				= settings->value(QLatin1Literal("mysql_host")).toString();
+            formatedServerSettings.database.db                  = settings->value(QLatin1Literal("mysql_db")).toString();
+            formatedServerSettings.database.login				= settings->value(QLatin1Literal("mysql_login")).toString();
+            formatedServerSettings.database.pass				= settings->value(QLatin1Literal("mysql_pass")).toString();
         break;
     }
     if(settings->value(QLatin1Literal("db_fight_sync")).toString()==QLatin1Literal("FightSync_AtEachTurn"))

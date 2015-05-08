@@ -2,6 +2,7 @@
 #include "CommonDatapack.h"
 #include "GeneralVariable.h"
 #include "FacilityLib.h"
+#include "Map_loader.h"
 #include "../fight/FightLoader.h"
 #include "DatapackGeneralLoader.h"
 
@@ -35,9 +36,9 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath)
     parseMonstersCollision();
     parseShop();
 
-/*    #ifdef EPOLLCATCHCHALLENGERSERVER
-    teleportConditionsUnparsed.clear();
-    #endif*/
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    Map_loader::teleportConditionsUnparsed.clear();
+    #endif
 
     isParsedSpec=true;
 }
@@ -74,8 +75,7 @@ void CommonDatapackServerSpec::unload()
     botFights.clear();
     quests.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    xmlLoadedFile.clear();
-    teleportConditionsUnparsed.clear();
+    Map_loader::teleportConditionsUnparsed.clear();
     #endif
     monstersCollision.clear();
     shops.clear();

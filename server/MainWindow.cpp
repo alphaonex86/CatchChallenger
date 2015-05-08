@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "../general/base/DatapackGeneralLoader.h"
+#include "../general/base/CommonSettingsCommon.h"
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -645,25 +646,25 @@ void MainWindow::send_settings()
     NormalServerSettings formatedServerNormalSettings=server.getNormalSettings();
 
     //common var
-    CommonSettings::commonSettings.min_character					= ui->min_character->value();
-    CommonSettings::commonSettings.max_character					= ui->max_character->value();
-    CommonSettings::commonSettings.max_pseudo_size					= ui->max_pseudo_size->value();
-    CommonSettings::commonSettings.character_delete_time			= ui->character_delete_time->value()*3600;
+    CommonSettingsCommon::commonSettingsCommon.min_character					= ui->min_character->value();
+    CommonSettingsCommon::commonSettingsCommon.max_character					= ui->max_character->value();
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= ui->max_pseudo_size->value();
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time			= ui->character_delete_time->value()*3600;
 
     if(!ui->forceSpeed->isChecked())
-        CommonSettings::commonSettings.forcedSpeed					= 0;
+        CommonSettingsServer::commonSettingsServer.forcedSpeed					= 0;
     else
-        CommonSettings::commonSettings.forcedSpeed					= ui->speed->value();
+        CommonSettingsServer::commonSettingsServer.forcedSpeed					= ui->speed->value();
     formatedServerSettings.dontSendPlayerType                       = ui->dontSendPlayerType->isChecked();
     //formatedServerSettings.announce                                 = ui->announce->isChecked();
-    CommonSettings::commonSettings.dontSendPseudo					= ui->dontSendPseudo->isChecked();
-    CommonSettings::commonSettings.forceClientToSendAtMapChange		= ui->forceClientToSendAtMapChange->isChecked();
-    CommonSettings::commonSettings.useSP                            = ui->useSP->isChecked();
-    CommonSettings::commonSettings.autoLearn                        = ui->autoLearn->isChecked() && !ui->useSP->isChecked();
-    CommonSettings::commonSettings.maxPlayerMonsters                = ui->maxPlayerMonsters->value();
-    CommonSettings::commonSettings.maxWarehousePlayerMonsters       = ui->maxWarehousePlayerMonsters->value();
-    CommonSettings::commonSettings.maxPlayerItems                   = ui->maxPlayerItems->value();
-    CommonSettings::commonSettings.maxWarehousePlayerItems          = ui->maxWarehousePlayerItems->value();
+    CommonSettingsServer::commonSettingsServer.dontSendPseudo					= ui->dontSendPseudo->isChecked();
+    CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= ui->forceClientToSendAtMapChange->isChecked();
+    CommonSettingsServer::commonSettingsServer.useSP                            = ui->useSP->isChecked();
+    CommonSettingsServer::commonSettingsServer.autoLearn                        = ui->autoLearn->isChecked() && !ui->useSP->isChecked();
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = ui->maxPlayerMonsters->value();
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = ui->maxWarehousePlayerMonsters->value();
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = ui->maxPlayerItems->value();
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = ui->maxWarehousePlayerItems->value();
 
     //the listen
     formatedServerNormalSettings.server_port			= ui->server_port->value();
@@ -673,7 +674,8 @@ void MainWindow::send_settings()
     formatedServerNormalSettings.useSsl					= ui->useSsl->isChecked();
     formatedServerSettings.anonymous					= ui->anonymous->isChecked();
     formatedServerSettings.server_message				= ui->server_message->toPlainText();
-    CommonSettings::commonSettings.httpDatapackMirror    		= ui->httpDatapackMirror->text();
+    CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase    		= ui->httpDatapackMirror->text();
+    CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
     if(!ui->datapack_cache->isChecked())
         formatedServerSettings.datapackCache			= -1;
     else if(!ui->datapack_cache_timeout_checkbox->isChecked())
@@ -681,12 +683,12 @@ void MainWindow::send_settings()
     else
         formatedServerSettings.datapackCache			= ui->datapack_cache_timeout->value();
     #ifdef Q_OS_LINUX
-    CommonSettings::commonSettings.tcpCork  = ui->linux_socket_cork->isChecked();
+    CommonSettingsServer::commonSettingsServer.tcpCork  = ui->linux_socket_cork->isChecked();
     formatedServerNormalSettings.tcpNodelay  = ui->tcpNodelay->isChecked();
     #endif
 
     //ddos
-    CommonSettings::commonSettings.waitBeforeConnectAfterKick=ui->DDOSwaitBeforeConnectAfterKick->value();
+    CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=ui->DDOSwaitBeforeConnectAfterKick->value();
     formatedServerSettings.ddos.computeAverageValueNumberOfValue=ui->DDOScomputeAverageValueNumberOfValue->value();
     formatedServerSettings.ddos.computeAverageValueTimeInterval=ui->DDOScomputeAverageValueTimeInterval->value();
     formatedServerSettings.ddos.kickLimitMove=ui->DDOSkickLimitMove->value();
@@ -717,47 +719,47 @@ void MainWindow::send_settings()
     }
 
     //rates
-    CommonSettings::commonSettings.rates_xp			= ui->rates_xp_normal->value();
-    CommonSettings::commonSettings.rates_gold		= ui->rates_gold_normal->value();
-    CommonSettings::commonSettings.rates_xp_pow     = ui->rates_xp_pow_normal->value();
-    CommonSettings::commonSettings.rates_drop		= ui->rates_drop_normal->value();
+    CommonSettingsServer::commonSettingsServer.rates_xp			= ui->rates_xp_normal->value();
+    CommonSettingsServer::commonSettingsServer.rates_gold		= ui->rates_gold_normal->value();
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow     = ui->rates_xp_pow_normal->value();
+    CommonSettingsServer::commonSettingsServer.rates_drop		= ui->rates_drop_normal->value();
 
     //chat allowed
-    CommonSettings::commonSettings.chat_allow_all		= ui->chat_allow_all->isChecked();
-    CommonSettings::commonSettings.chat_allow_local		= ui->chat_allow_local->isChecked();
-    CommonSettings::commonSettings.chat_allow_private		= ui->chat_allow_private->isChecked();
-    CommonSettings::commonSettings.chat_allow_clan		= ui->chat_allow_clan->isChecked();
+    CommonSettingsServer::commonSettingsServer.chat_allow_all		= ui->chat_allow_all->isChecked();
+    CommonSettingsServer::commonSettingsServer.chat_allow_local		= ui->chat_allow_local->isChecked();
+    CommonSettingsServer::commonSettingsServer.chat_allow_private		= ui->chat_allow_private->isChecked();
+    CommonSettingsServer::commonSettingsServer.chat_allow_clan		= ui->chat_allow_clan->isChecked();
 
     switch(ui->db_type->currentIndex())
     {
         default:
         case 0:
-            formatedServerSettings.database.type					= GameServerSettings::Database::DatabaseType_Mysql;
+            formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::Mysql;
         break;
         case 1:
-            formatedServerSettings.database.type					= GameServerSettings::Database::DatabaseType_SQLite;
+            formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::SQLite;
         break;
         case 2:
-            formatedServerSettings.database.type					= GameServerSettings::Database::DatabaseType_PostgreSQL;
+            formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::PostgreSQL;
         break;
     }
-    switch(formatedServerSettings.database.type)
+    switch(formatedServerSettings.database.tryOpenType)
     {
         default:
-        case GameServerSettings::Database::DatabaseType_Mysql:
-            formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
-            formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
-            formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
-            formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
+        case DatabaseBase::Type::Mysql:
+            formatedServerSettings.database.host				= ui->db_mysql_host->text();
+            formatedServerSettings.database.db                  = ui->db_mysql_base->text();
+            formatedServerSettings.database.login				= ui->db_mysql_login->text();
+            formatedServerSettings.database.pass				= ui->db_mysql_pass->text();
         break;
-        case GameServerSettings::Database::DatabaseType_SQLite:
-            formatedServerSettings.database.sqlite.file				= ui->db_sqlite_file->text();
+        case DatabaseBase::Type::SQLite:
+            formatedServerSettings.database.file				= ui->db_sqlite_file->text();
         break;
-        case GameServerSettings::Database::DatabaseType_PostgreSQL:
-            formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
-            formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
-            formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
-            formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
+        case DatabaseBase::Type::PostgreSQL:
+            formatedServerSettings.database.host				= ui->db_mysql_host->text();
+            formatedServerSettings.database.db                  = ui->db_mysql_base->text();
+            formatedServerSettings.database.login				= ui->db_mysql_login->text();
+            formatedServerSettings.database.pass				= ui->db_mysql_pass->text();
         break;
     }
     formatedServerSettings.database.fightSync                       = (GameServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();

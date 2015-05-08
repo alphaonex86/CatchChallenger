@@ -25,6 +25,7 @@
 
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/Api_client_real.h"
 #include "../base/Api_client_virtual.h"
@@ -1423,7 +1424,7 @@ void MainWindow::on_deleteDatapack_clicked()
     QMessageBox::StandardButton button=QMessageBox::question(this,tr("Are you sure?"),tr("Are you sure delete the datapack? This operation is not reversible."),QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
     if(button!=QMessageBox::Yes)
         return;
-    if(!CatchChallenger::FacilityLib::rmpath(datapackPathList[selectedDatapack]))
+    if(!CatchChallenger::FacilityLibGeneral::rmpath(datapackPathList[selectedDatapack]))
         QMessageBox::warning(this,tr("Error"),tr("Remove the datapack path is not completed. Try after restarting the application"));
     on_manageDatapack_clicked();
 }
@@ -1646,9 +1647,9 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 {
     CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
 
-    CommonSettings::commonSettings.waitBeforeConnectAfterKick=0;
-    CommonSettings::commonSettings.max_character=1;
-    CommonSettings::commonSettings.min_character=1;
+    CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=0;
+    CommonSettingsCommon::commonSettingsCommon.max_character=1;
+    CommonSettingsCommon::commonSettingsCommon.min_character=1;
 
     formatedServerSettings.automatic_account_creation=true;
     formatedServerSettings.max_players=1;
@@ -1656,8 +1657,7 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.sendPlayerNumber = false;
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
-    formatedServerSettings.database.type=CatchChallenger::GameServerSettings::Database::DatabaseType_SQLite;
-    formatedServerSettings.database.sqlite.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
     formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
 
@@ -1731,7 +1731,7 @@ void MainWindow::on_lineEditLogin_textChanged(const QString &arg1)
 void MainWindow::logged()
 {
     if(serverConnexion.contains(selectedServer))
-        lastServerWaitBeforeConnectAfterKick[serverConnexion.value(selectedServer)->host]=CommonSettings::commonSettings.waitBeforeConnectAfterKick;
+        lastServerWaitBeforeConnectAfterKick[serverConnexion.value(selectedServer)->host]=CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
 }
 
 void MainWindow::gameIsLoaded()

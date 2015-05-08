@@ -43,6 +43,7 @@ public:
     const char * value(const int &value) const;
     bool isConnected() const;
     void receiveReply(const QSqlQuery &queryReturn);
+    DatabaseBase::Type databaseType() const;
 
     QtDatabaseThread dbThread;
 signals:
@@ -55,6 +56,7 @@ private:
     QList<CallBack> queue;
     QList<QString> queriesList;
     static QByteArray valueReturnedData;
+    DatabaseBase::Type databaseConnected;
 };
 
 }

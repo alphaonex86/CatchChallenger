@@ -12,7 +12,7 @@ using namespace CatchChallenger;
 #include <QRegularExpression>
 #include <QNetworkReply>
 
-#include "../../general/base/CommonSettings.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include "qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
@@ -360,7 +360,7 @@ void Api_client_real::sendDatapackContent()
 
     //compute the mirror
     {
-        QStringList values=CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+        QStringList values=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
         {
             QString slash(QStringLiteral("/"));
             int index=0;
@@ -371,7 +371,7 @@ void Api_client_real::sendDatapackContent()
                 index++;
             }
         }
-        CommonSettings::commonSettings.httpDatapackMirror=values.join(Api_client_real::text_dotcoma);
+        CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=values.join(Api_client_real::text_dotcoma);
     }
 
     datapackTarXz=false;
@@ -393,16 +393,16 @@ void Api_client_real::datapackChecksumDone(const QStringList &datapackFilesList,
 
     this->datapackFilesList=datapackFilesList;
     this->partialHashList=partialHashList;
-    if(!datapackFilesList.isEmpty() && hash==CommonSettings::commonSettings.datapackHash)
+    if(!datapackFilesList.isEmpty() && hash==CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
     {
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
         haveTheDatapack();
         return;
     }
 
-    if(CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+    if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
     {
-        if(CommonSettings::commonSettings.datapackHash.isEmpty())
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.isEmpty())
         {
             qDebug() << "Datapack checksum done but not send by the server";
             return;//need CommonSettings::commonSettings.datapackHash send by the server
@@ -450,7 +450,7 @@ void Api_client_real::datapackChecksumDone(const QStringList &datapackFilesList,
                 qnam3.setProxy(QNetworkProxy::applicationProxy());
                 qnam4.setProxy(QNetworkProxy::applicationProxy());
             }
-            QNetworkRequest networkRequest(CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("pack/diff/datapack-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("pack/diff/datapack-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
             connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
@@ -485,7 +485,7 @@ void Api_client_real::test_mirror()
         qnam4.setProxy(QNetworkProxy::applicationProxy());
     }
     QNetworkReply *reply;
-    const QStringList &httpDatapackMirrorList=CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+    const QStringList &httpDatapackMirrorList=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXz)
     {
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("pack/datapack.tar.xz"));
@@ -587,7 +587,7 @@ bool Api_client_real::mirrorTryNext()
     {
         datapackTarXz=false;
         index_mirror++;
-        if(index_mirror>=CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+        if(index_mirror>=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
         {
             if(test_with_proxy)
             {
@@ -681,20 +681,20 @@ void Api_client_real::httpFinishedForDatapackList()
                             QFileInfo file(mDatapack+fileString);
                             if(!file.exists())
                             {
-                                getHttpFile(CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
+                                getHttpFile(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                             else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
-                                getHttpFile(CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
+                                getHttpFile(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                         }
                         else
                         {
-                            getHttpFile(CommonSettings::commonSettings.httpDatapackMirror.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
+                            getHttpFile(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
                             fileToGet++;
                             sizeToGet+=sizeString.toUInt();
                         }

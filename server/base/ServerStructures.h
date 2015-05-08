@@ -135,20 +135,11 @@ struct GameServerSettings
         bool positionTeleportSync;
         quint32 secondToPositionSync;//0 is disabled
 
-        struct Mysql
-        {
-            //mysql settings
-            QString host;
-            QString db;
-            QString login;
-            QString pass;
-        };
-        Mysql sql;
-        struct SQLite
-        {
-            QString file;
-        };
-        SQLite sqlite;
+        QString file;
+        QString host;
+        QString db;
+        QString login;
+        QString pass;
 
         DatabaseBase::Type tryOpenType;
         unsigned int tryInterval;//second
@@ -270,10 +261,10 @@ struct ServerPrivateVariables
 {
     //bd
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    EpollPostgresql db;
+    EpollPostgresql *db;//pointer to don't change the code for below preprocessor code
     QList<TimerEvents *> timerEvents;
     #else
-    QtDatabase db;
+    QtDatabase *db;
     QList<QtTimerEvents *> timerEvents;
     #endif
 

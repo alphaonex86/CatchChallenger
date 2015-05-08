@@ -1,6 +1,7 @@
 #include "QuestJS.h"
 #include "BaseWindow.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/GeneralStructures.h"
 
 Quest::Quest(const quint32 &quest) :
@@ -44,7 +45,7 @@ bool Quest::haveQuestStepRequirements() const
     {
         if(quests.value(quest).step<=0)
             return false;
-        if(CatchChallenger::BaseWindow::baseWindow->haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests.value(quest)))
+        if(CatchChallenger::BaseWindow::baseWindow->haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.value(quest)))
             return true;
         return false;
     }

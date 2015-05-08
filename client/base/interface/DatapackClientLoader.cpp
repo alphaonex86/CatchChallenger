@@ -3,7 +3,9 @@
 #include "../../../general/base/DatapackGeneralLoader.h"
 #include "../DatapackChecksum.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/FacilityLibGeneral.h"
 #include "../../../general/base/DatapackGeneralLoader.h"
 #include "../../../general/base/Map_loader.h"
 #include "../LanguagesSelect.h"
@@ -122,7 +124,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     }
     inProgress=true;
 
-    if(!CommonSettings::commonSettings.httpDatapackMirror.isEmpty())
+    if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
     {
         const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksum(datapackPath);
         if(hash.isEmpty())
@@ -132,10 +134,10 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
             return;
         }
 
-        if(CommonSettings::commonSettings.datapackHash!=hash)
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash)
         {
             qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() CommonSettings::commonSettings.datapackHash!=hash.result(): %1!=%2")
-                        .arg(QString(CommonSettings::commonSettings.datapackHash.toHex()))
+                        .arg(QString(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()))
                         .arg(QString(hash.toHex()));
             emit datapackChecksumError();
             inProgress=false;
@@ -608,7 +610,7 @@ void DatapackClientLoader::parseReputationExtra()
 void DatapackClientLoader::parseItemsExtra()
 {
     QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
-    const QStringList &fileList=CatchChallenger::FacilityLib::listFolder(dir.absolutePath()+DatapackClientLoader::text_slash);
+    const QStringList &fileList=CatchChallenger::FacilityLibGeneral::listFolder(dir.absolutePath()+DatapackClientLoader::text_slash);
     int file_index=0;
     while(file_index<fileList.size())
     {
@@ -810,7 +812,7 @@ void DatapackClientLoader::parseItemsExtra()
 
 void DatapackClientLoader::parseMaps()
 {
-    const QStringList &returnList=CatchChallenger::FacilityLib::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
+    const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
 
     //load the map
     const int &size=returnList.size();
@@ -944,7 +946,7 @@ void DatapackClientLoader::parseMaps()
 
 void DatapackClientLoader::parseSkins()
 {
-    skins=CatchChallenger::FacilityLib::skinIdList(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN));
+    skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN));
 
     qDebug() << QStringLiteral("%1 skin(s) loaded").arg(skins.size());
 }
@@ -1387,7 +1389,7 @@ void DatapackClientLoader::parseAudioAmbiance()
 
 void DatapackClientLoader::parseQuestsLink()
 {
-    QHashIterator<quint16,CatchChallenger::Quest> i(CatchChallenger::CommonDatapack::commonDatapack.quests);
+    QHashIterator<quint16,CatchChallenger::Quest> i(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests);
     while(i.hasNext()) {
         i.next();
         if(!i.value().steps.isEmpty())
@@ -1506,7 +1508,7 @@ void DatapackClientLoader::parseZoneExtra()
 
 void DatapackClientLoader::parseTileset()
 {
-    const QStringList &fileList=CatchChallenger::FacilityLib::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
+    const QStringList &fileList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
     int index=0;
     while(index<fileList.size())
     {
