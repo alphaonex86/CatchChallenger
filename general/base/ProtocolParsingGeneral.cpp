@@ -1,6 +1,7 @@
 #include "ProtocolParsing.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
+#include "GeneralStructures.h"
 #include "ProtocolParsingCheck.h"
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION

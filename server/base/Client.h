@@ -63,9 +63,9 @@ public:
     static void startTheCityCapture();
     static void setEvent(const quint8 &event, const quint8 &new_value);
 
-    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const char *data=NULL,const int &size=0);
-    void sendPacket(const quint8 &mainIdent,const char *data=NULL,const int &size=0);
-    void sendRawSmallPacket(const char *data,const int &size);
+    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data=NULL,const unsigned int &size=0);
+    void sendPacket(const quint8 &mainIdent,const char * const data=NULL,const unsigned int &size=0);
+    void sendRawSmallPacket(const char * const data,const unsigned int &size);
 
     static QList<int> generalChatDrop;
     static int generalChatDropTotalCache;
@@ -594,8 +594,8 @@ private:
     quint32 getClanId() const;
     bool haveAClan() const;
 
-    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const char *data=NULL,const int &size=0);
-    void postReply(const quint8 &queryNumber,const char *data=NULL,const int &size=0);
+    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data=NULL,const unsigned int &size=0);
+    void postReply(const quint8 &queryNumber,const char * const data=NULL,const unsigned int &size=0);
 
     void insertClientOnMap(CommonMap *map);
     void removeClientOnMap(CommonMap *map,const bool &withDestroy=false);

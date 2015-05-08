@@ -19,10 +19,10 @@ void Client::loadMonsters()
     }
     #endif
     const QString &queryText=PreparedDBQuery::db_query_select_monsters_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadMonsters_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadMonsters_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         loadReputation();
         return;
     }
@@ -41,16 +41,16 @@ void Client::loadMonsters_return()
     callbackRegistred.removeFirst();
     bool ok;
     Monster monster;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
         monster.give_sp=88889;
         PlayerMonster playerMonster;
-        playerMonster.id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        playerMonster.id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(!ok)
-            normalOutput(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
+            normalOutput(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
         if(ok)
         {
-            playerMonster.monster=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+            playerMonster.monster=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
@@ -62,11 +62,11 @@ void Client::loadMonsters_return()
                     monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.monster);
             }
             else
-                normalOutput(QStringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
+                normalOutput(QStringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(2)));
         }
         if(ok)
         {
-            playerMonster.level=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
+            playerMonster.level=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
             if(ok)
             {
                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -76,11 +76,11 @@ void Client::loadMonsters_return()
                 }
             }
             else
-                normalOutput(QStringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(3)));
+                normalOutput(QStringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(3)));
         }
         if(ok)
         {
-            playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db.value(4)).toUInt(&ok);
+            playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db->value(4)).toUInt(&ok);
             if(ok)
             {
                 if(playerMonster.level>monster.level_to_xp.size())
@@ -95,15 +95,15 @@ void Client::loadMonsters_return()
                 }
             }
             else
-                normalOutput(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(4)));
+                normalOutput(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(4)));
         }
         if(ok)
         {
             if(CommonSettingsServer::commonSettingsServer.useSP)
             {
-                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
+                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db->value(5)).toUInt(&ok);
                 if(!ok)
-                    normalOutput(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+                    normalOutput(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(5)));
             }
             else
                 playerMonster.sp=0;
@@ -115,18 +115,18 @@ void Client::loadMonsters_return()
             sp_offset=-1;
         if(ok)
         {
-            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db.value(6+sp_offset)).toUInt(&ok);
+            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db->value(6+sp_offset)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
                     normalOutput(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
             }
             else
-                normalOutput(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(6+sp_offset)));
+                normalOutput(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(6+sp_offset)));
         }
         if(ok)
         {
-            const quint32 &genderInt=QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)).toUInt(&ok);
+            const quint32 &genderInt=QString(GlobalServerData::serverPrivateVariables.db->value(7+sp_offset)).toUInt(&ok);
             if(ok)
             {
                 if(genderInt>=1 && genderInt<=3)
@@ -134,33 +134,33 @@ void Client::loadMonsters_return()
                 else
                 {
                     playerMonster.gender=Gender_Unknown;
-                    normalOutput(QStringLiteral("unknown monster gender, out of range: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)));
+                    normalOutput(QStringLiteral("unknown monster gender, out of range: %1").arg(GlobalServerData::serverPrivateVariables.db->value(7+sp_offset)));
                     ok=false;
                 }
             }
             else
             {
                 playerMonster.gender=Gender_Unknown;
-                normalOutput(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)));
+                normalOutput(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db->value(7+sp_offset)));
                 ok=false;
             }
         }
         if(ok)
         {
-            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)).toUInt(&ok);
+            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db->value(8+sp_offset)).toUInt(&ok);
             if(!ok)
-                normalOutput(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)));
+                normalOutput(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(8+sp_offset)));
         }
         if(ok)
         {
-            playerMonster.character_origin=QString(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset)).toUInt(&ok);
+            playerMonster.character_origin=QString(GlobalServerData::serverPrivateVariables.db->value(9+sp_offset)).toUInt(&ok);
             if(!ok)
-                normalOutput(QStringLiteral("monster character_origin: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset)));
+                normalOutput(QStringLiteral("monster character_origin: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(9+sp_offset)));
         }
         //stats
         if(ok)
         {
-            playerMonster.hp=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+            playerMonster.hp=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
             if(ok)
             {
                 const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
@@ -176,7 +176,7 @@ void Client::loadMonsters_return()
                 }
             }
             else
-                normalOutput(QStringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(1)));
+                normalOutput(QStringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
         }
         //finish it
         if(ok)
@@ -195,10 +195,10 @@ void Client::loadMonstersWarehouse()
     }
     #endif
     const QString &queryText=PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadMonstersWarehouse_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadMonstersWarehouse_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         loadReputation();
         return;
     }
@@ -217,16 +217,16 @@ void Client::loadMonstersWarehouse_return()
     callbackRegistred.removeFirst();
     bool ok;
     Monster monster;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
         monster.give_sp=88889;
         PlayerMonster playerMonster;
-        playerMonster.id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        playerMonster.id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(!ok)
-            normalOutput(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
+            normalOutput(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
         if(ok)
         {
-            playerMonster.monster=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+            playerMonster.monster=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
@@ -238,11 +238,11 @@ void Client::loadMonstersWarehouse_return()
                     monster=CommonDatapack::commonDatapack.monsters.value(playerMonster.monster);
             }
             else
-                normalOutput(QStringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
+                normalOutput(QStringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(2)));
         }
         if(ok)
         {
-            playerMonster.level=QString(GlobalServerData::serverPrivateVariables.db.value(3)).toUInt(&ok);
+            playerMonster.level=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
             if(ok)
             {
                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -252,11 +252,11 @@ void Client::loadMonstersWarehouse_return()
                 }
             }
             else
-                normalOutput(QStringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(3)));
+                normalOutput(QStringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(3)));
         }
         if(ok)
         {
-            playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db.value(4)).toUInt(&ok);
+            playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db->value(4)).toUInt(&ok);
             if(ok)
             {
                 if(playerMonster.level>monster.level_to_xp.size())
@@ -271,15 +271,15 @@ void Client::loadMonstersWarehouse_return()
                 }
             }
             else
-                normalOutput(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(4)));
+                normalOutput(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(4)));
         }
         if(ok)
         {
             if(CommonSettingsServer::commonSettingsServer.useSP)
             {
-                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db.value(5)).toUInt(&ok);
+                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db->value(5)).toUInt(&ok);
                 if(!ok)
-                    normalOutput(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(5)));
+                    normalOutput(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(5)));
             }
             else
                 playerMonster.sp=0;
@@ -291,18 +291,18 @@ void Client::loadMonstersWarehouse_return()
             sp_offset=-1;
         if(ok)
         {
-            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db.value(6+sp_offset)).toUInt(&ok);
+            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db->value(6+sp_offset)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
                     normalOutput(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
             }
             else
-                normalOutput(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(6+sp_offset)));
+                normalOutput(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(6+sp_offset)));
         }
         if(ok)
         {
-            const quint32 &genderInt=QString(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)).toUInt(&ok);
+            const quint32 &genderInt=QString(GlobalServerData::serverPrivateVariables.db->value(7+sp_offset)).toUInt(&ok);
             if(ok)
             {
                 if(genderInt>=1 && genderInt<=3)
@@ -310,33 +310,33 @@ void Client::loadMonstersWarehouse_return()
                 else
                 {
                     playerMonster.gender=Gender_Unknown;
-                    normalOutput(QStringLiteral("unknown monster gender, out of range: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)));
+                    normalOutput(QStringLiteral("unknown monster gender, out of range: %1").arg(GlobalServerData::serverPrivateVariables.db->value(7+sp_offset)));
                     ok=false;
                 }
             }
             else
             {
                 playerMonster.gender=Gender_Unknown;
-                normalOutput(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db.value(7+sp_offset)));
+                normalOutput(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db->value(7+sp_offset)));
                 ok=false;
             }
         }
         if(ok)
         {
-            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)).toUInt(&ok);
+            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db->value(8+sp_offset)).toUInt(&ok);
             if(!ok)
-                normalOutput(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(8+sp_offset)));
+                normalOutput(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(8+sp_offset)));
         }
         if(ok)
         {
-            playerMonster.character_origin=QString(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset)).toUInt(&ok);
+            playerMonster.character_origin=QString(GlobalServerData::serverPrivateVariables.db->value(9+sp_offset)).toUInt(&ok);
             if(!ok)
-                normalOutput(QStringLiteral("monster character_origin: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(9+sp_offset)));
+                normalOutput(QStringLiteral("monster character_origin: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(9+sp_offset)));
         }
         //stats
         if(ok)
         {
-            playerMonster.hp=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+            playerMonster.hp=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
             if(ok)
             {
                 const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
@@ -352,7 +352,7 @@ void Client::loadMonstersWarehouse_return()
                 }
             }
             else
-                normalOutput(QStringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(1)));
+                normalOutput(QStringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
         }
         //finish it
         if(ok)
@@ -395,10 +395,10 @@ void Client::loadPlayerMonsterBuffs(const quint32 &index)
             abort();
         #endif
 
-        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterBuffs_static);
+        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterBuffs_static);
         if(callback==NULL)
         {
-            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
             delete selectIndexParam;
             loadPlayerMonsterSkills(0);
             return;
@@ -459,10 +459,10 @@ void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
         playerMonster=&public_and_private_informations.warehouse_playerMonster[index-public_and_private_informations.playerMonster.size()];
     const quint32 &monsterId=playerMonster->id;
     bool ok;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
         PlayerBuff buff;
-        buff.buff=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        buff.buff=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(ok)
         {
             if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
@@ -472,10 +472,10 @@ void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
             }
         }
         else
-            normalOutput(QStringLiteral("buff id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
+            normalOutput(QStringLiteral("buff id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
         if(ok)
         {
-            buff.level=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+            buff.level=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
             if(ok)
             {
                 if(buff.level>CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.size())
@@ -485,7 +485,7 @@ void Client::loadPlayerMonsterBuffs_return(const quint32 &index)
                 }
             }
             else
-                normalOutput(QStringLiteral("buff level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
+                normalOutput(QStringLiteral("buff level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(2)));
         }
         if(ok)
         {
@@ -525,10 +525,10 @@ void Client::loadPlayerMonsterSkills(const quint32 &index)
     {
         SelectIndexParam *selectIndexParam=new SelectIndexParam;
         selectIndexParam->index=index;
-        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterSkills_static);
+        CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadPlayerMonsterSkills_static);
         if(callback==NULL)
         {
-            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
             delete selectIndexParam;
             loadReputation();
             return;
@@ -584,10 +584,10 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
     else
         playerMonster=&public_and_private_informations.warehouse_playerMonster[index-public_and_private_informations.playerMonster.size()];
     bool ok;
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
         PlayerMonster::PlayerSkill skill;
-        skill.skill=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        skill.skill=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(ok)
         {
             if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
@@ -597,10 +597,10 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
             }
         }
         else
-            normalOutput(QStringLiteral("skill id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(0)));
+            normalOutput(QStringLiteral("skill id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
         if(ok)
         {
-            skill.level=QString(GlobalServerData::serverPrivateVariables.db.value(1)).toUInt(&ok);
+            skill.level=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
             if(ok)
             {
                 if(skill.level>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.size())
@@ -610,11 +610,11 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
                 }
             }
             else
-                normalOutput(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(1)));
+                normalOutput(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
         }
         if(ok)
         {
-            skill.endurance=QString(GlobalServerData::serverPrivateVariables.db.value(2)).toUInt(&ok);
+            skill.endurance=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
             if(ok)
             {
                 if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance)
@@ -624,7 +624,7 @@ void Client::loadPlayerMonsterSkills_return(const quint32 &index)
                 }
             }
             else
-                normalOutput(QStringLiteral("skill endurance: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db.value(2)));
+                normalOutput(QStringLiteral("skill endurance: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(2)));
         }
         if(ok)
             playerMonster->skills << skill;
@@ -672,10 +672,10 @@ void Client::loadBotAlreadyBeaten()
     }
     #endif
     const QString &queryText=PreparedDBQuery::db_query_select_bot_beaten.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db.asyncRead(queryText.toLatin1(),this,&Client::loadBotAlreadyBeaten_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadBotAlreadyBeaten_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db.errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
         loadItemOnMap();
         return;
     }
@@ -694,9 +694,9 @@ void Client::loadBotAlreadyBeaten_return()
     callbackRegistred.removeFirst();
     bool ok;
     //parse the result
-    while(GlobalServerData::serverPrivateVariables.db.next())
+    while(GlobalServerData::serverPrivateVariables.db->next())
     {
-        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db.value(0)).toUInt(&ok);
+        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
         if(!ok)
         {
             normalOutput(QStringLiteral("wrong value type for quest, skip: %1").arg(id));

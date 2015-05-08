@@ -2,6 +2,7 @@
 
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
@@ -241,7 +242,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
-            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || items->contains(monstersCollision.item))
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.isEmpty())

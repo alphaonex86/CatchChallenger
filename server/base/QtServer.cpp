@@ -19,6 +19,7 @@ QtServer::QtServer()
     connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection);
     connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection);
     connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server);
+    GlobalServerData::serverPrivateVariables.db=new QtDatabase();
 }
 
 QtServer::~QtServer()
@@ -31,6 +32,7 @@ QtServer::~QtServer()
         delete client;
     }
     client_list.clear();
+    delete GlobalServerData::serverPrivateVariables.db;
 }
 
 void QtServer::preload_the_city_capture()
@@ -147,12 +149,12 @@ bool QtServer::check_if_now_stopped()
         return false;
 
     DebugClass::debugConsole("Fully stopped");
-    if(GlobalServerData::serverPrivateVariables.db.isConnected())
+    if(GlobalServerData::serverPrivateVariables.db->isConnected())
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(GlobalServerData::serverPrivateVariables.db_type_string)
-                                 .arg(GlobalServerData::serverSettings.database.mysql.host));
-        GlobalServerData::serverPrivateVariables.db.syncDisconnect();
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.database.host));
+        GlobalServerData::serverPrivateVariables.db->syncDisconnect();
     }
     stat=Down;
     is_started(false);

@@ -33,7 +33,7 @@ NormalServer::NormalServer() :
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
     #ifdef Q_OS_LINUX
-    CommonSettings::commonSettings.tcpCork  = true;
+    CommonSettingsServer::commonSettingsServer.tcpCork  = true;
     normalServerSettings.tcpNodelay         = false;
     #endif
 
@@ -241,7 +241,7 @@ void NormalServer::start_internal_server()
         return;
     }
     #ifdef Q_OS_LINUX
-    if(CommonSettings::commonSettings.tcpCork)
+    if(CommonSettingsServer::commonSettingsServer.tcpCork)
     {
         qintptr socketDescriptor=sslServer->socketDescriptor();
         if(socketDescriptor!=-1)
@@ -395,7 +395,7 @@ void NormalServer::newConnection()
             const QHostAddress &peerAddress=socket->peerAddress();
             bool kicked=kickedHosts.contains(peerAddress);
             if(kicked)
-                if((QDateTime::currentDateTime().toTime_t()-kickedHosts.value(peerAddress).toTime_t())>=(quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick)
+                if((QDateTime::currentDateTime().toTime_t()-kickedHosts.value(peerAddress).toTime_t())>=(quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
                 {
                     kickedHosts.remove(peerAddress);
                     kicked=false;
@@ -406,7 +406,7 @@ void NormalServer::newConnection()
                 if(socket!=NULL)
                 {
                     #ifdef Q_OS_LINUX
-                    if(CommonSettings::commonSettings.tcpCork)
+                    if(CommonSettingsServer::commonSettingsServer.tcpCork)
                     {
                         qintptr socketDescriptor=socket->socketDescriptor();
                         if(socketDescriptor!=-1)
@@ -459,7 +459,7 @@ void NormalServer::newConnection()
 
 void NormalServer::kicked(const QHostAddress &host)
 {
-    if(CommonSettings::commonSettings.waitBeforeConnectAfterKick>0)
+    if(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick>0)
         kickedHosts[host]=QDateTime::currentDateTime();
 }
 
@@ -470,7 +470,7 @@ void NormalServer::purgeKickedHost()
     QHashIterator<QHostAddress,QDateTime> i(kickedHosts);
     while (i.hasNext()) {
         i.next();
-        if((currentDateTime.toTime_t()-i.value().toTime_t())>=(quint32)CommonSettings::commonSettings.waitBeforeConnectAfterKick)
+        if((currentDateTime.toTime_t()-i.value().toTime_t())>=(quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
             hostsToRemove << i.key();
     }
     int index=0;

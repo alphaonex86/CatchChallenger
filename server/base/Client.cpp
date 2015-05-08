@@ -161,7 +161,7 @@ void Client::disconnectClient()
     if(character_id!=0)
         normalOutput("Disconnected client");
     #endif
-    GlobalServerData::serverPrivateVariables.db.clear();
+    GlobalServerData::serverPrivateVariables.db->clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected=false;
     if(socket!=NULL)

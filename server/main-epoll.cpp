@@ -139,13 +139,13 @@ void send_settings()
         default:
         case DatabaseBase::Type::PostgreSQL:
         case DatabaseBase::Type::Mysql:
-            formatedServerSettings.database.sql.host				= settings->value(QLatin1Literal("host")).toString();
-            formatedServerSettings.database.sql.db				= settings->value(QLatin1Literal("db")).toString();
-            formatedServerSettings.database.sql.login				= settings->value(QLatin1Literal("login")).toString();
-            formatedServerSettings.database.sql.pass				= settings->value(QLatin1Literal("pass")).toString();
+            formatedServerSettings.database.host				= settings->value(QLatin1Literal("host")).toString();
+            formatedServerSettings.database.db				= settings->value(QLatin1Literal("db")).toString();
+            formatedServerSettings.database.login				= settings->value(QLatin1Literal("login")).toString();
+            formatedServerSettings.database.pass				= settings->value(QLatin1Literal("pass")).toString();
         break;
         case DatabaseBase::Type::SQLite:
-            formatedServerSettings.database.sqlite.file				= settings->value(QLatin1Literal("file")).toString();
+            formatedServerSettings.database.file				= settings->value(QLatin1Literal("file")).toString();
         break;
     }
     if(settings->value(QLatin1Literal("db_fight_sync")).toString()==QLatin1Literal("FightSync_AtEachTurn"))
@@ -324,13 +324,14 @@ int main(int argc, char *argv[])
 
     send_settings();
 
-    if(!GlobalServerData::serverPrivateVariables.db.syncConnect(
-                GlobalServerData::serverSettings.database.sql.host.toLatin1(),
-                GlobalServerData::serverSettings.database.sql.db.toLatin1(),
-                GlobalServerData::serverSettings.database.sql.login.toLatin1(),
-                GlobalServerData::serverSettings.database.sql.pass.toLatin1()))
+    GlobalServerData::serverPrivateVariables.db=new EpollPostgresql();
+    if(!GlobalServerData::serverPrivateVariables.db->syncConnect(
+                GlobalServerData::serverSettings.database.host.toLatin1(),
+                GlobalServerData::serverSettings.database.db.toLatin1(),
+                GlobalServerData::serverSettings.database.login.toLatin1(),
+                GlobalServerData::serverSettings.database.pass.toLatin1()))
     {
-        qDebug() << "Unable to connect to database:" << GlobalServerData::serverPrivateVariables.db.errorMessage();
+        qDebug() << "Unable to connect to database:" << GlobalServerData::serverPrivateVariables.db->errorMessage();
         return EXIT_FAILURE;
     }
 
@@ -847,5 +848,6 @@ int main(int argc, char *argv[])
     server->close();
     server->unload_the_data();
     delete server;
+    delete GlobalServerData::serverPrivateVariables.db;
     return EXIT_SUCCESS;
 }

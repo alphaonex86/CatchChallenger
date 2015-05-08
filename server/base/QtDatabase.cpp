@@ -17,6 +17,7 @@ QtDatabase::QtDatabase() :
 {
     connect(this,&QtDatabase::sendQuery,&dbThread,&QtDatabaseThread::receiveQuery,Qt::QueuedConnection);
     connect(&dbThread,&QtDatabaseThread::sendReply,this,&QtDatabase::receiveReply,Qt::QueuedConnection);
+    databaseConnected=DatabaseBase::Type::Mysql;
 }
 
 QtDatabase::~QtDatabase()
@@ -53,6 +54,7 @@ bool QtDatabase::syncConnect(const char * host, const char * dbname, const char 
         conn=NULL;
         return false;
     }
+    databaseConnected=DatabaseBase::Type::Mysql;
     return true;
 }
 
@@ -75,6 +77,7 @@ bool QtDatabase::syncConnectSqlite(const char * file)
         conn=NULL;
         return false;
     }
+    databaseConnected=DatabaseBase::Type::SQLite;
     return true;
 }
 
@@ -97,6 +100,7 @@ bool QtDatabase::syncConnectPostgresql(const char * host, const char * dbname, c
         conn=NULL;
         return false;
     }
+    databaseConnected=DatabaseBase::Type::PostgreSQL;
     return true;
 }
 
@@ -110,6 +114,7 @@ void QtDatabase::syncDisconnect()
     conn->close();
     delete conn;
     conn=NULL;
+    databaseConnected=DatabaseBase::Type::Mysql;
 }
 
 DatabaseBase::CallBack *QtDatabase::asyncRead(const char *query,void * returnObject, CallBackDatabase method)
@@ -220,6 +225,11 @@ const char * QtDatabase::value(const int &value) const
     valueReturnedData=string.toUtf8();
     valueReturnedData[valueReturnedData.size()]='\0';
     return valueReturnedData.constData();
+}
+
+DatabaseBase::Type QtDatabase::databaseType() const
+{
+    return databaseConnected;
 }
 
 QtDatabaseThread::QtDatabaseThread()
