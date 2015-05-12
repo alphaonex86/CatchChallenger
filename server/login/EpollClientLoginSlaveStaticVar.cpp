@@ -40,7 +40,7 @@ char EpollClientLoginSlave::serverLogicalGroupList[];
 int EpollClientLoginSlave::serverLogicalGroupListSize=0;
 char EpollClientLoginSlave::serverLogicalGroupAndServerList[];
 int EpollClientLoginSlave::serverLogicalGroupAndServerListSize=0;
-EpollClientLoginSlave::ProxyMode EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Direct;
+EpollClientLoginSlave::ProxyMode EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
 
 const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER;
 

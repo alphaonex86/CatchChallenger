@@ -728,7 +728,7 @@ void MainWindow::on_server_select_clicked()
 
 void MainWindow::on_login_cancel_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->multi);
+    ui->stackedWidget->setCurrentWidget(ui->poolServersList);
 }
 
 void MainWindow::on_server_remove_clicked()
@@ -844,7 +844,7 @@ void MainWindow::resetAll()
             saveTime();
         break;
         case ServerMode_Remote:
-            ui->stackedWidget->setCurrentWidget(ui->multi);
+            ui->stackedWidget->setCurrentWidget(ui->poolServersList);
         break;
         default:
             ui->stackedWidget->setCurrentWidget(ui->mode);
@@ -1416,7 +1416,7 @@ void MainWindow::on_manageDatapack_clicked()
 
 void MainWindow::on_backDatapack_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->multi);
+    ui->stackedWidget->setCurrentWidget(ui->poolServersList);
 }
 
 void MainWindow::on_deleteDatapack_clicked()
@@ -1525,7 +1525,7 @@ void MainWindow::httpFinished()
 
 void MainWindow::on_multiplayer_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->multi);
+    ui->stackedWidget->setCurrentWidget(ui->poolServersList);
 }
 
 void MainWindow::on_server_back_clicked()

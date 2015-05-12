@@ -459,7 +459,7 @@ void EpollClientLoginSlave::selectCharacter(const quint8 &query_id,const quint32
 
 void EpollClientLoginSlave::selectCharacter_ReturnToken(const quint8 &query_id,const char * const token)
 {
-    if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Direct)
+    if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect)
         postReplyData(query_id,token,TOKEN_SIZE);
     else
     {
