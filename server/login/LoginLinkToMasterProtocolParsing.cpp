@@ -106,8 +106,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
                     {
                         EpollClientLoginSlave::serverPartialServerList[0x00]=0x02;//proxy mode
-                        EpollClientLoginSlave::serverPartialServerList[0x01]=0x00;//Skip server selection: no
-                        EpollClientLoginSlave::serverPartialServerList[0x02]=serverListSize;
+                        EpollClientLoginSlave::serverPartialServerList[0x01]=serverListSize;
                         pos=0x02;
                         while(serverListIndex<serverListSize)
                         {

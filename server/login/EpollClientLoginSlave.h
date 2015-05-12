@@ -78,8 +78,8 @@ public:
     };
     enum ProxyMode
     {
-        Direct,
-        Proxy
+        Reconnect=0x01,
+        Proxy=0x02
     };
     static ProxyMode proxyMode;
 

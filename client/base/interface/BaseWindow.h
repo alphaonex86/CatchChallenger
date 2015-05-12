@@ -14,6 +14,7 @@
 #include <QComboBox>
 #include <QMovie>
 #include <QQuickView>
+#include <QTreeWidgetItem>
 
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../general/base/ChatParsing.h"
@@ -155,7 +156,7 @@ private slots:
     void updateTheWareHouseContent();
     QListWidgetItem * itemToGraphic(const quint32 &id, const quint32 &quantity);
     //player
-    void logged(const QList<CharacterEntry> &characterEntryList);
+    void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList);
     void updatePlayerImage();
     void have_current_player_info();
     void have_inventory(const QHash<quint16,quint32> &items,const QHash<quint16,quint32> &warehouse_items);
@@ -438,6 +439,9 @@ private slots:
     void lastReplyTime(const quint32 &time);
     void detectSlowDown();
     void updateTheTurtle();
+    void on_serverListBack_clicked();
+    void updateServerList();
+    void addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetItem *item);
 protected slots:
     //datapack
     void datapackParsed();
@@ -475,8 +479,7 @@ private:
     quint32 datapackDownloadedCount;
     quint32 datapackDownloadedSize;
     quint32 progressingDatapackFileSize;
-    QList<CharacterEntry> characterEntryList,characterEntryListInWaiting;
-    bool isLogged;
+
     NewProfile *newProfile;
     quint32 datapackFileNumber;
     qint32 datapackFileSize;
@@ -500,8 +503,17 @@ private:
     QList<QTime> add_to_inventoryGainTime;
     QStringList add_to_inventoryGainExtraList;
     QList<QTime> add_to_inventoryGainExtraTime;
+
+    //cache
     QFont disableIntoListFont;
     QBrush disableIntoListBrush;
+
+    //for server/character selection
+    bool isLogged;
+    QList<ServerFromPoolForDisplay *> serverOrdenedList;
+    QList<QList<CharacterEntry> > characterListForSelection;
+    QList<CharacterEntry> characterEntryListInWaiting;
+    int serverSelected;
 
     //plant seed in waiting
     struct SeedInWaiting
