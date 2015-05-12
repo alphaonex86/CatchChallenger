@@ -57,6 +57,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<QList<QPair<quint8,quint8> > >("QList<QPair<quint8,quint8> >");
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
     qRegisterMetaType<QList<quint32> >("QList<quint32>");
+    qRegisterMetaType<QList<QList<CharacterEntry> > >("QList<QList<CharacterEntry> >");
     qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
 

@@ -66,7 +66,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             settings.setValue(QStringLiteral("mode"),mode);
         }
         if(mode==QStringLiteral("direct"))
-            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Direct;
+            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
         else
         {
             std::cerr << "proxy mode in the settings but not supported from now (abort)" << std::endl;
@@ -270,8 +270,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 std::cerr << "only db type postgresql supported (abort)" << std::endl;
                 abort();
             }
-            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=(unsigned char)data.size();
-            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=sizeof(unsigned char);
+            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=data.size();
+            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=2;
             memcpy(EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup+EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize,data.constData(),data.size());
             EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=data.size();
             index++;

@@ -13,6 +13,7 @@
 #include <QDateTime>
 #include <QCryptographicHash>
 
+#include "ClientStructures.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
@@ -29,6 +30,7 @@ public:
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
     void disconnectClient();
+    void unloadSelection();
 
     //protocol command
     bool tryLogin(const QString &login,const QString &pass);
@@ -54,6 +56,13 @@ public:
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
+
+    enum ProxyMode
+    {
+        Reconnect=0x01,
+        Proxy=0x02
+    };
+    ProxyMode proxyMode;
 private:
     //status for the query
     bool is_logged;
@@ -61,6 +70,16 @@ private:
     bool have_send_protocol;
     bool have_receive_protocol;
     bool tolerantMode;
+
+    static QString text_balise_root_start;
+    static QString text_balise_root_stop;
+    static QString text_name;
+    static QString text_description;
+    static QString text_en;
+    static QString text_lang;
+    static QString text_slash;
+
+    LogicialGroup logicialGroup;
 
     //to send trame
     quint8 lastQueryNumber;
@@ -97,6 +116,10 @@ protected:
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
     virtual void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
+    //servers list
+    LogicialGroup * addLogicalGroup(const QString &path, const QString &xml, const QString &language);
+    ServerFromPoolForDisplay * addLogicalServer(const ServerFromPoolForDisplayTemp &server, const QString &language);
+
     //error
     void parseError(const QString &userMessage, const QString &errorString);
 
@@ -130,6 +153,11 @@ protected:
     QByteArray token;
     QByteArray passHash;
     QByteArray loginHash;
+
+    //server list
+    QList<ServerFromPoolForDisplay *> serverOrdenedList;
+    QList<LogicialGroup *> logicialGroupIndexList;
+    QList<QList<CharacterEntry> > characterListForSelection;
 signals:
     void newError(const QString &error,const QString &detailedError) const;
     void message(const QString &message) const;
@@ -138,7 +166,7 @@ signals:
     //protocol/connection info
     void disconnected(const QString &reason) const;
     void notLogged(const QString &reason) const;
-    void logged(const QList<CharacterEntry> &characterEntryList) const;
+    void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList) const;
     void protocol_is_good() const;
 
     //general info
@@ -252,6 +280,7 @@ public:
     bool addCharacter(const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     bool removeCharacter(const quint32 &characterId);
     bool selectCharacter(const quint32 &characterId);
+    LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);

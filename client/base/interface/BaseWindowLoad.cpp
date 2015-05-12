@@ -48,7 +48,9 @@ void BaseWindow::resetAll()
     haveInventory=false;
     isLogged=false;
     datapackIsParsed=false;
-    characterEntryList.clear();
+    serverOrdenedList.clear();
+    characterListForSelection.clear();
+    characterEntryListInWaiting.clear();
     ui->inventory->clear();
     ui->shopItemList->clear();
     items_graphical.clear();
@@ -69,6 +71,7 @@ void BaseWindow::resetAll()
     isInQuest=false;
     displayAttackProgression=0;
     mLastGivenXP=0;
+    serverSelected=-1;
     fightTimerFinish=false;
     queryList.clear();
     ui->inventoryInformation->setVisible(false);
@@ -179,10 +182,11 @@ void BaseWindow::notLogged(QString reason)
     resetAll();
 }
 
-void BaseWindow::logged(const QList<CharacterEntry> &characterEntryList)
+void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList, const QList<QList<CharacterEntry> > &characterEntryList)
 {
+    this->serverOrdenedList=serverOrdenedList;
+    this->characterListForSelection=characterEntryList;
     CatchChallenger::Api_client_real::client->sendDatapackContent();
-    this->characterEntryList=characterEntryList;
     isLogged=true;
     updateConnectingStatus();
     ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
@@ -456,30 +460,43 @@ void BaseWindow::load_event()
 
 void BaseWindow::updateConnectingStatus()
 {
-    if(isLogged && datapackIsParsed && !havePlayerInformations)
+    if(isLogged && datapackIsParsed)
     {
-        if(ui->stackedWidget->currentWidget()!=ui->page_character)
+        if(serverSelected==-1)
         {
-            ui->stackedWidget->setCurrentWidget(ui->page_character);
-            updateCharacterList();
-            if(characterEntryList.isEmpty() && CommonSettingsCommon::commonSettingsCommon.max_character>0)
+            if(ui->stackedWidget->currentWidget()!=ui->page_serverList)
             {
-                if(CommonSettingsCommon::commonSettingsCommon.min_character>0)
-                {
-                    ui->stackedWidget->setCurrentWidget(ui->page_init);
-                    ui->label_connecting_status->setText(QString());
-                }
-                on_character_add_clicked();
+                ui->stackedWidget->setCurrentWidget(ui->page_serverList);
+                updateServerList();
+                return;
             }
-            if(characterEntryList.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterEntryList.size() && CommonSettingsCommon::commonSettingsCommon.max_character<=characterEntryList.size())
+        }
+        else if(!havePlayerInformations)
+        {
+            if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
-                /*if(!characterSelected && characterEntryList.first().mapId!=-1)
+                ui->stackedWidget->setCurrentWidget(ui->page_character);
+                updateCharacterList();
+                if(characterListForSelection.isEmpty() && CommonSettingsCommon::commonSettingsCommon.max_character>0)
                 {
-                    qDebug() << characterEntryList.first().mapId;
-                    characterSelected=true;
-                    ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
-                    on_character_select_clicked();
-                }*/
+                    if(CommonSettingsCommon::commonSettingsCommon.min_character>0)
+                    {
+                        ui->stackedWidget->setCurrentWidget(ui->page_init);
+                        ui->label_connecting_status->setText(QString());
+                    }
+                    on_character_add_clicked();
+                }
+                if(characterListForSelection.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterListForSelection.size() && CommonSettingsCommon::commonSettingsCommon.max_character<=characterListForSelection.size())
+                {
+                    /*if(!characterSelected && characterListForSelection.first().mapId!=-1)
+                    {
+                        qDebug() << characterListForSelection.first().mapId;
+                        characterSelected=true;
+                        ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
+                        on_character_select_clicked();
+                    }*/
+                }
+                return;
             }
         }
         return;
