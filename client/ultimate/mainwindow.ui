@@ -215,7 +215,7 @@ color: rgb(0, 0, 0);</string>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="multi">
+      <widget class="QWidget" name="poolServersList">
        <property name="styleSheet">
         <string notr="true">#multi{background-image: url(:/images/background.jpg);}</string>
        </property>

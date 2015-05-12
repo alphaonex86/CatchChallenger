@@ -9,26 +9,26 @@ using namespace CatchChallenger;
 
 void BaseWindow::on_character_add_clicked()
 {
-    if((characterEntryListInWaiting.size()+characterEntryList.size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
+    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         QMessageBox::warning(this,tr("Error"),tr("You have already the max characters count"));
         return;
     }
     if(newProfile!=NULL)
         delete newProfile;
-    newProfile=new NewProfile(CatchChallenger::Api_client_real::client->datapackPath(),this);
+    newProfile=new NewProfile(Api_client_real::client->datapackPath(),this);
     connect(newProfile,&NewProfile::finished,this,&BaseWindow::newProfileFinished);
     newProfile->show();
 }
 
 void BaseWindow::newProfileFinished()
 {
-    const QString &datapackPath=CatchChallenger::Api_client_real::client->datapackPath();
+    const QString &datapackPath=Api_client_real::client->datapackPath();
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         if(!newProfile->ok())
         {
-            if(characterEntryList.isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
-                CatchChallenger::Api_client_real::client->tryDisconnect();
+            if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
+                Api_client_real::client->tryDisconnect();
             return;
         }
     int profileIndex=0;
@@ -42,16 +42,16 @@ void BaseWindow::newProfileFinished()
     NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,profile.forcedskin,this);
     if(!nameGame.haveSkin())
     {
-        if(characterEntryList.isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
-            CatchChallenger::Api_client_real::client->tryDisconnect();
+        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
+            Api_client_real::client->tryDisconnect();
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
         return;
     }
     nameGame.exec();
     if(!nameGame.haveTheInformation())
     {
-        if(characterEntryList.isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
-            CatchChallenger::Api_client_real::client->tryDisconnect();
+        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
+            Api_client_real::client->tryDisconnect();
         return;
     }
     CharacterEntry characterEntry;
@@ -62,9 +62,9 @@ void BaseWindow::newProfileFinished()
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo();
     characterEntry.skinId=nameGame.skinId();
-    CatchChallenger::Api_client_real::client->addCharacter(profileIndex,characterEntry.pseudo,characterEntry.skinId);
+    Api_client_real::client->addCharacter(profileIndex,characterEntry.pseudo,characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
-    if((characterEntryListInWaiting.size()+characterEntryList.size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
+    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Creating your new character"));
@@ -77,7 +77,7 @@ void BaseWindow::newCharacterId(const quint8 &returnCode, const quint32 &charact
     if(returnCode==0x00)
     {
         characterEntry.character_id=characterId;
-        characterEntryList << characterEntry;
+        characterListForSelection[serverOrdenedList.at(serverSelected)->charactersGroupIndex] << characterEntry;
         updateCharacterList();
         ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
         //if(characterEntryList.size()>=CommonSettings::commonSettings.min_character && characterEntryList.size()<=CommonSettings::commonSettings.max_character)
@@ -97,9 +97,9 @@ void BaseWindow::updateCharacterList()
 {
     ui->characterEntryList->clear();
     int index=0;
-    while(index<characterEntryList.size())
+    while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
     {
-        const CharacterEntry &characterEntry=characterEntryList.at(index);
+        const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).at(index);
         QListWidgetItem * item=new QListWidgetItem();
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
@@ -110,7 +110,7 @@ void BaseWindow::updateCharacterList()
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(text);
-        item->setIcon(QIcon(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
+        item->setIcon(QIcon(Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
         ui->characterEntryList->addItem(item);
         index++;
     }
@@ -118,7 +118,7 @@ void BaseWindow::updateCharacterList()
 
 void BaseWindow::on_character_back_clicked()
 {
-    CatchChallenger::Api_client_real::client->tryDisconnect();
+    ui->stackedWidget->setCurrentWidget(ui->page_serverList);
 }
 
 void BaseWindow::on_character_select_clicked()
@@ -141,14 +141,14 @@ void BaseWindow::on_character_remove_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Deleting already planned"));
         return;
     }
-    CatchChallenger::Api_client_real::client->removeCharacter(character_id);
+    Api_client_real::client->removeCharacter(character_id);
     int index=0;
-    while(index<characterEntryList.size())
+    while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
     {
-        const CharacterEntry &characterEntry=characterEntryList.at(index);
+        const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).at(index);
         if(characterEntry.character_id==character_id)
         {
-            characterEntryList[index].delete_time_left=CommonSettingsCommon::commonSettingsCommon.character_delete_time;
+            characterListForSelection[serverOrdenedList.at(serverSelected)->charactersGroupIndex][index].delete_time_left=CommonSettingsCommon::commonSettingsCommon.character_delete_time;
             break;
         }
         index++;
@@ -160,12 +160,59 @@ void BaseWindow::on_character_remove_clicked()
 
 void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
 {
-    if(item->data(97).toInt()==-1)
+    /*if(item->data(97).toInt()==-1)
     {
         QMessageBox::warning(this,tr("Error"),tr("You can't play with this buggy charater"));
         return;
-    }
-    CatchChallenger::Api_client_real::client->selectCharacter(item->data(99).toUInt());
+    }*/
+    Api_client_real::client->selectCharacter(item->data(99).toUInt());
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
+}
+
+
+void BaseWindow::updateServerList()
+{
+    ui->serverList->clear();
+    LogicialGroup logicialGroup=Api_client_real::client->getLogicialGroup();
+    QTreeWidgetItem *item=new QTreeWidgetItem();
+    addToServerList(logicialGroup,item);
+    int index=0;
+    while(index<item->childCount())
+    {
+        ui->serverList->addTopLevelItem(item->child(index));
+        index++;
+    }
+    delete item;
+}
+
+void BaseWindow::addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetItem *item)
+{
+    item->setText(0,logicialGroup.name);
+    {
+        //list the group
+        QHashIterator<QString,LogicialGroup> i(logicialGroup.logicialGroupList);
+        while (i.hasNext()) {
+            i.next();
+            QTreeWidgetItem *itemGroup=new QTreeWidgetItem(item);
+            addToServerList(i.value(),itemGroup);
+        }
+    }
+    {
+        //list the server
+        int index=0;
+        while(index<logicialGroup.servers.size())
+        {
+            const ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
+            QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
+            itemServer->setText(0,server.name);
+            itemServer->setText(1,QString("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
+            index++;
+        }
+    }
+}
+
+void BaseWindow::on_serverListBack_clicked()
+{
+    Api_client_real::client->tryDisconnect();
 }
