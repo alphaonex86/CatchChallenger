@@ -597,6 +597,13 @@ struct Skill
     quint8 type;
 };
 
+enum Place
+{
+    OnPlayer=0,
+    WareHouse=1,
+    Market=2
+};
+
 struct Monster
 {
     enum EvolutionType
@@ -787,6 +794,16 @@ struct Profile
     QList<Monster> monsters;
     QList<Reputation> reputation;
     QList<Item> items;
+    QString id;
+};
+
+struct ServerProfile
+{
+    QString mapString;
+    /*COORD_TYPE*/ quint8 x;
+    /*COORD_TYPE*/ quint8 y;
+    Orientation orientation;
+
     QString id;
 };
 

@@ -14,6 +14,7 @@
 #include "ClientNetworkReadWithoutSender.h"
 #include "SqlFunction.h"
 #include "DictionaryServer.h"
+#include "DictionaryLogin.h"
 #include "PreparedDBQuery.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -136,9 +137,9 @@ BaseServer::BaseServer() :
     CommonSettingsServer::commonSettingsServer.factoryPriceChange     = 20;
     CommonSettingsCommon::commonSettingsCommon.character_delete_time  = 604800; // 7 day
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=30;
-    GlobalServerData::serverSettings.database.fightSync                         = GameServerSettings::Database::FightSync_AtTheEndOfBattle;
-    GlobalServerData::serverSettings.database.positionTeleportSync              = true;
-    GlobalServerData::serverSettings.database.secondToPositionSync              = 0;
+    GlobalServerData::serverSettings.fightSync                         = GameServerSettings::FightSync_AtTheEndOfBattle;
+    GlobalServerData::serverSettings.positionTeleportSync              = true;
+    GlobalServerData::serverSettings.secondToPositionSync              = 0;
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithmSelection_Simple;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
@@ -187,7 +188,9 @@ BaseServer::~BaseServer()
 
 void BaseServer::closeDB()
 {
-    GlobalServerData::serverPrivateVariables.db->syncDisconnect();
+    GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
+    GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+    GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
 }
 
 void BaseServer::initAll()
@@ -209,12 +212,6 @@ void BaseServer::preload_the_data()
         QTime time;
         time.restart();
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
-        /*int index=0;
-        while(index<CommonDatapack::commonDatapack.profileList.size())
-        {
-            CommonDatapack::commonDatapack.profileList[index].map.remove(BaseServer::text_dottmx);
-            index++;
-        }*/
         qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
     }
     timeDatapack.restart();
@@ -254,6 +251,7 @@ void BaseServer::SQL_common_load_finish()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL reputation dictionary").arg(dictionary_reputation_database_to_internal.size()));
 
+    preload_profile();
     load_sql_monsters_max_id();
 }
 
@@ -429,7 +427,7 @@ void BaseServer::preload_zone_sql()
         QString zoneCodeName=entryListZone.at(entryListIndex).fileName();
         zoneCodeName.remove(BaseServer::text_dotxml);
         QString queryText;
-        switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+        switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
             case DatabaseBase::Type::Mysql:
@@ -442,9 +440,9 @@ void BaseServer::preload_zone_sql()
                 queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
             break;
         }
-        if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static)==NULL)
+        if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static)==NULL)
         {
-            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
             entryListIndex++;
             preload_plant_on_map_sql();
@@ -459,7 +457,7 @@ void BaseServer::preload_zone_sql()
 void BaseServer::preload_itemOnMap_sql()
 {
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -472,9 +470,9 @@ void BaseServer::preload_itemOnMap_sql()
             queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_itemonmap ORDER BY map");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_itemOnMap_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_itemOnMap_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
 
         preload_the_map();
@@ -498,26 +496,26 @@ void BaseServer::preload_itemOnMap_return()
 {
     bool ok;
     dictionary_item_maxId=0;
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const quint16 &id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        const quint16 &id=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
         if(!ok)
-            qDebug() << QStringLiteral("preload_itemOnMap_return(): Id not found: %1").arg(QString(GlobalServerData::serverPrivateVariables.db->value(0)));
+            qDebug() << QStringLiteral("preload_itemOnMap_return(): Id not found: %1").arg(QString(GlobalServerData::serverPrivateVariables.db_server->value(0)));
         else
         {
-            const QString &map=QString(GlobalServerData::serverPrivateVariables.db->value(1));
-            const quint32 &x=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
+            const QString &map=QString(GlobalServerData::serverPrivateVariables.db_server->value(1));
+            const quint32 &x=QString(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
             if(!ok)
-                qDebug() << QStringLiteral("preload_itemOnMap_return(): x not number: %1").arg(QString(GlobalServerData::serverPrivateVariables.db->value(2)));
+                qDebug() << QStringLiteral("preload_itemOnMap_return(): x not number: %1").arg(QString(GlobalServerData::serverPrivateVariables.db_server->value(2)));
             else
             {
                 if(x>255)
                     qDebug() << QStringLiteral("preload_itemOnMap_return(): x out of range").arg(x);
                 else
                 {
-                    const quint32 &y=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
+                    const quint32 &y=QString(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
                     if(!ok)
-                        qDebug() << QStringLiteral("preload_itemOnMap_return(): y not number: %1").arg(QString(GlobalServerData::serverPrivateVariables.db->value(3)));
+                        qDebug() << QStringLiteral("preload_itemOnMap_return(): y not number: %1").arg(QString(GlobalServerData::serverPrivateVariables.db_server->value(3)));
                     else
                     {
                         if(y>255)
@@ -538,7 +536,7 @@ void BaseServer::preload_itemOnMap_return()
             }
         }
     }
-    GlobalServerData::serverPrivateVariables.db->clear();
+    GlobalServerData::serverPrivateVariables.db_server->clear();
     {
         DebugClass::debugConsole(QStringLiteral("%1 SQL item on map dictionary").arg(DictionaryServer::dictionary_itemOnMap_internal_to_database.size()));
 
@@ -560,7 +558,7 @@ void BaseServer::preload_itemOnMap_return()
 void BaseServer::preload_dictionary_map()
 {
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -573,9 +571,9 @@ void BaseServer::preload_dictionary_map()
             queryText=QStringLiteral("SELECT id,map FROM dictionary_map ORDER BY map");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_map_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_dictionary_map_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
 }
@@ -590,11 +588,11 @@ void BaseServer::preload_dictionary_map_return()
     QSet<QString> foundMap;
     int databaseMapId=0;
     int obsoleteMap=0;
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
-        databaseMapId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
-        const QString &map=QString(GlobalServerData::serverPrivateVariables.db->value(1));
+        databaseMapId=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        const QString &map=QString(GlobalServerData::serverPrivateVariables.db_server->value(1));
         if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
         {
             int index=DictionaryServer::dictionary_map_database_to_internal.size();
@@ -613,7 +611,7 @@ void BaseServer::preload_dictionary_map_return()
         else
             obsoleteMap++;
     }
-    GlobalServerData::serverPrivateVariables.db->clear();
+    GlobalServerData::serverPrivateVariables.db_server->clear();
     QStringList map_list_flat=GlobalServerData::serverPrivateVariables.map_list.keys();
     map_list_flat.sort();
     int index=0;
@@ -624,7 +622,7 @@ void BaseServer::preload_dictionary_map_return()
         {
             databaseMapId++;
             QString queryText;
-            switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+            switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
                 default:
                 case DatabaseBase::Type::Mysql:
@@ -637,9 +635,9 @@ void BaseServer::preload_dictionary_map_return()
                     queryText=QStringLiteral("INSERT INTO dictionary_map(id,map) VALUES(%1,'%2');").arg(databaseMapId).arg(map);
                 break;
             }
-            if(!GlobalServerData::serverPrivateVariables.db->asyncWrite(queryText.toLatin1()))
+            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
@@ -660,73 +658,120 @@ void BaseServer::preload_dictionary_map_return()
 
 /**
  * into the BaseServerLogin
- *
+ * */
 void BaseServer::preload_profile()
 {
-    DebugClass::debugConsole(QStringLiteral("%1 SQL skin dictionary").arg(DictionaryServer::dictionary_skin.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 SQL skin dictionary").arg(DictionaryLogin::dictionary_skin_internal_to_database.size()));
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileList.size())
+    {
+        DebugClass::debugConsole(QStringLiteral("profile common and server don't match"));
+        return;
+    }*/
+    if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
+    {
+        DebugClass::debugConsole(QStringLiteral("profile common and server don't match"));
+        return;
+    }
+    #endif
+    {
+        int index=0;
+        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
+        {
+            CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index].mapString.remove(BaseServer::text_dottmx);
+            index++;
+        }
+    }
+
+    GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
     int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
-        ServerProfile serverProfile;
-        serverProfile.valid=false;
-        if(GlobalServerData::serverPrivateVariables.map_list.contains(profile.map))
+        const ServerProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(index);
+        ServerProfileInternal serverProfileInternal;
+        serverProfileInternal.valid=false;
+        if(!serverProfile.mapString.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(serverProfile.mapString))
         {
-            const quint32 &mapId=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(profile.map))->reverse_db_id;
-            const QString &mapQuery=QString::number(mapId)+QLatin1String(",")+QString::number(profile.x)+QLatin1String(",")+QString::number(profile.y)+QLatin1String(",")+QString::number(Orientation_bottom);
-            switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+            serverProfileInternal.map=
+                    static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.value(serverProfile.mapString));
+            serverProfileInternal.x=serverProfile.x;
+            serverProfileInternal.y=serverProfile.y;
+            serverProfileInternal.orientation=serverProfile.orientation;
+            const quint32 &mapId=serverProfileInternal.map->reverse_db_id;
+            const QString &mapQuery=QString::number(mapId)+
+                    QLatin1String(",")+
+                    QString::number(serverProfile.x)+
+                    QLatin1String(",")+
+                    QString::number(serverProfile.y)+
+                    QLatin1String(",")+
+                    QString::number(Orientation_bottom);
+            switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
             {
                 default:
                 case DatabaseBase::Type::Mysql:
-                    serverProfile.preparedQuery << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
-                    serverProfile.preparedQuery << QLatin1String(",");
-                    serverProfile.preparedQuery << QLatin1String(",'");
-                    serverProfile.preparedQuery << QLatin1String("',");
-                    serverProfile.preparedQuery << QLatin1String(",")+//skin verificated above
-                            mapQuery+QLatin1String(",0,0,")+
-                            QString::number(profile.cash)+QLatin1String(",")+
-                            mapQuery+QLatin1String(",")+
-                            mapQuery+QLatin1String(",0,")+
-                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,0,0,0,0,")+
-                            QString::number(index)+QLatin1String(");");
+                    serverProfileInternal.preparedQueryAdd << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                    serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
+                    serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
+                    serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
+                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",")+//skin verificated above
+                            QLatin1String(",0,0,")+
+                            QString::number(profile.cash)+QLatin1String(",");
+                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
+                            QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
                 case DatabaseBase::Type::SQLite:
-                    serverProfile.preparedQuery << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfile.preparedQuery << QLatin1String(",");
-                    serverProfile.preparedQuery << QLatin1String(",'");
-                    serverProfile.preparedQuery << QLatin1String("',");
-                    serverProfile.preparedQuery << QLatin1String(",")+//skin verificated above
-                            mapQuery+QLatin1String(",0,0,")+
-                            QString::number(profile.cash)+QLatin1String(",")+
-                            mapQuery+QLatin1String(",")+
-                            mapQuery+QLatin1String(",0,")+
-                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,0,0,0,0,")+
-                            QString::number(index)+QLatin1String(");");
+                    serverProfileInternal.preparedQueryAdd << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
+                    serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
+                    serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
+                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",")+//skin verificated above
+                            QLatin1String(",0,0,")+
+                            QString::number(profile.cash)+QLatin1String(",");
+                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
+                            QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
                 case DatabaseBase::Type::PostgreSQL:
-                    serverProfile.preparedQuery << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,map,x,y,orientation,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
-                    serverProfile.preparedQuery << QLatin1String(",");
-                    serverProfile.preparedQuery << QLatin1String(",'");
-                    serverProfile.preparedQuery << QLatin1String("',");
-                    serverProfile.preparedQuery << QLatin1String(",")+//skin verificated above
-                            mapQuery+QLatin1String(",0,0,")+
-                            QString::number(profile.cash)+QLatin1String(",")+
-                            mapQuery+QLatin1String(",")+
-                            mapQuery+QLatin1String(",0,")+
-                            QString::number(QDateTime::currentDateTime().toTime_t())+QLatin1String(",0,FALSE,0,0,0,")+
-                            QString::number(index)+QLatin1String(");");
+                    serverProfileInternal.preparedQueryAdd << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                    serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
+                    serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
+                    serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
+                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",")+//skin verificated above
+                            QLatin1String(",0,0,")+
+                            QString::number(profile.cash)+QLatin1String(",");
+                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
+                            QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
             }
-            serverProfile.valid=true;
+            switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+            {
+                default:
+                case DatabaseBase::Type::Mysql:
+                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO `character_forserver`(`character`,`x`,`y`,`orientation`,`map`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
+                    serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
+                break;
+                case DatabaseBase::Type::SQLite:
+                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
+                    serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
+                break;
+                case DatabaseBase::Type::PostgreSQL:
+                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
+                    serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
+                break;
+            }
+            serverProfileInternal.valid=true;
         }
-        GlobalServerData::serverPrivateVariables.serverProfileList << serverProfile;
+        GlobalServerData::serverPrivateVariables.serverProfileInternalList << serverProfileInternal;
         index++;
     }
 
-    DebugClass::debugConsole(QStringLiteral("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileList.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()));
     preload_finish();
-}*/
+}
 
 bool BaseServer::preload_zone()
 {
@@ -743,12 +788,12 @@ void BaseServer::preload_zone_static(void *object)
 
 void BaseServer::preload_zone_return()
 {
-    if(GlobalServerData::serverPrivateVariables.db->next())
+    if(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
         QString zoneCodeName=entryListZone.at(entryListIndex).fileName();
         zoneCodeName.remove(BaseServer::text_dotxml);
-        const QString &tempString=QString(GlobalServerData::serverPrivateVariables.db->value(0));
+        const QString &tempString=QString(GlobalServerData::serverPrivateVariables.db_server->value(0));
         const quint32 &clanId=tempString.toUInt(&ok);
         if(ok)
         {
@@ -758,7 +803,7 @@ void BaseServer::preload_zone_return()
         else
             DebugClass::debugConsole(QStringLiteral("clan id is failed to convert to number for city status"));
     }
-    GlobalServerData::serverPrivateVariables.db->clear();
+    GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
     preload_plant_on_map_sql();
 }
@@ -768,7 +813,7 @@ void BaseServer::preload_industries()
     DebugClass::debugConsole(QStringLiteral("%1 SQL clan max id").arg(GlobalServerData::serverPrivateVariables.maxClanId));
 
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -781,9 +826,9 @@ void BaseServer::preload_industries()
             queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_industries_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         preload_finish();
     }
 }
@@ -795,11 +840,11 @@ void BaseServer::preload_industries_static(void *object)
 
 void BaseServer::preload_industries_return()
 {
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         IndustryStatus industryStatus;
         bool ok;
-        quint32 id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        quint32 id=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
         if(!ok)
             DebugClass::debugConsole(QStringLiteral("preload_industries: id is not a number"));
         if(ok)
@@ -812,7 +857,7 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
-            const QStringList &resourcesStringList=QString(GlobalServerData::serverPrivateVariables.db->value(1)).split(BaseServer::text_dotcomma);
+            const QStringList &resourcesStringList=QString(GlobalServerData::serverPrivateVariables.db_server->value(1)).split(BaseServer::text_dotcomma);
             int index=0;
             const int &listsize=resourcesStringList.size();
             while(index<listsize)
@@ -865,7 +910,7 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
-            const QStringList &productsStringList=QString(GlobalServerData::serverPrivateVariables.db->value(2)).split(BaseServer::text_dotcomma);
+            const QStringList &productsStringList=QString(GlobalServerData::serverPrivateVariables.db_server->value(2)).split(BaseServer::text_dotcomma);
             int index=0;
             const int &listsize=productsStringList.size();
             while(index<listsize)
@@ -918,52 +963,117 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
-            industryStatus.last_update=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
+            industryStatus.last_update=QString(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
             if(!ok)
                 DebugClass::debugConsole(QStringLiteral("preload_industries: last_update is not a number"));
         }
         if(ok)
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
     }
+    DebugClass::debugConsole(QStringLiteral("%1 SQL industries loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size()));
+
     preload_finish();
 }
 
-void BaseServer::preload_market_monsters_sql()
+//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
+void BaseServer::preload_market_monsters_prices_sql()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL industrie loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size()));
 
     QString queryText;
+    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+    {
+        default:
+        case DatabaseBase::Type::Mysql:
+            queryText=QLatin1String("SELECT `id`,`market_price` FROM `monster_market_price` ORDER BY `id`");
+        break;
+        case DatabaseBase::Type::SQLite:
+            queryText=QLatin1String("SELECT id,market_price FROM monster_market_price ORDER BY id");
+        break;
+        case DatabaseBase::Type::PostgreSQL:
+            queryText=QLatin1String("SELECT id,market_price FROM monster_market_price ORDER BY id");
+        break;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_prices_static)==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        preload_market_monsters_sql();
+    }
+}
+
+void BaseServer::preload_market_monsters_prices_static(void *object)
+{
+    static_cast<BaseServer *>(object)->preload_market_monsters_prices_return();
+}
+
+void BaseServer::preload_market_monsters_prices_return()
+{
+    bool ok;
+    while(GlobalServerData::serverPrivateVariables.db_server->next())
+    {
+        Monster_Semi_Market monsterSemi;
+        monsterSemi.id=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_server->value(0)));
+            continue;
+        }
+        monsterSemi.price=QString(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QStringLiteral("price: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_server->value(1)));
+            continue;
+        }
+        //finish it
+        if(ok)
+            monsterSemiMarketList << monsterSemi;
+    }
+
+    preload_market_monsters_sql();
+}
+
+//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
+void BaseServer::preload_market_monsters_sql()
+{
+    if(monsterSemiMarketList.isEmpty())
+    {
+        preload_market_items();
+        return;
+    }
+
+    QString queryText;
     if(CommonSettingsServer::commonSettingsServer.useSP)
-        switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+        switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
             case DatabaseBase::Type::Mysql:
-                queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster_market` ORDER BY `id`");
+                queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`=%1").arg(monsterSemiMarketList.first().id);
             break;
             case DatabaseBase::Type::SQLite:
-                queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
+                queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
             case DatabaseBase::Type::PostgreSQL:
-                queryText=QLatin1String("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
+                queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
         }
     else
-        switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+        switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
             case DatabaseBase::Type::Mysql:
-                queryText=QLatin1String("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price` FROM `monster_market` ORDER BY `id`");
+                queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`=%1").arg(monsterSemiMarketList.first().id);
             break;
             case DatabaseBase::Type::SQLite:
-                queryText=QLatin1String("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
+                queryText=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
             case DatabaseBase::Type::PostgreSQL:
-                queryText=QLatin1String("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character,market_price FROM monster_market ORDER BY id");
+                queryText=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
         }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_monsters_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        monsterSemiMarketList.clear();
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         preload_market_items();
     }
 }
@@ -981,16 +1091,16 @@ void BaseServer::preload_market_monsters_return()
     else
         spOffset=1;
     bool ok;
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         MarketPlayerMonster marketPlayerMonster;
         PlayerMonster playerMonster;
-        playerMonster.id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        playerMonster.id=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(!ok)
-            DebugClass::debugConsole(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
+            DebugClass::debugConsole(QStringLiteral("monsterId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
         if(ok)
         {
-            playerMonster.monster=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
+            playerMonster.monster=QString(GlobalServerData::serverPrivateVariables.db_common->value(2)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
@@ -1000,11 +1110,11 @@ void BaseServer::preload_market_monsters_return()
                 }
             }
             else
-            DebugClass::debugConsole(QStringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(2)));
+            DebugClass::debugConsole(QStringLiteral("monster: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(2)));
         }
         if(ok)
         {
-            playerMonster.level=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
+            playerMonster.level=QString(GlobalServerData::serverPrivateVariables.db_common->value(3)).toUInt(&ok);
             if(ok)
             {
                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -1014,11 +1124,11 @@ void BaseServer::preload_market_monsters_return()
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(3)));
+                DebugClass::debugConsole(QStringLiteral("level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(3)));
         }
         if(ok)
         {
-            playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db->value(4)).toUInt(&ok);
+            playerMonster.remaining_xp=QString(GlobalServerData::serverPrivateVariables.db_common->value(4)).toUInt(&ok);
             if(ok)
             {
                 if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters.value(playerMonster.monster).level_to_xp.at(playerMonster.level-1))
@@ -1028,33 +1138,33 @@ void BaseServer::preload_market_monsters_return()
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(4)));
+                DebugClass::debugConsole(QStringLiteral("monster xp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(4)));
         }
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
             if(ok)
             {
-                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db->value(5)).toUInt(&ok);
+                playerMonster.sp=QString(GlobalServerData::serverPrivateVariables.db_common->value(5)).toUInt(&ok);
                 if(!ok)
-                    DebugClass::debugConsole(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(5)));
+                    DebugClass::debugConsole(QStringLiteral("monster sp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(5)));
             }
         }
         else
             playerMonster.sp=0;
         if(ok)
         {
-            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db->value(6-spOffset)).toUInt(&ok);
+            playerMonster.catched_with=QString(GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset)).toUInt(&ok);
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
                     DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
             }
             else
-                DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(6-spOffset)));
+                DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset)));
         }
         if(ok)
         {
-            const quint32 &value=QString(GlobalServerData::serverPrivateVariables.db->value(7-spOffset)).toUInt(&ok);
+            const quint32 &value=QString(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset)).toUInt(&ok);
             if(ok)
             {
                 if(value>=1 && value<=3)
@@ -1069,24 +1179,24 @@ void BaseServer::preload_market_monsters_return()
             else
             {
                 playerMonster.gender=Gender_Unknown;
-                DebugClass::debugConsole(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db->value(7-spOffset)));
+                DebugClass::debugConsole(QStringLiteral("unknown monster gender: %1").arg(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset)));
                 ok=false;
             }
         }
         if(ok)
         {
-            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db->value(8-spOffset)).toUInt(&ok);
+            playerMonster.egg_step=QString(GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset)).toUInt(&ok);
             if(!ok)
-                DebugClass::debugConsole(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(8-spOffset)));
+                DebugClass::debugConsole(QStringLiteral("monster egg_step: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset)));
         }
         if(ok)
-            marketPlayerMonster.player=QString(GlobalServerData::serverPrivateVariables.db->value(9-spOffset)).toUInt(&ok);
+            marketPlayerMonster.player=QString(GlobalServerData::serverPrivateVariables.db_common->value(9-spOffset)).toUInt(&ok);
         if(ok)
-            marketPlayerMonster.cash=QString(GlobalServerData::serverPrivateVariables.db->value(10-spOffset)).toULongLong(&ok);
+            marketPlayerMonster.cash=monsterSemiMarketList.first().price;
         //stats
         if(ok)
         {
-            playerMonster.hp=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
+            playerMonster.hp=QString(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
             if(ok)
             {
                 const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.value(playerMonster.monster),playerMonster.level);
@@ -1102,7 +1212,7 @@ void BaseServer::preload_market_monsters_return()
                 }
             }
             else
-            DebugClass::debugConsole(QStringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
+            DebugClass::debugConsole(QStringLiteral("monster hp: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(1)));
         }
         //finish it
         if(ok)
@@ -1110,6 +1220,12 @@ void BaseServer::preload_market_monsters_return()
             marketPlayerMonster.monster=playerMonster;
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
         }
+    }
+    monsterSemiMarketList.removeFirst();
+    if(!monsterSemiMarketList.isEmpty())
+    {
+        preload_market_monsters_sql();
+        return;
     }
     if(!GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.isEmpty())
         loadMonsterBuffs(0);
@@ -1131,7 +1247,7 @@ void BaseServer::preload_market_items()
     }
     //do the query
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -1144,15 +1260,15 @@ void BaseServer::preload_market_items()
             queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         if(GlobalServerData::serverSettings.automatic_account_creation)
             load_account_max_id();
         else if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
-            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db);
+            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
     }
 }
 
@@ -1165,28 +1281,28 @@ void BaseServer::preload_market_items_return()
 {
     bool ok;
     //parse the result
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         MarketItem marketItem;
-        marketItem.item=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        marketItem.item=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("item id is not a number, skip"));
             continue;
         }
-        marketItem.quantity=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
+        marketItem.quantity=QString(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("quantity is not a number, skip"));
             continue;
         }
-        marketItem.player=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
+        marketItem.player=QString(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("player id is not a number, skip"));
             continue;
         }
-        marketItem.cash=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toULongLong(&ok);
+        marketItem.cash=QString(GlobalServerData::serverPrivateVariables.db_server->value(3)).toULongLong(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("cash is not a number, skip"));
@@ -1206,7 +1322,7 @@ void BaseServer::preload_market_items_return()
     else if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db);
+        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
 }
 
 void BaseServer::loadMonsterBuffs(const quint32 &index)
@@ -1218,7 +1334,7 @@ void BaseServer::loadMonsterBuffs(const quint32 &index)
         return;
     }
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -1232,9 +1348,9 @@ void BaseServer::loadMonsterBuffs(const quint32 &index)
         break;
     }
 
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterBuffs_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterBuffs_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         loadMonsterSkills(0);
     }
 }
@@ -1249,10 +1365,10 @@ void BaseServer::loadMonsterBuffs_return()
     const quint32 &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
     QList<PlayerBuff> buffs;
     bool ok;
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         PlayerBuff buff;
-        buff.buff=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        buff.buff=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(ok)
         {
             if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
@@ -1262,10 +1378,10 @@ void BaseServer::loadMonsterBuffs_return()
             }
         }
         else
-            DebugClass::debugConsole(QStringLiteral("buff id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
+            DebugClass::debugConsole(QStringLiteral("buff id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
         if(ok)
         {
-            buff.level=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
+            buff.level=QString(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
             if(ok)
             {
                 if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs.value(buff.buff).level.size())
@@ -1275,7 +1391,7 @@ void BaseServer::loadMonsterBuffs_return()
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("buff level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(2)));
+                DebugClass::debugConsole(QStringLiteral("buff level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(2)));
         }
         if(ok)
         {
@@ -1300,7 +1416,7 @@ void BaseServer::loadMonsterSkills(const quint32 &index)
         return;
     }
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -1313,9 +1429,9 @@ void BaseServer::loadMonsterSkills(const quint32 &index)
             queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill").arg(index);
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterSkills_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::loadMonsterSkills_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         preload_market_items();
     }
 }
@@ -1330,10 +1446,10 @@ void BaseServer::loadMonsterSkills_return()
     const quint32 &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
     QList<PlayerMonster::PlayerSkill> skills;
     bool ok;
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         PlayerMonster::PlayerSkill skill;
-        skill.skill=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        skill.skill=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(ok)
         {
             if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
@@ -1343,10 +1459,10 @@ void BaseServer::loadMonsterSkills_return()
             }
         }
         else
-            DebugClass::debugConsole(QStringLiteral("skill id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
+            DebugClass::debugConsole(QStringLiteral("skill id: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
         if(ok)
         {
-            skill.level=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
+            skill.level=QString(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
             if(ok)
             {
                 if(skill.level>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.size())
@@ -1356,11 +1472,11 @@ void BaseServer::loadMonsterSkills_return()
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
+                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(1)));
         }
         if(ok)
         {
-            skill.endurance=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
+            skill.endurance=QString(GlobalServerData::serverPrivateVariables.db_common->value(2)).toUInt(&ok);
             if(ok)
             {
                 if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.value(skill.skill).level.at(skill.level-1).endurance)
@@ -1371,7 +1487,7 @@ void BaseServer::loadMonsterSkills_return()
                 }
             }
             else
-                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(2)));
+                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(2)));
         }
         if(ok)
             skills << skill;
@@ -1461,7 +1577,7 @@ bool BaseServer::preload_the_map()
                         {
                             dictionary_item_maxId++;
                             QString queryText;
-                            switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+                            switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                             {
                                 default:
                                 case DatabaseBase::Type::Mysql:
@@ -1489,9 +1605,9 @@ bool BaseServer::preload_the_map()
                                             ;
                                 break;
                             }
-                            if(!GlobalServerData::serverPrivateVariables.db->asyncWrite(queryText.toLatin1()))
+                            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
                             {
-                                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+                                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
                                 criticalDatabaseQueryFailed();return false;//stop because can't resolv the name
                             }
                             while((quint32)DictionaryServer::dictionary_itemOnMap_database_to_internal.size()<dictionary_item_maxId)
@@ -2261,74 +2377,211 @@ void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
 
 bool BaseServer::initialize_the_database()
 {
-    if(GlobalServerData::serverPrivateVariables.db->isConnected())
+    if(GlobalServerData::serverPrivateVariables.db_server->isConnected())
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.database.host)
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.host)
                                  );
-        GlobalServerData::serverPrivateVariables.db->syncDisconnect();
+        GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     }
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    if(GlobalServerData::serverPrivateVariables.db_common->isConnected())
+    {
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.host)
+                                 );
+        GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+    }
+    if(GlobalServerData::serverPrivateVariables.db_login->isConnected())
+    {
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.host)
+                                 );
+        GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
+    }
+    switch(GlobalServerData::serverPrivateVariables.db_login->databaseType())
     {
         default:
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::Mysql:
-        if(!GlobalServerData::serverPrivateVariables.db->syncConnectMysql(
-                    GlobalServerData::serverSettings.database.host.toLatin1(),
-                    GlobalServerData::serverSettings.database.db.toLatin1(),
-                    GlobalServerData::serverSettings.database.login.toLatin1(),
-                    GlobalServerData::serverSettings.database.pass.toLatin1()
+        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectMysql(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
                     ))
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db->errorMessage()));
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage()));
             return false;
         }
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
-                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.database.host));
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.host));
         break;
 
         case DatabaseBase::Type::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db->syncConnectSqlite(GlobalServerData::serverSettings.database.file.toLatin1()))
+        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectSqlite(GlobalServerData::serverSettings.file.toLatin1()))
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db->errorMessage()));
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage()));
             return false;
         }
         else
-            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database.file));
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.file));
         break;
         #endif
 
         case DatabaseBase::Type::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(!GlobalServerData::serverPrivateVariables.db->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.database.host.toLatin1(),
-                    GlobalServerData::serverSettings.database.db.toLatin1(),
-                    GlobalServerData::serverSettings.database.login.toLatin1(),
-                    GlobalServerData::serverSettings.database.pass.toLatin1()
+        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectPostgresql(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
                     ))
         #else
-        if(!GlobalServerData::serverPrivateVariables.db->syncConnect(
-                    GlobalServerData::serverSettings.database.host.toLatin1(),
-                    GlobalServerData::serverSettings.database.db.toLatin1(),
-                    GlobalServerData::serverSettings.database.login.toLatin1(),
-                    GlobalServerData::serverSettings.database.pass.toLatin1()
+        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
                     ))
         #endif
         {
-            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db->errorMessage()));
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage()));
             return false;
         }
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
-                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.database.host));
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.host));
         break;
     }
+    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
+    {
+        default:
+        DebugClass::debugConsole(QStringLiteral("database type unknown"));
+        return false;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::Type::Mysql:
+        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectMysql(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
+                    ))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.host));
+        break;
+
+        case DatabaseBase::Type::SQLite:
+        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectSqlite(GlobalServerData::serverSettings.file.toLatin1()))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.file));
+        break;
+        #endif
+
+        case DatabaseBase::Type::PostgreSQL:
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectPostgresql(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
+                    ))
+        #else
+        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
+                    ))
+        #endif
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.host));
+        break;
+    }
+    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+    {
+        default:
+        DebugClass::debugConsole(QStringLiteral("database type unknown"));
+        return false;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::Type::Mysql:
+        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectMysql(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
+                    ))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.host));
+        break;
+
+        case DatabaseBase::Type::SQLite:
+        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectSqlite(GlobalServerData::serverSettings.file.toLatin1()))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.file));
+        break;
+        #endif
+
+        case DatabaseBase::Type::PostgreSQL:
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectPostgresql(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
+                    ))
+        #else
+        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
+                    GlobalServerData::serverSettings.host.toLatin1(),
+                    GlobalServerData::serverSettings.db.toLatin1(),
+                    GlobalServerData::serverSettings.login.toLatin1(),
+                    GlobalServerData::serverSettings.pass.toLatin1()
+                    ))
+        #endif
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.host));
+        break;
+    }
+
     initialize_the_database_prepared_query();
     return true;
 }
@@ -2451,7 +2704,7 @@ void BaseServer::unload_the_data()
 
 void BaseServer::unload_profile()
 {
-    GlobalServerData::serverPrivateVariables.serverProfileList.clear();
+    GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
 }
 
 void BaseServer::unload_dictionary()
@@ -2729,7 +2982,7 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.reshow;
     }
 
-    if(GlobalServerData::serverSettings.database.secondToPositionSync==0)
+    if(GlobalServerData::serverSettings.secondToPositionSync==0)
     {
         #ifndef EPOLLCATCHCHALLENGERSERVER
         GlobalServerData::serverPrivateVariables.positionSync.stop();
@@ -2737,7 +2990,7 @@ void BaseServer::loadAndFixSettings()
     }
     else
     {
-        GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000);
+        GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.secondToPositionSync*1000);
     }
     GlobalServerData::serverPrivateVariables.ddosTimer.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000);
 

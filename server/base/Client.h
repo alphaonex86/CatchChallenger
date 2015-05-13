@@ -187,6 +187,7 @@ private:
     quint8 otherPacketKickSize;
     quint8 otherPacketKickTotalCache;
     quint8 otherPacketKickNewValue;
+    quint8 profileIndex;
     QList<PlayerOnMap> lastTeleportation;
     QList<quint8> queryNumberList;
 
@@ -348,6 +349,10 @@ private:
     static void selectCharacter_static(void *object);
     void selectCharacter_object();
     void selectCharacter_return(const quint8 &query_id, const quint32 &characterId);
+    void selectCharacterServer(const quint8 &query_id, const quint32 &characterId);
+    static void selectCharacterServer_static(void *object);
+    void selectCharacterServer_object();
+    void selectCharacterServer_return(const quint8 &query_id, const quint32 &characterId);
 
     static void selectClan_static(void *object);
     void selectClan_object();

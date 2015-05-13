@@ -120,8 +120,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `place` smallint(6) NOT NULL,
   `position` tinyint(3) unsigned NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `player` (`character`),
-  KEY `place` (`place`)
+  KEY `character` (`character`,`place`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

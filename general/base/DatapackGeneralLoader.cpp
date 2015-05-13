@@ -2153,201 +2153,211 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
             if(startItem.hasAttribute(DatapackGeneralLoader::text_id))
                 profile.id=startItem.attribute(DatapackGeneralLoader::text_id);
 
-            const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
-
-            QStringList forcedskinList;
-            if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
-                forcedskinList=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
-            else
-                forcedskinList=defaultforcedskinList;
+            if(idDuplicate.contains(profile.id))
             {
-                int index=0;
-                while(index<forcedskinList.size())
-                {
-                    if(skinNameToId.contains(forcedskinList.at(index)))
-                        profile.forcedskin << skinNameToId.value(forcedskinList.at(index));
-                    else
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(forcedskinList.at(index)));
-                    index++;
-                }
-            }
-            int index=0;
-            while(index<profile.forcedskin.size())
-            {
-                if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
-                {
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists into: %5: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(profile.forcedskin.at(index)).arg(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))));
-                    profile.forcedskin.removeAt(index);
-                }
-                else
-                    index++;
-            }
-
-            profile.cash=0;
-            const QDomElement &cash = startItem.firstChildElement(DatapackGeneralLoader::text_cash);
-            if(!cash.isNull() && cash.isElement() && cash.hasAttribute(DatapackGeneralLoader::text_value))
-            {
-                profile.cash=cash.attribute(DatapackGeneralLoader::text_value).toULongLong(&ok);
-                if(!ok)
-                {
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, cash is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    profile.cash=0;
-                }
-            }
-            QDomElement monstersElement = startItem.firstChildElement(DatapackGeneralLoader::text_monster);
-            while(!monstersElement.isNull())
-            {
-                Profile::Monster monster;
-                if(monstersElement.isElement() && monstersElement.hasAttribute(DatapackGeneralLoader::text_id) && monstersElement.hasAttribute(DatapackGeneralLoader::text_level) && monstersElement.hasAttribute(DatapackGeneralLoader::text_captured_with))
-                {
-                    monster.id=monstersElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
-                    if(!ok)
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    if(ok)
-                    {
-                        monster.level=monstersElement.attribute(DatapackGeneralLoader::text_level).toUShort(&ok);
-                        if(!ok)
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    }
-                    if(ok)
-                    {
-                        if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster level is not into the range: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    }
-                    if(ok)
-                    {
-                        monster.captured_with=monstersElement.attribute(DatapackGeneralLoader::text_captured_with).toUInt(&ok);
-                        if(!ok)
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    }
-                    if(ok)
-                    {
-                        if(!monsters.contains(monster.id))
-                        {
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, starter don't found the monster %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
-                            ok=false;
-                        }
-                    }
-                    if(ok)
-                    {
-                        if(!items.contains(monster.captured_with))
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, starter don't found the monster capture item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
-                    }
-                    if(ok)
-                        profile.monsters << monster;
-                }
-                monstersElement = monstersElement.nextSiblingElement(DatapackGeneralLoader::text_monster);
-            }
-            if(profile.monsters.empty())
-            {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, not monster to load: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, id duplicate: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                 startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                 continue;
             }
-            QDomElement reputationElement = startItem.firstChildElement(DatapackGeneralLoader::text_reputation);
-            while(!reputationElement.isNull())
+
+            if(!profile.id.isEmpty() && !idDuplicate.contains(profile.id))
             {
-                Profile::Reputation reputationTemp;
-                if(reputationElement.isElement() && reputationElement.hasAttribute(DatapackGeneralLoader::text_type) && reputationElement.hasAttribute(DatapackGeneralLoader::text_level))
+                const QDomElement &forcedskin = startItem.firstChildElement(DatapackGeneralLoader::text_forcedskin);
+
+                QStringList forcedskinList;
+                if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute(DatapackGeneralLoader::text_value))
+                    forcedskinList=forcedskin.attribute(DatapackGeneralLoader::text_value).split(DatapackGeneralLoader::text_dotcomma);
+                else
+                    forcedskinList=defaultforcedskinList;
                 {
-                    reputationTemp.level=reputationElement.attribute(DatapackGeneralLoader::text_level).toShort(&ok);
-                    if(!ok)
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    if(ok)
+                    int index=0;
+                    while(index<forcedskinList.size())
                     {
-                        if(!reputationNameToId.contains(reputationElement.attribute(DatapackGeneralLoader::text_type)))
+                        if(skinNameToId.contains(forcedskinList.at(index)))
+                            profile.forcedskin << skinNameToId.value(forcedskinList.at(index));
+                        else
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(forcedskinList.at(index)));
+                        index++;
+                    }
+                }
+                int index=0;
+                while(index<profile.forcedskin.size())
+                {
+                    if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
+                    {
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, skin %4 don't exists into: %5: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(profile.forcedskin.at(index)).arg(datapackPath+QLatin1String(DATAPACK_BASE_PATH_SKIN)+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))));
+                        profile.forcedskin.removeAt(index);
+                    }
+                    else
+                        index++;
+                }
+
+                profile.cash=0;
+                const QDomElement &cash = startItem.firstChildElement(DatapackGeneralLoader::text_cash);
+                if(!cash.isNull() && cash.isElement() && cash.hasAttribute(DatapackGeneralLoader::text_value))
+                {
+                    profile.cash=cash.attribute(DatapackGeneralLoader::text_value).toULongLong(&ok);
+                    if(!ok)
+                    {
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, cash is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        profile.cash=0;
+                    }
+                }
+                QDomElement monstersElement = startItem.firstChildElement(DatapackGeneralLoader::text_monster);
+                while(!monstersElement.isNull())
+                {
+                    Profile::Monster monster;
+                    if(monstersElement.isElement() && monstersElement.hasAttribute(DatapackGeneralLoader::text_id) && monstersElement.hasAttribute(DatapackGeneralLoader::text_level) && monstersElement.hasAttribute(DatapackGeneralLoader::text_captured_with))
+                    {
+                        monster.id=monstersElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                        if(!ok)
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        if(ok)
                         {
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
-                            ok=false;
+                            monster.level=monstersElement.attribute(DatapackGeneralLoader::text_level).toUShort(&ok);
+                            if(!ok)
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                         }
                         if(ok)
                         {
-                            reputationTemp.reputationId=reputationNameToId.value(reputationElement.attribute(DatapackGeneralLoader::text_type));
-                            if(reputationTemp.level==0)
+                            if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, monster level is not into the range: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        }
+                        if(ok)
+                        {
+                            monster.captured_with=monstersElement.attribute(DatapackGeneralLoader::text_captured_with).toUInt(&ok);
+                            if(!ok)
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        }
+                        if(ok)
+                        {
+                            if(!monsters.contains(monster.id))
                             {
-                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is useless if level 0: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, starter don't found the monster %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
                                 ok=false;
                             }
-                            else if(reputationTemp.level<0)
+                        }
+                        if(ok)
+                        {
+                            if(!items.contains(monster.captured_with))
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, starter don't found the monster capture item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
+                        }
+                        if(ok)
+                            profile.monsters << monster;
+                    }
+                    monstersElement = monstersElement.nextSiblingElement(DatapackGeneralLoader::text_monster);
+                }
+                if(profile.monsters.empty())
+                {
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, not monster to load: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    continue;
+                }
+                QDomElement reputationElement = startItem.firstChildElement(DatapackGeneralLoader::text_reputation);
+                while(!reputationElement.isNull())
+                {
+                    Profile::Reputation reputationTemp;
+                    if(reputationElement.isElement() && reputationElement.hasAttribute(DatapackGeneralLoader::text_type) && reputationElement.hasAttribute(DatapackGeneralLoader::text_level))
+                    {
+                        reputationTemp.level=reputationElement.attribute(DatapackGeneralLoader::text_level).toShort(&ok);
+                        if(!ok)
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        if(ok)
+                        {
+                            if(!reputationNameToId.contains(reputationElement.attribute(DatapackGeneralLoader::text_type)))
                             {
-                                if((-reputationTemp.level)>reputations.value(reputationTemp.reputationId).reputation_negative.size())
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation type not found %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                ok=false;
+                            }
+                            if(ok)
+                            {
+                                reputationTemp.reputationId=reputationNameToId.value(reputationElement.attribute(DatapackGeneralLoader::text_type));
+                                if(reputationTemp.level==0)
                                 {
-                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is useless if level 0: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                     ok=false;
                                 }
-                            }
-                            else// if(reputationTemp.level>0)
-                            {
-                                if((reputationTemp.level)>=reputations.value(reputationTemp.reputationId).reputation_positive.size())
+                                else if(reputationTemp.level<0)
                                 {
-                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
-                                    ok=false;
+                                    if((-reputationTemp.level)>reputations.value(reputationTemp.reputationId).reputation_negative.size())
+                                    {
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is lower than minimal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                        ok=false;
+                                    }
+                                }
+                                else// if(reputationTemp.level>0)
+                                {
+                                    if((reputationTemp.level)>=reputations.value(reputationTemp.reputationId).reputation_positive.size())
+                                    {
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation level is higther than maximal level for %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(reputationElement.attribute(DatapackGeneralLoader::text_type)));
+                                        ok=false;
+                                    }
+                                }
+                            }
+                            if(ok)
+                            {
+                                reputationTemp.point=0;
+                                if(reputationElement.hasAttribute(DatapackGeneralLoader::text_point))
+                                {
+                                    reputationTemp.point=reputationElement.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                    if(ok)
+                                    {
+                                        if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
+                                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation point is not negative/positive like the level: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                    }
                                 }
                             }
                         }
                         if(ok)
+                            profile.reputation << reputationTemp;
+                    }
+                    reputationElement = reputationElement.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                }
+                QDomElement itemElement = startItem.firstChildElement(DatapackGeneralLoader::text_item);
+                while(!itemElement.isNull())
+                {
+                    Profile::Item itemTemp;
+                    if(itemElement.isElement() && itemElement.hasAttribute(DatapackGeneralLoader::text_id))
+                    {
+                        itemTemp.id=itemElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
+                        if(!ok)
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        if(ok)
                         {
-                            reputationTemp.point=0;
-                            if(reputationElement.hasAttribute(DatapackGeneralLoader::text_point))
+                            itemTemp.quantity=0;
+                            if(itemElement.hasAttribute(DatapackGeneralLoader::text_quantity))
                             {
-                                reputationTemp.point=reputationElement.attribute(DatapackGeneralLoader::text_point).toInt(&ok);
-                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                itemTemp.quantity=itemElement.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
+                                if(!ok)
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                                 if(ok)
                                 {
-                                    if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, reputation point is not negative/positive like the level: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                    if(itemTemp.quantity==0)
+                                    {
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, item quantity is null: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                                        ok=false;
+                                    }
+                                }
+                                if(ok)
+                                {
+                                    if(!items.contains(itemTemp.id))
+                                    {
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, item not found as know item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(itemTemp.id));
+                                        ok=false;
+                                    }
                                 }
                             }
                         }
+                        if(ok)
+                            profile.items << itemTemp;
                     }
-                    if(ok)
-                        profile.reputation << reputationTemp;
+                    itemElement = itemElement.nextSiblingElement(DatapackGeneralLoader::text_item);
                 }
-                reputationElement = reputationElement.nextSiblingElement(DatapackGeneralLoader::text_reputation);
+                idDuplicate << profile.id;
+                returnVar.second << profile;
+                returnVar.first << startItem;
             }
-            QDomElement itemElement = startItem.firstChildElement(DatapackGeneralLoader::text_item);
-            while(!itemElement.isNull())
-            {
-                Profile::Item itemTemp;
-                if(itemElement.isElement() && itemElement.hasAttribute(DatapackGeneralLoader::text_id))
-                {
-                    itemTemp.id=itemElement.attribute(DatapackGeneralLoader::text_id).toUInt(&ok);
-                    if(!ok)
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                    if(ok)
-                    {
-                        itemTemp.quantity=0;
-                        if(itemElement.hasAttribute(DatapackGeneralLoader::text_quantity))
-                        {
-                            itemTemp.quantity=itemElement.attribute(DatapackGeneralLoader::text_quantity).toUInt(&ok);
-                            if(!ok)
-                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                            if(ok)
-                            {
-                                if(itemTemp.quantity==0)
-                                {
-                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, item quantity is null: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
-                                    ok=false;
-                                }
-                            }
-                            if(ok)
-                            {
-                                if(!items.contains(itemTemp.id))
-                                {
-                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, item not found as know item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(itemTemp.id));
-                                    ok=false;
-                                }
-                            }
-                        }
-                    }
-                    if(ok)
-                        profile.items << itemTemp;
-                }
-                itemElement = itemElement.nextSiblingElement(DatapackGeneralLoader::text_item);
-            }
-            returnVar.second << profile;
-            returnVar.first << startItem;
-
         }
         else
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
@@ -2801,4 +2811,164 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
         shopItem = shopItem.nextSiblingElement(DatapackGeneralLoader::text_shop);
     }
     return shops;
+}
+
+QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations,const QList<Profile> &profileCommon)
+{
+    QList<ServerProfile> serverProfile=loadServerProfileListInternal(datapackPath,file,items,monsters,reputations);
+    //index of base profile
+    QSet<QString> profileId,serverProfileId;
+    {
+        int index=0;
+        while(index<profileCommon.size())
+        {
+            //already deduplicated at loading
+            profileId << profileCommon.at(index).id;
+            index++;
+        }
+    }
+    //drop serverProfileList
+    {
+        int index=0;
+        while(index<serverProfile.size())
+        {
+            if(profileId.contains(serverProfile.at(index).id))
+            {
+                serverProfileId << serverProfile.at(index).id;
+                index++;
+            }
+            else
+            {
+                qDebug() << (QStringLiteral("Profile xml file: %1, found id %2 but not found in common, drop it").arg(file).arg(serverProfile.at(index).id));
+                serverProfile.removeAt(index);
+            }
+        }
+    }
+    //add serverProfileList
+    {
+        int index=0;
+        while(index<profileCommon.size())
+        {
+            if(serverProfileId.contains(profileCommon.at(index).id))
+                index++;
+            else
+            {
+                qDebug() << (QStringLiteral("Profile xml file: %1, found common id %2 but not found in server, add it").arg(file).arg(profileCommon.at(index).id));
+                ServerProfile serverProfile;
+                serverProfile.id=profileCommon.at(index).id;
+                serverProfile.orientation=Orientation_bottom;
+                serverProfile.x=0;
+                serverProfile.y=0;
+                serverProfile << serverProfile;
+            }
+        }
+    }
+
+    return serverProfile;
+}
+
+QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations)
+{
+    QList<ServerProfile> serverProfileList;
+
+    QDomDocument domDocument;
+    //open and quick check the file
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    if(CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
+        domDocument=CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
+    else
+    {
+        #endif
+        QFile xmlFile(file);
+        if(!xmlFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            return serverProfileList;
+        }
+        const QByteArray &xmlContent=xmlFile.readAll();
+        xmlFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            return serverProfileList;
+        }
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        CommonDatapack::commonDatapack.xmlLoadedFile[file]=domDocument;
+    }
+    #endif
+    const QDomElement &root = domDocument.documentElement();
+    if(root.tagName()!=DatapackGeneralLoader::text_list)
+    {
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        return serverProfileList;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement startItem = root.firstChildElement(DatapackGeneralLoader::text_start);
+    while(!startItem.isNull())
+    {
+        if(startItem.isElement())
+        {
+            ServerProfile serverProfile;
+            serverProfile.orientation=Orientation_bottom;
+
+            const QDomElement &map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
+            if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
+            {
+                profile.map=map.attribute(DatapackGeneralLoader::text_file);
+                if(!profile.map.endsWith(DatapackGeneralLoader::text_dottmx))
+                    profile.map+=DatapackGeneralLoader::text_dottmx;
+                if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+profile.map))
+                {
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    continue;
+                }
+                profile.x=map.attribute(DatapackGeneralLoader::text_x).toUShort(&ok);
+                if(!ok)
+                {
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    continue;
+                }
+                profile.y=map.attribute(DatapackGeneralLoader::text_y).toUShort(&ok);
+                if(!ok)
+                {
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                    continue;
+                }
+            }
+            else
+            {
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, no correct map configuration: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                continue;
+            }
+
+            if(startItem.hasAttribute(DatapackGeneralLoader::text_id))
+                serverProfile.id=startItem.attribute(DatapackGeneralLoader::text_id);
+
+            if(idDuplicate.contains(serverProfile.id))
+            {
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, id duplicate: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+                continue;
+            }
+
+            if(!serverProfile.id.isEmpty() && !idDuplicate.contains(serverProfile.id))
+            {
+                idDuplicate << serverProfile.id;
+                serverProfileList << serverProfile;
+            }
+        }
+        else
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
+        startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
+    }
+
+    return serverProfileList;
 }

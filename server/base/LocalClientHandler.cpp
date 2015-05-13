@@ -99,11 +99,11 @@ void Client::savePosition()
     const quint32 &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
     const quint32 &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
     const quint32 &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
-            updateMapPositionQuery=QStringLiteral("UPDATE `character` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,%5 WHERE `id`=%6")
+            updateMapPositionQuery=QStringLiteral("UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,%5 WHERE `id`=%6")
                 .arg(map_file_database_id)
                 .arg(x)
                 .arg(y)
@@ -122,7 +122,7 @@ void Client::savePosition()
                 .arg(character_id);
         break;
         case DatabaseBase::Type::SQLite:
-            updateMapPositionQuery=QStringLiteral("UPDATE character SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
+            updateMapPositionQuery=QStringLiteral("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
                 .arg(map_file_database_id)
                 .arg(x)
                 .arg(y)
@@ -141,7 +141,7 @@ void Client::savePosition()
                 .arg(character_id);
         break;
         case DatabaseBase::Type::PostgreSQL:
-            updateMapPositionQuery=QStringLiteral("UPDATE character SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
+            updateMapPositionQuery=QStringLiteral("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
                 .arg(map_file_database_id)
                 .arg(x)
                 .arg(y)
@@ -698,6 +698,7 @@ void Client::removeWarehouseCash(const quint64 &cash)
                  );
 }
 
+remake this part
 void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
 {
     if(!wareHouseStoreCheck(cash,items,withdrawMonsters,depositeMonsters))
@@ -812,7 +813,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
         }
     }
     if(!depositeMonsters.isEmpty() || !withdrawMonsters.isEmpty())
-        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheDisconnexion)
+        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::Database::FightSync_AtTheDisconnexion)
             saveMonsterStat(public_and_private_informations.playerMonster.last());
 }
 
@@ -3514,6 +3515,7 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
     postReply(query_id,outputData);
 }
 
+remake this part
 void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
     if(getInTrade() || isInFight())
@@ -3653,6 +3655,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     postReply(query_id,outputData);
 }
 
+remake this part
 void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price)
 {
     if(getInTrade() || isInFight())
@@ -3805,6 +3808,7 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
     postReply(query_id,outputData);
 }
 
+remake this part
 void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
     if(getInTrade() || isInFight())

@@ -12,6 +12,7 @@ class EpollSslServer : public CatchChallenger::EpollGenericSslServer, public Cat
 {
 public:
     EpollSslServer();
+    ~EpollSslServer();
     bool tryListen();
     void preload_the_data();
     void unload_the_data();

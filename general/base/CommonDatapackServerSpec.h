@@ -30,6 +30,7 @@ public:
     QHash<quint16,Quest> quests;
     QList<MonstersCollision> monstersCollision;
     QHash<quint32,Shop> shops;
+    QList<ServerProfile> serverProfileList;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 private:
     QMutex inProgressSpec;
@@ -40,6 +41,7 @@ private:
     void parseBotFights();
     void parseMonstersCollision();
     void parseShop();
+    void parseServerProfileList();
 };
 }
 
