@@ -58,6 +58,7 @@ Client::Client(
     chatPacketKickNewValue(0),
     otherPacketKickTotalCache(0),
     otherPacketKickNewValue(0),
+    profileIndex(0),
     otherPlayerBattle(NULL),
     battleIsValidated(false),
     mCurrentSkillId(0),
@@ -161,7 +162,9 @@ void Client::disconnectClient()
     if(character_id!=0)
         normalOutput("Disconnected client");
     #endif
-    GlobalServerData::serverPrivateVariables.db->clear();
+    GlobalServerData::serverPrivateVariables.db_login->clear();
+    GlobalServerData::serverPrivateVariables.db_common->clear();
+    GlobalServerData::serverPrivateVariables.db_server->clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected=false;
     if(socket!=NULL)
