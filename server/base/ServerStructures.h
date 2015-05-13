@@ -123,18 +123,18 @@ struct GameServerSettings
     bool dontSendPlayerType;
     qint32 datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
 
+    enum FightSync
+    {
+        FightSync_AtEachTurn=0x00,
+        FightSync_AtTheEndOfBattle=0x01,//or at the object usage
+        FightSync_AtTheDisconnexion=0x02
+    };
+    FightSync fightSync;
+    bool positionTeleportSync;
+    quint32 secondToPositionSync;//0 is disabled
+
     struct Database
     {
-        enum FightSync
-        {
-            FightSync_AtEachTurn=0x00,
-            FightSync_AtTheEndOfBattle=0x01,//or at the object usage
-            FightSync_AtTheDisconnexion=0x02
-        };
-        FightSync fightSync;
-        bool positionTeleportSync;
-        quint32 secondToPositionSync;//0 is disabled
-
         QString file;
         QString host;
         QString db;
@@ -145,7 +145,9 @@ struct GameServerSettings
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
     };
-    Database database;
+    Database database_login;
+    Database database_common;
+    Database database_server;
 
     //connection
     bool tolerantMode;
@@ -251,9 +253,16 @@ struct TokenLink
     char value[CATCHCHALLENGER_TOKENSIZE];
 };
 
-struct ServerProfile
+struct ServerProfileInternal
 {
-    QStringList preparedQuery;
+    MapServer *map;
+    /*COORD_TYPE*/ quint8 x;
+    /*COORD_TYPE*/ quint8 y;
+    Orientation orientation;
+
+    //only to add
+    QStringList preparedQueryAdd;
+    QStringList preparedQuerySelect;
     bool valid;
 };
 
@@ -261,14 +270,18 @@ struct ServerPrivateVariables
 {
     //bd
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    EpollPostgresql *db;//pointer to don't change the code for below preprocessor code
+    EpollPostgresql *db_login;
+    EpollPostgresql *db_common;
+    EpollPostgresql *db_server;//pointer to don't change the code for below preprocessor code
     QList<TimerEvents *> timerEvents;
     #else
-    QtDatabase *db;
+    QtDatabase *db_login;
+    QtDatabase *db_common;
+    QtDatabase *db_server;
     QList<QtTimerEvents *> timerEvents;
     #endif
 
-    QList<ServerProfile> serverProfileList;
+    QList<ServerProfileInternal> serverProfileInternalList;
 
     //datapack
     QString datapack_mapPath;

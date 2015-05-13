@@ -19,6 +19,12 @@ EpollServer::EpollServer()
     #ifdef Q_OS_LINUX
     CommonSettingsServer::commonSettingsServer.tcpCork                      = true;
     #endif
+    GlobalServerData::serverPrivateVariables.db=new EpollPostgresql();
+}
+
+EpollServer::~EpollServer()
+{
+    delete GlobalServerData::serverPrivateVariables.db;
 }
 
 void EpollServer::preload_finish()
