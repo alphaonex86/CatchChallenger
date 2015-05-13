@@ -35,6 +35,7 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath)
     parseBotFights();
     parseMonstersCollision();
     parseShop();
+    parseServerProfileList();
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     Map_loader::teleportConditionsUnparsed.clear();
@@ -67,6 +68,13 @@ void CommonDatapackServerSpec::parseMonstersCollision()
     qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
 }
 
+void CommonDatapackServerSpec::parseServerProfileList()
+{
+    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml"),items.item,monsters,reputation,CommonDatapack::commonDatapack.profileList).second;
+    qDebug() << QStringLiteral("%1 server profile(s) loaded").arg(CommonDatapackServerSpec.size());
+}
+
+
 void CommonDatapackServerSpec::unload()
 {
     QMutexLocker mutexLocker(&inProgressSpec);
@@ -79,6 +87,7 @@ void CommonDatapackServerSpec::unload()
     #endif
     monstersCollision.clear();
     shops.clear();
+    serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
     isParsedSpec=false;
 }

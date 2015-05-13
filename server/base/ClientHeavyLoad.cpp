@@ -932,6 +932,13 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         errorOutput(QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(number_of_character).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
         return;
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileList.size())
+    {
+        errorOutput(QStringLiteral("profile common and server don't match"));
+        return;
+    }
+    #endif
     if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
     {
         errorOutput(QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
@@ -1044,7 +1051,18 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     const quint32 &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
     int index=0;
     int monster_position=1;
-    dbQueryWrite(serverProfile.preparedQuery.at(0)+QString::number(characterId)+serverProfile.preparedQuery.at(1)+QString::number(account_id)+serverProfile.preparedQuery.at(2)+pseudo+serverProfile.preparedQuery.at(3)+QString::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId))+serverProfile.preparedQuery.at(4));
+    dbQueryWrite(serverProfile.preparedQueryAdd.at(0)+
+                 QString::number(characterId)+
+                 serverProfile.preparedQueryAdd.at(1)+
+                 QString::number(account_id)+
+                 serverProfile.preparedQueryAdd.at(2)+
+                 pseudo+
+                 serverProfile.preparedQueryAdd.at(3)+
+                 QString::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId))+
+                 serverProfile.preparedQueryAdd.at(4)+
+                 QString::number(QDateTime::currentDateTime().toTime_t())+
+                 serverProfile.preparedQueryAdd.at(5)
+                 );
     while(index<profile.monsters.size())
     {
         const quint32 &monsterId=profile.monsters.at(index).id;

@@ -17,7 +17,7 @@ LocalClientHandlerWithoutSender::~LocalClientHandlerWithoutSender()
 
 void LocalClientHandlerWithoutSender::doAllAction()
 {
-    if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
+    if(GlobalServerData::serverSettings.secondToPositionSync>0)
     {
         int index=0;
         const int &list_size=allClient.size();

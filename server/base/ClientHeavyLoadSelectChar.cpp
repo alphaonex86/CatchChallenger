@@ -51,7 +51,7 @@ void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
     selectCharacterParam->characterId=characterId;
 
     const QString &queryText=PreparedDBQuery::db_query_character_by_id.arg(characterId);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::selectCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::selectCharacter_static);
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
@@ -104,11 +104,8 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         abort();
     }
     #endif
-    /*account(0),pseudo(1),skin(2),x(3),y(4),orientation(5),map(6),type(7),clan(8),cash(9),
-    rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13),unvalidated_rescue_map(14),
-    unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17),
-    warehouse_cash(18),clan_leader(19),market_cash(20),
-    time_to_delete(21),*/
+    /*account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
+    warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9)*/
     callbackRegistred.removeFirst();
     if(!GlobalServerData::serverPrivateVariables.db->next())
     {
@@ -118,13 +115,13 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     }
 
     bool ok;
-    public_and_private_informations.clan=QString(GlobalServerData::serverPrivateVariables.db->value(8)).toUInt(&ok);
+    public_and_private_informations.clan=QString(GlobalServerData::serverPrivateVariables.db->value(4)).toUInt(&ok);
     if(!ok)
     {
         //normalOutput(QStringLiteral("clan id is not an number, clan disabled"));
         public_and_private_informations.clan=0;//no clan
     }
-    public_and_private_informations.clan_leader=(QString(GlobalServerData::serverPrivateVariables.db->value(19)).toUInt(&ok)==1);
+    public_and_private_informations.clan_leader=(QString(GlobalServerData::serverPrivateVariables.db->value(7)).toUInt(&ok)==1);
     if(!ok)
     {
         //normalOutput(QStringLiteral("clan_leader id is not an number, clan_leader disabled"));
@@ -152,20 +149,6 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x03,QLatin1String("Already logged"));
         return;
     }
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        default:
-        case MapVisibilityAlgorithmSelection_Simple:
-        case MapVisibilityAlgorithmSelection_WithBorder:
-        if(simplifiedIdList.size()<=0)
-        {
-            characterSelectionIsWrong(query_id,0x04,QLatin1String("Not free id to login"));
-            return;
-        }
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-        break;
-    }
 
     public_and_private_informations.public_informations.pseudo=QString(GlobalServerData::serverPrivateVariables.db->value(1));
     if(!loadTheRawUTF8String())
@@ -183,7 +166,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     else
         normalOutput(QStringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
     #endif
-    const quint32 &time_to_delete=QString(GlobalServerData::serverPrivateVariables.db->value(21)).toUInt(&ok);
+    const quint32 &time_to_delete=QString(GlobalServerData::serverPrivateVariables.db->value(8)).toUInt(&ok);
     if(!ok || time_to_delete>0)
         dbQueryWrite(PreparedDBQuery::db_query_update_character_time_to_delete.arg(characterId));
     dbQueryWrite(PreparedDBQuery::db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
@@ -204,7 +187,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
             public_and_private_informations.public_informations.skinId=0;
         }
     }
-    const quint32 &type=QString(GlobalServerData::serverPrivateVariables.db->value(7)).toUInt(&ok);
+    const quint32 &type=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
     if(!ok)
     {
         normalOutput(QStringLiteral("Player type is not a number, default to normal"));
@@ -220,19 +203,223 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
             public_and_private_informations.public_informations.type=Player_type_normal;
         }
     }
-    public_and_private_informations.cash=QString(GlobalServerData::serverPrivateVariables.db->value(9)).toUInt(&ok);
+    public_and_private_informations.cash=QString(GlobalServerData::serverPrivateVariables.db->value(5)).toUInt(&ok);
     if(!ok)
     {
         normalOutput(QStringLiteral("cash id is not an number, cash set to 0"));
         public_and_private_informations.cash=0;
     }
-    public_and_private_informations.warehouse_cash=QString(GlobalServerData::serverPrivateVariables.db->value(18)).toUInt(&ok);
+    public_and_private_informations.warehouse_cash=QString(GlobalServerData::serverPrivateVariables.db->value(6)).toUInt(&ok);
     if(!ok)
     {
         normalOutput(QStringLiteral("warehouse cash id is not an number, warehouse cash set to 0"));
         public_and_private_informations.warehouse_cash=0;
     }
-    market_cash=QString(GlobalServerData::serverPrivateVariables.db->value(20)).toULongLong(&ok);
+
+    public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
+    if(!loadTheRawUTF8String())
+    {
+        characterSelectionIsWrong(query_id,0x04,"Convert into utf8 have wrong size");
+        return;
+    }
+
+    const quint8 &starter=QString(GlobalServerData::serverPrivateVariables.db->value(9)).toUInt(&ok);
+    if(!ok)
+    {
+        characterSelectionIsWrong(query_id,0x04,"start from base selection");
+        return;
+    }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileList.size())
+    {
+        errorOutput(QStringLiteral("profile common and server don't match"));
+        return;
+    }
+    #endif
+    if(starter>=DictionaryLogin::dictionary_starter_database_to_internal.size())
+    {
+        errorOutput(QStringLiteral("starter %1 >= DictionaryLogin::dictionary_starter_database_to_internal.size() %2").arg(starter).arg(DictionaryLogin::dictionary_starter_database_to_internal.size()));
+        return;
+    }
+    profileIndex=DictionaryLogin::dictionary_starter_database_to_internal.at(starter);
+    if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    {
+        errorOutput(QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
+        return;
+    }
+    if(!GlobalServerData::serverPrivateVariables.serverProfileList.at(profileIndex).valid)
+    {
+        errorOutput(QStringLiteral("profile index: %1 profil not valid").arg(profileIndex));
+        return;
+    }
+
+    Client::selectCharacterServer(query_id,characterId);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void Client::selectCharacterServer(const quint8 &query_id, const quint32 &characterId)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(PreparedDBQuery::db_query_character_by_id.isEmpty())
+    {
+        errorOutput(QStringLiteral("selectCharacter() Query is empty, bug"));
+        return;
+    }
+    if(PreparedDBQuery::db_query_update_character_last_connect.isEmpty())
+    {
+        errorOutput(QStringLiteral("selectCharacter() Query db_query_update_character_last_connect is empty, bug"));
+        return;
+    }
+    if(PreparedDBQuery::db_query_update_character_time_to_delete.isEmpty())
+    {
+        errorOutput(QStringLiteral("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug"));
+        return;
+    }
+    #endif
+    SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
+    selectCharacterParam->query_id=query_id;
+    selectCharacterParam->characterId=characterId;
+
+    const QString &queryText=PreparedDBQuery::db_query_character_server_by_id.arg(characterId);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::selectCharacterServer_static);
+    if(callback==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        characterSelectionIsWrong(query_id,0x02,queryText+QLatin1String(": ")+GlobalServerData::serverPrivateVariables.db->errorMessage());
+        delete selectCharacterParam;
+        return;
+    }
+    else
+    {
+        paramToPassToCallBack << selectCharacterParam;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        paramToPassToCallBackType << QStringLiteral("SelectCharacterParam");
+        #endif
+        callbackRegistred << callback;
+    }
+}
+
+void Client::selectCharacterServer_static(void *object)
+{
+    if(object!=NULL)
+        static_cast<Client *>(object)->selectCharacter_object();
+    GlobalServerData::serverPrivateVariables.db->clear();
+}
+
+void Client::selectCharacterServer_object()
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBack.isEmpty())
+    {
+        qDebug() << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__;
+        abort();
+    }
+    #endif
+    SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.takeFirst());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(selectCharacterParam==NULL)
+        abort();
+    #endif
+    selectCharacterServer_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
+    delete selectCharacterParam;
+    GlobalServerData::serverPrivateVariables.db->clear();
+}
+
+void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &characterId)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("SelectCharacterParam"))
+    {
+        qDebug() << "is not SelectCharacterParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+        abort();
+    }
+    #endif
+    /*x(0),y(1),orientation(2),map(3),
+    rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
+    unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
+    market_cash(12)*/
+    callbackRegistred.removeFirst();
+    if(!GlobalServerData::serverPrivateVariables.db->next())
+    {
+        const ServerProfile &serverProfile=GlobalServerData::serverPrivateVariables.serverProfileList.at(profileIndex);
+        dbQueryWrite(serverProfile.preparedQuerySelect.at(0)+
+                     QString::number(characterId)+
+                     serverProfile.preparedQuerySelect.at(1)+
+                     QString::number(QDateTime::currentDateTime().toTime_t())+
+                     serverProfile.preparedQuerySelect.at(2)
+                     );
+        GlobalServerData::serverPrivateVariables.serverProfileList.at(profileIndex).preparedQuery
+        //dbQueryWrite(PreparedDBQuery::db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
+        create here the new server entry: QDateTime::currentDateTime().toTime_t();
+        loginIsRightWithRescue(query_id,
+            characterId,
+            map,
+            x,
+            y,
+            orentation,
+                GlobalServerData::serverPrivateVariables.db->value(4),
+                GlobalServerData::serverPrivateVariables.db->value(5),
+                GlobalServerData::serverPrivateVariables.db->value(6),
+                GlobalServerData::serverPrivateVariables.db->value(7),
+                GlobalServerData::serverPrivateVariables.db->value(8),
+                GlobalServerData::serverPrivateVariables.db->value(9),
+                GlobalServerData::serverPrivateVariables.db->value(10),
+                GlobalServerData::serverPrivateVariables.db->value(11)
+        );
+        return;
+    }
+
+    bool ok;
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    {
+        default:
+        case MapVisibilityAlgorithmSelection_Simple:
+        case MapVisibilityAlgorithmSelection_WithBorder:
+        if(simplifiedIdList.size()<=0)
+        {
+            characterSelectionIsWrong(query_id,0x04,QLatin1String("Not free id to login"));
+            return;
+        }
+        break;
+        case MapVisibilityAlgorithmSelection_None:
+        break;
+    }
+
+    #ifndef SERVERBENCHMARK
+    if(GlobalServerData::serverSettings.anonymous)
+        normalOutput(QStringLiteral("Charater id is logged: %1").arg(characterId));
+    else
+        normalOutput(QStringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
+    #endif
+
+    market_cash=QString(GlobalServerData::serverPrivateVariables.db->value(12)).toULongLong(&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,QStringLiteral("Market cash wrong: %1").arg(GlobalServerData::serverPrivateVariables.db->value(22)));
@@ -246,7 +433,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         return;
     }
     Orientation orentation;
-    const quint32 &orientationInt=QString(GlobalServerData::serverPrivateVariables.db->value(5)).toUInt(&ok);
+    const quint32 &orientationInt=QString(GlobalServerData::serverPrivateVariables.db->value(2)).toUInt(&ok);
     if(ok)
     {
         if(orientationInt>=1 && orientationInt<=4)
@@ -263,7 +450,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         normalOutput(QStringLiteral("Wrong orientation (not number) corrected with bottom: %1").arg(QString(GlobalServerData::serverPrivateVariables.db->value(5))));
     }
     //all is rights
-    const quint32 &map_database_id=QString(GlobalServerData::serverPrivateVariables.db->value(6)).toUInt(&ok);
+    const quint32 &map_database_id=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id is not a number"));
@@ -280,13 +467,13 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id have not reverse"));
         return;
     }
-    const quint8 &x=QString(GlobalServerData::serverPrivateVariables.db->value(3)).toUInt(&ok);
+    const quint8 &x=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("x coord is not a number"));
         return;
     }
-    const quint8 &y=QString(GlobalServerData::serverPrivateVariables.db->value(4)).toUInt(&ok);
+    const quint8 &y=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("y coord is not a number"));
@@ -308,16 +495,50 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         x,
         y,
         orentation,
+            GlobalServerData::serverPrivateVariables.db->value(4),
+            GlobalServerData::serverPrivateVariables.db->value(5),
+            GlobalServerData::serverPrivateVariables.db->value(6),
+            GlobalServerData::serverPrivateVariables.db->value(7),
+            GlobalServerData::serverPrivateVariables.db->value(8),
+            GlobalServerData::serverPrivateVariables.db->value(9),
             GlobalServerData::serverPrivateVariables.db->value(10),
-            GlobalServerData::serverPrivateVariables.db->value(11),
-            GlobalServerData::serverPrivateVariables.db->value(12),
-            GlobalServerData::serverPrivateVariables.db->value(13),
-            GlobalServerData::serverPrivateVariables.db->value(14),
-            GlobalServerData::serverPrivateVariables.db->value(15),
-            GlobalServerData::serverPrivateVariables.db->value(16),
-            GlobalServerData::serverPrivateVariables.db->value(17)
+            GlobalServerData::serverPrivateVariables.db->value(11)
     );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
                   const QVariant &rescue_map, const QVariant &rescue_x, const QVariant &rescue_y, const QVariant &rescue_orientation,

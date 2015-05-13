@@ -275,7 +275,7 @@ CREATE UNIQUE INDEX item_warehouse_uniqueindex ON item_warehouse USING btree (it
 -- Name: monster_bychar; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE INDEX monster_bychar ON monster USING btree ("character");
+CREATE INDEX monster_bychar ON monster USING btree ("character", place);
 
 
 --
