@@ -160,7 +160,7 @@ void Client::savePosition()
                 .arg(character_id);
         break;
     }
-    dbQueryWrite(updateMapPositionQuery);
+    dbQueryWriteServer(updateMapPositionQuery);
 /* do at moveDownMonster and moveUpMonster
  *     const QList<PlayerMonster> &playerMonsterList=getPlayerMonster();
     int index=0;
@@ -512,7 +512,7 @@ void Client::addObject(const quint16 &item,const quint32 &quantity)
     if(public_and_private_informations.items.contains(item))
     {
         public_and_private_informations.items[item]+=quantity;
-        dbQueryWrite(PreparedDBQuery::db_query_update_item
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item
                  .arg(public_and_private_informations.items.value(item))
                  .arg(item)
                  .arg(character_id)
@@ -520,7 +520,7 @@ void Client::addObject(const quint16 &item,const quint32 &quantity)
     }
     else
     {
-        dbQueryWrite(PreparedDBQuery::db_query_insert_item
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_item
                      .arg(item)
                      .arg(character_id)
                      .arg(quantity)
@@ -534,7 +534,7 @@ void Client::addWarehouseObject(const quint16 &item,const quint32 &quantity)
     if(public_and_private_informations.warehouse_items.contains(item))
     {
         public_and_private_informations.warehouse_items[item]+=quantity;
-        dbQueryWrite(PreparedDBQuery::db_query_update_item_warehouse
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item_warehouse
                  .arg(public_and_private_informations.items.value(item))
                  .arg(item)
                  .arg(character_id)
@@ -542,7 +542,7 @@ void Client::addWarehouseObject(const quint16 &item,const quint32 &quantity)
     }
     else
     {
-        dbQueryWrite(PreparedDBQuery::db_query_insert_item_warehouse
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_item_warehouse
                      .arg(item)
                      .arg(character_id)
                      .arg(quantity)
@@ -558,7 +558,7 @@ quint32 Client::removeWarehouseObject(const quint16 &item,const quint32 &quantit
         if(public_and_private_informations.warehouse_items.value(item)>quantity)
         {
             public_and_private_informations.warehouse_items[item]-=quantity;
-            dbQueryWrite(PreparedDBQuery::db_query_update_item_warehouse
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item_warehouse
                      .arg(public_and_private_informations.items.value(item))
                      .arg(item)
                      .arg(character_id)
@@ -569,7 +569,7 @@ quint32 Client::removeWarehouseObject(const quint16 &item,const quint32 &quantit
         {
             quint32 removed_quantity=public_and_private_informations.warehouse_items.value(item);
             public_and_private_informations.warehouse_items.remove(item);
-            dbQueryWrite(PreparedDBQuery::db_query_delete_item_warehouse
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item_warehouse
                          .arg(item)
                          .arg(character_id)
                          );
@@ -584,7 +584,7 @@ void Client::saveObjectRetention(const quint16 &item)
 {
     if(public_and_private_informations.items.contains(item))
     {
-        dbQueryWrite(PreparedDBQuery::db_query_update_item
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item
                  .arg(public_and_private_informations.items.value(item))
                  .arg(item)
                  .arg(character_id)
@@ -592,7 +592,7 @@ void Client::saveObjectRetention(const quint16 &item)
     }
     else
     {
-        dbQueryWrite(PreparedDBQuery::db_query_delete_item
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item
                      .arg(item)
                      .arg(character_id)
                      );
@@ -606,7 +606,7 @@ quint32 Client::removeObject(const quint16 &item, const quint32 &quantity)
         if(public_and_private_informations.items.value(item)>quantity)
         {
             public_and_private_informations.items[item]-=quantity;
-            dbQueryWrite(PreparedDBQuery::db_query_update_item
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_item
                      .arg(public_and_private_informations.items.value(item))
                      .arg(item)
                      .arg(character_id)
@@ -617,7 +617,7 @@ quint32 Client::removeObject(const quint16 &item, const quint32 &quantity)
         {
             quint32 removed_quantity=public_and_private_informations.items.value(item);
             public_and_private_informations.items.remove(item);
-            dbQueryWrite(PreparedDBQuery::db_query_delete_item
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_item
                          .arg(item)
                          .arg(character_id)
                          );
@@ -659,7 +659,7 @@ void Client::addCash(const quint64 &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.cash+=cash;
-    dbQueryWrite(PreparedDBQuery::db_query_update_cash
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_cash
                  .arg(public_and_private_informations.cash)
                  .arg(character_id)
                  );
@@ -670,7 +670,7 @@ void Client::removeCash(const quint64 &cash)
     if(cash==0)
         return;
     public_and_private_informations.cash-=cash;
-    dbQueryWrite(PreparedDBQuery::db_query_update_cash
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_cash
                  .arg(public_and_private_informations.cash)
                  .arg(character_id)
                  );
@@ -681,7 +681,7 @@ void Client::addWarehouseCash(const quint64 &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.warehouse_cash+=cash;
-    dbQueryWrite(PreparedDBQuery::db_query_update_warehouse_cash
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_warehouse_cash
                  .arg(public_and_private_informations.warehouse_cash)
                  .arg(character_id)
                  );
@@ -692,13 +692,12 @@ void Client::removeWarehouseCash(const quint64 &cash)
     if(cash==0)
         return;
     public_and_private_informations.warehouse_cash-=cash;
-    dbQueryWrite(PreparedDBQuery::db_query_update_warehouse_cash
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_warehouse_cash
                  .arg(public_and_private_informations.warehouse_cash)
                  .arg(character_id)
                  );
 }
 
-remake this part
 void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
 {
     if(!wareHouseStoreCheck(cash,items,withdrawMonsters,depositeMonsters))
@@ -742,27 +741,8 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
                 const PlayerMonster &playerMonsterinWarehouse=public_and_private_informations.warehouse_playerMonster.at(sub_index);
                 if(playerMonsterinWarehouse.id==withdrawMonsters.at(index))
                 {
-                        dbQueryWrite(PreparedDBQuery::db_query_delete_monster_warehouse_by_id.arg(playerMonsterinWarehouse.id));
-                        dbQueryWrite(PreparedDBQuery::db_query_insert_monster_full
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                     .arg(playerMonsterinWarehouse.id)
-                                     .arg(playerMonsterinWarehouse.hp)
-                                     .arg(character_id)
-                                     .arg(playerMonsterinWarehouse.monster)
-                                     .arg(playerMonsterinWarehouse.level)
-                                     .arg(playerMonsterinWarehouse.remaining_xp)
-                                     .arg(playerMonsterinWarehouse.sp)
-                                     .arg(playerMonsterinWarehouse.catched_with)
-                                     .arg((quint8)playerMonsterinWarehouse.gender)
-                                     )
-                                 .arg(
-                                     QStringLiteral("%1,%2,%3")
-                                     .arg(playerMonsterinWarehouse.egg_step)
-                                     .arg(playerMonsterinWarehouse.character_origin)
-                                     .arg(public_and_private_informations.playerMonster.size()+2)
-                                     )
-                                 );
+
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_player.arg(public_and_private_informations.playerMonster.size()+2).arg(playerMonsterinWarehouse.id));
                     public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster.at(sub_index);
                     public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
                     break;
@@ -782,27 +762,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
                 const PlayerMonster &playerMonsterOnPlayer=public_and_private_informations.playerMonster.at(sub_index);
                 if(playerMonsterOnPlayer.id==depositeMonsters.at(index))
                 {
-                        dbQueryWrite(PreparedDBQuery::db_query_delete_monster_by_id.arg(playerMonsterOnPlayer.id));
-                        dbQueryWrite(PreparedDBQuery::db_query_insert_warehouse_monster_full
-                                     .arg(
-                                         QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                                         .arg(playerMonsterOnPlayer.id)
-                                         .arg(playerMonsterOnPlayer.hp)
-                                         .arg(character_id)
-                                         .arg(playerMonsterOnPlayer.monster)
-                                         .arg(playerMonsterOnPlayer.level)
-                                         .arg(playerMonsterOnPlayer.remaining_xp)
-                                         .arg(playerMonsterOnPlayer.sp)
-                                         .arg(playerMonsterOnPlayer.catched_with)
-                                         .arg((quint8)playerMonsterOnPlayer.gender)
-                                         )
-                                     .arg(
-                                         QStringLiteral("%1,%2,%3")
-                                         .arg(playerMonsterOnPlayer.egg_step)
-                                         .arg(playerMonsterOnPlayer.character_origin)
-                                         .arg(public_and_private_informations.warehouse_playerMonster.size()+2)
-                                         )
-                                     );
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse.arg(public_and_private_informations.warehouse_playerMonster.size()+2).arg(playerMonsterOnPlayer.id));
                     public_and_private_informations.warehouse_playerMonster << public_and_private_informations.playerMonster.at(sub_index);
                     public_and_private_informations.playerMonster.removeAt(sub_index);
                     break;
@@ -813,7 +773,7 @@ void Client::wareHouseStore(const qint64 &cash, const QList<QPair<quint16, qint3
         }
     }
     if(!depositeMonsters.isEmpty() || !withdrawMonsters.isEmpty())
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::Database::FightSync_AtTheDisconnexion)
+        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
             saveMonsterStat(public_and_private_informations.playerMonster.last());
 }
 
@@ -1391,7 +1351,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         out << (quint8)ObjectUsage_correctlyUsed;
         postReply(query_id,outputData);
         //add into db
-        dbQueryWrite(PreparedDBQuery::db_query_insert_recipe
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_recipe
                      .arg(character_id)
                      .arg(recipeId)
                      );
@@ -1451,7 +1411,7 @@ void Client::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,co
     if(mapChange)
         removeNearPlant();
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
-    if(GlobalServerData::serverSettings.database.positionTeleportSync)
+    if(GlobalServerData::serverSettings.positionTeleportSync)
         savePosition();
     if(mapChange)
         sendNearPlant();
@@ -1868,7 +1828,7 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     //save in db
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
-        dbQueryWrite(PreparedDBQuery::db_query_insert_factory
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_factory
                      .arg(factoryId)
                      .arg(resourcesStringList.join(Client::text_dotcomma))
                      .arg(productsStringList.join(Client::text_dotcomma))
@@ -1877,7 +1837,7 @@ void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &i
     }
     else
     {
-        dbQueryWrite(PreparedDBQuery::db_query_update_factory
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_factory
                      .arg(factoryId)
                      .arg(resourcesStringList.join(Client::text_dotcomma))
                      .arg(productsStringList.join(Client::text_dotcomma))
@@ -2219,7 +2179,7 @@ void Client::appendAllow(const ActionAllow &allow)
     if(public_and_private_informations.allow.contains(allow))
         return;
     public_and_private_informations.allow << allow;
-    dbQueryWrite(PreparedDBQuery::db_query_insert_character_allow
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_character_allow
                  .arg(character_id)
                  .arg(DictionaryLogin::dictionary_allow_internal_to_database.at(allow))
                  );
@@ -2230,7 +2190,7 @@ void Client::removeAllow(const ActionAllow &allow)
     if(!public_and_private_informations.allow.contains(allow))
         return;
     public_and_private_informations.allow.remove(allow);
-    dbQueryWrite(PreparedDBQuery::db_query_delete_character_allow
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_character_allow
                  .arg(character_id)
                  .arg(DictionaryLogin::dictionary_allow_internal_to_database.at(allow))
                  );
@@ -2283,7 +2243,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
     FacilityLib::appendReputationPoint(playerReputation,point,reputation);
     if(isNewReputation)
     {
-        dbQueryWrite(PreparedDBQuery::db_query_insert_reputation
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_reputation
                          .arg(character_id)
                          .arg(reputation.reverse_database_id)
                          .arg(playerReputation->point)
@@ -2292,7 +2252,7 @@ void Client::appendReputationPoint(const quint8 &reputationId, const qint32 &poi
     }
     else
     {
-        dbQueryWrite(PreparedDBQuery::db_query_update_reputation
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_reputation
                      .arg(character_id)
                      .arg(reputation.reverse_database_id)
                      .arg(playerReputation->point)
@@ -2513,11 +2473,11 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             clanActionParam->action=action;
             clanActionParam->text=text;
 
-            const QString &queryText=PreparedDBQuery::db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::addClan_static);
+            const QString &queryText=PreparedDBQueryCommon::db_query_select_clan_by_name.arg(SqlFunction::quoteSqlVariable(text));
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::addClan_static);
             if(callback==NULL)
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
 
                 QByteArray outputData;
                 QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2560,7 +2520,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             out << (quint8)0x01;
             postReply(query_id,outputData);
             //update the db
-            dbQueryWrite(PreparedDBQuery::db_query_update_character_clan.arg(character_id));
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(character_id));
         }
         break;
         //dissolve
@@ -2592,11 +2552,11 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             int index=0;
             while(index<players.size())
             {
-                dbQueryWrite(PreparedDBQuery::db_query_update_character_clan.arg(players.at(index)->getPlayerId()));
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(players.at(index)->getPlayerId()));
                 index++;
             }
-            dbQueryWrite(PreparedDBQuery::db_query_delete_clan.arg(public_and_private_informations.clan));
-            dbQueryWrite(PreparedDBQuery::db_query_delete_city.arg(clan->capturedCity));
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_clan.arg(public_and_private_informations.clan));
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_city.arg(clan->capturedCity));
             //update the object
             clanList.remove(public_and_private_informations.clan);
             GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
@@ -2697,7 +2657,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             postReply(query_id,outputData);
             if(!isFound)
             {
-                dbQueryWrite(PreparedDBQuery::db_query_update_character_clan_by_pseudo.arg(text).arg(public_and_private_informations.clan));
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo.arg(text).arg(public_and_private_informations.clan));
                 return;
             }
             else if(isIntoTheClan)
@@ -2714,7 +2674,7 @@ void Client::addClan_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->addClan_object();
-    GlobalServerData::serverPrivateVariables.db->clear();
+    GlobalServerData::serverPrivateVariables.db_common->clear();
 }
 
 void Client::addClan_object()
@@ -2742,7 +2702,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     #endif
     callbackRegistred.removeFirst();
     Q_UNUSED(action);
-    if(GlobalServerData::serverPrivateVariables.db->next())
+    if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2764,7 +2724,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
     postReply(query_id,outputData);
     //add into db
-    dbQueryWrite(PreparedDBQuery::db_query_insert_clan
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_clan
              .arg(GlobalServerData::serverPrivateVariables.maxClanId)
              .arg(SqlFunction::quoteSqlVariable(text))
              .arg(QDateTime::currentMSecsSinceEpoch()/1000)
@@ -2858,7 +2818,7 @@ void Client::insertIntoAClan(const quint32 &clanId)
 {
     //add into db
     QString clan_leader;
-    if(GlobalServerData::serverPrivateVariables.db->databaseType()!=DatabaseBase::Type::PostgreSQL)
+    if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::Type::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
             clan_leader=Client::text_1;
@@ -2872,7 +2832,7 @@ void Client::insertIntoAClan(const quint32 &clanId)
         else
             clan_leader=Client::text_false;
     }
-    dbQueryWrite(PreparedDBQuery::db_query_update_character_clan_and_leader
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan_and_leader
              .arg(clanId)
              .arg(clan_leader)
              .arg(character_id)
@@ -2884,7 +2844,7 @@ void Client::insertIntoAClan(const quint32 &clanId)
 void Client::ejectToClan()
 {
     dissolvedClan();
-    dbQueryWrite(PreparedDBQuery::db_query_update_character_clan.arg(character_id));
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(character_id));
 }
 
 quint32 Client::getClanId() const
@@ -3246,13 +3206,13 @@ void Client::fightOrBattleFinish(const bool &win, const quint32 &fightId)
                             GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
-                        dbQueryWrite(PreparedDBQuery::db_query_delete_city.arg(clan->capturedCity));
+                        dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_city.arg(clan->capturedCity));
                         if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->captureCityInProgress))
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.value(clan->captureCityInProgress).clan!=0)
-                            dbQueryWrite(PreparedDBQuery::db_query_update_city_clan.arg(clan->clanId).arg(clan->captureCityInProgress));
+                            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_city_clan.arg(clan->clanId).arg(clan->captureCityInProgress));
                         else
-                            dbQueryWrite(PreparedDBQuery::db_query_insert_city.arg(clan->clanId).arg(clan->captureCityInProgress));
+                            dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_city.arg(clan->clanId).arg(clan->captureCityInProgress));
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
                         clan->capturedCity=clan->captureCityInProgress;
@@ -3482,13 +3442,13 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
             //apply the buy
             if(marketItem.quantity==quantity)
             {
-                dbQueryWrite(PreparedDBQuery::db_query_delete_item_market.arg(marketItem.item).arg(marketItem.player));
+                dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_item_market.arg(marketItem.item).arg(marketItem.player));
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
             }
             else
             {
                 GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
-                dbQueryWrite(PreparedDBQuery::db_query_update_item_market
+                dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market
                              .arg(marketItem.quantity-quantity)
                              .arg(marketItem.item)
                              .arg(marketItem.player)
@@ -3500,7 +3460,7 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
                 if(!playerById.value(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
                     normalOutput(QStringLiteral("Problem at market cash adding"));
             }
-            dbQueryWrite(PreparedDBQuery::db_query_update_charaters_market_cash
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_charaters_market_cash
                          .arg(quantity*marketItem.cash)
                          .arg(marketItem.player)
                          );
@@ -3515,7 +3475,6 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
     postReply(query_id,outputData);
 }
 
-remake this part
 void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
     if(getInTrade() || isInFight())
@@ -3549,32 +3508,19 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
             //apply the buy
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
             removeCash(marketPlayerMonster.cash);
-            dbQueryWrite(PreparedDBQuery::db_query_update_charaters_market_cash
+            //entry created at first server connexion
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_charaters_market_cash
                          .arg(marketPlayerMonster.cash)
                          .arg(marketPlayerMonster.player)
                          );
             addPlayerMonster(marketPlayerMonster.monster);
-            dbQueryWrite(PreparedDBQuery::db_query_delete_monster_market_by_id.arg(marketPlayerMonster.monster.id));
-            dbQueryWrite(PreparedDBQuery::db_query_insert_monster_full
-                     .arg(
-                         QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                         .arg(marketPlayerMonster.monster.id)
-                         .arg(marketPlayerMonster.monster.hp)
-                         .arg(character_id)
-                         .arg(marketPlayerMonster.monster.monster)
-                         .arg(marketPlayerMonster.monster.level)
-                         .arg(marketPlayerMonster.monster.remaining_xp)
-                         .arg(marketPlayerMonster.monster.sp)
-                         .arg(marketPlayerMonster.monster.catched_with)
-                         .arg((quint8)marketPlayerMonster.monster.gender)
-                         )
-                     .arg(
-                         QStringLiteral("%1,%2,%3")
-                         .arg(marketPlayerMonster.monster.egg_step)
-                         .arg(marketPlayerMonster.monster.character_origin)
-                         .arg(getPlayerMonster().size())
-                         )
-                     );
+
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_by_id.arg(marketPlayerMonster.monster.id));
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_new_player
+                               .arg(character_id)
+                               .arg(getPlayerMonster().size())
+                               .arg(marketPlayerMonster.monster.id)
+                               );
             out << (quint8)0x01;
             postReply(query_id,outputData);
             return;
@@ -3618,7 +3564,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
             out << (quint8)0x01;
             postReply(query_id,outputData);
-            dbQueryWrite(PreparedDBQuery::db_query_update_item_market_and_price
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market_and_price
                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
                 .arg(price)
                 .arg(objectId)
@@ -3637,7 +3583,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     }
     //append to the market
     removeObject(objectId,quantity);
-    dbQueryWrite(PreparedDBQuery::db_query_insert_item_market
+    dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_item_market
                  .arg(objectId)
                  .arg(character_id)
                  .arg(quantity)
@@ -3655,7 +3601,6 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     postReply(query_id,outputData);
 }
 
-remake this part
 void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price)
 {
     if(getInTrade() || isInFight())
@@ -3685,31 +3630,13 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
             marketPlayerMonster.player=character_id;
             public_and_private_informations.playerMonster.removeAt(index);
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
-            dbQueryWrite(PreparedDBQuery::db_query_delete_monster_by_id.arg(marketPlayerMonster.monster.id));
-            dbQueryWrite(PreparedDBQuery::db_query_insert_monster_market
-                     .arg(
-                         QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                         .arg(marketPlayerMonster.monster.id)
-                         .arg(marketPlayerMonster.monster.hp)
-                         .arg(character_id)
-                         .arg(marketPlayerMonster.monster.monster)
-                         .arg(marketPlayerMonster.monster.level)
-                         .arg(marketPlayerMonster.monster.remaining_xp)
-                         .arg(marketPlayerMonster.monster.sp)
-                         .arg(marketPlayerMonster.monster.catched_with)
-                         .arg((quint8)marketPlayerMonster.monster.gender)
-                         )
-                     .arg(
-                         QStringLiteral("%1,%2,%3")
-                         .arg(marketPlayerMonster.monster.egg_step)
-                         .arg(marketPlayerMonster.monster.character_origin)
-                         .arg(price)
-                         )
-                     );
+
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_market.arg(marketPlayerMonster.monster.id));
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_monster_market_price.arg(marketPlayerMonster.monster.id).arg(price));
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_position
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position
                              .arg(index+1)
                              .arg(playerMonster.id)
                              );
@@ -3738,7 +3665,7 @@ void Client::recoverMarketCash(const quint32 &query_id)
     out << (quint64)market_cash;
     public_and_private_informations.cash+=market_cash;
     market_cash=0;
-    dbQueryWrite(PreparedDBQuery::db_query_get_market_cash
+    dbQueryWriteServer(PreparedDBQueryServer::db_query_get_market_cash
                  .arg(public_and_private_informations.cash)
                  .arg(character_id)
                  );
@@ -3787,13 +3714,13 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
             {
                 marketObjectIdList << marketItem.marketObjectId;
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
-                dbQueryWrite(PreparedDBQuery::db_query_delete_item_market
+                dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_item_market
                              .arg(objectId)
                              .arg(character_id)
                              );
             }
             else
-                dbQueryWrite(PreparedDBQuery::db_query_update_item_market
+                dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market
                              .arg(GlobalServerData::serverPrivateVariables.marketItemList.value(index).quantity)
                              .arg(objectId)
                              .arg(character_id)
@@ -3808,7 +3735,6 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
     postReply(query_id,outputData);
 }
 
-remake this part
 void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
     if(getInTrade() || isInFight())
@@ -3839,27 +3765,8 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
             }
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
             public_and_private_informations.playerMonster << marketPlayerMonster.monster;
-            dbQueryWrite(PreparedDBQuery::db_query_delete_monster_by_id.arg(marketPlayerMonster.monster.id));
-            dbQueryWrite(PreparedDBQuery::db_query_insert_monster_market
-                     .arg(
-                         QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
-                         .arg(marketPlayerMonster.monster.id)
-                         .arg(marketPlayerMonster.monster.hp)
-                         .arg(character_id)
-                         .arg(marketPlayerMonster.monster.monster)
-                         .arg(marketPlayerMonster.monster.level)
-                         .arg(marketPlayerMonster.monster.remaining_xp)
-                         .arg(marketPlayerMonster.monster.sp)
-                         .arg(marketPlayerMonster.monster.catched_with)
-                         .arg((quint8)marketPlayerMonster.monster.gender)
-                         )
-                     .arg(
-                         QStringLiteral("%1,%2,%3")
-                         .arg(marketPlayerMonster.monster.egg_step)
-                         .arg(marketPlayerMonster.monster.character_origin)
-                         .arg(public_and_private_informations.playerMonster.size())
-                         )
-                     );
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_player.arg(marketPlayerMonster.monster.id));
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_price.arg(marketPlayerMonster.monster.id));
             out << (quint8)0x01;
             out << (quint8)0x02;
             postReply(query_id,outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.last()));

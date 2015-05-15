@@ -335,7 +335,9 @@ private:
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();
     void sendCompressedFileContent();
-    void dbQueryWrite(const QString &queryText);
+    void dbQueryWriteLogin(const QString &queryText);
+    void dbQueryWriteCommon(const QString &queryText);
+    void dbQueryWriteServer(const QString &queryText);
     //character
     void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     static void addCharacter_static(void *object);

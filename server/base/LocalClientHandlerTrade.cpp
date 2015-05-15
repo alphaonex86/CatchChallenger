@@ -147,7 +147,7 @@ void Client::addExistingMonster(QList<PlayerMonster> tradeMonster)
     int index=0;
     while(index<tradeMonster.size())
     {
-        dbQueryWrite(PreparedDBQuery::db_query_update_monster_owner.arg(tradeMonster.at(index).id).arg(character_id));
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_owner.arg(tradeMonster.at(index).id).arg(character_id));
         index++;
     }
     public_and_private_informations.playerMonster << tradeMonster;
@@ -305,7 +305,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_position.arg(index+1).arg(playerMonster.id));
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position.arg(index+1).arg(playerMonster.id));
                 index++;
             }
             return;

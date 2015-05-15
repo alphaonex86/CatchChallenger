@@ -230,11 +230,11 @@ void Client::disconnectClient()
         leaveTheCityCapture();
         const quint32 &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
         if(addTime>5)
-            dbQueryWrite(PreparedDBQuery::db_query_played_time.arg(character_id).arg(addTime));
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_played_time.arg(character_id).arg(addTime));
         //save the monster
-        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle && isInFight())
+        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle && isInFight())
             saveCurrentMonsterStat();
-        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheDisconnexion)
+        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
         {
             int index=0;
             const int &size=public_and_private_informations.playerMonster.size();
@@ -242,7 +242,7 @@ void Client::disconnectClient()
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 if(CommonSettingsServer::commonSettingsServer.useSP)
-                    dbQueryWrite(PreparedDBQuery::db_query_monster
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster
                                  .arg(playerMonster.id)
                                  .arg(character_id)
                                  .arg(playerMonster.hp)
@@ -252,7 +252,7 @@ void Client::disconnectClient()
                                  .arg(index+1)
                                  );
                 else
-                    dbQueryWrite(PreparedDBQuery::db_query_monster
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster
                                  .arg(playerMonster.id)
                                  .arg(character_id)
                                  .arg(playerMonster.hp)
@@ -265,7 +265,7 @@ void Client::disconnectClient()
                 while(sub_index<sub_size)
                 {
                     const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
-                    dbQueryWrite(PreparedDBQuery::db_query_monster_skill
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster_skill
                                  .arg(playerSkill.endurance)
                                  .arg(playerMonster.id)
                                  .arg(playerSkill.skill)
