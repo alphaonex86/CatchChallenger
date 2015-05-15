@@ -34,6 +34,7 @@ public:
     static QString db_query_select_server_time;
     static QString db_query_insert_server_time;
 
+    static QString db_query_select_monstersBuff_by_id;
     static QString db_query_monster_by_character_id;
     static QString db_query_delete_monster_buff;
     static QString db_query_delete_monster_specific_buff;
@@ -91,7 +92,6 @@ public:
     static QString db_query_update_monster_sp_only;
     static QString db_query_update_monster_skill_level;
     static QString db_query_update_monster_xp;
-    static QString db_query_insert_bot_already_beaten;
     static QString db_query_insert_monster_buff;
     static QString db_query_update_monster_level;
     static QString db_query_update_monster_position;
@@ -107,8 +107,8 @@ class PreparedDBQueryServer
 public:
     static void initDatabaseQueryServer(const DatabaseBase::Type &type);
 public:
+    static QString db_query_insert_bot_already_beaten;
     static QString db_query_character_server_by_id;
-    static QString db_query_select_monstersBuff_by_id;
     static QString db_query_select_bot_beaten;
     static QString db_query_select_itemOnMap;
     static QString db_query_insert_itemonmap;

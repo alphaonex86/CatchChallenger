@@ -127,37 +127,56 @@ void send_settings()
 
     settings->beginGroup(QLatin1Literal("db"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
-        formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
-        formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::SQLite;
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::SQLite;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
-        formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::PostgreSQL;
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::PostgreSQL;
     else
-        formatedServerSettings.database.tryOpenType					= DatabaseBase::Type::Mysql;
-    switch(formatedServerSettings.database.tryOpenType)
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::Mysql;
+    switch(formatedServerSettings.database_login.tryOpenType)
     {
         default:
         case DatabaseBase::Type::PostgreSQL:
         case DatabaseBase::Type::Mysql:
-            formatedServerSettings.database.host				= settings->value(QLatin1Literal("host")).toString();
-            formatedServerSettings.database.db				= settings->value(QLatin1Literal("db")).toString();
-            formatedServerSettings.database.login				= settings->value(QLatin1Literal("login")).toString();
-            formatedServerSettings.database.pass				= settings->value(QLatin1Literal("pass")).toString();
+            formatedServerSettings.database_login.host				= settings->value(QLatin1Literal("host")).toString();
+            formatedServerSettings.database_login.db				= settings->value(QLatin1Literal("db")).toString();
+            formatedServerSettings.database_login.login				= settings->value(QLatin1Literal("login")).toString();
+            formatedServerSettings.database_login.pass				= settings->value(QLatin1Literal("pass")).toString();
         break;
         case DatabaseBase::Type::SQLite:
-            formatedServerSettings.database.file				= settings->value(QLatin1Literal("file")).toString();
+            formatedServerSettings.database_login.file				= settings->value(QLatin1Literal("file")).toString();
         break;
     }
+    formatedServerSettings.database_login.tryInterval       = settings->value(QLatin1Literal("tryInterval")).toUInt();
+    formatedServerSettings.database_login.considerDownAfterNumberOfTry = settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
+
+    formatedServerSettings.database_common.tryOpenType      = formatedServerSettings.database_login.tryOpenType;
+    formatedServerSettings.database_common.host				= formatedServerSettings.database_login.host;
+    formatedServerSettings.database_common.db				= formatedServerSettings.database_login.db;
+    formatedServerSettings.database_common.login			= formatedServerSettings.database_login.login;
+    formatedServerSettings.database_common.pass				= formatedServerSettings.database_login.pass;
+    formatedServerSettings.database_common.file				= formatedServerSettings.database_login.file;
+    formatedServerSettings.database_common.tryInterval		= formatedServerSettings.database_login.tryInterval;
+    formatedServerSettings.database_common.considerDownAfterNumberOfTry=formatedServerSettings.database_login.considerDownAfterNumberOfTry;
+
+    formatedServerSettings.database_server.tryOpenType      = formatedServerSettings.database_login.tryOpenType;
+    formatedServerSettings.database_server.host				= formatedServerSettings.database_login.host;
+    formatedServerSettings.database_server.db				= formatedServerSettings.database_login.db;
+    formatedServerSettings.database_server.login			= formatedServerSettings.database_login.login;
+    formatedServerSettings.database_server.pass				= formatedServerSettings.database_login.pass;
+    formatedServerSettings.database_server.file				= formatedServerSettings.database_login.file;
+    formatedServerSettings.database_server.tryInterval		= formatedServerSettings.database_login.tryInterval;
+    formatedServerSettings.database_server.considerDownAfterNumberOfTry=formatedServerSettings.database_login.considerDownAfterNumberOfTry;
+
     if(settings->value(QLatin1Literal("db_fight_sync")).toString()==QLatin1Literal("FightSync_AtEachTurn"))
-        formatedServerSettings.database.fightSync                       = CatchChallenger::GameServerSettings::Database::FightSync_AtEachTurn;
+        formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtEachTurn;
     else if(settings->value(QLatin1Literal("db_fight_sync")).toString()==QLatin1Literal("FightSync_AtTheDisconnexion"))
-        formatedServerSettings.database.fightSync                       = CatchChallenger::GameServerSettings::Database::FightSync_AtTheDisconnexion;
+        formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtTheDisconnexion;
     else
-        formatedServerSettings.database.fightSync                       = CatchChallenger::GameServerSettings::Database::FightSync_AtTheEndOfBattle;
-    formatedServerSettings.database.positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
-    formatedServerSettings.database.secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
-    formatedServerSettings.database.tryInterval=settings->value(QLatin1Literal("tryInterval")).toUInt();
-    formatedServerSettings.database.considerDownAfterNumberOfTry=settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
+        formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtTheEndOfBattle;
+    formatedServerSettings.positionTeleportSync=settings->value(QLatin1Literal("positionTeleportSync")).toBool();
+    formatedServerSettings.secondToPositionSync=settings->value(QLatin1Literal("secondToPositionSync")).toUInt();
     settings->endGroup();
 
     //connection
@@ -324,14 +343,31 @@ int main(int argc, char *argv[])
 
     send_settings();
 
-    GlobalServerData::serverPrivateVariables.db=new EpollPostgresql();
-    if(!GlobalServerData::serverPrivateVariables.db->syncConnect(
-                GlobalServerData::serverSettings.database.host.toLatin1(),
-                GlobalServerData::serverSettings.database.db.toLatin1(),
-                GlobalServerData::serverSettings.database.login.toLatin1(),
-                GlobalServerData::serverSettings.database.pass.toLatin1()))
+    if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
+                GlobalServerData::serverSettings.database_login.host.toLatin1(),
+                GlobalServerData::serverSettings.database_login.db.toLatin1(),
+                GlobalServerData::serverSettings.database_login.login.toLatin1(),
+                GlobalServerData::serverSettings.database_login.pass.toLatin1()))
     {
-        qDebug() << "Unable to connect to database:" << GlobalServerData::serverPrivateVariables.db->errorMessage();
+        qDebug() << "Unable to connect to database:" << GlobalServerData::serverPrivateVariables.db_login->errorMessage();
+        return EXIT_FAILURE;
+    }
+    if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
+                GlobalServerData::serverSettings.database_common.host.toLatin1(),
+                GlobalServerData::serverSettings.database_common.db.toLatin1(),
+                GlobalServerData::serverSettings.database_common.login.toLatin1(),
+                GlobalServerData::serverSettings.database_common.pass.toLatin1()))
+    {
+        qDebug() << "Unable to connect to database:" << GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        return EXIT_FAILURE;
+    }
+    if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
+                GlobalServerData::serverSettings.database_server.host.toLatin1(),
+                GlobalServerData::serverSettings.database_server.db.toLatin1(),
+                GlobalServerData::serverSettings.database_server.login.toLatin1(),
+                GlobalServerData::serverSettings.database_server.pass.toLatin1()))
+    {
+        qDebug() << "Unable to connect to database:" << GlobalServerData::serverPrivateVariables.db_server->errorMessage();
         return EXIT_FAILURE;
     }
 
@@ -379,8 +415,8 @@ int main(int argc, char *argv[])
     }
     #endif
     {
-        if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
-            if(!timerPositionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000))
+        if(GlobalServerData::serverSettings.secondToPositionSync>0)
+            if(!timerPositionSync.start(GlobalServerData::serverSettings.secondToPositionSync*1000))
             {
                 std::cerr << "timerPositionSync fail to set" << std::endl;
                 return EXIT_FAILURE;
@@ -431,7 +467,21 @@ int main(int argc, char *argv[])
             qDebug() << "Proxy not supported";
             return EXIT_FAILURE;
         }
-        if(formatedServerSettings.database.tryOpenType!=DatabaseBase::Type::PostgreSQL)
+        if(formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::PostgreSQL)
+        {
+            settings->beginGroup(QLatin1Literal("db"));
+            qDebug() << "Only postgresql is supported for now:" << settings->value(QLatin1Literal("type")).toString();
+            settings->endGroup();
+            return EXIT_FAILURE;
+        }
+        if(formatedServerSettings.database_common.tryOpenType!=DatabaseBase::Type::PostgreSQL)
+        {
+            settings->beginGroup(QLatin1Literal("db"));
+            qDebug() << "Only postgresql is supported for now:" << settings->value(QLatin1Literal("type")).toString();
+            settings->endGroup();
+            return EXIT_FAILURE;
+        }
+        if(formatedServerSettings.database_server.tryOpenType!=DatabaseBase::Type::PostgreSQL)
         {
             settings->beginGroup(QLatin1Literal("db"));
             qDebug() << "Only postgresql is supported for now:" << settings->value(QLatin1Literal("type")).toString();
@@ -848,6 +898,5 @@ int main(int argc, char *argv[])
     server->close();
     server->unload_the_data();
     delete server;
-    delete GlobalServerData::serverPrivateVariables.db;
     return EXIT_SUCCESS;
 }

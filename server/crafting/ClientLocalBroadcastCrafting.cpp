@@ -175,7 +175,7 @@ void Client::seedValidated()
     plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
     const quint32 &map_database_id=static_cast<MapServer *>(plant_list_in_waiting.first().map)->reverse_db_id;
-    dbQueryWrite(PreparedDBQuery::db_query_insert_plant
+    dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_plant
                  .arg(plantOnMap.id)
                  .arg(map_database_id)
                  .arg(plantOnMap.x)
@@ -417,7 +417,7 @@ void Client::collectPlant(const quint8 &query_id)
                     )
             {
                 //remove plant from db
-                dbQueryWrite(PreparedDBQuery::db_query_delete_plant_by_id.arg(plant.id));
+                dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant_by_id.arg(plant.id));
 
                 QByteArray finalData;
                 {

@@ -12,17 +12,17 @@ void Client::loadRecipes()
 {
     //recipes
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_select_recipes_by_player_id.isEmpty())
+    if(PreparedDBQueryCommon::db_query_select_recipes_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadRecipes() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=PreparedDBQuery::db_query_select_recipes_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadRecipes_static);
+    const QString &queryText=PreparedDBQueryCommon::db_query_select_recipes_by_player_id.arg(character_id);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::loadRecipes_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         loadMonsters();
         return;
     }
@@ -40,9 +40,9 @@ void Client::loadRecipes_return()
 {
     callbackRegistred.removeFirst();
     bool ok;
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const quint32 &recipeId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        const quint32 &recipeId=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(ok)
         {
             if(CommonDatapack::commonDatapack.crafingRecipes.contains(recipeId))
@@ -51,7 +51,7 @@ void Client::loadRecipes_return()
                 normalOutput(QStringLiteral("recipeId: %1 is not into recipe list").arg(recipeId));
         }
         else
-            normalOutput(QStringLiteral("recipeId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db->value(0)));
+            normalOutput(QStringLiteral("recipeId: %1 is not a number").arg(GlobalServerData::serverPrivateVariables.db_common->value(0)));
     }
     loadMonsters();
 }
@@ -60,17 +60,17 @@ void Client::loadItems()
 {
     //do the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_select_items_by_player_id.isEmpty())
+    if(PreparedDBQueryCommon::db_query_select_items_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadItems() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=PreparedDBQuery::db_query_select_items_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadItems_static);
+    const QString &queryText=PreparedDBQueryCommon::db_query_select_items_by_player_id.arg(character_id);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::loadItems_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         loadItemsWarehouse();
         return;
     }
@@ -89,15 +89,15 @@ void Client::loadItems_return()
     callbackRegistred.removeFirst();
     bool ok;
     //parse the result
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(!ok)
         {
             normalOutput(QLatin1String("item id is not a number, skip"));
             continue;
         }
-        const quint32 &quantity=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
+        const quint32 &quantity=QString(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
         if(!ok)
         {
             normalOutput(QLatin1String("quantity is not a number, skip"));
@@ -122,17 +122,17 @@ void Client::loadItemsWarehouse()
 {
     //do the query
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_select_items_warehouse_by_player_id.isEmpty())
+    if(PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id.isEmpty())
     {
         errorOutput(QStringLiteral("loadItems() Query is empty, bug"));
         return;
     }
     #endif
-    const QString &queryText=PreparedDBQuery::db_query_select_items_warehouse_by_player_id.arg(character_id);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&Client::loadItemsWarehouse_static);
+    const QString &queryText=PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id.arg(character_id);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::loadItemsWarehouse_static);
     if(callback==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         loadRecipes();
         return;
     }
@@ -151,15 +151,15 @@ void Client::loadItemsWarehouse_return()
     callbackRegistred.removeFirst();
     bool ok;
     //parse the result
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        const quint32 &id=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(!ok)
         {
             normalOutput(QLatin1String("item id is not a number, skip"));
             continue;
         }
-        const quint32 &quantity=QString(GlobalServerData::serverPrivateVariables.db->value(1)).toUInt(&ok);
+        const quint32 &quantity=QString(GlobalServerData::serverPrivateVariables.db_common->value(1)).toUInt(&ok);
         if(!ok)
         {
             normalOutput(QLatin1String("quantity is not a number, skip"));

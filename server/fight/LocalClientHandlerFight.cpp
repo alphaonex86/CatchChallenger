@@ -70,10 +70,10 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     }
     #endif
     //save into the db
-    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle)
+    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
     {
         if(CommonSettingsServer::commonSettingsServer.useSP)
-            dbQueryWrite(PreparedDBQuery::db_query_update_monster_xp_hp_level
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_xp_hp_level
                                  .arg(monster.id)
                                  .arg(monster.hp)
                                  .arg(monster.remaining_xp)
@@ -81,7 +81,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
                                  .arg(monster.sp)
                                  );
         else
-            dbQueryWrite(PreparedDBQuery::db_query_update_monster_xp_hp_level
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_xp_hp_level
                                  .arg(monster.id)
                                  .arg(monster.hp)
                                  .arg(monster.remaining_xp)
@@ -91,7 +91,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
         while (i != deferedEndurance.constEnd()) {
             QHash<quint32,quint32>::const_iterator j = i.value().constBegin();
             while (j != i.value().constEnd()) {
-                dbQueryWrite(PreparedDBQuery::db_query_monster_skill
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster_skill
                              .arg(j.value())
                              .arg(i.key())
                              .arg(j.key())
@@ -175,14 +175,14 @@ void Client::healAllMonsters()
             if(public_and_private_informations.playerMonster.value(index).hp!=stat.hp)
             {
                 public_and_private_informations.playerMonster[index].hp=stat.hp;
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_hp_only
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_hp_only
                              .arg(public_and_private_informations.playerMonster.value(index).hp)
                              .arg(public_and_private_informations.playerMonster.value(index).id)
                              );
             }
             if(!public_and_private_informations.playerMonster.value(index).buffs.isEmpty())
             {
-                dbQueryWrite(PreparedDBQuery::db_query_delete_monster_buff.arg(public_and_private_informations.playerMonster.value(index).id));
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_buff.arg(public_and_private_informations.playerMonster.value(index).id));
                 public_and_private_informations.playerMonster[index].buffs.clear();
             }
             sub_index=0;
@@ -195,7 +195,7 @@ void Client::healAllMonsters()
                         .level.at(public_and_private_informations.playerMonster.value(index).skills.at(sub_index).level-1).endurance;
                 if(public_and_private_informations.playerMonster.value(index).skills.value(sub_index).endurance!=endurance)
                 {
-                    dbQueryWrite(PreparedDBQuery::db_query_monster_skill
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster_skill
                                  .arg(endurance)
                                  .arg(public_and_private_informations.playerMonster.value(index).id)
                                  .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index).skill)
@@ -219,7 +219,7 @@ void Client::fightFinished()
 
 void Client::syncForEndOfTurn()
 {
-    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtEachTurn)
+    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
         saveStat();
 }
 
@@ -245,7 +245,7 @@ void Client::saveStat()
             }
     }
     #endif
-    dbQueryWrite(PreparedDBQuery::db_query_update_monster_hp_only
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_hp_only
                  .arg(getCurrentMonster()->hp)
                  .arg(getCurrentMonster()->id)
                  );
@@ -418,7 +418,7 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                                 return false;
                             }
                             public_and_private_informations.playerMonster[index].sp-=sp;
-                            dbQueryWrite(PreparedDBQuery::db_query_update_monster_sp_only
+                            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_sp_only
                                          .arg(public_and_private_informations.playerMonster.value(index).sp)
                                          .arg(monsterId)
                                          );
@@ -430,7 +430,7 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                             temp.level=1;
                             temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.value(temp.skill).level.first().endurance;
                             public_and_private_informations.playerMonster[index].skills << temp;
-                            dbQueryWrite(PreparedDBQuery::db_query_insert_monster_skill
+                            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_skill
                                          .arg(monsterId)
                                          .arg(temp.skill)
                                          .arg(1)
@@ -440,7 +440,7 @@ bool Client::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
                         else
                         {
                             public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
-                            dbQueryWrite(PreparedDBQuery::db_query_update_monster_skill_level
+                            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_skill_level
                                          .arg(public_and_private_informations.playerMonster.value(index).skills.value(sub_index2).level)
                                          .arg(monsterId)
                                          .arg(skill)
@@ -755,12 +755,12 @@ void Client::sendBattleMonsterChange()
 bool Client::giveXPSP(int xp,int sp)
 {
     const bool &haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
-    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtEachTurn)
+    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
             if(haveChangeOfLevel)
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_xp_hp_level
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_xp_hp_level
                              .arg(getCurrentMonster()->id)
                              .arg(getCurrentMonster()->hp)
                              .arg(getCurrentMonster()->remaining_xp)
@@ -768,7 +768,7 @@ bool Client::giveXPSP(int xp,int sp)
                              .arg(getCurrentMonster()->sp)
                              );
             else
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_xp
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_xp
                              .arg(getCurrentMonster()->id)
                              .arg(getCurrentMonster()->remaining_xp)
                              .arg(getCurrentMonster()->sp)
@@ -777,14 +777,14 @@ bool Client::giveXPSP(int xp,int sp)
         else
         {
             if(haveChangeOfLevel)
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_xp_hp_level
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_xp_hp_level
                              .arg(getCurrentMonster()->id)
                              .arg(getCurrentMonster()->hp)
                              .arg(getCurrentMonster()->remaining_xp)
                              .arg(getCurrentMonster()->level)
                              );
             else
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_xp
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_xp
                              .arg(getCurrentMonster()->id)
                              .arg(getCurrentMonster()->remaining_xp)
                              );
@@ -813,7 +813,7 @@ bool Client::finishTheTurn(const bool &isBot)
                 {
                     addCash(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.value(botFightId).cash);
                     public_and_private_informations.bot_already_beaten << botFightId;
-                    dbQueryWrite(PreparedDBQuery::db_query_insert_bot_already_beaten
+                    dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_bot_already_beaten
                                  .arg(character_id)
                                  .arg(botFightId)
                                  );
@@ -915,7 +915,7 @@ bool Client::dropKOOtherMonster()
         battleReturn=otherPlayerBattle->dropKOCurrentMonster();
     else
     {
-        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle)
+        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
         {
             if(!isInFight())
                 saveCurrentMonsterStat();
@@ -946,13 +946,8 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
         public_and_private_informations.playerMonster.last().id=monster_id;
         position=public_and_private_informations.playerMonster.size();
     }
-    QString place;
     if(toStorage)
-        place=QStringLiteral("monster_warehouse");
-    else
-        place=QStringLiteral("monster");
-    if(CommonSettingsServer::commonSettingsServer.useSP)
-        dbQueryWrite(PreparedDBQuery::db_query_insert_monster_catch
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_warehouse_monster_full
                      .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
                           .arg(monster_id)
                           .arg(newMonster.hp)
@@ -969,17 +964,17 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                           .arg(character_id)
                           .arg(position)
                           )
-                     .arg(place)
                      );
     else
-        dbQueryWrite(PreparedDBQuery::db_query_insert_monster_catch
-                     .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8")
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_full
+                     .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9")
                           .arg(monster_id)
                           .arg(newMonster.hp)
                           .arg(character_id)
                           .arg(newMonster.monster)
                           .arg(newMonster.level)
                           .arg(newMonster.remaining_xp)
+                          .arg(newMonster.sp)
                           .arg(newMonster.catched_with)
                           .arg((quint8)newMonster.gender)
                           )
@@ -988,12 +983,12 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
                           .arg(character_id)
                           .arg(position)
                           )
-                     .arg(place)
                      );
+
     int index=0;
     while(index<newMonster.skills.size())
     {
-        dbQueryWrite(PreparedDBQuery::db_query_insert_monster_skill
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_skill
                      .arg(monster_id)
                      .arg(newMonster.skills.at(index).skill)
                      .arg(newMonster.skills.at(index).level)
@@ -1005,7 +1000,7 @@ quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonste
     while(index<newMonster.buffs.size())
     {
         if(CommonDatapack::commonDatapack.monsterBuffs.value(newMonster.buffs.at(index).buff).level.at(newMonster.buffs.at(index).level).duration==Buff::Duration_Always)
-            dbQueryWrite(PreparedDBQuery::db_query_insert_monster_buff
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_buff
                          .arg(monster_id)
                          .arg(newMonster.buffs.at(index).buff)
                          .arg(newMonster.buffs.at(index).level)
@@ -1044,7 +1039,7 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 case ApplyOn_AloneEnemy:
                 case ApplyOn_AllEnemy:
                 if(isInBattle())
-                    dbQueryWrite(PreparedDBQuery::db_query_insert_monster_buff
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_buff
                              .arg(otherPlayerBattle->getCurrentMonster()->id)
                              .arg(effect.buff)
                              .arg(effect.level)
@@ -1052,7 +1047,7 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 break;
                 case ApplyOn_Themself:
                 case ApplyOn_AllAlly:
-                dbQueryWrite(PreparedDBQuery::db_query_insert_monster_buff
+                dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_buff
                          .arg(getCurrentMonster()->id)
                          .arg(effect.buff)
                          .arg(effect.level)
@@ -1068,15 +1063,15 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 case ApplyOn_AloneEnemy:
                 case ApplyOn_AllEnemy:
                 if(isInBattle())
-                    dbQueryWrite(PreparedDBQuery::db_query_update_monster_level
-                                 .arg(otherPlayerBattle->getCurrentMonster()->id)
-                                 .arg(effect.buff)
-                                 .arg(effect.level)
-                                 );
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_level
+                             .arg(otherPlayerBattle->getCurrentMonster()->id)
+                             .arg(effect.buff)
+                             .arg(effect.level)
+                             );
                 break;
                 case ApplyOn_Themself:
                 case ApplyOn_AllAlly:
-                dbQueryWrite(PreparedDBQuery::db_query_update_monster_level
+                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_level
                              .arg(getCurrentMonster()->id)
                              .arg(effect.buff)
                              .arg(effect.level)
@@ -1094,7 +1089,7 @@ bool Client::moveUpMonster(const quint8 &number)
 {
     if(!CommonFightEngine::moveUpMonster(number))
         return false;
-    if(GlobalServerData::serverSettings.database.fightSync!=GameServerSettings::Database::FightSync_AtTheDisconnexion)
+    if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
     {
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number-1).id,number);
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number).id,number+1);
@@ -1109,7 +1104,7 @@ bool Client::moveDownMonster(const quint8 &number)
         errorOutput("Move monster have failed");
         return false;
     }
-    if(GlobalServerData::serverSettings.database.fightSync!=GameServerSettings::Database::FightSync_AtTheDisconnexion)
+    if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
     {
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number).id,number+1);
         saveMonsterPosition(public_and_private_informations.playerMonster.value(number+1).id,number+2);
@@ -1120,7 +1115,7 @@ bool Client::moveDownMonster(const quint8 &number)
 
 void Client::saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterPosition)
 {
-    dbQueryWrite(PreparedDBQuery::db_query_update_monster_position
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position
                  .arg(monsterPosition)
                  .arg(monsterId)
                  );
@@ -1217,9 +1212,9 @@ quint8 Client::decreaseSkillEndurance(const quint32 &skill)
         return 0;
     }
     const quint8 &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
-    if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtEachTurn)
+    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
-        dbQueryWrite(PreparedDBQuery::db_query_monster_skill
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_monster_skill
                      .arg(newEndurance)
                      .arg(currentMonster->id)
                      .arg(skill)
@@ -1227,7 +1222,7 @@ quint8 Client::decreaseSkillEndurance(const quint32 &skill)
     }
     else
     {
-        if(GlobalServerData::serverSettings.database.fightSync==GameServerSettings::Database::FightSync_AtTheEndOfBattle)
+        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
             deferedEndurance[currentMonster->id][skill]=newEndurance;
     }
     return newEndurance;
@@ -1247,7 +1242,7 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &mon
         }
     #endif
     CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
-    dbQueryWrite(PreparedDBQuery::db_query_update_monster_and_hp
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_and_hp
                  .arg(playerMonster->hp)
                  .arg(playerMonster->monster)
                  .arg(playerMonster->id)
@@ -1335,7 +1330,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
         }
     }
     #endif
-    dbQueryWrite(PreparedDBQuery::db_query_update_monster_hp_only
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_hp_only
                  .arg(newHpValue)
                  .arg(currentMonster->id)
                  );
@@ -1345,7 +1340,7 @@ bool Client::removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &
 {
     const bool returnVal=CommonFightEngine::removeBuffOnMonster(currentMonster,buffId);
     if(returnVal)
-        dbQueryWrite(PreparedDBQuery::db_query_delete_monster_specific_buff.arg(currentMonster->id).arg(buffId));
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_specific_buff.arg(currentMonster->id).arg(buffId));
     return returnVal;
 }
 
@@ -1353,7 +1348,7 @@ bool Client::removeAllBuffOnMonster(PlayerMonster * currentMonster)
 {
     const bool &returnVal=CommonFightEngine::removeAllBuffOnMonster(currentMonster);
     if(returnVal)
-        dbQueryWrite(PreparedDBQuery::db_query_delete_monster_buff.arg(currentMonster->id));
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_buff.arg(currentMonster->id));
     return returnVal;
 }
 
@@ -1361,7 +1356,7 @@ bool Client::addLevel(PlayerMonster * monster, const quint8 &numberOfLevel)
 {
     if(!CommonFightEngine::addLevel(monster,numberOfLevel))
         return false;
-    dbQueryWrite(PreparedDBQuery::db_query_update_monster_level_only.arg(monster->hp).arg(monster->level).arg(monster->id));
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_level_only.arg(monster->hp).arg(monster->level).arg(monster->id));
     return true;
 }
 
@@ -1369,7 +1364,7 @@ bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::Player
 {
     if(!CommonFightEngine::addSkill(currentMonster,skill))
         return false;
-    dbQueryWrite(PreparedDBQuery::db_query_insert_monster_skill.arg(currentMonster->id).arg(skill.skill).arg(skill.level).arg(skill.endurance));
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_skill.arg(currentMonster->id).arg(skill.skill).arg(skill.level).arg(skill.endurance));
     return true;
 }
 
@@ -1377,7 +1372,7 @@ bool Client::setSkillLevel(PlayerMonster * currentMonster,const int &index,const
 {
     if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
         return false;
-    dbQueryWrite(PreparedDBQuery::db_query_update_monster_skill_level.arg(level).arg(currentMonster->id).arg(currentMonster->skills.at(index).skill));
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_skill_level.arg(level).arg(currentMonster->id).arg(currentMonster->skills.at(index).skill));
     return true;
 }
 
@@ -1385,6 +1380,6 @@ bool Client::removeSkill(PlayerMonster * currentMonster,const int &index)
 {
     if(!CommonFightEngine::removeSkill(currentMonster,index))
         return false;
-    dbQueryWrite(PreparedDBQuery::db_query_delete_monster_specific_skill.arg(currentMonster->id).arg(currentMonster->skills.at(index).skill));
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_specific_skill.arg(currentMonster->id).arg(currentMonster->skills.at(index).skill));
     return true;
 }

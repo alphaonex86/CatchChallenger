@@ -167,6 +167,6 @@ void Client::takeAnObjectOnMap()
     public_and_private_informations.itemOnMap << item.itemIndexOnMap;
     //add get item from db
     if(!item.infinite)
-        dbQueryWrite(PreparedDBQuery::db_query_insert_itemonmap.arg(character_id).arg(item.itemDbCode));
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_itemonmap.arg(character_id).arg(item.itemDbCode));
     addObject(item.item);
 }
