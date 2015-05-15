@@ -29,7 +29,7 @@ void BaseServer::load_sql_monsters_max_id()
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxMonsterId=0;
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -42,11 +42,11 @@ void BaseServer::load_sql_monsters_max_id()
             queryText=QStringLiteral("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_max_id_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         abort();//stop because can't do the first db access
-        load_sql_monsters_warehouse_max_id();
+        load_clan_max_id();
     }
     return;
 }
@@ -58,109 +58,11 @@ void BaseServer::load_monsters_max_id_static(void *object)
 
 void BaseServer::load_monsters_max_id_return()
 {
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
         //not +1 because incremented before use
-        const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
-        if(!ok)
-        {
-            DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
-            continue;
-        }
-        else
-            if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
-                GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
-    }
-    load_sql_monsters_warehouse_max_id();
-}
-
-void BaseServer::load_sql_monsters_warehouse_max_id()
-{
-    QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
-    {
-        default:
-        case DatabaseBase::Type::Mysql:
-            queryText=QStringLiteral("SELECT `id` FROM `monster_warehouse` ORDER BY `id` DESC LIMIT 0,1;");
-        break;
-        case DatabaseBase::Type::SQLite:
-            queryText=QStringLiteral("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 0,1;");
-        break;
-        case DatabaseBase::Type::PostgreSQL:
-            queryText=QStringLiteral("SELECT id FROM monster_warehouse ORDER BY id DESC LIMIT 1;");
-        break;
-    }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_warehouse_max_id_static)==NULL)
-    {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
-        abort();//stop because can't do the first db access
-        load_sql_monsters_market_max_id();
-    }
-    return;
-}
-
-void BaseServer::load_monsters_warehouse_max_id_static(void *object)
-{
-    static_cast<BaseServer *>(object)->load_monsters_warehouse_max_id_return();
-}
-
-void BaseServer::load_monsters_warehouse_max_id_return()
-{
-    while(GlobalServerData::serverPrivateVariables.db->next())
-    {
-        bool ok;
-        //not +1 because incremented before use
-        const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
-        if(!ok)
-        {
-            DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
-            continue;
-        }
-        else
-            if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
-                GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
-    }
-    load_sql_monsters_market_max_id();
-}
-
-void BaseServer::load_sql_monsters_market_max_id()
-{
-    QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
-    {
-        default:
-        case DatabaseBase::Type::Mysql:
-            queryText=QStringLiteral("SELECT `id` FROM `monster_market` ORDER BY `id` DESC LIMIT 0,1;");
-        break;
-        case DatabaseBase::Type::SQLite:
-            queryText=QStringLiteral("SELECT id FROM monster_market ORDER BY id DESC LIMIT 0,1;");
-        break;
-        case DatabaseBase::Type::PostgreSQL:
-            queryText=QStringLiteral("SELECT id FROM monster_market ORDER BY id DESC LIMIT 1;");
-        break;
-    }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::load_monsters_market_max_id_static)==NULL)
-    {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
-        abort();//stop because can't do the first db access
-        load_clan_max_id();
-    }
-    return;
-}
-
-void BaseServer::load_monsters_market_max_id_static(void *object)
-{
-    static_cast<BaseServer *>(object)->load_monsters_market_max_id_return();
-}
-
-void BaseServer::load_monsters_market_max_id_return()
-{
-    while(GlobalServerData::serverPrivateVariables.db->next())
-    {
-        bool ok;
-        //not +1 because incremented before use
-        const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));

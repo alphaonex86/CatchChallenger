@@ -396,5 +396,5 @@ void Client::setRights(const Player_type& type)
 {
     public_and_private_informations.public_informations.type=type;
     const int &newType=type/0x10-1;
-    dbQueryWrite(PreparedDBQuery::db_query_change_right.arg(account_id).arg(newType));
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_change_right.arg(account_id).arg(newType));
 }
