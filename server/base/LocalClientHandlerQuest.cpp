@@ -233,7 +233,7 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput(QStringLiteral("finish the quest: %1").arg(quest.id));
         #endif
-        dbQueryWrite(PreparedDBQuery::db_query_update_quest_finish.arg(character_id).arg(quest.id));
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_finish.arg(character_id).arg(quest.id));
         public_and_private_informations.quests[quest.id].step=0;
         public_and_private_informations.quests[quest.id].finish_one_time=true;
         index=0;
@@ -260,7 +260,7 @@ bool Client::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         normalOutput(QStringLiteral("next step in the quest: %1").arg(quest.id));
         #endif
-        dbQueryWrite(PreparedDBQuery::db_query_update_quest_step
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_step
                      .arg(character_id)
                      .arg(quest.id)
                      .arg(public_and_private_informations.quests.value(quest.id).step)
@@ -274,7 +274,7 @@ bool Client::startQuest(const Quest &quest)
 {
     if(!public_and_private_informations.quests.contains(quest.id))
     {
-        dbQueryWrite(PreparedDBQuery::db_query_insert_quest
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_quest
                      .arg(character_id)
                      .arg(quest.id)
                      .arg(1)
@@ -284,7 +284,7 @@ bool Client::startQuest(const Quest &quest)
     }
     else
     {
-        dbQueryWrite(PreparedDBQuery::db_query_update_quest_restart.arg(character_id).arg(quest.id));
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_update_quest_restart.arg(character_id).arg(quest.id));
         public_and_private_informations.quests[quest.id].step=1;
     }
     addQuestStepDrop(quest.id,1);

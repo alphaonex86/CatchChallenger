@@ -2381,7 +2381,7 @@ bool BaseServer::initialize_the_database()
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.host)
+                                 .arg(GlobalServerData::serverSettings.database_server.host)
                                  );
         GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     }
@@ -2389,7 +2389,7 @@ bool BaseServer::initialize_the_database()
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.host)
+                                 .arg(GlobalServerData::serverSettings.database_common.host)
                                  );
         GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
     }
@@ -2397,11 +2397,11 @@ bool BaseServer::initialize_the_database()
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
                                  .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.host)
+                                 .arg(GlobalServerData::serverSettings.database_login.host)
                                  );
         GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     }
-    switch(GlobalServerData::serverPrivateVariables.db_login->databaseType())
+    switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
         default:
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
@@ -2445,10 +2445,10 @@ bool BaseServer::initialize_the_database()
                     ))
         #else
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_login.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.pass.toLatin1()
                     ))
         #endif
         {
@@ -2458,10 +2458,10 @@ bool BaseServer::initialize_the_database()
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.host));
+                                     .arg(GlobalServerData::serverSettings.database_login.host));
         break;
     }
-    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
+    switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
         default:
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
@@ -2505,10 +2505,10 @@ bool BaseServer::initialize_the_database()
                     ))
         #else
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_common.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.pass.toLatin1()
                     ))
         #endif
         {
@@ -2518,10 +2518,10 @@ bool BaseServer::initialize_the_database()
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.host));
+                                     .arg(GlobalServerData::serverSettings.database_common.host));
         break;
     }
-    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+    switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
         default:
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
@@ -2565,10 +2565,10 @@ bool BaseServer::initialize_the_database()
                     ))
         #else
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_server.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.pass.toLatin1()
                     ))
         #endif
         {
@@ -2578,7 +2578,7 @@ bool BaseServer::initialize_the_database()
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.host));
+                                     .arg(GlobalServerData::serverSettings.database_server.host));
         break;
     }
 
@@ -2588,7 +2588,9 @@ bool BaseServer::initialize_the_database()
 
 void BaseServer::initialize_the_database_prepared_query()
 {
-    PreparedDBQuery::initDatabaseQuery(GlobalServerData::serverPrivateVariables.db->databaseType(),CommonSettingsServer::commonSettingsServer.useSP);
+    PreparedDBQueryLogin::initDatabaseQueryLogin(GlobalServerData::serverPrivateVariables.db_login->databaseType());
+    PreparedDBQueryCommon::initDatabaseQueryCommon(GlobalServerData::serverPrivateVariables.db_common->databaseType(),CommonSettingsServer::commonSettingsServer.useSP);
+    PreparedDBQueryServer::initDatabaseQueryServer(GlobalServerData::serverPrivateVariables.db_server->databaseType());
 }
 
 void BaseServer::loadBotFile(const QString &mapfile,const QString &file)
@@ -2856,14 +2858,34 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverPrivateVariables.server_message.removeLast();
     } while(removeTheLastList);
 
-    if(GlobalServerData::serverPrivateVariables.db->tryInterval<1)
-        GlobalServerData::serverPrivateVariables.db->tryInterval=5;
-    if(GlobalServerData::serverPrivateVariables.db->considerDownAfterNumberOfTry<1)
-        GlobalServerData::serverPrivateVariables.db->considerDownAfterNumberOfTry=3;
-    if(GlobalServerData::serverPrivateVariables.db->tryInterval*GlobalServerData::serverPrivateVariables.db->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    if(GlobalServerData::serverPrivateVariables.db_login->tryInterval<1)
+        GlobalServerData::serverPrivateVariables.db_login->tryInterval=5;
+    if(GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry<1)
+        GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry=3;
+    if(GlobalServerData::serverPrivateVariables.db_login->tryInterval*GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        GlobalServerData::serverPrivateVariables.db->tryInterval=5;
-        GlobalServerData::serverPrivateVariables.db->considerDownAfterNumberOfTry=3;
+        GlobalServerData::serverPrivateVariables.db_login->tryInterval=5;
+        GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry=3;
+    }
+
+    if(GlobalServerData::serverPrivateVariables.db_common->tryInterval<1)
+        GlobalServerData::serverPrivateVariables.db_common->tryInterval=5;
+    if(GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry<1)
+        GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry=3;
+    if(GlobalServerData::serverPrivateVariables.db_common->tryInterval*GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    {
+        GlobalServerData::serverPrivateVariables.db_common->tryInterval=5;
+        GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry=3;
+    }
+
+    if(GlobalServerData::serverPrivateVariables.db_server->tryInterval<1)
+        GlobalServerData::serverPrivateVariables.db_server->tryInterval=5;
+    if(GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry<1)
+        GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
+    if(GlobalServerData::serverPrivateVariables.db_server->tryInterval*GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    {
+        GlobalServerData::serverPrivateVariables.db_server->tryInterval=5;
+        GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
     }
 
     if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)
@@ -2994,7 +3016,7 @@ void BaseServer::loadAndFixSettings()
     }
     GlobalServerData::serverPrivateVariables.ddosTimer.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000);
 
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
         case CatchChallenger::DatabaseBase::Type::SQLite:
         case CatchChallenger::DatabaseBase::Type::Mysql:
@@ -3002,6 +3024,29 @@ void BaseServer::loadAndFixSettings()
         break;
         default:
             qDebug() << "Wrong db type";
+            GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
+        break;
+    }
+    switch(GlobalServerData::serverSettings.database_common.tryOpenType)
+    {
+        case CatchChallenger::DatabaseBase::Type::SQLite:
+        case CatchChallenger::DatabaseBase::Type::Mysql:
+        case CatchChallenger::DatabaseBase::Type::PostgreSQL:
+        break;
+        default:
+            qDebug() << "Wrong db type";
+            GlobalServerData::serverSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
+        break;
+    }
+    switch(GlobalServerData::serverSettings.database_server.tryOpenType)
+    {
+        case CatchChallenger::DatabaseBase::Type::SQLite:
+        case CatchChallenger::DatabaseBase::Type::Mysql:
+        case CatchChallenger::DatabaseBase::Type::PostgreSQL:
+        break;
+        default:
+            qDebug() << "Wrong db type";
+            GlobalServerData::serverSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
         break;
     }
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
@@ -3075,7 +3120,7 @@ void BaseServer::load_clan_max_id()
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxClanId=0;
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -3088,9 +3133,9 @@ void BaseServer::load_clan_max_id()
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::load_clan_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_clan_max_id_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         preload_industries();
     }
 }
@@ -3104,11 +3149,11 @@ void BaseServer::load_clan_max_id_return()
 {
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxClanId=0;
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
         //not +1 because incremented before use
-        GlobalServerData::serverPrivateVariables.maxClanId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxClanId=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max clan id is failed to convert to number"));
@@ -3123,7 +3168,7 @@ void BaseServer::load_clan_max_id_return()
 void BaseServer::load_account_max_id()
 {
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_login->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -3136,13 +3181,13 @@ void BaseServer::load_account_max_id()
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::load_account_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText.toLatin1(),this,&BaseServer::load_account_max_id_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage());
         if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
-            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db);
+            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_common);
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
@@ -3155,11 +3200,11 @@ void BaseServer::load_account_max_id_static(void *object)
 
 void BaseServer::load_account_max_id_return()
 {
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_login->next())
     {
         bool ok;
         //not +1 because incremented before use
-        GlobalServerData::serverPrivateVariables.maxAccountId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxAccountId=QString(GlobalServerData::serverPrivateVariables.db_login->value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max account id is failed to convert to number"));
@@ -3171,13 +3216,13 @@ void BaseServer::load_account_max_id_return()
     if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db);
+        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
 }
 
 void BaseServer::load_character_max_id()
 {
     QString queryText;
-    switch(GlobalServerData::serverPrivateVariables.db->databaseType())
+    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -3190,10 +3235,10 @@ void BaseServer::load_character_max_id()
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
         break;
     }
-    if(GlobalServerData::serverPrivateVariables.db->asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static)==NULL)
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db->errorMessage());
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db);
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_common);
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
@@ -3206,11 +3251,11 @@ void BaseServer::load_character_max_id_static(void *object)
 
 void BaseServer::load_character_max_id_return()
 {
-    while(GlobalServerData::serverPrivateVariables.db->next())
+    while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
         //not +1 because incremented before use
-        GlobalServerData::serverPrivateVariables.maxCharacterId=QString(GlobalServerData::serverPrivateVariables.db->value(0)).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxCharacterId=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max character id is failed to convert to number"));
@@ -3219,6 +3264,6 @@ void BaseServer::load_character_max_id_return()
             continue;
         }
     }
-    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db);
+    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_common);
 }
 
