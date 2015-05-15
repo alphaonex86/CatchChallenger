@@ -31,7 +31,8 @@ public:
     static QString db_query_update_character_time_to_delete;
     static QString db_query_update_character_last_connect;
     static QString db_query_clan;
-    static QString db_query_servers;
+    static QString db_query_select_server_time;
+    static QString db_query_insert_server_time;
 
     static QString db_query_monster_by_character_id;
     static QString db_query_delete_monster_buff;
@@ -48,6 +49,10 @@ public:
     static QString db_query_delete_reputation;
     static QString db_query_delete_allow;
 
+    static QString db_query_update_monster_move_to_player;
+    static QString db_query_update_monster_move_to_new_player;
+    static QString db_query_update_monster_move_to_warehouse;
+    static QString db_query_update_monster_move_to_market;
     static QString db_query_select_clan_by_name;
     static QString db_query_select_character_by_pseudo;
     static QString db_query_insert_monster;
@@ -122,6 +127,9 @@ public:
     static QString db_query_delete_plant;
     static QString db_query_delete_plant_by_id;
     static QString db_query_insert_plant;
+    static QString db_query_delete_bot_already_beaten;
+    static QString db_query_insert_monster_market_price;
+    static QString db_query_delete_monster_market_price;
 
     static QString db_query_delete_all_item_market;
     static QString db_query_delete_monster_market_by_character;

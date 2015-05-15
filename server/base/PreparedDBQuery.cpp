@@ -15,101 +15,109 @@ QString PreparedDBQueryServer::db_query_update_item_market=NULL;
 QString PreparedDBQueryServer::db_query_update_item_market_and_price=NULL;
 QString PreparedDBQueryServer::db_query_update_charaters_market_cash=NULL;
 QString PreparedDBQueryServer::db_query_get_market_cash=NULL;
+QString PreparedDBQueryServer::db_query_insert_monster_market_price=NULL;
+QString PreparedDBQueryServer::db_query_delete_monster_market_price=NULL;
 
-QString PreparedDBQuery::db_query_select_allow=NULL;
-QString PreparedDBQuery::db_query_characters=NULL;
-QString PreparedDBQuery::db_query_played_time=NULL;
-QString PreparedDBQuery::db_query_monster_skill=NULL;
-QString PreparedDBQuery::db_query_monster=NULL;
-QString PreparedDBQuery::db_query_character_by_id=NULL;
-QString PreparedDBQuery::db_query_update_character_time_to_delete=NULL;
-QString PreparedDBQuery::db_query_update_character_last_connect=NULL;
-QString PreparedDBQuery::db_query_clan=NULL;
+QString PreparedDBQueryServer::db_query_insert_plant=NULL;
+QString PreparedDBQueryServer::db_query_update_quest_finish=NULL;
+QString PreparedDBQueryServer::db_query_update_quest_step=NULL;
+QString PreparedDBQueryServer::db_query_update_quest_restart=NULL;
+QString PreparedDBQueryServer::db_query_insert_quest=NULL;
+QString PreparedDBQueryServer::db_query_update_city_clan=NULL;
+QString PreparedDBQueryServer::db_query_insert_city=NULL;
+QString PreparedDBQueryServer::db_query_delete_plant=NULL;
+QString PreparedDBQueryServer::db_query_delete_plant_by_id=NULL;
+QString PreparedDBQueryServer::db_query_delete_quest=NULL;
+QString PreparedDBQueryServer::db_query_select_quest_by_id=NULL;
+QString PreparedDBQueryServer::db_query_select_monstersBuff_by_id=NULL;
+QString PreparedDBQueryServer::db_query_select_bot_beaten=NULL;
+QString PreparedDBQueryServer::db_query_select_itemOnMap=NULL;
+QString PreparedDBQueryServer::db_query_insert_itemonmap=NULL;
+QString PreparedDBQueryServer::db_query_insert_factory=NULL;
+QString PreparedDBQueryServer::db_query_update_factory=NULL;
+QString PreparedDBQueryServer::db_query_delete_city=NULL;
 
-QString PreparedDBQuery::db_query_monster_by_character_id=NULL;
-QString PreparedDBQuery::db_query_delete_monster_buff=NULL;
-QString PreparedDBQuery::db_query_delete_monster_specific_buff=NULL;
-QString PreparedDBQuery::db_query_delete_monster_skill=NULL;
-QString PreparedDBQuery::db_query_delete_bot_already_beaten=NULL;
-QString PreparedDBQuery::db_query_delete_character=NULL;
-QString PreparedDBQuery::db_query_delete_all_item=NULL;
-QString PreparedDBQuery::db_query_delete_all_item_warehouse=NULL;
-QString PreparedDBQuery::db_query_delete_monster_by_character=NULL;
-QString PreparedDBQuery::db_query_delete_monster_warehouse_by_character=NULL;
-QString PreparedDBQuery::db_query_delete_monster_by_id=NULL;
-QString PreparedDBQuery::db_query_delete_monster_warehouse_by_id=NULL;
-QString PreparedDBQuery::db_query_delete_plant=NULL;
-QString PreparedDBQuery::db_query_delete_plant_by_id=NULL;
-QString PreparedDBQuery::db_query_delete_quest=NULL;
-QString PreparedDBQuery::db_query_delete_recipes=NULL;
-QString PreparedDBQuery::db_query_delete_reputation=NULL;
-QString PreparedDBQuery::db_query_delete_allow=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_move_to_player;
+QString PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
+QString PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse;
+QString PreparedDBQueryCommon::db_query_update_monster_move_to_market;
+QString PreparedDBQueryCommon::db_query_select_allow=NULL;
+QString PreparedDBQueryCommon::db_query_characters=NULL;
+QString PreparedDBQueryCommon::db_query_played_time=NULL;
+QString PreparedDBQueryCommon::db_query_monster_skill=NULL;
+QString PreparedDBQueryCommon::db_query_monster=NULL;
+QString PreparedDBQueryCommon::db_query_character_by_id=NULL;
+QString PreparedDBQueryCommon::db_query_update_character_time_to_delete=NULL;
+QString PreparedDBQueryCommon::db_query_update_character_last_connect=NULL;
+QString PreparedDBQueryCommon::db_query_clan=NULL;
 
-QString PreparedDBQuery::db_query_select_clan_by_name=NULL;
-QString PreparedDBQuery::db_query_select_character_by_pseudo=NULL;
-QString PreparedDBQuery::db_query_insert_monster=NULL;
-QString PreparedDBQuery::db_query_insert_monster_full=NULL;
-QString PreparedDBQuery::db_query_insert_warehouse_monster_full=NULL;
-QString PreparedDBQuery::db_query_insert_monster_skill=NULL;
-QString PreparedDBQuery::db_query_insert_reputation=NULL;
-QString PreparedDBQuery::db_query_insert_item=NULL;
-QString PreparedDBQuery::db_query_insert_item_warehouse=NULL;
-QString PreparedDBQuery::db_query_account_time_to_delete_character_by_id=NULL;
-QString PreparedDBQuery::db_query_update_character_time_to_delete_by_id=NULL;
-QString PreparedDBQuery::db_query_select_reputation_by_id=NULL;
-QString PreparedDBQuery::db_query_select_quest_by_id=NULL;
-QString PreparedDBQuery::db_query_select_recipes_by_player_id=NULL;
-QString PreparedDBQuery::db_query_select_items_by_player_id=NULL;
-QString PreparedDBQuery::db_query_select_items_warehouse_by_player_id=NULL;
-QString PreparedDBQuery::db_query_select_monsters_by_player_id=NULL;
-QString PreparedDBQuery::db_query_select_monsters_warehouse_by_player_id=NULL;
-QString PreparedDBQuery::db_query_select_monstersSkill_by_id=NULL;
-QString PreparedDBQuery::db_query_select_monstersBuff_by_id=NULL;
-QString PreparedDBQuery::db_query_select_bot_beaten=NULL;
-QString PreparedDBQuery::db_query_select_itemOnMap=NULL;
-QString PreparedDBQuery::db_query_insert_itemonmap=NULL;
-QString PreparedDBQuery::db_query_change_right=NULL;
-QString PreparedDBQuery::db_query_update_item=NULL;
-QString PreparedDBQuery::db_query_update_item_warehouse=NULL;
-QString PreparedDBQuery::db_query_delete_item=NULL;
-QString PreparedDBQuery::db_query_delete_item_warehouse=NULL;
-QString PreparedDBQuery::db_query_update_cash=NULL;
-QString PreparedDBQuery::db_query_update_warehouse_cash=NULL;
-QString PreparedDBQuery::db_query_insert_recipe=NULL;
-QString PreparedDBQuery::db_query_insert_factory=NULL;
-QString PreparedDBQuery::db_query_update_factory=NULL;
-QString PreparedDBQuery::db_query_insert_character_allow=NULL;
-QString PreparedDBQuery::db_query_delete_character_allow=NULL;
-QString PreparedDBQuery::db_query_update_reputation=NULL;
-QString PreparedDBQuery::db_query_update_character_clan=NULL;
-QString PreparedDBQuery::db_query_update_character_clan_and_leader=NULL;
-QString PreparedDBQuery::db_query_delete_clan=NULL;
-QString PreparedDBQuery::db_query_delete_city=NULL;
-QString PreparedDBQuery::db_query_update_character_clan_by_pseudo=NULL;
-QString PreparedDBQuery::db_query_update_monster_xp_hp_level=NULL;
-QString PreparedDBQuery::db_query_update_monster_hp_only=NULL;
-QString PreparedDBQuery::db_query_update_monster_sp_only=NULL;
-QString PreparedDBQuery::db_query_update_monster_skill_level=NULL;
-QString PreparedDBQuery::db_query_update_monster_xp=NULL;
-QString PreparedDBQuery::db_query_insert_bot_already_beaten=NULL;
-QString PreparedDBQuery::db_query_insert_monster_buff=NULL;
-QString PreparedDBQuery::db_query_update_monster_level=NULL;
-QString PreparedDBQuery::db_query_update_monster_position=NULL;
-QString PreparedDBQuery::db_query_update_monster_and_hp=NULL;
-QString PreparedDBQuery::db_query_update_monster_level_only=NULL;
-QString PreparedDBQuery::db_query_delete_monster_specific_skill=NULL;
-QString PreparedDBQuery::db_query_insert_clan=NULL;
-QString PreparedDBQuery::db_query_insert_plant=NULL;
-QString PreparedDBQuery::db_query_update_monster_owner=NULL;
-QString PreparedDBQuery::db_query_update_quest_finish=NULL;
-QString PreparedDBQuery::db_query_update_quest_step=NULL;
-QString PreparedDBQuery::db_query_update_quest_restart=NULL;
-QString PreparedDBQuery::db_query_insert_quest=NULL;
-QString PreparedDBQuery::db_query_update_city_clan=NULL;
-QString PreparedDBQuery::db_query_insert_city=NULL;
-QString PreparedDBQuery::db_query_servers=NULL;
+QString PreparedDBQueryCommon::db_query_monster_by_character_id=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_buff=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_specific_buff=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_skill=NULL;
+QString PreparedDBQueryCommon::db_query_delete_bot_already_beaten=NULL;
+QString PreparedDBQueryCommon::db_query_delete_character=NULL;
+QString PreparedDBQueryCommon::db_query_delete_all_item=NULL;
+QString PreparedDBQueryCommon::db_query_delete_all_item_warehouse=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_by_character=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_character=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_by_id=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_id=NULL;
+QString PreparedDBQueryCommon::db_query_delete_recipes=NULL;
+QString PreparedDBQueryCommon::db_query_delete_reputation=NULL;
+QString PreparedDBQueryCommon::db_query_delete_allow=NULL;
 
-QString PreparedDBQuery::db_query_select_server=NULL;
+QString PreparedDBQueryCommon::db_query_select_clan_by_name=NULL;
+QString PreparedDBQueryCommon::db_query_select_character_by_pseudo=NULL;
+QString PreparedDBQueryCommon::db_query_insert_monster=NULL;
+QString PreparedDBQueryCommon::db_query_insert_monster_full=NULL;
+QString PreparedDBQueryCommon::db_query_insert_warehouse_monster_full=NULL;
+QString PreparedDBQueryCommon::db_query_insert_monster_skill=NULL;
+QString PreparedDBQueryCommon::db_query_insert_reputation=NULL;
+QString PreparedDBQueryCommon::db_query_insert_item=NULL;
+QString PreparedDBQueryCommon::db_query_insert_item_warehouse=NULL;
+QString PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id=NULL;
+QString PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id=NULL;
+QString PreparedDBQueryCommon::db_query_select_reputation_by_id=NULL;
+QString PreparedDBQueryCommon::db_query_select_recipes_by_player_id=NULL;
+QString PreparedDBQueryCommon::db_query_select_items_by_player_id=NULL;
+QString PreparedDBQueryCommon::db_query_select_items_warehouse_by_player_id=NULL;
+QString PreparedDBQueryCommon::db_query_select_monsters_by_player_id=NULL;
+QString PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=NULL;
+QString PreparedDBQueryCommon::db_query_select_monstersSkill_by_id=NULL;
+QString PreparedDBQueryCommon::db_query_change_right=NULL;
+QString PreparedDBQueryCommon::db_query_update_item=NULL;
+QString PreparedDBQueryCommon::db_query_update_item_warehouse=NULL;
+QString PreparedDBQueryCommon::db_query_delete_item=NULL;
+QString PreparedDBQueryCommon::db_query_delete_item_warehouse=NULL;
+QString PreparedDBQueryCommon::db_query_update_cash=NULL;
+QString PreparedDBQueryCommon::db_query_update_warehouse_cash=NULL;
+QString PreparedDBQueryCommon::db_query_insert_recipe=NULL;
+QString PreparedDBQueryCommon::db_query_insert_character_allow=NULL;
+QString PreparedDBQueryCommon::db_query_delete_character_allow=NULL;
+QString PreparedDBQueryCommon::db_query_update_reputation=NULL;
+QString PreparedDBQueryCommon::db_query_update_character_clan=NULL;
+QString PreparedDBQueryCommon::db_query_update_character_clan_and_leader=NULL;
+QString PreparedDBQueryCommon::db_query_delete_clan=NULL;
+QString PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_hp_only=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_sp_only=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_skill_level=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_xp=NULL;
+QString PreparedDBQueryCommon::db_query_insert_bot_already_beaten=NULL;
+QString PreparedDBQueryCommon::db_query_insert_monster_buff=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_level=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_position=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_and_hp=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_level_only=NULL;
+QString PreparedDBQueryCommon::db_query_delete_monster_specific_skill=NULL;
+QString PreparedDBQueryCommon::db_query_insert_clan=NULL;
+QString PreparedDBQueryCommon::db_query_update_monster_owner=NULL;
+QString PreparedDBQueryCommon::db_query_select_server_time=NULL;
+QString PreparedDBQueryCommon::db_query_insert_server_time=NULL;
+
+QString PreparedDBQueryCommon::db_query_select_server=NULL;
 
 void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::Type &type)
 {
@@ -191,6 +199,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
             PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4 WHERE `id`=%1");
             PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2 WHERE `id`=%1");
         }
+        PreparedDBQueryCommon::db_query_update_monster_move_to_player=QStringLiteral("UPDATE `monster` SET `place`=0,`position`=%1 WHERE `id`=%2");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=QStringLiteral("UPDATE `monster` SET `place`=0,`character`=%1,`position`=%2 WHERE `id`=%3");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse=QStringLiteral("UPDATE `monster` SET `place`=1,`position`=%1 WHERE `id`=%2");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_market=QStringLiteral("UPDATE `monster` SET `place`=2 WHERE `id`=%1");
         PreparedDBQueryCommon::db_query_insert_monster_skill=QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryCommon::db_query_insert_item=QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`) VALUES(%1,%2,%3)");
         PreparedDBQueryCommon::db_query_insert_item_warehouse=QStringLiteral("INSERT INTO `item_warehouse`(`item`,`character`,`quantity`) VALUES(%1,%2,%3)");
@@ -231,7 +243,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_insert_clan=QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);");
         PreparedDBQueryCommon::db_query_update_monster_owner=QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;");
         PreparedDBQueryCommon::db_query_update_quest_finish=QStringLiteral("UPDATE `quest` SET `step`=0,`finish_one_time`=1 WHERE `character`=%1 AND `quest`=%2;");
-        PreparedDBQueryCommon::db_query_servers=QStringLiteral("SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1");//not by characters to prevent too hurge datas to store
+        PreparedDBQueryCommon::db_query_select_server_time=QStringLiteral("SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1");//not by characters to prevent too hurge datas to store
+        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO `server_time`(`server`,`account`,`played_time`,`last_connect`) VALUES(0,%1,0,%2);");
         break;
         #endif
 
@@ -283,6 +296,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
             PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
             PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
         }
+        PreparedDBQueryCommon::db_query_update_monster_move_to_player=QStringLiteral("UPDATE monster SET place=0,position=%1 WHERE id=%2");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=QStringLiteral("UPDATE monster SET place=0,character=%1,position=%2 WHERE id=%3");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse=QStringLiteral("UPDATE monster SET place=1,position=%1 WHERE id=%2");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_market=QStringLiteral("UPDATE monster SET place=2 WHERE id=%1");
         PreparedDBQueryCommon::db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryCommon::db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)");
         PreparedDBQueryCommon::db_query_insert_item_warehouse=QStringLiteral("INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3)");
@@ -323,7 +340,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2");
         PreparedDBQueryCommon::db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
         PreparedDBQueryCommon::db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
-        PreparedDBQueryCommon::db_query_servers=QStringLiteral("SELECT server,played_time,last_connect FROM server_time WHERE account=%1");//not by characters to prevent too hurge datas to store
+        PreparedDBQueryCommon::db_query_select_server_time=QStringLiteral("SELECT server,played_time,last_connect FROM server_time WHERE account=%1");//not by characters to prevent too hurge datas to store
+        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(0,%1,0,%2);");
         break;
         #endif
 
@@ -346,7 +364,6 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_delete_all_item_warehouse=QStringLiteral("DELETE FROM item_warehouse WHERE character=%1");
         PreparedDBQueryCommon::db_query_delete_monster_by_character=QStringLiteral("DELETE FROM monster WHERE character=%1");
         PreparedDBQueryCommon::db_query_delete_monster_by_id=QStringLiteral("DELETE FROM monster WHERE id=%1");
-        PreparedDBQueryCommon::db_query_delete_quest=QStringLiteral("DELETE FROM quest WHERE character=%1");
         PreparedDBQueryCommon::db_query_delete_recipes=QStringLiteral("DELETE FROM recipe WHERE character=%1");
         PreparedDBQueryCommon::db_query_delete_reputation=QStringLiteral("DELETE FROM reputation WHERE character=%1");
         PreparedDBQueryCommon::db_query_delete_allow=QStringLiteral("DELETE FROM character_allow WHERE character=%1");
@@ -375,6 +392,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
             PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
             PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
         }
+        PreparedDBQueryCommon::db_query_update_monster_move_to_player=QStringLiteral("UPDATE monster SET place=0,position=%1 WHERE id=%2");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=QStringLiteral("UPDATE monster SET place=0,character=%1,position=%2 WHERE id=%3");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse=QStringLiteral("UPDATE monster SET place=1,position=%1 WHERE id=%2");
+        PreparedDBQueryCommon::db_query_update_monster_move_to_market=QStringLiteral("UPDATE monster SET place=2 WHERE id=%1");
         PreparedDBQueryCommon::db_query_insert_monster_skill=QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryCommon::db_query_insert_item=QStringLiteral("INSERT INTO item(item,character,quantity) VALUES(%1,%2,%3)");
         PreparedDBQueryCommon::db_query_insert_item_warehouse=QStringLiteral("INSERT INTO item_warehouse(item,character,quantity) VALUES(%1,%2,%3)");
@@ -415,7 +436,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_delete_monster_specific_skill=QStringLiteral("DELETE FROM monster_skill WHERE monster=%1 AND skill=%2");
         PreparedDBQueryCommon::db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
         PreparedDBQueryCommon::db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
-        PreparedDBQueryCommon::db_query_servers=QStringLiteral("SELECT server,played_time,last_connect FROM server_time WHERE account=%1");//not by characters to prevent too hurge datas to store
+        PreparedDBQueryCommon::db_query_select_server_time=QStringLiteral("SELECT server,played_time,last_connect FROM server_time WHERE account=%1");//not by characters to prevent too hurge datas to store
+        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(0,%1,0,%2);");
         break;
     }
 }
@@ -436,8 +458,11 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE `item_market` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
         PreparedDBQueryServer::db_query_update_item_market_and_price=QStringLiteral("UPDATE `item_market` SET `quantity`=%1,`market_price`=%2 WHERE `item`=%3 AND `character`=%4;");
-        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE `character` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2");
+        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE `character_forserver` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2");
         PreparedDBQueryServer::db_query_get_market_cash=QStringLiteral("UPDATE `character` SET `cash`=%1,`market_cash`=0 WHERE `id`=%2;");
+        PreparedDBQueryServer::db_query_insert_monster_market_price=QStringLiteral("INSERT INTO `monster_market_price`(`id`,`market_price`) VALUES(%1,%2)");
+        PreparedDBQueryServer::db_query_delete_monster_market_price=QStringLiteral("DELETE FROM `monster_market_price` WHERE `id`=%1");
+
         PreparedDBQueryServer::db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM `bot_already_beaten` WHERE `character`=%1");
         PreparedDBQueryServer::db_query_delete_plant=QStringLiteral("DELETE FROM `plant` WHERE `character`=%1");
         PreparedDBQueryServer::db_query_delete_plant_by_id=QStringLiteral("DELETE FROM `plant` WHERE `id`=%1");
@@ -471,8 +496,10 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");
         PreparedDBQueryServer::db_query_update_item_market_and_price=QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;");
-        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2");
+        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character_forserver SET market_cash=market_cash+%1 WHERE id=%2");
         PreparedDBQueryServer::db_query_get_market_cash=QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;");
+        PreparedDBQueryServer::db_query_insert_monster_market_price=QStringLiteral("INSERT INTO monster_market_price(id,market_price) VALUES(%1,%2)");
+        PreparedDBQueryServer::db_query_delete_monster_market_price=QStringLiteral("DELETE FROM monster_market_price WHERE id=%1");
 
         PreparedDBQueryServer::db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
         PreparedDBQueryServer::db_query_delete_plant=QStringLiteral("DELETE FROM plant WHERE character=%1");
@@ -502,8 +529,10 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");
         PreparedDBQueryServer::db_query_update_item_market_and_price=QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;");
-        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character SET market_cash=market_cash+%1 WHERE id=%2");
+        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character_forserver SET market_cash=market_cash+%1 WHERE id=%2");
         PreparedDBQueryServer::db_query_get_market_cash=QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;");
+        PreparedDBQueryServer::db_query_insert_monster_market_price=QStringLiteral("INSERT INTO monster_market_price(id,market_price) VALUES(%1,%2)");
+        PreparedDBQueryServer::db_query_delete_monster_market_price=QStringLiteral("DELETE FROM monster_market_price WHERE id=%1");
 
         PreparedDBQueryServer::db_query_delete_bot_already_beaten=QStringLiteral("DELETE FROM bot_already_beaten WHERE character=%1");
         PreparedDBQueryServer::db_query_delete_plant=QStringLiteral("DELETE FROM plant WHERE character=%1");
