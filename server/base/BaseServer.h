@@ -111,12 +111,6 @@ protected:
     void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    void load_sql_monsters_warehouse_max_id();
-    static void load_monsters_warehouse_max_id_static(void *object);
-    void load_monsters_warehouse_max_id_return();
-    void load_sql_monsters_market_max_id();
-    static void load_monsters_market_max_id_static(void *object);
-    void load_monsters_market_max_id_return();
     QHash<quint16,MonsterDrops> loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters);
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;

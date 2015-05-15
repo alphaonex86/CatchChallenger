@@ -70,8 +70,8 @@ void CommonDatapackServerSpec::parseMonstersCollision()
 
 void CommonDatapackServerSpec::parseServerProfileList()
 {
-    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml"),items.item,monsters,reputation,CommonDatapack::commonDatapack.profileList).second;
-    qDebug() << QStringLiteral("%1 server profile(s) loaded").arg(CommonDatapackServerSpec.size());
+    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml"),CommonDatapack::commonDatapack.profileList);
+    qDebug() << QStringLiteral("%1 server profile(s) loaded").arg(serverProfileList.size());
 }
 
 
