@@ -2050,6 +2050,7 @@ QList<QString> DatapackGeneralLoader::loadSkins(const QString &folder)
 
 QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations)
 {
+    QSet<QString> idDuplicate;
     QHash<QString,int> reputationNameToId;
     {
         int index=0;
@@ -2813,9 +2814,9 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
     return shops;
 }
 
-QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations,const QList<Profile> &profileCommon)
+QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString &datapackPath, const QString &file,const QList<Profile> &profileCommon)
 {
-    QList<ServerProfile> serverProfile=loadServerProfileListInternal(datapackPath,file,items,monsters,reputations);
+    QList<ServerProfile> serverProfile=loadServerProfileListInternal(datapackPath,file);
     //index of base profile
     QSet<QString> profileId,serverProfileId;
     {
@@ -2854,12 +2855,12 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString 
             else
             {
                 qDebug() << (QStringLiteral("Profile xml file: %1, found common id %2 but not found in server, add it").arg(file).arg(profileCommon.at(index).id));
-                ServerProfile serverProfile;
-                serverProfile.id=profileCommon.at(index).id;
-                serverProfile.orientation=Orientation_bottom;
-                serverProfile.x=0;
-                serverProfile.y=0;
-                serverProfile << serverProfile;
+                ServerProfile serverProfileTemp;
+                serverProfileTemp.id=profileCommon.at(index).id;
+                serverProfileTemp.orientation=Orientation_bottom;
+                serverProfileTemp.x=0;
+                serverProfileTemp.y=0;
+                serverProfile << serverProfileTemp;
             }
         }
     }
@@ -2867,8 +2868,9 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString 
     return serverProfile;
 }
 
-QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations)
+QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const QString &datapackPath, const QString &file)
 {
+    QSet<QString> idDuplicate;
     QList<ServerProfile> serverProfileList;
 
     QDomDocument domDocument;
@@ -2918,23 +2920,23 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const 
             const QDomElement &map = startItem.firstChildElement(DatapackGeneralLoader::text_map);
             if(!map.isNull() && map.isElement() && map.hasAttribute(DatapackGeneralLoader::text_file) && map.hasAttribute(DatapackGeneralLoader::text_x) && map.hasAttribute(DatapackGeneralLoader::text_y))
             {
-                profile.map=map.attribute(DatapackGeneralLoader::text_file);
-                if(!profile.map.endsWith(DatapackGeneralLoader::text_dottmx))
-                    profile.map+=DatapackGeneralLoader::text_dottmx;
-                if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+profile.map))
+                serverProfile.mapString=map.attribute(DatapackGeneralLoader::text_file);
+                if(!serverProfile.mapString.endsWith(DatapackGeneralLoader::text_dottmx))
+                    serverProfile.mapString+=DatapackGeneralLoader::text_dottmx;
+                if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+serverProfile.mapString))
                 {
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(serverProfile.mapString).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
-                profile.x=map.attribute(DatapackGeneralLoader::text_x).toUShort(&ok);
+                serverProfile.x=map.attribute(DatapackGeneralLoader::text_x).toUShort(&ok);
                 if(!ok)
                 {
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);
                     continue;
                 }
-                profile.y=map.attribute(DatapackGeneralLoader::text_y).toUShort(&ok);
+                serverProfile.y=map.attribute(DatapackGeneralLoader::text_y).toUShort(&ok);
                 if(!ok)
                 {
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()));
