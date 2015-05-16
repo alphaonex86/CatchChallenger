@@ -55,7 +55,7 @@ private:
 private:
     void parseTypes();
     void parseItems();
-    void parseIndustries();
+    virtual void parseIndustries();
     void parsePlants();
     void parseCraftingRecipes();
     void parseBuff();

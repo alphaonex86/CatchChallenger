@@ -70,10 +70,11 @@ void CommonDatapack::parseItems()
 
 void CommonDatapack::parseIndustries()
 {
-    industries=DatapackGeneralLoader::loadIndustries(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIES),items.item);
-    industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIES)+QStringLiteral("list.xml"),industries);
-    qDebug() << QStringLiteral("%1 industries(s) loaded").arg(industries.size());
-    qDebug() << QStringLiteral("%1 industries(s) link loaded").arg(industriesLink.size());
+    industries=DatapackGeneralLoader::loadIndustries(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIESBASE),items.item);
+    industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIESBASE)+QStringLiteral("list.xml"),industries);
+    qDebug() << QStringLiteral("%1 industries loaded").arg(industries.size());
+    qDebug() << QStringLiteral("%1 industries link loaded").arg(industriesLink.size());
+
 }
 
 void CommonDatapack::parseCraftingRecipes()
@@ -92,7 +93,7 @@ void CommonDatapack::parsePlants()
 
 void CommonDatapack::parseReputation()
 {
-    reputation=DatapackGeneralLoader::loadReputation(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("reputation.xml"));
+    reputation=DatapackGeneralLoader::loadReputation(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("reputation.xml"));
     qDebug() << QStringLiteral("%1 reputation(s) loaded").arg(reputation.size());
 }
 
@@ -112,7 +113,7 @@ void CommonDatapack::parseSkills()
 
 void CommonDatapack::parseEvents()
 {
-    events=DatapackGeneralLoader::loadEvents(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("event.xml"));
+    events=DatapackGeneralLoader::loadEvents(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("event.xml"));
     qDebug() << QStringLiteral("%1 event(s) loaded").arg(events.size());
 }
 
@@ -140,13 +141,13 @@ void CommonDatapack::parseMonstersItemToLearn()
 
 void CommonDatapack::parseProfileList()
 {
-    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml"),items.item,monsters,reputation).second;
+    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("start.xml"),items.item,monsters,reputation).second;
     qDebug() << QStringLiteral("%1 profile(s) loaded").arg(profileList.size());
 }
 
 void CommonDatapack::parseLayersOptions()
 {
-    layersOptions=DatapackGeneralLoader::loadLayersOptions(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("layers.xml"));
+    layersOptions=DatapackGeneralLoader::loadLayersOptions(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("layers.xml"));
     qDebug() << QStringLiteral("layers options parsed");
 }
 

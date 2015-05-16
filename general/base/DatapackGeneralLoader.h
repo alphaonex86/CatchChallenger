@@ -23,8 +23,8 @@ public:
     static QHash<quint16,Industry> loadIndustries(const QString &folder,const QHash<quint16, Item> &items);
     static QHash<quint16,IndustryLink> loadIndustriesLink(const QString &file,const QHash<quint16,Industry> &industries);
     static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations);
-    static QList<ServerProfile> loadServerProfileList(const QString &datapackPath, const QString &file, const QList<Profile> &profileCommon);
-    static QList<ServerProfile> loadServerProfileListInternal(const QString &datapackPath, const QString &file);
+    static QList<ServerProfile> loadServerProfileList(const QString &datapackPath, const QString &mainDatapackCode, const QString &file, const QList<Profile> &profileCommon);
+    static QList<ServerProfile> loadServerProfileListInternal(const QString &datapackPath, const QString &mainDatapackCode, const QString &file);
     static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint16, Item> &items, const QList<Event> &events);
     static LayersOptions loadLayersOptions(const QString &file);
     static QList<Event> loadEvents(const QString &file);

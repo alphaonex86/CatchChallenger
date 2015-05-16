@@ -103,18 +103,19 @@ bool EpollPostgresql::syncConnect(const char * const fullConenctString)
     ConnStatusType connStatusType=PQstatus(conn);
     if(connStatusType==CONNECTION_BAD)
     {
-       std::cerr << "pg connexion not OK, retrying..." << std::endl;
-       unsigned int index=0;
-       while(index<considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
-       {
-           sleep(tryInterval);
-           //std::cerr << "Connecting to postgresql ... (" << (index+1) << ")" << std::endl;
-           conn=PQconnectdb(strCoPG);
-           connStatusType=PQstatus(conn);
-           index++;
-       }
-       if(connStatusType==CONNECTION_BAD)
-        return false;
+        std::cerr << "pg connexion not OK, retrying..." << std::endl;
+        unsigned int index=0;
+        while(index<considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
+        {
+            sleep(tryInterval);
+            //std::cerr << "Connecting to postgresql ... (" << (index+1) << ")" << std::endl;
+            PQfinish(conn);
+            conn=PQconnectdb(strCoPG);
+            connStatusType=PQstatus(conn);
+            index++;
+        }
+        if(connStatusType==CONNECTION_BAD)
+            return false;
     }
     std::cerr << "Connected to postgresql" << std::endl;
     if(PQsetnonblocking(conn,1)!=0)

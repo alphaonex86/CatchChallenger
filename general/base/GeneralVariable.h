@@ -47,13 +47,15 @@
 #define CATCHCHALLENGER_EXTENSION_ALLOWED "tmx;xml;tsx;js;png;jpg;gif;ogg;qml;qm;ts;txt"
 
 #define DATAPACK_FILE_REGEX "^[0-9/a-z\\.\\- _]*[0-9a-z]\\.[a-z]{2,4}$"
-#define DATAPACK_BASE_PATH_MAP "map/"
-#define DATAPACK_BASE_PATH_ZONE "map/zone/"
+#define DATAPACK_BASE_PATH_MAPBASE "map/"
+#define DATAPACK_BASE_PATH_MAPSPEC "map/main/%1/"
+#define DATAPACK_BASE_PATH_ZONE "map/main/%1/map/zone/"
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
 #define DATAPACK_BASE_PATH_SKINBASE "skin/"
 #define DATAPACK_BASE_PATH_ANIMATION "animation/"
 #define DATAPACK_BASE_PATH_ITEM "items/"
-#define DATAPACK_BASE_PATH_INDUSTRIES "industries/"
+#define DATAPACK_BASE_PATH_INDUSTRIESBASE "industries/"
+#define DATAPACK_BASE_PATH_INDUSTRIESSPEC "map/main/%1/industries/"
 #define DATAPACK_BASE_PATH_PLANTS "plants/"
 #define DATAPACK_BASE_PATH_MONSTERS "monsters/"
 #define DATAPACK_BASE_PATH_BUFF "monsters/buff/"
@@ -61,10 +63,11 @@
 #define DATAPACK_BASE_PATH_SKILL "monsters/skill/"
 #define DATAPACK_BASE_PATH_SKILLANIMATION "monsters/skill-animation/"
 #define DATAPACK_BASE_PATH_FIGHT "fight/"
-#define DATAPACK_BASE_PATH_PLAYER "player/"
-#define DATAPACK_BASE_PATH_QUESTS "quests/"
+#define DATAPACK_BASE_PATH_PLAYERBASE "player/"
+#define DATAPACK_BASE_PATH_PLAYERSPEC "map/main/%1/"
+#define DATAPACK_BASE_PATH_QUESTS "map/main/%1/quests/"
 #define DATAPACK_BASE_PATH_CRAFTING "crafting/"
-#define DATAPACK_BASE_PATH_SHOP "shop/"
+#define DATAPACK_BASE_PATH_SHOP "map/main/%1/shop/"
 
 #if defined(__linux__) || defined(__CYGWIN__)
     #include <byteswap.h>
