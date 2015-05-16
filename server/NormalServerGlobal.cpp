@@ -2,12 +2,16 @@
 #include "VariableServer.h"
 
 #include <QDebug>
+#include <QDir>
+#include <QFileInfo>
+#include <QFileInfoList>
+#include <QRegularExpression>
 
 NormalServerGlobal::NormalServerGlobal()
 {
 }
 
-void NormalServerGlobal::checkSettingsFile(QSettings *settings)
+void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QString &datapack_basePath)
 {
     #if defined(Q_CC_GNU)
         qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
@@ -76,6 +80,21 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
     #else
         settings->setValue(QLatin1Literal("useSsl"),false);
     #endif
+    if(!settings->contains(QLatin1Literal("mainDatapackCode")))
+    {
+        settings->setValue(QLatin1Literal("mainDatapackCode"),QString());
+        QDir dir(datapack_basePath+QStringLiteral("map/main/"));
+        const QFileInfoList &fileInfoList=dir.entryInfoList(QStringList(),QDir::AllDirs|QDir::NoDot|QDir::NoDotDot);
+        if(fileInfoList.size()==1)
+        {
+            QFileInfo folder=fileInfoList.first();
+            const QString &string=folder.fileName();
+            if(string.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
+                settings->setValue(QLatin1Literal("mainDatapackCode"),string);
+        }
+    }
+    if(!settings->contains(QLatin1Literal("subDatapackCode")))
+        settings->setValue(QLatin1Literal("subDatapackCode"),QString());
     if(!settings->contains(QLatin1Literal("maxPlayerMonsters")))
         settings->setValue(QLatin1Literal("maxPlayerMonsters"),8);
     if(!settings->contains(QLatin1Literal("maxWarehousePlayerMonsters")))
@@ -188,6 +207,15 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
     }
 
     settings->beginGroup(QLatin1Literal("db"));
+    if(!settings->contains(QLatin1Literal("db_fight_sync")))
+        settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtTheEndOfBattle"));
+    if(!settings->contains(QLatin1Literal("secondToPositionSync")))
+        settings->setValue(QLatin1Literal("secondToPositionSync"),0);
+    if(!settings->contains(QLatin1Literal("positionTeleportSync")))
+        settings->setValue(QLatin1Literal("positionTeleportSync"),true);
+    settings->endGroup();
+
+    settings->beginGroup(QLatin1Literal("db-login"));
     if(!settings->contains(QLatin1Literal("type")))
         settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
     if(!settings->contains(QLatin1Literal("host")))
@@ -197,13 +225,41 @@ void NormalServerGlobal::checkSettingsFile(QSettings *settings)
     if(!settings->contains(QLatin1Literal("pass")))
         settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
     if(!settings->contains(QLatin1Literal("db")))
-        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger"));
-    if(!settings->contains(QLatin1Literal("db_fight_sync")))
-        settings->setValue(QLatin1Literal("db_fight_sync"),QLatin1Literal("FightSync_AtTheEndOfBattle"));
-    if(!settings->contains(QLatin1Literal("secondToPositionSync")))
-        settings->setValue(QLatin1Literal("secondToPositionSync"),0);
-    if(!settings->contains(QLatin1Literal("positionTeleportSync")))
-        settings->setValue(QLatin1Literal("positionTeleportSync"),true);
+        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_login"));
+    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
+        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
+    if(!settings->contains(QLatin1Literal("tryInterval")))
+        settings->setValue(QLatin1Literal("tryInterval"),5);
+    settings->endGroup();
+
+    settings->beginGroup(QLatin1Literal("db-common"));
+    if(!settings->contains(QLatin1Literal("type")))
+        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
+    if(!settings->contains(QLatin1Literal("host")))
+        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
+    if(!settings->contains(QLatin1Literal("login")))
+        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-login"));
+    if(!settings->contains(QLatin1Literal("pass")))
+        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
+    if(!settings->contains(QLatin1Literal("db")))
+        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_common"));
+    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
+        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
+    if(!settings->contains(QLatin1Literal("tryInterval")))
+        settings->setValue(QLatin1Literal("tryInterval"),5);
+    settings->endGroup();
+
+    settings->beginGroup(QLatin1Literal("db-server"));
+    if(!settings->contains(QLatin1Literal("type")))
+        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
+    if(!settings->contains(QLatin1Literal("host")))
+        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
+    if(!settings->contains(QLatin1Literal("login")))
+        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-login"));
+    if(!settings->contains(QLatin1Literal("pass")))
+        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
+    if(!settings->contains(QLatin1Literal("db")))
+        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_server"));
     if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
         settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
     if(!settings->contains(QLatin1Literal("tryInterval")))

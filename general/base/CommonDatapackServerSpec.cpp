@@ -23,11 +23,14 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
 {
 }
 
-void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath)
+void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath,const QString &mainDatapackCode)
 {
     if(isParsedSpec)
         return;
     QMutexLocker mutexLocker(&inProgressSpec);
+
+    this->datapackPath=datapackPath;
+    this->mainDatapackCode=mainDatapackCode;
 
     CommonDatapack::commonDatapack.parseDatapack(datapackPath);
 
@@ -36,6 +39,7 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath)
     parseMonstersCollision();
     parseShop();
     parseServerProfileList();
+    parseIndustries();
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     Map_loader::teleportConditionsUnparsed.clear();
@@ -52,7 +56,7 @@ void CommonDatapackServerSpec::parseQuests()
 
 void CommonDatapackServerSpec::parseShop()
 {
-    shops=DatapackGeneralLoader::preload_shop(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SHOP)+QStringLiteral("shop.xml"),CommonDatapack::commonDatapack.items.item);
+    shops=DatapackGeneralLoader::preload_shop(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SHOP).arg(mainDatapackCode)+QStringLiteral("shop.xml"),CommonDatapack::commonDatapack.items.item);
     qDebug() << QStringLiteral("%1 monster items(s) to learn loaded").arg(shops.size());
 }
 
@@ -64,16 +68,41 @@ void CommonDatapackServerSpec::parseBotFights()
 
 void CommonDatapackServerSpec::parseMonstersCollision()
 {
-    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("layers.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
+    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("layers.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
     qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
 }
 
 void CommonDatapackServerSpec::parseServerProfileList()
 {
-    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml"),CommonDatapack::commonDatapack.profileList);
+    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERSPEC).arg(mainDatapackCode)+QStringLiteral("start.xml"),CommonDatapack::commonDatapack.profileList);
     qDebug() << QStringLiteral("%1 server profile(s) loaded").arg(serverProfileList.size());
 }
 
+void CommonDatapackServerSpec::parseIndustries()
+{
+    QHash<quint16,Industry> industriesBase=CommonDatapack::commonDatapack.industries;
+    QHash<quint16,IndustryLink> industriesLinkBase=CommonDatapack::commonDatapack.industriesLink;
+    CommonDatapack::commonDatapack.industries=DatapackGeneralLoader::loadIndustries(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIESSPEC).arg(mainDatapackCode),CommonDatapack::commonDatapack.items.item);
+    qDebug() << QStringLiteral("%1 industries loaded (spec industries %2)").arg(industriesBase.size()).arg(CommonDatapack::commonDatapack.industries.size());
+    {
+        QHashIterator<quint16,Industry> i(industriesBase);
+        while (i.hasNext()) {
+            i.next();
+            if(!CommonDatapack::commonDatapack.industries.contains(i.key()))
+                CommonDatapack::commonDatapack.industries[i.key()]=i.value();
+        }
+    }
+    CommonDatapack::commonDatapack.industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIESSPEC).arg(mainDatapackCode)+QStringLiteral("list.xml"),CommonDatapack::commonDatapack.industries);
+    qDebug() << QStringLiteral("%1 industries link loaded (spec industries link %2)").arg(industriesLinkBase.size()).arg(CommonDatapack::commonDatapack.industriesLink.size());
+    {
+        QHashIterator<quint16,IndustryLink> i(industriesLinkBase);
+        while (i.hasNext()) {
+            i.next();
+            if(!CommonDatapack::commonDatapack.industriesLink.contains(i.key()))
+                CommonDatapack::commonDatapack.industriesLink[i.key()]=i.value();
+        }
+    }
+}
 
 void CommonDatapackServerSpec::unload()
 {

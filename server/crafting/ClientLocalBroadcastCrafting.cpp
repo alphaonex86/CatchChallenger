@@ -2,7 +2,7 @@
 #include "../base/BroadCastWithoutSender.h"
 #include "../base/MapServer.h"
 #include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../base/GlobalServerData.h"
 #include "../base/PreparedDBQuery.h"
 
