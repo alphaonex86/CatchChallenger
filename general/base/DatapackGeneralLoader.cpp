@@ -2399,7 +2399,7 @@ QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QStr
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to monster collision: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2591,7 +2591,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const QString &file)
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to load layer options: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2650,7 +2650,7 @@ QList<Event> DatapackGeneralLoader::loadEvents(const QString &file)
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to load event: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return returnVar;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2814,9 +2814,9 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
     return shops;
 }
 
-QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString &datapackPath, const QString &file,const QList<Profile> &profileCommon)
+QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString &datapackPath, const QString &mainDatapackCode, const QString &file,const QList<Profile> &profileCommon)
 {
-    QList<ServerProfile> serverProfile=loadServerProfileListInternal(datapackPath,file);
+    QList<ServerProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file);
     //index of base profile
     QSet<QString> profileId,serverProfileId;
     {
@@ -2840,7 +2840,7 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString 
             }
             else
             {
-                qDebug() << (QStringLiteral("Profile xml file: %1, found id %2 but not found in common, drop it").arg(file).arg(serverProfile.at(index).id));
+                qDebug() << (QStringLiteral("Profile xml file: %1, found id \"%2\" but not found in common, drop it").arg(file).arg(serverProfile.at(index).id));
                 serverProfile.removeAt(index);
             }
         }
@@ -2850,11 +2850,9 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString 
         int index=0;
         while(index<profileCommon.size())
         {
-            if(serverProfileId.contains(profileCommon.at(index).id))
-                index++;
-            else
+            if(!serverProfileId.contains(profileCommon.at(index).id))
             {
-                qDebug() << (QStringLiteral("Profile xml file: %1, found common id %2 but not found in server, add it").arg(file).arg(profileCommon.at(index).id));
+                qDebug() << (QStringLiteral("Profile xml file: %1, found common id \"%2\" but not found in server, add it").arg(file).arg(profileCommon.at(index).id));
                 ServerProfile serverProfileTemp;
                 serverProfileTemp.id=profileCommon.at(index).id;
                 serverProfileTemp.orientation=Orientation_bottom;
@@ -2862,13 +2860,14 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString 
                 serverProfileTemp.y=0;
                 serverProfile << serverProfileTemp;
             }
+            index++;
         }
     }
 
     return serverProfile;
 }
 
-QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const QString &datapackPath, const QString &file)
+QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const QString &datapackPath, const QString &mainDatapackCode, const QString &file)
 {
     QSet<QString> idDuplicate;
     QList<ServerProfile> serverProfileList;
@@ -2884,7 +2883,7 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const 
         QFile xmlFile(file);
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file to have new profile: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            qDebug() << (QStringLiteral("Unable to open the xml file to have new server profile internal: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return serverProfileList;
         }
         const QByteArray &xmlContent=xmlFile.readAll();
@@ -2923,7 +2922,7 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const 
                 serverProfile.mapString=map.attribute(DatapackGeneralLoader::text_file);
                 if(!serverProfile.mapString.endsWith(DatapackGeneralLoader::text_dottmx))
                     serverProfile.mapString+=DatapackGeneralLoader::text_dottmx;
-                if(!QFile::exists(datapackPath+QLatin1String(DATAPACK_BASE_PATH_MAP)+serverProfile.mapString))
+                if(!QFile::exists(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(mainDatapackCode)+serverProfile.mapString))
                 {
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(serverProfile.mapString).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);

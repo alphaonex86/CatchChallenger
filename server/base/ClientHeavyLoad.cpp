@@ -2,7 +2,7 @@
 #include "GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonMap.h"
@@ -1059,7 +1059,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
-    //const ServerProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(profileIndex);
+    //const ServerProfile &serverProfile=CommonDatapack::commonDatapack.serverProfileList.at(profileIndex);
     const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
 
     number_of_character++;

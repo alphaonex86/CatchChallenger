@@ -1,6 +1,6 @@
 #include "BaseServerMasterLoadDictionary.h"
 #include "BaseServerMasterSendDatapack.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"

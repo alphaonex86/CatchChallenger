@@ -10,21 +10,16 @@
 #include <QMultiHash>
 
 #include "GeneralStructures.h"
+#include "CommonDatapack.h"
 
 namespace CatchChallenger {
 class CommonDatapackServerSpec
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        : public QObject
-        #endif
 {
-#ifndef EPOLLCATCHCHALLENGERSERVER
-Q_OBJECT
-#endif
 public:
     explicit CommonDatapackServerSpec();
 public:
     void unload();
-    void parseDatapack(const QString &datapackPath);
+    void parseDatapack(const QString &datapackPath, const QString &mainDatapackCode);
 public:
     QHash<quint16,BotFight> botFights;
     QHash<quint16,Quest> quests;
@@ -36,12 +31,14 @@ private:
     QMutex inProgressSpec;
     bool isParsedSpec;
     QString datapackPath;
+    QString mainDatapackCode;
 private:
     void parseQuests();
     void parseBotFights();
     void parseMonstersCollision();
     void parseShop();
     void parseServerProfileList();
+    void parseIndustries();
 };
 }
 

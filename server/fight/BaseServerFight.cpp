@@ -146,7 +146,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                         {
                                             dropVar.quantity_min=drop.attribute(BaseServer::text_quantity_min).toUInt(&ok);
                                             if(!ok)
-                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_min is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_min is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                         }
                                         else
                                             dropVar.quantity_min=1;
@@ -156,7 +156,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                             {
                                                 dropVar.quantity_max=drop.attribute(BaseServer::text_quantity_max).toUInt(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_max is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, quantity_max is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                             else
                                                 dropVar.quantity_max=1;
@@ -166,7 +166,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                             if(dropVar.quantity_min<=0)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, dropVar.quantity_min is 0: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, dropVar.quantity_min is 0: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                         }
                                         if(ok)
@@ -174,7 +174,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                             if(dropVar.quantity_max<=0)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, dropVar.quantity_max is 0: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, dropVar.quantity_max is 0: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                         }
                                         if(ok)
@@ -182,7 +182,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                             if(dropVar.quantity_max<dropVar.quantity_min)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, dropVar.quantity_max<dropVar.quantity_min: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, dropVar.quantity_max<dropVar.quantity_min: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                         }
                                         if(ok)
@@ -193,7 +193,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                                 luck.remove(BaseServer::text_percent);
                                                 dropVar.luck=luck.toUShort(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                             else
                                                 dropVar.luck=100;
@@ -203,12 +203,12 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                             if(dropVar.luck<=0)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is 0!: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is 0!: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                             if(dropVar.luck>100)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is greater than 100: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, luck is greater than 100: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                         }
                                         if(ok)
@@ -217,7 +217,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                             {
                                                 dropVar.item=drop.attribute(BaseServer::text_item).toUInt(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, item is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                             }
                                             else
                                                 dropVar.luck=100;
@@ -227,7 +227,7 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                             if(!items.contains(dropVar.item))
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, the item %4 is not into the item list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(dropVar.item));
+                                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, the item %4 is not into the item list: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()).arg(dropVar.item));
                                             }
                                         }
                                         if(ok)
@@ -248,10 +248,10 @@ QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHa
                                         }
                                     }
                                     else
-                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, as not item attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, as not item attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                 }
                                 else
-                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(drop.tagName()).arg(drop.lineNumber()));
                                 drop = drop.nextSiblingElement(BaseServer::text_drop);
                             }
                         }

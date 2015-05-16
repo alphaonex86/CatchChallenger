@@ -212,6 +212,7 @@ void BaseServer::preload_the_data()
         QTime time;
         time.restart();
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
+        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,GlobalServerData::serverSettings.mainDatapackCode);
         qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
     }
     timeDatapack.restart();
@@ -1508,7 +1509,7 @@ bool BaseServer::preload_the_city_capture()
 
 bool BaseServer::preload_the_map()
 {
-    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MAP;
+    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(GlobalServerData::serverSettings.mainDatapackCode);
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     DebugClass::debugConsole(QStringLiteral("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
@@ -2702,6 +2703,7 @@ void BaseServer::unload_the_data()
     BaseServerLogin::unload();
 
     CommonDatapack::commonDatapack.unload();
+    CommonDatapackServerSpec::commonDatapackServerSpec.unload();
 }
 
 void BaseServer::unload_profile()
@@ -2886,6 +2888,23 @@ void BaseServer::loadAndFixSettings()
     {
         GlobalServerData::serverPrivateVariables.db_server->tryInterval=5;
         GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
+    }
+
+    if(GlobalServerData::serverSettings.mainDatapackCode.isEmpty())
+    {
+        DebugClass::debugConsole(QStringLiteral("mainDatapackCode is empty, please put it into the settings"));
+        abort();
+    }
+    if(!GlobalServerData::serverSettings.mainDatapackCode.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
+    {
+        DebugClass::debugConsole(QStringLiteral("GlobalServerData::serverSettings.mainDatapackCode not match ^[a-z0-9\\- _]+$"));
+        abort();
+    }
+    const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+GlobalServerData::serverSettings.mainDatapackCode+QStringLiteral("/");
+    if(!QDir(mainDir).exists())
+    {
+        DebugClass::debugConsole(mainDir+QStringLiteral(" don't exists"));
+        abort();
     }
 
     if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)
