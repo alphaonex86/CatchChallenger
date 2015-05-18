@@ -3,6 +3,11 @@
 using namespace CatchChallenger;
 
 /* not use mainCodeWithoutSubCodeTypeServerToClient because the reply have unknow code */
+void Client::sendFullPacket(const quint8 &mainCodeType,const quint8 &subCodeType)
+{
+    sendFullPacket(mainCodeType,subCodeType,NULL,0);
+}
+
 void Client::sendFullPacket(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -24,6 +29,11 @@ void Client::sendFullPacket(const quint8 &mainCodeType,const quint8 &subCodeType
         return;
     }
     #endif
+}
+
+void Client::sendPacket(const quint8 &mainCodeType)
+{
+    sendPacket(mainCodeType,NULL,0);
 }
 
 void Client::sendPacket(const quint8 &mainCodeType,const char * const data,const unsigned int &size)
@@ -72,6 +82,11 @@ void Client::sendRawSmallPacket(const char * const data,const unsigned int &size
     #endif
 }
 
+void Client::sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber)
+{
+    sendQuery(mainIdent,subIdent,queryNumber,NULL,0);
+}
+
 void Client::sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -96,6 +111,10 @@ void Client::sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quin
 }
 
 //send reply
+void Client::postReply(const quint8 &queryNumber)
+{
+    postReply(queryNumber,NULL,0);
+}
 
 void Client::postReply(const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {

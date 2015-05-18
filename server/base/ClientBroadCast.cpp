@@ -125,7 +125,8 @@ void Client::receiveChatText(const Chat_type &chatType,const QString &text,const
         out2 << (quint8)Player_type_normal;
     else
         out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
-    sendPacket(0xCA,outputData+sender_informations->rawPseudo+outputData2);
+    const QByteArray newData(outputData+sender_informations->rawPseudo+outputData2);
+    sendPacket(0xCA,newData.constData(),newData.size());
 }
 
 void Client::receiveSystemText(const QString &text,const bool &important)
@@ -148,7 +149,7 @@ void Client::receiveSystemText(const QString &text,const bool &important)
         outputData+=tempText;
         out.device()->seek(out.device()->pos()+tempText.size());
     }
-    sendPacket(0xCA,outputData);
+    sendPacket(0xCA,outputData.constData(),outputData.size());
 }
 
 void Client::sendChatText(const Chat_type &chatType,const QString &text)
