@@ -74,7 +74,7 @@ void Client::useRecipe(const quint8 &query_id,const quint32 &recipe_id)
         out << (quint8)RecipeUsage_ok;
     else
         out << (quint8)RecipeUsage_failed;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::takeAnObjectOnMap()

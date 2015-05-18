@@ -21,7 +21,7 @@ void Client::characterSelectionIsWrong(const quint8 &query_id,const quint8 &retu
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)returnCode;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 
     //send to server to stop the connection
     errorOutput(debugMessage);
@@ -979,7 +979,7 @@ void Client::loginIsRightFinalStep()
     }
     #endif
 
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
     sendInventory();
     updateCanDoFight();
 

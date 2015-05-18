@@ -621,7 +621,8 @@ void Client::internalBattleAccepted(const bool &send)
         }
         out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
         QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
-        sendFullPacket(0xE0,0x08,otherPlayerBattle->rawPseudo+outputData+firstValidOtherPlayerMonster);
+        const QByteArray newData(otherPlayerBattle->rawPseudo+outputData+firstValidOtherPlayerMonster);
+        sendFullPacket(0xE0,0x08,newData.constData(),newData.size());
     }
 }
 
@@ -736,7 +737,8 @@ void Client::sendBattleReturn()
     }
     attackReturn.clear();
 
-    sendFullPacket(0xE0,0x06,outputData+binarypublicPlayerMonster);
+    const QByteArray newData(outputData+binarypublicPlayerMonster);
+    sendFullPacket(0xE0,0x06,newData.constData(),newData.size());
 }
 
 void Client::sendBattleMonsterChange()
@@ -748,7 +750,8 @@ void Client::sendBattleMonsterChange()
     out << (quint8)0;
     out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
     binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
-    sendFullPacket(0xE0,0x06,outputData+binarypublicPlayerMonster);
+    const QByteArray newData(outputData+binarypublicPlayerMonster);
+    sendFullPacket(0xE0,0x06,newData.constData(),newData.size());
 }
 
 //return true if change level, multiplicator do at datapack loading
