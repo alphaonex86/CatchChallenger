@@ -1546,6 +1546,11 @@ QString Api_protocol::datapackPath() const
     return mDatapack;
 }
 
+QString Api_protocol::mainDatapackCode() const
+{
+    return QString();
+}
+
 void Api_protocol::setDatapackPath(const QString &datapack_path)
 {
     if(datapack_path.endsWith(QLatin1Literal("/")))

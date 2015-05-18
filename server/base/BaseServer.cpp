@@ -252,6 +252,14 @@ void BaseServer::SQL_common_load_finish()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL reputation dictionary").arg(dictionary_reputation_database_to_internal.size()));
 
+    DictionaryLogin::dictionary_allow_database_to_internal=this->dictionary_allow_database_to_internal;
+    DictionaryLogin::dictionary_allow_internal_to_database=this->dictionary_allow_internal_to_database;
+    DictionaryLogin::dictionary_reputation_database_to_internal=this->dictionary_reputation_database_to_internal;//negative == not found
+    DictionaryLogin::dictionary_skin_database_to_internal=this->dictionary_skin_database_to_internal;
+    DictionaryLogin::dictionary_skin_internal_to_database=this->dictionary_skin_internal_to_database;
+    DictionaryLogin::dictionary_starter_database_to_internal=this->dictionary_starter_database_to_internal;
+    DictionaryLogin::dictionary_starter_internal_to_database=this->dictionary_starter_internal_to_database;
+
     preload_profile();
     load_sql_monsters_max_id();
 }
@@ -771,7 +779,6 @@ void BaseServer::preload_profile()
     }
 
     DebugClass::debugConsole(QStringLiteral("%1 profile loaded").arg(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()));
-    preload_finish();
 }
 
 bool BaseServer::preload_zone()
@@ -2410,10 +2417,10 @@ bool BaseServer::initialize_the_database()
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectMysql(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_login.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.pass.toLatin1()
                     ))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage()));
@@ -2422,27 +2429,27 @@ bool BaseServer::initialize_the_database()
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.host));
+                                     .arg(GlobalServerData::serverSettings.database_login.host));
         break;
 
         case DatabaseBase::Type::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectSqlite(GlobalServerData::serverSettings.file.toLatin1()))
+        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectSqlite(GlobalServerData::serverSettings.database_login.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage()));
             return false;
         }
         else
-            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.file));
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database_login.file));
         break;
         #endif
 
         case DatabaseBase::Type::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_login.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_login.pass.toLatin1()
                     ))
         #else
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
@@ -2470,10 +2477,10 @@ bool BaseServer::initialize_the_database()
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectMysql(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_common.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.pass.toLatin1()
                     ))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage()));
@@ -2482,27 +2489,27 @@ bool BaseServer::initialize_the_database()
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.host));
+                                     .arg(GlobalServerData::serverSettings.database_common.host));
         break;
 
         case DatabaseBase::Type::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectSqlite(GlobalServerData::serverSettings.file.toLatin1()))
+        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectSqlite(GlobalServerData::serverSettings.database_common.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage()));
             return false;
         }
         else
-            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.file));
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database_common.file));
         break;
         #endif
 
         case DatabaseBase::Type::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_common.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_common.pass.toLatin1()
                     ))
         #else
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
@@ -2530,10 +2537,10 @@ bool BaseServer::initialize_the_database()
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectMysql(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_server.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.pass.toLatin1()
                     ))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage()));
@@ -2542,27 +2549,27 @@ bool BaseServer::initialize_the_database()
         else
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
-                                     .arg(GlobalServerData::serverSettings.host));
+                                     .arg(GlobalServerData::serverSettings.database_server.host));
         break;
 
         case DatabaseBase::Type::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectSqlite(GlobalServerData::serverSettings.file.toLatin1()))
+        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectSqlite(GlobalServerData::serverSettings.database_server.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage()));
             return false;
         }
         else
-            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.file));
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database_server.file));
         break;
         #endif
 
         case DatabaseBase::Type::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.host.toLatin1(),
-                    GlobalServerData::serverSettings.db.toLatin1(),
-                    GlobalServerData::serverSettings.login.toLatin1(),
-                    GlobalServerData::serverSettings.pass.toLatin1()
+                    GlobalServerData::serverSettings.database_server.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_server.pass.toLatin1()
                     ))
         #else
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
@@ -3283,6 +3290,6 @@ void BaseServer::load_character_max_id_return()
             continue;
         }
     }
-    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_common);
+    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
 }
 

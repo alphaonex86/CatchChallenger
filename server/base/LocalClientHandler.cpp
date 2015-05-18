@@ -4,6 +4,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../base/PreparedDBQuery.h"
+#include "../base/BaseServerMasterLoadDictionary.h"
 #include "SqlFunction.h"
 #include "MapServer.h"
 #include "DictionaryLogin.h"

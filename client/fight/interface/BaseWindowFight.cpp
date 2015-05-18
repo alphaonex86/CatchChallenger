@@ -549,7 +549,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
         {
             if(!monstersCollision.background.isEmpty())
             {
-                const QString &baseSearch=CatchChallenger::Api_client_real::client->datapackPath()+QLatin1Literal(DATAPACK_BASE_PATH_MAP)+monstersCollision.background;
+                const QString &baseSearch=CatchChallenger::Api_client_real::client->datapackPath()+QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE)+monstersCollision.background;
                 if(QFile(baseSearch+"/background.png").exists())
                     ui->labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.png")).scaled(800,440));
                 else if(QFile(baseSearch+"/background.jpg").exists() && (supportedImageFormats.contains(QLatin1Literal("jpeg")) || supportedImageFormats.contains(QLatin1Literal("jpg"))))

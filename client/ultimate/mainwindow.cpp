@@ -1091,7 +1091,7 @@ void MainWindow::connectTheExternalSocket()
             return;
         }
     CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectedState);
     CatchChallenger::Api_client_real::client->sendProtocol();
 }
@@ -1553,7 +1553,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
     CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("datapack/internal/"));
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
@@ -1620,7 +1620,7 @@ void MainWindow::saveTime()
             if(metaData.status()==QSettings::NoError)
             {
                 QString locaction=CatchChallenger::BaseWindow::baseWindow->lastLocation();
-                QString mapPath=internalServer->getSettings().datapack_basePath+DATAPACK_BASE_PATH_MAP;
+                const QString &mapPath=internalServer->getSettings().datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(internalServer->getSettings().mainDatapackCode);
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
@@ -1657,7 +1657,12 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.sendPlayerNumber = false;
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
-    formatedServerSettings.database.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
+    formatedServerSettings.database_login.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
+    formatedServerSettings.database_common.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
+    formatedServerSettings.database_server.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
     formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
 

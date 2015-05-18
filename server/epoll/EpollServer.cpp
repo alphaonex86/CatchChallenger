@@ -34,8 +34,16 @@ EpollServer::~EpollServer()
 void EpollServer::preload_finish()
 {
     BaseServer::preload_finish();
-    qDebug() << QStringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
-    ready=true;
+    if(!ready)
+    {
+        qDebug() << QStringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
+        ready=true;
+
+        if(!tryListen())
+            abort();
+    }
+    else
+        qDebug() << QStringLiteral("EpollServer::preload_finish() double event dropped");
 }
 
 bool EpollServer::isReady()
@@ -63,6 +71,8 @@ void EpollServer::preload_the_data()
 
 void EpollServer::unload_the_data()
 {
+    close();
+    ready=false;
     BaseServer::unload_the_data();
 }
 

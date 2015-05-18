@@ -82,7 +82,8 @@ const QString DatapackClientLoader::text_y=QLatin1Literal("y");
 const QString DatapackClientLoader::text_object=QLatin1Literal("object");
 const QString DatapackClientLoader::text_objectgroup=QLatin1Literal("objectgroup");
 const QString DatapackClientLoader::text_Object=QLatin1Literal("Object");
-const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAP=QLatin1Literal(DATAPACK_BASE_PATH_MAP);
+const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE);
+QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QLatin1Literal(DATAPACK_BASE_PATH_MAPSPEC);
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -115,7 +116,7 @@ bool DatapackClientLoader::isParsingDatapack()
     return inProgress;
 }
 
-void DatapackClientLoader::parseDatapack(const QString &datapackPath)
+void DatapackClientLoader::parseDatapack(const QString &datapackPath, const QString &mainDatapackCode)
 {
     if(inProgress)
     {
@@ -146,6 +147,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     }
 
     this->datapackPath=datapackPath;
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(mainDatapackCode);
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
@@ -180,7 +182,7 @@ void DatapackClientLoader::parseVisualCategory()
 {
     QDomDocument domDocument;
     //open and quick check the file
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("visualcategory.xml");
+    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("visualcategory.xml");
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
@@ -336,7 +338,7 @@ void DatapackClientLoader::parseReputationExtra()
     }
     QDomDocument domDocument;
     //open and quick check the file
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("reputation.xml");
+    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("reputation.xml");
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.value(file);
     else
@@ -812,7 +814,7 @@ void DatapackClientLoader::parseItemsExtra()
 
 void DatapackClientLoader::parseMaps()
 {
-    const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
+    const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC);
 
     //load the map
     const int &size=returnList.size();
@@ -835,7 +837,7 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
     tempMapList.sort();
-    const QString &basePath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP);
+    const QString &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC;
     index=0;
     while(index<tempMapList.size())
     {
@@ -920,7 +922,7 @@ void DatapackClientLoader::parseMaps()
                                             const quint32 &object_x=object.attribute(DatapackClientLoader::text_x).toUInt(&ok)/tilewidth;
                                             if(ok)
                                             {
-                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAP+fileName][QPair<quint8,quint8>(object_x,object_y)]=indexOfItemOnMap;
+                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC+fileName][QPair<quint8,quint8>(object_x,object_y)]=indexOfItemOnMap;
                                                 indexOfItemOnMap++;
                                             }
                                         }
@@ -1329,7 +1331,7 @@ void DatapackClientLoader::parseQuestsText()
 
 void DatapackClientLoader::parseAudioAmbiance()
 {
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+QStringLiteral("music.xml");
+    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("music.xml");
     QDomDocument domDocument;
     //open and quick check the file
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.contains(file))
@@ -1372,7 +1374,7 @@ void DatapackClientLoader::parseAudioAmbiance()
             {
                 const QString &type=item.attribute(DatapackClientLoader::text_type);
                 if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
-                    audioAmbiance[type]=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+item.text();
+                    audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC+item.text();
                 else
                     qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
             }
@@ -1508,14 +1510,14 @@ void DatapackClientLoader::parseZoneExtra()
 
 void DatapackClientLoader::parseTileset()
 {
-    const QStringList &fileList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP));
+    const QStringList &fileList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE));
     int index=0;
     while(index<fileList.size())
     {
         const QString &filePath=fileList.at(index);
         if(filePath.endsWith(DatapackClientLoader::text_dottsx))
         {
-            const QString &source=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)+filePath).absoluteFilePath();
+            const QString &source=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+filePath).absoluteFilePath();
             QFile file(source);
             if(file.open(QIODevice::ReadOnly))
             {
