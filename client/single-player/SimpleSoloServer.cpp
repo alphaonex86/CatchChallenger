@@ -138,8 +138,12 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.sendPlayerNumber = false;
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
-    formatedServerSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
-    formatedServerSettings.database.sqlite.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
+    formatedServerSettings.database_login.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
+    formatedServerSettings.database_common.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
+    formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
+    formatedServerSettings.database_server.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
     formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
 

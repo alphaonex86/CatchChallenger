@@ -10,7 +10,7 @@ QString MapController::mapIdToString(const quint32 &mapId) const
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return QString();
     }
-    return QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
+    return QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId)).absoluteFilePath();
 }
 
 //plant
@@ -32,8 +32,8 @@ void MapController::insert_plant(const quint32 &mapId, const quint8 &x, const qu
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    const QString &map=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
-    if(!haveMapInMemory(map) || !mapItem->haveMap(all_map[map]->tiledMap))
+    const QString &map=QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
+    if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.value(map)->tiledMap))
     {
         qDebug() << QStringLiteral("map (%1) not show or not loaded, delay it").arg(map);
         DelayedPlantInsert tempItem;
@@ -160,7 +160,7 @@ void MapController::remove_plant(const quint32 &mapId, const quint8 &x, const qu
         qDebug() << "MapController::remove_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    remove_plant_full(QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath(),x,y);
+    remove_plant_full(QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath(),x,y);
 }
 
 void MapController::remove_plant_full(const QString &map, const quint8 &x, const quint8 &y)

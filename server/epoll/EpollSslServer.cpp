@@ -32,7 +32,16 @@ EpollSslServer::~EpollSslServer()
 void EpollSslServer::preload_finish()
 {
     BaseServer::preload_finish();
-    ready=true;
+    if(!ready)
+    {
+        qDebug() << QStringLiteral("Waiting connection on port %1").arg(normalServerSettings.server_port);
+        ready=true;
+
+        if(!tryListen())
+            abort();
+    }
+    else
+        qDebug() << QStringLiteral("EpollSslServer::preload_finish() double event dropped");
 }
 
 bool EpollSslServer::isReady()
@@ -60,6 +69,8 @@ void EpollSslServer::preload_the_data()
 
 void EpollSslServer::unload_the_data()
 {
+    close();
+    ready=false;
     BaseServer::unload_the_data();
 }
 

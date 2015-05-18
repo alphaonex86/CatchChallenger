@@ -24,6 +24,7 @@ BaseServerMasterLoadDictionary::~BaseServerMasterLoadDictionary()
 void BaseServerMasterLoadDictionary::load(DatabaseBase * const databaseBase)
 {
     this->databaseBaseLogin=databaseBase;
+    preload_dictionary_allow();
 }
 
 void BaseServerMasterLoadDictionary::preload_dictionary_allow()

@@ -211,7 +211,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             return;
         }
 
-        loadPlayerMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(mapId),x,y);
+        loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId),x,y);
         setSpeed(player.speed);
     }
     else
@@ -229,7 +229,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         tempPlayer.inMove=false;
         tempPlayer.stepAlternance=false;
 
-        const QString &mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
+        const QString &mapPath=QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
         if(!all_map.contains(mapPath))
         {
             qDebug() << "MapControllerMP::insert_player(): current map " << mapPath << " not loaded, delayed";
@@ -990,7 +990,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     this->y=y;
 
     unloadPlayerFromCurrentMap();
-    current_map=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
+    current_map=QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
     passMapIntoOld();
     if(!haveMapInMemory(current_map))
     {
@@ -1150,7 +1150,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 case DelayedType_Insert:
                 if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
                 {
-                    const QString &mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps.value(delayedActions.at(index).insert.mapId)).absoluteFilePath();
+                    const QString &mapPath=QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(delayedActions.at(index).insert.mapId)).absoluteFilePath();
                     if(all_map.contains(mapPath))
                     {
                         insert_player(delayedActions.at(index).insert.player,delayedActions.at(index).insert.mapId,delayedActions.at(index).insert.x,delayedActions.at(index).insert.y,delayedActions.at(index).insert.direction);
