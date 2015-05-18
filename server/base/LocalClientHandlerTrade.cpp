@@ -185,7 +185,7 @@ void Client::tradeAddTradeCash(const quint64 &cash)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x01;
     out << cash;
-    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData);
+    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
 }
 
 void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
@@ -226,7 +226,7 @@ void Client::tradeAddTradeObject(const quint16 &item,const quint32 &quantity)
     out << (quint8)0x02;
     out << item;
     out << quantity;
-    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData);
+    otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
 }
 
 void Client::tradeAddTradeMonster(const quint32 &monsterId)
@@ -301,7 +301,7 @@ void Client::tradeAddTradeMonster(const quint32 &monsterId)
                 out << monster.skills.at(sub_index).level;
                 sub_index++;
             }
-            otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData);
+            otherPlayerTrade->sendFullPacket(0xD0,0x04,outputData.constData(),outputData.size());
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
@@ -377,6 +377,7 @@ void Client::internalTradeAccepted(const bool &send)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << otherPlayerTrade->public_and_private_informations.public_informations.skinId;
-        sendFullPacket(0xD0,0x05,otherPlayerTrade->rawPseudo+outputData);
+        const QByteArray newData(otherPlayerTrade->rawPseudo+outputData);
+        sendFullPacket(0xD0,0x05,newData.constData(),newData.size());
     }
 }

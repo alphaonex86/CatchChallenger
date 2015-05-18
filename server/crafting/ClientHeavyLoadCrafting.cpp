@@ -202,5 +202,5 @@ void Client::sendInventory()
         out << (quint32)j.value();
     }
     //send the items
-    sendFullPacket(0xD0,0x01,outputData);
+    sendFullPacket(0xD0,0x01,outputData.constData(),outputData.size());
 }

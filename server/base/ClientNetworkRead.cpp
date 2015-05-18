@@ -110,7 +110,7 @@ void Client::sendNewEvent(const QByteArray &data)
         errorOutput(QStringLiteral("Sorry, no free query number to send this query of sendNewEvent"));
         return;
     }
-    sendQuery(0x79,0x02,queryNumberList.first(),data);
+    sendQuery(0x79,0x02,queryNumberList.first(),data.constData(),data.size());
     queryNumberList.removeFirst();
 }
 
@@ -139,7 +139,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COO
     out << (COORD_TYPE)x;
     out << (COORD_TYPE)y;
     out << (quint8)orientation;
-    sendQuery(0x79,0x01,queryNumberList.first(),outputData);
+    sendQuery(0x79,0x01,queryNumberList.first(),outputData.constData(),outputData.size());
     queryNumberList.removeFirst();
 }
 
@@ -150,7 +150,7 @@ void Client::sendTradeRequest(const QByteArray &data)
         errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
         return;
     }
-    sendQuery(0x80,0x01,queryNumberList.first(),data);
+    sendQuery(0x80,0x01,queryNumberList.first(),data.constData(),data.size());
     queryNumberList.removeFirst();
 }
 
@@ -161,7 +161,7 @@ void Client::sendBattleRequest(const QByteArray &data)
         errorOutput(QStringLiteral("Sorry, no free query number to send this query of trade"));
         return;
     }
-    sendQuery(0x90,0x01,queryNumberList.first(),data);
+    sendQuery(0x90,0x01,queryNumberList.first(),data.constData(),data.size());
     queryNumberList.removeFirst();
 }
 

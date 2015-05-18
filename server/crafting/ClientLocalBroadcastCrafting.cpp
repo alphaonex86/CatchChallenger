@@ -105,7 +105,7 @@ void Client::plantSeed(const quint8 &query_id,const quint8 &plant_id)
         {
             QByteArray data;
             data[0]=0x02;
-            postReply(query_id,data);
+            postReply(query_id,data.constData(),data.size());
             return;
         }
         index++;
@@ -147,7 +147,7 @@ void Client::seedValidated()
                 addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
                 QByteArray data;
                 data[0]=0x02;
-                postReply(plant_list_in_waiting.first().query_id,data);
+                postReply(plant_list_in_waiting.first().query_id,data.constData(),data.size());
                 plant_list_in_waiting.removeFirst();
                 return;
             }
@@ -157,7 +157,7 @@ void Client::seedValidated()
     //is ok
     QByteArray data;
     data[0]=0x01;
-    postReply(plant_list_in_waiting.first().query_id,data);
+    postReply(plant_list_in_waiting.first().query_id,data.constData(),data.size());
     quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     MapServerCrafting::PlantOnMap plantOnMap;
     if(GlobalServerData::serverPrivateVariables.plantUnusedId.isEmpty())
@@ -276,7 +276,7 @@ void Client::sendNearPlant()
         #endif
         index++;
     }
-    sendPacket(0xD1,outputData);
+    sendPacket(0xD1,outputData.constData(),outputData.size());
 }
 
 void Client::removeNearPlant()
@@ -309,7 +309,7 @@ void Client::removeNearPlant()
         #endif
         index++;
     }
-    sendPacket(0xD2,outputData);
+    sendPacket(0xD2,outputData.constData(),outputData.size());
 }
 
 void Client::collectPlant(const quint8 &query_id)
@@ -406,7 +406,7 @@ void Client::collectPlant(const quint8 &query_id)
             {
                 QByteArray data;
                 data[0]=Plant_collect_impossible;
-                postReply(query_id,data);
+                postReply(query_id,data.constData(),data.size());
                 return;
             }
             //check if owned
@@ -460,7 +460,7 @@ void Client::collectPlant(const quint8 &query_id)
 
                 QByteArray data;
                 data[0]=Plant_collect_correctly_collected;
-                postReply(query_id,data);
+                postReply(query_id,data.constData(),data.size());
                 addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
 
                 GlobalServerData::serverPrivateVariables.plantUnusedId << plant.id;
@@ -471,7 +471,7 @@ void Client::collectPlant(const quint8 &query_id)
             {
                 QByteArray data;
                 data[0]=Plant_collect_owned_by_another_player;
-                postReply(query_id,data);
+                postReply(query_id,data.constData(),data.size());
                 return;
             }
         }
@@ -479,5 +479,5 @@ void Client::collectPlant(const quint8 &query_id)
     }
     QByteArray data;
     data[0]=Plant_collect_empty_dirt;
-    postReply(query_id,data);
+    postReply(query_id,data.constData(),data.size());
 }

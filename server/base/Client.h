@@ -63,8 +63,10 @@ public:
     static void startTheCityCapture();
     static void setEvent(const quint8 &event, const quint8 &new_value);
 
-    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data=NULL,const unsigned int &size=0);
-    void sendPacket(const quint8 &mainIdent,const char * const data=NULL,const unsigned int &size=0);
+    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data,const unsigned int &size);
+    void sendPacket(const quint8 &mainIdent,const char * const data,const unsigned int &size);
+    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent);
+    void sendPacket(const quint8 &mainIdent);
     void sendRawSmallPacket(const char * const data,const unsigned int &size);
 
     static QList<int> generalChatDrop;
@@ -601,8 +603,10 @@ private:
     quint32 getClanId() const;
     bool haveAClan() const;
 
-    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data=NULL,const unsigned int &size=0);
-    void postReply(const quint8 &queryNumber,const char * const data=NULL,const unsigned int &size=0);
+    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber);
+    void postReply(const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void postReply(const quint8 &queryNumber);
 
     void insertClientOnMap(CommonMap *map);
     void removeClientOnMap(CommonMap *map,const bool &withDestroy=false);

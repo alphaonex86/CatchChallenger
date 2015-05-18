@@ -738,7 +738,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
         }
     }
 
-    sendPacket(0xC0,purgeBuffer_outputData);
+    sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
@@ -789,7 +789,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
     }
     to_send_move.clear();
 
-    sendPacket(0xC7,purgeBuffer_outputData);
+    sendPacket(0xC7,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
@@ -828,7 +828,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
     }
     to_send_remove.clear();
 
-    sendPacket(0xC8,purgeBuffer_outputData);
+    sendPacket(0xC8,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
 }
 
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
@@ -875,7 +875,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
     }
     to_send_reinsert.clear();
 
-    sendPacket(0xC5,purgeBuffer_outputData);
+    sendPacket(0xC5,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
 }
 
 bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::singleMove(const Direction &direction)
