@@ -43,7 +43,7 @@ public:
     CatchChallenger::Map_client * getMapObject();
 
     //the datapack
-    void setDatapackPath(const QString &path);
+    void setDatapackPath(const QString &path, const QString &mainDatapackCode);
     virtual void datapackParsed();
 
     void setInformations(QHash<quint16,quint32> *items, QHash<quint16, CatchChallenger::PlayerQuest> *quests, QList<quint8> *events, QList<quint8> *itemOnMap);
@@ -52,7 +52,8 @@ protected:
     //datapack
     bool mHaveTheDatapack;
     QString datapackPath;
-    QString datapackMapPath;
+    QString datapackMapPathBase;
+    QString datapackMapPathSpec;
     //player
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
@@ -97,7 +98,8 @@ protected:
     QList<quint8> *itemOnMap;
 protected:
     static QString text_DATAPACK_BASE_PATH_SKIN;
-    static QString text_DATAPACK_BASE_PATH_MAP;
+    static QString text_DATAPACK_BASE_PATH_MAPBASE;
+    static QString text_DATAPACK_BASE_PATH_MAPSPEC;
     static QString text_slashtrainerpng;
     static QString text_slash;
     static QString text_antislash;

@@ -130,7 +130,7 @@ public:
 protected:
     void run();
 public slots:
-    void parseDatapack(const QString &datapackPath);
+    void parseDatapack(const QString &datapackPath,const QString &mainDatapackCode);
 signals:
     void datapackParsed();
     void datapackChecksumError();
@@ -216,7 +216,8 @@ protected:
     static const QString text_object;
     static const QString text_objectgroup;
     static const QString text_Object;
-    static const QString text_DATAPACK_BASE_PATH_MAP;
+    static const QString text_DATAPACK_BASE_PATH_MAPBASE;
+    static QString text_DATAPACK_BASE_PATH_MAPSPEC;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

@@ -51,7 +51,7 @@ NewProfile::~NewProfile()
 
 void NewProfile::loadProfileText()
 {
-    const QString &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYER+"start.xml";
+    const QString &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
     QList<QDomElement> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(datapackPath,xmlFile,CatchChallenger::CommonDatapack::commonDatapack.items.item,CatchChallenger::CommonDatapack::commonDatapack.monsters,CatchChallenger::CommonDatapack::commonDatapack.reputation).first;
     int index=0;
     while(index<xmlList.size())
