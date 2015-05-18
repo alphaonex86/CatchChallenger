@@ -84,7 +84,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         int index=0;
         while(index<clients.size())
         {
-            clients.at(index)->sendPacket(0xC0,purgeBuffer_outputData);
+            clients.at(index)->sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
             index++;
         }
         send_reinsert_all=true;
@@ -179,7 +179,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     else
                     {
-                        client->sendPacket(0xC0,purgeBuffer_outputData);
+                        client->sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
                         clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=client;
                         clientsToSendDataSizeOldClients++;
                     }
@@ -242,7 +242,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         }
                         ++index_subindex;
                     }
-                    clients.at(index)->sendPacket(0xC0,purgeBuffer_outputData);
+                    clients.at(index)->sendPacket(0xC0,purgeBuffer_outputData.constData(),purgeBuffer_outputData.size());
                 }
                 index++;
             }

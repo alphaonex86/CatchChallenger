@@ -352,7 +352,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         //send the network reply
         QByteArray outputData;
         outputData[0x00]=0x01;
-        postReply(askLoginParam->query_id,outputData);
+        postReply(askLoginParam->query_id,outputData.constData(),outputData.size());
         is_logging_in_progess=false;
     }
     else
@@ -750,7 +750,8 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
     #endif
     tempRawData[0]=validServerCount;
 
-    postReply(query_id,previousData+outputData+QByteArray(tempRawData,tempRawDataSize));
+    const QByteArray newData(previousData+outputData+QByteArray(tempRawData,tempRawDataSize));
+    postReply(query_id,newData.constData(),newData.size());
 }
 
 void Client::deleteCharacterNow(const quint32 &characterId)
@@ -935,7 +936,7 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         out << (quint32)0x00000000;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(number_of_character>=CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -998,7 +999,7 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
         out << (quint32)0x00000000;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         delete addCharacterParam;
         return;
     }
@@ -1055,7 +1056,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x01;
         out << (quint32)0x00000000;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
@@ -1167,7 +1168,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x00;
     out << characterId;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
@@ -1197,7 +1198,7 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         delete removeCharacterParam;
         return;
     }
@@ -1273,7 +1274,7 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x02;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 //load linked data (like item, quests, ...)
@@ -1487,7 +1488,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint32)datapckFileNumber;
         out << (quint32)datapckFileSize;
-        sendFullPacket(0xC2,0x000C,outputData);
+        sendFullPacket(0xC2,0x000C,outputData.constData(),outputData.size());
     }
     if(fileToSendList.isEmpty())
     {
@@ -1550,7 +1551,7 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
                 out.device()->seek(out.device()->size());
                 index++;
             }
-            sendFullPacket(0xC2,0x000D,outputData);
+            sendFullPacket(0xC2,0x000D,outputData.constData(),outputData.size());
         }
         purgeDatapackListReply(query_id);
     }
@@ -1669,7 +1670,7 @@ void Client::purgeDatapackListReply(const quint8 &query_id)
     }
     if(tempDatapackListReplyArray.isEmpty())
         tempDatapackListReplyArray[0x00]=0x00;
-    postReply(query_id,tempDatapackListReplyArray);
+    postReply(query_id,tempDatapackListReplyArray.constData(),tempDatapackListReplyArray.size());
     tempDatapackListReplyArray.clear();
 }
 
@@ -1681,7 +1682,8 @@ void Client::sendFileContent()
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)BaseServerMasterSendDatapack::rawFilesBufferCount;
-        sendFullPacket(0xC2,0x03,outputData+BaseServerMasterSendDatapack::rawFilesBuffer);
+        const QByteArray newData(outputData+BaseServerMasterSendDatapack::rawFilesBuffer);
+        sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
         BaseServerMasterSendDatapack::rawFilesBuffer.clear();
         BaseServerMasterSendDatapack::rawFilesBufferCount=0;
     }
@@ -1695,7 +1697,8 @@ void Client::sendCompressedFileContent()
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)BaseServerMasterSendDatapack::compressedFilesBufferCount;
-        sendFullPacket(0xC2,0x04,outputData+BaseServerMasterSendDatapack::compressedFilesBuffer);
+        const QByteArray newData(outputData+BaseServerMasterSendDatapack::compressedFilesBuffer);
+        sendFullPacket(0xC2,0x04,newData.constData(),newData.size());
         BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
         BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
     }
@@ -1741,7 +1744,8 @@ bool Client::sendFile(const QString &fileName)
             {
                 QByteArray outputData2;
                 outputData2[0x00]=0x01;
-                sendFullPacket(0xC2,0x03,outputData2+fileNameRaw+outputData+content);
+                const QByteArray newData(outputData2+fileNameRaw+outputData+content);
+                sendFullPacket(0xC2,0x03,newData.constData(),newData.size());
             }
             else
             {

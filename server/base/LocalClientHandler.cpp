@@ -220,7 +220,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     }
     out << public_and_private_informations.public_informations.skinId;
 
-    sendPacket(0xC0,outputData);
+    sendPacket(0xC0,outputData.constData(),outputData.size());
 
     //load the first time the random number list
     generateRandomNumber();
@@ -500,7 +500,7 @@ void Client::addObjectAndSend(const quint16 &item,const quint32 &quantity)
     out << (quint16)1;
     out << (quint16)item;
     out << (quint32)quantity;
-    sendFullPacket(0xD0,0x02,outputData);
+    sendFullPacket(0xD0,0x02,outputData.constData(),outputData.size());
 }
 
 void Client::addObject(const quint16 &item,const quint32 &quantity)
@@ -638,7 +638,7 @@ void Client::sendRemoveObject(const quint16 &item,const quint32 &quantity)
     out << (quint32)1;
     out << (quint16)item;
     out << (quint32)quantity;
-    sendFullPacket(0xD0,0x03,outputData);
+    sendFullPacket(0xD0,0x03,outputData.constData(),outputData.size());
 }
 
 quint32 Client::objectQuantity(const quint16 &item)
@@ -1350,7 +1350,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)ObjectUsage_correctlyUsed;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         //add into db
         dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_recipe
                      .arg(character_id)
@@ -1380,7 +1380,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
             out << (quint32)maxMonsterId;
         else
             out << (quint32)0x00000000;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
     }
     //use repel into fight
     else if(CommonDatapack::commonDatapack.items.repel.contains(itemId))
@@ -1391,7 +1391,7 @@ void Client::useObject(const quint8 &query_id,const quint16 &itemId)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)ObjectUsage_correctlyUsed;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
     }
     else
     {
@@ -1544,7 +1544,8 @@ void Client::getShopList(const quint8 &query_id,const quint16 &shopId)
         index++;
     }
     out << (quint16)objectCount;
-    postReply(query_id,outputData+outputData2);
+    const QByteArray outputNew(outputData+outputData2);
+    postReply(query_id,outputNew.constData(),outputNew.size());
 }
 
 void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
@@ -1643,20 +1644,20 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
     if(priceIndex==-1)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     const quint32 &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.shops.value(shopId).prices.at(priceIndex);
     if(realprice==0)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(realprice>price)
     {
         out << (quint8)BuyStat_PriceHaveChanged;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(realprice<price)
@@ -1674,7 +1675,7 @@ void Client::buyObject(const quint8 &query_id,const quint16 &shopId,const quint1
         return;
     }
     addObject(objectId,quantity);
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
@@ -1788,7 +1789,7 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
     if(realPrice<price)
     {
         out << (quint8)SoldStat_PriceHaveChanged;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(realPrice>price)
@@ -1800,7 +1801,7 @@ void Client::sellObject(const quint8 &query_id,const quint16 &shopId,const quint
         out << (quint8)SoldStat_Done;
     removeObject(objectId,quantity);
     addCash(realPrice*quantity);
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
@@ -1947,7 +1948,7 @@ void Client::getFactoryList(const quint8 &query_id, const quint16 &factoryId)
             index++;
         }
     }
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
@@ -2018,13 +2019,13 @@ void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,c
     if(quantity>quantityInStock)
     {
         out << (quint8)0x03;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(actualPrice>price)
     {
         out << (quint8)0x04;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     if(actualPrice==price)
@@ -2046,7 +2047,7 @@ void Client::buyFactoryProduct(const quint8 &query_id,const quint16 &factoryId,c
     saveIndustryStatus(factoryId,industryStatus,industry);
     addObject(objectId,quantity);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId,const quint16 &objectId,const quint32 &quantity,const quint32 &price)
@@ -2121,14 +2122,14 @@ void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId
                 if((resource.quantity*industry.cycletobefull-industryStatus.resources.value(resource.item))<quantity)
                 {
                     out << (quint8)0x03;
-                    postReply(query_id,outputData);
+                    postReply(query_id,outputData.constData(),outputData.size());
                     return;
                 }
                 resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources.value(resource.item),resource,industry);
                 if(price>resourcePrice)
                 {
                     out << (quint8)0x04;
-                    postReply(query_id,outputData);
+                    postReply(query_id,outputData.constData(),outputData.size());
                     return;
                 }
                 if((industryStatus.resources.value(resource.item)+quantity)==resource.quantity)
@@ -2159,7 +2160,7 @@ void Client::sellFactoryResource(const quint8 &query_id,const quint16 &factoryId
     addCash(resourcePrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.value(factoryId).rewards.reputation);
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
@@ -2484,7 +2485,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
                 QDataStream out(&outputData, QIODevice::WriteOnly);
                 out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                 out << (quint8)0x02;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 delete clanActionParam;
                 return;
             }
@@ -2519,7 +2520,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)0x01;
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             //update the db
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan.arg(character_id));
         }
@@ -2548,7 +2549,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)0x01;
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             //update the db
             int index=0;
             while(index<players.size())
@@ -2615,7 +2616,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
                     normalOutput(QStringLiteral("Clan invite: Player %1 is already into a clan").arg(text));
                 out << (quint8)0x02;
             }
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
         }
         break;
         //eject
@@ -2655,7 +2656,7 @@ void Client::clanAction(const quint8 &query_id,const quint8 &action,const QStrin
                     normalOutput(QStringLiteral("Clan invite: Player %1 is not into your clan").arg(text));
                 out << (quint8)0x02;
             }
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             if(!isFound)
             {
                 dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_clan_by_pseudo.arg(text).arg(public_and_private_informations.clan));
@@ -2709,7 +2710,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint8)0x02;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     GlobalServerData::serverPrivateVariables.maxClanId++;
@@ -2723,7 +2724,7 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x01;
     out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
     //add into db
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_clan
              .arg(GlobalServerData::serverPrivateVariables.maxClanId)
@@ -2759,7 +2760,7 @@ void Client::sendClanInfo()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << clan->name;
-    sendFullPacket(0xC2,0x000A,outputData);
+    sendFullPacket(0xC2,0x0A,outputData.constData(),outputData.size());
 }
 
 void Client::dissolvedClan()
@@ -2769,7 +2770,7 @@ void Client::dissolvedClan()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    sendFullPacket(0xC2,0x09,QByteArray());
+    sendFullPacket(0xC2,0x09);
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
 
@@ -2785,7 +2786,7 @@ bool Client::inviteToClan(const quint32 &clanId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint32)clanId;
     out << clan->name;
-    sendFullPacket(0xC2,0x000B,outputData);
+    sendFullPacket(0xC2,0x000B,outputData.constData(),outputData.size());
     return false;
 }
 
@@ -2955,7 +2956,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 QDataStream out(&outputData, QIODevice::WriteOnly);
                 out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
                 out << (quint8)0x01;
-                sendFullPacket(0xF0,0x01,outputData);
+                sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
                 return;
             }
         }
@@ -2971,7 +2972,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
             out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
             out << (quint8)0x02;
             out << clan->captureCityInProgress;
-            sendFullPacket(0xF0,0x01,outputData);
+            sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
             return;
         }
         if(captureCity.count(zoneName)>0)
@@ -3265,7 +3266,7 @@ void Client::cityCaptureBattle(const quint16 &number_of_player,const quint16 &nu
     out << (quint8)0x04;
     out << (quint16)number_of_player;
     out << (quint16)number_of_clan;
-    sendFullPacket(0xF0,0x01,outputData);
+    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
 void Client::cityCaptureBotFight(const quint16 &number_of_player,const quint16 &number_of_clan,const quint32 &fightId)
@@ -3277,7 +3278,7 @@ void Client::cityCaptureBotFight(const quint16 &number_of_player,const quint16 &
     out << (quint16)number_of_player;
     out << (quint16)number_of_clan;
     out << (quint32)fightId;
-    sendFullPacket(0xF0,0x01,outputData);
+    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
 void Client::cityCaptureInWait(const quint16 &number_of_player,const quint16 &number_of_clan)
@@ -3288,7 +3289,7 @@ void Client::cityCaptureInWait(const quint16 &number_of_player,const quint16 &nu
     out << (quint8)0x05;
     out << (quint16)number_of_player;
     out << (quint16)number_of_clan;
-    sendFullPacket(0xF0,0x01,outputData);
+    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
 void Client::cityCaptureWin()
@@ -3297,7 +3298,7 @@ void Client::cityCaptureWin()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x06;
-    sendFullPacket(0xF0,0x01,outputData);
+    sendFullPacket(0xF0,0x01,outputData.constData(),outputData.size());
 }
 
 void Client::previousCityCaptureNotFinished()
@@ -3306,7 +3307,7 @@ void Client::previousCityCaptureNotFinished()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x02;
-    sendFullPacket(0xF0,0x03,outputData);
+    sendFullPacket(0xF0,0x03,outputData.constData(),outputData.size());
 }
 
 void Client::moveMonster(const bool &up,const quint8 &number)
@@ -3402,7 +3403,7 @@ void Client::getMarketList(const quint32 &query_id)
         index++;
     }
 
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity)
@@ -3430,14 +3431,14 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
             if(marketItem.quantity<quantity)
             {
                 out << (quint8)0x02;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             //check if have the price
             if((quantity*marketItem.cash)>public_and_private_informations.cash)
             {
                 out << (quint8)0x03;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             //apply the buy
@@ -3467,13 +3468,13 @@ void Client::buyMarketObject(const quint32 &query_id,const quint32 &marketObject
                          );
             addObject(marketItem.item,quantity);
             out << (quint8)0x01;
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             return;
         }
         index++;
     }
     out << (quint8)0x03;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
@@ -3489,7 +3490,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
     if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
         out << (quint8)0x02;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     //search into the market
@@ -3503,7 +3504,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
             if(marketPlayerMonster.cash>public_and_private_informations.cash)
             {
                 out << (quint8)0x03;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             //apply the buy
@@ -3523,13 +3524,13 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
                                .arg(marketPlayerMonster.monster.id)
                                );
             out << (quint8)0x01;
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             return;
         }
         index++;
     }
     out << (quint8)0x03;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
@@ -3550,7 +3551,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     if(objectQuantity(objectId)<quantity)
     {
         out << (quint8)0x02;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
     //search into the market
@@ -3564,7 +3565,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
             GlobalServerData::serverPrivateVariables.marketItemList[index].cash=price;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
             out << (quint8)0x01;
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             dbQueryWriteServer(PreparedDBQueryServer::db_query_update_item_market_and_price
                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
                 .arg(price)
@@ -3578,7 +3579,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     if(marketObjectIdList.isEmpty())
     {
         out << (quint8)0x02;
-        postReply(query_id,outputData);
+        postReply(query_id,outputData.constData(),outputData.size());
         normalOutput(QStringLiteral("No more id into marketObjectIdList"));
         return;
     }
@@ -3599,7 +3600,7 @@ void Client::putMarketObject(const quint32 &query_id,const quint32 &objectId,con
     marketObjectIdList.removeFirst();
     GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
     out << (quint8)0x01;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price)
@@ -3622,7 +3623,7 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
             {
                 normalOutput(QStringLiteral("You can't put in market this msonter because you will be without monster to fight"));
                 out << (quint8)0x02;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             MarketPlayerMonster marketPlayerMonster;
@@ -3644,13 +3645,13 @@ void Client::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,c
                 index++;
             }
             out << (quint8)0x01;
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             return;
         }
         index++;
     }
     out << (quint8)0x02;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::recoverMarketCash(const quint32 &query_id)
@@ -3670,7 +3671,7 @@ void Client::recoverMarketCash(const quint32 &query_id)
                  .arg(public_and_private_informations.cash)
                  .arg(character_id)
                  );
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity)
@@ -3697,13 +3698,13 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
             if(marketItem.player!=character_id)
             {
                 out << (quint8)0x02;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             if(marketItem.quantity<quantity)
             {
                 out << (quint8)0x02;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             out << (quint8)0x01;
@@ -3727,13 +3728,13 @@ void Client::withdrawMarketObject(const quint32 &query_id,const quint32 &objectI
                              .arg(character_id)
                              );
             addObject(objectId,quantity);
-            postReply(query_id,outputData);
+            postReply(query_id,outputData.constData(),outputData.size());
             return;
         }
         index++;
     }
     out << (quint8)0x02;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId)
@@ -3755,13 +3756,13 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
             if(marketPlayerMonster.player!=character_id)
             {
                 out << (quint8)0x02;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             if(public_and_private_informations.playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
             {
                 out << (quint8)0x02;
-                postReply(query_id,outputData);
+                postReply(query_id,outputData.constData(),outputData.size());
                 return;
             }
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
@@ -3770,13 +3771,14 @@ void Client::withdrawMarketMonster(const quint32 &query_id,const quint32 &monste
             dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_price.arg(marketPlayerMonster.monster.id));
             out << (quint8)0x01;
             out << (quint8)0x02;
-            postReply(query_id,outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.last()));
+            const QByteArray newData(outputData+FacilityLib::privateMonsterToBinary(public_and_private_informations.playerMonster.last()));
+            postReply(query_id,newData.constData(),newData.size());
             return;
         }
         index++;
     }
     out << (quint8)0x02;
-    postReply(query_id,outputData);
+    postReply(query_id,outputData.constData(),outputData.size());
 }
 
 bool Client::haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const
