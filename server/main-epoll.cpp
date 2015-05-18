@@ -501,9 +501,6 @@ int main(int argc, char *argv[])
     }
     server->initialize_the_database_prepared_query();
 
-    if(!server->tryListen())
-        return EPOLLERR;
-
     EpollUnixSocketServer unixServer;
     if(!unixServer.tryListen())
     {

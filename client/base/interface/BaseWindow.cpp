@@ -65,7 +65,7 @@ BaseWindow::BaseWindow() :
 
     MapController::mapController=new MapController(true,false,true,false);
     if(CatchChallenger::Api_client_real::client!=NULL)
-        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
+        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
     animationWidget=NULL;

@@ -164,7 +164,7 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     if(GlobalServerData::serverSettings.anonymous)
         normalOutput(QStringLiteral("Charater id is logged: %1").arg(characterId));
     else
-        normalOutput(QStringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
+        normalOutput(QStringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db_common->value(1)));
     #endif
     const quint32 &time_to_delete=QString(GlobalServerData::serverPrivateVariables.db_common->value(8)).toUInt(&ok);
     if(!ok || time_to_delete>0)
@@ -401,13 +401,6 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
         case MapVisibilityAlgorithmSelection_None:
         break;
     }
-
-    #ifndef SERVERBENCHMARK
-    if(GlobalServerData::serverSettings.anonymous)
-        normalOutput(QStringLiteral("Charater id is logged: %1").arg(characterId));
-    else
-        normalOutput(QStringLiteral("Charater is logged: %1").arg(GlobalServerData::serverPrivateVariables.db->value(1)));
-    #endif
 
     market_cash=QString(GlobalServerData::serverPrivateVariables.db_server->value(12)).toULongLong(&ok);
     if(!ok)

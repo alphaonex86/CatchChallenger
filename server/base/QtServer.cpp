@@ -14,12 +14,14 @@ QtServer::QtServer()
     qRegisterMetaType<QSqlDatabase>("QSqlDatabase");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
     connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,this,&QtServer::send_insert_move_remove,Qt::QueuedConnection);
-    if(GlobalServerData::serverSettings.database.secondToPositionSync>0)
+    if(GlobalServerData::serverSettings.secondToPositionSync>0)
         connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,this,&QtServer::positionSync,Qt::QueuedConnection);
     connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection);
     connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection);
     connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server);
-    GlobalServerData::serverPrivateVariables.db=new QtDatabase();
+    GlobalServerData::serverPrivateVariables.db_login=new QtDatabase();
+    GlobalServerData::serverPrivateVariables.db_common=new QtDatabase();
+    GlobalServerData::serverPrivateVariables.db_server=new QtDatabase();
 }
 
 QtServer::~QtServer()
@@ -32,7 +34,9 @@ QtServer::~QtServer()
         delete client;
     }
     client_list.clear();
-    delete GlobalServerData::serverPrivateVariables.db;
+    delete GlobalServerData::serverPrivateVariables.db_server;
+    delete GlobalServerData::serverPrivateVariables.db_common;
+    delete GlobalServerData::serverPrivateVariables.db_login;
 }
 
 void QtServer::preload_the_city_capture()
@@ -149,12 +153,26 @@ bool QtServer::check_if_now_stopped()
         return false;
 
     DebugClass::debugConsole("Fully stopped");
-    if(GlobalServerData::serverPrivateVariables.db->isConnected())
+    if(GlobalServerData::serverPrivateVariables.db_login->isConnected())
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db->databaseType()))
-                                 .arg(GlobalServerData::serverSettings.database.host));
-        GlobalServerData::serverPrivateVariables.db->syncDisconnect();
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.database_login.host));
+        GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
+    }
+    if(GlobalServerData::serverPrivateVariables.db_common->isConnected())
+    {
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.database_common.host));
+        GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+    }
+    if(GlobalServerData::serverPrivateVariables.db_server->isConnected())
+    {
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.database_server.host));
+        GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     }
     stat=Down;
     is_started(false);

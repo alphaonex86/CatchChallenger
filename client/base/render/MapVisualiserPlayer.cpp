@@ -13,7 +13,8 @@
 #include <QMessageBox>
 
 QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
-QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAP=QLatin1Literal(DATAPACK_BASE_PATH_MAP);
+QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPBASE=QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE);
+QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPSPEC=QLatin1Literal(DATAPACK_BASE_PATH_MAPSPEC);
 QString MapVisualiserPlayer::text_slashtrainerpng=QLatin1Literal("/trainer.png");
 QString MapVisualiserPlayer::text_slash=QLatin1Literal("/");
 QString MapVisualiserPlayer::text_antislash=QLatin1Literal("\\");
@@ -1401,7 +1402,7 @@ CatchChallenger::Map_client * MapVisualiserPlayer::getMapObject()
 }
 
 //the datapack
-void MapVisualiserPlayer::setDatapackPath(const QString &path)
+void MapVisualiserPlayer::setDatapackPath(const QString &path,const QString &mainDatapackCode)
 {
     #ifdef DEBUG_CLIENT_LOAD_ORDER
     qDebug() << QStringLiteral("MapControllerMP::setDatapackPath()");
@@ -1411,9 +1412,12 @@ void MapVisualiserPlayer::setDatapackPath(const QString &path)
         datapackPath=path;
     else
         datapackPath=path+MapVisualiserPlayer::text_slash;
-    datapackMapPath=QFileInfo(datapackPath+MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAP).absoluteFilePath();
-    if(!datapackMapPath.endsWith(MapVisualiserPlayer::text_slash) && !datapackMapPath.endsWith(MapVisualiserPlayer::text_antislash))
-        datapackMapPath+=MapVisualiserPlayer::text_slash;
+    datapackMapPathBase=QFileInfo(datapackPath+MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPBASE).absoluteFilePath();
+    if(!datapackMapPathBase.endsWith(MapVisualiserPlayer::text_slash) && !datapackMapPathBase.endsWith(MapVisualiserPlayer::text_antislash))
+        datapackMapPathBase+=MapVisualiserPlayer::text_slash;
+    datapackMapPathSpec=QFileInfo(datapackPath+MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPSPEC.arg(mainDatapackCode)).absoluteFilePath();
+    if(!datapackMapPathSpec.endsWith(MapVisualiserPlayer::text_slash) && !datapackMapPathSpec.endsWith(MapVisualiserPlayer::text_antislash))
+        datapackMapPathSpec+=MapVisualiserPlayer::text_slash;
     mLastLocation.clear();
 }
 

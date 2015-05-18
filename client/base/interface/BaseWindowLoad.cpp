@@ -269,7 +269,7 @@ void BaseWindow::haveTheDatapack()
     haveDatapack=true;
 
     if(CatchChallenger::Api_client_real::client!=NULL)
-        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPath());
+        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
 }
 
 void BaseWindow::datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize)
