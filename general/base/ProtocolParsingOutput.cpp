@@ -750,9 +750,8 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
         const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
-    const quint16 &tempSubCodeType=htole16(subCodeType);
-    memcpy(buffer+1,&tempSubCodeType,sizeof(subCodeType));
-    buffer[3]=queryNumber;
+    buffer[1]=subCodeType;
+    buffer[2]=queryNumber;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
@@ -808,14 +807,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                                return 4+newSize+compressedData.size();
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
                             }
                             else
-                                return 4+newSize;
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -834,14 +833,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+4,size);
+            const int &newSize=encodeSize(buffer+3,size);
             if(size>0)
             {
-                memcpy(buffer+4+newSize,data,size);
-                return 4+newSize+size;
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
             }
             else
-                return 4+newSize;
+                return 3+newSize;
         }
         else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
         {
@@ -874,14 +873,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                                return 4+newSize+compressedData.size();
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
                             }
                             else
-                                return 4+newSize;
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -900,14 +899,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+4,size);
+            const int &newSize=encodeSize(buffer+3,size);
             if(size>0)
             {
-                memcpy(buffer+4+newSize,data,size);
-                return 4+newSize+size;
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
             }
             else
-                return 4+newSize;
+                return 3+newSize;
         }
         else
         {
@@ -933,11 +932,11 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
             #endif
             if(size>0)
             {
-                memcpy(buffer+4,data,size);
-                return 4+size;
+                memcpy(buffer+3,data,size);
+                return 3+size;
             }
             else
-                return 4;
+                return 3;
         }
     }
     else
@@ -994,14 +993,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                                return 4+newSize+compressedData.size();
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
                             }
                             else
-                                return 4+newSize;
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -1020,14 +1019,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+4,size);
+            const int &newSize=encodeSize(buffer+3,size);
             if(size>0)
             {
-                memcpy(buffer+4+newSize,data,size);
-                return 4+newSize+size;
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
             }
             else
-                return 4+newSize;
+                return 3+newSize;
         }
         else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
         {
@@ -1060,14 +1059,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+4,compressedData.size());
+                            const int &newSize=encodeSize(buffer+3,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+4+newSize,compressedData.constData(),compressedData.size());
-                                return 4+newSize+compressedData.size();
+                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
+                                return 3+newSize+compressedData.size();
                             }
                             else
-                                return 4+newSize;
+                                return 3+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -1086,14 +1085,14 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+4,size);
+            const int &newSize=encodeSize(buffer+3,size);
             if(size>0)
             {
-                memcpy(buffer+4+newSize,data,size);
-                return 4+newSize+size;
+                memcpy(buffer+3+newSize,data,size);
+                return 3+newSize+size;
             }
             else
-                return 4+newSize;
+                return 3+newSize;
         }
         else
         {
@@ -1119,11 +1118,11 @@ int ProtocolParsingBase::computeFullOutcommingQuery(
             #endif
             if(size>0)
             {
-                memcpy(buffer+4,data,size);
-                return 4+size;
+                memcpy(buffer+3,data,size);
+                return 3+size;
             }
             else
-                return 4;
+                return 3;
         }
     }
 }
@@ -1136,8 +1135,7 @@ int ProtocolParsingBase::computeFullOutcommingData(
         const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const int &size)
 {
     buffer[0]=mainCodeType;
-    const quint16 &tempSubCodeType=htole16(subCodeType);
-    memcpy(buffer+1,&tempSubCodeType,sizeof(subCodeType));
+    buffer[1]=subCodeType;
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
@@ -1193,14 +1191,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
                             }
                             else
-                                return 3+newSize;
+                                return 2+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -1219,14 +1217,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+3,size);
+            const int &newSize=encodeSize(buffer+2,size);
             if(size>0)
             {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
             }
             else
-                return 3+newSize+size;
+                return 2+newSize+size;
         }
         else if(!sizeMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
         {
@@ -1259,14 +1257,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
                             }
                             else
-                                return 3+newSize;
+                                return 2+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -1285,14 +1283,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+3,size);
+            const int &newSize=encodeSize(buffer+2,size);
             if(size>0)
             {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
             }
             else
-                return 3+newSize;
+                return 2+newSize;
         }
         else
         {
@@ -1318,11 +1316,11 @@ int ProtocolParsingBase::computeFullOutcommingData(
             #endif
             if(size>0)
             {
-                memcpy(buffer+3,data,size);
-                return 3+size;
+                memcpy(buffer+2,data,size);
+                return 2+size;
             }
             else
-                return 3;
+                return 2;
         }
     }
     else
@@ -1379,14 +1377,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
                             }
                             else
-                                return 3+newSize;
+                                return 2+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -1405,14 +1403,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+3,size);
+            const int &newSize=encodeSize(buffer+2,size);
             if(size>0)
             {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
             }
             else
-                return 3+newSize;
+                return 2+newSize;
         }
         else if(!sizeMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
         {
@@ -1445,14 +1443,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                                 return 0;
                             }
                             #endif
-                            const int &newSize=encodeSize(buffer+3,compressedData.size());
+                            const int &newSize=encodeSize(buffer+2,compressedData.size());
                             if(compressedData.size()>0)
                             {
-                                memcpy(buffer+3+newSize,compressedData.constData(),compressedData.size());
-                                return 3+newSize+compressedData.size();
+                                memcpy(buffer+2+newSize,compressedData.constData(),compressedData.size());
+                                return 2+newSize+compressedData.size();
                             }
                             else
-                                return 3+newSize;
+                                return 2+newSize;
                         }
                         break;
                         case CompressionType::None:
@@ -1471,14 +1469,14 @@ int ProtocolParsingBase::computeFullOutcommingData(
                 return 0;
             }
             #endif
-            const int &newSize=encodeSize(buffer+3,size);
+            const int &newSize=encodeSize(buffer+2,size);
             if(size>0)
             {
-                memcpy(buffer+3+newSize,data,size);
-                return 3+newSize+size;
+                memcpy(buffer+2+newSize,data,size);
+                return 2+newSize+size;
             }
             else
-                return 3+newSize;
+                return 2+newSize;
         }
         else
         {
@@ -1504,11 +1502,11 @@ int ProtocolParsingBase::computeFullOutcommingData(
             #endif
             if(size>0)
             {
-                memcpy(buffer+3,data,size);
-                return 3+size;
+                memcpy(buffer+2,data,size);
+                return 2+size;
             }
             else
-                return 3;
+                return 2;
         }
     }
 }
@@ -1556,13 +1554,7 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
                         #endif
             QStringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
             #endif
-            CompressionType compressionType;
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            if(isClient)
-                compressionType=compressionTypeClient;
-            else
-            #endif
-                compressionType=compressionTypeServer;
+            const CompressionType &compressionType=getCompressType();
             switch(compressionType)
             {
                 case CompressionType::Xz:
