@@ -473,3 +473,13 @@ ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
     delete protocolParsingCheck;
     #endif
 }
+
+ProtocolParsing::CompressionType ProtocolParsingInputOutput::getCompressType() const
+{
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    if(isClient)
+        return compressionTypeClient;
+    else
+    #endif
+        return compressionTypeServer;
+}

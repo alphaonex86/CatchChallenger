@@ -55,7 +55,12 @@ Api_client_real::~Api_client_real()
     }
 }
 
-void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
+{
+    return parseFullReplyData(mainCodeType,subCodeType,queryNumber,QByteArray(data,size));
+}
+
+void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     if(querySendTime.contains(queryNumber))
     {

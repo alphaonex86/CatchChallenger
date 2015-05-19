@@ -240,6 +240,7 @@ protected:
     #endif
     bool internalSendRawSmallPacket(const char * const data,const int &size);
     virtual void disconnectClient() = 0;
+    virtual ProtocolParsing::CompressionType getCompressType() const = 0;
 };
 
 class ProtocolParsingInputOutput : public ProtocolParsingBase
@@ -271,6 +272,7 @@ public:
     void closeSocket();
 protected:
     void parseIncommingData();
+    ProtocolParsing::CompressionType getCompressType() const;
     #ifdef EPOLLCATCHCHALLENGERSERVER
         #ifdef SERVERSSL
             EpollSslClient epollSocket;

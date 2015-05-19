@@ -52,7 +52,8 @@ public:
     void cleanDatapack(QString suffix);
     void setProxy(const QNetworkProxy &proxy);
 protected:
-    void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
 
     //general data
     void defineMaxPlayers(const quint16 &maxPlayers);
