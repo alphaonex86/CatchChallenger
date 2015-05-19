@@ -30,6 +30,8 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         void errorParsingLayer(const QString &error);
         void messageParsingLayer(const QString &message) const;
 
+        ProtocolParsing::CompressionType getCompressType() const; /// if client get server because it's check then mirror
+
         void disconnectClient();
 
         ssize_t read(char * data, const size_t &size);

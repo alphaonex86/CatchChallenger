@@ -69,7 +69,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             quint32 cursor=0;
             if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
             {
-                qDebug() << "Bug at data-sending";
+                qDebug() << "Bug at data-sending: " << QString(QByteArray(data,size).toHex());
                 abort();
             }
             if(!protocolParsingCheck->valid)
@@ -960,7 +960,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                 if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                     {
-                        switch(compressionTypeClient)
+                        switch(getCompressType())
                         {
                             case CompressionType::Xz:
                             {
@@ -1005,7 +1005,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                 if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                     {
-                        switch(compressionTypeServer)
+                        switch(getCompressType())
                         {
                             case CompressionType::Xz:
                             {
@@ -1077,7 +1077,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                         if(compressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionTypeClient)
+                            switch(getCompressType())
                             {
                                 case CompressionType::Xz:
                                 {
@@ -1122,7 +1122,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                         if(compressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionTypeServer)
+                            switch(getCompressType())
                             {
                                 case CompressionType::Xz:
                                 {
@@ -1179,7 +1179,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                     {
-                        switch(compressionTypeClient)
+                        switch(getCompressType())
                         {
                             case CompressionType::Xz:
                             {
@@ -1223,7 +1223,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                     if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
                     {
-                        switch(compressionTypeServer)
+                        switch(getCompressType())
                         {
                             case CompressionType::Xz:
                             {
@@ -1278,7 +1278,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                         if(replyComressionMultipleCodePacketServerToClient.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionTypeClient)
+                            switch(getCompressType())
                             {
                                 case CompressionType::Xz:
                                 {
@@ -1323,7 +1323,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                         if(replyComressionMultipleCodePacketClientToServer.value(mainCodeType).contains(subCodeType))
                         {
-                            switch(compressionTypeServer)
+                            switch(getCompressType())
                             {
                                 case CompressionType::Xz:
                                 {
