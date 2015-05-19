@@ -654,13 +654,6 @@ void Client::server_list_object()
 
 void Client::server_list_return(const quint8 &query_id, const QByteArray &previousData)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))
-    {
-        qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
-        abort();
-    }
-    #endif
     callbackRegistred.removeFirst();
     //send signals into the server
     #ifndef SERVERBENCHMARK
@@ -745,7 +738,7 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
     #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
     if(validServerCount==0)
     {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_select_server_time.arg(account_id).arg(QDateTime::currentDateTime().toTime_t()));
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_server_time.arg(account_id).arg(QDateTime::currentDateTime().toTime_t()));
     }
     #endif
     tempRawData[0]=validServerCount;
@@ -1770,6 +1763,11 @@ void Client::dbQueryWriteLogin(const QString &queryText)
         errorOutput(QStringLiteral("dbQueryWriteLogin() Query is empty, bug"));
         return;
     }
+    if(queryText.startsWith("SELECT"))
+    {
+            errorOutput(QStringLiteral("dbQueryWriteLogin() Query is SELECT but here is the write queue, bug"));
+            return;
+    }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     normalOutput(QStringLiteral("Do db_login write: ")+queryText);
@@ -1785,6 +1783,11 @@ void Client::dbQueryWriteCommon(const QString &queryText)
         errorOutput(QStringLiteral("dbQueryWriteCommon() Query is empty, bug"));
         return;
     }
+    if(queryText.startsWith("SELECT"))
+    {
+            errorOutput(QStringLiteral("dbQueryWriteCommon() Query is SELECT but here is the write queue, bug"));
+            return;
+    }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     normalOutput(QStringLiteral("Do db_common write: ")+queryText);
@@ -1799,6 +1802,11 @@ void Client::dbQueryWriteServer(const QString &queryText)
     {
         errorOutput(QStringLiteral("dbQueryWriteServer() Query is empty, bug"));
         return;
+    }
+    if(queryText.startsWith("SELECT"))
+    {
+            errorOutput(QStringLiteral("dbQueryWriteServer() Query is SELECT but here is the write queue, bug"));
+            return;
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL

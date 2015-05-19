@@ -4,7 +4,7 @@
 using namespace CatchChallenger;
 
 /* not use mainCodeWithoutSubCodeTypeServerToClient because the reply have unknow code */
-void EpollClientLoginSlave::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const char *data,const int &size)
+void EpollClientLoginSlave::sendFullPacket(const quint8 &mainCodeType,const quint8 &subCodeType,const char *data,const int &size)
 {
     if(!ProtocolParsingBase::packFullOutcommingData(mainCodeType,subCodeType,data,size))
         return;

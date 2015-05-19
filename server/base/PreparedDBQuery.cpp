@@ -153,7 +153,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::Mysql:
         PreparedDBQueryCommon::db_query_select_allow=QStringLiteral("SELECT `allow` FROM `character_allow` WHERE `character`=%1");
-        PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 ORDER BY `played_time` LIMIT 0,%2");
+        PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1 ORDER BY `played_time` LIMIT 0,%2");
         PreparedDBQueryCommon::db_query_played_time=QStringLiteral("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1");
         PreparedDBQueryCommon::db_query_monster_skill=QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3");
         PreparedDBQueryCommon::db_query_character_by_id=QStringLiteral("SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter` FROM `character` WHERE `id`=%1");
@@ -246,7 +246,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::SQLite:
         PreparedDBQueryCommon::db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
-        PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 ORDER BY played_time LIMIT 0,%2");
+        PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 ORDER BY played_time LIMIT 0,%2");
         PreparedDBQueryCommon::db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
         PreparedDBQueryCommon::db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
         PreparedDBQueryCommon::db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter FROM character WHERE id=%1");
@@ -338,7 +338,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
 
         case DatabaseBase::Type::PostgreSQL:
         PreparedDBQueryCommon::db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
-        PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 ORDER BY played_time LIMIT %2");
+        PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 ORDER BY played_time LIMIT %2");
         PreparedDBQueryCommon::db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
         PreparedDBQueryCommon::db_query_monster_skill=QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3");
         PreparedDBQueryCommon::db_query_character_by_id=QStringLiteral("SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter FROM character WHERE id=%1");
