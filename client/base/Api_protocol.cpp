@@ -16,6 +16,7 @@ const unsigned char protocolHeaderToMatch[] = PROTOCOL_HEADER;
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/GeneralType.h"
 #include "LanguagesSelect.h"
 
@@ -367,7 +368,7 @@ void Api_protocol::teleportDone()
     teleportList.removeFirst();
 }
 
-bool Api_protocol::addCharacter(const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
+bool Api_protocol::addCharacter(const quint8 &charactersGroupIndex,const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
 {
     if(!is_logged)
     {
@@ -388,14 +389,24 @@ bool Api_protocol::addCharacter(const quint8 &profileIndex, const QString &pseud
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    out << (quint8)charactersGroupIndex;
     out << (quint8)profileIndex;
-    out << pseudo;
+    {
+        const QByteArray &rawPseudo=FacilityLibGeneral::toUTF8WithHeader(pseudo);
+        if(rawPseudo.size()>255 || rawPseudo.isEmpty())
+        {
+            DebugClass::debugConsole(QStringLiteral("rawPseudo too big or not compatible with utf8"));
+            return false;
+        }
+        outputData+=rawPseudo;
+        out.device()->seek(out.device()->size());
+    }
     out << (quint8)skinId;
     is_logged=packFullOutcommingQuery(0x02,0x03,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
-bool Api_protocol::removeCharacter(const quint32 &characterId)
+bool Api_protocol::removeCharacter(const quint8 &charactersGroupIndex,const quint32 &characterId)
 {
     if(!is_logged)
     {
@@ -405,12 +416,13 @@ bool Api_protocol::removeCharacter(const quint32 &characterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    out << (quint8)charactersGroupIndex;
     out << characterId;
     is_logged=packFullOutcommingQuery(0x02,0x04,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
-bool Api_protocol::selectCharacter(const quint32 &characterId)
+bool Api_protocol::selectCharacter(const quint8 &charactersGroupIndex,const quint32 &serverUniqueKey,const quint32 &characterId)
 {
     if(!is_logged)
     {
@@ -420,8 +432,11 @@ bool Api_protocol::selectCharacter(const quint32 &characterId)
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    out << (quint8)charactersGroupIndex;
+    out << (quint32)serverUniqueKey;
     out << characterId;
     is_logged=packFullOutcommingQuery(0x02,0x05,queryNumber(),outputData.constData(),outputData.size());
+    unloadSelection();
     return true;
 }
 
@@ -1524,7 +1539,9 @@ void Api_protocol::resetAll()
     tradeRequestId.clear();
     isInBattle=false;
     battleRequestId.clear();
-    mDatapack=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath());
+    mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath());
+    mDatapackMain=mDatapackBase+"map/main/main/";
+    mDatapackSub=mDatapackMain+"sub/sub/";
 
     //to send trame
     lastQueryNumber=1;
@@ -1541,9 +1558,26 @@ void Api_protocol::unloadSelection()
     logicialGroup.servers.clear();
 }
 
-QString Api_protocol::datapackPath() const
+ServerFromPoolForDisplay Api_protocol::getCurrentServer(const int &index)
 {
-    return mDatapack;
+    ServerFromPoolForDisplay tempVar=*serverOrdenedList.at(index);
+    serverOrdenedList.clear();
+    return tempVar;
+}
+
+QString Api_protocol::datapackPathBase() const
+{
+    return mDatapackBase;
+}
+
+QString Api_protocol::datapackPathMain() const
+{
+    return mDatapackMain;
+}
+
+QString Api_protocol::datapackPathSub() const
+{
+    return mDatapackSub;
 }
 
 QString Api_protocol::mainDatapackCode() const
@@ -1551,12 +1585,19 @@ QString Api_protocol::mainDatapackCode() const
     return QString();
 }
 
+QString Api_protocol::subDatapackCode() const
+{
+    return QString();
+}
+
 void Api_protocol::setDatapackPath(const QString &datapack_path)
 {
     if(datapack_path.endsWith(QLatin1Literal("/")))
-        mDatapack=datapack_path;
+        mDatapackBase=datapack_path;
     else
-        mDatapack=datapack_path+QLatin1Literal("/");
+        mDatapackBase=datapack_path+QLatin1Literal("/");
+    mDatapackMain=mDatapackBase+"map/main/main/";
+    mDatapackSub=mDatapackMain+"sub/sub/";
 }
 
 bool Api_protocol::getIsLogged() const
@@ -1741,7 +1782,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
         }
     }
 
-    if(server.logicalGroupIndex<=logicialGroupIndexList.size())
+    if(server.logicalGroupIndex>=logicialGroupIndexList.size())
     {
         qDebug() << (QStringLiteral("out of range for addLogicalGroup: %1, server.logicalGroupIndex %2 <= logicialGroupIndexList.size() %3")
                      .arg(server.xml)

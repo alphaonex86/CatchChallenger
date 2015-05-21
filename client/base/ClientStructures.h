@@ -21,11 +21,14 @@ struct ServerFromPoolForDisplay
     //displayed info
     QString name;
     QString description;
-    int charactersGroupIndex;
+    quint8 charactersGroupIndex;
     quint16 maxPlayer;
     quint16 currentPlayer;
     quint32 playedTime;
     quint32 lastConnect;
+
+    //select info
+    quint8 serverOrdenedListIndex;
 };
 struct ServerFromPoolForDisplayTemp
 {
@@ -35,12 +38,12 @@ struct ServerFromPoolForDisplayTemp
     quint32 uniqueKey;
 
     //displayed info
-    int charactersGroupIndex;
+    quint8 charactersGroupIndex;
     quint16 maxPlayer;
     quint16 currentPlayer;
 
     //temp
-    int logicalGroupIndex;
+    quint8 logicalGroupIndex;
     QString xml;
 };
 struct LogicialGroup

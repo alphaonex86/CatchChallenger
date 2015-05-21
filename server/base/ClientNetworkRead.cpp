@@ -2,6 +2,7 @@
 #include "GlobalServerData.h"
 #include "MapServer.h"
 #include "../../general/base/ProtocolParsingCheck.h"
+#include "../../general/base/CommonSettingsCommon.h"
 
 using namespace CatchChallenger;
 
@@ -441,7 +442,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                             parseNetworkReadError("wrong utf8 to QString size in PM for text");
                             return;
                         }
-                        QByteArray rawText=newData.mid(in.device()->pos(),textSize);
+                        const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
                         text=QString::fromUtf8(rawText.data(),rawText.size());
                         in.device()->seek(in.device()->pos()+rawText.size());
                     }
@@ -459,7 +460,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                             parseNetworkReadError("wrong utf8 to QString size in PM for pseudo");
                             return;
                         }
-                        QByteArray rawText=newData.mid(in.device()->pos(),pseudoSize);
+                        const QByteArray &rawText=newData.mid(in.device()->pos(),pseudoSize);
                         pseudo=QString::fromUtf8(rawText.data(),rawText.size());
                         in.device()->seek(in.device()->pos()+rawText.size());
                     }
@@ -487,7 +488,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                     parseNetworkReadError("wrong utf8 to QString size");
                     return;
                 }
-                QByteArray rawText=newData.mid(in.device()->pos(),textSize);
+                const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
                 QString text=QString::fromUtf8(rawText.data(),rawText.size());
                 in.device()->seek(in.device()->pos()+rawText.size());
 
@@ -1217,19 +1218,36 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                     return;
                 }
-                in >> profileIndex;
+                in >> charactersGroupIndex;
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                     return;
                 }
-                in >> charactersGroupIndex;
-                if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                in >> profileIndex;
+                //pseudo
                 {
-                    parseNetworkReadError(QStringLiteral("error to get pseudo with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
-                    return;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseNetworkReadError("wrong utf8 to QString size in PM for text size");
+                        return;
+                    }
+                    quint8 textSize;
+                    in >> textSize;
+                    if(textSize>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
+                    {
+                        parseNetworkReadError(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
+                        return;
+                    }
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                    {
+                        parseNetworkReadError("wrong utf8 to QString size in PM for text");
+                        return;
+                    }
+                    const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
+                    pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                    in.device()->seek(in.device()->pos()+rawText.size());
                 }
-                in >> pseudo;
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -1261,6 +1279,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     return;
                 }
                 #endif
+                //skip charactersGroupIndex with rawData+1
                 const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
                 removeCharacter(queryNumber,characterId);
             }
@@ -1275,6 +1294,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     return;
                 }
                 #endif
+                //skip charactersGroupIndex with rawData+4+1
                 const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4+1)));
                 selectCharacter(queryNumber,characterId);
             }
