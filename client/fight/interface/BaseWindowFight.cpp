@@ -549,7 +549,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
         {
             if(!monstersCollision.background.isEmpty())
             {
-                const QString &baseSearch=CatchChallenger::Api_client_real::client->datapackPath()+QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE)+monstersCollision.background;
+                const QString &baseSearch=CatchChallenger::Api_client_real::client->datapackPathBase()+QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE)+monstersCollision.background;
                 if(QFile(baseSearch+"/background.png").exists())
                     ui->labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.png")).scaled(800,440));
                 else if(QFile(baseSearch+"/background.jpg").exists() && (supportedImageFormats.contains(QLatin1Literal("jpeg")) || supportedImageFormats.contains(QLatin1Literal("jpg"))))
@@ -1300,7 +1300,7 @@ void BaseWindow::checkEvolution()
                 animationWidget->rootContext()->setContextProperty("itemEvolution",QString());
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/evolution-animation.qml";
+                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPathBase()+"qml/evolution-animation.qml";
                 if(QFile(datapackQmlFile).exists())
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else
@@ -1353,7 +1353,7 @@ void BaseWindow::checkEvolution()
                 animationWidget->rootContext()->setContextProperty("itemEvolution",QString());
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/evolution-animation.qml";
+                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPathBase()+"qml/evolution-animation.qml";
                 if(QFile(datapackQmlFile).exists())
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else

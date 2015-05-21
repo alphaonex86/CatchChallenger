@@ -257,6 +257,13 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                 characterEntry.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
                                 in.device()->seek(in.device()->pos()+rawText.size());
                             }
+                            //Skin id
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> characterEntry.skinId;
                             //Time left before delete
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
@@ -326,8 +333,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
 
                         if(serverIndex<serverOrdenedList.size())
                         {
-                            serverOrdenedList[serverIndex]->playedTime=playedTime;
-                            serverOrdenedList[serverIndex]->lastConnect=lastConnect;
+                            if(serverOrdenedList.at(serverIndex)!=NULL)
+                            {
+                                serverOrdenedList[serverIndex]->playedTime=playedTime;
+                                serverOrdenedList[serverIndex]->lastConnect=lastConnect;
+                            }
                         }
                         else
                         {

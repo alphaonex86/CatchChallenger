@@ -269,7 +269,7 @@ void BaseWindow::haveTheDatapack()
     haveDatapack=true;
 
     if(CatchChallenger::Api_client_real::client!=NULL)
-        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
 }
 
 void BaseWindow::datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize)
@@ -377,12 +377,12 @@ void BaseWindow::datapackParsed()
     updateConnectingStatus();
     loadSettingsWithDatapack();
     {
-        if(QFile(CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelBottom.png")).exists())
-            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelBottom.png');padding:6px 6px 6px 14px;}"));
+        if(QFile(CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelBottom.png")).exists())
+            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelBottom.png');padding:6px 6px 6px 14px;}"));
         else
             ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url(:/images/interface/fight/labelBottom.png);padding:6px 6px 6px 14px;}"));
-        if(QFile(CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelTop.png")).exists())
-            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPath()+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 14px 6px 6px;}"));
+        if(QFile(CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelTop.png")).exists())
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 14px 6px 6px;}"));
         else
             ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url(:/images/interface/fight/labelTop.png);padding:6px 14px 6px 6px;}"));
     }
@@ -467,6 +467,8 @@ void BaseWindow::updateConnectingStatus()
             if(ui->stackedWidget->currentWidget()!=ui->page_serverList)
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_serverList);
+                ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
+                ui->serverList->header()->resizeSection(0,680);
                 updateServerList();
                 return;
             }
@@ -688,27 +690,27 @@ QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
 QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) const
 {
     {
-        QFileInfo pngFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
+        QFileInfo pngFile(CatchChallenger::Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
         if(pngFile.exists())
             return pngFile.absoluteFilePath();
     }
     {
-        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
+        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }
-    QDir folderList(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKINBASE);
+    QDir folderList(CatchChallenger::Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKINBASE);
     const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
     int entryListIndex=0;
     while(entryListIndex<entryList.size())
     {
         {
-            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(CatchChallenger::Api_client_real::client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(pngFile.exists())
                 return pngFile.absoluteFilePath();
         }
         {
-            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(CatchChallenger::Api_client_real::client->datapackPath()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(CatchChallenger::Api_client_real::client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(gifFile.exists())
                 return gifFile.absoluteFilePath();
         }

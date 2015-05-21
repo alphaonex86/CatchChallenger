@@ -560,7 +560,7 @@ void BaseWindow::on_craftingUse_clicked()
     craftingAnimationObject=new CraftingAnimation(mIngredients,mRecipe,mProduct,QUrl::fromLocalFile(playerBackImagePath).toEncoded());
     animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
     animationWidget->rootContext()->setContextProperty("craftingAnimationObject",craftingAnimationObject);
-    const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/crafting-animation.qml";
+    const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPathBase()+"qml/crafting-animation.qml";
     if(QFile(datapackQmlFile).exists())
         animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
     else
