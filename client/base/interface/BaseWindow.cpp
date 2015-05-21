@@ -46,6 +46,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
+    qRegisterMetaType<QList<ServerFromPoolForDisplay *> >("QList<ServerFromPoolForDisplay *>");
 
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<Player_type>("Player_type");
@@ -65,7 +66,7 @@ BaseWindow::BaseWindow() :
 
     MapController::mapController=new MapController(true,false,true,false);
     if(CatchChallenger::Api_client_real::client!=NULL)
-        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
     animationWidget=NULL;
@@ -666,7 +667,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
                 animationWidget->rootContext()->setContextProperty("itemEvolution",QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra.value(item).imagePath));
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/evolution-animation.qml";
+                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPathBase()+"qml/evolution-animation.qml";
                 if(QFile(datapackQmlFile).exists())
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else
@@ -3102,7 +3103,7 @@ void BaseWindow::getTextEntryPoint()
     }
     QScriptEngine engine;
 
-    const QString &client_logic=CatchChallenger::Api_client_real::client->datapackPath()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
+    const QString &client_logic=CatchChallenger::Api_client_real::client->datapackPathMain()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
         showTip(tr("Client file missing"));
@@ -3509,4 +3510,21 @@ void BaseWindow::updateTheTurtle()
     if(!ui->labelSlow->isVisible())
         return;
     ui->labelSlow->hide();
+}
+
+void BaseWindow::on_serverList_activated(const QModelIndex &index)
+{
+    Q_UNUSED(index);
+    on_serverListSelect_clicked();
+}
+
+void BaseWindow::on_serverListSelect_clicked()
+{
+    const QList<QTreeWidgetItem *> &selectedItems=ui->serverList->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+
+    const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
+    serverSelected=selectedItem->data(99,99).toUInt();
+    updateConnectingStatus();
 }

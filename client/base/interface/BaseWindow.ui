@@ -53,7 +53,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -153,6 +153,9 @@ color: rgb(0, 0, 0);</string>
         <layout class="QVBoxLayout" name="verticalLayout_36">
          <item>
           <widget class="QTreeWidget" name="serverList">
+           <property name="rootIsDecorated">
+            <bool>false</bool>
+           </property>
            <column>
             <property name="text">
              <string>Server</string>

@@ -18,6 +18,7 @@ using namespace CatchChallenger;
 #include "LanguagesSelect.h"
 
 #include <QCoreApplication>
+#include <QDebug>
 
 #ifdef BENCHMARKMUTIPLECLIENT
 #include <iostream>
@@ -913,8 +914,13 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
 {
     if(!is_logged)
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("is not logged with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
-        return;
+        if(mainCodeType==0xC2 && (subCodeType==0x0E || subCodeType==0x0F))
+        {}
+        else
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("is not logged with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+            return;
+        }
     }
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
@@ -1420,7 +1426,9 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                     serverListIndex=0;
                     while(serverListIndex<serverListSize)
                     {
-                        serverOrdenedList << addLogicalServer(serverTempList.at(serverListIndex),language);
+                        ServerFromPoolForDisplay * tempVar=addLogicalServer(serverTempList.at(serverListIndex),language);
+                        tempVar->serverOrdenedListIndex=serverOrdenedList.size();
+                        serverOrdenedList << tempVar;
                         serverListIndex++;
                     }
                 }

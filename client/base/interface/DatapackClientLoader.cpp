@@ -127,7 +127,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath, const QStr
 
     if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
     {
-        const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksum(datapackPath);
+        const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
         if(hash.isEmpty())
         {
             emit datapackChecksumError();
