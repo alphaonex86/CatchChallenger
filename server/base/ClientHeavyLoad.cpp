@@ -576,7 +576,7 @@ QByteArray Client::character_list_return(const quint8 &query_id)
             return QByteArray();
         }
 
-        out << (quint8)0x01;//characters group 1, all in one server
+        out << (quint8)0x01;//Number of characters group, characters group 0, all in one server
 
         number_of_character=characterEntryList.size();
         out << (quint8)characterEntryList.size();
@@ -666,7 +666,7 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
         QByteArray outputData;
         outputData[0]=0x01;
         outputData[1]=0x00;
-        outputData[2]=0x00;
+        outputData[2]=0x00;outputData[3]=0x00;//16Bits
         sendFullPacket(0xC2,0x0F,outputData.constData(),outputData.size());
     }
     //C20E
@@ -696,10 +696,6 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
         sendFullPacket(0xC2,0x0E,outputData.constData(),outputData.size());
     }
     //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-
     char * const tempRawData=new char[4*1024];
     //memset(tempRawData,0x00,sizeof(4*1024));
     int tempRawDataSize=0x01;
@@ -743,7 +739,7 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
     #endif
     tempRawData[0]=validServerCount;
 
-    const QByteArray newData(previousData+outputData+QByteArray(tempRawData,tempRawDataSize));
+    const QByteArray newData(previousData+QByteArray(tempRawData,tempRawDataSize));
     postReply(query_id,newData.constData(),newData.size());
 }
 

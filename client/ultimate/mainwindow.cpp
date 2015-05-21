@@ -1091,7 +1091,7 @@ void MainWindow::connectTheExternalSocket()
             return;
         }
     CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectedState);
     CatchChallenger::Api_client_real::client->sendProtocol();
 }
@@ -1545,7 +1545,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
         realSslSocket=NULL;
     }
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"));
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"),QStringLiteral("main"),QStringLiteral("sub"));
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
@@ -1553,7 +1553,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
     CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("datapack/internal/"));
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
@@ -1664,7 +1664,7 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::Type::SQLite;
     formatedServerSettings.database_server.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
-    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPathBase();
 
     {
         CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList[QStringLiteral("day")][QStringLiteral("day")];

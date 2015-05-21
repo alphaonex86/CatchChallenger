@@ -16,14 +16,14 @@ void BaseWindow::on_character_add_clicked()
     }
     if(newProfile!=NULL)
         delete newProfile;
-    newProfile=new NewProfile(Api_client_real::client->datapackPath(),this);
+    newProfile=new NewProfile(Api_client_real::client->datapackPathBase(),this);
     connect(newProfile,&NewProfile::finished,this,&BaseWindow::newProfileFinished);
     newProfile->show();
 }
 
 void BaseWindow::newProfileFinished()
 {
-    const QString &datapackPath=Api_client_real::client->datapackPath();
+    const QString &datapackPath=Api_client_real::client->datapackPathBase();
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         if(!newProfile->ok())
         {
@@ -62,7 +62,7 @@ void BaseWindow::newProfileFinished()
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo();
     characterEntry.skinId=nameGame.skinId();
-    Api_client_real::client->addCharacter(profileIndex,characterEntry.pseudo,characterEntry.skinId);
+    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,characterEntry.pseudo,characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
@@ -104,13 +104,17 @@ void BaseWindow::updateCharacterList()
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
         //item->setData(97,characterEntry.mapId);
-        QString text=characterEntry.pseudo+"\n"+QStringLiteral("%1 played").arg(FacilityLibGeneral::timeToString(characterEntry.played_time));
+        QString text=characterEntry.pseudo+"\n";
+        if(characterEntry.played_time>0)
+            text+=tr("%1 played").arg(FacilityLibGeneral::timeToString(characterEntry.played_time));
+        else
+            text+=tr("Never played");
         if(characterEntry.delete_time_left>0)
             text+="\n"+tr("%1 to be deleted").arg(FacilityLibGeneral::timeToString(characterEntry.delete_time_left));
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(text);
-        item->setIcon(QIcon(Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
+        item->setIcon(QIcon(Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
         ui->characterEntryList->addItem(item);
         index++;
     }
@@ -141,7 +145,7 @@ void BaseWindow::on_character_remove_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Deleting already planned"));
         return;
     }
-    Api_client_real::client->removeCharacter(character_id);
+    Api_client_real::client->removeCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,character_id);
     int index=0;
     while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
     {
@@ -165,9 +169,11 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("You can't play with this buggy charater"));
         return;
     }*/
-    Api_client_real::client->selectCharacter(item->data(99).toUInt());
+    Api_client_real::client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt());
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
+    serverSelected=-1;
+    Api_client_real::client->unloadSelection();
 }
 
 
@@ -175,15 +181,8 @@ void BaseWindow::updateServerList()
 {
     ui->serverList->clear();
     LogicialGroup logicialGroup=Api_client_real::client->getLogicialGroup();
-    QTreeWidgetItem *item=new QTreeWidgetItem();
-    addToServerList(logicialGroup,item);
-    int index=0;
-    while(index<item->childCount())
-    {
-        ui->serverList->addTopLevelItem(item->child(index));
-        index++;
-    }
-    delete item;
+    addToServerList(logicialGroup,ui->serverList->invisibleRootItem());
+    ui->serverList->expandAll();
 }
 
 void BaseWindow::addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetItem *item)
@@ -205,8 +204,12 @@ void BaseWindow::addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetI
         {
             const ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
             QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
-            itemServer->setText(0,server.name);
-            itemServer->setText(1,QString("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
+            if(!server.name.isEmpty())
+                itemServer->setText(0,server.name);
+            else
+                itemServer->setText(0,tr("Default server"));
+            itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
+            itemServer->setData(99,99,server.serverOrdenedListIndex);
             index++;
         }
     }

@@ -442,6 +442,8 @@ private slots:
     void on_serverListBack_clicked();
     void updateServerList();
     void addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetItem *item);
+    void on_serverList_activated(const QModelIndex &index);
+    void on_serverListSelect_clicked();
 protected slots:
     //datapack
     void datapackParsed();

@@ -724,8 +724,7 @@ void BaseServer::preload_profile()
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
                     serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
-                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",")+//skin verificated above
-                            QLatin1String(",0,0,")+
+                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
                             QString::number(profile.cash)+QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
                             QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
@@ -735,8 +734,7 @@ void BaseServer::preload_profile()
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
                     serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
-                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",")+//skin verificated above
-                            QLatin1String(",0,0,")+
+                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
                             QString::number(profile.cash)+QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
                             QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
@@ -746,10 +744,9 @@ void BaseServer::preload_profile()
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
                     serverProfileInternal.preparedQueryAdd << /*pseudo*/ QLatin1String("',");
-                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",")+//skin verificated above
-                            QLatin1String(",0,0,")+
+                    serverProfileInternal.preparedQueryAdd << /*skin*/QLatin1String(",0,0,")+
                             QString::number(profile.cash)+QLatin1String(",");
-                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
+                    serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,FALSE,0,0,0,")+
                             QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
             }
@@ -2012,9 +2009,9 @@ void BaseServer::preload_the_datapack()
     QCryptographicHash hashSub(QCryptographicHash::Sha224);
     QStringList datapack_file_temp=Client::datapack_file_list().keys();
     datapack_file_temp.sort();
-    const QString &mainDatapackBase=QStringLiteral("map/main/");
-    const QString &mainDatapackFolder=mainDatapackBase+GlobalServerData::serverSettings.mainDatapackCode+QStringLiteral("/");
-    const QString &subDatapackBase=mainDatapackBase+GlobalServerData::serverSettings.mainDatapackCode+QStringLiteral("/sub/");
+    const QRegularExpression mainDatapackBase("^map[/\\\\]main[/\\\\]");
+    const QRegularExpression mainDatapackFolder("^map[/\\\\]main[/\\\\]"+GlobalServerData::serverSettings.mainDatapackCode+"[/\\\\]");
+    const QRegularExpression subDatapackBase("^map[/\\\\]main[/\\\\]"+GlobalServerData::serverSettings.mainDatapackCode+"[/\\\\]sub[/\\\\]");
     int index=0;
     while(index<datapack_file_temp.size()) {
         QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
@@ -2034,13 +2031,13 @@ void BaseServer::preload_the_datapack()
                 }
 
                 //switch the data to correct hash or drop it
-                if(datapack_file_temp.at(index).startsWith(mainDatapackBase))
+                if(datapack_file_temp.at(index).contains(mainDatapackBase))
                 {
-                    if(datapack_file_temp.at(index).startsWith(mainDatapackFolder))
+                    if(datapack_file_temp.at(index).contains(mainDatapackFolder))
                     {
-                        if(datapack_file_temp.at(index).startsWith(subDatapackBase))
+                        if(datapack_file_temp.at(index).contains(subDatapackBase))
                         {
-                            if(!subDatapackFolder.isEmpty() && datapack_file_temp.at(index).startsWith(subDatapackBase))
+                            if(!subDatapackFolder.isEmpty() && datapack_file_temp.at(index).contains(subDatapackBase))
                                 hashSub.addData(data);
                         }
                         else

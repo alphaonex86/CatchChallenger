@@ -31,6 +31,7 @@ public:
     ~Api_protocol();
     void disconnectClient();
     void unloadSelection();
+    ServerFromPoolForDisplay getCurrentServer(const int &index);
 
     //protocol command
     bool tryLogin(const QString &login,const QString &pass);
@@ -44,8 +45,11 @@ public:
 
     virtual void sendDatapackContent() = 0;
     virtual void tryDisconnect() = 0;
-    virtual QString datapackPath() const;
+    virtual QString datapackPathBase() const;
+    virtual QString datapackPathMain() const;
+    virtual QString datapackPathSub() const;
     virtual QString mainDatapackCode() const;
+    virtual QString subDatapackCode() const;
     void setDatapackPath(const QString &datapackPath);
 
     //to reset all
@@ -140,7 +144,9 @@ protected:
     QList<quint32> lastObjectUsed;
 
     //datapack
-    QString mDatapack;
+    QString mDatapackBase;
+    QString mDatapackMain;
+    QString mDatapackSub;
 
     //teleport list query id
     QList<quint8> teleportList;
@@ -278,9 +284,9 @@ public:
     void teleportDone();
 
     //character
-    bool addCharacter(const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
-    bool removeCharacter(const quint32 &characterId);
-    bool selectCharacter(const quint32 &characterId);
+    bool addCharacter(const quint8 &charactersGroupIndex,const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
+    bool removeCharacter(const quint8 &charactersGroupIndex,const quint32 &characterId);
+    bool selectCharacter(const quint8 &charactersGroupIndex, const quint32 &serverUniqueKey, const quint32 &characterId);
     LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish
