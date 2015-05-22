@@ -3517,7 +3517,7 @@ void Client::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
                          );
             addPlayerMonster(marketPlayerMonster.monster);
 
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_by_id.arg(marketPlayerMonster.monster.id));
+            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_price.arg(marketPlayerMonster.monster.id));
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_move_to_new_player
                                .arg(character_id)
                                .arg(getPlayerMonster().size())

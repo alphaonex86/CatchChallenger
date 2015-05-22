@@ -656,9 +656,6 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
 {
     callbackRegistred.removeFirst();
     //send signals into the server
-    #ifndef SERVERBENCHMARK
-    normalOutput(QStringLiteral("Logged the account %1").arg(account_id));
-    #endif
 
     //C20F
     {
@@ -880,7 +877,6 @@ void Client::deleteCharacterNow_return(const quint32 &characterId)
     dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_all_item_market.arg(characterId));
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_by_character.arg(characterId));
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_character.arg(characterId));
-    dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_monster_market_by_character.arg(characterId));
     dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant.arg(characterId));
     dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_quest.arg(characterId));
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_recipes.arg(characterId));
@@ -1160,7 +1156,7 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     postReply(query_id,outputData.constData(),outputData.size());
 }
 
-void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
+void Client::removeCharacterLater(const quint8 &query_id, const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.isEmpty())
@@ -1179,7 +1175,7 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
     removeCharacterParam->characterId=characterId;
 
     const QString &queryText=PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.arg(characterId);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::removeCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::removeCharacterLater_static);
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
@@ -1201,14 +1197,14 @@ void Client::removeCharacter(const quint8 &query_id, const quint32 &characterId)
     }
 }
 
-void Client::removeCharacter_static(void *object)
+void Client::removeCharacterLater_static(void *object)
 {
     if(object!=NULL)
-        static_cast<Client *>(object)->removeCharacter_object();
+        static_cast<Client *>(object)->removeCharacterLater_object();
     GlobalServerData::serverPrivateVariables.db_common->clear();
 }
 
-void Client::removeCharacter_object()
+void Client::removeCharacterLater_object()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBack.isEmpty())
@@ -1222,11 +1218,11 @@ void Client::removeCharacter_object()
     if(removeCharacterParam==NULL)
         abort();
     #endif
-    removeCharacter_return(removeCharacterParam->query_id,removeCharacterParam->characterId);
+    removeCharacterLater_return(removeCharacterParam->query_id,removeCharacterParam->characterId);
     delete removeCharacterParam;
 }
 
-void Client::removeCharacter_return(const quint8 &query_id,const quint32 &characterId)
+void Client::removeCharacterLater_return(const quint8 &query_id,const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("RemoveCharacterParam"))
@@ -1258,7 +1254,13 @@ void Client::removeCharacter_return(const quint8 &query_id,const quint32 &charac
         characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(CommonSettingsCommon::commonSettingsCommon.character_delete_time));
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId)
+                       .arg(
+                           //date to delete, not time (no sens)
+                           QDateTime::currentDateTime().toTime_t()+
+                           CommonSettingsCommon::commonSettingsCommon.character_delete_time
+                           )
+                       );
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);

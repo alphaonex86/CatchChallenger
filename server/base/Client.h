@@ -345,10 +345,10 @@ private:
     static void addCharacter_static(void *object);
     void addCharacter_object();
     void addCharacter_return(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
-    void removeCharacter(const quint8 &query_id, const quint32 &characterId);
-    static void removeCharacter_static(void *object);
-    void removeCharacter_object();
-    void removeCharacter_return(const quint8 &query_id, const quint32 &characterId);
+    void removeCharacterLater(const quint8 &query_id, const quint32 &characterId);
+    static void removeCharacterLater_static(void *object);
+    void removeCharacterLater_object();
+    void removeCharacterLater_return(const quint8 &query_id, const quint32 &characterId);
     void selectCharacter(const quint8 &query_id, const quint32 &characterId);
     static void selectCharacter_static(void *object);
     void selectCharacter_object();

@@ -109,7 +109,7 @@ void MainWindow::logged(const QList<CatchChallenger::CharacterEntry> &characterE
     if(!ui->multipleConnexion->isChecked())
     {
         int index=0;
-        while(index<characterEntryList.size())
+        while(index<characterEntryList.size())fix this
         {
             const CatchChallenger::CharacterEntry &character=characterEntryList.at(index);
             ui->characterList->addItem(character.pseudo,character.character_id);

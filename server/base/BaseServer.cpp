@@ -2846,14 +2846,23 @@ void BaseServer::loadAndFixSettings()
 {
     GlobalServerData::serverPrivateVariables.server_message=GlobalServerData::serverSettings.server_message.split(QRegularExpression("[\n\r]+"));
     while(GlobalServerData::serverPrivateVariables.server_message.size()>16)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.server_message too big, remove: ")+GlobalServerData::serverPrivateVariables.server_message.last();
         GlobalServerData::serverPrivateVariables.server_message.removeLast();
+    }
     int index=0;
     const int &listsize=GlobalServerData::serverPrivateVariables.server_message.size();
     while(index<listsize)
     {
-        GlobalServerData::serverPrivateVariables.server_message[index].truncate(128);
+        if(GlobalServerData::serverPrivateVariables.server_message.at(index).size()>128)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.server_message too big, truncate: ")+GlobalServerData::serverPrivateVariables.server_message.at(index);
+            GlobalServerData::serverPrivateVariables.server_message[index].truncate(128);
+        }
         index++;
     }
+
+    //drop the empty \n
     bool removeTheLastList;
     do
     {
@@ -2865,31 +2874,52 @@ void BaseServer::loadAndFixSettings()
     } while(removeTheLastList);
 
     if(GlobalServerData::serverPrivateVariables.db_login->tryInterval<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->tryInterval<1");
         GlobalServerData::serverPrivateVariables.db_login->tryInterval=5;
+    }
     if(GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry<1");
         GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry=3;
+    }
     if(GlobalServerData::serverPrivateVariables.db_login->tryInterval*GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->tryInterval*GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry>(60*10)");
         GlobalServerData::serverPrivateVariables.db_login->tryInterval=5;
         GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry=3;
     }
 
     if(GlobalServerData::serverPrivateVariables.db_common->tryInterval<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_common->tryInterval<1");
         GlobalServerData::serverPrivateVariables.db_common->tryInterval=5;
+    }
     if(GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry<1");
         GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry=3;
+    }
     if(GlobalServerData::serverPrivateVariables.db_common->tryInterval*GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_common->tryInterval*GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry>(60*10)");
         GlobalServerData::serverPrivateVariables.db_common->tryInterval=5;
         GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry=3;
     }
 
     if(GlobalServerData::serverPrivateVariables.db_server->tryInterval<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_server->tryInterval<1");
         GlobalServerData::serverPrivateVariables.db_server->tryInterval=5;
+    }
     if(GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry<1");
         GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
+    }
     if(GlobalServerData::serverPrivateVariables.db_server->tryInterval*GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_server->tryInterval*GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry>(60*10)");
         GlobalServerData::serverPrivateVariables.db_server->tryInterval=5;
         GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
     }
@@ -2912,18 +2942,36 @@ void BaseServer::loadAndFixSettings()
     }
 
     if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9");
         GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=9;
+    }
     if(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1");
         GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval=1;
+    }
 
-    if(CommonSettingsCommon::commonSettingsCommon.min_character<1)
-        CommonSettingsCommon::commonSettingsCommon.min_character=1;
+    /*if(CommonSettingsCommon::commonSettingsCommon.min_character<0)
+    {
+        qDebug() << QStringLiteral("CommonSettingsCommon::commonSettingsCommon.min_character<0");
+        CommonSettingsCommon::commonSettingsCommon.min_character=0;
+    }*/
     if(CommonSettingsCommon::commonSettingsCommon.max_character<1)
+    {
+        qDebug() << QStringLiteral("CommonSettingsCommon::commonSettingsCommon.max_character<1");
         CommonSettingsCommon::commonSettingsCommon.max_character=1;
+    }
     if(CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character)
+    {
+        qDebug() << QStringLiteral("CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character");
         CommonSettingsCommon::commonSettingsCommon.max_character=CommonSettingsCommon::commonSettingsCommon.min_character;
+    }
     if(CommonSettingsCommon::commonSettingsCommon.character_delete_time<=0)
+    {
+        qDebug() << QStringLiteral("CommonSettingsCommon::commonSettingsCommon.character_delete_time<=0");
         CommonSettingsCommon::commonSettingsCommon.character_delete_time=7*24*3600;
+    }
     if(CommonSettingsServer::commonSettingsServer.useSP)
     {
         if(CommonSettingsServer::commonSettingsServer.autoLearn)
@@ -2934,7 +2982,10 @@ void BaseServer::loadAndFixSettings()
     }
 
     if(GlobalServerData::serverSettings.datapackCache<-1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.datapackCache<-1");
         GlobalServerData::serverSettings.datapackCache=-1;
+    }
     {
         QStringList newMirrorList;
         QRegularExpression httpMatch("^https?://.+$");
@@ -2960,7 +3011,10 @@ void BaseServer::loadAndFixSettings()
 
     //check the settings here
     if(GlobalServerData::serverSettings.max_players<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.max_players<1");
         GlobalServerData::serverSettings.max_players=200;
+    }
     ProtocolParsing::setMaxPlayers(GlobalServerData::serverSettings.max_players);
 
 /*    quint8 player_list_size;
@@ -2983,16 +3037,31 @@ void BaseServer::loadAndFixSettings()
     if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
     {
         if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.simple.max<5");
             GlobalServerData::serverSettings.mapVisibility.simple.max=5;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow<3)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.simple.reshow<3");
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=3;
+        }
 
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players");
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.max_players;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players");
             GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max");
             GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.mapVisibility.simple.max;
+        }
 
         /*do the coding part...if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.simple.max)
             GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.simple.max;*/
@@ -3000,31 +3069,67 @@ void BaseServer::loadAndFixSettings()
     else if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder)
     {
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3");
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=3;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2");
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=2;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.max<5)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.max<5");
             GlobalServerData::serverSettings.mapVisibility.withBorder.max=5;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3");
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=3;
+        }
 
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players");
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.max_players;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players");
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.max_players;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players");
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.max_players;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players");
             GlobalServerData::serverSettings.mapVisibility.withBorder.max=GlobalServerData::serverSettings.max_players;
+        }
 
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max");
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder");
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max");
             GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
+        }
         if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)
+        {
+            qDebug() << QStringLiteral("GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow");
             GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.reshow;
+        }
     }
 
     if(GlobalServerData::serverSettings.secondToPositionSync==0)

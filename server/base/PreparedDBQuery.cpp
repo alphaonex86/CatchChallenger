@@ -8,8 +8,6 @@ QString PreparedDBQueryLogin::db_query_insert_login=NULL;
 
 QString PreparedDBQueryServer::db_query_character_server_by_id=NULL;
 QString PreparedDBQueryServer::db_query_delete_all_item_market=NULL;
-QString PreparedDBQueryServer::db_query_delete_monster_market_by_character=NULL;
-QString PreparedDBQueryServer::db_query_delete_monster_market_by_id=NULL;
 QString PreparedDBQueryServer::db_query_insert_item_market=NULL;
 QString PreparedDBQueryServer::db_query_delete_item_market=NULL;
 QString PreparedDBQueryServer::db_query_update_item_market=NULL;
@@ -439,8 +437,6 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         case DatabaseBase::Type::Mysql:
         PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT `x`,`y`,`orientation`,`map`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash` FROM `character_forserver` WHERE `id`=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `character`=%1");
-        PreparedDBQueryServer::db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM `monster_market` WHERE `character`=%1");
-        PreparedDBQueryServer::db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM `monster_market` WHERE `id`=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE `item_market` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
@@ -475,8 +471,6 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         case DatabaseBase::Type::SQLite:
         PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE id=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
-        PreparedDBQueryServer::db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM monster_market WHERE character=%1");
-        PreparedDBQueryServer::db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM monster_market WHERE id=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");
@@ -510,8 +504,6 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         case DatabaseBase::Type::PostgreSQL:
         PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE id=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
-        PreparedDBQueryServer::db_query_delete_monster_market_by_character=QStringLiteral("DELETE FROM monster_market WHERE character=%1");
-        PreparedDBQueryServer::db_query_delete_monster_market_by_id=QStringLiteral("DELETE FROM monster_market WHERE id=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");

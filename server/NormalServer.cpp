@@ -526,9 +526,16 @@ void NormalServer::stop_server()
 void NormalServer::loadAndFixSettings()
 {
     if(normalServerSettings.server_port<=0)
+    {
         normalServerSettings.server_port=42489;
+        qDebug() << QStringLiteral("normalServerSettings.server_port<=0 fix by 42489");
+    }
     if(normalServerSettings.proxy_port<=0)
+    {
         normalServerSettings.proxy=QString();
+        fix that's
+        qDebug() << QStringLiteral("normalServerSettings.proxy_port<=0 fix by 8080");
+    }
 }
 
 void NormalServer::preload_finish()

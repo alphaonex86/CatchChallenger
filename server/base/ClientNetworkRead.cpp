@@ -1273,7 +1273,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x0004:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint32))
+                if(size!=(int)sizeof(quint8)+sizeof(quint32))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                     return;
@@ -1281,14 +1281,14 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 #endif
                 //skip charactersGroupIndex with rawData+1
                 const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
-                removeCharacter(queryNumber,characterId);
+                removeCharacterLater(queryNumber,characterId);
             }
             break;
             //Select character
             case 0x0005:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=(int)sizeof(quint32))
+                if(size!=(int)sizeof(quint8)+sizeof(quint32)+sizeof(quint32))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                     return;

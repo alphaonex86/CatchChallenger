@@ -80,7 +80,7 @@ void BaseWindow::newCharacterId(const quint8 &returnCode, const quint32 &charact
         characterListForSelection[serverOrdenedList.at(serverSelected)->charactersGroupIndex] << characterEntry;
         updateCharacterList();
         ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
-        //if(characterEntryList.size()>=CommonSettings::commonSettings.min_character && characterEntryList.size()<=CommonSettings::commonSettings.max_character)
+        //if(characterEntryList.size().size()>=CommonSettings::commonSettings.min_character && characterEntryList.size().size()<=CommonSettings::commonSettings.max_character)
             on_character_select_clicked();
     /*    else
             ui->stackedWidget->setCurrentWidget(ui->page_character);*/
@@ -157,6 +157,7 @@ void BaseWindow::on_character_remove_clicked()
         }
         index++;
     }
+    updateCharacterList();
     QMessageBox::information(this,tr("Information"),tr("Your charater will be deleted into %1")
                              .arg(FacilityLibGeneral::timeToString(CommonSettingsCommon::commonSettingsCommon.character_delete_time))
                              );
@@ -181,11 +182,50 @@ void BaseWindow::updateServerList()
 {
     ui->serverList->clear();
     LogicialGroup logicialGroup=Api_client_real::client->getLogicialGroup();
-    addToServerList(logicialGroup,ui->serverList->invisibleRootItem());
+    bool fullView=true;
+    if(serverOrdenedList.size()>10)
+        fullView=false;
+    const quint64 &current__date=QDateTime::currentDateTime().toTime_t();
+
+    //reload, bug if before init
+    {
+        BaseWindow::icon_server_list_star1=QIcon(":/images/interface/server_list/star1.png");
+        BaseWindow::icon_server_list_star2=QIcon(":/images/interface/server_list/star2.png");
+        BaseWindow::icon_server_list_star3=QIcon(":/images/interface/server_list/star3.png");
+        BaseWindow::icon_server_list_star4=QIcon(":/images/interface/server_list/star4.png");
+        BaseWindow::icon_server_list_star5=QIcon(":/images/interface/server_list/star5.png");
+        BaseWindow::icon_server_list_star6=QIcon(":/images/interface/server_list/star6.png");
+        BaseWindow::icon_server_list_stat1=QIcon(":/images/interface/server_list/stat1.png");
+        BaseWindow::icon_server_list_stat2=QIcon(":/images/interface/server_list/stat2.png");
+        BaseWindow::icon_server_list_stat3=QIcon(":/images/interface/server_list/stat3.png");
+        BaseWindow::icon_server_list_stat4=QIcon(":/images/interface/server_list/stat4.png");
+    }
+    //do the average value
+    {
+        int entryCount=0;
+        int index=0;
+        while(index<serverOrdenedList.size())
+        {
+            const ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            if(server.playedTime>0 && server.lastConnect<=current__date)
+            {
+                averagePlayedTime+=server.playedTime;
+                averageLastConnect+=server.lastConnect;
+                entryCount++;
+            }
+            index++;
+        }
+        if(entryCount>0)
+        {
+            averagePlayedTime/=entryCount;
+            averageLastConnect/=entryCount;
+        }
+    }
+    addToServerList(logicialGroup,ui->serverList->invisibleRootItem(),current__date,fullView);
     ui->serverList->expandAll();
 }
 
-void BaseWindow::addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetItem *item)
+void BaseWindow::addToServerList(const LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView)
 {
     item->setText(0,logicialGroup.name);
     {
@@ -194,7 +234,7 @@ void BaseWindow::addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetI
         while (i.hasNext()) {
             i.next();
             QTreeWidgetItem *itemGroup=new QTreeWidgetItem(item);
-            addToServerList(i.value(),itemGroup);
+            addToServerList(i.value(),itemGroup,currentDate,fullView);
         }
     }
     {
@@ -204,10 +244,76 @@ void BaseWindow::addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetI
         {
             const ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
             QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
-            if(!server.name.isEmpty())
-                itemServer->setText(0,server.name);
+            QString text;
+            QString groupText;
+            if(characterListForSelection.size()>1)
+                groupText=QStringLiteral(" (%1)").arg(server.charactersGroupIndex);
+            QString name=server.name;
+            if(name.isEmpty())
+                name=tr("Default server");
+            if(fullView)
+            {
+                text=name+groupText;
+                if(server.playedTime>0)
+                {
+                    if(!server.description.isEmpty())
+                        text+=" "+tr("%1 played").arg(FacilityLibGeneral::timeToString(server.playedTime));
+                    else
+                        text+="\n"+tr("%1 played").arg(FacilityLibGeneral::timeToString(server.playedTime));
+                }
+                if(!server.description.isEmpty())
+                    text+="\n"+server.description;
+            }
             else
-                itemServer->setText(0,tr("Default server"));
+            {
+                if(server.description.isEmpty())
+                    text=name+groupText;
+                else
+                    text=name+groupText+" - "+server.description;
+            }
+            itemServer->setText(0,text);
+
+            //do the icon here
+            if(server.playedTime>0 || server.lastConnect>0)
+            {
+                quint64 dateDiff=0;
+                if(currentDate>server.lastConnect)
+                    dateDiff=currentDate-server.lastConnect;
+                if(server.playedTime>24*3600*31)
+                {
+                    if(dateDiff<24*3600)
+                        itemServer->setIcon(0,BaseWindow::icon_server_list_star1);
+                    else
+                        itemServer->setIcon(0,BaseWindow::icon_server_list_star2);
+                }
+                else if(server.lastConnect<averageLastConnect)
+                {
+                    if(server.playedTime<averagePlayedTime)
+                        itemServer->setIcon(0,BaseWindow::icon_server_list_star3);
+                    else
+                        itemServer->setIcon(0,BaseWindow::icon_server_list_star4);
+                }
+                else
+                {
+                    if(server.playedTime<averagePlayedTime)
+                        itemServer->setIcon(0,BaseWindow::icon_server_list_star5);
+                    else
+                        itemServer->setIcon(0,BaseWindow::icon_server_list_star6);
+                }
+
+            }
+            //do server.currentPlayer/server.maxPlayer icon
+            {
+                int percent=(server.currentPlayer*100)/server.maxPlayer;
+                if(server.currentPlayer==server.maxPlayer || (server.maxPlayer>50 && percent>98))
+                    itemServer->setIcon(1,BaseWindow::icon_server_list_stat4);
+                else if(server.currentPlayer>30 && percent>50)
+                    itemServer->setIcon(1,BaseWindow::icon_server_list_stat3);
+                else if(server.currentPlayer>5 && percent>20)
+                    itemServer->setIcon(1,BaseWindow::icon_server_list_stat2);
+                else
+                    itemServer->setIcon(1,BaseWindow::icon_server_list_stat1);
+            }
             itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
             itemServer->setData(99,99,server.serverOrdenedListIndex);
             index++;

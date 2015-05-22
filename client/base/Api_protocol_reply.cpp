@@ -330,6 +330,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         }
                         quint32 lastConnect;
                         in >> lastConnect;
+                        if(playedTime>0 && lastConnect==0)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("playedTime>0 && lastConnect==0 with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                            return;
+                        }
 
                         if(serverIndex<serverOrdenedList.size())
                         {
