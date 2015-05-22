@@ -189,13 +189,6 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
     CatchChallenger::Api_client_real::client->sendDatapackContent();
     isLogged=true;
     updateConnectingStatus();
-    ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
-    ui->character_remove->setEnabled(characterEntryList.size()>CommonSettingsCommon::commonSettingsCommon.min_character);
-    if(characterEntryList.isEmpty())
-    {
-        if(CommonSettingsCommon::commonSettingsCommon.max_character==0)
-            emit message("Can't create character but the list is empty");
-    }
 }
 
 void BaseWindow::protocol_is_good()
@@ -478,6 +471,15 @@ void BaseWindow::updateConnectingStatus()
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_character);
+                const quint8 &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
+                const QList<CharacterEntry> &characterEntryList=characterListForSelection.at(charactersGroupIndex);
+                ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
+                ui->character_remove->setEnabled(characterEntryList.size()>CommonSettingsCommon::commonSettingsCommon.min_character);
+                if(characterEntryList.isEmpty())
+                {
+                    if(CommonSettingsCommon::commonSettingsCommon.max_character==0)
+                        emit message("Can't create character but the list is empty");
+                }
                 updateCharacterList();
                 if(characterListForSelection.isEmpty() && CommonSettingsCommon::commonSettingsCommon.max_character>0)
                 {

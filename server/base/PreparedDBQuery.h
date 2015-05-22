@@ -132,8 +132,6 @@ public:
     static QString db_query_delete_monster_market_price;
 
     static QString db_query_delete_all_item_market;
-    static QString db_query_delete_monster_market_by_character;
-    static QString db_query_delete_monster_market_by_id;
     static QString db_query_insert_item_market;
     static QString db_query_delete_item_market;
     static QString db_query_update_item_market;

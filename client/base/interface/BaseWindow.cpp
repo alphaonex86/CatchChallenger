@@ -40,6 +40,18 @@ QString BaseWindow::text_text=QLatin1Literal("text");
 QFile BaseWindow::debugFile;
 quint8 BaseWindow::debugFileStatus=0;
 
+// bug if init here
+QIcon BaseWindow::icon_server_list_star1;
+QIcon BaseWindow::icon_server_list_star2;
+QIcon BaseWindow::icon_server_list_star3;
+QIcon BaseWindow::icon_server_list_star4;
+QIcon BaseWindow::icon_server_list_star5;
+QIcon BaseWindow::icon_server_list_star6;
+QIcon BaseWindow::icon_server_list_stat1;
+QIcon BaseWindow::icon_server_list_stat2;
+QIcon BaseWindow::icon_server_list_stat3;
+QIcon BaseWindow::icon_server_list_stat4;
+
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)
 {

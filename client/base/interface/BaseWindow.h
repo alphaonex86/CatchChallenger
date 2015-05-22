@@ -441,7 +441,7 @@ private slots:
     void updateTheTurtle();
     void on_serverListBack_clicked();
     void updateServerList();
-    void addToServerList(const LogicialGroup &logicialGroup,QTreeWidgetItem *item);
+    void addToServerList(const LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView=true);
     void on_serverList_activated(const QModelIndex &index);
     void on_serverListSelect_clicked();
 protected slots:
@@ -512,6 +512,7 @@ private:
 
     //for server/character selection
     bool isLogged;
+    quint32 averagePlayedTime,averageLastConnect;
     QList<ServerFromPoolForDisplay *> serverOrdenedList;
     QList<QList<CharacterEntry> > characterListForSelection;
     QList<CharacterEntry> characterEntryListInWaiting;
@@ -664,6 +665,17 @@ private:
     static QString text_lang;
     static QString text_en;
     static QString text_text;
+
+    static QIcon icon_server_list_star1;
+    static QIcon icon_server_list_star2;
+    static QIcon icon_server_list_star3;
+    static QIcon icon_server_list_star4;
+    static QIcon icon_server_list_star5;
+    static QIcon icon_server_list_star6;
+    static QIcon icon_server_list_stat1;
+    static QIcon icon_server_list_stat2;
+    static QIcon icon_server_list_stat3;
+    static QIcon icon_server_list_stat4;
 
     bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;
