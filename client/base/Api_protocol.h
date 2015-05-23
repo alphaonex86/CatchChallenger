@@ -43,7 +43,7 @@ public:
     QString getPseudo();
     quint16 getId();
 
-    virtual void sendDatapackContent() = 0;
+    virtual void sendDatapackContentBase() = 0;
     virtual void tryDisconnect() = 0;
     virtual QString datapackPathBase() const;
     virtual QString datapackPathMain() const;
@@ -219,6 +219,7 @@ signals:
 
     //datapack
     void haveTheDatapack() const;
+    void haveTheDatapackMainSub() const;
     void newFile(const QString &fileName,const QByteArray &data) const;
     void newHttpFile(const QString &url,const QString &fileName) const;
     void removeFile(const QString &fileName) const;
