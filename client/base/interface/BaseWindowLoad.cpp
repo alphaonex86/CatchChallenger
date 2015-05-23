@@ -42,12 +42,14 @@ void BaseWindow::resetAll()
     worseQueryTime=0;
     progressingDatapackFileSize=0;
     haveDatapack=false;
+    haveDatapackMainSub=false;
     characterSelected=false;
     havePlayerInformations=false;
     DatapackClientLoader::datapackLoader.resetAll();
     haveInventory=false;
     isLogged=false;
     datapackIsParsed=false;
+    mainSubDatapackIsParsed=false;
     serverOrdenedList.clear();
     characterListForSelection.clear();
     characterEntryListInWaiting.clear();
@@ -186,7 +188,7 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
 {
     this->serverOrdenedList=serverOrdenedList;
     this->characterListForSelection=characterEntryList;
-    CatchChallenger::Api_client_real::client->sendDatapackContent();
+    CatchChallenger::Api_client_real::client->sendDatapackContentBase();
     isLogged=true;
     updateConnectingStatus();
 }
@@ -222,6 +224,10 @@ void BaseWindow::have_current_player_info()
     if(havePlayerInformations)
         return;
     havePlayerInformations=true;
+}
+
+void BaseWindow::have_main_and_sub_datapack_loaded()
+{
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     MapController::mapController->have_current_player_info(informations);
     CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
@@ -262,7 +268,20 @@ void BaseWindow::haveTheDatapack()
     haveDatapack=true;
 
     if(CatchChallenger::Api_client_real::client!=NULL)
-        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPathBase());
+}
+
+void BaseWindow::haveTheDatapackMainSub()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::haveTheDatapackMainSub()";
+    #endif
+    if(haveDatapackMainSub)
+        return;
+    haveDatapackMainSub=true;
+
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        emit parseDatapackMainSub(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->datapackPathMain(),CatchChallenger::Api_client_real::client->datapackPathSub());
 }
 
 void BaseWindow::datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize)
@@ -503,9 +522,10 @@ void BaseWindow::updateConnectingStatus()
                 return;
             }
         }
-        return;
     }
     QStringList waitedData;
+    if(havePlayerInformations && !mainSubDatapackIsParsed)
+        waitedData << tr("Loading of the specific datapack part");
     if(haveDatapack && (!haveInventory || !havePlayerInformations))
     {
         if(!havePlayerInformations)

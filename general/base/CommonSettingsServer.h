@@ -17,6 +17,8 @@ public:
     int waitBeforeConnectAfterKick;
     QByteArray datapackHashServerMain;
     QByteArray datapackHashServerSub;
+    QString mainDatapackCode;
+    QString subDatapackCode;
 
     //rates
     float rates_xp;

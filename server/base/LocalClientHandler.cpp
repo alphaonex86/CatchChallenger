@@ -100,67 +100,23 @@ void Client::savePosition()
     const quint32 &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
     const quint32 &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
     const quint32 &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
-    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-    {
-        default:
-        case DatabaseBase::Type::Mysql:
-            updateMapPositionQuery=QStringLiteral("UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,%5 WHERE `id`=%6")
-                .arg(map_file_database_id)
-                .arg(x)
-                .arg(y)
-                .arg((quint8)getLastDirection())
-                .arg(
-                        QStringLiteral("`rescue_map`=%1,`rescue_x`=%2,`rescue_y`=%3,`rescue_orientation`=%4,`unvalidated_rescue_map`=%5,`unvalidated_rescue_x`=%6,`unvalidated_rescue_y`=%7,`unvalidated_rescue_orientation`=%8")
-                        .arg(rescue_map_file_database_id)
-                        .arg(rescue.x)
-                        .arg(rescue.y)
-                        .arg((quint8)rescue.orientation)
-                        .arg(unvalidated_rescue_map_file_database_id)
-                        .arg(unvalidated_rescue.x)
-                        .arg(unvalidated_rescue.y)
-                        .arg((quint8)unvalidated_rescue.orientation)
-                )
-                .arg(character_id);
-        break;
-        case DatabaseBase::Type::SQLite:
-            updateMapPositionQuery=QStringLiteral("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
-                .arg(map_file_database_id)
-                .arg(x)
-                .arg(y)
-                .arg((quint8)getLastDirection())
-                .arg(
-                        QStringLiteral("rescue_map=%1,rescue_x=%2,rescue_y=%3,rescue_orientation=%4,unvalidated_rescue_map=%5,unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=%8")
-                        .arg(rescue_map_file_database_id)
-                        .arg(rescue.x)
-                        .arg(rescue.y)
-                        .arg((quint8)rescue.orientation)
-                        .arg(unvalidated_rescue_map_file_database_id)
-                        .arg(unvalidated_rescue.x)
-                        .arg(unvalidated_rescue.y)
-                        .arg((quint8)unvalidated_rescue.orientation)
-                )
-                .arg(character_id);
-        break;
-        case DatabaseBase::Type::PostgreSQL:
-            updateMapPositionQuery=QStringLiteral("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE id=%6")
-                .arg(map_file_database_id)
-                .arg(x)
-                .arg(y)
-                .arg((quint8)getLastDirection())
-                .arg(
-                        QStringLiteral("rescue_map=%1,rescue_x=%2,rescue_y=%3,rescue_orientation=%4,unvalidated_rescue_map=%5,unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=%8")
-                        .arg(rescue_map_file_database_id)
-                        .arg(rescue.x)
-                        .arg(rescue.y)
-                        .arg((quint8)rescue.orientation)
-                        .arg(unvalidated_rescue_map_file_database_id)
-                        .arg(unvalidated_rescue.x)
-                        .arg(unvalidated_rescue.y)
-                        .arg((quint8)unvalidated_rescue.orientation)
-                )
-                .arg(character_id);
-        break;
-    }
+    updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map_part1
+        .arg(map_file_database_id)
+        .arg(x)
+        .arg(y)
+        .arg((quint8)getLastDirection())
+        .arg(
+                PreparedDBQueryServer::db_query_update_character_forserver_map_part2
+                .arg(rescue_map_file_database_id)
+                .arg(rescue.x)
+                .arg(rescue.y)
+                .arg((quint8)rescue.orientation)
+                .arg(unvalidated_rescue_map_file_database_id)
+                .arg(unvalidated_rescue.x)
+                .arg(unvalidated_rescue.y)
+                .arg((quint8)unvalidated_rescue.orientation)
+        )
+        .arg(character_id);
     dbQueryWriteServer(updateMapPositionQuery);
 /* do at moveDownMonster and moveUpMonster
  *     const QList<PlayerMonster> &playerMonsterList=getPlayerMonster();

@@ -1,5 +1,8 @@
 SOURCES += $$PWD/RssNews.cpp \
     $$PWD/Api_client_real.cpp \
+    $$PWD/Api_client_real_base.cpp \
+    $$PWD/Api_client_real_main.cpp \
+    $$PWD/Api_client_real_sub.cpp \
     $$PWD/qt-tar-xz/QXzDecodeThread.cpp \
     $$PWD/qt-tar-xz/QXzDecode.cpp \
     $$PWD/qt-tar-xz/QTarDecode.cpp \

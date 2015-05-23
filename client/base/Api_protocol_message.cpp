@@ -195,18 +195,21 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                         }
                         quint8 pseudoSize;
                         in >> pseudoSize;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                        if(pseudoSize>0)
                         {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                            return;
-                        }
-                        QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
-                        public_informations.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                        in.device()->seek(in.device()->pos()+rawText.size());
-                        if(public_informations.pseudo.isEmpty())
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed for pseudo: %1, rawData: %2, line: %3").arg(mainCodeType).arg(QString(rawText.toHex())).arg(__LINE__));
-                            return;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                return;
+                            }
+                            QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                            public_informations.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                            in.device()->seek(in.device()->pos()+rawText.size());
+                            if(public_informations.pseudo.isEmpty())
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed for pseudo: %1, rawData: %2, line: %3").arg(mainCodeType).arg(QString(rawText.toHex())).arg(__LINE__));
+                                return;
+                            }
                         }
                     }
                     else
@@ -691,49 +694,57 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
                 return;
             }
+            QString text;
             quint8 textSize;
             in >> textSize;
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+            if(textSize>0)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, pseudoSize: %2, data: %3, line: %4")
-                              .arg(mainCodeType)
-                              .arg(textSize)
-                              .arg(QString(data.mid(in.device()->pos()).toHex()))
-                              .arg(__LINE__)
-                              );
-                return;
-            }
-            QByteArray rawText=data.mid(in.device()->pos(),textSize);
-            const QString &text=QString::fromUtf8(rawText.data(),rawText.size());
-            in.device()->seek(in.device()->pos()+rawText.size());
-            if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
-                new_system_text(chat_type,text);
-            else
-            {
-                quint8 pseudoSize;
-                in >> pseudoSize;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, pseudoSize: %2, data: %3, line: %4")
                                   .arg(mainCodeType)
-                                  .arg(pseudoSize)
+                                  .arg(textSize)
                                   .arg(QString(data.mid(in.device()->pos()).toHex()))
                                   .arg(__LINE__)
                                   );
                     return;
                 }
-                QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
-                QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                QByteArray rawText=data.mid(in.device()->pos(),textSize);
+                text=QString::fromUtf8(rawText.data(),rawText.size());
                 in.device()->seek(in.device()->pos()+rawText.size());
-                if(pseudo.isEmpty())
+            }
+            if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
+                new_system_text(chat_type,text);
+            else
+            {
+                QString pseudo;
+                quint8 pseudoSize;
+                in >> pseudoSize;
+                if(pseudoSize>0)
                 {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, rawText.data(): %2, rawText.size(): %3, line: %4")
-                                  .arg(mainCodeType)
-                                  .arg(QString(rawText.toHex()))
-                                  .arg(rawText.size())
-                                  .arg(__LINE__)
-                                  );
-                    return;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                    {
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, pseudoSize: %2, data: %3, line: %4")
+                                      .arg(mainCodeType)
+                                      .arg(pseudoSize)
+                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                    pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                    in.device()->seek(in.device()->pos()+rawText.size());
+                    if(pseudo.isEmpty())
+                    {
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, rawText.data(): %2, rawText.size(): %3, line: %4")
+                                      .arg(mainCodeType)
+                                      .arg(QString(rawText.toHex()))
+                                      .arg(rawText.size())
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
                 }
                 quint8 player_type_int;
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
@@ -949,16 +960,20 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                             return;
                         }
+                        QString fileName;
                         quint8 fileNameSize;
                         in >> fileNameSize;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                        if(fileNameSize>0)
                         {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                            return;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
+                            in.device()->seek(in.device()->pos()+rawText.size());
+                            fileName=QString::fromUtf8(rawText.data(),rawText.size());
                         }
-                        QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
-                        in.device()->seek(in.device()->pos()+rawText.size());
-                        QString fileName=QString::fromUtf8(rawText.data(),rawText.size());
                         if(!extensionAllowed.contains(QFileInfo(fileName).suffix()))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("extension not allowed: %4 with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__).arg(QFileInfo(fileName).suffix()));
@@ -1097,30 +1112,33 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         }
                         quint8 baseHttpSize;
                         in >> baseHttpSize;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)baseHttpSize)
+                        if(baseHttpSize>0)
                         {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                          .arg(mainCodeType)
-                                          .arg(subCodeType)
-                                          .arg(baseHttpSize)
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                          .arg(__LINE__)
-                                          );
-                            return;
-                        }
-                        QByteArray baseHttpRaw=data.mid(in.device()->pos(),baseHttpSize);
-                        baseHttp=QString::fromUtf8(baseHttpRaw.data(),baseHttpRaw.size());
-                        in.device()->seek(in.device()->pos()+baseHttpRaw.size());
-                        if(baseHttp.isEmpty())
-                        {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
-                                          .arg(mainCodeType)
-                                          .arg(subCodeType)
-                                          .arg(QString(baseHttpRaw.toHex()))
-                                          .arg(baseHttpRaw.size())
-                                          .arg(__LINE__)
-                                          );
-                            return;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)baseHttpSize)
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                              .arg(mainCodeType)
+                                              .arg(subCodeType)
+                                              .arg(baseHttpSize)
+                                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                              .arg(__LINE__)
+                                              );
+                                return;
+                            }
+                            QByteArray baseHttpRaw=data.mid(in.device()->pos(),baseHttpSize);
+                            baseHttp=QString::fromUtf8(baseHttpRaw.data(),baseHttpRaw.size());
+                            in.device()->seek(in.device()->pos()+baseHttpRaw.size());
+                            if(baseHttp.isEmpty())
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                              .arg(mainCodeType)
+                                              .arg(subCodeType)
+                                              .arg(QString(baseHttpRaw.toHex()))
+                                              .arg(baseHttpRaw.size())
+                                              .arg(__LINE__)
+                                              );
+                                return;
+                            }
                         }
                     }
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
@@ -1143,16 +1161,20 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                             return;
                         }
+                        QString fileName;
                         quint8 fileNameSize;
                         in >> fileNameSize;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                        if(fileNameSize>0)
                         {
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                            return;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
+                            in.device()->seek(in.device()->pos()+rawText.size());
+                            fileName=QString::fromUtf8(rawText.data(),rawText.size());
                         }
-                        QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
-                        in.device()->seek(in.device()->pos()+rawText.size());
-                        QString fileName=QString::fromUtf8(rawText.data(),rawText.size());
                         if(!extensionAllowed.contains(QFileInfo(fileName).suffix()))
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("extension not allowed: %4 with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__).arg(QFileInfo(fileName).suffix()));
@@ -1227,20 +1249,23 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                                 }
                                 quint8 stringSize;
                                 in >> stringSize;
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                                if(stringSize>0)
                                 {
-                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                                  .arg(mainCodeType)
-                                                  .arg(subCodeType)
-                                                  .arg(stringSize)
-                                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                                  .arg(__LINE__)
-                                                  );
-                                    return;
+                                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                                    {
+                                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                                      .arg(mainCodeType)
+                                                      .arg(subCodeType)
+                                                      .arg(stringSize)
+                                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                                      .arg(__LINE__)
+                                                      );
+                                        return;
+                                    }
+                                    QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                                    server.host=QString::fromUtf8(stringRaw.data(),stringRaw.size());
+                                    in.device()->seek(in.device()->pos()+stringRaw.size());
                                 }
-                                QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
-                                server.host=QString::fromUtf8(stringRaw.data(),stringRaw.size());
-                                in.device()->seek(in.device()->pos()+stringRaw.size());
                             }
                             //port
                             {
@@ -1283,20 +1308,23 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                                 }
                                 quint16 stringSize;
                                 in >> stringSize;
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                                if(stringSize>0)
                                 {
-                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                                  .arg(mainCodeType)
-                                                  .arg(subCodeType)
-                                                  .arg(stringSize)
-                                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                                  .arg(__LINE__)
-                                                  );
-                                    return;
+                                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                                    {
+                                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                                      .arg(mainCodeType)
+                                                      .arg(subCodeType)
+                                                      .arg(stringSize)
+                                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                                      .arg(__LINE__)
+                                                      );
+                                        return;
+                                    }
+                                    QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                                    server.xml=QString::fromUtf8(stringRaw.data(),stringRaw.size());
+                                    in.device()->seek(in.device()->pos()+stringRaw.size());
                                 }
-                                QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
-                                server.xml=QString::fromUtf8(stringRaw.data(),stringRaw.size());
-                                in.device()->seek(in.device()->pos()+stringRaw.size());
                             }
                             {
                                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -1371,20 +1399,23 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                                 }
                                 quint16 stringSize;
                                 in >> stringSize;
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                                if(stringSize>0)
                                 {
-                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                                  .arg(mainCodeType)
-                                                  .arg(subCodeType)
-                                                  .arg(stringSize)
-                                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                                  .arg(__LINE__)
-                                                  );
-                                    return;
+                                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)stringSize)
+                                    {
+                                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                                      .arg(mainCodeType)
+                                                      .arg(subCodeType)
+                                                      .arg(stringSize)
+                                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                                      .arg(__LINE__)
+                                                      );
+                                        return;
+                                    }
+                                    QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                                    server.xml=QString::fromUtf8(stringRaw.data(),stringRaw.size());
+                                    in.device()->seek(in.device()->pos()+stringRaw.size());
                                 }
-                                QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
-                                server.xml=QString::fromUtf8(stringRaw.data(),stringRaw.size());
-                                in.device()->seek(in.device()->pos()+stringRaw.size());
                             }
                             {
                                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -1467,20 +1498,23 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             }
                             quint8 pathSize;
                             in >> pathSize;
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pathSize)
+                            if(pathSize>0)
                             {
-                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                              .arg(mainCodeType)
-                                              .arg(subCodeType)
-                                              .arg(pathSize)
-                                              .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                              .arg(__LINE__)
-                                              );
-                                return;
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pathSize)
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                                  .arg(mainCodeType)
+                                                  .arg(subCodeType)
+                                                  .arg(pathSize)
+                                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                                  .arg(__LINE__)
+                                                  );
+                                    return;
+                                }
+                                QByteArray pathRaw=data.mid(in.device()->pos(),pathSize);
+                                path=QString::fromUtf8(pathRaw.data(),pathRaw.size());
+                                in.device()->seek(in.device()->pos()+pathRaw.size());
                             }
-                            QByteArray pathRaw=data.mid(in.device()->pos(),pathSize);
-                            path=QString::fromUtf8(pathRaw.data(),pathRaw.size());
-                            in.device()->seek(in.device()->pos()+pathRaw.size());
                         }
                         {
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
@@ -1495,20 +1529,23 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             }
                             quint16 xmlSize;
                             in >> xmlSize;
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)xmlSize)
+                            if(xmlSize>0)
                             {
-                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                              .arg(mainCodeType)
-                                              .arg(subCodeType)
-                                              .arg(xmlSize)
-                                              .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                              .arg(__LINE__)
-                                              );
-                                return;
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)xmlSize)
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                                  .arg(mainCodeType)
+                                                  .arg(subCodeType)
+                                                  .arg(xmlSize)
+                                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                                  .arg(__LINE__)
+                                                  );
+                                    return;
+                                }
+                                QByteArray xmlRaw=data.mid(in.device()->pos(),xmlSize);
+                                xml=QString::fromUtf8(xmlRaw.data(),xmlRaw.size());
+                                in.device()->seek(in.device()->pos()+xmlRaw.size());
                             }
-                            QByteArray xmlRaw=data.mid(in.device()->pos(),xmlSize);
-                            xml=QString::fromUtf8(xmlRaw.data(),xmlRaw.size());
-                            in.device()->seek(in.device()->pos()+xmlRaw.size());
                         }
 
                         logicialGroupIndexList << addLogicalGroup(path,xml,language);
@@ -1880,32 +1917,36 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
                     }
+                    QString pseudo;
                     quint8 pseudoSize;
                     in >> pseudoSize;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                    if(pseudoSize>0)
                     {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                      .arg(mainCodeType)
-                                      .arg(subCodeType)
-                                      .arg(pseudoSize)
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                      .arg(__LINE__)
-                                      );
-                        return;
-                    }
-                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
-                    QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
-                    if(pseudo.isEmpty())
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
-                                      .arg(mainCodeType)
-                                      .arg(subCodeType)
-                                      .arg(QString(rawText.toHex()))
-                                      .arg(rawText.size())
-                                      .arg(__LINE__)
-                                      );
-                        return;
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(pseudoSize)
+                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(__LINE__)
+                                          );
+                            return;
+                        }
+                        QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                        pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                        in.device()->seek(in.device()->pos()+rawText.size());
+                        if(pseudo.isEmpty())
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(QString(rawText.toHex()))
+                                          .arg(rawText.size())
+                                          .arg(__LINE__)
+                                          );
+                            return;
+                        }
                     }
                     quint8 skinId;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
@@ -2323,32 +2364,36 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
                     }
+                    QString pseudo;
                     quint8 pseudoSize;
                     in >> pseudoSize;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                    if(pseudoSize>0)
                     {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
-                                      .arg(mainCodeType)
-                                      .arg(subCodeType)
-                                      .arg(pseudoSize)
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
-                                      .arg(__LINE__)
-                                      );
-                        return;
-                    }
-                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
-                    QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
-                    if(pseudo.isEmpty())
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
-                                      .arg(mainCodeType)
-                                      .arg(subCodeType)
-                                      .arg(QString(rawText.toHex()))
-                                      .arg(rawText.size())
-                                      .arg(__LINE__)
-                                      );
-                        return;
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(pseudoSize)
+                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(__LINE__)
+                                          );
+                            return;
+                        }
+                        QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                        pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                        in.device()->seek(in.device()->pos()+rawText.size());
+                        if(pseudo.isEmpty())
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(QString(rawText.toHex()))
+                                          .arg(rawText.size())
+                                          .arg(__LINE__)
+                                          );
+                            return;
+                        }
                     }
                     quint8 skinId;
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))

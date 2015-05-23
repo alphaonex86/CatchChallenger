@@ -73,7 +73,6 @@ void Client::selectCharacter_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->selectCharacter_object();
-    GlobalServerData::serverPrivateVariables.db_common->clear();
 }
 
 void Client::selectCharacter_object()
@@ -298,7 +297,7 @@ void Client::selectCharacterServer(const quint8 &query_id, const quint32 &charac
     selectCharacterParam->characterId=characterId;
 
     const QString &queryText=PreparedDBQueryServer::db_query_character_server_by_id.arg(characterId);
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&Client::selectCharacterServer_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&Client::selectCharacterServer_static);
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
@@ -319,7 +318,7 @@ void Client::selectCharacterServer(const quint8 &query_id, const quint32 &charac
 void Client::selectCharacterServer_static(void *object)
 {
     if(object!=NULL)
-        static_cast<Client *>(object)->selectCharacter_object();
+        static_cast<Client *>(object)->selectCharacterServer_object();
     GlobalServerData::serverPrivateVariables.db_server->clear();
 }
 
@@ -852,24 +851,57 @@ void Client::loginIsRightFinalStep()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint8)01;
+    out << (quint8)01;// all is good
+    //main hash
+    outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
+    out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
+    //sub hash
+    outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
+    out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
+    //mirror
+    {
+        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer);
+        outputData+=httpDatapackMirrorRaw;
+        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
+    }
+    //Main type code
+    {
+        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+        outputData+=httpDatapackMirrorRaw;
+        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
+    }
+    //Sub type cod
+    {
+        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.subDatapackCode);
+        outputData+=httpDatapackMirrorRaw;
+        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
+    }
+
+    //temporary character id
     if(GlobalServerData::serverSettings.max_players<=255)
         out << (quint8)public_and_private_informations.public_informations.simplifiedId;
     else
         out << (quint16)public_and_private_informations.public_informations.simplifiedId;
-    out << public_and_private_informations.public_informations.pseudo;
+    //pseudo
+    {
+        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(public_and_private_informations.public_informations.pseudo);
+        outputData+=httpDatapackMirrorRaw;
+        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
+    }
     out << (quint8)public_and_private_informations.allow.size();
     {
         QSetIterator<ActionAllow> i(public_and_private_informations.allow);
         while (i.hasNext())
             out << (quint8)i.next();
     }
-    out << (quint32)public_and_private_informations.clan;
 
+    //clan related
+    out << (quint32)public_and_private_informations.clan;
     if(public_and_private_informations.clan_leader)
         out << (quint8)0x01;
     else
         out << (quint8)0x00;
+
     //send the event
     {
         QList<QPair<quint8,quint8> > events;
@@ -891,6 +923,7 @@ void Client::loginIsRightFinalStep()
             index++;
         }
     }
+
     out << (quint64)public_and_private_informations.cash;
     out << (quint64)public_and_private_informations.warehouse_cash;
     out << (quint8)public_and_private_informations.itemOnMap.size();

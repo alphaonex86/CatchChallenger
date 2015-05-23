@@ -138,10 +138,14 @@ BaseWindow::BaseWindow() :
     connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setMultiPlayer,Qt::QueuedConnection);
 
     //connect the datapack loader
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumError,  this,                            &BaseWindow::datapackChecksumError,Qt::QueuedConnection);
-    connect(this,                                   &BaseWindow::parseDatapack,             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsedMainSub,           this,                                   &BaseWindow::datapackParsedMainSub,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumError,           this,                                   &BaseWindow::datapackChecksumError,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumErrorMainSub,    this,                                   &BaseWindow::datapackChecksumErrorMainSub,Qt::QueuedConnection);
+    connect(this,                                   &BaseWindow::parseDatapack,                             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
+    connect(this,                                   &BaseWindow::parseDatapackMainSub,                      &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsedMainSub,           MapController::mapController,           &MapController::datapackParsedMainSub,Qt::QueuedConnection);
 
     //render, logical part into Map_Client
     connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of);
@@ -273,6 +277,7 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::notLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::logged,             this,&BaseWindow::logged,           Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,    this,&BaseWindow::haveTheDatapackMainSub,  Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newError,           this,&BaseWindow::newError,         Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanActionFailed,   this,&BaseWindow::clanActionFailed, Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanActionSuccess,  this,&BaseWindow::clanActionSuccess,Qt::QueuedConnection);

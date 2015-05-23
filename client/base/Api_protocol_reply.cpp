@@ -199,14 +199,17 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     }
                     quint8 mirrorSize;
                     in >> mirrorSize;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)mirrorSize)
+                    if(mirrorSize>0)
                     {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                        return;
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)mirrorSize)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                            return;
+                        }
+                        QByteArray rawText=data.mid(in.device()->pos(),mirrorSize);
+                        CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromUtf8(rawText.data(),rawText.size());
+                        in.device()->seek(in.device()->pos()+rawText.size());
                     }
-                    QByteArray rawText=data.mid(in.device()->pos(),mirrorSize);
-                    CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromUtf8(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
                 }
                 //characters
                 {
@@ -248,14 +251,17 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                 }
                                 quint8 pseudoSize;
                                 in >> pseudoSize;
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                                if(pseudoSize>0)
                                 {
-                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                                    return;
+                                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                                    {
+                                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                        return;
+                                    }
+                                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                                    characterEntry.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                                    in.device()->seek(in.device()->pos()+rawText.size());
                                 }
-                                QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
-                                characterEntry.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                                in.device()->seek(in.device()->pos()+rawText.size());
                             }
                             //Skin id
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -736,6 +742,84 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                     }
                     else
                     {
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        CommonSettingsServer::commonSettingsServer.datapackHashServerMain=data.mid(in.device()->pos(),28);
+                        in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        CommonSettingsServer::commonSettingsServer.datapackHashServerSub=data.mid(in.device()->pos(),28);
+                        in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
+                        {
+                            //the mirror
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                return;
+                            }
+                            quint8 mirrorSize;
+                            in >> mirrorSize;
+                            if(mirrorSize>0)
+                            {
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)mirrorSize)
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                    return;
+                                }
+                                QByteArray rawText=data.mid(in.device()->pos(),mirrorSize);
+                                CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=QString::fromUtf8(rawText.data(),rawText.size());
+                                in.device()->seek(in.device()->pos()+rawText.size());
+                            }
+                        }
+                        {
+                            //Main type code
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                return;
+                            }
+                            quint8 textSize;
+                            in >> textSize;
+                            if(textSize>0)
+                            {
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                    return;
+                                }
+                                QByteArray rawText=data.mid(in.device()->pos(),textSize);
+                                CommonSettingsServer::commonSettingsServer.mainDatapackCode=QString::fromUtf8(rawText.data(),rawText.size());
+                                in.device()->seek(in.device()->pos()+rawText.size());
+                            }
+                        }
+                        {
+                            //Sub type code
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                return;
+                            }
+                            quint8 textSize;
+                            in >> textSize;
+                            if(textSize>0)
+                            {
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                    return;
+                                }
+                                QByteArray rawText=data.mid(in.device()->pos(),textSize);
+                                CommonSettingsServer::commonSettingsServer.subDatapackCode=QString::fromUtf8(rawText.data(),rawText.size());
+                                in.device()->seek(in.device()->pos()+rawText.size());
+                            }
+                        }
+
                         if(max_players<=255)
                         {
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -756,12 +840,27 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                             }
                             in >> player_informations.public_informations.simplifiedId;
                         }
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || !checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                         {
-                            newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                            return;
+                            //pseudo
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                return;
+                            }
+                            quint8 textSize;
+                            in >> textSize;
+                            if(textSize>0)
+                            {
+                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                                    return;
+                                }
+                                QByteArray rawText=data.mid(in.device()->pos(),textSize);
+                                player_informations.public_informations.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                                in.device()->seek(in.device()->pos()+rawText.size());
+                            }
                         }
-                        in >> player_informations.public_informations.pseudo;
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));

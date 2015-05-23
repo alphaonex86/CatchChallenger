@@ -138,6 +138,8 @@ public:
     static QString db_query_update_item_market_and_price;
     static QString db_query_update_charaters_market_cash;
     static QString db_query_get_market_cash;
+    static QString db_query_update_character_forserver_map_part1;
+    static QString db_query_update_character_forserver_map_part2;
 };
 
 }

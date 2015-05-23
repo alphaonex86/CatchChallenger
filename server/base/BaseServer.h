@@ -87,6 +87,7 @@ protected:
         quint64 price;
     };
 
+    void preload_randomBlock();
     void preload_the_data();
     void preload_the_events();
     void preload_the_ddos();
@@ -134,6 +135,7 @@ protected:
     static void preload_dictionary_map_static(void *object);
     void preload_dictionary_map_return();
 
+    void unload_randomBlock();
     void unload_industries();
     void unload_zone();
     void unload_market();
