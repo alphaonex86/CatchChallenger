@@ -27,7 +27,7 @@ Api_client_virtual::~Api_client_virtual()
 {
 }
 
-void Api_client_virtual::sendDatapackContent()
+void Api_client_virtual::sendDatapackContentBase()
 {
     /*emit */haveTheDatapack();
 }

@@ -116,7 +116,7 @@ bool DatapackClientLoader::isParsingDatapack()
     return inProgress;
 }
 
-void DatapackClientLoader::parseDatapack(const QString &datapackPath, const QString &mainDatapackCode)
+void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 {
     if(inProgress)
     {
@@ -147,7 +147,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath, const QStr
     }
 
     this->datapackPath=datapackPath;
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(mainDatapackCode);
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg("na");
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
@@ -171,6 +171,11 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath, const QStr
     parseReputationExtra();
     inProgress=false;
     emit datapackParsed();
+}
+
+void DatapackClientLoader::parseDatapackMainSub(const QString &datapackPath, const QString &mainDatapackCode, const QString &subDatapackCode)
+{
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(mainDatapackCode);
 }
 
 QString DatapackClientLoader::getDatapackPath()

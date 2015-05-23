@@ -115,6 +115,8 @@ QString PreparedDBQueryCommon::db_query_insert_clan=NULL;
 QString PreparedDBQueryCommon::db_query_update_monster_owner=NULL;
 QString PreparedDBQueryCommon::db_query_select_server_time=NULL;
 QString PreparedDBQueryCommon::db_query_insert_server_time=NULL;
+QString PreparedDBQueryServer::db_query_update_character_forserver_map_part1=NULL;
+QString PreparedDBQueryServer::db_query_update_character_forserver_map_part2=NULL;
 
 void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::Type &type)
 {
@@ -435,13 +437,13 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::Mysql:
-        PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT `x`,`y`,`orientation`,`map`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash` FROM `character_forserver` WHERE `id`=%1");
+        PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT `x`,`y`,`orientation`,`map`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash` FROM `character_forserver` WHERE `character`=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `character`=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `item`=%1 AND `character`=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE `item_market` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3");
         PreparedDBQueryServer::db_query_update_item_market_and_price=QStringLiteral("UPDATE `item_market` SET `quantity`=%1,`market_price`=%2 WHERE `item`=%3 AND `character`=%4;");
-        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE `character_forserver` SET `market_cash`=`market_cash`+%1 WHERE `id`=%2");
+        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE `character_forserver` SET `market_cash`=`market_cash`+%1 WHERE `character`=%2");
         PreparedDBQueryServer::db_query_get_market_cash=QStringLiteral("UPDATE `character` SET `cash`=%1,`market_cash`=0 WHERE `id`=%2;");
         PreparedDBQueryServer::db_query_insert_monster_market_price=QStringLiteral("INSERT INTO `monster_market_price`(`id`,`market_price`) VALUES(%1,%2)");
         PreparedDBQueryServer::db_query_delete_monster_market_price=QStringLiteral("DELETE FROM `monster_market_price` WHERE `id`=%1");
@@ -464,18 +466,20 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         PreparedDBQueryServer::db_query_insert_quest=QStringLiteral("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,0,%3);");
         PreparedDBQueryServer::db_query_update_city_clan=QStringLiteral("UPDATE `city` SET `clan`=%1 WHERE `city`='%2';");
         PreparedDBQueryServer::db_query_insert_city=QStringLiteral("INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');");
+        PreparedDBQueryServer::db_query_update_character_forserver_map_part1=QStringLiteral("UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,%5 WHERE `character`=%6");
+        PreparedDBQueryServer::db_query_update_character_forserver_map_part2=QStringLiteral("`rescue_map`=%1,`rescue_x`=%2,`rescue_y`=%3,`rescue_orientation`=%4,`unvalidated_rescue_map`=%5,`unvalidated_rescue_x`=%6,`unvalidated_rescue_y`=%7,`unvalidated_rescue_orientation`=%8");
         break;
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::SQLite:
-        PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE id=%1");
+        PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");
         PreparedDBQueryServer::db_query_update_item_market_and_price=QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;");
-        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character_forserver SET market_cash=market_cash+%1 WHERE id=%2");
+        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character_forserver SET market_cash=market_cash+%1 WHERE character=%2");
         PreparedDBQueryServer::db_query_get_market_cash=QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;");
         PreparedDBQueryServer::db_query_insert_monster_market_price=QStringLiteral("INSERT INTO monster_market_price(id,market_price) VALUES(%1,%2)");
         PreparedDBQueryServer::db_query_delete_monster_market_price=QStringLiteral("DELETE FROM monster_market_price WHERE id=%1");
@@ -498,17 +502,19 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         PreparedDBQueryServer::db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,0,%3);");
         PreparedDBQueryServer::db_query_update_city_clan=QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';");
         PreparedDBQueryServer::db_query_insert_city=QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');");
+        PreparedDBQueryServer::db_query_update_character_forserver_map_part1=QStringLiteral("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE character=%6");
+        PreparedDBQueryServer::db_query_update_character_forserver_map_part2=QStringLiteral("rescue_map=%1,rescue_x=%2,rescue_y=%3,rescue_orientation=%4,unvalidated_rescue_map=%5,unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=%8");
         break;
         #endif
 
         case DatabaseBase::Type::PostgreSQL:
-        PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE id=%1");
+        PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
         PreparedDBQueryServer::db_query_delete_item_market=QStringLiteral("DELETE FROM item_market WHERE item=%1 AND character=%2");
         PreparedDBQueryServer::db_query_update_item_market=QStringLiteral("UPDATE item_market SET quantity=%1 WHERE item=%2 AND character=%3");
         PreparedDBQueryServer::db_query_update_item_market_and_price=QStringLiteral("UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;");
-        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character_forserver SET market_cash=market_cash+%1 WHERE id=%2");
+        PreparedDBQueryServer::db_query_update_charaters_market_cash=QStringLiteral("UPDATE character_forserver SET market_cash=market_cash+%1 WHERE character=%2");
         PreparedDBQueryServer::db_query_get_market_cash=QStringLiteral("UPDATE character SET cash=%1,market_cash=0 WHERE id=%2;");
         PreparedDBQueryServer::db_query_insert_monster_market_price=QStringLiteral("INSERT INTO monster_market_price(id,market_price) VALUES(%1,%2)");
         PreparedDBQueryServer::db_query_delete_monster_market_price=QStringLiteral("DELETE FROM monster_market_price WHERE id=%1");
@@ -531,6 +537,8 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         PreparedDBQueryServer::db_query_insert_quest=QStringLiteral("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,0,%3);");
         PreparedDBQueryServer::db_query_update_city_clan=QStringLiteral("UPDATE city SET clan=%1 WHERE city='%2';");
         PreparedDBQueryServer::db_query_insert_city=QStringLiteral("INSERT INTO city(clan,city) VALUES(%1,'%2');");
+        PreparedDBQueryServer::db_query_update_character_forserver_map_part1=QStringLiteral("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,%5 WHERE character=%6");
+        PreparedDBQueryServer::db_query_update_character_forserver_map_part2=QStringLiteral("rescue_map=%1,rescue_x=%2,rescue_y=%3,rescue_orientation=%4,unvalidated_rescue_map=%5,unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=%8");
         break;
     }
 }
