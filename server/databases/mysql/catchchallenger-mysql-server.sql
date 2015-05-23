@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS `bot_already_beaten` (
 --
 
 CREATE TABLE IF NOT EXISTS `character_forserver` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
   `character` int(11) NOT NULL,
   `x` tinyint(3) unsigned NOT NULL,
   `y` tinyint(3) unsigned NOT NULL,
@@ -41,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
   `date` int(11) unsigned NOT NULL,
   `market_cash` bigint(20) unsigned NOT NULL,
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`character`),
   KEY `account` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

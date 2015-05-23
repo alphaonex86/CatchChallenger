@@ -638,12 +638,44 @@ void Client::generateRandomNumber()
     {
         //can send the next block
         const QByteArray newData(GlobalServerData::serverPrivateVariables.randomData.mid(randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(GlobalServerData::serverPrivateVariables.randomData.isEmpty())
+        {
+            qDebug() << QStringLiteral("Client::generateRandomNumber() GlobalServerData::serverPrivateVariables.randomData.isEmpty()");
+            return;
+        }
+        if(newData.isEmpty())
+        {
+            qDebug() << QStringLiteral("Client::generateRandomNumber() newData.isEmpty(), GlobalServerData::serverPrivateVariables.randomData.size(): %1 mid(%2+%3,%4)")
+                        .arg(GlobalServerData::serverPrivateVariables.randomData.size())
+                        .arg(randomIndex)
+                        .arg(randomSize)
+                        .arg(CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)
+                        ;
+            return;
+        }
+        #endif
         sendFullPacket(0xE0,0x09,newData.constData(),newData.size());
     }
     else
     {
         //need return to the first block
         const QByteArray newData(GlobalServerData::serverPrivateVariables.randomData.mid(0,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(GlobalServerData::serverPrivateVariables.randomData.isEmpty())
+        {
+            qDebug() << QStringLiteral("Client::generateRandomNumber() GlobalServerData::serverPrivateVariables.randomData.isEmpty()");
+            return;
+        }
+        if(newData.isEmpty())
+        {
+            qDebug() << QStringLiteral("Client::generateRandomNumber() newData.isEmpty(), GlobalServerData::serverPrivateVariables.randomData.size(): %1 mid(0,%2)")
+                        .arg(GlobalServerData::serverPrivateVariables.randomData.size())
+                        .arg(CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)
+                        ;
+            return;
+        }
+        #endif
         sendFullPacket(0xE0,0x09,newData.constData(),newData.size());
     }
     randomSize+=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;

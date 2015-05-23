@@ -217,6 +217,7 @@ void BaseServer::preload_the_data()
     }
     timeDatapack.restart();
     preload_the_randomData();
+    preload_randomBlock();
     preload_the_events();
     preload_the_ddos();
     preload_the_datapack();
@@ -246,6 +247,44 @@ void BaseServer::preload_the_data()
     void load_sql_monsters_warehouse_max_id();
     void load_sql_monsters_market_max_id();
     */
+}
+
+void BaseServer::preload_randomBlock()
+{
+    #ifdef Q_OS_LINUX
+    if(BaseServerLogin::fpRandomFile!=NULL)
+        fclose(BaseServerLogin::fpRandomFile);
+    BaseServerLogin::fpRandomFile = fopen("/dev/urandom","rb");
+    if(BaseServerLogin::fpRandomFile==NULL)
+        qDebug() << "Unable to open /dev/urandom to have trusted number generator";
+    //fclose(BaseServerLogin::fpRandomFile);-> used later into ./base/ClientNetworkRead.cpp for token
+    GlobalServerData::serverPrivateVariables.randomData.resize(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
+    const int &returnedSize=fread(GlobalServerData::serverPrivateVariables.randomData.data(),1,CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE,BaseServerLogin::fpRandomFile);
+    if(returnedSize!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+    {
+        qDebug() << QStringLiteral("CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE don't match with urandom size: %1").arg(returnedSize);
+        abort();
+    }
+    if(GlobalServerData::serverPrivateVariables.randomData.size()!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.randomData.size() don't match with urandom size");
+        abort();
+    }
+    #else
+    QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
+    randomDataStream.setVersion(QDataStream::Qt_4_4);
+    int index=0;
+    while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+    {
+        randomDataStream << quint8(rand()%256);
+        index++;
+    }
+    #endif
+}
+
+void BaseServer::unload_randomBlock()
+{
+    GlobalServerData::serverPrivateVariables.randomData.clear();
 }
 
 void BaseServer::SQL_common_load_finish()

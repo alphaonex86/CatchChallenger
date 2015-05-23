@@ -200,9 +200,6 @@ struct GameServerSettings
         quint16 offset;//mins
     };
     QHash<QString,QHash<QString,ProgrammedEvent> > programmedEventList;
-
-    QString mainDatapackCode;
-    QString subDatapackCode;
 };
 
 struct CityStatus

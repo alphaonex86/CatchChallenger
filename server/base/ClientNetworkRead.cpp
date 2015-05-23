@@ -437,14 +437,17 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                         }
                         quint8 textSize;
                         in >> textSize;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                        if(textSize>0)
                         {
-                            parseNetworkReadError("wrong utf8 to QString size in PM for text");
-                            return;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                            {
+                                parseNetworkReadError("wrong utf8 to QString size in PM for text");
+                                return;
+                            }
+                            const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
+                            text=QString::fromUtf8(rawText.data(),rawText.size());
+                            in.device()->seek(in.device()->pos()+rawText.size());
                         }
-                        const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                        text=QString::fromUtf8(rawText.data(),rawText.size());
-                        in.device()->seek(in.device()->pos()+rawText.size());
                     }
                     QString pseudo;
                     {
@@ -455,14 +458,17 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                         }
                         quint8 pseudoSize;
                         in >> pseudoSize;
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                        if(pseudoSize>0)
                         {
-                            parseNetworkReadError("wrong utf8 to QString size in PM for pseudo");
-                            return;
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                            {
+                                parseNetworkReadError("wrong utf8 to QString size in PM for pseudo");
+                                return;
+                            }
+                            const QByteArray &rawText=newData.mid(in.device()->pos(),pseudoSize);
+                            pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                            in.device()->seek(in.device()->pos()+rawText.size());
                         }
-                        const QByteArray &rawText=newData.mid(in.device()->pos(),pseudoSize);
-                        pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                        in.device()->seek(in.device()->pos()+rawText.size());
                     }
 
                     normalOutput(Client::text_slashpmspace+pseudo+Client::text_space+text);
@@ -483,14 +489,17 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                 }
                 quint8 textSize;
                 in >> textSize;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                if(textSize>0)
                 {
-                    parseNetworkReadError("wrong utf8 to QString size");
-                    return;
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                    {
+                        parseNetworkReadError("wrong utf8 to QString size");
+                        return;
+                    }
+                    const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
+                    QString text=QString::fromUtf8(rawText.data(),rawText.size());
+                    in.device()->seek(in.device()->pos()+rawText.size());
                 }
-                const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                QString text=QString::fromUtf8(rawText.data(),rawText.size());
-                in.device()->seek(in.device()->pos()+rawText.size());
 
                 if(!text.startsWith(Client::text_slash))
                 {
@@ -1234,19 +1243,22 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                     }
                     quint8 textSize;
                     in >> textSize;
-                    if(textSize>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
+                    if(textSize>0)
                     {
-                        parseNetworkReadError(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
-                        return;
+                        if(textSize>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
+                        {
+                            parseNetworkReadError(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
+                            return;
+                        }
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                        {
+                            parseNetworkReadError("wrong utf8 to QString size in PM for text");
+                            return;
+                        }
+                        const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
+                        pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                        in.device()->seek(in.device()->pos()+rawText.size());
                     }
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
-                    {
-                        parseNetworkReadError("wrong utf8 to QString size in PM for text");
-                        return;
-                    }
-                    const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
-                    pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
                 }
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {

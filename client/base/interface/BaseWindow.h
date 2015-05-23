@@ -545,7 +545,7 @@ private:
     QString toSmilies(QString text);
     QStringList server_list;
     QAbstractSocket::SocketState socketState;
-    bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
+    bool haveDatapack,haveDatapackMainSub,havePlayerInformations,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
     bool characterSelected;
     quint32 fightId;
 
@@ -686,7 +686,8 @@ private:
 signals:
     void newError(QString error,QString detailedError);
     //datapack
-    void parseDatapack(const QString &datapackPath, const QString &mainDatapackCode);
+    void parseDatapack(const QString &datapackPath);
+    void parseDatapackMainSub(const QString &datapackPath, const QString &mainDatapackCode, const QString &subDatapackCode);
     void sendsetMultiPlayer(const bool & multiplayer);
     void teleportDone();
     //plant, can do action only if the previous is finish

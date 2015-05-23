@@ -431,7 +431,7 @@ QByteArray Client::character_list_return(const quint8 &query_id)
     out.device()->seek(out.device()->pos()+CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
 
     {
-        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer);
+        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase);
         outputData+=httpDatapackMirrorRaw;
         out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
     }
