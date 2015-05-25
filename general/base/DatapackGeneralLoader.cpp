@@ -2922,7 +2922,7 @@ QList<ServerProfile> DatapackGeneralLoader::loadServerProfileListInternal(const 
                 serverProfile.mapString=map.attribute(DatapackGeneralLoader::text_file);
                 if(!serverProfile.mapString.endsWith(DatapackGeneralLoader::text_dottmx))
                     serverProfile.mapString+=DatapackGeneralLoader::text_dottmx;
-                if(!QFile::exists(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(mainDatapackCode)+serverProfile.mapString))
+                if(!QFile::exists(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(mainDatapackCode)+serverProfile.mapString))
                 {
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(file).arg(serverProfile.mapString).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement(DatapackGeneralLoader::text_start);

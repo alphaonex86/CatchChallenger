@@ -32,6 +32,11 @@ void Api_client_virtual::sendDatapackContentBase()
     /*emit */haveTheDatapack();
 }
 
+void Api_client_virtual::sendDatapackContentMainSub()
+{
+    /*emit */haveTheDatapackMainSub();
+}
+
 void Api_client_virtual::tryDisconnect()
 {
     if(socket!=NULL)

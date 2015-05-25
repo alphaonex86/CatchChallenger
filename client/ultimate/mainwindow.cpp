@@ -1620,7 +1620,7 @@ void MainWindow::saveTime()
             if(metaData.status()==QSettings::NoError)
             {
                 QString locaction=CatchChallenger::BaseWindow::baseWindow->lastLocation();
-                const QString &mapPath=internalServer->getSettings().datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(internalServer->getSettings().mainDatapackCode);
+                const QString &mapPath=internalServer->getSettings().datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode);//internalServer->getSettings().mainDatapackCode
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())

@@ -44,12 +44,13 @@ public:
 
     //datapack related
     void sendDatapackContentBase();
-    void sendDatapackContentMain();
-    void sendDatapackContentSub();
+    void sendDatapackContentMainSub();
     void test_mirror_base();
     void test_mirror_main();
     void test_mirror_sub();
-    void httpErrorEvent();
+    void httpErrorEventBase();
+    void httpErrorEventMain();
+    void httpErrorEventSub();
     void decodedIsFinishBase();
     void decodedIsFinishMain();
     void decodedIsFinishSub();
@@ -140,8 +141,9 @@ private slots:
     void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
     void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
     void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
-    void downloadProgressDatapack(qint64 bytesReceived, qint64 bytesTotal);
-    void downloadProgressDatapackMainSub(qint64 bytesReceived, qint64 bytesTotal);
+    void downloadProgressDatapackBase(qint64 bytesReceived, qint64 bytesTotal);
+    void downloadProgressDatapackMain(qint64 bytesReceived, qint64 bytesTotal);
+    void downloadProgressDatapackSub(qint64 bytesReceived, qint64 bytesTotal);
 signals:
     void newDatapackFileBase(const quint32 &size) const;
     void newDatapackFileMain(const quint32 &size) const;

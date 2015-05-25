@@ -141,7 +141,6 @@ BaseWindow::BaseWindow() :
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsedMainSub,           this,                                   &BaseWindow::datapackParsedMainSub,Qt::QueuedConnection);
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumError,           this,                                   &BaseWindow::datapackChecksumError,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackChecksumErrorMainSub,    this,                                   &BaseWindow::datapackChecksumErrorMainSub,Qt::QueuedConnection);
     connect(this,                                   &BaseWindow::parseDatapack,                             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
     connect(this,                                   &BaseWindow::parseDatapackMainSub,                      &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection);
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
@@ -356,10 +355,14 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawObject,       this,&BaseWindow::marketWithdrawObject);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster);
     //datapack
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::datapackSize,this,&BaseWindow::datapackSize);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::datapackSizeBase,this,&BaseWindow::datapackSize);
     #ifdef CATCHCHALLENGER_MULTI
-    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFile,            this,&BaseWindow::newDatapackFile);
-    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::progressingDatapackFile,this,&BaseWindow::progressingDatapackFile);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFileBase,            this,&BaseWindow::newDatapackFile);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFileMain,            this,&BaseWindow::newDatapackFile);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFileSub,             this,&BaseWindow::newDatapackFile);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::progressingDatapackFileBase,    this,&BaseWindow::progressingDatapackFile);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::progressingDatapackFileMain,    this,&BaseWindow::progressingDatapackFile);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::progressingDatapackFileSub,     this,&BaseWindow::progressingDatapackFile);
     #endif
 
     connect(this,&BaseWindow::destroyObject,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::destroyObject);
