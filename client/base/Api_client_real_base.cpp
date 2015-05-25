@@ -19,7 +19,7 @@ using namespace CatchChallenger;
 
 //need host + port here to have datapack base
 
-void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &data)
+void Api_client_real::writeNewFileBase(const QString &fileName,const QByteArray &data)
 {
     const QString &fullPath=mDatapackBase+text_slash+fileName;
     //to be sure the QFile is destroyed
@@ -52,19 +52,19 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
 
     //send size
     {
-        if(httpMode)
-            newDatapackFile(ceil((float)data.size()/1000)*1000);
+        if(httpModeBase)
+            newDatapackFileBase(ceil((float)data.size()/1000)*1000);
         else
-            newDatapackFile(data.size());
+            newDatapackFileBase(data.size());
     }
 }
 
-void Api_client_real::getHttpFile(const QString &url, const QString &fileName)
+void Api_client_real::getHttpFileBase(const QString &url, const QString &fileName)
 {
     if(httpError)
         return;
-    if(!httpMode)
-        httpMode=true;
+    if(!httpModeBase)
+        httpModeBase=true;
     QNetworkRequest networkRequest(url);
     QNetworkReply *reply;
     //choice the right queue
@@ -94,15 +94,15 @@ void Api_client_real::getHttpFile(const QString &url, const QString &fileName)
     }
     UrlInWaiting urlInWaiting;
     urlInWaiting.fileName=fileName;
-    urlInWaitingList[reply]=urlInWaiting;
-    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinished);
+    urlInWaitingListBase[reply]=urlInWaiting;
+    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedBase);
 }
 
-void Api_client_real::httpFinished()
+void Api_client_real::httpFinishedBase()
 {
     if(httpError)
         return;
-    if(urlInWaitingList.isEmpty())
+    if(urlInWaitingListBase.isEmpty())
     {
         httpError=true;
         newError(tr("Datapack downloading error"),QStringLiteral("no more reply in waiting"));
@@ -154,7 +154,7 @@ void Api_client_real::httpFinished()
         reply->deleteLater();
         return;
     }
-    if(!urlInWaitingList.contains(reply))
+    if(!urlInWaitingListBase.contains(reply))
     {
         httpError=true;
         newError(tr("Datapack downloading error"),QStringLiteral("reply of unknown query"));
@@ -163,13 +163,13 @@ void Api_client_real::httpFinished()
         return;
     }
 
-    const UrlInWaiting &urlInWaiting=urlInWaitingList.value(reply);
-    writeNewFile(urlInWaiting.fileName,reply->readAll());
+    const UrlInWaiting &urlInWaiting=urlInWaitingListBase.value(reply);
+    writeNewFileBase(urlInWaiting.fileName,reply->readAll());
 
-    if(urlInWaitingList.remove(reply)!=1)
-        DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingList.size()));
+    if(urlInWaitingListBase.remove(reply)!=1)
+        DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListBase.size()));
     reply->deleteLater();
-    if(urlInWaitingList.isEmpty())
+    if(urlInWaitingListBase.isEmpty())
         haveTheDatapack();
 }
 
@@ -220,84 +220,70 @@ void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesL
     {
         if(datapackFilesListBase.isEmpty())
         {
-            index_mirror=0;
-            test_mirror();
+            index_mirror_base=0;
+            test_mirror_base();
             qDebug() << "Datapack is empty, get from mirror into" << mDatapackBase;
         }
         else
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
-            if(proxy.type()==QNetworkProxy::Socks5Proxy)
-            {
-                qnam.setProxy(proxy);
-                qnam2.setProxy(proxy);
-                qnam3.setProxy(proxy);
-                qnam4.setProxy(proxy);
-            }
-            else
-            {
-                qnam.setProxy(QNetworkProxy::applicationProxy());
-                qnam2.setProxy(QNetworkProxy::applicationProxy());
-                qnam3.setProxy(QNetworkProxy::applicationProxy());
-                qnam4.setProxy(QNetworkProxy::applicationProxy());
-            }
-            QNetworkRequest networkRequest(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+QStringLiteral("pack/diff/datapack-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+QStringLiteral("pack/diff/datapack-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam.get(networkRequest);
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
-            connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
+            connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase);
         }
     }
 }
 
-void Api_client_real::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
+void Api_client_real::downloadProgressDatapackBase(qint64 bytesReceived, qint64 bytesTotal)
 {
-    if(!datapackTarXz)
+    if(!datapackTarXzBase)
     {
         if(bytesReceived>0)
-            datapackSize(1,bytesTotal);
+            datapackSizeBase(1,bytesTotal);
     }
-    emit progressingDatapackFile(bytesReceived);
+    emit progressingDatapackFileBase(bytesReceived);
 }
 
 void Api_client_real::test_mirror_base()
 {
     QNetworkReply *reply;
     const QStringList &httpDatapackMirrorList=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
-    if(!datapackTarXz)
+    if(!datapackTarXzBase)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("pack/datapack.tar.xz"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.xz"));
         reply = qnam.get(networkRequest);
     }
     else
     {
-        if(index_mirror>=httpDatapackMirrorList.size())
+        if(index_mirror_base>=httpDatapackMirrorList.size())
             /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/base.txt, and only after that's quit */
             return;
 
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror)+QStringLiteral("datapack-list/base.txt"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("datapack-list/base.txt"));
         reply = qnam.get(networkRequest);
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackList);
-        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEvent);
-        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgress);
+        connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
+        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventBase);
+        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase);
     }
     else
     {
         qDebug() << reply->url().toString() << reply->errorString();
-        mirrorTryNext();
+        mirrorTryNextBase();
         return;
     }
 }
 
 void Api_client_real::decodedIsFinishBase()
 {
-    if(xzDecodeThread.errorFound())
-        test_mirror();
+    if(xzDecodeThreadBase.errorFound())
+        test_mirror_base();
     else
     {
-        const QByteArray &decodedData=xzDecodeThread.decodedData();
+        const QByteArray &decodedData=xzDecodeThreadBase.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -331,37 +317,37 @@ void Api_client_real::decodedIsFinishBase()
                 }
                 index++;
             }
-            wait_datapack_content=false;
+            wait_datapack_content_base=false;
             haveTheDatapack();
         }
         else
-            test_mirror();
+            test_mirror_base();
     }
 }
 
 bool Api_client_real::mirrorTryNextBase()
 {
-    if(!datapackTarXz)
+    if(!datapackTarXzBase)
     {
-        datapackTarXz=true;
-        test_mirror();
+        datapackTarXzBase=true;
+        test_mirror_base();
     }
     else
     {
-        datapackTarXz=false;
-        index_mirror++;
-        if(index_mirror>=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+        datapackTarXzBase=false;
+        index_mirror_base++;
+        if(index_mirror_base>=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
         {
             newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
             return false;
         }
         else
-            test_mirror();
+            test_mirror_base();
     }
     return true;
 }
 
-void Api_client_real::httpFinishedForDatapackList()
+void Api_client_real::httpFinishedForDatapackListBase()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     if(reply==NULL)
@@ -389,17 +375,17 @@ void Api_client_real::httpFinishedForDatapackList()
                                                   .arg(proxy.type())
                                                   );
         reply->deleteLater();
-        mirrorTryNext();
+        mirrorTryNextBase();
         return;
     }
     else
     {
-        if(!datapackTarXz)
+        if(!datapackTarXzBase)
         {
             qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
-            datapackTarXz=true;
-            xzDecodeThread.setData(reply->readAll(),100*1024*1024);
-            xzDecodeThread.start(QThread::LowestPriority);
+            datapackTarXzBase=true;
+            xzDecodeThreadBase.setData(reply->readAll(),100*1024*1024);
+            xzDecodeThreadBase.start(QThread::LowestPriority);
             return;
         }
         else
@@ -436,20 +422,20 @@ void Api_client_real::httpFinishedForDatapackList()
                             QFileInfo file(mDatapackBase+fileString);
                             if(!file.exists())
                             {
-                                getHttpFile(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
+                                getHttpFileBase(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                             else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
-                                getHttpFile(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
+                                getHttpFileBase(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                         }
                         else
                         {
-                            getHttpFile(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror)+fileString,fileString);
+                            getHttpFileBase(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+fileString,fileString);
                             fileToGet++;
                             sizeToGet+=sizeString.toUInt();
                         }
@@ -473,7 +459,7 @@ void Api_client_real::httpFinishedForDatapackList()
             if(fileToGet==0)
                 haveTheDatapack();
             else
-                datapackSize(fileToGet,sizeToGet*1000);
+                datapackSizeBase(fileToGet,sizeToGet*1000);
         }
     }
 }
@@ -527,4 +513,50 @@ void Api_client_real::cleanDatapackBase(QString suffix)
     entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     if(entryList.size()==0)
         finalDatapackFolder.rmpath(mDatapackBase+suffix);
+}
+
+void Api_client_real::httpErrorEventBase()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if(reply==NULL)
+    {
+        httpError=true;
+        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        socket->disconnectFromHost();
+        return;
+    }
+    qDebug() << reply->url().toString() << reply->errorString();
+    mirrorTryNextBase();
+    return;
+}
+
+void Api_client_real::sendDatapackContentBase()
+{
+    if(wait_datapack_content_base)
+    {
+        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
+        return;
+    }
+
+    //compute the mirror
+    {
+        QStringList values=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+        {
+            QString slash(QStringLiteral("/"));
+            int index=0;
+            while(index<values.size())
+            {
+                if(!values.at(index).endsWith(slash))
+                    values[index]+=slash;
+                index++;
+            }
+        }
+        CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=values.join(Api_client_real::text_dotcoma);
+    }
+
+    datapackTarXzBase=false;
+    wait_datapack_content_base=true;
+    datapackFilesListBase=listDatapackBase(QString());
+    datapackFilesListBase.sort();
+    emit doDifferedChecksumBase(mDatapackBase);
 }

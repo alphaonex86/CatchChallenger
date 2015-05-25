@@ -32,22 +32,30 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     qnamQueueCount3(0),
     qnamQueueCount4(0)
 {
-    datapackTarXz=false;
-    index_mirror=0;
+    datapackTarXzBase=false;
+    datapackTarXzMain=false;
+    datapackTarXzSub=false;
+    index_mirror_base=0;
     index_mirror_main=0;
     index_mirror_sub=0;
     host=QLatin1Literal("localhost");
     port=42489;
     connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
-    connect(this,   &Api_client_real::newFile,      this,&Api_client_real::writeNewFile);
-    connect(this,   &Api_client_real::newHttpFile,  this,&Api_client_real::getHttpFile);
+    connect(this,   &Api_client_real::newFileBase,      this,&Api_client_real::writeNewFileBase);
+    connect(this,   &Api_client_real::newFileMain,      this,&Api_client_real::writeNewFileMain);
+    connect(this,   &Api_client_real::newFileSub,      this,&Api_client_real::writeNewFileSub);
+    connect(this,   &Api_client_real::newHttpFileBase,  this,&Api_client_real::getHttpFileBase);
+    connect(this,   &Api_client_real::newHttpFileMain,  this,&Api_client_real::getHttpFileMain);
+    connect(this,   &Api_client_real::newHttpFileSub,  this,&Api_client_real::getHttpFileSub);
     connect(this,   &Api_client_real::doDifferedChecksumBase,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumBase);
     connect(this,   &Api_client_real::doDifferedChecksumMain,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumMain);
     connect(this,   &Api_client_real::doDifferedChecksumSub,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumSub);
     connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneBase,this,&Api_client_real::datapackChecksumDoneBase);
     connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneMain,this,&Api_client_real::datapackChecksumDoneMain);
     connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneSub,this,&Api_client_real::datapackChecksumDoneSub);
-    connect(&xzDecodeThread,&QXzDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinish);
+    connect(&xzDecodeThreadBase,&QXzDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishBase);
+    connect(&xzDecodeThreadMain,&QXzDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishMain);
+    connect(&xzDecodeThreadSub,&QXzDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishSub);
     disconnected();
     //dataClear();do into disconnected()
 }
@@ -89,7 +97,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8
                     {
                         if(datapackFilesListBase.isEmpty() && data.size()==1)
                         {
-                            if(!httpMode)
+                            if(!httpModeBase)
                                 haveTheDatapack();
                             return;
                         }
@@ -133,7 +141,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint8
                             newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
-                        if(!httpMode)
+                        if(!httpModeBase)
                             haveTheDatapack();
                     }
                     return;
@@ -197,7 +205,9 @@ void Api_client_real::tryConnect(QString host,quint16 port)
 
 void Api_client_real::disconnected()
 {
-    wait_datapack_content=false;
+    wait_datapack_content_base=false;
+    wait_datapack_content_main=false;
+    wait_datapack_content_sub=false;
     resetAll();
 }
 
@@ -219,7 +229,7 @@ quint16 Api_client_real::getPort()
 
 void Api_client_real::sendDatapackContentMainSub()
 {
-    if(wait_datapack_content)
+    if(wait_datapack_content_main || wait_datapack_content_sub)
     {
         DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
         return;
@@ -245,40 +255,29 @@ void Api_client_real::sendDatapackContentMainSub()
     datapackTarXzSub=false;
     wait_datapack_content_main=true;
     wait_datapack_content_sub=true;
-    datapackFilesListMain=listDatapackBase(QString());
+    datapackFilesListMain=listDatapackMain(QString());
     datapackFilesListMain.sort();
-    datapackFilesListSub=listDatapackBase(QString());
+    datapackFilesListSub=listDatapackSub(QString());
     datapackFilesListSub.sort();
     emit doDifferedChecksumMain(mDatapackMain);
     emit doDifferedChecksumSub(mDatapackSub);
 }
 
-void Api_client_real::downloadProgressDatapackMainSub(qint64 bytesReceived, qint64 bytesTotal)
-{
-    if(!datapackTarXzMain && !datapackTarXzSub)
-    {
-        if(bytesReceived>0)
-            datapackSize(1,bytesTotal);
-    }
-    emit progressingDatapackFile(bytesReceived);
-}
-
-void Api_client_real::httpErrorEvent()
-{
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if(reply==NULL)
-    {
-        httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
-        socket->disconnectFromHost();
-        return;
-    }
-    qDebug() << reply->url().toString() << reply->errorString();
-    mirrorTryNext();
-    return;
-}
-
 void Api_client_real::setProxy(const QNetworkProxy &proxy)
 {
     this->proxy=proxy;
+    if(proxy.type()==QNetworkProxy::Socks5Proxy)
+    {
+        qnam.setProxy(proxy);
+        qnam2.setProxy(proxy);
+        qnam3.setProxy(proxy);
+        qnam4.setProxy(proxy);
+    }
+    else
+    {
+        qnam.setProxy(QNetworkProxy::applicationProxy());
+        qnam2.setProxy(QNetworkProxy::applicationProxy());
+        qnam3.setProxy(QNetworkProxy::applicationProxy());
+        qnam4.setProxy(QNetworkProxy::applicationProxy());
+    }
 }

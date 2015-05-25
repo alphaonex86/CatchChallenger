@@ -401,6 +401,15 @@ void BaseWindow::datapackParsed()
     //updatePlayerImage();
 }
 
+void BaseWindow::datapackParsedMainSub()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::datapackParsedMainSub()";
+    #endif
+    mainSubDatapackIsParsed=true;
+    updateConnectingStatus();
+}
+
 void BaseWindow::datapackChecksumError()
 {
     #ifdef DEBUG_BASEWINDOWS

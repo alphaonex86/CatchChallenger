@@ -63,6 +63,7 @@ protected slots:
     void loadPlayerFromCurrentMap();
 public slots:
     virtual void datapackParsed();
+    virtual void datapackParsedMainSub();
     virtual void reinject_signals();
 private slots:
     void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);

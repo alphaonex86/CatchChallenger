@@ -14,7 +14,7 @@
 
 QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
 QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPBASE=QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE);
-QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPSPEC=QLatin1Literal(DATAPACK_BASE_PATH_MAPSPEC);
+QString MapVisualiserPlayer::text_DATAPACK_BASE_PATH_MAPSPEC=QLatin1Literal(DATAPACK_BASE_PATH_MAPMAIN);
 QString MapVisualiserPlayer::text_slashtrainerpng=QLatin1Literal("/trainer.png");
 QString MapVisualiserPlayer::text_slash=QLatin1Literal("/");
 QString MapVisualiserPlayer::text_antislash=QLatin1Literal("\\");
@@ -1423,8 +1423,12 @@ void MapVisualiserPlayer::setDatapackPath(const QString &path,const QString &mai
 
 void MapVisualiserPlayer::datapackParsed()
 {
+}
+
+void MapVisualiserPlayer::datapackParsedMainSub()
+{
     #ifdef DEBUG_CLIENT_LOAD_ORDER
-    qDebug() << QStringLiteral("MapControllerMP::datapackParsed()");
+    qDebug() << QStringLiteral("MapControllerMP::datapackParsedMainSub()");
     #endif
 
     if(mHaveTheDatapack)

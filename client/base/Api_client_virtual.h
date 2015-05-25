@@ -28,6 +28,7 @@ public:
     explicit Api_client_virtual(ConnectedSocket *socket,const QString &forcedDatapack,const QString &mainDatapackCode,const QString &subDatapackCode);
     ~Api_client_virtual();
     void sendDatapackContentBase();
+    void sendDatapackContentMainSub();
     void tryDisconnect();
     virtual QString datapackPathBase() const;
     virtual QString datapackPathMain() const;

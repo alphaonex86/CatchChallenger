@@ -3,6 +3,8 @@
 #include "../../../general/base/DatapackGeneralLoader.h"
 #include "../DatapackChecksum.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonSettingsCommon.h"
+#include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/FacilityLibGeneral.h"
@@ -83,7 +85,8 @@ const QString DatapackClientLoader::text_object=QLatin1Literal("object");
 const QString DatapackClientLoader::text_objectgroup=QLatin1Literal("objectgroup");
 const QString DatapackClientLoader::text_Object=QLatin1Literal("Object");
 const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE);
-QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QLatin1Literal(DATAPACK_BASE_PATH_MAPSPEC);
+QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=QLatin1Literal(DATAPACK_BASE_PATH_MAPMAIN);
+QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=QLatin1Literal(DATAPACK_BASE_PATH_MAPSUB);
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -147,7 +150,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     }
 
     this->datapackPath=datapackPath;
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg("na");
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg("na");
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
@@ -173,9 +176,84 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     emit datapackParsed();
 }
 
-void DatapackClientLoader::parseDatapackMainSub(const QString &datapackPath, const QString &mainDatapackCode, const QString &subDatapackCode)
+void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode, const QString &subDatapackCode)
 {
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC=QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(mainDatapackCode);
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(mainDatapackCode);
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=QStringLiteral(DATAPACK_BASE_PATH_MAPSUB).arg(mainDatapackCode).arg(subDatapackCode);
+
+    if(inProgress)
+    {
+        qDebug() << QStringLiteral("already in progress");
+        return;
+    }
+    inProgress=true;
+    this->mainDatapackCode=mainDatapackCode;
+    this->subDatapackCode=mainDatapackCode;
+
+    if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    {
+        {
+            const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksumMain(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
+            if(hash.isEmpty())
+            {
+                emit datapackChecksumError();
+                inProgress=false;
+                return;
+            }
+
+            if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash)
+            {
+                qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Main CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash.result(): %1!=%2")
+                            .arg(QString(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()))
+                            .arg(QString(hash.toHex()));
+                emit datapackChecksumError();
+                inProgress=false;
+                return;
+            }
+        }
+        {
+            const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksumSub(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB);
+            if(hash.isEmpty())
+            {
+                emit datapackChecksumError();
+                inProgress=false;
+                return;
+            }
+
+            if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash)
+            {
+                qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Sub CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash.result(): %1!=%2")
+                            .arg(QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()))
+                            .arg(QString(hash.toHex()));
+                emit datapackChecksumError();
+                inProgress=false;
+                return;
+            }
+        }
+    }
+    if(mDefaultInventoryImage==NULL)
+        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
+    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
+/*    parseVisualCategory();
+    parseTypesExtra();
+    parseItemsExtra();
+    parseMaps();
+    parseSkins();
+    parseMonstersExtra();
+    parseBuffExtra();
+    parseSkillsExtra();
+    parseQuestsLink();
+    parseQuestsExtra();
+    parseQuestsText();
+    parseBotFightsExtra();
+    parsePlantsExtra();
+    parseAudioAmbiance();
+    parseZoneExtra();
+    parseTileset();
+    parseReputationExtra();*/
+    inProgress=false;
+
+    emit datapackParsedMainSub();
 }
 
 QString DatapackClientLoader::getDatapackPath()
@@ -819,7 +897,7 @@ void DatapackClientLoader::parseItemsExtra()
 
 void DatapackClientLoader::parseMaps()
 {
-    const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC);
+    const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
 
     //load the map
     const int &size=returnList.size();
@@ -842,7 +920,7 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
     tempMapList.sort();
-    const QString &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC;
+    const QString &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
     index=0;
     while(index<tempMapList.size())
     {
@@ -927,7 +1005,7 @@ void DatapackClientLoader::parseMaps()
                                             const quint32 &object_x=object.attribute(DatapackClientLoader::text_x).toUInt(&ok)/tilewidth;
                                             if(ok)
                                             {
-                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC+fileName][QPair<quint8,quint8>(object_x,object_y)]=indexOfItemOnMap;
+                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName][QPair<quint8,quint8>(object_x,object_y)]=indexOfItemOnMap;
                                                 indexOfItemOnMap++;
                                             }
                                         }
@@ -1379,7 +1457,7 @@ void DatapackClientLoader::parseAudioAmbiance()
             {
                 const QString &type=item.attribute(DatapackClientLoader::text_type);
                 if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
-                    audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSPEC+item.text();
+                    audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item.text();
                 else
                     qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
             }

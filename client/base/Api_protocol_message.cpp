@@ -998,7 +998,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             DebugClass::debugConsole(QStringLiteral("Raw file to create: %1").arg(fileName));
                         else
                             DebugClass::debugConsole(QStringLiteral("Compressed file to create: %1").arg(fileName));
-                        newFile(fileName,dataFile);
+                        newFileBase(fileName,dataFile);
                         index++;
                     }
                     return;//no remaining data, because all remaing is used as file data
@@ -1092,7 +1092,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                     }
                     quint32 datapckFileSize;
                     in >> datapckFileSize;
-                    datapackSize(datapckFileNumber,datapckFileSize);
+                    datapackSizeBase(datapckFileNumber,datapckFileSize);
                 }
                 break;
                 //Update file http
@@ -1181,7 +1181,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             if(!tolerantMode)
                                 return;
                         }
-                        newHttpFile(baseHttp+fileName,fileName);
+                        newHttpFileBase(baseHttp+fileName,fileName);
 
                         index++;
                     }

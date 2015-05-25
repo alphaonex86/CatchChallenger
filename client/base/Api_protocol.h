@@ -44,6 +44,7 @@ public:
     quint16 getId();
 
     virtual void sendDatapackContentBase() = 0;
+    virtual void sendDatapackContentMainSub() = 0;
     virtual void tryDisconnect() = 0;
     virtual QString datapackPathBase() const;
     virtual QString datapackPathMain() const;
@@ -220,10 +221,21 @@ signals:
     //datapack
     void haveTheDatapack() const;
     void haveTheDatapackMainSub() const;
-    void newFile(const QString &fileName,const QByteArray &data) const;
-    void newHttpFile(const QString &url,const QString &fileName) const;
-    void removeFile(const QString &fileName) const;
-    void datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
+    //base
+    void newFileBase(const QString &fileName,const QByteArray &data) const;
+    void newHttpFileBase(const QString &url,const QString &fileName) const;
+    void removeFileBase(const QString &fileName) const;
+    void datapackSizeBase(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
+    //main
+    void newFileMain(const QString &fileName,const QByteArray &data) const;
+    void newHttpFileMain(const QString &url,const QString &fileName) const;
+    void removeFileMain(const QString &fileName) const;
+    void datapackSizeMain(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
+    //sub
+    void newFileSub(const QString &fileName,const QByteArray &data) const;
+    void newHttpFileSub(const QString &url,const QString &fileName) const;
+    void removeFileSub(const QString &fileName) const;
+    void datapackSizeSub(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items) const;
