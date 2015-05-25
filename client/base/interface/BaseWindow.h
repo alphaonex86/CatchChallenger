@@ -159,6 +159,7 @@ private slots:
     void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList);
     void updatePlayerImage();
     void have_current_player_info();
+    void have_main_and_sub_datapack_loaded();
     void have_inventory(const QHash<quint16,quint32> &items,const QHash<quint16,quint32> &warehouse_items);
     void add_to_inventory(const quint32 &item,const quint32 &quantity=1,const bool &showGain=true);
     void add_to_inventory(const QList<QPair<quint16,quint32> > &items,const bool &showGain=true);
@@ -207,6 +208,7 @@ private slots:
 
     //datapack
     void haveTheDatapack();
+    void haveTheDatapackMainSub();
     void newDatapackFile(const quint32 &size);
     void progressingDatapackFile(const quint32 &size);
     void datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize);
@@ -447,6 +449,7 @@ private slots:
 protected slots:
     //datapack
     void datapackParsed();
+    void datapackParsedMainSub();
     void datapackChecksumError();
     void loadSoundSettings();
     //UI

@@ -48,7 +48,8 @@
 
 #define DATAPACK_FILE_REGEX "^[0-9/a-z\\.\\- _]*[0-9a-z]\\.[a-z]{2,4}$"
 #define DATAPACK_BASE_PATH_MAPBASE "map/"
-#define DATAPACK_BASE_PATH_MAPSPEC "map/main/%1/"
+#define DATAPACK_BASE_PATH_MAPMAIN "map/main/%1/"
+#define DATAPACK_BASE_PATH_MAPSUB "map/main/%1/sub/%2/"
 #define DATAPACK_BASE_PATH_ZONE "map/main/%1/map/zone/"
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
 #define DATAPACK_BASE_PATH_SKINBASE "skin/"
