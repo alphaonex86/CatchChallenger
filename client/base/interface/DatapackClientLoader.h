@@ -130,13 +130,17 @@ public:
 protected:
     void run();
 public slots:
-    void parseDatapack(const QString &datapackPath,const QString &mainDatapackCode);
+    void parseDatapack(const QString &datapackPath);
+    void parseDatapackMainSub(const QString &mainDatapackCode, const QString &subDatapackCode);
 signals:
     void datapackParsed();
+    void datapackParsedMainSub();
     void datapackChecksumError();
 private:
     bool inProgress;
     QString datapackPath;
+    QString mainDatapackCode;
+    QString subDatapackCode;
     QPixmap *mDefaultInventoryImage;
     explicit DatapackClientLoader();
     ~DatapackClientLoader();
@@ -217,7 +221,8 @@ protected:
     static const QString text_objectgroup;
     static const QString text_Object;
     static const QString text_DATAPACK_BASE_PATH_MAPBASE;
-    static QString text_DATAPACK_BASE_PATH_MAPSPEC;
+    static QString text_DATAPACK_BASE_PATH_MAPMAIN;
+    static QString text_DATAPACK_BASE_PATH_MAPSUB;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

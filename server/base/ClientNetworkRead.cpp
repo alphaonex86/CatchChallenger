@@ -487,6 +487,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                     parseNetworkReadError("wrong utf8 to QString header size");
                     return;
                 }
+                QString text;
                 quint8 textSize;
                 in >> textSize;
                 if(textSize>0)
@@ -497,7 +498,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                         return;
                     }
                     const QByteArray &rawText=newData.mid(in.device()->pos(),textSize);
-                    QString text=QString::fromUtf8(rawText.data(),rawText.size());
+                    text=QString::fromUtf8(rawText.data(),rawText.size());
                     in.device()->seek(in.device()->pos()+rawText.size());
                 }
 

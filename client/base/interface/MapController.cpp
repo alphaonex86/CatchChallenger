@@ -82,9 +82,14 @@ void MapController::resetAll()
 
 void MapController::datapackParsed()
 {
+    MapControllerMP::datapackParsed();
+}
+
+void MapController::datapackParsedMainSub()
+{
     if(mHaveTheDatapack)
         return;
-    MapControllerMP::datapackParsed();
+    MapControllerMP::datapackParsedMainSub();
     int index;
 
     index=0;

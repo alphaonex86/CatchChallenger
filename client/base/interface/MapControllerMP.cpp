@@ -1069,6 +1069,11 @@ void MapControllerMP::have_current_player_info(const CatchChallenger::Player_pri
 void MapControllerMP::datapackParsed()
 {
     MapVisualiserPlayer::datapackParsed();
+}
+
+void MapControllerMP::datapackParsedMainSub()
+{
+    MapVisualiserPlayer::datapackParsedMainSub();
 
     skinFolderList=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+MapControllerMP::text_DATAPACK_BASE_PATH_SKIN);
 

@@ -76,13 +76,13 @@ void send_settings()
     formatedServerNormalSettings.proxy_port				= settings->value(QLatin1Literal("proxy_port")).toUInt();
     formatedServerNormalSettings.useSsl					= settings->value(QLatin1Literal("useSsl")).toBool();
 
-    formatedServerSettings.mainDatapackCode             = settings->value(QLatin1Literal("mainDatapackCode")).toString();
-    if(formatedServerSettings.mainDatapackCode.isEmpty())
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode             = settings->value(QLatin1Literal("mainDatapackCode")).toString();
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
     {
         DebugClass::debugConsole(QStringLiteral("mainDatapackCode is empty, please put it into the settings"));
         abort();
     }
-    formatedServerSettings.subDatapackCode              = settings->value(QLatin1Literal("subDatapackCode")).toString();
+    CommonSettingsServer::commonSettingsServer.subDatapackCode              = settings->value(QLatin1Literal("subDatapackCode")).toString();
     formatedServerSettings.anonymous					= settings->value(QLatin1Literal("anonymous")).toBool();
     formatedServerSettings.server_message				= settings->value(QLatin1Literal("server_message")).toString();
     CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value(QLatin1Literal("httpDatapackMirror")).toString();

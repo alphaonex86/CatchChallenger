@@ -212,7 +212,7 @@ void BaseServer::preload_the_data()
         QTime time;
         time.restart();
         CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
-        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,GlobalServerData::serverSettings.mainDatapackCode);
+        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode);
         qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
     }
     timeDatapack.restart();
@@ -1552,7 +1552,7 @@ bool BaseServer::preload_the_city_capture()
 
 bool BaseServer::preload_the_map()
 {
-    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC).arg(GlobalServerData::serverSettings.mainDatapackCode);
+    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     DebugClass::debugConsole(QStringLiteral("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
@@ -2014,17 +2014,17 @@ void BaseServer::preload_the_datapack()
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        if(GlobalServerData::serverSettings.mainDatapackCode.isEmpty())
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
         {
-            DebugClass::debugConsole(QStringLiteral("GlobalServerData::serverSettings.mainDatapackCode.isEmpty"));
+            DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty"));
             abort();
         }
-        if(!GlobalServerData::serverSettings.mainDatapackCode.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
+        if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
         {
-            DebugClass::debugConsole(QStringLiteral("GlobalServerData::serverSettings.mainDatapackCode not match ^[a-z0-9\\- _]+$"));
+            DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match ^[a-z0-9\\- _]+$"));
             abort();
         }
-        const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+GlobalServerData::serverSettings.mainDatapackCode+QStringLiteral("/");
+        const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/");
         if(!QDir(mainDir).exists())
         {
             DebugClass::debugConsole(mainDir+QStringLiteral(" don't exists"));
@@ -2032,8 +2032,8 @@ void BaseServer::preload_the_datapack()
         }
     }
     #endif
-    QString subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+GlobalServerData::serverSettings.mainDatapackCode+QStringLiteral("/")+
-            QStringLiteral("sub/")+GlobalServerData::serverSettings.subDatapackCode+QStringLiteral("/");
+    QString subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/")+
+            QStringLiteral("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("/");
     if(!QDir(subDatapackFolder).exists())
     {
         DebugClass::debugConsole(subDatapackFolder+QStringLiteral(" don't exists, drop spec"));
@@ -2049,8 +2049,8 @@ void BaseServer::preload_the_datapack()
     QStringList datapack_file_temp=Client::datapack_file_list().keys();
     datapack_file_temp.sort();
     const QRegularExpression mainDatapackBase("^map[/\\\\]main[/\\\\]");
-    const QRegularExpression mainDatapackFolder("^map[/\\\\]main[/\\\\]"+GlobalServerData::serverSettings.mainDatapackCode+"[/\\\\]");
-    const QRegularExpression subDatapackBase("^map[/\\\\]main[/\\\\]"+GlobalServerData::serverSettings.mainDatapackCode+"[/\\\\]sub[/\\\\]");
+    const QRegularExpression mainDatapackFolder("^map[/\\\\]main[/\\\\]"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"[/\\\\]");
+    const QRegularExpression subDatapackBase("^map[/\\\\]main[/\\\\]"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"[/\\\\]sub[/\\\\]");
     int index=0;
     while(index<datapack_file_temp.size()) {
         QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
@@ -2963,17 +2963,17 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
     }
 
-    if(GlobalServerData::serverSettings.mainDatapackCode.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
     {
         DebugClass::debugConsole(QStringLiteral("mainDatapackCode is empty, please put it into the settings"));
         abort();
     }
-    if(!GlobalServerData::serverSettings.mainDatapackCode.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
+    if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
     {
-        DebugClass::debugConsole(QStringLiteral("GlobalServerData::serverSettings.mainDatapackCode not match ^[a-z0-9\\- _]+$"));
+        DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match ^[a-z0-9\\- _]+$"));
         abort();
     }
-    const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+GlobalServerData::serverSettings.mainDatapackCode+QStringLiteral("/");
+    const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/");
     if(!QDir(mainDir).exists())
     {
         DebugClass::debugConsole(mainDir+QStringLiteral(" don't exists"));

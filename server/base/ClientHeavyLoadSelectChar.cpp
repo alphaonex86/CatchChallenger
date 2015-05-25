@@ -4,6 +4,7 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonMap.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/ProtocolParsingCheck.h"

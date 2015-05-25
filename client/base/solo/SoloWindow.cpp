@@ -392,11 +392,11 @@ void SoloWindow::updateSavegameList()
                         if(!map.isEmpty())
                         {
                             map.replace(SoloWindow::text_dottmx,SoloWindow::text_dotxml);
-                            if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC)+map).isFile())
-                                mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC)+map);
+                            if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN)+map).isFile())
+                                mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN)+map);
                             if(mapName.isEmpty())
                             {
-                                const QString &tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPSPEC)+metaData.value(SoloWindow::text_location).toString();
+                                const QString &tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN)+metaData.value(SoloWindow::text_location).toString();
                                 if(QFileInfo(tmxFile).isFile())
                                 {
                                     QString zone=getMapZone(tmxFile);

@@ -37,6 +37,7 @@ public slots:
 
     //the datapack
     virtual void datapackParsed();
+    virtual void datapackParsedMainSub();
     virtual void reinject_signals();
     virtual void reinject_signals_on_valid_map();
 private:

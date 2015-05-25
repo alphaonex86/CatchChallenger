@@ -45,6 +45,7 @@ public:
     //the datapack
     void setDatapackPath(const QString &path, const QString &mainDatapackCode);
     virtual void datapackParsed();
+    virtual void datapackParsedMainSub();
 
     void setInformations(QHash<quint16,quint32> *items, QHash<quint16, CatchChallenger::PlayerQuest> *quests, QList<quint8> *events, QList<quint8> *itemOnMap);
     void unblock();
