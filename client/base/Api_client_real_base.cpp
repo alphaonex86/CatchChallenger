@@ -227,7 +227,7 @@ void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesL
         else
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
-            QNetworkRequest networkRequest(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+QStringLiteral("pack/diff/datapack-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+QStringLiteral("pack/diff/datapack-base-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
             connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase);
@@ -253,6 +253,8 @@ void Api_client_real::test_mirror_base()
     {
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.xz"));
         reply = qnam.get(networkRequest);
+        if(reply->error()==QNetworkReply::NoError)
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);//fix it, put httpFinished* broke it
     }
     else
     {
@@ -262,10 +264,11 @@ void Api_client_real::test_mirror_base()
 
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("datapack-list/base.txt"));
         reply = qnam.get(networkRequest);
+        if(reply->error()==QNetworkReply::NoError)
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
         connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventBase);
         connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase);
     }
@@ -327,7 +330,7 @@ void Api_client_real::decodedIsFinishBase()
 
 bool Api_client_real::mirrorTryNextBase()
 {
-    if(!datapackTarXzBase)
+    if(datapackTarXzBase==false)
     {
         datapackTarXzBase=true;
         test_mirror_base();
@@ -403,10 +406,13 @@ void Api_client_real::httpFinishedForDatapackListBase()
                 abort();
                 return;
             }
+            const QString &selectedMirror=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base);
+            int correctContent=0;
             while(index<content.size())
             {
                 if(content.at(index).contains(splitReg))
                 {
+                    correctContent++;
                     QString fileString=content.at(index);
                     QString partialHashString=content.at(index);
                     QString sizeString=content.at(index);
@@ -422,20 +428,20 @@ void Api_client_real::httpFinishedForDatapackListBase()
                             QFileInfo file(mDatapackBase+fileString);
                             if(!file.exists())
                             {
-                                getHttpFileBase(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+fileString,fileString);
+                                getHttpFileBase(selectedMirror+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                             else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
-                                getHttpFileBase(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+fileString,fileString);
+                                getHttpFileBase(selectedMirror+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                         }
                         else
                         {
-                            getHttpFileBase(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+fileString,fileString);
+                            getHttpFileBase(selectedMirror+fileString,fileString);
                             fileToGet++;
                             sizeToGet+=sizeString.toUInt();
                         }
@@ -456,6 +462,12 @@ void Api_client_real::httpFinishedForDatapackListBase()
                 index++;
             }
             datapackFilesListBase.clear();
+            if(correctContent==0)
+            {
+                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n");
+                abort();
+                return;
+            }
             if(fileToGet==0)
                 haveTheDatapack();
             else
@@ -526,7 +538,7 @@ void Api_client_real::httpErrorEventBase()
         return;
     }
     qDebug() << reply->url().toString() << reply->errorString();
-    mirrorTryNextBase();
+    //mirrorTryNextBase();-> double mirrorTryNext*() call due to httpFinishedForDatapackList*()
     return;
 }
 

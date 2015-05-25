@@ -313,6 +313,7 @@ void BaseWindow::have_inventory(const QHash<quint16,quint32> &items, const QHash
     this->items=items;
     this->warehouse_items=warehouse_items;
     haveInventory=true;
+    CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
     updateConnectingStatus();
 }
 
