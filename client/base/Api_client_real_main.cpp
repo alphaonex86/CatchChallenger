@@ -221,7 +221,7 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
         else
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
-            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
             connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackMain);
@@ -235,21 +235,24 @@ void Api_client_real::test_mirror_main()
     const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzMain)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main.tar.xz"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".tar.xz"));
         reply = qnam.get(networkRequest);
+        if(reply->error()==QNetworkReply::NoError)
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);//fix it, put httpFinished* broke it
     }
     else
     {
         if(index_mirror_main>=httpDatapackMirrorList.size())
-            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main.txt, and only after that's quit */
+            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main-XXXX.txt, and only after that's quit */
             return;
 
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main.txt"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".txt"));
         reply = qnam.get(networkRequest);
+        if(reply->error()==QNetworkReply::NoError)
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
         connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventMain);
         connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackMain);
     }
@@ -388,10 +391,13 @@ void Api_client_real::httpFinishedForDatapackListMain()
                 abort();
                 return;
             }
+            const QString &selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
+            int correctContent=0;
             while(index<content.size())
             {
                 if(content.at(index).contains(splitReg))
                 {
+                    correctContent++;
                     QString fileString=content.at(index);
                     QString partialHashString=content.at(index);
                     QString sizeString=content.at(index);
@@ -407,20 +413,20 @@ void Api_client_real::httpFinishedForDatapackListMain()
                             QFileInfo file(mDatapackMain+fileString);
                             if(!file.exists())
                             {
-                                getHttpFileMain(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+fileString,fileString);
+                                getHttpFileMain(selectedMirror+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                             else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
                             {
-                                getHttpFileMain(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+fileString,fileString);
+                                getHttpFileMain(selectedMirror+fileString,fileString);
                                 fileToGet++;
                                 sizeToGet+=sizeString.toUInt();
                             }
                         }
                         else
                         {
-                            getHttpFileMain(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+fileString,fileString);
+                            getHttpFileMain(selectedMirror+fileString,fileString);
                             fileToGet++;
                             sizeToGet+=sizeString.toUInt();
                         }
@@ -441,6 +447,12 @@ void Api_client_real::httpFinishedForDatapackListMain()
                 index++;
             }
             datapackFilesListMain.clear();
+            if(correctContent==0)
+            {
+                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n");
+                abort();
+                return;
+            }
             if(fileToGet==0 && !wait_datapack_content_sub)
                 haveTheDatapackMainSub();
             else
@@ -521,6 +533,6 @@ void Api_client_real::httpErrorEventMain()
         return;
     }
     qDebug() << reply->url().toString() << reply->errorString();
-    mirrorTryNextMain();
+    //mirrorTryNextMain();//mirrorTryNextBase();-> double mirrorTryNext*() call due to httpFinishedForDatapackList*()
     return;
 }

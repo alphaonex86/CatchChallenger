@@ -173,7 +173,6 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
     Api_client_real::client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt());
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
-    serverSelected=-1;
     Api_client_real::client->unloadSelection();
 }
 
@@ -282,23 +281,41 @@ void BaseWindow::addToServerList(const LogicialGroup &logicialGroup, QTreeWidget
                 if(server.playedTime>24*3600*31)
                 {
                     if(dateDiff<24*3600)
+                    {
                         itemServer->setIcon(0,BaseWindow::icon_server_list_star1);
+                        itemServer->setToolTip(0,tr("Played time greater than 24h, last connect in this last 24h"));
+                    }
                     else
+                    {
                         itemServer->setIcon(0,BaseWindow::icon_server_list_star2);
+                        itemServer->setToolTip(0,tr("Played time greater than 24h, last connect not in this last 24h"));
+                    }
                 }
                 else if(server.lastConnect<averageLastConnect)
                 {
                     if(server.playedTime<averagePlayedTime)
+                    {
                         itemServer->setIcon(0,BaseWindow::icon_server_list_star3);
+                        itemServer->setToolTip(0,tr("Into the more recent server used, out of the most used server"));
+                    }
                     else
+                    {
                         itemServer->setIcon(0,BaseWindow::icon_server_list_star4);
+                        itemServer->setToolTip(0,tr("Into the more recent server used, into the most used server"));
+                    }
                 }
                 else
                 {
                     if(server.playedTime<averagePlayedTime)
+                    {
                         itemServer->setIcon(0,BaseWindow::icon_server_list_star5);
+                        itemServer->setToolTip(0,tr("Out of the more recent server used, out of the most used server"));
+                    }
                     else
+                    {
                         itemServer->setIcon(0,BaseWindow::icon_server_list_star6);
+                        itemServer->setToolTip(0,tr("Out of the more recent server used, into the most used server"));
+                    }
                 }
 
             }
