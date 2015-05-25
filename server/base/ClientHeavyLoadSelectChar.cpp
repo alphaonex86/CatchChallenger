@@ -853,6 +853,49 @@ void Client::loginIsRightFinalStep()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)01;// all is good
+
+    if(GlobalServerData::serverSettings.sendPlayerNumber)
+        out << (quint16)GlobalServerData::serverSettings.max_players;
+    else
+    {
+        if(GlobalServerData::serverSettings.max_players<=255)
+            out << (quint16)255;
+        else
+            out << (quint16)65535;
+    }
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
+        out << (quint32)0x00000000;
+    else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
+    {
+        const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+        out << (quint32)time/1000;
+    }
+    else
+        out << (quint32)0x00000000;
+    #else
+    out << (quint32)0x00000000;
+    #endif
+    out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
+
+    //common settings
+    out << (quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.forcedSpeed;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.useSP;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.tcpCork;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.autoLearn;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.dontSendPseudo;
+    out << (float)CommonSettingsServer::commonSettingsServer.rates_xp;
+    out << (float)CommonSettingsServer::commonSettingsServer.rates_gold;
+    out << (float)CommonSettingsServer::commonSettingsServer.rates_xp_pow;
+    out << (float)CommonSettingsServer::commonSettingsServer.rates_drop;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.chat_allow_all;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.chat_allow_local;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.chat_allow_private;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.chat_allow_clan;
+    out << (quint8)CommonSettingsServer::commonSettingsServer.factoryPriceChange;
+
     //main hash
     outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
     out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
