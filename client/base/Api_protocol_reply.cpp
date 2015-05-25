@@ -18,6 +18,7 @@ using namespace CatchChallenger;
 #include "LanguagesSelect.h"
 
 #include <QCoreApplication>
+#include <QRegularExpression>
 
 #ifdef BENCHMARKMUTIPLECLIENT
 #include <iostream>
@@ -699,6 +700,17 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                                 QByteArray rawText=data.mid(in.device()->pos(),textSize);
                                 CommonSettingsServer::commonSettingsServer.mainDatapackCode=QString::fromUtf8(rawText.data(),rawText.size());
                                 in.device()->seek(in.device()->pos()+rawText.size());
+
+                                if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("mainDatapackCode is empty, please put it into the settings"));
+                                    return;
+                                }
+                                if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
+                                {
+                                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE"));
+                                    return;
+                                }
                             }
                         }
                         {
@@ -720,6 +732,15 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                                 QByteArray rawText=data.mid(in.device()->pos(),textSize);
                                 CommonSettingsServer::commonSettingsServer.subDatapackCode=QString::fromUtf8(rawText.data(),rawText.size());
                                 in.device()->seek(in.device()->pos()+rawText.size());
+
+                                if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+                                {
+                                    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_SUBDATAPACKCODE)))
+                                    {
+                                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("CommonSettingsServer::commonSettingsServer.subDatapackCode not match CATCHCHALLENGER_CHECK_SUBDATAPACKCODE"));
+                                        return;
+                                    }
+                                }
                             }
                         }
 
@@ -1282,6 +1303,11 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                             index++;
                         }
                         character_selected=true;
+                        mDatapackMain=mDatapackBase+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
+                        if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+                            mDatapackSub=mDatapackMain+"sub/emptyRandomCoder23osaQ9mb5hYh2j/";
+                        else
+                            mDatapackSub=mDatapackMain+"sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
                         haveCharacter();
                     }
                 }
