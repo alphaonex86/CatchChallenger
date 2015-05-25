@@ -2019,9 +2019,9 @@ void BaseServer::preload_the_datapack()
             DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty"));
             abort();
         }
-        if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
+        if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
         {
-            DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match ^[a-z0-9\\- _]+$"));
+            DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE"));
             abort();
         }
         const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/");
@@ -2968,10 +2968,18 @@ void BaseServer::loadAndFixSettings()
         DebugClass::debugConsole(QStringLiteral("mainDatapackCode is empty, please put it into the settings"));
         abort();
     }
-    if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression("^[a-z0-9\\- _]+$")))
+    if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
     {
-        DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match ^[a-z0-9\\- _]+$"));
+        DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE"));
         abort();
+    }
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_SUBDATAPACKCODE)))
+        {
+            DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.subDatapackCode not match CATCHCHALLENGER_CHECK_SUBDATAPACKCODE"));
+            abort();
+        }
     }
     const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/");
     if(!QDir(mainDir).exists())

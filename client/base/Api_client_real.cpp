@@ -251,16 +251,29 @@ void Api_client_real::sendDatapackContentMainSub()
         CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(Api_client_real::text_dotcoma);
     }
 
-    datapackTarXzMain=false;
-    datapackTarXzSub=false;
-    wait_datapack_content_main=true;
-    wait_datapack_content_sub=true;
-    datapackFilesListMain=listDatapackMain(QString());
-    datapackFilesListMain.sort();
-    datapackFilesListSub=listDatapackSub(QString());
-    datapackFilesListSub.sort();
-    emit doDifferedChecksumMain(mDatapackMain);
-    emit doDifferedChecksumSub(mDatapackSub);
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        datapackTarXzMain=false;
+        datapackTarXzSub=true;
+        wait_datapack_content_main=true;
+        wait_datapack_content_sub=false;
+        datapackFilesListMain=listDatapackMain(QString());
+        datapackFilesListMain.sort();
+        emit doDifferedChecksumMain(mDatapackMain);
+    }
+    else
+    {
+        datapackTarXzMain=false;
+        datapackTarXzSub=false;
+        wait_datapack_content_main=true;
+        wait_datapack_content_sub=true;
+        datapackFilesListMain=listDatapackMain(QString());
+        datapackFilesListMain.sort();
+        datapackFilesListSub=listDatapackSub(QString());
+        datapackFilesListSub.sort();
+        emit doDifferedChecksumMain(mDatapackMain);
+        emit doDifferedChecksumSub(mDatapackSub);
+    }
 }
 
 void Api_client_real::setProxy(const QNetworkProxy &proxy)
