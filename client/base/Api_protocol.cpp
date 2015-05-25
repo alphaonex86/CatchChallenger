@@ -237,12 +237,12 @@ void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &di
     #endif
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     quint8 directionInt=static_cast<quint8>(direction);
@@ -263,12 +263,12 @@ void Api_protocol::send_player_direction(const Direction &the_direction)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     newDirection(the_direction);
@@ -278,12 +278,12 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_aliance && chatType!=Chat_type_system && chatType!=Chat_type_system_important)
@@ -299,7 +299,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return;
         }
         out << (quint8)tempText.size();
@@ -313,12 +313,12 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(this->player_informations.public_informations.pseudo==pseudo)
@@ -331,7 +331,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
         const QByteArray &tempText=text.toUtf8();
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return;
         }
         out << (quint8)tempText.size();
@@ -342,7 +342,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
         const QByteArray &tempText=pseudo.toUtf8();
         if(tempText.size()>255)
         {
-            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(__LINE__));
+            DebugClass::debugConsole(QStringLiteral("text in Utf8 too big, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return;
         }
         out << (quint8)tempText.size();
@@ -356,12 +356,12 @@ void Api_protocol::teleportDone()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     is_logged=character_selected=postReplyData(teleportList.first(),NULL,0);
@@ -372,7 +372,7 @@ bool Api_protocol::addCharacter(const quint8 &charactersGroupIndex,const quint8 
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
     if(skinId>=CommonDatapack::commonDatapack.skins.size())
@@ -410,7 +410,7 @@ bool Api_protocol::removeCharacter(const quint8 &charactersGroupIndex,const quin
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
     QByteArray outputData;
@@ -426,7 +426,7 @@ bool Api_protocol::selectCharacter(const quint8 &charactersGroupIndex,const quin
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
     QByteArray outputData;
@@ -444,12 +444,12 @@ void Api_protocol::useSeed(const quint8 &plant_id)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -461,12 +461,12 @@ void Api_protocol::monsterMoveUp(const quint8 &number)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -481,12 +481,12 @@ void Api_protocol::confirmEvolution(const quint32 &monterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -500,12 +500,12 @@ void Api_protocol::monsterMoveDown(const quint8 &number)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -521,12 +521,12 @@ void Api_protocol::destroyObject(const quint16 &object, const quint32 &quantity)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -541,12 +541,12 @@ void Api_protocol::useObject(const quint16 &object)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -561,12 +561,12 @@ void Api_protocol::useObjectOnMonster(const quint16 &object,const quint32 &monst
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -582,12 +582,12 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint16,
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -631,12 +631,12 @@ void Api_protocol::getShopList(const quint32 &shopId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -650,12 +650,12 @@ void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -672,12 +672,12 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -694,12 +694,12 @@ void Api_protocol::getFactoryList(const quint16 &factoryId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -713,12 +713,12 @@ void Api_protocol::buyFactoryProduct(const quint16 &factoryId,const quint16 &obj
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -735,12 +735,12 @@ void Api_protocol::sellFactoryResource(const quint16 &factoryId,const quint16 &o
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -757,12 +757,12 @@ void Api_protocol::tryEscape()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     is_logged=character_selected=packFullOutcommingData(0x60,0x02,NULL,0);
@@ -772,12 +772,12 @@ void Api_protocol::heal()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     is_logged=character_selected=packFullOutcommingData(0x60,0x06,NULL,0);
@@ -787,12 +787,12 @@ void Api_protocol::requestFight(const quint32 &fightId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -806,12 +806,12 @@ void Api_protocol::changeOfMonsterInFight(const quint32 &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -825,12 +825,12 @@ void Api_protocol::useSkill(const quint16 &skill)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -844,12 +844,12 @@ void Api_protocol::learnSkill(const quint32 &monsterId,const quint16 &skill)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -864,12 +864,12 @@ void Api_protocol::startQuest(const quint16 &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -883,12 +883,12 @@ void Api_protocol::finishQuest(const quint16 &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -902,12 +902,12 @@ void Api_protocol::cancelQuest(const quint16 &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -921,12 +921,12 @@ void Api_protocol::nextQuestStep(const quint16 &questId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -940,12 +940,12 @@ void Api_protocol::createClan(const QString &name)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -960,12 +960,12 @@ void Api_protocol::leaveClan()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -979,12 +979,12 @@ void Api_protocol::dissolveClan()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -998,12 +998,12 @@ void Api_protocol::inviteClan(const QString &pseudo)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1018,12 +1018,12 @@ void Api_protocol::ejectClan(const QString &pseudo)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1038,12 +1038,12 @@ void Api_protocol::inviteAccept(const bool &accept)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1060,12 +1060,12 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1083,12 +1083,12 @@ void Api_protocol::getMarketList()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x10,queryNumber(),NULL,0);
@@ -1098,12 +1098,12 @@ void Api_protocol::buyMarketObject(const quint32 &marketObjectId, const quint32 
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1119,12 +1119,12 @@ void Api_protocol::buyMarketMonster(const quint32 &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1139,12 +1139,12 @@ void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quanti
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1161,12 +1161,12 @@ void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &pric
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1182,12 +1182,12 @@ void Api_protocol::recoverMarketCash()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x13,queryNumber(),NULL,0);
@@ -1197,12 +1197,12 @@ void Api_protocol::withdrawMarketObject(const quint32 &objectId,const quint32 &q
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1218,12 +1218,12 @@ void Api_protocol::withdrawMarketMonster(const quint32 &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1238,12 +1238,12 @@ void Api_protocol::collectMaturePlant()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     is_logged=character_selected=packFullOutcommingQuery(0x10,0x07,queryNumber(),NULL,0);
@@ -1254,12 +1254,12 @@ void Api_protocol::useRecipe(const quint16 &recipeId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     QByteArray outputData;
@@ -1278,12 +1278,12 @@ void Api_protocol::battleRefused()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(battleRequestId.isEmpty())
@@ -1303,12 +1303,12 @@ void Api_protocol::battleAccepted()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(battleRequestId.isEmpty())
@@ -1329,12 +1329,12 @@ void Api_protocol::tradeRefused()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(tradeRequestId.isEmpty())
@@ -1354,12 +1354,12 @@ void Api_protocol::tradeAccepted()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(tradeRequestId.isEmpty())
@@ -1380,12 +1380,12 @@ void Api_protocol::tradeCanceled()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!isInTrade)
@@ -1401,12 +1401,12 @@ void Api_protocol::tradeFinish()
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!isInTrade)
@@ -1421,12 +1421,12 @@ void Api_protocol::addTradeCash(const quint64 &cash)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(cash==0)
@@ -1451,12 +1451,12 @@ void Api_protocol::addObject(const quint16 &item, const quint32 &quantity)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(quantity==0)
@@ -1482,12 +1482,12 @@ void Api_protocol::addMonster(const quint32 &monsterId)
 {
     if(!is_logged)
     {
-        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("is not logged, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!character_selected)
     {
-        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(__LINE__));
+        DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
     if(!isInTrade)
