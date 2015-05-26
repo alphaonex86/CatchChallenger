@@ -223,6 +223,7 @@ void BaseWindow::have_current_player_info()
     #endif
     if(havePlayerInformations)
         return;
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     havePlayerInformations=true;
 }
 
