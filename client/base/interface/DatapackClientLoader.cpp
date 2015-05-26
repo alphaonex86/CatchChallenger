@@ -158,19 +158,12 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseVisualCategory();
     parseTypesExtra();
     parseItemsExtra();
-    parseMaps();
     parseSkins();
     parseMonstersExtra();
     parseBuffExtra();
     parseSkillsExtra();
-    parseQuestsLink();
-    parseQuestsExtra();
-    parseQuestsText();
-    parseBotFightsExtra();
     parsePlantsExtra();
     parseAudioAmbiance();
-    parseZoneExtra();
-    parseTileset();
     parseReputationExtra();
     inProgress=false;
     emit datapackParsed();
@@ -235,23 +228,15 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
-/*    parseVisualCategory();
-    parseTypesExtra();
-    parseItemsExtra();
+
     parseMaps();
-    parseSkins();
-    parseMonstersExtra();
-    parseBuffExtra();
-    parseSkillsExtra();
     parseQuestsLink();
     parseQuestsExtra();
     parseQuestsText();
     parseBotFightsExtra();
-    parsePlantsExtra();
-    parseAudioAmbiance();
     parseZoneExtra();
     parseTileset();
-    parseReputationExtra();*/
+
     inProgress=false;
 
     emit datapackParsedMainSub();
@@ -1090,7 +1075,7 @@ void DatapackClientLoader::resetAll()
 void DatapackClientLoader::parseQuestsExtra()
 {
     //open and quick check the file
-    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     while(index<entryList.size())
     {
@@ -1306,7 +1291,7 @@ void DatapackClientLoader::parseQuestsExtra()
 void DatapackClientLoader::parseQuestsText()
 {
     //open and quick check the file
-    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    const QFileInfoList &entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     while(index<entryList.size())
     {
@@ -1495,7 +1480,7 @@ void DatapackClientLoader::parseQuestsLink()
 void DatapackClientLoader::parseZoneExtra()
 {
     //open and quick check the file
-    QFileInfoList entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ZONE)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    QFileInfoList entryList=QDir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ZONE).arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     QRegularExpression xmlFilter(QStringLiteral("^[a-zA-Z0-9\\- _]+\\.xml$"));
     QRegularExpression removeXml(QStringLiteral("\\.xml$"));

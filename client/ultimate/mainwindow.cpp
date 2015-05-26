@@ -1091,7 +1091,6 @@ void MainWindow::connectTheExternalSocket()
             return;
         }
     CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
     CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectedState);
     CatchChallenger::Api_client_real::client->sendProtocol();
 }
