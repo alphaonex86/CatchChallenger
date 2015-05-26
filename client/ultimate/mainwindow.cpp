@@ -1545,7 +1545,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
         realSslSocket=NULL;
     }
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"),QStringLiteral("main"),QStringLiteral("sub"));
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket);//QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/")
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);

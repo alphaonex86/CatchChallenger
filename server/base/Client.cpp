@@ -230,7 +230,12 @@ void Client::disconnectClient()
         leaveTheCityCapture();
         const quint32 &addTime=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-connectedSince.toMSecsSinceEpoch()/1000;
         if(addTime>5)
+        {
             dbQueryWriteCommon(PreparedDBQueryCommon::db_query_played_time.arg(character_id).arg(addTime));
+            #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_server_time_played_time.arg(addTime).arg(0).arg(character_id));
+            #endif
+        }
         //save the monster
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle && isInFight())
             saveCurrentMonsterStat();
