@@ -406,7 +406,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
                 abort();
                 return;
             }
-            const QString &selectedMirror=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base);
+            /*ref crash here*/const QString selectedMirror=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base);
             int correctContent=0;
             while(index<content.size())
             {
@@ -464,7 +464,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
             datapackFilesListBase.clear();
             if(correctContent==0)
             {
-                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n");
+                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n") << "\nFor:" << reply->url().toString();
                 abort();
                 return;
             }

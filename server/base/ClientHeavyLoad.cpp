@@ -730,9 +730,9 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
     }
     #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
     if(validServerCount==0)
-    {
-        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_server_time.arg(account_id).arg(QDateTime::currentDateTime().toTime_t()));
-    }
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_server_time.arg(0).arg(account_id).arg(QDateTime::currentDateTime().toTime_t()));
+    else
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_server_time_last_connect.arg(QDateTime::currentDateTime().toTime_t()).arg(0).arg(account_id));
     #endif
     tempRawData[0]=validServerCount;
 
@@ -1310,7 +1310,7 @@ QHash<QString, quint32> Client::datapack_file_list_cached()
     }
 }
 
-QHash<QString,quint32> Client::datapack_file_list()
+QHash<QString,quint32> Client::datapack_file_list(const bool withHash)
 {
     QHash<QString,quint32> filesList;
 
@@ -1336,9 +1336,14 @@ QHash<QString,quint32> Client::datapack_file_list()
                         #ifdef Q_OS_WIN32
                         fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
                         #endif
-                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(file.readAll());
-                        filesList[fileName]=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        if(withHash)
+                        {
+                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                            hashFile.addData(file.readAll());
+                            filesList[fileName]=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        }
+                        else
+                            filesList[fileName]=0;
                         file.close();
                     }
                 }

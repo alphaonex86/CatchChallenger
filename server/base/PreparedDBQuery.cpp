@@ -115,6 +115,8 @@ QString PreparedDBQueryCommon::db_query_insert_clan=NULL;
 QString PreparedDBQueryCommon::db_query_update_monster_owner=NULL;
 QString PreparedDBQueryCommon::db_query_select_server_time=NULL;
 QString PreparedDBQueryCommon::db_query_insert_server_time=NULL;
+QString PreparedDBQueryCommon::db_query_update_server_time_played_time=NULL;
+QString PreparedDBQueryCommon::db_query_update_server_time_last_connect=NULL;
 QString PreparedDBQueryServer::db_query_update_character_forserver_map_part1=NULL;
 QString PreparedDBQueryServer::db_query_update_character_forserver_map_part2=NULL;
 
@@ -239,7 +241,9 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_insert_clan=QStringLiteral("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,'%2',%3);");
         PreparedDBQueryCommon::db_query_update_monster_owner=QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;");
         PreparedDBQueryCommon::db_query_select_server_time=QStringLiteral("SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1");//not by characters to prevent too hurge datas to store
-        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO `server_time`(`server`,`account`,`played_time`,`last_connect`) VALUES(0,%1,0,%2);");
+        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO `server_time`(`server`,`account`,`played_time`,`last_connect`) VALUES(%1,%2,0,%3);");
+        PreparedDBQueryCommon::db_query_update_server_time_played_time=QStringLiteral("UPDATE `server_time` SET `played_time`=`played_time`+%1 WHERE `server`=%2 AND `account`=%3;");
+        PreparedDBQueryCommon::db_query_update_server_time_last_connect=QStringLiteral("UPDATE `server_time` SET `last_connect`=%1 WHERE `server`=%2 AND `account`=%3;");
         break;
         #endif
 
@@ -332,7 +336,9 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
         PreparedDBQueryCommon::db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
         PreparedDBQueryCommon::db_query_select_server_time=QStringLiteral("SELECT server,played_time,last_connect FROM server_time WHERE account=%1");//not by characters to prevent too hurge datas to store
-        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(0,%1,0,%2);");
+        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);");
+        PreparedDBQueryCommon::db_query_update_server_time_played_time=QStringLiteral("UPDATE server_time SET played_time=played_time+%1 WHERE server=%2 AND account=%3;");
+        PreparedDBQueryCommon::db_query_update_server_time_last_connect=QStringLiteral("UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;");
         break;
         #endif
 
@@ -424,7 +430,9 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_insert_clan=QStringLiteral("INSERT INTO clan(id,name,date) VALUES(%1,'%2',%3);");
         PreparedDBQueryCommon::db_query_update_monster_owner=QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;");
         PreparedDBQueryCommon::db_query_select_server_time=QStringLiteral("SELECT server,played_time,last_connect FROM server_time WHERE account=%1");//not by characters to prevent too hurge datas to store
-        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(0,%1,0,%2);");
+        PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);");
+        PreparedDBQueryCommon::db_query_update_server_time_played_time=QStringLiteral("UPDATE server_time SET played_time=played_time+%1 WHERE server=%2 AND account=%3;");
+        PreparedDBQueryCommon::db_query_update_server_time_last_connect=QStringLiteral("UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;");
         break;
     }
 }

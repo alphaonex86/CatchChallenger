@@ -25,25 +25,14 @@ namespace CatchChallenger {
 class Api_client_virtual : public Api_protocol
 {
 public:
-    explicit Api_client_virtual(ConnectedSocket *socket,const QString &forcedDatapack,const QString &mainDatapackCode,const QString &subDatapackCode);
+    explicit Api_client_virtual(ConnectedSocket *socket);
     ~Api_client_virtual();
     void sendDatapackContentBase();
     void sendDatapackContentMainSub();
     void tryDisconnect();
-    virtual QString datapackPathBase() const;
-    virtual QString datapackPathMain() const;
-    virtual QString datapackPathSub() const;
-    QString mainDatapackCode() const;
-    QString subDatapackCode() const;
 protected:
     //general data
     void defineMaxPlayers(const quint16 &);
-private:
-    QString forcedDatapackBase;
-    QString forcedDatapackMain;
-    QString forcedDatapackSub;
-    QString mMainDatapackCode;
-    QString mSubDatapackCode;
 };
 }
 

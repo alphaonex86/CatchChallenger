@@ -211,6 +211,7 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
                 return;
             }
         }
+        if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
         {
             const QByteArray &hash=CatchChallenger::DatapackChecksum::doChecksumSub(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB);
             if(hash.isEmpty())
