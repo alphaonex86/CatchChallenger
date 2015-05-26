@@ -281,7 +281,7 @@ void BaseWindow::haveTheDatapackMainSub()
     haveDatapackMainSub=true;
 
     if(CatchChallenger::Api_client_real::client!=NULL)
-        emit parseDatapackMainSub(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->datapackPathMain(),CatchChallenger::Api_client_real::client->datapackPathSub());
+        emit parseDatapackMainSub(CatchChallenger::Api_client_real::client->mainDatapackCode(),CatchChallenger::Api_client_real::client->subDatapackCode());
 }
 
 void BaseWindow::datapackSize(const quint32 &datapackFileNumber,const quint32 &datapackFileSize)

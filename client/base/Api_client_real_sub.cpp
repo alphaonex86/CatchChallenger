@@ -134,8 +134,8 @@ void Api_client_real::httpFinishedSub()
     if(urlInWaitingListSub.remove(reply)!=1)
         DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListSub.size()));
     reply->deleteLater();
-    if(urlInWaitingListSub.isEmpty())
-        haveTheDatapack();
+    if(urlInWaitingListSub.isEmpty() && !wait_datapack_content_main)
+        haveTheDatapackMainSub();
 }
 
 void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
@@ -364,7 +364,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
                 abort();
                 return;
             }
-            const QString &selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
+            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
             int correctContent=0;
             while(index<content.size())
             {
@@ -421,12 +421,8 @@ void Api_client_real::httpFinishedForDatapackListSub()
             }
             datapackFilesListSub.clear();
             if(correctContent==0)
-            {
-                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n");
-                abort();
-                return;
-            }
-            if(fileToGet==0 && !wait_datapack_content_sub)
+                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n") << "\nFor:" << reply->url().toString();
+            if(fileToGet==0)
                 haveTheDatapackMainSub();
             else
                 datapackSizeSub(fileToGet,sizeToGet*1000);
@@ -505,4 +501,19 @@ void Api_client_real::httpErrorEventSub()
     qDebug() << reply->url().toString() << reply->errorString();
     //mirrorTryNextSub();//mirrorTryNextBase();-> double mirrorTryNext*() call due to httpFinishedForDatapackList*()
     return;
+}
+
+void Api_client_real::sendDatapackContentSub()
+{
+    if(wait_datapack_content_sub)
+    {
+        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
+        return;
+    }
+
+    datapackTarXzSub=false;
+    wait_datapack_content_sub=true;
+    datapackFilesListSub=listDatapackSub(QString());
+    datapackFilesListSub.sort();
+    emit doDifferedChecksumSub(mDatapackSub);
 }

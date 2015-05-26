@@ -1542,6 +1542,8 @@ void Api_protocol::resetAll()
     mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath());
     mDatapackMain=mDatapackBase+"map/main/main/";
     mDatapackSub=mDatapackMain+"sub/sub/";
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode="main";
+    CommonSettingsServer::commonSettingsServer.subDatapackCode="sub";
 
     //to send trame
     lastQueryNumber=1;
@@ -1582,12 +1584,12 @@ QString Api_protocol::datapackPathSub() const
 
 QString Api_protocol::mainDatapackCode() const
 {
-    return QString();
+    return CommonSettingsServer::commonSettingsServer.mainDatapackCode;
 }
 
 QString Api_protocol::subDatapackCode() const
 {
-    return QString();
+    return CommonSettingsServer::commonSettingsServer.subDatapackCode;
 }
 
 void Api_protocol::setDatapackPath(const QString &datapack_path)
@@ -1598,6 +1600,8 @@ void Api_protocol::setDatapackPath(const QString &datapack_path)
         mDatapackBase=datapack_path+QLatin1Literal("/");
     mDatapackMain=mDatapackBase+"map/main/main/";
     mDatapackSub=mDatapackMain+"sub/sub/";
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode="main";
+    CommonSettingsServer::commonSettingsServer.subDatapackCode="sub";
 }
 
 bool Api_protocol::getIsLogged() const

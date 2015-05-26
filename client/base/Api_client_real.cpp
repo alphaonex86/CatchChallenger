@@ -229,51 +229,7 @@ quint16 Api_client_real::getPort()
 
 void Api_client_real::sendDatapackContentMainSub()
 {
-    if(wait_datapack_content_main || wait_datapack_content_sub)
-    {
-        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
-        return;
-    }
-
-    //compute the mirror
-    {
-        QStringList values=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
-        {
-            QString slash(QStringLiteral("/"));
-            int index=0;
-            while(index<values.size())
-            {
-                if(!values.at(index).endsWith(slash))
-                    values[index]+=slash;
-                index++;
-            }
-        }
-        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(Api_client_real::text_dotcoma);
-    }
-
-    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
-    {
-        datapackTarXzMain=false;
-        datapackTarXzSub=true;
-        wait_datapack_content_main=true;
-        wait_datapack_content_sub=false;
-        datapackFilesListMain=listDatapackMain(QString());
-        datapackFilesListMain.sort();
-        emit doDifferedChecksumMain(mDatapackMain);
-    }
-    else
-    {
-        datapackTarXzMain=false;
-        datapackTarXzSub=false;
-        wait_datapack_content_main=true;
-        wait_datapack_content_sub=true;
-        datapackFilesListMain=listDatapackMain(QString());
-        datapackFilesListMain.sort();
-        datapackFilesListSub=listDatapackSub(QString());
-        datapackFilesListSub.sort();
-        emit doDifferedChecksumMain(mDatapackMain);
-        emit doDifferedChecksumSub(mDatapackSub);
-    }
+    sendDatapackContentMain();
 }
 
 void Api_client_real::setProxy(const QNetworkProxy &proxy)
