@@ -2032,12 +2032,17 @@ void BaseServer::preload_the_datapack()
         }
     }
     #endif
-    QString subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/")+
-            QStringLiteral("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("/");
-    if(!QDir(subDatapackFolder).exists())
+    QString subDatapackFolder;
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
-        DebugClass::debugConsole(subDatapackFolder+QStringLiteral(" don't exists, drop spec"));
-        subDatapackFolder.clear();
+        subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/")+
+                QStringLiteral("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("/");
+        if(!QDir(subDatapackFolder).exists())
+        {
+            DebugClass::debugConsole(subDatapackFolder+QStringLiteral(" don't exists, drop spec"));
+            subDatapackFolder.clear();
+            CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+        }
     }
 
     if(GlobalServerData::serverSettings.datapackCache==0)
@@ -2046,7 +2051,7 @@ void BaseServer::preload_the_datapack()
     QCryptographicHash hashBase(QCryptographicHash::Sha224);
     QCryptographicHash hashMain(QCryptographicHash::Sha224);
     QCryptographicHash hashSub(QCryptographicHash::Sha224);
-    QStringList datapack_file_temp=Client::datapack_file_list().keys();
+    QStringList datapack_file_temp=Client::datapack_file_list(false).keys();
     datapack_file_temp.sort();
     const QRegularExpression mainDatapackBase("^map[/\\\\]main[/\\\\]");
     const QRegularExpression mainDatapackFolder("^map[/\\\\]main[/\\\\]"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"[/\\\\]");
@@ -2986,6 +2991,16 @@ void BaseServer::loadAndFixSettings()
     {
         DebugClass::debugConsole(mainDir+QStringLiteral(" don't exists"));
         abort();
+    }
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        const QString &subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/")+
+                QStringLiteral("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("/");
+        if(!QDir(subDatapackFolder).exists())
+        {
+            DebugClass::debugConsole(subDatapackFolder+QStringLiteral(" don't exists, drop spec"));
+            CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+        }
     }
 
     if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)

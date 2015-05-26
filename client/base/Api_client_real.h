@@ -45,6 +45,8 @@ public:
     //datapack related
     void sendDatapackContentBase();
     void sendDatapackContentMainSub();
+    void sendDatapackContentMain();
+    void sendDatapackContentSub();
     void test_mirror_base();
     void test_mirror_main();
     void test_mirror_sub();
@@ -132,6 +134,7 @@ private slots:
     void writeNewFileBase(const QString &fileName, const QByteArray &data);
     void writeNewFileMain(const QString &fileName, const QByteArray &data);
     void writeNewFileSub(const QString &fileName, const QByteArray &data);
+    void checkIfContinueOrFinished();
     void getHttpFileBase(const QString &url, const QString &fileName);
     void getHttpFileMain(const QString &url, const QString &fileName);
     void getHttpFileSub(const QString &url, const QString &fileName);

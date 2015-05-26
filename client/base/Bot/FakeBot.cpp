@@ -15,7 +15,7 @@ QSemaphore FakeBot::wait_to_stop;
 /// \todo ask player information at the insert
 FakeBot::FakeBot() :
     socket(&fakeSocket),
-    api(&socket,QStringLiteral(""),QStringLiteral("main"),QStringLiteral("sub"))
+    api(&socket)
 {
     connect(&api,&Api_client_virtual::insert_player,            this,&FakeBot::insert_player);
     connect(&api,&Api_client_virtual::have_current_player_info, this,&FakeBot::have_current_player_info);

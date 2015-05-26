@@ -211,6 +211,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromUtf8(rawText.data(),rawText.size());
                         in.device()->seek(in.device()->pos()+rawText.size());
                     }
+                    else
+                        CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.clear();
                 }
                 //characters
                 {
@@ -680,6 +682,8 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                                 CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=QString::fromUtf8(rawText.data(),rawText.size());
                                 in.device()->seek(in.device()->pos()+rawText.size());
                             }
+                            else
+                                CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
                         }
                         {
                             //Main type code
@@ -712,6 +716,8 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                                     return;
                                 }
                             }
+                            else
+                                CommonSettingsServer::commonSettingsServer.mainDatapackCode.clear();
                         }
                         {
                             //Sub type code
@@ -742,6 +748,8 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                                     }
                                 }
                             }
+                            else
+                                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
                         }
 
                         if(max_players<=255)
@@ -784,6 +792,8 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                                 player_informations.public_informations.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
                                 in.device()->seek(in.device()->pos()+rawText.size());
                             }
+                            else
+                                player_informations.public_informations.pseudo.clear();
                         }
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {

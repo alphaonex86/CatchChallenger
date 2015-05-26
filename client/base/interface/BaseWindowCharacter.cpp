@@ -201,6 +201,8 @@ void BaseWindow::updateServerList()
     }
     //do the average value
     {
+        averagePlayedTime=0;
+        averageLastConnect=0;
         int entryCount=0;
         int index=0;
         while(index<serverOrdenedList.size())

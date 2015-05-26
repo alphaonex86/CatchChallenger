@@ -33,6 +33,8 @@ public:
     static QString db_query_clan;
     static QString db_query_select_server_time;
     static QString db_query_insert_server_time;
+    static QString db_query_update_server_time_played_time;
+    static QString db_query_update_server_time_last_connect;
 
     static QString db_query_select_monstersBuff_by_id;
     static QString db_query_monster_by_character_id;

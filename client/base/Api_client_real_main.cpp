@@ -162,7 +162,7 @@ void Api_client_real::httpFinishedMain()
         DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListMain.size()));
     reply->deleteLater();
     if(urlInWaitingListMain.isEmpty())
-        haveTheDatapack();
+        checkIfContinueOrFinished();
 }
 
 void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
@@ -181,8 +181,7 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
     {
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
         wait_datapack_content_main=false;
-        if(!wait_datapack_content_main && !wait_datapack_content_sub)
-            haveTheDatapackMainSub();
+        checkIfContinueOrFinished();
         return;
     }
 
@@ -305,8 +304,7 @@ void Api_client_real::decodedIsFinishMain()
                 index++;
             }
             wait_datapack_content_main=false;
-            if(!wait_datapack_content_main && !wait_datapack_content_sub)
-                haveTheDatapackMainSub();
+            checkIfContinueOrFinished();
         }
         else
             test_mirror_main();
@@ -391,7 +389,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
                 abort();
                 return;
             }
-            const QString &selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
+            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
             int correctContent=0;
             while(index<content.size())
             {
@@ -449,12 +447,12 @@ void Api_client_real::httpFinishedForDatapackListMain()
             datapackFilesListMain.clear();
             if(correctContent==0)
             {
-                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n");
+                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n") << "\nFor:" << reply->url().toString();
                 abort();
                 return;
             }
-            if(fileToGet==0 && !wait_datapack_content_sub)
-                haveTheDatapackMainSub();
+            if(fileToGet==0)
+                checkIfContinueOrFinished();
             else
                 datapackSizeMain(fileToGet,sizeToGet*1000);
         }
@@ -535,4 +533,43 @@ void Api_client_real::httpErrorEventMain()
     qDebug() << reply->url().toString() << reply->errorString();
     //mirrorTryNextMain();//mirrorTryNextBase();-> double mirrorTryNext*() call due to httpFinishedForDatapackList*()
     return;
+}
+
+void Api_client_real::sendDatapackContentMain()
+{
+    if(wait_datapack_content_main || wait_datapack_content_sub)
+    {
+        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
+        return;
+    }
+
+    //compute the mirror
+    {
+        QStringList values=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+        {
+            QString slash(QStringLiteral("/"));
+            int index=0;
+            while(index<values.size())
+            {
+                if(!values.at(index).endsWith(slash))
+                    values[index]+=slash;
+                index++;
+            }
+        }
+        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(Api_client_real::text_dotcoma);
+    }
+
+    datapackTarXzMain=false;
+    wait_datapack_content_main=true;
+    datapackFilesListMain=listDatapackMain(QString());
+    datapackFilesListMain.sort();
+    emit doDifferedChecksumMain(mDatapackMain);
+}
+
+void Api_client_real::checkIfContinueOrFinished()
+{
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+        haveTheDatapackMainSub();
+    else
+        sendDatapackContentSub();
 }

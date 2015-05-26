@@ -42,22 +42,18 @@ InternetUpdater::InternetUpdater()
 
 void InternetUpdater::downloadFile()
 {
-    QString name="CatchChallenger";
     QString catchChallengerVersion;
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    catchChallengerVersion=QStringLiteral("%1 Ultimate/%2").arg(name).arg(CATCHCHALLENGER_VERSION);
+    catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
     #else
-    catchChallengerVersion=QStringLiteral("%1/%2").arg(name).arg(CATCHCHALLENGER_VERSION);
-    #endif
-    #ifdef CATCHCHALLENGER_VERSION_PORTABLE
-        #ifdef CATCHCHALLENGER_PLUGIN_ALL_IN_ONE
-             catchChallengerVersion+=QStringLiteral(" portable/all-in-one");
+        #ifdef CATCHCHALLENGER_VERSION_SINGLESERVER
+        catchChallengerVersion=QStringLiteral("CatchChallenger SingleServer/%1").arg(CATCHCHALLENGER_VERSION);
         #else
-             catchChallengerVersion+=QStringLiteral(" portable");
-        #endif
-    #else
-        #ifdef CATCHCHALLENGER_PLUGIN_ALL_IN_ONE
-            catchChallengerVersion+=QStringLiteral(" all-in-one");
+            #ifdef CATCHCHALLENGER_VERSION_SOLO
+            catchChallengerVersion=QStringLiteral("CatchChallenger Solo/%1").arg(CATCHCHALLENGER_VERSION);
+            #else
+            catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
+            #endif
         #endif
     #endif
     #if defined(Q_OS_WIN32) || defined(Q_OS_MAC)
