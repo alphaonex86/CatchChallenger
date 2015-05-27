@@ -11,7 +11,7 @@ using namespace CatchChallenger;
 void EpollClientLoginSlave::askLogin(const quint8 &query_id,const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_login==NULL)
+    if(PreparedDBQueryLogin::db_query_login==NULL)
     {
         errorParsingLayer(QStringLiteral("askLogin() Query login is empty, bug"));
         return;
@@ -28,7 +28,7 @@ void EpollClientLoginSlave::askLogin(const quint8 &query_id,const char *rawdata)
     askLoginParam->login=login;
     askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
-    const QString &queryText=QString(PreparedDBQuery::db_query_login).arg(QString(login.toHex()));
+    const QString &queryText=QString(PreparedDBQueryLogin::db_query_login).arg(QString(login.toHex()));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::askLogin_static);
     if(callback==NULL)
     {
@@ -261,17 +261,17 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
 void EpollClientLoginSlave::createAccount(const quint8 &query_id, const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_login==0 || PreparedDBQuery::db_query_login[0]=='\0')
+    if(PreparedDBQueryLogin::db_query_login==0 || PreparedDBQueryLogin::db_query_login[0]=='\0')
     {
         errorParsingLayer(QStringLiteral("createAccount() Query login is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_insert_login==0 || PreparedDBQuery::db_query_insert_login[0]=='\0')
+    if(PreparedDBQueryLogin::db_query_insert_login==0 || PreparedDBQueryLogin::db_query_insert_login[0]=='\0')
     {
         errorParsingLayer(QStringLiteral("createAccount() Query inset login is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_characters==0 || PreparedDBQuery::db_query_characters[0]=='\0')
+    if(PreparedDBQueryCommon::db_query_characters==0 || PreparedDBQueryCommon::db_query_characters[0]=='\0')
     {
         errorParsingLayer(QStringLiteral("createAccount() Query characters is empty, bug"));
         return;
@@ -303,7 +303,7 @@ void EpollClientLoginSlave::createAccount(const quint8 &query_id, const char *ra
     askLoginParam->login=login;
     askLoginParam->pass=QByteArray(rawdata+CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE);
 
-    const QString &queryText=QString(PreparedDBQuery::db_query_login).arg(QString(login.toHex()));
+    const QString &queryText=QString(PreparedDBQueryLogin::db_query_login).arg(QString(login.toHex()));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::createAccount_static);
     if(callback==NULL)
     {
@@ -390,11 +390,11 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             linkToMaster->newFullOutputQuery(0x11,0x01,queryNumber);
         }
         account_id=maxAccountIdList.takeFirst();
-        dbQueryWriteLogin(QString(PreparedDBQuery::db_query_insert_login).arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()).toUtf8().constData());
+        dbQueryWriteLogin(QString(PreparedDBQueryLogin::db_query_insert_login).arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()).toUtf8().constData());
         //send the network reply
         QByteArray outputData;
         outputData[0x00]=0x01;
-        postReply(askLoginParam->query_id,outputData);
+        postReply(askLoginParam->query_id,outputData.constData(),outputData.size());
         is_logging_in_progess=false;
     }
     else

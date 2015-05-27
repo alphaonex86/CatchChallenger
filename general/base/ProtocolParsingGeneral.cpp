@@ -474,6 +474,7 @@ ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
     #endif
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 ProtocolParsing::CompressionType ProtocolParsingInputOutput::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -483,3 +484,4 @@ ProtocolParsing::CompressionType ProtocolParsingInputOutput::getCompressType() c
     #endif
         return compressionTypeServer;
 }
+#endif
