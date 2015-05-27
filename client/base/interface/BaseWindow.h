@@ -691,6 +691,7 @@ signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
     void parseDatapackMainSub(const QString &mainDatapackCode, const QString &subDatapackCode);
+    void datapackParsedMainSubMap();
     void sendsetMultiPlayer(const bool & multiplayer);
     void teleportDone();
     //plant, can do action only if the previous is finish

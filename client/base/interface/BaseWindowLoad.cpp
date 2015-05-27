@@ -223,15 +223,17 @@ void BaseWindow::have_current_player_info()
     #endif
     if(havePlayerInformations)
         return;
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+
+    CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
+    CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());
+
     havePlayerInformations=true;
 }
 
 void BaseWindow::have_main_and_sub_datapack_loaded()
 {
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-    MapController::mapController->have_current_player_info(informations);
-    CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
+
     clan=informations.clan;
     allow=informations.allow;
     clan_leader=informations.clan_leader;
@@ -243,7 +245,10 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
     ui->warehousePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(informations.cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(informations.cash));
-    CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());
+
+    //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
+    MapController::mapController->have_current_player_info(informations);
+
     DebugClass::debugConsole(QStringLiteral("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
     updateConnectingStatus();
     updateClanDisplay();
@@ -409,6 +414,14 @@ void BaseWindow::datapackParsedMainSub()
     qDebug() << "BaseWindow::datapackParsedMainSub()";
     #endif
     mainSubDatapackIsParsed=true;
+
+    //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+
+    have_main_and_sub_datapack_loaded();
+
+    emit datapackParsedMainSubMap();
+
     updateConnectingStatus();
 }
 
