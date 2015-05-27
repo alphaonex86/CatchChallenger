@@ -903,13 +903,13 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     if(!name.isEmpty() && rawSize==(quint32)data.size())
                     {
                         int index=0;
-                        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.size())
+                        while(index<CommonDatapack::commonDatapack.monstersCollision.size())
                         {
-                            if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer==name)
+                            if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
                             {
                                 mapLayerContentForMonsterCollision[name]=data.constData();
                                 {
-                                    const QStringList &monsterTypeListText=CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).monsterTypeList;
+                                    const QStringList &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
                                     int monsterTypeListIndex=0;
                                     while(monsterTypeListIndex<monsterTypeListText.size())
                                     {
@@ -1155,9 +1155,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                     DebugClass::debugConsole(QStringLiteral("Have already monster at %1,%2 for %3, actual zone: %4 (%5), new zone: %6 (%7)")
                                              .arg(x).arg(y).arg(fileName)
                                              .arg(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
-                                             .arg(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer)
+                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer)
                                              .arg(zoneId)
-                                             .arg(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(zoneId).layer)
+                                             .arg(CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer)
                                             );
                                     this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
                                 }
@@ -1320,11 +1320,11 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
     QStringList caveName;
     {
         int index=0;
-        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.size())
+        while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
-            if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer.isEmpty())
+            if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.isEmpty())
             {
-                caveName=CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).monsterTypeList;
+                caveName=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
                 break;
             }
             index++;
@@ -1353,9 +1353,9 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
     quint8 zoneNumberIndex=1;
     {
         int index=0;
-        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.size())
+        while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
-            const MonstersCollision &monstersCollision=CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index);
+            const MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.monstersCollision.at(index);
             const QStringList &searchList=monstersCollision.defautMonsterTypeList;
             int index_search=0;
             while(index_search<searchList.size())
@@ -1368,24 +1368,24 @@ bool Map_loader::loadMonsterMap(const QString &fileName, QList<QString> detected
             {
                 quint8 tempZoneNumberIndex=0;
                 //cave
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer.isEmpty())
+                if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.isEmpty())
                 {}
                 //not cave
-                else if(detectedMonsterCollisionLayer.contains(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer))
+                else if(detectedMonsterCollisionLayer.contains(CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
                 {
-                    if(!zoneNumber.contains(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer))
+                    if(!zoneNumber.contains(CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
                     {
-                        zoneNumber[CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer]=zoneNumberIndex;
+                        zoneNumber[CommonDatapack::commonDatapack.monstersCollision.at(index).layer]=zoneNumberIndex;
                         this->map_to_send.parsed_layer.monstersCollisionList << MonstersCollisionValue();//create
                         tempZoneNumberIndex=zoneNumberIndex;
                         zoneNumberIndex++;
                     }
                     else
-                        tempZoneNumberIndex=zoneNumber.value(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).layer);
+                        tempZoneNumberIndex=zoneNumber.value(CommonDatapack::commonDatapack.monstersCollision.at(index).layer);
                 }
                 {
                     MonstersCollisionValue *monstersCollisionValue=&this->map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
-                    if(CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
+                    if(CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
                     {
                         monstersCollisionValue->actionOn << index;
                         monstersCollisionValue->actionOnMonsters << monsterTypeList.value(searchList.at(index_search));

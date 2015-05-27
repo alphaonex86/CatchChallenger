@@ -36,7 +36,6 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath,const Q
 
     parseQuests();
     parseBotFights();
-    parseMonstersCollision();
     parseShop();
     parseServerProfileList();
     parseIndustries();
@@ -50,7 +49,7 @@ void CommonDatapackServerSpec::parseDatapack(const QString &datapackPath,const Q
 
 void CommonDatapackServerSpec::parseQuests()
 {
-    quests=DatapackGeneralLoader::loadQuests(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS));
+    quests=DatapackGeneralLoader::loadQuests(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS).arg(mainDatapackCode));
     qDebug() << QStringLiteral("%1 quest(s) loaded").arg(quests.size());
 }
 
@@ -62,14 +61,8 @@ void CommonDatapackServerSpec::parseShop()
 
 void CommonDatapackServerSpec::parseBotFights()
 {
-    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT),CommonDatapack::commonDatapack.monsters,CommonDatapack::commonDatapack.monsterSkills,CommonDatapack::commonDatapack.items.item);
+    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT).arg(mainDatapackCode),CommonDatapack::commonDatapack.monsters,CommonDatapack::commonDatapack.monsterSkills,CommonDatapack::commonDatapack.items.item);
     qDebug() << QStringLiteral("%1 bot fight(s) loaded").arg(botFights.size());
-}
-
-void CommonDatapackServerSpec::parseMonstersCollision()
-{
-    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("layers.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
-    qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
 }
 
 void CommonDatapackServerSpec::parseServerProfileList()
@@ -114,7 +107,6 @@ void CommonDatapackServerSpec::unload()
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
-    monstersCollision.clear();
     shops.clear();
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();

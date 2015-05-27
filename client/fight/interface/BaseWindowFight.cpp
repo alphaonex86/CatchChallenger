@@ -544,7 +544,7 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
     int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
-        const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+        const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
         if(monstersCollision.item==0 || items.contains(monstersCollision.item))
         {
             if(!monstersCollision.background.isEmpty())

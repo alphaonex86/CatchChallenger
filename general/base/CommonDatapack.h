@@ -40,6 +40,7 @@ public:
     ItemFull items;
     QHash<quint16,Industry> industries;
     QHash<quint16,IndustryLink> industriesLink;
+    QList<MonstersCollision> monstersCollision;
     QList<Profile> profileList;
     QList<Type> types;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -62,6 +63,7 @@ private:
     void parseSkills();
     void parseEvents();
     void parseMonsters();
+    void parseMonstersCollision();
     void parseMonstersEvolutionItems();
     void parseMonstersItemToLearn();
     void parseReputation();

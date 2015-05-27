@@ -144,7 +144,7 @@ BaseWindow::BaseWindow() :
     connect(this,                                   &BaseWindow::parseDatapack,                             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
     connect(this,                                   &BaseWindow::parseDatapackMainSub,                      &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection);
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,                  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsedMainSub,           MapController::mapController,           &MapController::datapackParsedMainSub,Qt::QueuedConnection);
+    connect(this,                                   &BaseWindow::datapackParsedMainSubMap,                  MapController::mapController,        &MapController::datapackParsedMainSub,Qt::QueuedConnection);
 
     //render, logical part into Map_Client
     connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of);

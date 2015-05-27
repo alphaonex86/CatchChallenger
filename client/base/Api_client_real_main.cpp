@@ -568,6 +568,7 @@ void Api_client_real::sendDatapackContentMain()
 
 void Api_client_real::checkIfContinueOrFinished()
 {
+    wait_datapack_content_main=false;
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
         haveTheDatapackMainSub();
     else
