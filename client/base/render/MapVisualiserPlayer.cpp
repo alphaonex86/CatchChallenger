@@ -507,6 +507,7 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
                                 {
                                     if(object->property(MapVisualiserThread::text_visible)==MapVisualiserThread::text_false)
                                     {
+                                        //The tiled object not exist on this layer
                                         ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
                                         tempMapObject->logicalMap.itemsOnMap[QPair<quint8,quint8>(x,y)].tileObject=NULL;
                                         objects.removeAt(index2);
@@ -607,7 +608,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
-            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || items->contains(monstersCollision.item))
             {
                 if(monstersCollision.tile!=lastTileset)

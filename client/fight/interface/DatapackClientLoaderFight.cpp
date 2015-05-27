@@ -798,7 +798,7 @@ void DatapackClientLoader::parseBotFightsExtra()
 {
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     bool found;
-    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT));
+    QDir dir(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT).arg(mainDatapackCode));
     QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
     while(index_file<list.size())
@@ -966,5 +966,5 @@ void DatapackClientLoader::parseBotFightsExtra()
         }
     }
 
-    qDebug() << QStringLiteral("%1 bot fight extra(s) loaded").arg(maps.size());
+    qDebug() << QStringLiteral("%1 fight extra(s) loaded").arg(botFightsExtra.size());
 }

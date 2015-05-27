@@ -39,6 +39,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseSkills();
     parseEvents();
     parseMonsters();
+    parseMonstersCollision();
     parseMonstersEvolutionItems();
     parseMonstersItemToLearn();
     parseIndustries();
@@ -123,6 +124,12 @@ void CommonDatapack::parseMonsters()
     qDebug() << QStringLiteral("%1 monster(s) loaded").arg(monsters.size());
 }
 
+void CommonDatapack::parseMonstersCollision()
+{
+    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("layers.xml"),CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
+    qDebug() << QStringLiteral("%1 monster(s) collisions loaded").arg(monstersCollision.size());
+}
+
 void CommonDatapack::parseMonstersEvolutionItems()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
@@ -171,6 +178,7 @@ void CommonDatapack::unload()
     items.repel.clear();
     industries.clear();
     profileList.clear();
+    monstersCollision.clear();
     types.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
     xmlLoadedFile.clear();

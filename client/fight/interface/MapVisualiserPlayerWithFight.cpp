@@ -242,7 +242,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
-            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || items->contains(monstersCollision.item))
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.isEmpty())

@@ -23,7 +23,6 @@ public:
 public:
     QHash<quint16,BotFight> botFights;
     QHash<quint16,Quest> quests;
-    QList<MonstersCollision> monstersCollision;
     QHash<quint32,Shop> shops;
     QList<ServerProfile> serverProfileList;
     static CommonDatapackServerSpec commonDatapackServerSpec;
@@ -35,7 +34,6 @@ private:
 private:
     void parseQuests();
     void parseBotFights();
-    void parseMonstersCollision();
     void parseShop();
     void parseServerProfileList();
     void parseIndustries();
