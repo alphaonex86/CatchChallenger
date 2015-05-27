@@ -11,7 +11,7 @@ using namespace CatchChallenger;
 
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const quint32 &account_id)
 {
-    const QString &queryText=QString(PreparedDBQuery::db_query_characters).arg(account_id).arg(EpollClientLoginSlave::max_character*2);
+    const QString &queryText=QString(PreparedDBQueryCommon::db_query_characters).arg(account_id).arg(EpollClientLoginSlave::max_character*2);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::character_list_static);
     if(callback==NULL)
     {
@@ -130,7 +130,7 @@ void CharactersGroupForLogin::character_list_object()
 
 void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const quint32 &account_id)
 {
-    const QString &queryText=QString(PreparedDBQuery::db_query_servers).arg(account_id);
+    const QString &queryText=QString(PreparedDBQueryCommon::db_query_select_server_time).arg(account_id);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::server_list_static);
     if(callback==NULL)
     {
@@ -209,64 +209,49 @@ void CharactersGroupForLogin::server_list_object()
 void CharactersGroupForLogin::deleteCharacterNow(const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_monster_by_character_id==0)
+    if(PreparedDBQueryCommon::db_query_monster_by_character_id==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_delete_monster_buff==0)
+    if(PreparedDBQueryCommon::db_query_delete_monster_buff==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_buff is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_delete_monster_skill==0)
+    if(PreparedDBQueryCommon::db_query_delete_monster_skill==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_monster_skill is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_delete_bot_already_beaten==0)
-    {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_bot_already_beaten is empty, bug"));
-        return;
-    }
-    if(PreparedDBQuery::db_query_delete_character==0)
+    if(PreparedDBQueryCommon::db_query_delete_character==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_character is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_delete_all_item==0)
+    if(PreparedDBQueryCommon::db_query_delete_all_item==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_item is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_delete_monster_by_character==0)
+    if(PreparedDBQueryCommon::db_query_delete_monster_by_character==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_monster is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_delete_plant==0)
-    {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_plant is empty, bug"));
-        return;
-    }
-    if(PreparedDBQuery::db_query_delete_quest==0)
-    {
-        qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_quest is empty, bug"));
-        return;
-    }
-    if(PreparedDBQuery::db_query_delete_recipes==0)
+    if(PreparedDBQueryCommon::db_query_delete_recipes==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_recipes is empty, bug"));
         return;
     }
-    if(PreparedDBQuery::db_query_delete_reputation==0)
+    if(PreparedDBQueryCommon::db_query_delete_reputation==0)
     {
         qDebug() << (QStringLiteral("deleteCharacterNow() Query db_query_delete_reputation is empty, bug"));
         return;
     }
     #endif
 
-    const QString &queryText=QString(PreparedDBQuery::db_query_monster_by_character_id).arg(characterId);
+    const QString &queryText=QString(PreparedDBQueryCommon::db_query_monster_by_character_id).arg(characterId);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::deleteCharacterNow_static);
     if(callback==NULL)
     {
@@ -297,29 +282,24 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const quint32 &character
         const quint32 &monsterId=QString(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
-            dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_monster_buff).arg(monsterId).toUtf8().constData());
-            dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_monster_skill).arg(monsterId).toUtf8().constData());
+            dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_buff).arg(monsterId).toUtf8().constData());
+            dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_skill).arg(monsterId).toUtf8().constData());
         }
     }
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_bot_already_beaten).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_character).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_all_item).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_all_item_warehouse).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_all_item_market).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_monster_by_character).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_monster_warehouse_by_character).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_monster_market_by_character).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_plant).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_quest).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_recipes).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_reputation).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQuery::db_query_delete_allow).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_character).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_all_item).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_all_item_warehouse).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_by_character).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_character).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_recipes).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_reputation).arg(characterId).toUtf8().constData());
+    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_allow).arg(characterId).toUtf8().constData());
 }
 
 qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_select_character_by_pseudo==NULL)
+    if(PreparedDBQueryCommon::db_query_select_character_by_pseudo==NULL)
     {
         qDebug() << (QStringLiteral("addCharacter() Query is empty, bug"));
         return 0x03;
@@ -365,7 +345,7 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
     addCharacterParam.skinId=skinId;
     addCharacterParam.client=client;
 
-    const QString &queryText=QString(PreparedDBQuery::db_query_select_character_by_pseudo).arg(SqlFunction::quoteSqlVariable(pseudo));
+    const QString &queryText=QString(PreparedDBQueryCommon::db_query_select_character_by_pseudo).arg(SqlFunction::quoteSqlVariable(pseudo));
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::addCharacter_static);
     if(callback==NULL)
     {
@@ -468,7 +448,7 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
 
         //insert the monster is db
         {
-            dbQueryWriteCommon(PreparedDBQuery::db_query_insert_monster
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster
                .arg(monster_id)
                .arg(monster.hp)
                .arg(characterId)
@@ -486,7 +466,7 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
         while(sub_index<monster.skills.size())
         {
             const EpollServerLoginSlave::LoginProfile::Monster::Skill &skill=monster.skills.at(sub_index);
-            dbQueryWriteCommon(PreparedDBQuery::db_query_insert_monster_skill
+            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster_skill
                .arg(monster_id)
                .arg(skill.id)
                .arg(skill.level)
@@ -500,7 +480,7 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
     while(index<profile.reputation.size())
     {
         const EpollServerLoginSlave::LoginProfile::Reputation &reputation=profile.reputation.at(index);
-        dbQueryWriteCommon(PreparedDBQuery::db_query_insert_reputation
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_reputation
            .arg(characterId)
            .arg(reputation.reputationDatabaseId)
            .arg(reputation.point)
@@ -511,7 +491,7 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
     index=0;
     while(index<profile.items.size())
     {
-        dbQueryWriteCommon(PreparedDBQuery::db_query_insert_item
+        dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_item
            .arg(profile.items.at(index).id)
            .arg(characterId)
            .arg(profile.items.at(index).quantity)
@@ -528,7 +508,7 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
 bool CharactersGroupForLogin::removeCharacter(void * const client,const quint8 &query_id, const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQuery::db_query_account_time_to_delete_character_by_id==NULL)
+    if(PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id==NULL)
     {
         qDebug() << (QStringLiteral("removeCharacter() Query is empty, bug"));
         return false;
@@ -539,7 +519,7 @@ bool CharactersGroupForLogin::removeCharacter(void * const client,const quint8 &
     removeCharacterParam.characterId=characterId;
     removeCharacterParam.client=client;
 
-    const QString &queryText=PreparedDBQuery::db_query_account_time_to_delete_character_by_id.arg(characterId);
+    const QString &queryText=PreparedDBQueryCommon::db_query_account_time_to_delete_character_by_id.arg(characterId);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::removeCharacter_static);
     if(callback==NULL)
     {
@@ -591,7 +571,7 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    dbQueryWriteCommon(PreparedDBQuery::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(EpollClientLoginSlave::character_delete_time).toUtf8().constData());
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(EpollClientLoginSlave::character_delete_time).toUtf8().constData());
     CharactersGroupForLogin::tempBuffer[0]=0x02;
     client->postReply(query_id,CharactersGroupForLogin::tempBuffer,1);
 }
