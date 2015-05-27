@@ -182,14 +182,14 @@ public:
     void character_list_return(const quint8 &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize);
     void server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize);
 
-    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const char *data,const int &size);
-    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent);
-    void sendPacket(const quint8 &mainIdent,const char *data,const int &size);
+    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data, const unsigned int &size);
+    void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent);
+    void sendPacket(const quint8 &mainIdent, const char * const data, const unsigned int &size);
     void sendPacket(const quint8 &mainIdent);
-    void sendRawSmallPacket(const char *data,const int &size);
-    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const char *data,const int &size);
-    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber);
-    void postReply(const quint8 &queryNumber,const char *data,const int &size);
+    void sendRawSmallPacket(const char * const data, const unsigned int &size);
+    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data, const unsigned int &size);
+    void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber);
+    void postReply(const quint8 &queryNumber,const char * const data, const unsigned int &size);
     void postReply(const quint8 &queryNumber);
     void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
 private:

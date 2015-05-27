@@ -140,6 +140,7 @@ bool ProtocolParsingCheck::parseIncommingDataRaw(const char * const commonBuffer
     return returnVar;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 ProtocolParsing::CompressionType ProtocolParsingCheck::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -151,5 +152,6 @@ ProtocolParsing::CompressionType ProtocolParsingCheck::getCompressType() const
         return compressionTypeServer;
     #endif
 }
+#endif
 
 #endif
