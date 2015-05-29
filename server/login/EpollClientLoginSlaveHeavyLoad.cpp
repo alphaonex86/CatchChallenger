@@ -440,6 +440,7 @@ void EpollClientLoginSlave::selectCharacter(const quint8 &query_id,const quint32
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
     #endif
+    where verify the characterId is linked to the correct account?
     if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
     {
         EpollClientLoginSlave::loginIsWrongBuffer[1]=query_id;

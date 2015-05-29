@@ -19,6 +19,7 @@ public:
     QByteArray datapackHashServerSub;
     QString mainDatapackCode;
     QString subDatapackCode;
+    QString exportedXml;
 
     //rates
     float rates_xp;

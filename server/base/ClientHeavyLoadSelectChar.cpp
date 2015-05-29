@@ -28,6 +28,25 @@ void Client::characterSelectionIsWrong(const quint8 &query_id,const quint8 &retu
     errorOutput(debugMessage);
 }
 
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+void Client::selectCharacter(const quint8 &query_id, const char * const token)
+{
+    int index=0;
+    while(index<tokenAuthList.size())
+    {
+        const TokenAuth &tokenAuth=tokenAuthList.at(index);
+        if(memcmp(tokenAuth.token,token,sizeof(tokenAuth.token))==0)
+        {
+            delete tokenAuth.token;
+            selectCharacter(query_id,tokenAuth.characterId);
+            tokenAuthList.removeAt(index);
+            return;
+        }
+        index++;
+    }
+}
+#endif
+
 void Client::selectCharacter(const quint8 &query_id, const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
