@@ -1188,10 +1188,15 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
         return;
     }
     const bool goodQueryBeforeCharacterLoaded=mainCodeType==0x02 &&
-            (subCodeType==0x03 ||
-             subCodeType==0x04 ||
-             subCodeType==0x0C ||
-             subCodeType==0x05
+            (
+                #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                subCodeType==0x03 ||
+                subCodeType==0x04 ||
+                subCodeType==0x05 ||
+                #else
+                subCodeType==0x06 ||
+                #endif
+                subCodeType==0x0C
                 );
     if(!character_loaded && !goodQueryBeforeCharacterLoaded)
     {
@@ -1213,6 +1218,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
         case 0x02:
         switch(subCodeType)
         {
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             //Add character
             case 0x0003:
             {
@@ -1312,6 +1318,22 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 selectCharacter(queryNumber,characterId);
             }
             break;
+            #else
+            //Select character on game server
+            case 0x0006:
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(size!=4)
+                {
+                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    return;
+                }
+                #endif
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4+1)));
+                selectCharacter(queryNumber,characterId);
+            }
+            break;
+            #endif
             //Send datapack file list
             case 0x000C:
             {

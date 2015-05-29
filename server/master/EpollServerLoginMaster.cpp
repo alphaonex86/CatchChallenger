@@ -62,7 +62,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
 EpollServerLoginMaster::~EpollServerLoginMaster()
 {
     if(EpollClientLoginMaster::private_token!=NULL)
-        memset(EpollClientLoginMaster::private_token,0x00,TOKEN_SIZE);
+        memset(EpollClientLoginMaster::private_token,0x00,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
     if(server_ip!=NULL)
     {
         delete server_ip;
@@ -112,10 +112,10 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     if(!settings.contains(QStringLiteral("token")))
         generateToken(settings);
     QString token=settings.value(QStringLiteral("token")).toString();
-    if(token.size()!=(TOKEN_SIZE*2))
+    if(token.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2))
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(EpollClientLoginMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE);
+    memcpy(EpollClientLoginMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -571,13 +571,13 @@ void EpollServerLoginMaster::generateToken(QSettings &settings)
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(EpollClientLoginMaster::private_token,1,TOKEN_SIZE,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE)
+    const int &returnedSize=fread(EpollClientLoginMaster::private_token,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE << " needed to do the token from /dev/urandom" << std::endl;
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginMaster::private_token,TOKEN_SIZE).toHex()));
+    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()));
     fclose(fpRandomFile);
 }
 

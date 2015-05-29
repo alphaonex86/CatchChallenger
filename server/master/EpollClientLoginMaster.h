@@ -8,7 +8,7 @@
 #include <QRegularExpression>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
-#define TOKEN_SIZE 64
+#define TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT 32
 #define CATCHCHALLENGER_SERVER_MAXIDBLOCK 50
 
 namespace CatchChallenger {
@@ -24,7 +24,7 @@ public:
         );
     void parseIncommingData();
     void selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
-    bool trySelectCharacter(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
+    bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
     void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
     void selectCharacter_ReturnFailed(const quint8 &query_id, const quint8 &errorCode, const quint32 &characterId);
     enum EpollClientLoginMasterStat
@@ -55,7 +55,7 @@ public:
     std::vector<quint8> queryNumberList;
 
     static bool automatic_account_creation;
-    static char private_token[TOKEN_SIZE];
+    static char private_token[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];
     static unsigned char protocolReplyProtocolNotSupported[3];
     static unsigned char protocolReplyWrongAuth[3];
@@ -63,7 +63,7 @@ public:
     static unsigned char protocolReplyCompresssionZlib[3];
     static unsigned char protocolReplyCompressionXz[3];
     static unsigned char loginIsWrongBuffer[4];
-    static char selectCharaterRequest[3+4+1+4];
+    static char selectCharaterRequest[3+4];
     static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
     +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
     +1000];

@@ -351,10 +351,10 @@ void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const
     //do the work here
     switch(mainCodeType)
     {
-        case 0x02:
+        case 0x81:
             switch(subCodeType)
             {
-                case 0x05:
+                case 0x01:
                 {
                     if(stat!=EpollClientLoginMasterStat::GameServer)
                     {
