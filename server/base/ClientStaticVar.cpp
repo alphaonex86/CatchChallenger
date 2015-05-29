@@ -118,3 +118,8 @@ const QString Client::text_to=QLatin1Literal("to");
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 Player_private_and_public_informations *ClientBase::public_and_private_informations_solo=NULL;
 #endif
+
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+static std::vector<Client::TokenAuth> Client::tokenAuthList;
+#endif
+

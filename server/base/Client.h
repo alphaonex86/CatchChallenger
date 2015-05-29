@@ -62,6 +62,9 @@ public:
     void parseIncommingData();
     static void startTheCityCapture();
     static void setEvent(const quint8 &event, const quint8 &new_value);
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    static char * addAuthGetToken(const quint32 &characterId);
+    #endif
 
     void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data,const unsigned int &size);
     void sendPacket(const quint8 &mainIdent,const char * const data,const unsigned int &size);
@@ -202,6 +205,14 @@ private:
     bool isInCityCapture;
     QList<Skill::AttackReturn> attackReturn;
     QHash<quint32, QHash<quint32,quint32> > deferedEndurance;
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    struct TokenAuth
+    {
+        char *token;
+        quint32 characterId;
+    };
+    static std::vector<TokenAuth> tokenAuthList;
+    #endif
 
     //player indexed list
     static const QString text_chat;
@@ -350,6 +361,9 @@ private:
     void removeCharacterLater_object();
     void removeCharacterLater_return(const quint8 &query_id, const quint32 &characterId);
     void selectCharacter(const quint8 &query_id, const quint32 &characterId);
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    void selectCharacter(const quint8 &query_id, const char * const token);
+    #endif
     static void selectCharacter_static(void *object);
     void selectCharacter_object();
     void selectCharacter_return(const quint8 &query_id, const quint32 &characterId);

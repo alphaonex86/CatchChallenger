@@ -165,7 +165,9 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.maxClanId=0;
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.maxMonsterId=0;
+    #endif
 
 
     initAll();

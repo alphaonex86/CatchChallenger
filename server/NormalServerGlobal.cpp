@@ -7,6 +7,8 @@
 #include <QFileInfoList>
 #include <QRegularExpression>
 
+#include <random>
+
 NormalServerGlobal::NormalServerGlobal()
 {
 }
@@ -103,6 +105,24 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("maxPlayerItems"),30);
     if(!settings->contains(QLatin1Literal("maxWarehousePlayerItems")))
         settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),150);
+
+    if(!settings->contains(QLatin1Literal("exportedXml")))
+        settings->setValue(QLatin1Literal("exportedXml"),QString());
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    if(!settings->contains(QLatin1Literal("external-server-ip")))
+        settings->setValue(QLatin1Literal("external-server-ip"),settings->value(QLatin1Literal("server-ip")).toString());
+    if(!settings->contains(QLatin1Literal("external-server-port")))
+        settings->setValue(QLatin1Literal("external-server-port"),settings->value(QLatin1Literal("server-port")).toString());
+    {
+    std::default_random_engine generator;
+
+            std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
+            settings->setValue(QLatin1Literal("uniqueKey"),distribution(generator));
+            settings->setValue(QLatin1Literal("charactersGroup"),QStringLiteral("PutHereTheInfoLike-").arg(distribution(generator)));
+    }
+    if(!settings->contains(QLatin1Literal("logicalGroup")))
+        settings->setValue(QLatin1Literal("logicalGroup"),QString());
+    #endif
 
     #ifdef Q_OS_LINUX
     settings->beginGroup(QLatin1Literal("Linux"));

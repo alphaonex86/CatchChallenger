@@ -129,11 +129,14 @@ void EpollClientLoginMaster::selectCharacter(const quint8 &query_id,const quint3
     }
     CharactersGroup::list[charactersGroupIndex]->lockedAccount << characterId;
     EpollClientLoginMaster * gameServer=static_cast<EpollClientLoginMaster *>(CharactersGroup::list.at(charactersGroupIndex)->gameServers.value(serverUniqueKey).link);
-    gameServer->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId);
+    gameServer->trySelectCharacterGameServer(this,query_id,serverUniqueKey,charactersGroupIndex,characterId);
 }
 
-bool EpollClientLoginMaster::trySelectCharacter(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
+bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
 {
+    //here you are on game server link
+
+    //check if the characterId is linked to the correct account on login server
     if(queryNumberList.empty())
         return false;
     DataForSelectedCharacterReturn dataForSelectedCharacterReturn;
@@ -143,21 +146,19 @@ bool EpollClientLoginMaster::trySelectCharacter(EpollClientLoginMaster * const l
     dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
     dataForSelectedCharacterReturn.characterId=characterId;
     loginServerReturnForCharaterSelect << dataForSelectedCharacterReturn;
-    //register it
-    newFullOutputQuery(0x02,0x05,queryNumberList.back());
     //the data
-    EpollClientLoginMaster::selectCharaterRequest[0x02]=queryNumberList.back();
-    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::selectCharaterRequest+0x03)=serverUniqueKey;
-    EpollClientLoginMaster::selectCharaterRequest[0x07]=charactersGroupIndex;
-    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::selectCharaterRequest+0x08)=htole32(characterId);
-
+    const quint8 &queryNumber=queryNumberList.back();
+    waitedReply_mainCodeType[queryNumber]=0x81;
+    waitedReply_subCodeType[queryNumber]=0x01;
+    EpollClientLoginMaster::selectCharaterRequest[0x02]=queryNumber;
+    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::selectCharaterRequest+0x03)=htole32(characterId);
     queryNumberList.pop_back();
     return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::selectCharaterRequest),sizeof(EpollClientLoginMaster::selectCharaterRequest));
 }
 
 void EpollClientLoginMaster::selectCharacter_ReturnToken(const quint8 &query_id,const char * const token)
 {
-    postReplyData(query_id,token,TOKEN_SIZE);
+    postReplyData(query_id,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 }
 
 void EpollClientLoginMaster::selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode,const quint32 &characterId)

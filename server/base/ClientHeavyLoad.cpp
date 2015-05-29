@@ -675,7 +675,16 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
         out << (quint8)0x01;//server list size, only this alone server
         out << (quint8)0x00;//charactersgroup empty
         out << (quint32)0x00000000;//unique key, useless here
-        out << (quint16)0x0000;//description is empty
+        {
+            const QByteArray &rawXml=FacilityLibGeneral::toUTF8With16BitsHeader(CommonSettingsServer::commonSettingsServer.exportedXml);
+            if(rawXml.size()>65535 || rawXml.isEmpty())
+            {
+                errorOutput(QLatin1Literal("file path too big or not compatible with utf8"));
+                return;
+            }
+            outputData+=rawXml;
+            out.device()->seek(out.device()->size());
+        }
         out << (quint8)0x00;//logical group empty
         if(GlobalServerData::serverSettings.sendPlayerNumber)
         {
