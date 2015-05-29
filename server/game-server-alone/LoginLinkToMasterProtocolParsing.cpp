@@ -1,0 +1,218 @@
+#include "LoginLinkToMaster.h"
+#include <iostream>
+
+using namespace CatchChallenger;
+
+void LoginLinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
+{
+    Q_UNUSED(queryNumber);
+    Q_UNUSED(size);
+    Q_UNUSED(data);
+    switch(mainCodeType)
+    {
+        default:
+            parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
+        break;
+    }
+}
+
+void LoginLinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
+{
+    (void)data;
+    (void)size;
+    switch(mainCodeType)
+    {
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
+}
+
+void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
+{
+    if(stat!=Stat::Logged)
+    {
+        parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+        return;
+    }
+    (void)rawData;
+    (void)size;
+    switch(mainCodeType)
+    {
+        case 0xF1:
+            switch(subCodeType)
+            {
+                default:
+                    parseNetworkReadError("unknown sub ident: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                    return;
+                break;
+            }
+        break;
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
+}
+
+//have query with reply
+void LoginLinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+{
+    Q_UNUSED(data);
+    if(!have_send_protocol_and_registred)
+    {
+        parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
+        return;
+    }
+    switch(mainCodeType)
+    {
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
+}
+
+void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+{
+    (void)subCodeType;
+    (void)queryNumber;
+    (void)rawData;
+    (void)size;
+    if(!have_send_protocol_and_registred)
+    {
+        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        return;
+    }
+    //do the work here
+    switch(mainCodeType)
+    {
+        case 0x81:
+            switch(subCodeType)
+            {
+                //query because need wait the return (sync/async problem) to send the token for the client connect
+                //check if the characterId is linked to the correct account on login server
+                case 0x01:
+                    if(Q_UNLIKELY(size!=4))
+                    {
+                        parseNetworkReadError("unknown sub ident: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    else
+                    {
+                        const char * const token=Client::addAuthGetToken(rawData,le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))));
+                        if(token!=NULL)
+                        {
+                            memcpy(LoginLinkToMaster::protocolReplyGetToken+0x03,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                            internalSendRawSmallPacket(LoginLinkToMaster::protocolReplyNoMoreToken,sizeof(LoginLinkToMaster::protocolReplyNoMoreToken));
+                        }
+                        else
+                        {
+                            LoginLinkToMaster::protocolReplyNoMoreToken[0x01]=queryNumber;
+                            internalSendRawSmallPacket(LoginLinkToMaster::protocolReplyNoMoreToken,sizeof(LoginLinkToMaster::protocolReplyNoMoreToken));
+                        }
+                    }
+                break;
+                default:
+                    parseNetworkReadError("unknown sub ident: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                    return;
+                break;
+            }
+        break;
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
+}
+
+//send reply
+void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+{
+    queryNumberList.push_back(queryNumber);
+    Q_UNUSED(data);
+    Q_UNUSED(size);
+    //do the work here
+    switch(mainCodeType)
+    {
+        case 0x07:
+        {
+            if((size-pos)<1)
+            {
+                std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                abort();
+            }
+            unsigned int pos=0;
+            switch(data[0x00])
+            {
+                case 0x02:
+                if((size-pos)<4)
+                {
+                    std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
+                {
+                    const quint32 &uniqueKey=*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos));
+                    pos+=4;
+                    settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
+                }
+                case 0x01:
+                {
+                    index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        if((size-pos)<4)
+                        {
+                            std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            abort();
+                        }
+                        GlobalServerData::serverPrivateVariables.maxMonsterId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
+                        pos+=4;
+                        index++;
+                    }
+                }
+                break;
+                default:
+                    std::cerr << "reply return code error (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                break;
+            }
+
+            have_send_protocol_and_registred=true;
+        }
+        break;
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
+    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
+    return;
+}
+
+void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+{
+    if(!have_send_protocol_and_registred)
+    {
+        std::cerr << "parseFullReplyData() reply to unknown query: mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
+        abort();
+    }
+    (void)data;
+    (void)size;
+    queryNumberList.push_back(queryNumber);
+    //do the work here
+    switch(mainCodeType)
+    {
+        default:
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
+    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+}
+
+void LoginLinkToMaster::parseNetworkReadError(const QString &errorString)
+{
+    errorParsingLayer(errorString);
+}

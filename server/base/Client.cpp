@@ -3,6 +3,8 @@
 #include "../base/PreparedDBQuery.h"
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/GeneralType.h"
+#include "../game-server-alone/LoginLinkToMaster.h"
+#include "BaseServerLogin.h"
 
 #include <QCryptographicHash>
 
@@ -222,6 +224,9 @@ void Client::disconnectClient()
         GlobalServerData::serverPrivateVariables.connected_players--;
         simplifiedIdList << public_and_private_informations.public_informations.simplifiedId;
         GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(character_id);
+        #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        LoginLinkToMaster::loginLinkToMaster->characterDisconnected(character_id);
+        #endif
         playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
         clanChangeWithoutDb(0);
         clientBroadCastList.removeOne(this);
@@ -411,3 +416,27 @@ void Client::messageFightEngine(const QString &message) const
 {
     normalOutput(message);
 }
+
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+char *Client::addAuthGetToken(const quint32 &characterId)
+{
+    TokenAuth newEntry;
+    newEntry.characterId=characterId;
+    newEntry.token=new char[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    const int &returnedSize=fread(newEntry.token,1,sizeof(newEntry.token),BaseServerLogin::fpRandomFile);
+    if(returnedSize!=sizeof(newEntry.token))
+    {
+        qDebug() << QStringLiteral("sizeof(newEntry.token) don't match with urandom size: %1").arg(returnedSize);
+        delete newEntry.token;
+        return NULL;
+    }
+    tokenAuthList.push_back(newEntry);
+
+    if(tokenAuthList.size()>50)
+    {
+        LoginLinkToMaster::loginLinkToMaster->characterDisconnected(tokenAuthList.first());
+        tokenAuthList.removeFirst();
+    }
+    return newEntry.token;
+}
+#endif

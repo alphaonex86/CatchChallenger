@@ -30,6 +30,7 @@
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 #include "../general/base/FacilityLib.h"
 #include "../general/base/GeneralVariable.h"
+#include "game-server-alone/LoginLinkToMaster.h"
 
 #define MAXEVENTS 512
 
@@ -57,7 +58,8 @@ void send_settings()
     CommonSettingsServer::commonSettingsServer.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();
     CommonSettingsServer::commonSettingsServer.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
-    formatedServerSettings.dontSendPlayerType                       = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
+    CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value(QLatin1Literal("exportedXml")).toString();
+    formatedServerSettings.dontSendPlayerType                                   = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = settings->value(QLatin1Literal("maxPlayerMonsters")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = settings->value(QLatin1Literal("maxWarehousePlayerMonsters")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = settings->value(QLatin1Literal("maxPlayerItems")).toUInt();
@@ -380,13 +382,30 @@ int main(int argc, char *argv[])
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
+    //before linkToMaster->registerGameServer() to have the correct settings loaded
+    send_settings();
+
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    const int &linkfd=LoginLinkToMaster::tryConnect(host.toLocal8Bit().constData(),port,tryInterval,considerDownAfterNumberOfTry);
+    if(linkfd<0)
+    {
+        std::cerr << "Unable to connect on master" << std::endl;
+        abort();
+    }
+    #ifdef SERVERSSL
+    ctx from what?
+    LoginLinkToMaster::loginLinkToMaster=new linkToMaster(linkfd,ctx);
+    #else
+    LoginLinkToMaster::loginLinkToMaster=new linkToMaster(linkfd);
+    #endif
+    linkToMaster->registerGameServer(settings,CommonSettingsServer::commonSettingsServer.exportedXml);
+    #endif
+
     #ifdef SERVERSSL
     server=new EpollSslServer();
     #else
     server=new EpollServer();
     #endif
-
-    send_settings();
 
     bool tcpCork,tcpNodelay;
     {
@@ -939,6 +958,8 @@ int main(int argc, char *argv[])
     }
     server->close();
     server->unload_the_data();
+    LoginLinkToMaster::loginLinkToMaster->closeSocket();
     delete server;
+    delete LoginLinkToMaster::loginLinkToMaster;
     return EXIT_SUCCESS;
 }

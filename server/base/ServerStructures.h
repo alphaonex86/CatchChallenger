@@ -287,7 +287,11 @@ struct ServerPrivateVariables
 
     //fight
     QMultiHash<quint16,MonsterDrops> monsterDrops;
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    std::vector<quint32> maxMonsterId;
+    #else
     quint32 maxMonsterId;
+    #endif
     QMutex monsterIdMutex;
     QHash<QString,QList<quint16> > captureFightIdList;
     QHash<QString,CityStatus> cityStatusList;
