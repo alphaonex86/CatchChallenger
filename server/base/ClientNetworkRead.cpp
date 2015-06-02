@@ -3,6 +3,9 @@
 #include "MapServer.h"
 #include "../../general/base/ProtocolParsingCheck.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "BaseServerLogin.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -186,6 +189,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             removeFromQueryReceived(queryNumber);
             #endif
+            replyOutputSize.remove(queryNumber);
             if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
             {
                 *(Client::protocolReplyServerFull+1)=queryNumber;
@@ -194,37 +198,43 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 //errorOutput(Client::text_server_full);DDOS -> full the log
                 return;
             }
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             //if lot of un logged connection, remove the first
-            if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
+            if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
             {
-                Client *client=static_cast<Client *>(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client);
+                Client *client=static_cast<Client *>(BaseServerLogin::tokenForAuth[0].client);
                 client->disconnectClient();
                 delete client;
-                GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
-                if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
+                BaseServerLogin::tokenForAuthSize--;
+                if(BaseServerLogin::tokenForAuthSize>0)
                 {
                     quint32 index=0;
-                    while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                    while(index<BaseServerLogin::tokenForAuthSize)
                     {
-                        GlobalServerData::serverPrivateVariables.tokenForAuth[index]=GlobalServerData::serverPrivateVariables.tokenForAuth[index+1];
+                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
                         index++;
                     }
-                    //don't work:memmove(GlobalServerData::serverPrivateVariables.tokenForAuth,GlobalServerData::serverPrivateVariables.tokenForAuth+sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuthSize*sizeof(TokenLink));
+                    //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client==NULL)
+                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
                         abort();
                     #endif
                 }
                 return;
             }
+            #endif
             if(memcmp(data,Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
             {
-                TokenLink *token=&GlobalServerData::serverPrivateVariables.tokenForAuth[GlobalServerData::serverPrivateVariables.tokenForAuthSize];
+                #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
                 {
                     token->client=this;
                     #ifdef Q_OS_LINUX
                     if(GlobalServerData::serverPrivateVariables.fpRandomFile==NULL)
                     {
+                        //failback
+                        /// \warning total insecure implementation
+                        abort();
                         int index=0;
                         while(index<CATCHCHALLENGER_TOKENSIZE)
                         {
@@ -241,6 +251,8 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                         }
                     }
                     #else
+                    /// \warning total insecure implementation
+                    // not abort(); because under not linux will not work
                     int index=0;
                     while(index<CATCHCHALLENGER_TOKENSIZE)
                     {
@@ -249,22 +261,29 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                     }
                     #endif
                 }
+                #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 switch(ProtocolParsing::compressionTypeServer)
                 {
                     case CompressionType_None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
+                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
                     case CompressionType_Zlib:
                         *(Client::protocolReplyCompresssionZlib+1)=queryNumber;
+                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         memcpy(Client::protocolReplyCompresssionZlib+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZlib),sizeof(Client::protocolReplyCompresssionZlib));
                     break;
                     case CompressionType_Xz:
                         *(Client::protocolReplyCompressionXz+1)=queryNumber;
+                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         memcpy(Client::protocolReplyCompressionXz+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionXz),sizeof(Client::protocolReplyCompressionXz));
                     break;
                     default:
@@ -276,7 +295,9 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                 #endif
-                GlobalServerData::serverPrivateVariables.tokenForAuthSize++;
+                #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                BaseServerLogin::tokenForAuthSize++;
+                #endif
                 have_send_protocol=true;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                 normalOutput(QStringLiteral("Protocol sended and replied"));
@@ -290,6 +311,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 return;
             }
         break;
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         case 0x04:
             if(!have_send_protocol)
             {
@@ -301,6 +323,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
                 #endif
+                replyOutputSize.remove(queryNumber);
                 *(Client::loginInProgressBuffer+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
                 errorOutput("Loggin already in progress");
@@ -323,6 +346,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
                 #endif
+                replyOutputSize.remove(queryNumber);
                 *(Client::loginInProgressBuffer+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
                 errorOutput("Loggin already in progress");
@@ -340,12 +364,14 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     removeFromQueryReceived(queryNumber);
                     #endif
+                    replyOutputSize.remove(queryNumber);
                     *(Client::loginInProgressBuffer+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
                     errorOutput("Account creation not premited");
                 }
             }
         break;
+        #endif
         default:
             parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
         break;
@@ -699,7 +725,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
         switch(subCodeType)
         {
             //Clan invite accept
-            case 0x0004:
+            case 0x04:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=((int)sizeof(quint8)))
@@ -735,7 +761,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
             switch(subCodeType)
             {
                 //Destroy an object
-                case 0x0002:
+                case 0x02:
                 {
                     if(size!=((int)sizeof(quint16)+sizeof(quint32)))
                     {
@@ -749,7 +775,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //Put object into a trade
-                case 0x0003:
+                case 0x03:
                 {
                     QByteArray data(rawData,size);
                     QDataStream in(data);
@@ -828,15 +854,15 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //trade finished after the accept
-                case 0x0004:
+                case 0x04:
                     tradeFinished();
                 break;
                 //trade canceled after the accept
-                case 0x0005:
+                case 0x05:
                     tradeCanceled();
                 break;
                 //deposite/withdraw to the warehouse
-                case 0x0006:
+                case 0x06:
                 {
                     QByteArray data(rawData,size);
                     QDataStream in(data);
@@ -931,7 +957,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                     return;
                 }
                 break;
-                case 0x0007:
+                case 0x07:
                     takeAnObjectOnMap();
                 break;
                 default:
@@ -945,11 +971,11 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
             switch(subCodeType)
             {
                 //Try escape
-                case 0x0002:
+                case 0x02:
                     tryEscape();
                 break;
                 //Learn skill
-                case 0x0004:
+                case 0x04:
                 {
                     if(size!=((int)sizeof(quint32)+sizeof(quint16)))
                     {
@@ -963,11 +989,11 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //Heal all the monster
-                case 0x0006:
+                case 0x06:
                     heal();
                 break;
                 //Request bot fight
-                case 0x0007:
+                case 0x07:
                 {
                     if(size!=((int)sizeof(quint16)))
                     {
@@ -980,7 +1006,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //move the monster
-                case 0x0008:
+                case 0x08:
                 {
                     if(size!=((int)sizeof(quint8)*2))
                     {
@@ -1007,7 +1033,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //change monster in fight, monster id in db
-                case 0x0009:
+                case 0x09:
                 {
                     if(size!=((int)sizeof(quint32)))
                     {
@@ -1021,7 +1047,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 break;
                 /// \todo check double validation
                 //Monster evolution validated
-                case 0x000A:
+                case 0x0A:
                 {
                     if(size!=((int)sizeof(quint32)))
                     {
@@ -1034,7 +1060,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //Use object on monster
-                case 0x000B:
+                case 0x0B:
                 {
                     if(size<((int)sizeof(quint16)+(int)sizeof(quint32)))
                     {
@@ -1058,7 +1084,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
             switch(subCodeType)
             {
                 //Quest start
-                case 0x0001:
+                case 0x01:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(size!=((int)sizeof(quint16)))
@@ -1073,7 +1099,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //Quest finish
-                case 0x0002:
+                case 0x02:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(size!=((int)sizeof(quint16)))
@@ -1088,7 +1114,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //Quest cancel
-                case 0x0003:
+                case 0x03:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(size!=((int)sizeof(quint16)))
@@ -1103,7 +1129,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //Quest next step
-                case 0x0004:
+                case 0x04:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(size!=((int)sizeof(quint16)))
@@ -1118,7 +1144,7 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 }
                 break;
                 //Waiting for city caputre
-                case 0x0005:
+                case 0x05:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(size!=((int)sizeof(quint8)))
@@ -1220,7 +1246,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             //Add character
-            case 0x0003:
+            case 0x03:
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
@@ -1289,7 +1315,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Remove character
-            case 0x0004:
+            case 0x04:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint8)+sizeof(quint32))
@@ -1304,7 +1330,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Select character
-            case 0x0005:
+            case 0x05:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint8)+sizeof(quint32)+sizeof(quint32))
@@ -1320,7 +1346,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             break;
             #else
             //Select character on game server
-            case 0x0006:
+            case 0x06:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=4)
@@ -1335,7 +1361,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             break;
             #endif
             //Send datapack file list
-            case 0x000C:
+            case 0x0C:
             {
                 if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
                 {
@@ -1396,7 +1422,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Clan action
-            case 0x000D:
+            case 0x0D:
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
@@ -1456,7 +1482,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
         switch(subCodeType)
         {
             //Use seed into dirt
-            case 0x0006:
+            case 0x06:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint8))
@@ -1471,11 +1497,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Collect mature plant
-            case 0x0007:
+            case 0x07:
                 collectPlant(queryNumber);
             break;
             //Usage of recipe
-            case 0x0008:
+            case 0x08:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16))
@@ -1490,7 +1516,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Use object
-            case 0x0009:
+            case 0x09:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16))
@@ -1505,7 +1531,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Get shop list
-            case 0x000A:
+            case 0x0A:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16))
@@ -1520,7 +1546,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Buy object
-            case 0x000B:
+            case 0x0B:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
@@ -1538,7 +1564,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             }
             break;
             //Sell object
-            case 0x000C:
+            case 0x0C:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
@@ -1555,7 +1581,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 return;
             }
             break;
-            case 0x000D:
+            case 0x0D:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16))
@@ -1569,7 +1595,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 return;
             }
             break;
-            case 0x000E:
+            case 0x0E:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
@@ -1586,7 +1612,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 return;
             }
             break;
-            case 0x000F:
+            case 0x0F:
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint16)*2+sizeof(quint32)*2)
@@ -1603,11 +1629,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 return;
             }
             break;
-            case 0x0010:
+            case 0x10:
                 getMarketList(queryNumber);
                 return;
             break;
-            case 0x0011:
+            case 0x11:
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
@@ -1671,7 +1697,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 return;
             }
             break;
-            case 0x0012:
+            case 0x12:
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
@@ -1759,11 +1785,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 return;
             }
             break;
-            case 0x0013:
+            case 0x13:
                 recoverMarketCash(queryNumber);
                 return;
             break;
-            case 0x0014:
+            case 0x14:
             {
                 QByteArray data(rawData,size);
                 QDataStream in(data);
@@ -1895,13 +1921,13 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
         switch(subCodeType)
         {
             //teleportation
-            case 0x0001:
+            case 0x01:
                 normalOutput("teleportValidatedTo() from protocol");
                 teleportValidatedTo(lastTeleportation.first().map,lastTeleportation.first().x,lastTeleportation.first().y,lastTeleportation.first().orientation);
                 lastTeleportation.removeFirst();
             break;
             //Event change
-            case 0x0002:
+            case 0x02:
                 removeFirstEventInQueue();
             break;
             default:
@@ -1914,7 +1940,7 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
         switch(subCodeType)
         {
             //Another player request a trade
-            case 0x0001:
+            case 0x01:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(size!=(int)sizeof(quint8))
@@ -1949,7 +1975,7 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
         switch(subCodeType)
         {
             //Another player request a trade
-            case 0x0001:
+            case 0x01:
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(size!=(int)sizeof(quint8))

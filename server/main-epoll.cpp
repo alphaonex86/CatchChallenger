@@ -386,7 +386,12 @@ int main(int argc, char *argv[])
     send_settings();
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    const int &linkfd=LoginLinkToMaster::tryConnect(host.toLocal8Bit().constData(),port,tryInterval,considerDownAfterNumberOfTry);
+    const int &linkfd=LoginLinkToMaster::tryConnect(
+                settings->value("server-ip").toString().toLocal8Bit().constData(),
+                settings->value("server-port").toUInt(),
+                5,
+                3
+                );
     if(linkfd<0)
     {
         std::cerr << "Unable to connect on master" << std::endl;
@@ -394,11 +399,11 @@ int main(int argc, char *argv[])
     }
     #ifdef SERVERSSL
     ctx from what?
-    LoginLinkToMaster::loginLinkToMaster=new linkToMaster(linkfd,ctx);
+    LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd,ctx);
     #else
-    LoginLinkToMaster::loginLinkToMaster=new linkToMaster(linkfd);
+    LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd);
     #endif
-    linkToMaster->registerGameServer(settings,CommonSettingsServer::commonSettingsServer.exportedXml);
+    LoginLinkToMaster::loginLinkToMaster->registerGameServer(settings,CommonSettingsServer::commonSettingsServer.exportedXml);
     #endif
 
     #ifdef SERVERSSL

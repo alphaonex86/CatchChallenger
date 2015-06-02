@@ -1,4 +1,5 @@
 #include "CharactersGroup.h"
+#include "EpollServerLoginMaster.h"
 #include <iostream>
 #include <QDebug>
 
@@ -8,9 +9,10 @@ int CharactersGroup::serverWaitedToBeReady=0;
 QHash<QString,CharactersGroup *> CharactersGroup::hash;
 QList<CharactersGroup *> CharactersGroup::list;
 
-CharactersGroup::CharactersGroup(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval) :
+CharactersGroup::CharactersGroup(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval,const QString &name) :
     databaseBaseCommon(new EpollPostgresql())
 {
+    this->name=name;
     databaseBaseCommon->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;
     databaseBaseCommon->tryInterval=tryInterval;
     if(!databaseBaseCommon->syncConnect(host,db,login,pass))
@@ -176,16 +178,41 @@ BaseClassSwitch::Type CharactersGroup::getType() const
     return BaseClassSwitch::Type::Client;
 }
 
-void CharactersGroup::setServerUniqueKey(void * const link,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port)
+CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host,
+                                                                              const quint16 &port, const QString &metaData, const QString &logicalGroup,
+                                                                              const quint16 &currentPlayer, const quint16 &maxPlayer)
 {
-    InternalLoginServer tempServer;
-    tempServer.host=QString::fromUtf8(hostData,hostDataSize);
+    InternalGameServer tempServer;
+    tempServer.host=host;//QString::fromUtf8(hostData,hostDataSize)
     tempServer.port=port;
     tempServer.link=link;
-    gameServers[serverUniqueKey]=tempServer;
+
+    tempServer.logicalGroup=logicalGroup;
+    tempServer.metaData=metaData;
+    tempServer.uniqueKey=uniqueKey;
+
+    tempServer.currentPlayer=currentPlayer;
+    tempServer.maxPlayer=maxPlayer;
+
+    gameServers[uniqueKey]=tempServer;
+    gameServersLinkToUniqueKey[link]=uniqueKey;
+
+    EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
+    EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+
+    return &gameServers[uniqueKey];
 }
 
-bool CharactersGroup::containsServerUniqueKey(const quint32 &serverUniqueKey) const
+void CharactersGroup::removeGameServerUniqueKey(void * const link)
+{
+    gameServers.remove(gameServersLinkToUniqueKey.value(link));
+    gameServersLinkToUniqueKey.remove(link);
+
+    EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
+    EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+}
+
+bool CharactersGroup::containsGameServerUniqueKey(const quint32 &serverUniqueKey) const
 {
     return gameServers.contains(serverUniqueKey);
 }
