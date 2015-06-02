@@ -178,24 +178,25 @@ void Client::disconnectClient()
         socket=NULL;
     }
     #endif
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
         quint32 index=0;
-        while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+        while(index<BaseServerLogin::tokenForAuthSize)
         {
-            const TokenLink &tokenLink=GlobalServerData::serverPrivateVariables.tokenForAuth[index];
+            const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
             if(tokenLink.client==this)
             {
-                GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
-                if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
+                BaseServerLogin::tokenForAuthSize--;
+                if(BaseServerLogin::tokenForAuthSize>0)
                 {
-                    while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                    while(index<BaseServerLogin::tokenForAuthSize)
                     {
-                        GlobalServerData::serverPrivateVariables.tokenForAuth[index]=GlobalServerData::serverPrivateVariables.tokenForAuth[index+1];
+                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
                         index++;
                     }
-                    //don't work:memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(GlobalServerData::serverPrivateVariables.tokenForAuthSize-index));
+                    //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client==NULL)
+                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
                         abort();
                     #endif
                 }
@@ -204,6 +205,7 @@ void Client::disconnectClient()
             index++;
         }
     }
+    #endif
 
     if(character_loaded_in_progress)
     {
@@ -418,10 +420,11 @@ void Client::messageFightEngine(const QString &message) const
 }
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-char *Client::addAuthGetToken(const quint32 &characterId)
+char *Client::addAuthGetToken(const quint32 &characterId, const quint32 &accountIdRequester)
 {
     TokenAuth newEntry;
     newEntry.characterId=characterId;
+    newEntry.accountIdRequester=accountIdRequester;
     newEntry.token=new char[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     const int &returnedSize=fread(newEntry.token,1,sizeof(newEntry.token),BaseServerLogin::fpRandomFile);
     if(returnedSize!=sizeof(newEntry.token))
@@ -434,9 +437,57 @@ char *Client::addAuthGetToken(const quint32 &characterId)
 
     if(tokenAuthList.size()>50)
     {
-        LoginLinkToMaster::loginLinkToMaster->characterDisconnected(tokenAuthList.first());
-        tokenAuthList.removeFirst();
+        LoginLinkToMaster::loginLinkToMaster->characterDisconnected(tokenAuthList.at(0).characterId);
+        tokenAuthList.erase(tokenAuthList.begin());
     }
     return newEntry.token;
+}
+
+quint32 Client::getMonsterId(bool * const ok)
+{
+    if(GlobalServerData::serverPrivateVariables.maxMonsterId.size()==0)
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+    if(ok!=NULL)
+        *ok=true;
+    const quint32 monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId.front();
+    GlobalServerData::serverPrivateVariables.maxMonsterId.erase(GlobalServerData::serverPrivateVariables.maxMonsterId.begin());
+    if(GlobalServerData::serverPrivateVariables.maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
+        LoginLinkToMaster::loginLinkToMaster->askMoreMaxMonsterId();
+    return monsterId;
+}
+
+quint32 Client::getClanId(bool * const ok)
+{
+    if(GlobalServerData::serverPrivateVariables.maxClanId.size()==0)
+    {
+        if(ok!=NULL)
+            *ok=false;
+        return 0;
+    }
+    if(ok!=NULL)
+        *ok=true;
+    const quint32 clanId=GlobalServerData::serverPrivateVariables.maxClanId.front();
+    GlobalServerData::serverPrivateVariables.maxClanId.erase(GlobalServerData::serverPrivateVariables.maxClanId.begin());
+    if(GlobalServerData::serverPrivateVariables.maxClanId.size()<CATCHCHALLENGER_SERVER_MINCLANIDBLOCK)
+        LoginLinkToMaster::loginLinkToMaster->askMoreMaxClanId();
+    return clanId;
+}
+#else
+quint32 Client::getMonsterId(bool * const)
+{
+    const quint32 monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId;
+    GlobalServerData::serverPrivateVariables.maxMonsterId++;
+    return monsterId;
+}
+
+quint32 Client::getClanId(bool * const)
+{
+    const quint32 clanId=GlobalServerData::serverPrivateVariables.maxClanId;
+    GlobalServerData::serverPrivateVariables.maxClanId++;
+    return clanId;
 }
 #endif

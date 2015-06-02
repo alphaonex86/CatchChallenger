@@ -1,4 +1,6 @@
 #include "LoginLinkToMaster.h"
+#include "../base/Client.h"
+#include "../base/GlobalServerData.h"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -94,14 +96,17 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
                 //query because need wait the return (sync/async problem) to send the token for the client connect
                 //check if the characterId is linked to the correct account on login server
                 case 0x01:
-                    if(Q_UNLIKELY(size!=4))
+                    if(Q_UNLIKELY(size!=(4+4)))
                     {
                         parseNetworkReadError("unknown sub ident: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;
                     }
                     else
                     {
-                        const char * const token=Client::addAuthGetToken(rawData,le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))));
+                        const char * const token=Client::addAuthGetToken(
+                                    le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData))),
+                                    le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4)))
+                                    );
                         if(token!=NULL)
                         {
                             memcpy(LoginLinkToMaster::protocolReplyGetToken+0x03,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
@@ -138,7 +143,7 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
     {
         case 0x07:
         {
-            if((size-pos)<1)
+            if(size<1)
             {
                 std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
@@ -153,13 +158,13 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                     abort();
                 }
                 {
-                    const quint32 &uniqueKey=*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos));
+                    const quint32 &uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
                     pos+=4;
                     settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
                 }
                 case 0x01:
                 {
-                    index=0;
+                    int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
                         if((size-pos)<4)
@@ -168,6 +173,18 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                             abort();
                         }
                         GlobalServerData::serverPrivateVariables.maxMonsterId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
+                        pos+=4;
+                        index++;
+                    }
+                    index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                    {
+                        if((size-pos)<4)
+                        {
+                            std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            abort();
+                        }
+                        GlobalServerData::serverPrivateVariables.maxClanId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
                         pos+=4;
                         index++;
                     }
@@ -204,6 +221,53 @@ void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quin
     //do the work here
     switch(mainCodeType)
     {
+        case 0x11:
+        switch(subCodeType)
+        {
+            case 0x07:
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size!=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4)
+            {
+                std::cerr << "parseFullReplyData() size!=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4: mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
+                abort();
+            }
+            #endif
+            {
+                int index=0;
+                while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                {
+                    GlobalServerData::serverPrivateVariables.maxMonsterId.push_back(
+                                le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+index*sizeof(unsigned int))))
+                                );
+                    index++;
+                }
+            }
+            break;
+            case 0x08:
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(size!=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK*4)
+            {
+                std::cerr << "parseFullReplyData() size!=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK*4: mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
+                abort();
+            }
+            #endif
+            {
+                int index=0;
+                while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                {
+                    GlobalServerData::serverPrivateVariables.maxClanId.push_back(
+                                le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+index*sizeof(unsigned int))))
+                                );
+                    index++;
+                }
+            }
+            break;
+            default:
+                std::cerr << "mainCodeType: " << mainCodeType << ", unknown subCodeType: " << subCodeType << " " << __FILE__ << ":" <<__LINE__ << std::endl;
+                return;
+            break;
+        }
+        break;
         default:
             parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
             return;

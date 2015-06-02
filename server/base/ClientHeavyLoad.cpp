@@ -13,6 +13,9 @@
 #include "DictionaryLogin.h"
 #include "DictionaryServer.h"
 #include "BaseServerMasterSendDatapack.h"
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "BaseServerLogin.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +44,7 @@
 
 using namespace CatchChallenger;
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::askLogin(const quint8 &query_id,const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -137,11 +141,12 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             if(GlobalServerData::serverSettings.automatic_account_creation)
             {
                 //network send
+                *(Client::loginIsWrongBuffer+1)=(quint8)askLoginParam->query_id;
+                *(Client::loginIsWrongBuffer+3)=(quint8)0x07;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(askLoginParam->query_id);
                 #endif
-                *(Client::loginIsWrongBuffer+1)=(quint8)askLoginParam->query_id;
-                *(Client::loginIsWrongBuffer+3)=(quint8)0x07;
+                replyOutputSize.remove(askLoginParam->query_id);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
                 delete askLoginParam;
                 is_logging_in_progess=false;
@@ -166,9 +171,9 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             {
                 bool found=false;
                 quint32 index=0;
-                while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                while(index<BaseServerLogin::tokenForAuthSize)
                 {
-                    const TokenLink &tokenLink=GlobalServerData::serverPrivateVariables.tokenForAuth[index];
+                    const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
                     if(tokenLink.client==this)
                     {
                         const QString &secretToken(GlobalServerData::serverPrivateVariables.db_login->value(1));
@@ -177,17 +182,17 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         hash.addData(secretTokenBinary);
                         hash.addData(tokenLink.value,CATCHCHALLENGER_TOKENSIZE);
                         hashedToken=hash.result();
-                        GlobalServerData::serverPrivateVariables.tokenForAuthSize--;
-                        if(GlobalServerData::serverPrivateVariables.tokenForAuthSize>0)
+                        BaseServerLogin::tokenForAuthSize--;
+                        if(BaseServerLogin::tokenForAuthSize>0)
                         {
-                            while(index<GlobalServerData::serverPrivateVariables.tokenForAuthSize)
+                            while(index<BaseServerLogin::tokenForAuthSize)
                             {
-                                GlobalServerData::serverPrivateVariables.tokenForAuth[index]=GlobalServerData::serverPrivateVariables.tokenForAuth[index+1];
+                                BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
                                 index++;
                             }
-                            //don't work:memmove(GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink),GlobalServerData::serverPrivateVariables.tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(GlobalServerData::serverPrivateVariables.tokenForAuthSize-index));
+                            //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            if(GlobalServerData::serverPrivateVariables.tokenForAuth[0].client==NULL)
+                            if(BaseServerLogin::tokenForAuth[0].client==NULL)
                                 abort();
                             #endif
                         }
@@ -676,14 +681,13 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
         out << (quint8)0x00;//charactersgroup empty
         out << (quint32)0x00000000;//unique key, useless here
         {
-            const QByteArray &rawXml=FacilityLibGeneral::toUTF8With16BitsHeader(CommonSettingsServer::commonSettingsServer.exportedXml);
-            if(rawXml.size()>65535 || rawXml.isEmpty())
+            const int &newSize=FacilityLibGeneral::toUTF8With16BitsHeader(CommonSettingsServer::commonSettingsServer.exportedXml,outputData.data());
+            if(newSize>65535 || newSize<=0)
             {
                 errorOutput(QLatin1Literal("file path too big or not compatible with utf8"));
                 return;
             }
-            outputData+=rawXml;
-            out.device()->seek(out.device()->size());
+            out.device()->seek(out.device()->pos()+newSize);
         }
         out << (quint8)0x00;//logical group empty
         if(GlobalServerData::serverSettings.sendPlayerNumber)
@@ -1060,6 +1064,28 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
     number_of_character++;
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
 
+    std::vector<unsigned int> monsterIdList;
+    {
+        bool ok;
+        int index=0;
+        while(index<profile.monsters.size())
+        {
+            monsterIdList.push_back(getMonsterId(&ok));
+            if(!ok)
+            {
+                qDebug() << "getMonsterId(&ok) have failed, no more id to get?" << __FILE__ << __LINE__;
+                QByteArray outputData;
+                QDataStream out(&outputData, QIODevice::WriteOnly);
+                out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+                out << (quint8)0x03;
+                out << (quint32)0x00000000;
+                postReply(query_id,outputData.constData(),outputData.size());
+                return;
+            }
+            index++;
+        }
+    }
+
     const quint32 &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
     int index=0;
     int monster_position=1;
@@ -1092,12 +1118,8 @@ void Client::addCharacter_return(const quint8 &query_id,const quint8 &profileInd
             CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(monster,profile.monsters.at(index).level);
             const QList<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngine::generateWildSkill(monster,profile.monsters.at(index).level);
 
-            quint32 monster_id;
-            {
-                QMutexLocker(&GlobalServerData::serverPrivateVariables.monsterIdMutex);
-                GlobalServerData::serverPrivateVariables.maxMonsterId++;
-                monster_id=GlobalServerData::serverPrivateVariables.maxMonsterId;
-            }
+            const quint32 &monster_id=monsterIdList.back();
+            monsterIdList.pop_back();
             {
                 dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_monster
                    .arg(monster_id)
@@ -1276,6 +1298,7 @@ void Client::removeCharacterLater_return(const quint8 &query_id,const quint32 &c
     out << (quint8)0x02;
     postReply(query_id,outputData.constData(),outputData.size());
 }
+#endif
 
 //load linked data (like item, quests, ...)
 void Client::loadLinkedData()

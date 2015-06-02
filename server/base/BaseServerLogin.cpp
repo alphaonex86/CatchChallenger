@@ -15,8 +15,10 @@ using namespace CatchChallenger;
 #ifdef Q_OS_LINUX
 FILE * BaseServerLogin::fpRandomFile=NULL;
 #endif
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 BaseServerLogin::TokenLink BaseServerLogin::tokenForAuth[];
 quint32 BaseServerLogin::tokenForAuthSize=0;
+#endif
 
 BaseServerLogin::BaseServerLogin() :
     databaseBaseLogin(NULL)
@@ -29,7 +31,9 @@ BaseServerLogin::~BaseServerLogin()
 
 void BaseServerLogin::preload_the_randomData()
 {
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     BaseServerLogin::tokenForAuthSize=0;
+    #endif
 
     //to have previsible data
     /*if(GlobalServerData::serverSettings.benchmark)
@@ -63,6 +67,8 @@ void BaseServerLogin::unload_the_randomData()
         BaseServerLogin::fpRandomFile=NULL;
     }
     #endif
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     BaseServerLogin::tokenForAuthSize=0;
+    #endif
     //GlobalServerData::serverPrivateVariables.randomData.clear();
 }

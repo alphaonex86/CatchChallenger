@@ -931,11 +931,12 @@ bool Client::dropKOOtherMonster()
 quint32 Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
     int position=999999;
-    quint32 monster_id;
+    bool ok;
+    const quint32 monster_id=getMonsterId(&ok);
+    if(!ok)
     {
-        QMutexLocker(&GlobalServerData::serverPrivateVariables.monsterIdMutex);
-        GlobalServerData::serverPrivateVariables.maxMonsterId++;
-        monster_id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+        errorFightEngine("No more monster id: getMonsterId(&ok) failed");
+        return 0;
     }
     if(toStorage)
     {

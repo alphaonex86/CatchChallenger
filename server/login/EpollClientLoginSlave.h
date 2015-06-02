@@ -11,9 +11,6 @@
 #include <QString>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
-#define TOKEN_SIZE 64
-#define CATCHCHALLENGER_SERVER_MINIDBLOCK 20
-#define CATCHCHALLENGER_SERVER_MAXIDBLOCK 50
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
     #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
@@ -98,7 +95,7 @@ public:
     quint8 accountCharatersCount;
 
     static LoginLinkToMaster *linkToMaster;
-    static char private_token[TOKEN_SIZE];
+    static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
     static QList<unsigned int> maxAccountIdList;
     static QList<unsigned int> maxCharacterIdList;
     static QList<unsigned int> maxClanIdList;

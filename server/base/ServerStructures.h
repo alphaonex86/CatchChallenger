@@ -36,6 +36,9 @@
 #include "QtTimerEvents.h"
 #include "QtDatabase.h"
 #endif
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include <atomic>
+#endif
 
 namespace CatchChallenger {
 class EventThreader;
@@ -244,12 +247,6 @@ struct CaptureCityValidated
     QHash<quint32,quint16> clanSize;
 };
 
-struct TokenLink
-{
-    void * client;
-    char value[CATCHCHALLENGER_TOKENSIZE];
-};
-
 struct ServerProfileInternal
 {
     MapServer *map;
@@ -289,10 +286,11 @@ struct ServerPrivateVariables
     QMultiHash<quint16,MonsterDrops> monsterDrops;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::vector<quint32> maxMonsterId;
+    std::vector<quint32> maxClanId;
     #else
-    quint32 maxMonsterId;
+    std::atomic<unsigned int> maxClanId;
+    std::atomic<unsigned int> maxMonsterId;
     #endif
-    QMutex monsterIdMutex;
     QHash<QString,QList<quint16> > captureFightIdList;
     QHash<QString,CityStatus> cityStatusList;
     QHash<quint32,QString> cityStatusListReverse;
@@ -318,9 +316,10 @@ struct ServerPrivateVariables
 
     //general data
     bool stopIt;
-    quint32 maxClanId;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     quint32 maxAccountId;
     quint32 maxCharacterId;
+    #endif
     QDateTime time_city_capture;
     QHash<quint32,Clan *> clanList;
 
@@ -335,8 +334,6 @@ struct ServerPrivateVariables
     FILE *fpRandomFile;
     #endif
     quint16 connected_players;
-    TokenLink tokenForAuth[CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION];
-    quint32 tokenForAuthSize;
     PlayerUpdater player_updater;
     QSet<quint32> connected_players_id_list;
     QStringList server_message;

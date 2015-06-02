@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QCryptographicHash>
+#include <vector>
 
 #include "ClientStructures.h"
 #include "../../general/base/DebugClass.h"
@@ -88,7 +89,7 @@ private:
     LogicialGroup logicialGroup;
 
     //to send trame
-    quint8 lastQueryNumber;
+    std::vector<quint8> lastQueryNumber;
 
     #ifdef BENCHMARKMUTIPLECLIENT
     static char hurgeBufferForBenchmark[4096];

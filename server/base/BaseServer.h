@@ -39,6 +39,7 @@ public:
     GameServerSettings getSettings() const;
     static void initialize_the_database_prepared_query();
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void load_clan_max_id();
     static void load_clan_max_id_static(void *object);
     void load_clan_max_id_return();
@@ -50,6 +51,7 @@ public:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);
     void load_character_max_id_return();
+    #endif
 protected:
     //init, constructor, destructor
     void initAll();//call before all

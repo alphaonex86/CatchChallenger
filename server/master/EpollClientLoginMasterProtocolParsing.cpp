@@ -110,6 +110,229 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
     }
     switch(mainCodeType)
     {
+        case 0x07:
+        {
+            unsigned int pos=0;
+
+            QString charactersGroup;
+            quint32 uniqueKey;
+            QString host;
+            quint16 port;
+            QString xml;
+            QString logicalGroup;
+            quint16 currentPlayer,maxPlayer;
+            //charactersGroup
+            {
+                if((size-pos)<(int)sizeof(quint8))
+                {
+                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    return;
+                }
+                const quint8 &textSize=data[pos];
+                pos+=sizeof(quint8);
+                if(textSize>0)
+                {
+                    if((size-pos)<(int)textSize)
+                    {
+                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        return;
+                    }
+                    charactersGroup=QString::fromUtf8(data+pos,textSize);
+                    pos+=textSize;
+                }
+            }
+            if(!CharactersGroup::hash.contains(charactersGroup))
+            {
+                EpollClientLoginMaster::tempBuffer[0x00]=0x03;
+                postReplyData(queryNumber,EpollClientLoginMaster::tempBuffer,1);
+            }
+            //uniqueKey
+            if((size-pos)<(int)sizeof(quint32))
+            {
+                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                return;
+            }
+            uniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(quint32);
+            //host
+            {
+                if((size-pos)<(int)sizeof(quint8))
+                {
+                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    return;
+                }
+                const quint8 &textSize=data[pos];
+                pos+=sizeof(quint8);
+                if(textSize>0)
+                {
+                    if((size-pos)<(int)textSize)
+                    {
+                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        return;
+                    }
+                    host=QString::fromUtf8(data+pos,textSize);
+                    pos+=textSize;
+                }
+            }
+            //port
+            if((size-pos)<(int)sizeof(quint16))
+            {
+                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                return;
+            }
+            port=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(quint16);
+            //xml
+            {
+                if((size-pos)<(int)sizeof(quint16))
+                {
+                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    return;
+                }
+                const quint16 textSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(quint16);
+                if(textSize>0)
+                {
+                    if((size-pos)<(int)textSize)
+                    {
+                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        return;
+                    }
+                    xml=QString::fromUtf8(data+pos,textSize);
+                    pos+=textSize;
+                }
+            }
+            //logical group
+            {
+                if((size-pos)<(int)sizeof(quint8))
+                {
+                    parseNetworkReadError("wrong utf8 to QString size for text size");
+                    return;
+                }
+                const quint8 &textSize=data[pos];
+                pos+=sizeof(quint8);
+                if(textSize>0)
+                {
+                    if((size-pos)<(int)textSize)
+                    {
+                        parseNetworkReadError("wrong utf8 to QString size for text");
+                        return;
+                    }
+                    logicalGroup=QString::fromUtf8(data+pos,textSize);
+                    pos+=textSize;
+                }
+            }
+            //current player
+            if((size-pos)<(int)sizeof(quint16))
+            {
+                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                return;
+            }
+            currentPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(quint16);
+            //max player
+            if((size-pos)<(int)sizeof(quint16))
+            {
+                parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                return;
+            }
+            maxPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(quint16);
+            //disconnected player
+            {
+                unsigned int index=0;
+                if((size-pos)<(int)sizeof(quint16))
+                {
+                    parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                    return;
+                }
+                unsigned int disconnectedPlayerNumber=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(quint16);
+                while(index<disconnectedPlayerNumber)
+                {
+                    if((size-pos)<(int)sizeof(quint32))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size at %1:%2").arg(__FILE__).arg(__LINE__));
+                        return;
+                    }
+                    unsigned int characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(quint32);
+                    charactersGroupForGameServer->lockedAccount.remove(characterId);
+                    index++;
+                }
+            }
+            if(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(uniqueKey)))
+            {
+                quint32 newUniqueKey;
+                do
+                {
+                    std::default_random_engine generator;
+                    std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
+                    newUniqueKey = distribution(generator);
+                } while(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(newUniqueKey)));
+                uniqueKey=newUniqueKey;
+                unsigned int pos=1+4;
+                EpollClientLoginMaster::tempBuffer[0x00]=0x02;
+                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::tempBuffer+1)=(quint32)htole32(newUniqueKey);
+                //monster id list
+                {
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+pos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
+                        index++;
+                    }
+                    pos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    charactersGroupForGameServer->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                }
+                //clan id list
+                {
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+pos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxClanId+1+index);
+                        index++;
+                    }
+                    pos+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+                    charactersGroupForGameServer->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+                }
+
+                postReplyData(queryNumber,EpollClientLoginMaster::tempBuffer,pos);
+            }
+            else
+            {
+                unsigned int pos=1;
+                EpollClientLoginMaster::tempBuffer[0x00]=0x01;
+                //monster id list
+                {
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+pos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
+                        index++;
+                    }
+                    pos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    charactersGroupForGameServer->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                }
+                //clan id list
+                {
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+pos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxClanId+1+index);
+                        index++;
+                    }
+                    pos+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+                    charactersGroupForGameServer->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+                }
+
+                postReplyData(queryNumber,EpollClientLoginMaster::tempBuffer,pos);
+            }
+
+            charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
+                        this,uniqueKey,host,port,xml,logicalGroup,currentPlayer,maxPlayer);
+        }
+        break;
         case 0x08:
         {
             if(stat!=EpollClientLoginMasterStat::Logged)
@@ -154,6 +377,10 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     charactersGroupIndex++;
                 }
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            removeFromQueryReceived(queryNumber);
+            #endif
+            replyOutputSize.remove(queryNumber);
             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToRegisterLoginServer),sizeof(EpollClientLoginMaster::replyToRegisterLoginServer));
         }
         break;
@@ -227,6 +454,10 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                         index++;
                     }
                     maxAccountId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    removeFromQueryReceived(queryNumber);
+                    #endif
+                    replyOutputSize.remove(queryNumber);
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
                 }
                 break;
@@ -257,6 +488,10 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                         index++;
                     }
                     charactersGroup->maxCharacterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    removeFromQueryReceived(queryNumber);
+                    #endif
+                    replyOutputSize.remove(queryNumber);
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
                 }
                 break;
@@ -287,10 +522,14 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                         index++;
                     }
                     charactersGroup->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    removeFromQueryReceived(queryNumber);
+                    #endif
+                    replyOutputSize.remove(queryNumber);
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
                 }
                 break;
-                case 0x04:
+                case 0x07:
                 {
                     if(stat!=EpollClientLoginMasterStat::GameServer)
                     {
@@ -313,10 +552,48 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htole32(charactersGroup->maxMonsterId+1+index);
+                        index++;
+                    }
+                    charactersGroup->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    removeFromQueryReceived(queryNumber);
+                    #endif
+                    replyOutputSize.remove(queryNumber);
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
+                }
+                break;
+                case 0x08:
+                {
+                    if(stat!=EpollClientLoginMasterStat::GameServer)
+                    {
+                        parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    if(size!=1)
+                    {
+                        parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    const unsigned char &charactersGroupIndex=*rawData;
+                    if(charactersGroupIndex>=CharactersGroup::list.size())
+                    {
+                        parseNetworkReadError("charactersGroupIndex>=CharactersGroup::charactersGroupList.size() EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    CharactersGroup * const charactersGroup=CharactersGroup::list.at(charactersGroupIndex);
+                    EpollClientLoginMaster::replyToIdListBuffer[0x01]=queryNumber;
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                    {
                         *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+2+index*4/*size of int*/)=(quint32)htole32(charactersGroup->maxClanId+1+index);
                         index++;
                     }
-                    charactersGroup->maxClanId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    charactersGroup->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    removeFromQueryReceived(queryNumber);
+                    #endif
+                    replyOutputSize.remove(queryNumber);
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),sizeof(EpollClientLoginMaster::replyToIdListBuffer));
                 }
                 break;

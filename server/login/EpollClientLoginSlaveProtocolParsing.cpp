@@ -14,6 +14,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             removeFromQueryReceived(queryNumber);
             #endif
+            replyOutputSize.remove(queryNumber);
             //if lot of un logged connection, remove the first
             if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
             {
@@ -112,6 +113,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
                 #endif
+                replyOutputSize.remove(queryNumber);
                 *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
                 parseNetworkReadError("Loggin already in progress");
@@ -134,6 +136,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
                 #endif
+                replyOutputSize.remove(queryNumber);
                 *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
                 parseNetworkReadError("Loggin already in progress");
@@ -151,6 +154,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     removeFromQueryReceived(queryNumber);
                     #endif
+                    replyOutputSize.remove(queryNumber);
                     *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
                     parseNetworkReadError("Account creation not premited");

@@ -114,10 +114,11 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
     if(!settings->contains(QLatin1Literal("external-server-port")))
         settings->setValue(QLatin1Literal("external-server-port"),settings->value(QLatin1Literal("server-port")).toString());
     {
-    std::default_random_engine generator;
-
-            std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
-            settings->setValue(QLatin1Literal("uniqueKey"),distribution(generator));
+        std::default_random_engine generator;
+        std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
+        if(!settings->contains(QLatin1Literal("uniqueKey")))
+            settings->setValue(QLatin1Literal("uniqueKey"),htole32(distribution(generator)));
+        if(!settings->contains(QLatin1Literal("charactersGroup")))
             settings->setValue(QLatin1Literal("charactersGroup"),QStringLiteral("PutHereTheInfoLike-").arg(distribution(generator)));
     }
     if(!settings->contains(QLatin1Literal("logicalGroup")))

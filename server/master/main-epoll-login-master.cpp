@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
-    EpollServerLoginMaster *server=new EpollServerLoginMaster();
+    EpollServerLoginMaster::epollServerLoginMaster=new EpollServerLoginMaster();
 
     ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::MasterServer);
     #ifndef SERVERNOBUFFER
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
                     {
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
-                        const int &infd = server->accept(&in_addr, &in_len);
+                        const int &infd = EpollServerLoginMaster::epollServerLoginMaster->accept(&in_addr, &in_len);
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
                     }
                     if(CharactersGroup::serverWaitedToBeReady==0)
                     {
-                        if(!server->tryListen())
+                        if(!EpollServerLoginMaster::epollServerLoginMaster->tryListen())
                             abort();
                         CharactersGroup::serverWaitedToBeReady--;
                     }
@@ -253,8 +253,8 @@ int main(int argc, char *argv[])
             }
         }
     }
-    server->close();
-    delete server;
-    server=NULL;
+    EpollServerLoginMaster::epollServerLoginMaster->close();
+    delete EpollServerLoginMaster::epollServerLoginMaster;
+    EpollServerLoginMaster::epollServerLoginMaster=NULL;
     return EXIT_SUCCESS;
 }
