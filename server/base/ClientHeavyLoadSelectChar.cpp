@@ -31,15 +31,16 @@ void Client::characterSelectionIsWrong(const quint8 &query_id,const quint8 &retu
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::selectCharacter(const quint8 &query_id, const char * const token)
 {
-    int index=0;
+    unsigned int index=0;
     while(index<tokenAuthList.size())
     {
         const TokenAuth &tokenAuth=tokenAuthList.at(index);
-        if(memcmp(tokenAuth.token,token,sizeof(tokenAuth.token))==0)
+        if(memcmp(tokenAuth.token,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)==0)
         {
             delete tokenAuth.token;
+            account_id=tokenAuth.accountIdRequester;/// \warning need take care of only write if character is selected
             selectCharacter(query_id,tokenAuth.characterId);
-            tokenAuthList.removeAt(index);
+            tokenAuthList.erase(tokenAuthList.begin()+index);
             return;
         }
         index++;
@@ -1163,11 +1164,12 @@ void Client::selectClan_return()
 void Client::loginIsWrong(const quint8 &query_id, const quint8 &returnCode, const QString &debugMessage)
 {
     //network send
+    *(Client::loginIsWrongBuffer+1)=query_id;
+    *(Client::loginIsWrongBuffer+3)=returnCode;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     removeFromQueryReceived(query_id);
     #endif
-    *(Client::loginIsWrongBuffer+1)=query_id;
-    *(Client::loginIsWrongBuffer+3)=returnCode;
+    replyOutputSize.remove(query_id);
     internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginIsWrongBuffer),sizeof(Client::loginIsWrongBuffer));
 
     //send to server to stop the connection

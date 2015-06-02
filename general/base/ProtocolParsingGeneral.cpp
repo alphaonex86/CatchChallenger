@@ -232,10 +232,12 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeMultipleCodePacketClientToServer[0x10][0x0F]=2*2+2*4;
             sizeMultipleCodePacketClientToServer[0x10][0x10]=0;
             sizeMultipleCodePacketClientToServer[0x10][0x13]=0;
-            sizeMultipleCodePacketClientToServer[0x11][0x01]=4;
+            sizeMultipleCodePacketClientToServer[0x11][0x01]=0;
             sizeMultipleCodePacketClientToServer[0x11][0x02]=4;
             sizeMultipleCodePacketClientToServer[0x11][0x03]=4;
             sizeMultipleCodePacketClientToServer[0x11][0x04]=4;
+            sizeMultipleCodePacketClientToServer[0x11][0x07]=0;
+            sizeMultipleCodePacketClientToServer[0x11][0x08]=0;
             sizeMultipleCodePacketClientToServer[0x50][0x02]=2+4;
             sizeMultipleCodePacketClientToServer[0x50][0x04]=0;
             sizeMultipleCodePacketClientToServer[0x50][0x05]=0;
@@ -259,7 +261,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeMultipleCodePacketServerToClient[0xD0][0x07]=0;
             sizeMultipleCodePacketServerToClient[0xD0][0x08]=0;
             sizeMultipleCodePacketServerToClient[0xE0][0x07]=0;
-            sizeMultipleCodePacketServerToClient[0x81][0x01]=4;
+            sizeMultipleCodePacketServerToClient[0x81][0x01]=4+4;
             sizeMultipleCodePacketServerToClient[0x79][0x02]=2;
             //define the size of the reply
             replySizeOnlyMainCodePacketServerToClient[0x01]=1;
@@ -273,7 +275,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             replySizeMultipleCodePacketServerToClient[0x11][0x01]=50*4;
             replySizeMultipleCodePacketServerToClient[0x11][0x02]=50*4;
             replySizeMultipleCodePacketServerToClient[0x11][0x03]=50*4;
-            replySizeMultipleCodePacketServerToClient[0x11][0x04]=50*4;
+            replySizeMultipleCodePacketServerToClient[0x11][0x04]=5*4;
+            replySizeMultipleCodePacketServerToClient[0x11][0x07]=50*4;
+            replySizeMultipleCodePacketServerToClient[0x11][0x08]=5*4;
 
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             compressionMultipleCodePacketClientToServer[0x02] << 0x000C;

@@ -75,4 +75,6 @@ HEADERS += \
     ../../general/base/GeneralStructures.h \
     ../../general/base/FacilityLibGeneral.h \
     ../base/SqlFunction.h \
-    ../base/DictionaryLogin.h
+    ../base/DictionaryLogin.h \
+    ../VariableServer.h \
+    ../../general/base/GeneralVariable.h

@@ -19,6 +19,9 @@ public:
     EpollServerLoginMaster();
     ~EpollServerLoginMaster();
     bool tryListen();
+    void doTheServerList();
+    void doTheReplyCache();
+    static EpollServerLoginMaster *epollServerLoginMaster;
 private:
     char * server_ip;
     char * server_port;
@@ -49,8 +52,6 @@ private:
     QStringList loadCharactersGroup(QSettings &settings);
     void charactersGroupListReply(QStringList &charactersGroupList);
     void doTheLogicalGroup(QSettings &settings);
-    void doTheServerList();
-    void doTheReplyCache();
     void loadTheProfile();
     void SQL_common_load_finish();
 };

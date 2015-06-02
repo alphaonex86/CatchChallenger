@@ -1,5 +1,6 @@
 #include "LoginLinkToMaster.h"
-#include "EpollClientLoginSlave.h"
+#include "../../general/base/FacilityLibGeneral.h"
+#include "../base/GlobalServerData.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -9,6 +10,8 @@
 #include <unistd.h>
 
 using namespace CatchChallenger;
+
+LoginLinkToMaster *LoginLinkToMaster::loginLinkToMaster;
 
 LoginLinkToMaster::LoginLinkToMaster(
         #ifdef SERVERSSL
@@ -46,6 +49,11 @@ LoginLinkToMaster::~LoginLinkToMaster()
 
 int LoginLinkToMaster::tryConnect(const char * const host, const quint16 &port,const quint8 &tryInterval,const quint8 &considerDownAfterNumberOfTry)
 {
+    if(port==0)
+    {
+        std::cerr << "ERROR port is 0 (abort)" << std::endl;
+        abort();
+    }
     int sockfd,n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
@@ -193,7 +201,7 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
                 settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
             }
         }
-        *reinterpret_cast<quint32 *>(tempBuffer+pos)=uniqueKey;
+        *reinterpret_cast<quint32 *>(tempBuffer+pos)=htole32(uniqueKey);
         pos+=4;
     }
 
@@ -230,7 +238,7 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
     //the xml with name and description
     {
         if(!exportedXml.isEmpty())
-            newSizeCharactersGroup=FacilityLibGeneral::toUTF16WithHeader(exportedXml,tempBuffer+pos);
+            newSizeCharactersGroup=FacilityLibGeneral::toUTF8With16BitsHeader(exportedXml,tempBuffer+pos);
         else
         {
             tempBuffer[pos]=0x00;
@@ -289,12 +297,25 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
         disconnectedClientsDatabaseId.clear();
     }
 
-    newOutputQuery(0x07,queryNumberList.back(),tempBuffer,pos);
+    packOutcommingQuery(0x07,queryNumberList.back(),tempBuffer,pos);
     queryNumberList.pop_back();
+    return true;
 }
 
 void LoginLinkToMaster::characterDisconnected(const quint32 &characterId)
 {
     *reinterpret_cast<quint32 *>(LoginLinkToMaster::sendDisconnectedPlayer+0x02)=htole32(characterId);
-    return internalSendRawSmallPacket(LoginLinkToMaster::sendDisconnectedPlayer,sizeof(LoginLinkToMaster::sendDisconnectedPlayer));
+    internalSendRawSmallPacket(LoginLinkToMaster::sendDisconnectedPlayer,sizeof(LoginLinkToMaster::sendDisconnectedPlayer));
+}
+
+void LoginLinkToMaster::askMoreMaxMonsterId()
+{
+    newFullOutputQuery(0x11,0x07,queryNumberList.back());
+    queryNumberList.pop_back();
+}
+
+void LoginLinkToMaster::askMoreMaxClanId()
+{
+    newFullOutputQuery(0x11,0x08,queryNumberList.back());
+    queryNumberList.pop_back();
 }

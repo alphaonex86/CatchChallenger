@@ -18,6 +18,7 @@ public:
     #ifdef Q_OS_LINUX
     static FILE *fpRandomFile;
     #endif
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     struct TokenLink
     {
         void * client;
@@ -25,6 +26,7 @@ public:
     };
     static TokenLink tokenForAuth[CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION];
     static quint32 tokenForAuthSize;
+    #endif
 
     DatabaseBase *databaseBaseLogin;
 protected:

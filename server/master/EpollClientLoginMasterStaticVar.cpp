@@ -6,7 +6,8 @@ using namespace CatchChallenger;
 
 const unsigned char EpollClientLoginMaster::protocolHeaderToMatch[]={0x88,0x62,0xBC,0xBB,0x67,0x9E,0x3D,0xE7};
 bool EpollClientLoginMaster::automatic_account_creation=false;
-char EpollClientLoginMaster::private_token[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+char EpollClientLoginMaster::private_token[TOKEN_SIZE_FOR_MASTERAUTH];
+char EpollClientLoginMaster::tempBuffer[4096];
 
 unsigned char EpollClientLoginMaster::protocolReplyProtocolNotSupported[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x02/*return code*/};
 unsigned char EpollClientLoginMaster::protocolReplyWrongAuth[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x07/*return code*/};

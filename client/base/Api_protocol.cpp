@@ -81,6 +81,15 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
         #endif
         qDebug() << QStringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
     }
+
+    {
+        int index=1;
+        while(index<256)
+        {
+            lastQueryNumber.push_back(index);
+            index++;
+        }
+    }
 }
 
 Api_protocol::~Api_protocol()
@@ -145,10 +154,10 @@ quint16 Api_protocol::getId()
 
 quint8 Api_protocol::queryNumber()
 {
-    if(lastQueryNumber>=254)
-        lastQueryNumber=1;
-    querySendTime[lastQueryNumber].start();
-    return lastQueryNumber++;
+    const quint8 lastQueryNumberTemp=this->lastQueryNumber.back();
+    querySendTime[lastQueryNumberTemp].start();
+    this->lastQueryNumber.pop_back();
+    return lastQueryNumberTemp;
 }
 
 bool Api_protocol::sendProtocol()
@@ -1544,9 +1553,6 @@ void Api_protocol::resetAll()
     mDatapackSub=mDatapackMain+"sub/sub/";
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="main";
     CommonSettingsServer::commonSettingsServer.subDatapackCode="sub";
-
-    //to send trame
-    lastQueryNumber=1;
 
     ProtocolParsingInputOutput::reset();
 }

@@ -52,10 +52,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(!settings.contains(QStringLiteral("token")))
         generateToken(settings);
     QString token=settings.value(QStringLiteral("token")).toString();
-    if(token.size()!=(TOKEN_SIZE*2))
+    if(token.size()!=(TOKEN_SIZE_FOR_MASTERAUTH*2))
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(EpollClientLoginSlave::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE);
+    memcpy(EpollClientLoginSlave::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     {
         if(!settings.contains(QStringLiteral("mode")))
             settings.setValue(QStringLiteral("mode"),QStringLiteral("direct"));//or proxy
@@ -327,7 +327,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 EpollServerLoginSlave::~EpollServerLoginSlave()
 {
     if(EpollClientLoginSlave::private_token!=NULL)
-        memset(EpollClientLoginSlave::private_token,0x00,TOKEN_SIZE);
+        memset(EpollClientLoginSlave::private_token,0x00,TOKEN_SIZE_FOR_MASTERAUTH);
     if(server_ip!=NULL)
     {
         delete server_ip;
@@ -408,13 +408,13 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(EpollClientLoginSlave::private_token,1,TOKEN_SIZE,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE)
+    const int &returnedSize=fread(EpollClientLoginSlave::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE << " needed to do the token from /dev/urandom" << std::endl;
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginSlave::private_token,TOKEN_SIZE).toHex()));
+    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginSlave::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
     fclose(fpRandomFile);
 }
 

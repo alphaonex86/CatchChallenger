@@ -25,7 +25,8 @@ EpollClientLoginMaster::EpollClientLoginMaster(
         stat(None),
         socketString(NULL),
         socketStringSize(0),
-        charactersGroupForGameServer(NULL)
+        charactersGroupForGameServer(NULL),
+        charactersGroupForGameServerInformation(NULL)
 {
 }
 
@@ -52,6 +53,7 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
     }
     if(stat==EpollClientLoginMasterStat::GameServer)
     {
+        charactersGroupForGameServer->removeGameServerUniqueKey(this);
         EpollClientLoginMaster::gameServers.removeOne(this);
         int index=0;
         while(index<loginServerReturnForCharaterSelect.size())
@@ -110,13 +112,14 @@ void EpollClientLoginMaster::selectCharacter(const quint8 &query_id,const quint3
         errorParsingLayer("EpollClientLoginMaster::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    removeFromQueryReceived(query_id);
-    #endif
-    if(!CharactersGroup::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
+    if(!CharactersGroup::list.at(charactersGroupIndex)->containsGameServerUniqueKey(serverUniqueKey))
     {
         EpollClientLoginMaster::loginIsWrongBuffer[1]=query_id;
         EpollClientLoginMaster::loginIsWrongBuffer[3]=0x05;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        removeFromQueryReceived(query_id);
+        #endif
+        replyOutputSize.remove(query_id);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginIsWrongBuffer),sizeof(EpollClientLoginMaster::loginIsWrongBuffer));
         return;
     }
@@ -124,6 +127,10 @@ void EpollClientLoginMaster::selectCharacter(const quint8 &query_id,const quint3
     {
         EpollClientLoginMaster::loginIsWrongBuffer[1]=query_id;
         EpollClientLoginMaster::loginIsWrongBuffer[3]=0x03;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        removeFromQueryReceived(query_id);
+        #endif
+        replyOutputSize.remove(query_id);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginIsWrongBuffer),sizeof(EpollClientLoginMaster::loginIsWrongBuffer));
         return;
     }
