@@ -20,7 +20,9 @@ using namespace CatchChallenger;
 
 void BaseServer::preload_plant_on_map_sql()
 {
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     DebugClass::debugConsole(QStringLiteral("%1 SQL monster max id").arg(GlobalServerData::serverPrivateVariables.maxMonsterId));
+    #endif
 
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())

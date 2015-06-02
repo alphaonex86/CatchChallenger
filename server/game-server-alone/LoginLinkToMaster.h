@@ -36,9 +36,9 @@ public:
     QString httpDatapackMirror;
     //to unordered reply
     QHash<quint8/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
-    static unsigned char protocolReplyNoMoreToken[4];
-    static unsigned char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
-    static unsigned char sendDisconnectedPlayer[2+4];
+    static char protocolReplyNoMoreToken[4];
+    static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    static char sendDisconnectedPlayer[2+4];
 
     static LoginLinkToMaster *loginLinkToMaster;
     std::vector<quint8> queryNumberList;
@@ -48,6 +48,8 @@ public:
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     bool registerGameServer(QSettings * const settings,const QString &exportedXml);
     void characterDisconnected(const quint32 &characterId);
+    void askMoreMaxMonsterId();
+    void askMoreMaxClanId();
 protected:
     void disconnectClient();
     void errorParsingLayer(const QString &error);

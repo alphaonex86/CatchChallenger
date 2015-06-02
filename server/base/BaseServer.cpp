@@ -162,11 +162,11 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.city.capture.minute                        = 0;
     GlobalServerData::serverPrivateVariables.flat_map_list                      = NULL;
     //start to 0 due to pre incrementation before use
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.maxClanId=0;
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    GlobalServerData::serverPrivateVariables.maxMonsterId=0;
+    GlobalServerData::serverPrivateVariables.maxMonsterId=1;
     #endif
 
 
@@ -302,7 +302,11 @@ void BaseServer::SQL_common_load_finish()
     DictionaryLogin::dictionary_starter_internal_to_database=this->dictionary_starter_internal_to_database;
 
     preload_profile();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     load_sql_monsters_max_id();
+    #else
+    preload_industries();
+    #endif
 }
 
 void BaseServer::preload_the_events()
@@ -856,7 +860,9 @@ void BaseServer::preload_zone_return()
 
 void BaseServer::preload_industries()
 {
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     DebugClass::debugConsole(QStringLiteral("%1 SQL clan max id").arg(GlobalServerData::serverPrivateVariables.maxClanId));
+    #endif
 
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
@@ -1309,11 +1315,13 @@ void BaseServer::preload_market_items()
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_market_items_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         if(GlobalServerData::serverSettings.automatic_account_creation)
             load_account_max_id();
         else if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
+        #endif
             BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
     }
 }
@@ -1363,11 +1371,13 @@ void BaseServer::preload_market_items_return()
         Client::marketObjectIdList.removeFirst();
         GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
     }
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverSettings.automatic_account_creation)
         load_account_max_id();
     else if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
+    #endif
         BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
 }
 
@@ -3307,10 +3317,11 @@ void BaseServer::loadAndFixSettings()
     }
 }
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::load_clan_max_id()
 {
     //start to 0 due to pre incrementation before use
-    GlobalServerData::serverPrivateVariables.maxClanId=0;
+    GlobalServerData::serverPrivateVariables.maxClanId=1;
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
@@ -3340,17 +3351,17 @@ void BaseServer::load_clan_max_id_static(void *object)
 void BaseServer::load_clan_max_id_return()
 {
     //start to 0 due to pre incrementation before use
-    GlobalServerData::serverPrivateVariables.maxClanId=0;
+    GlobalServerData::serverPrivateVariables.maxClanId=1;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
         //not +1 because incremented before use
-        GlobalServerData::serverPrivateVariables.maxClanId=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxClanId=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok)+1;
         if(!ok)
         {
             DebugClass::debugConsole(QStringLiteral("Max clan id is failed to convert to number"));
             //start to 0 due to pre incrementation before use
-            GlobalServerData::serverPrivateVariables.maxClanId=0;
+            GlobalServerData::serverPrivateVariables.maxClanId=1;
             continue;
         }
     }
@@ -3458,4 +3469,4 @@ void BaseServer::load_character_max_id_return()
     }
     BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
 }
-
+#endif

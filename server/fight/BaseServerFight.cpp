@@ -22,12 +22,13 @@ void BaseServer::preload_monsters_drops()
     DebugClass::debugConsole(QStringLiteral("%1 monster drop(s) loaded").arg(CommonDatapack::commonDatapack.monsters.size()));
 }
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::load_sql_monsters_max_id()
 {
     DebugClass::debugConsole(QStringLiteral("%1 SQL city loaded").arg(GlobalServerData::serverPrivateVariables.cityStatusList.size()));
 
     //start to 0 due to pre incrementation before use
-    GlobalServerData::serverPrivateVariables.maxMonsterId=0;
+    GlobalServerData::serverPrivateVariables.maxMonsterId=1;
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
@@ -61,7 +62,6 @@ void BaseServer::load_monsters_max_id_return()
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
-        //not +1 because incremented before use
         const quint32 &maxMonsterId=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
         if(!ok)
         {
@@ -69,11 +69,12 @@ void BaseServer::load_monsters_max_id_return()
             continue;
         }
         else
-            if(maxMonsterId>GlobalServerData::serverPrivateVariables.maxMonsterId)
-                GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId;
+            if(maxMonsterId>=GlobalServerData::serverPrivateVariables.maxMonsterId)
+                GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId+1;
     }
     load_clan_max_id();
 }
+#endif
 
 QHash<quint16,MonsterDrops> BaseServer::loadMonsterDrop(const QString &file, QHash<quint16,Item> items,const QHash<quint16,Monster> &monsters)
 {

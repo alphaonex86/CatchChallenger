@@ -2669,8 +2669,18 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
         postReply(query_id,outputData.constData(),outputData.size());
         return;
     }
-    GlobalServerData::serverPrivateVariables.maxClanId++;
-    public_and_private_informations.clan=GlobalServerData::serverPrivateVariables.maxClanId;
+    bool ok;
+    const quint32 clanId=getClanId(&ok);
+    if(!ok)
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+        out << (quint8)0x02;
+        postReply(query_id,outputData.constData(),outputData.size());
+        return;
+    }
+    public_and_private_informations.clan=clanId;
     createMemoryClan();
     clan->name=text;
     public_and_private_informations.clan_leader=true;
@@ -2679,15 +2689,15 @@ void Client::addClan_return(const quint8 &query_id,const quint8 &action,const QS
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (quint8)0x01;
-    out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
+    out << (quint32)clanId;
     postReply(query_id,outputData.constData(),outputData.size());
     //add into db
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_insert_clan
-             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+             .arg(clanId)
              .arg(SqlFunction::quoteSqlVariable(text))
              .arg(QDateTime::currentMSecsSinceEpoch()/1000)
              );
-    insertIntoAClan(GlobalServerData::serverPrivateVariables.maxClanId);
+    insertIntoAClan(clanId);
 }
 
 quint32 Client::getPlayerId() const

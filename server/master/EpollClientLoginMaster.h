@@ -3,13 +3,12 @@
 
 #include "../../general/base/ProtocolParsing.h"
 #include "CharactersGroup.h"
+#include "../VariableServer.h"
 
 #include <QString>
 #include <QRegularExpression>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
-#define TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT 32
-#define CATCHCHALLENGER_SERVER_MAXIDBLOCK 50
 
 namespace CatchChallenger {
 class EpollClientLoginMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
@@ -40,6 +39,7 @@ public:
     char *socketString;
     int socketStringSize;
     CharactersGroup *charactersGroupForGameServer;
+    CharactersGroup::InternalGameServer *charactersGroupForGameServerInformation;
     struct DataForSelectedCharacterReturn
     {
         EpollClientLoginMaster * loginServer;
@@ -55,7 +55,7 @@ public:
     std::vector<quint8> queryNumberList;
 
     static bool automatic_account_creation;
-    static char private_token[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];
     static unsigned char protocolReplyProtocolNotSupported[3];
     static unsigned char protocolReplyWrongAuth[3];
@@ -67,6 +67,7 @@ public:
     static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
     +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
     +1000];
+    static char tempBuffer[4096];
     static unsigned char replyToRegisterLoginServerBaseOffset;
     static char loginSettingsAndCharactersGroup[256*1024];
     static int loginSettingsAndCharactersGroupSize;

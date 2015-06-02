@@ -38,6 +38,15 @@
 //the % of the price change when the resource/product if full/empty
 #define CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE 20
 
+//server cluster
+#define TOKEN_SIZE_FOR_MASTERAUTH 32
+#define TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT 32
+#define CATCHCHALLENGER_SERVER_MINIDBLOCK 20
+#define CATCHCHALLENGER_SERVER_MAXIDBLOCK 50
+#define CATCHCHALLENGER_SERVER_MINCLANIDBLOCK 1
+#define CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK 5
+
+
 /** map visibility bandwith optimisation
  Do in define to not drop cpu performance, due to heavy call **/
 

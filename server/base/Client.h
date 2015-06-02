@@ -63,7 +63,7 @@ public:
     static void startTheCityCapture();
     static void setEvent(const quint8 &event, const quint8 &new_value);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    static char * addAuthGetToken(const quint32 &characterId);
+    static char * addAuthGetToken(const quint32 &characterId,const quint32 &accountIdRequester);
     #endif
 
     void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data,const unsigned int &size);
@@ -90,9 +90,15 @@ public:
 
     static unsigned char protocolReplyProtocolNotSupported[4];
     static unsigned char protocolReplyServerFull[4];
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     static unsigned char protocolReplyCompressionNone[4+CATCHCHALLENGER_TOKENSIZE];
     static unsigned char protocolReplyCompresssionZlib[4+CATCHCHALLENGER_TOKENSIZE];
     static unsigned char protocolReplyCompressionXz[4+CATCHCHALLENGER_TOKENSIZE];
+    #else
+    static unsigned char protocolReplyCompressionNone[4];
+    static unsigned char protocolReplyCompresssionZlib[4];
+    static unsigned char protocolReplyCompressionXz[4];
+    #endif
 
     static unsigned char loginInProgressBuffer[4];
     static unsigned char loginIsWrongBuffer[4];
@@ -210,6 +216,7 @@ private:
     {
         char *token;
         quint32 characterId;
+        quint32 accountIdRequester;
     };
     static std::vector<TokenAuth> tokenAuthList;
     #endif
@@ -321,6 +328,8 @@ private:
     void sendSystemMessage(const QString &text,const bool &important=false);
     //clan
     void clanChangeWithoutDb(const quint32 &clanId);
+
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void askLogin(const quint8 &query_id, const char *rawdata);
     void createAccount(const quint8 &query_id, const char *rawdata);
     static void createAccount_static(void *object);
@@ -340,6 +349,7 @@ private:
     static void deleteCharacterNow_static(void *object);
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const quint32 &characterId);
+    #endif
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
     static QHash<QString,quint32> datapack_file_list(const bool withHash=true);
@@ -352,6 +362,7 @@ private:
     void dbQueryWriteCommon(const QString &queryText);
     void dbQueryWriteServer(const QString &queryText);
     //character
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void addCharacter(const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     static void addCharacter_static(void *object);
     void addCharacter_object();
@@ -360,6 +371,7 @@ private:
     static void removeCharacterLater_static(void *object);
     void removeCharacterLater_object();
     void removeCharacterLater_return(const quint8 &query_id, const quint32 &characterId);
+    #endif
     void selectCharacter(const quint8 &query_id, const quint32 &characterId);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void selectCharacter(const quint8 &query_id, const char * const token);
@@ -598,6 +610,8 @@ private:
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
     bool otherPlayerIsInRange(Client * otherPlayer);
 
+    static quint32 getMonsterId(bool * const ok);
+    static quint32 getClanId(bool * const ok);
     bool getInTrade();
     void registerTradeRequest(Client * otherPlayerTrade);
     bool getIsFreezed();

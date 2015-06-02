@@ -120,6 +120,6 @@ Player_private_and_public_informations *ClientBase::public_and_private_informati
 #endif
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-static std::vector<Client::TokenAuth> Client::tokenAuthList;
+std::vector<Client::TokenAuth> Client::tokenAuthList;
 #endif
 
