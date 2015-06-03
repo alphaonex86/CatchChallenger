@@ -1,0 +1,4 @@
+What server kind need what database:
+* Login server need: login (read in all case, if account automatic creation then read/write), common (all)
+* Master server need: login (read if account automatic creation), base, common (all, read)
+* Game server need: base (read), common (spec), server

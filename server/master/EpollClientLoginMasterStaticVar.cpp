@@ -16,8 +16,8 @@ unsigned char EpollClientLoginMaster::protocolReplyCompresssionZlib[]={0xC1/*rep
 unsigned char EpollClientLoginMaster::protocolReplyCompressionXz[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x06/*return code*/};
 unsigned char EpollClientLoginMaster::loginIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 char EpollClientLoginMaster::selectCharaterRequest[]={0x02/*reply server to client*/,0x05/*query id*/,0x00/*the init reply query number*/};
-unsigned char EpollClientLoginMaster::replyToRegisterLoginServer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/};
-unsigned char EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset=10;
+unsigned char EpollClientLoginMaster::replyToRegisterLoginServer[];
+unsigned char EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset=0;
 char EpollClientLoginMaster::loginSettingsAndCharactersGroup[];
 int EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=0;
 char EpollClientLoginMaster::serverServerList[];

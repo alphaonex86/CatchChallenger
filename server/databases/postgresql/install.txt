@@ -1,10 +1,13 @@
 createuser -P login -U postgres
-echo 'CREATE DATABASE catchchallenger_common;' | psql postgres login
 echo 'CREATE DATABASE catchchallenger_login;' | psql postgres login
-echo 'CREATE DATABASE catchchallenger_server;' | psql postgres login
-psql catchchallenger_common login < catchchallenger-postgresql-common.sql
+echo 'CREATE DATABASE catchchallenger_base;' | psql postgres base
+echo 'CREATE DATABASE catchchallenger_common;' | psql postgres common
+echo 'CREATE DATABASE catchchallenger_server;' | psql postgres server
 psql catchchallenger_login login < catchchallenger-postgresql-login.sql
-psql catchchallenger_server login < catchchallenger-postgresql-server.sql
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_login root
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_common root
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_server root
+psql catchchallenger_base base < catchchallenger-postgresql-base.sql
+psql catchchallenger_common common < catchchallenger-postgresql-common.sql
+psql catchchallenger_server server < catchchallenger-postgresql-server.sql
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_login login
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_base base
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_common common
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_server server

@@ -43,6 +43,11 @@ EpollServer *server=NULL;
 #endif
 QSettings *settings=NULL;
 
+QString master_host;
+quint16 master_port;
+quint8 master_tryInterval;
+quint8 master_considerDownAfterNumberOfTry;
+
 void send_settings()
 {
     GameServerSettings formatedServerSettings=server->getSettings();
@@ -134,6 +139,7 @@ void send_settings()
     CommonSettingsServer::commonSettingsServer.chat_allow_clan		= settings->value(QLatin1Literal("allow-clan")).toBool();
     settings->endGroup();
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup(QLatin1Literal("db-login"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::Mysql;
@@ -159,6 +165,34 @@ void send_settings()
     }
     formatedServerSettings.database_login.tryInterval       = settings->value(QLatin1Literal("tryInterval")).toUInt();
     formatedServerSettings.database_login.considerDownAfterNumberOfTry = settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
+    settings->endGroup();
+    #endif
+
+    settings->beginGroup(QLatin1Literal("db-base"));
+    if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::Mysql;
+    else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::SQLite;
+    else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::PostgreSQL;
+    else
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::Mysql;
+    switch(formatedServerSettings.database_base.tryOpenType)
+    {
+        default:
+        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::Type::Mysql:
+            formatedServerSettings.database_base.host              = settings->value(QLatin1Literal("host")).toString();
+            formatedServerSettings.database_base.db                = settings->value(QLatin1Literal("db")).toString();
+            formatedServerSettings.database_base.login             = settings->value(QLatin1Literal("login")).toString();
+            formatedServerSettings.database_base.pass              = settings->value(QLatin1Literal("pass")).toString();
+        break;
+        case DatabaseBase::Type::SQLite:
+            formatedServerSettings.database_base.file              = settings->value(QLatin1Literal("file")).toString();
+        break;
+    }
+    formatedServerSettings.database_base.tryInterval       = settings->value(QLatin1Literal("tryInterval")).toUInt();
+    formatedServerSettings.database_base.considerDownAfterNumberOfTry = settings->value(QLatin1Literal("considerDownAfterNumberOfTry")).toUInt();
     settings->endGroup();
 
     settings->beginGroup(QLatin1Literal("db-common"));
@@ -304,6 +338,31 @@ void send_settings()
         settings->endGroup();
     }
 
+    {
+        bool ok;
+        settings->beginGroup(QStringLiteral("master"));
+        master_host=settings->value(QStringLiteral("host")).toString();
+        master_port=settings->value(QStringLiteral("port")).toUInt(&ok);
+        if(master_port==0 || !ok)
+        {
+            std::cerr << "Master port not a number or 0:" << settings->value(QStringLiteral("port")).toString().toStdString() << std::endl;
+            abort();
+        }
+        master_tryInterval=settings->value(QStringLiteral("tryInterval")).toUInt(&ok);
+        if(master_tryInterval==0 || !ok)
+        {
+            std::cerr << "tryInterval==0 (abort)" << std::endl;
+            abort();
+        }
+        master_considerDownAfterNumberOfTry=settings->value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+        if(master_considerDownAfterNumberOfTry==0 || !ok)
+        {
+            std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
+            abort();
+        }
+        settings->endGroup();
+    }
+
     settings->beginGroup(QLatin1Literal("city"));
     if(settings->value(QLatin1Literal("capture_frequency")).toString()==QLatin1Literal("week"))
         formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_week;
@@ -382,15 +441,22 @@ int main(int argc, char *argv[])
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
+    #ifdef SERVERSSL
+    server=new EpollSslServer();
+    #else
+    server=new EpollServer();
+    #endif
+
     //before linkToMaster->registerGameServer() to have the correct settings loaded
+    //after server to have the settings
     send_settings();
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     const int &linkfd=LoginLinkToMaster::tryConnect(
-                settings->value("server-ip").toString().toLocal8Bit().constData(),
-                settings->value("server-port").toUInt(),
-                5,
-                3
+                master_host.toLocal8Bit().constData(),
+                master_port,
+                master_tryInterval,
+                master_considerDownAfterNumberOfTry
                 );
     if(linkfd<0)
     {
@@ -403,13 +469,19 @@ int main(int argc, char *argv[])
     #else
     LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd);
     #endif
-    LoginLinkToMaster::loginLinkToMaster->registerGameServer(settings,CommonSettingsServer::commonSettingsServer.exportedXml);
-    #endif
-
-    #ifdef SERVERSSL
-    server=new EpollSslServer();
-    #else
-    server=new EpollServer();
+    {
+        epoll_event event;
+        event.data.ptr = LoginLinkToMaster::loginLinkToMaster;
+        event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, linkfd, &event);
+        if(s == -1)
+        {
+            std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
+            abort();
+        }
+    }
+    LoginLinkToMaster::loginLinkToMaster->setSettings(settings);
+    LoginLinkToMaster::loginLinkToMaster->sendProtocolHeader();
     #endif
 
     bool tcpCork,tcpNodelay;
@@ -429,9 +501,18 @@ int main(int argc, char *argv[])
             qDebug() << "Proxy not supported";
             return EXIT_FAILURE;
         }
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         if(formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::PostgreSQL)
         {
             settings->beginGroup(QLatin1Literal("db-login"));
+            qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
+            settings->endGroup();
+            return EXIT_FAILURE;
+        }
+        #endif
+        if(formatedServerSettings.database_base.tryOpenType!=DatabaseBase::Type::PostgreSQL)
+        {
+            settings->beginGroup(QLatin1Literal("db-base"));
             qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
             settings->endGroup();
             return EXIT_FAILURE;
@@ -496,6 +577,7 @@ int main(int argc, char *argv[])
     }
     server->loadAndFixSettings();
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                 GlobalServerData::serverSettings.database_login.host.toLatin1(),
                 GlobalServerData::serverSettings.database_login.db.toLatin1(),
@@ -503,6 +585,16 @@ int main(int argc, char *argv[])
                 GlobalServerData::serverSettings.database_login.pass.toLatin1()))
     {
         qDebug() << "Unable to connect to database login:" << GlobalServerData::serverPrivateVariables.db_login->errorMessage();
+        return EXIT_FAILURE;
+    }
+    #endif
+    if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
+                GlobalServerData::serverSettings.database_base.host.toLatin1(),
+                GlobalServerData::serverSettings.database_base.db.toLatin1(),
+                GlobalServerData::serverSettings.database_base.login.toLatin1(),
+                GlobalServerData::serverSettings.database_base.pass.toLatin1()))
+    {
+        qDebug() << "Unable to connect to database base:" << GlobalServerData::serverPrivateVariables.db_base->errorMessage();
         return EXIT_FAILURE;
     }
     if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(

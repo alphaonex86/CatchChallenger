@@ -1,5 +1,6 @@
 #include "EpollServerLoginSlave.h"
 #include "CharactersGroupForLogin.h"
+#include "../epoll/Epoll.h"
 
 using namespace CatchChallenger;
 
@@ -49,13 +50,19 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     const QByteArray &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
     server_port=new char[server_port_data.size()+1];
     strcpy(server_port,server_port_data.constData());
+
+    //token
+    settings.beginGroup(QStringLiteral("master"));
     if(!settings.contains(QStringLiteral("token")))
         generateToken(settings);
     QString token=settings.value(QStringLiteral("token")).toString();
-    if(token.size()!=(TOKEN_SIZE_FOR_MASTERAUTH*2))
+    if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(EpollClientLoginSlave::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(EpollClientLoginSlave::header_magic_number_and_private_token+8,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    settings.endGroup();
+
+    //mode
     {
         if(!settings.contains(QStringLiteral("mode")))
             settings.setValue(QStringLiteral("mode"),QStringLiteral("direct"));//or proxy
@@ -66,13 +73,17 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             settings.setValue(QStringLiteral("mode"),mode);
         }
         if(mode==QStringLiteral("direct"))
+        {
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
+            EpollClientLoginSlave::serverPartialServerList[0x00]=0x01;//Reconnect mode
+        }
         else
         {
             std::cerr << "proxy mode in the settings but not supported from now (abort)" << std::endl;
             abort();
 
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
+            EpollClientLoginSlave::serverPartialServerList[0x00]=0x02;//proxy mode
         }
     }
 
@@ -132,10 +143,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     settings.endGroup();
     settings.sync();
 
-    QString mysql_db;
-    QString mysql_host;
-    QString mysql_login;
-    QString mysql_pass;
+    QString db;
+    QString host;
+    QString login;
+    QString pass;
     QString type;
     bool ok;
     //here to have by login server an auth
@@ -145,14 +156,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
         if(!settings.contains(QStringLiteral("tryInterval")))
             settings.setValue(QStringLiteral("tryInterval"),1);
-        if(!settings.contains(QStringLiteral("mysql_db")))
-            settings.setValue(QStringLiteral("mysql_db"),QStringLiteral("catchchallenger_login"));
-        if(!settings.contains(QStringLiteral("mysql_host")))
-            settings.setValue(QStringLiteral("mysql_host"),QStringLiteral("localhost"));
-        if(!settings.contains(QStringLiteral("mysql_login")))
-            settings.setValue(QStringLiteral("mysql_login"),QStringLiteral("root"));
-        if(!settings.contains(QStringLiteral("mysql_pass")))
-            settings.setValue(QStringLiteral("mysql_pass"),QStringLiteral("root"));
+        if(!settings.contains(QStringLiteral("db")))
+            settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_login"));
+        if(!settings.contains(QStringLiteral("host")))
+            settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
+        if(!settings.contains(QStringLiteral("login")))
+            settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
+        if(!settings.contains(QStringLiteral("pass")))
+            settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
         if(!settings.contains(QStringLiteral("type")))
             settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
         settings.sync();
@@ -162,10 +173,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
             abort();
         }
-        mysql_db=settings.value(QStringLiteral("mysql_db")).toString();
-        mysql_host=settings.value(QStringLiteral("mysql_host")).toString();
-        mysql_login=settings.value(QStringLiteral("mysql_login")).toString();
-        mysql_pass=settings.value(QStringLiteral("mysql_pass")).toString();
+        db=settings.value(QStringLiteral("db")).toString();
+        host=settings.value(QStringLiteral("host")).toString();
+        login=settings.value(QStringLiteral("login")).toString();
+        pass=settings.value(QStringLiteral("pass")).toString();
         EpollClientLoginSlave::databaseBaseLogin.tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.tryInterval==0 || !ok)
         {
@@ -178,7 +189,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "only db type postgresql supported (abort)" << std::endl;
             abort();
         }
-        if(!EpollClientLoginSlave::databaseBaseLogin.syncConnect(mysql_host.toUtf8().constData(),mysql_db.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData()))
+        if(!EpollClientLoginSlave::databaseBaseLogin.syncConnect(host.toUtf8().constData(),db.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData()))
         {
             std::cerr << "Connect to login database failed:" << EpollClientLoginSlave::databaseBaseLogin.errorMessage() << std::endl;
             abort();
@@ -199,14 +210,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
             if(!settings.contains(QStringLiteral("tryInterval")))
                 settings.setValue(QStringLiteral("tryInterval"),5);
-            if(!settings.contains(QStringLiteral("mysql_db")))
-                settings.setValue(QStringLiteral("mysql_db"),QStringLiteral("catchchallenger_common"));
-            if(!settings.contains(QStringLiteral("mysql_host")))
-                settings.setValue(QStringLiteral("mysql_host"),QStringLiteral("localhost"));
-            if(!settings.contains(QStringLiteral("mysql_login")))
-                settings.setValue(QStringLiteral("mysql_login"),QStringLiteral("root"));
-            if(!settings.contains(QStringLiteral("mysql_pass")))
-                settings.setValue(QStringLiteral("mysql_pass"),QStringLiteral("root"));
+            if(!settings.contains(QStringLiteral("db")))
+                settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_common"));
+            if(!settings.contains(QStringLiteral("host")))
+                settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
+            if(!settings.contains(QStringLiteral("login")))
+                settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
+            if(!settings.contains(QStringLiteral("pass")))
+                settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
             if(!settings.contains(QStringLiteral("type")))
                 settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
             if(!settings.contains(QStringLiteral("CharactersGroupForLogin")))
@@ -215,7 +226,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
         }
         settings.sync();
-        if(settings.contains(QStringLiteral("mysql_login")))
+        if(settings.contains(QStringLiteral("login")))
         {
             const QString &charactersGroup=settings.value(QStringLiteral("CharactersGroupForLogin")).toString();
             if(!CharactersGroupForLogin::hash.contains(charactersGroup))
@@ -226,10 +237,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
                 }
-                mysql_db=settings.value(QStringLiteral("mysql_db")).toString();
-                mysql_host=settings.value(QStringLiteral("mysql_host")).toString();
-                mysql_login=settings.value(QStringLiteral("mysql_login")).toString();
-                mysql_pass=settings.value(QStringLiteral("mysql_pass")).toString();
+                db=settings.value(QStringLiteral("db")).toString();
+                host=settings.value(QStringLiteral("host")).toString();
+                login=settings.value(QStringLiteral("login")).toString();
+                pass=settings.value(QStringLiteral("pass")).toString();
                 const quint8 &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
@@ -242,7 +253,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
                 }
-                CharactersGroupForLogin::list << new CharactersGroupForLogin(mysql_db.toUtf8().constData(),mysql_host.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
+                CharactersGroupForLogin::list << new CharactersGroupForLogin(db.toUtf8().constData(),host.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
                 CharactersGroupForLogin::hash[charactersGroup]=CharactersGroupForLogin::list.last();
                 CharactersGroupForLogin::list.last()->index=CharactersGroupForLogin::list.size()-1;
                 charactersGroupForLoginList << charactersGroup;
@@ -285,9 +296,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(!settings.contains(QStringLiteral("port")))
             settings.setValue(QStringLiteral("port"),9999);
         if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
+            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
         if(!settings.contains(QStringLiteral("tryInterval")))
-            settings.setValue(QStringLiteral("tryInterval"),1);
+            settings.setValue(QStringLiteral("tryInterval"),5);
         settings.sync();
         const QString &host=settings.value(QStringLiteral("host")).toString();
         const quint16 &port=settings.value(QStringLiteral("port")).toUInt(&ok);
@@ -319,15 +330,27 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         #else
         EpollClientLoginSlave::linkToMaster=new LoginLinkToMaster(linkfd);
         #endif
+        //add to epoll
+        {
+            epoll_event event;
+            event.data.ptr = EpollClientLoginSlave::linkToMaster;
+            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+            int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, linkfd, &event);
+            if(s == -1)
+            {
+                std::cerr << "epoll_ctl on socket (client) error" << std::endl;
+                abort();
+            }
+        }
         EpollClientLoginSlave::linkToMaster->httpDatapackMirror=httpDatapackMirror;
+        EpollClientLoginSlave::linkToMaster->sendProtocolHeader();
         settings.endGroup();
     }
 }
 
 EpollServerLoginSlave::~EpollServerLoginSlave()
 {
-    if(EpollClientLoginSlave::private_token!=NULL)
-        memset(EpollClientLoginSlave::private_token,0x00,TOKEN_SIZE_FOR_MASTERAUTH);
+    memset(EpollClientLoginSlave::header_magic_number_and_private_token,0x00,sizeof(EpollClientLoginSlave::header_magic_number_and_private_token));
     if(server_ip!=NULL)
     {
         delete server_ip;
@@ -408,14 +431,19 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(EpollClientLoginSlave::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(EpollClientLoginSlave::header_magic_number_and_private_token+8,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginSlave::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
+    settings.setValue(QStringLiteral("token"),QString(
+                          QByteArray(
+                              reinterpret_cast<char *>(EpollClientLoginSlave::header_magic_number_and_private_token)
+                              +8,TOKEN_SIZE_FOR_MASTERAUTH)
+                          .toHex()));
     fclose(fpRandomFile);
+    settings.sync();
 }
 
 void EpollServerLoginSlave::setSkinPair(const quint8 &internalId,const quint16 &databaseId)
@@ -540,5 +568,10 @@ void EpollServerLoginSlave::preload_profile()
         index++;
     }
 
+    if(EpollServerLoginSlave::loginProfileList.size()==0 && EpollClientLoginSlave::min_character!=EpollClientLoginSlave::max_character)
+    {
+        std::cout << "no profile loaded!" << std::endl;
+        abort();
+    }
     std::cout << EpollServerLoginSlave::loginProfileList.size() << " profile loaded" << std::endl;
 }

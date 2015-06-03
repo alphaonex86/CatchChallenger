@@ -62,7 +62,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
 void LoginLinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     Q_UNUSED(data);
-    if(!have_send_protocol_and_registred)
+    if(stat!=Stat::Logged)
     {
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
         return;
@@ -82,7 +82,7 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
     (void)queryNumber;
     (void)rawData;
     (void)size;
-    if(!have_send_protocol_and_registred)
+    if(stat!=Stat::Logged)
     {
         parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
@@ -141,6 +141,45 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
     //do the work here
     switch(mainCodeType)
     {
+        case 0x01:
+        {
+            //Protocol initialization
+            const quint8 &returnCode=data[0x00];
+            if(returnCode>=0x04 && returnCode<=0x06)
+            {
+                switch(returnCode)
+                {
+                    case 0x04:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                    break;
+                    case 0x05:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
+                    break;
+                    case 0x06:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
+                    break;
+                    default:
+                        std::cerr << "compression type wrong with main ident: 1 and queryNumber: %2, type: query_type_protocol" << queryNumber << std::endl;
+                        abort();
+                    return;
+                }
+                stat=Stat::ProtocolGood;
+                registerGameServer(CommonSettingsServer::commonSettingsServer.exportedXml);
+                return;
+            }
+            else
+            {
+                if(returnCode==0x02)
+                    std::cerr << "Protocol not supported" << std::endl;
+                else if(returnCode==0x07)
+                    std::cerr << "Token auth wrong" << std::endl;
+                else
+                    std::cerr << "Unknown error " << returnCode << std::endl;
+                abort();
+                return;
+            }
+        }
+        break;
         case 0x07:
         {
             if(size<1)
@@ -189,6 +228,10 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                         index++;
                     }
                 }
+                return;
+                case 0x03:
+                    std::cerr << "charactersGroup not found" << settings->value(QLatin1Literal("charactersGroup")).toString().toStdString() << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
                 break;
                 default:
                     std::cerr << "reply return code error (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -196,7 +239,7 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                 break;
             }
 
-            have_send_protocol_and_registred=true;
+            stat=Stat::Logged;
         }
         break;
         default:
@@ -210,7 +253,7 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
 
 void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
-    if(!have_send_protocol_and_registred)
+    if(stat!=Stat::Logged)
     {
         std::cerr << "parseFullReplyData() reply to unknown query: mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
         abort();

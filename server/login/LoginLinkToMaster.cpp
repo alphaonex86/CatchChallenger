@@ -27,8 +27,7 @@ LoginLinkToMaster::LoginLinkToMaster(
             ,PacketModeTransmission_Client
             #endif
             ),
-        stat(Stat::None),
-        have_send_protocol_and_registred(false)
+        stat(Stat::None)
 {
     queryNumberList.resize(30);
     unsigned int index=0;
@@ -169,4 +168,14 @@ bool LoginLinkToMaster::trySelectCharacter(void * const client,const quint8 &cli
 
     queryNumberList.pop_back();
     return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::selectCharaterRequest),sizeof(EpollClientLoginSlave::selectCharaterRequest));
+}
+
+void LoginLinkToMaster::sendProtocolHeader()
+{
+    packOutcommingQuery(0x01,
+                        queryNumberList.back(),
+                        reinterpret_cast<char *>(EpollClientLoginSlave::header_magic_number_and_private_token),
+                        sizeof(EpollClientLoginSlave::header_magic_number_and_private_token)
+                        );
+    queryNumberList.pop_back();
 }

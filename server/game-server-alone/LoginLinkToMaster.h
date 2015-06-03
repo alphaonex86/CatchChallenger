@@ -3,6 +3,7 @@
 
 #include "../../general/base/ProtocolParsing.h"
 #include <vector>
+#include <random>
 #include <QSettings>
 
 namespace CatchChallenger {
@@ -39,6 +40,7 @@ public:
     static char protocolReplyNoMoreToken[4];
     static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static char sendDisconnectedPlayer[2+4];
+    static unsigned char header_magic_number_and_private_token[8+TOKEN_SIZE_FOR_MASTERAUTH];
 
     static LoginLinkToMaster *loginLinkToMaster;
     std::vector<quint8> queryNumberList;
@@ -46,7 +48,10 @@ public:
     BaseClassSwitch::Type getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
-    bool registerGameServer(QSettings * const settings,const QString &exportedXml);
+    bool registerGameServer(const QString &exportedXml);
+    void generateToken();
+    void sendProtocolHeader();
+    bool setSettings(QSettings * const settings);
     void characterDisconnected(const quint32 &characterId);
     void askMoreMaxMonsterId();
     void askMoreMaxClanId();
@@ -70,8 +75,8 @@ protected:
 
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
 private:
-    bool have_send_protocol_and_registred;
     QSettings * settings;
+    std::mt19937 rng;
 };
 }
 

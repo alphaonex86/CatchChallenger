@@ -13,7 +13,7 @@
 using namespace CatchChallenger;
 
 BaseServerMasterLoadDictionary::BaseServerMasterLoadDictionary() :
-    databaseBaseLogin(NULL)
+    databaseBaseBase(NULL)
 {
 }
 
@@ -23,14 +23,14 @@ BaseServerMasterLoadDictionary::~BaseServerMasterLoadDictionary()
 
 void BaseServerMasterLoadDictionary::load(DatabaseBase * const databaseBase)
 {
-    this->databaseBaseLogin=databaseBase;
+    this->databaseBaseBase=databaseBase;
     preload_dictionary_allow();
 }
 
 void BaseServerMasterLoadDictionary::preload_dictionary_allow()
 {
     QString queryText;
-    switch(databaseBaseLogin->databaseType())
+    switch(databaseBaseBase->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -43,9 +43,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow()
             queryText=QStringLiteral("SELECT id,allow FROM dictionary_allow ORDER BY allow");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_allow_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_allow_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
@@ -61,11 +61,11 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
     bool haveAllowClan=false;
     QString allowClan(QStringLiteral("clan"));
     int lastId=0;
-    while(databaseBaseLogin->next())
+    while(databaseBaseBase->next())
     {
         bool ok;
-        lastId=QString(databaseBaseLogin->value(0)).toUInt(&ok);
-        const QString &allow=QString(databaseBaseLogin->value(1));
+        lastId=QString(databaseBaseBase->value(0)).toUInt(&ok);
+        const QString &allow=QString(databaseBaseBase->value(1));
         if(dictionary_allow_database_to_internal.size()<=lastId)
         {
             int index=dictionary_allow_database_to_internal.size();
@@ -84,12 +84,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
         else
             dictionary_allow_database_to_internal << ActionAllow_Nothing;
     }
-    databaseBaseLogin->clear();
+    databaseBaseBase->clear();
     if(!haveAllowClan)
     {
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         lastId++;
         QString queryText;
-        switch(databaseBaseLogin->databaseType())
+        switch(databaseBaseBase->databaseType())
         {
             default:
             case DatabaseBase::Type::Mysql:
@@ -102,15 +103,19 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
                 queryText=QStringLiteral("INSERT INTO dictionary_allow(id,allow) VALUES(%1,'clan');").arg(lastId);
             break;
         }
-        if(!databaseBaseLogin->asyncWrite(queryText.toLatin1()))
+        if(!databaseBaseBase->asyncWrite(queryText.toLatin1()))
         {
-            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+            qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
             abort();//stop because can't resolv the name
         }
         while(dictionary_allow_database_to_internal.size()<lastId)
             dictionary_allow_database_to_internal << ActionAllow_Nothing;
         dictionary_allow_database_to_internal << ActionAllow_Clan;
         dictionary_allow_internal_to_database[ActionAllow_Clan]=lastId;
+        #else
+        qDebug() << QStringLiteral("Dictionary allow mismatch (abort)");
+        abort();
+        #endif
     }
     preload_dictionary_reputation();
 }
@@ -118,7 +123,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
 void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
 {
     QString queryText;
-    switch(databaseBaseLogin->databaseType())
+    switch(databaseBaseBase->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -131,9 +136,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
             queryText=QStringLiteral("SELECT id,reputation FROM dictionary_reputation ORDER BY reputation");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_reputation_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_reputation_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
@@ -156,11 +161,11 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     }
     QSet<QString> foundReputation;
     int lastId=0;
-    while(databaseBaseLogin->next())
+    while(databaseBaseBase->next())
     {
         bool ok;
-        lastId=QString(databaseBaseLogin->value(0)).toUInt(&ok);
-        const QString &reputation=QString(databaseBaseLogin->value(1));
+        lastId=QString(databaseBaseBase->value(0)).toUInt(&ok);
+        const QString &reputation=QString(databaseBaseBase->value(1));
         if(dictionary_reputation_database_to_internal.size()<=lastId)
         {
             int index=dictionary_reputation_database_to_internal.size();
@@ -177,16 +182,17 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             CommonDatapack::commonDatapack.reputation[reputationResolution.value(reputation)].reverse_database_id=lastId;
         }
     }
-    databaseBaseLogin->clear();
+    databaseBaseBase->clear();
     int index=0;
     while(index<CommonDatapack::commonDatapack.reputation.size())
     {
         const QString &reputation=CommonDatapack::commonDatapack.reputation.at(index).name;
         if(!foundReputation.contains(reputation))
         {
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             lastId++;
             QString queryText;
-            switch(databaseBaseLogin->databaseType())
+            switch(databaseBaseBase->databaseType())
             {
                 default:
                 case DatabaseBase::Type::Mysql:
@@ -199,15 +205,19 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
                     queryText=QStringLiteral("INSERT INTO dictionary_reputation(id,reputation) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
             }
-            if(!databaseBaseLogin->asyncWrite(queryText.toLatin1()))
+            if(!databaseBaseBase->asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
                 abort();//stop because can't resolv the name
             }
             while(dictionary_reputation_database_to_internal.size()<=lastId)
                 dictionary_reputation_database_to_internal << -1;
             dictionary_reputation_database_to_internal[lastId]=index;
             CommonDatapack::commonDatapack.reputation[index].reverse_database_id=lastId;
+            #else
+            qDebug() << QStringLiteral("Dictionary reputation mismatch (abort)");
+            abort();
+            #endif
         }
         index++;
     }
@@ -217,7 +227,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
 void BaseServerMasterLoadDictionary::preload_dictionary_skin()
 {
     QString queryText;
-    switch(databaseBaseLogin->databaseType())
+    switch(databaseBaseBase->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -230,9 +240,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin()
             queryText=QStringLiteral("SELECT id,skin FROM dictionary_skin ORDER BY skin");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_skin_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_skin_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
@@ -254,11 +264,11 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     }
     QSet<QString> foundSkin;
     int lastId=0;
-    while(databaseBaseLogin->next())
+    while(databaseBaseBase->next())
     {
         bool ok;
-        lastId=QString(databaseBaseLogin->value(0)).toUInt(&ok);
-        const QString &skin=QString(databaseBaseLogin->value(1));
+        lastId=QString(databaseBaseBase->value(0)).toUInt(&ok);
+        const QString &skin=QString(databaseBaseBase->value(1));
         if(dictionary_skin_database_to_internal.size()<=lastId)
         {
             int index=dictionary_skin_database_to_internal.size();
@@ -276,16 +286,17 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             foundSkin << skin;
         }
     }
-    databaseBaseLogin->clear();
+    databaseBaseBase->clear();
     QHashIterator<QString,quint8> i(BaseServerMasterSendDatapack::skinList);
     while (i.hasNext()) {
         i.next();
         const QString &skin=i.key();
         if(!foundSkin.contains(skin))
         {
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             lastId++;
             QString queryText;
-            switch(databaseBaseLogin->databaseType())
+            switch(databaseBaseBase->databaseType())
             {
                 default:
                 case DatabaseBase::Type::Mysql:
@@ -298,15 +309,19 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
                     queryText=QStringLiteral("INSERT INTO dictionary_skin(id,skin) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
             }
-            if(!databaseBaseLogin->asyncWrite(queryText.toLatin1()))
+            if(!databaseBaseBase->asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
                 abort();//stop because can't resolv the name
             }
             while(dictionary_skin_database_to_internal.size()<lastId)
                 dictionary_skin_database_to_internal << 0;
             dictionary_skin_database_to_internal << i.value();
             dictionary_skin_internal_to_database[i.value()]=lastId;
+            #else
+            qDebug() << QStringLiteral("Dictionary skin mismatch (abort)");
+            abort();
+            #endif
         }
     }
     preload_dictionary_starter();
@@ -315,7 +330,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
 void BaseServerMasterLoadDictionary::preload_dictionary_starter()
 {
     QString queryText;
-    switch(databaseBaseLogin->databaseType())
+    switch(databaseBaseBase->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
@@ -328,9 +343,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter()
             queryText=QStringLiteral("SELECT id,starter FROM dictionary_starter ORDER BY starter");
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_starter_static)==NULL)
+    if(databaseBaseBase->asyncRead(queryText.toLatin1(),this,&BaseServerMasterLoadDictionary::preload_dictionary_starter_static)==NULL)
     {
-        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
         abort();//stop because can't resolv the name
     }
 }
@@ -362,11 +377,11 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     }
     QSet<QString> foundstarter;
     int lastId=0;
-    while(databaseBaseLogin->next())
+    while(databaseBaseBase->next())
     {
         bool ok;
-        lastId=QString(databaseBaseLogin->value(0)).toUInt(&ok);
-        const QString &starter=QString(databaseBaseLogin->value(1));
+        lastId=QString(databaseBaseBase->value(0)).toUInt(&ok);
+        const QString &starter=QString(databaseBaseBase->value(1));
         if(dictionary_starter_database_to_internal.size()<=lastId)
         {
             int index=dictionary_starter_database_to_internal.size();
@@ -384,16 +399,17 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             foundstarter << CommonDatapack::commonDatapack.profileList.at(internalValue).id;
         }
     }
-    databaseBaseLogin->clear();
+    databaseBaseBase->clear();
     int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
         if(!foundstarter.contains(profile.id))
         {
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             lastId++;
             QString queryText;
-            switch(databaseBaseLogin->databaseType())
+            switch(databaseBaseBase->databaseType())
             {
                 default:
                 case DatabaseBase::Type::Mysql:
@@ -406,15 +422,19 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
                     queryText=QStringLiteral("INSERT INTO dictionary_starter(id,starter) VALUES(%1,'%2');").arg(lastId).arg(profile.id);
                 break;
             }
-            if(!databaseBaseLogin->asyncWrite(queryText.toLatin1()))
+            if(!databaseBaseBase->asyncWrite(queryText.toLatin1()))
             {
-                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin->errorMessage());
+                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseBase->errorMessage());
                 abort();//stop because can't resolv the name
             }
             while(dictionary_starter_database_to_internal.size()<lastId)
                 dictionary_starter_database_to_internal << 0;
             dictionary_starter_database_to_internal << index;
             dictionary_starter_internal_to_database[index]=lastId;
+            #else
+            qDebug() << QStringLiteral("Dictionary starter mismatch (abort)");
+            abort();
+            #endif
         }
         index++;
     }
@@ -430,5 +450,5 @@ void BaseServerMasterLoadDictionary::unload()
     dictionary_reputation_database_to_internal.clear();
     dictionary_allow_database_to_internal.clear();
     dictionary_allow_internal_to_database.clear();
-    databaseBaseLogin=NULL;
+    databaseBaseBase=NULL;
 }

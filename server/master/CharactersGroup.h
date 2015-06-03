@@ -36,6 +36,7 @@ public:
                                 const quint16 &currentPlayer,const quint16 &maxPlayer);
     void removeGameServerUniqueKey(void * const link);
     bool containsGameServerUniqueKey(const quint32 &serverUniqueKey) const;
+    void broadcastGameServerChange();
 
     quint32 maxClanId;
     quint32 maxCharacterId;
