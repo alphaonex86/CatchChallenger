@@ -41,6 +41,7 @@ public:
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     bool trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
+    void sendProtocolHeader();
 protected:
     void disconnectClient();
     void errorParsingLayer(const QString &error);
@@ -60,8 +61,6 @@ protected:
     void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
 
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
-private:
-    bool have_send_protocol_and_registred;
 };
 }
 

@@ -29,6 +29,7 @@ private:
     int rawServerListForC211Size;
 
     CatchChallenger::DatabaseBase *databaseBaseLogin;
+    CatchChallenger::DatabaseBase *databaseBaseBase;
 
     quint32 character_delete_time;
     quint8 min_character;

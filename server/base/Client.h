@@ -358,7 +358,9 @@ private:
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();
     void sendCompressedFileContent();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void dbQueryWriteLogin(const QString &queryText);
+    #endif
     void dbQueryWriteCommon(const QString &queryText);
     void dbQueryWriteServer(const QString &queryText);
     //character

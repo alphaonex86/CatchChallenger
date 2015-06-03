@@ -1790,6 +1790,7 @@ bool Client::sendFile(const QString &fileName)
         return false;
 }
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::dbQueryWriteLogin(const QString &queryText)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1809,6 +1810,7 @@ void Client::dbQueryWriteLogin(const QString &queryText)
     #endif
     GlobalServerData::serverPrivateVariables.db_login->asyncWrite(queryText.toUtf8());
 }
+#endif
 
 void Client::dbQueryWriteCommon(const QString &queryText)
 {

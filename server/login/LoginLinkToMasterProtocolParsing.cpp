@@ -13,12 +13,6 @@ void LoginLinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const 
     Q_UNUSED(data);
     switch(mainCodeType)
     {
-        case 0x03:
-        break;
-        case 0x04:
-        break;
-        case 0x05:
-        break;
         default:
             parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
         break;
@@ -98,6 +92,11 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     memset(EpollClientLoginSlave::serverPartialServerList,0x00,sizeof(EpollClientLoginSlave::serverPartialServerList));
                     int rawServerListSize=0x01;
 
+                    if(size<1)
+                    {
+                        std::cerr << "C210 missing first bytes (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
                     const unsigned short int &serverListSize=rawData[0x00];
                     int pos;
                     int serverListIndex=0;
@@ -105,9 +104,9 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
 
                     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
                     {
-                        EpollClientLoginSlave::serverPartialServerList[0x00]=0x02;//proxy mode
                         EpollClientLoginSlave::serverPartialServerList[0x01]=serverListSize;
-                        pos=0x02;
+                        /// \warning not linked with above
+                        pos=0x01;
                         while(serverListIndex<serverListSize)
                         {
                             QString charactersGroupString;
@@ -230,9 +229,9 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     }
                     else
                     {
-                        EpollClientLoginSlave::serverPartialServerList[0x00]=0x01;//Reconnect mode
                         EpollClientLoginSlave::serverPartialServerList[0x01]=serverListSize;
-                        pos=0x02;
+                        /// \warning not linked with above
+                        pos=0x01;
                         while(serverListIndex<serverListSize)
                         {
                             QString charactersGroupString;
@@ -355,18 +354,22 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                         }
                     }
                     EpollClientLoginSlave::serverPartialServerListSize=rawServerListSize;
-                    if((size-pos)<static_cast<unsigned int>(serverListSize*(sizeof(quint16)+sizeof(quint16))))
+                    if(serverListSize>0)
                     {
-                        std::cerr << "C210 co player list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                        abort();
+                        if((size-pos)<static_cast<unsigned int>(serverListSize*(sizeof(quint16)+sizeof(quint16))))
+                        {
+                            std::cerr << "C210 co player list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            abort();
+                        }
+                        memcpy(EpollClientLoginSlave::serverPartialServerList,rawData+pos,serverListSize*(sizeof(quint16)+sizeof(quint16)));
+                        pos+=serverListSize*(sizeof(quint16)+sizeof(quint16));
+                        rawServerListSize+=serverListSize*(sizeof(quint16)+sizeof(quint16));
                     }
-                    memcpy(EpollClientLoginSlave::serverPartialServerList,rawData+pos,serverListSize*(sizeof(quint16)+sizeof(quint16)));
-                    pos+=serverListSize*(sizeof(quint16)+sizeof(quint16));
-                    rawServerListSize+=serverListSize*(sizeof(quint16)+sizeof(quint16));
 
                     if((size-pos)!=0)
                     {
                         std::cerr << "C210 remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cerr << "Data: " << QString(QByteArray(rawData,size).toHex()).toStdString() << std::endl;
                         abort();
                     }
                     EpollClientLoginSlave::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
@@ -471,6 +474,11 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                             abort();
                         }
                         const quint8 &profileListSize=rawData[cursor];
+                        if(profileListSize==0 && EpollClientLoginSlave::min_character!=EpollClientLoginSlave::max_character)
+                        {
+                            std::cout << "no profile loaded!" << std::endl;
+                            abort();
+                        }
                         cursor+=1;
                         quint8 profileListIndex=0;
                         while(profileListIndex<profileListSize)
@@ -717,6 +725,9 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     }
 
                     EpollServerLoginSlave::epollServerLoginSlave->compose04Reply();
+
+                    if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
+                        abort();
                 }
                 break;
                 default:
@@ -736,7 +747,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
 void LoginLinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     Q_UNUSED(data);
-    if(!have_send_protocol_and_registred)
+    if(stat!=Stat::Logged)
     {
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
         return;
@@ -756,7 +767,7 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
     (void)queryNumber;
     (void)rawData;
     (void)size;
-    if(!have_send_protocol_and_registred)
+    if(stat!=Stat::Logged)
     {
         parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
@@ -775,11 +786,66 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
 void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
+    if(stat!=Stat::Logged)
+    {
+        if(stat==Stat::None && mainCodeType==0x01)
+        {}
+        else if(stat==Stat::ProtocolGood && mainCodeType==0x08)
+        {}
+        else
+        {
+            parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+            return;
+        }
+    }
     Q_UNUSED(data);
     Q_UNUSED(size);
     //do the work here
     switch(mainCodeType)
     {
+        case 0x01:
+        {
+            //Protocol initialization
+            const quint8 &returnCode=data[0x00];
+            if(returnCode>=0x04 && returnCode<=0x06)
+            {
+                switch(returnCode)
+                {
+                    case 0x04:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                    break;
+                    case 0x05:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
+                    break;
+                    case 0x06:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
+                    break;
+                    default:
+                        std::cerr << "compression type wrong with main ident: 1 and queryNumber: %2, type: query_type_protocol" << queryNumber << std::endl;
+                        abort();
+                    return;
+                }
+                stat=Stat::ProtocolGood;
+                //send the query 0x08
+                {
+                    packOutcommingQuery(0x08,queryNumberList.back(),NULL,0);
+                    queryNumberList.pop_back();
+                }
+                return;
+            }
+            else
+            {
+                if(returnCode==0x02)
+                    std::cerr << "Protocol not supported" << std::endl;
+                else if(returnCode==0x07)
+                    std::cerr << "Token auth wrong" << std::endl;
+                else
+                    std::cerr << "Unknown error " << returnCode << std::endl;
+                abort();
+                return;
+            }
+        }
+        break;
         case 0x08:
         {
             unsigned int pos=0;
@@ -828,9 +894,9 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                     groupIndex++;
                 }
             }
-            have_send_protocol_and_registred=true;
+            stat=Stat::Logged;
         }
-        break;
+        return;
         default:
             parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
             return;
@@ -842,14 +908,14 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
 
 void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
-    if(!have_send_protocol_and_registred)
+    queryNumberList.push_back(queryNumber);
+    if(stat!=Stat::Logged)
     {
-        std::cerr << "parseFullReplyData() reply to unknown query: mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
-        abort();
+        parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        return;
     }
     (void)data;
     (void)size;
-    queryNumberList.push_back(queryNumber);
     //do the work here
     switch(mainCodeType)
     {
@@ -877,7 +943,7 @@ void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quin
                     else
                         std::cerr << "parseFullReplyData() !selectCharacterClients.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;
                 }
-                break;
+                return;
                 default:
                     parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType));
                     return;

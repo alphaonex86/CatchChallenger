@@ -52,12 +52,12 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
+    ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::MasterServer);
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
     EpollServerLoginMaster::epollServerLoginMaster=new EpollServerLoginMaster();
 
-    ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::MasterServer);
     #ifndef SERVERNOBUFFER
     #ifdef SERVERSSL
     EpollSslClient::staticInit();

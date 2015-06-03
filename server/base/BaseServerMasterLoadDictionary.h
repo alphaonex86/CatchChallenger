@@ -17,7 +17,7 @@ public:
 
     void load(CatchChallenger::DatabaseBase * const databaseBase);
 public:
-    DatabaseBase *databaseBaseLogin;
+    DatabaseBase *databaseBaseBase;
 
     QList<ActionAllow> dictionary_allow_database_to_internal;
     QList<quint8> dictionary_allow_internal_to_database;

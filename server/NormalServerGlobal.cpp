@@ -109,20 +109,33 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
     if(!settings->contains(QLatin1Literal("exportedXml")))
         settings->setValue(QLatin1Literal("exportedXml"),QString());
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    settings->beginGroup(QStringLiteral("master"));
     if(!settings->contains(QLatin1Literal("external-server-ip")))
         settings->setValue(QLatin1Literal("external-server-ip"),settings->value(QLatin1Literal("server-ip")).toString());
     if(!settings->contains(QLatin1Literal("external-server-port")))
         settings->setValue(QLatin1Literal("external-server-port"),settings->value(QLatin1Literal("server-port")).toString());
     {
-        std::default_random_engine generator;
-        std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
+        std::mt19937 rng;
+        rng.seed(time(0));
         if(!settings->contains(QLatin1Literal("uniqueKey")))
-            settings->setValue(QLatin1Literal("uniqueKey"),htole32(distribution(generator)));
+            settings->setValue(QLatin1Literal("uniqueKey"),static_cast<unsigned int>(rng()));
         if(!settings->contains(QLatin1Literal("charactersGroup")))
-            settings->setValue(QLatin1Literal("charactersGroup"),QStringLiteral("PutHereTheInfoLike-").arg(distribution(generator)));
+            settings->setValue(QLatin1Literal("charactersGroup"),QStringLiteral("PutHereTheInfoLike-%1").arg(rng()));
     }
     if(!settings->contains(QLatin1Literal("logicalGroup")))
         settings->setValue(QLatin1Literal("logicalGroup"),QString());
+
+    if(!settings->contains(QStringLiteral("host")))
+        settings->setValue(QStringLiteral("host"),QStringLiteral("localhost"));
+    if(!settings->contains(QStringLiteral("port")))
+        settings->setValue(QStringLiteral("port"),9999);
+    if(!settings->contains(QStringLiteral("considerDownAfterNumberOfTry")))
+        settings->setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
+    if(!settings->contains(QStringLiteral("tryInterval")))
+        settings->setValue(QStringLiteral("tryInterval"),5);
+    if(!settings->contains(QStringLiteral("token")))
+        settings->setValue(QStringLiteral("token"),QString());
+    settings->endGroup();
     #endif
 
     #ifdef Q_OS_LINUX
@@ -236,6 +249,7 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("positionTeleportSync"),true);
     settings->endGroup();
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup(QLatin1Literal("db-login"));
     if(!settings->contains(QLatin1Literal("type")))
         settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
@@ -247,6 +261,24 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
     if(!settings->contains(QLatin1Literal("db")))
         settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_login"));
+    if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
+        settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
+    if(!settings->contains(QLatin1Literal("tryInterval")))
+        settings->setValue(QLatin1Literal("tryInterval"),5);
+    settings->endGroup();
+    #endif
+
+    settings->beginGroup(QLatin1Literal("db-base"));
+    if(!settings->contains(QLatin1Literal("type")))
+        settings->setValue(QLatin1Literal("type"),QLatin1Literal("sqlite"));
+    if(!settings->contains(QLatin1Literal("host")))
+        settings->setValue(QLatin1Literal("host"),QLatin1Literal("localhost"));
+    if(!settings->contains(QLatin1Literal("login")))
+        settings->setValue(QLatin1Literal("login"),QLatin1Literal("catchchallenger-base"));
+    if(!settings->contains(QLatin1Literal("pass")))
+        settings->setValue(QLatin1Literal("pass"),QLatin1Literal("catchchallenger-pass"));
+    if(!settings->contains(QLatin1Literal("db")))
+        settings->setValue(QLatin1Literal("db"),QLatin1Literal("catchchallenger_base"));
     if(!settings->contains(QLatin1Literal("considerDownAfterNumberOfTry")))
         settings->setValue(QLatin1Literal("considerDownAfterNumberOfTry"),3);
     if(!settings->contains(QLatin1Literal("tryInterval")))

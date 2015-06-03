@@ -34,6 +34,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     rawServerListForC211(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
     rawServerListForC211Size(0),
     databaseBaseLogin(NULL),
+    databaseBaseBase(NULL),
     character_delete_time(3600),
     min_character(0),
     max_character(3),
@@ -41,7 +42,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
 {
     {
         //empty buffer
-        memset(EpollClientLoginMaster::replyToRegisterLoginServer+2,0x00,sizeof(EpollClientLoginMaster::replyToRegisterLoginServer)-2);
+        memset(EpollClientLoginMaster::replyToRegisterLoginServer,0x00,sizeof(EpollClientLoginMaster::replyToRegisterLoginServer));
         memset(EpollClientLoginMaster::serverServerList,0x00,sizeof(EpollClientLoginMaster::serverServerList));
         memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
         memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
@@ -80,6 +81,12 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         EpollPostgresql *databaseBasePg=static_cast<EpollPostgresql *>(databaseBaseLogin);
         delete databaseBasePg;
         databaseBaseLogin=NULL;
+    }
+    if(databaseBaseBase!=NULL)
+    {
+        EpollPostgresql *databaseBasePg=static_cast<EpollPostgresql *>(databaseBaseBase);
+        delete databaseBasePg;
+        databaseBaseBase=NULL;
     }
     if(rawServerListForC211!=NULL)
     {
@@ -169,80 +176,149 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
 
 void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
 {
-    QString mysql_db;
-    QString mysql_host;
-    QString mysql_login;
-    QString mysql_pass;
-    QString type;
-
-    settings.beginGroup(QStringLiteral("db-login"));
-    if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
-        settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
-    if(!settings.contains(QStringLiteral("tryInterval")))
-        settings.setValue(QStringLiteral("tryInterval"),1);
-    if(!settings.contains(QStringLiteral("mysql_db")))
-        settings.setValue(QStringLiteral("mysql_db"),QStringLiteral("catchchallenger_login"));
-    if(!settings.contains(QStringLiteral("mysql_host")))
-        settings.setValue(QStringLiteral("mysql_host"),QStringLiteral("localhost"));
-    if(!settings.contains(QStringLiteral("mysql_login")))
-        settings.setValue(QStringLiteral("mysql_login"),QStringLiteral("root"));
-    if(!settings.contains(QStringLiteral("mysql_pass")))
-        settings.setValue(QStringLiteral("mysql_pass"),QStringLiteral("root"));
-    if(!settings.contains(QStringLiteral("type")))
-        settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
-    if(!settings.contains(QStringLiteral("comment")))
-        settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
-    settings.sync();
-
-    bool ok;
-    //to load the dictionary
-    {
-        databaseBaseLogin=new EpollPostgresql();
-        //here to have by login server an auth
-
-        databaseBaseLogin->considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
-        if(databaseBaseLogin->considerDownAfterNumberOfTry==0 || !ok)
-        {
-            std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
-            abort();
-        }
-        mysql_db=settings.value(QStringLiteral("mysql_db")).toString();
-        mysql_host=settings.value(QStringLiteral("mysql_host")).toString();
-        mysql_login=settings.value(QStringLiteral("mysql_login")).toString();
-        mysql_pass=settings.value(QStringLiteral("mysql_pass")).toString();
-        databaseBaseLogin->tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
-        if(databaseBaseLogin->tryInterval==0 || !ok)
-        {
-            std::cerr << "tryInterval==0 (abort)" << std::endl;
-            abort();
-        }
-        type=settings.value(QStringLiteral("type")).toString();
-        if(type!=QStringLiteral("postgresql"))
-        {
-            std::cerr << "only db type postgresql supported (abort)" << std::endl;
-            abort();
-        }
-        if(!databaseBaseLogin->syncConnect(mysql_host.toUtf8().constData(),mysql_db.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData()))
-        {
-            std::cerr << "Connect to login database failed:" << databaseBaseLogin->errorMessage() << std::endl;
-            abort();
-        }
-    }
-
     if(EpollClientLoginMaster::automatic_account_creation)
     {
+        QString db;
+        QString host;
+        QString login;
+        QString pass;
+        QString type;
+
+        settings.beginGroup(QStringLiteral("db-login"));
+        if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
+            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
+        if(!settings.contains(QStringLiteral("tryInterval")))
+            settings.setValue(QStringLiteral("tryInterval"),1);
+        if(!settings.contains(QStringLiteral("db")))
+            settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_login"));
+        if(!settings.contains(QStringLiteral("host")))
+            settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
+        if(!settings.contains(QStringLiteral("login")))
+            settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
+        if(!settings.contains(QStringLiteral("pass")))
+            settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
+        if(!settings.contains(QStringLiteral("type")))
+            settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
+        if(!settings.contains(QStringLiteral("comment")))
+            settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
+        settings.sync();
+
+        bool ok;
+        //to load the dictionary
+        {
+            databaseBaseLogin=new EpollPostgresql();
+            //here to have by login server an auth
+
+            databaseBaseLogin->considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+            if(databaseBaseLogin->considerDownAfterNumberOfTry==0 || !ok)
+            {
+                std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
+                abort();
+            }
+            db=settings.value(QStringLiteral("db")).toString();
+            host=settings.value(QStringLiteral("host")).toString();
+            login=settings.value(QStringLiteral("login")).toString();
+            pass=settings.value(QStringLiteral("pass")).toString();
+            databaseBaseLogin->tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+            if(databaseBaseLogin->tryInterval==0 || !ok)
+            {
+                std::cerr << "tryInterval==0 (abort)" << std::endl;
+                abort();
+            }
+            type=settings.value(QStringLiteral("type")).toString();
+            if(type!=QStringLiteral("postgresql"))
+            {
+                std::cerr << "only db type postgresql supported (abort)" << std::endl;
+                abort();
+            }
+            if(!databaseBaseLogin->syncConnect(host.toUtf8().constData(),db.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData()))
+            {
+                std::cerr << "Connect to login database failed:" << databaseBaseLogin->errorMessage() << std::endl;
+                abort();
+            }
+        }
+
         CharactersGroup::serverWaitedToBeReady++;
         load_account_max_id();
+        settings.endGroup();
     }
-    settings.endGroup();
+    else
+    {
+        EpollClientLoginMaster::maxAccountId=1;
+        databaseBaseLogin=NULL;
+    }
+    {
+        QString db;
+        QString host;
+        QString login;
+        QString pass;
+        QString type;
+
+        settings.beginGroup(QStringLiteral("db-base"));
+        if(!settings.contains(QStringLiteral("considerDownAfterNumberOfTry")))
+            settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),30);
+        if(!settings.contains(QStringLiteral("tryInterval")))
+            settings.setValue(QStringLiteral("tryInterval"),1);
+        if(!settings.contains(QStringLiteral("db")))
+            settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_base"));
+        if(!settings.contains(QStringLiteral("host")))
+            settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
+        if(!settings.contains(QStringLiteral("login")))
+            settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
+        if(!settings.contains(QStringLiteral("pass")))
+            settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
+        if(!settings.contains(QStringLiteral("type")))
+            settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
+        if(!settings.contains(QStringLiteral("comment")))
+            settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxAccountId"));
+        settings.sync();
+
+        bool ok;
+        //to load the dictionary
+        {
+            databaseBaseBase=new EpollPostgresql();
+            //here to have by login server an auth
+
+            databaseBaseBase->considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
+            if(databaseBaseBase->considerDownAfterNumberOfTry==0 || !ok)
+            {
+                std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
+                abort();
+            }
+            db=settings.value(QStringLiteral("db")).toString();
+            host=settings.value(QStringLiteral("host")).toString();
+            login=settings.value(QStringLiteral("login")).toString();
+            pass=settings.value(QStringLiteral("pass")).toString();
+            databaseBaseBase->tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
+            if(databaseBaseBase->tryInterval==0 || !ok)
+            {
+                std::cerr << "tryInterval==0 (abort)" << std::endl;
+                abort();
+            }
+            type=settings.value(QStringLiteral("type")).toString();
+            if(type!=QStringLiteral("postgresql"))
+            {
+                std::cerr << "only db type postgresql supported (abort)" << std::endl;
+                abort();
+            }
+            if(!databaseBaseBase->syncConnect(host.toUtf8().constData(),db.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData()))
+            {
+                std::cerr << "Connect to login database failed:" << databaseBaseBase->errorMessage() << std::endl;
+                abort();
+            }
+        }
+
+        CharactersGroup::serverWaitedToBeReady++;
+        settings.endGroup();
+    }
 }
 
 QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
 {
-    QString mysql_db;
-    QString mysql_host;
-    QString mysql_login;
-    QString mysql_pass;
+    QString db;
+    QString host;
+    QString login;
+    QString pass;
     QString type;
     bool ok;
 
@@ -258,14 +334,14 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
                 settings.setValue(QStringLiteral("considerDownAfterNumberOfTry"),3);
             if(!settings.contains(QStringLiteral("tryInterval")))
                 settings.setValue(QStringLiteral("tryInterval"),5);
-            if(!settings.contains(QStringLiteral("mysql_db")))
-                settings.setValue(QStringLiteral("mysql_db"),QStringLiteral("catchchallenger_common"));
-            if(!settings.contains(QStringLiteral("mysql_host")))
-                settings.setValue(QStringLiteral("mysql_host"),QStringLiteral("localhost"));
-            if(!settings.contains(QStringLiteral("mysql_login")))
-                settings.setValue(QStringLiteral("mysql_login"),QStringLiteral("root"));
-            if(!settings.contains(QStringLiteral("mysql_pass")))
-                settings.setValue(QStringLiteral("mysql_pass"),QStringLiteral("root"));
+            if(!settings.contains(QStringLiteral("db")))
+                settings.setValue(QStringLiteral("db"),QStringLiteral("catchchallenger_common"));
+            if(!settings.contains(QStringLiteral("host")))
+                settings.setValue(QStringLiteral("host"),QStringLiteral("localhost"));
+            if(!settings.contains(QStringLiteral("login")))
+                settings.setValue(QStringLiteral("login"),QStringLiteral("root"));
+            if(!settings.contains(QStringLiteral("pass")))
+                settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
             if(!settings.contains(QStringLiteral("type")))
                 settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
             if(!settings.contains(QStringLiteral("charactersGroup")))
@@ -274,7 +350,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
                 settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
         }
         settings.sync();
-        if(settings.contains(QStringLiteral("mysql_login")))
+        if(settings.contains(QStringLiteral("login")))
         {
             const QString &charactersGroup=settings.value(QStringLiteral("charactersGroup")).toString();
             if(!CharactersGroup::hash.contains(charactersGroup))
@@ -286,10 +362,10 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
                 }
-                mysql_db=settings.value(QStringLiteral("mysql_db")).toString();
-                mysql_host=settings.value(QStringLiteral("mysql_host")).toString();
-                mysql_login=settings.value(QStringLiteral("mysql_login")).toString();
-                mysql_pass=settings.value(QStringLiteral("mysql_pass")).toString();
+                db=settings.value(QStringLiteral("db")).toString();
+                host=settings.value(QStringLiteral("host")).toString();
+                login=settings.value(QStringLiteral("login")).toString();
+                pass=settings.value(QStringLiteral("pass")).toString();
                 const quint8 &tryInterval=settings.value(QStringLiteral("tryInterval")).toUInt(&ok);
                 if(tryInterval==0 || !ok)
                 {
@@ -302,7 +378,7 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
                 }
-                CharactersGroup::hash[charactersGroup]=new CharactersGroup(mysql_db.toUtf8().constData(),mysql_host.toUtf8().constData(),mysql_login.toUtf8().constData(),mysql_pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval,charactersGroup);
+                CharactersGroup::hash[charactersGroup]=new CharactersGroup(db.toUtf8().constData(),host.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval,charactersGroup);
                 charactersGroupList << charactersGroup;
             }
             else
@@ -422,7 +498,7 @@ void EpollServerLoginMaster::doTheServerList()
     memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));
     int rawServerListSize=0x00;
 
-    const int &serverListSize=0x01;
+    const int &serverListSize=EpollClientLoginMaster::gameServers.size();
     EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=serverListSize;
     rawServerListSize+=1;
     int serverListIndex=0;
@@ -430,12 +506,6 @@ void EpollServerLoginMaster::doTheServerList()
     {
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
-        /*const QString &charactersGroup="Test";
-        const char key[]={0x00,0x00,0x00,0x00};
-        const QString &host="localhost";
-        const unsigned short int port=9999;
-        const QString &metaData="<name>Server test 4</name><name lang=\"fr\">Serveur de teste 4</name><description>Description in english</description><description lang=\"fr\">Description en français</description> (xml attached)";
-        const QString &logicalGroup="folder/path (group)";*/
 
         //charactersGroup
         if(gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->name.size()>20)
@@ -629,6 +699,7 @@ void EpollServerLoginMaster::load_account_max_id_return()
             abort();
         }
     }
+    CharactersGroup::serverWaitedToBeReady--;
     //will jump to SQL_common_load_finish()
 }
 
@@ -639,14 +710,14 @@ void EpollServerLoginMaster::loadTheDatapack()
     CommonDatapack::commonDatapack.parseDatapack("datapack/");
     qDebug() << QStringLiteral("Loaded the common datapack into %1ms").arg(time.elapsed());
 
-    if(databaseBaseLogin==NULL)
+    if(databaseBaseBase==NULL)
     {
         std::cerr << "Login databases need be connected to load the dictionary" << std::endl;
         abort();
     }
 
     baseServerMasterSendDatapack.load("datapack/");
-    load(databaseBaseLogin);
+    load(databaseBaseBase);
 }
 
 void EpollServerLoginMaster::SQL_common_load_finish()

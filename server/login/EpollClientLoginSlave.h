@@ -95,7 +95,7 @@ public:
     quint8 accountCharatersCount;
 
     static LoginLinkToMaster *linkToMaster;
-    static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
+    static unsigned char header_magic_number_and_private_token[8+TOKEN_SIZE_FOR_MASTERAUTH];
     static QList<unsigned int> maxAccountIdList;
     static QList<unsigned int> maxCharacterIdList;
     static QList<unsigned int> maxClanIdList;

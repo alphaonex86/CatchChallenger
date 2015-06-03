@@ -5,6 +5,7 @@
 #include "CharactersGroup.h"
 #include "../VariableServer.h"
 
+#include <random>
 #include <QString>
 #include <QRegularExpression>
 
@@ -21,11 +22,14 @@ public:
             const int &infd
         #endif
         );
+    ~EpollClientLoginMaster();
     void parseIncommingData();
     void selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
     bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
     void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
     void selectCharacter_ReturnFailed(const quint8 &query_id, const quint8 &errorCode, const quint32 &characterId);
+    static void broadcastGameServerChange();
+    bool sendRawSmallPacket(const char * const data,const int &size);
     enum EpollClientLoginMasterStat
     {
         None,
@@ -33,9 +37,9 @@ public:
         GameServer,
         LoginServer,
     };
-    ~EpollClientLoginMaster();
 
     EpollClientLoginMasterStat stat;
+    std::mt19937 rng;
     char *socketString;
     int socketStringSize;
     CharactersGroup *charactersGroupForGameServer;

@@ -199,7 +199,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
 
             //def query without the sub code
             mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
-            mainCodeWithoutSubCodeTypeClientToServer << 0x03 << 0x04 << 0x05  << 0x07  << 0x08 << 0x40 << 0x43 << 0x61;
+            mainCodeWithoutSubCodeTypeClientToServer << 0x01 << 0x03 << 0x04 << 0x05  << 0x07 << 0x08 << 0x40 << 0x43 << 0x61;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             toDebugValidMainCodeServerToClient << 0x79 << 0xC2 << 0x90 << 0xE0 << 0xD0 << 0x80 << 0x81 << 0xF0;
             toDebugValidMainCodeClientToServer << 0x02 << 0x42 << 0x60 << 0x50 << 0x6a;
@@ -211,7 +211,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
                 sizeOnlyMainCodePacketServerToClient[0xC3]=2;
             }
             sizeOnlyMainCodePacketServerToClient[0xC4]=0;
-            sizeOnlyMainCodePacketClientToServer[0x01]=8+64;
+            sizeOnlyMainCodePacketClientToServer[0x01]=8+TOKEN_SIZE_FOR_MASTERAUTH;
             sizeOnlyMainCodePacketClientToServer[0x40]=2;
             sizeOnlyMainCodePacketClientToServer[0x03]=5;
             sizeOnlyMainCodePacketClientToServer[0x08]=0;
