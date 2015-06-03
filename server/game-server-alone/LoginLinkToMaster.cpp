@@ -8,6 +8,7 @@
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 #include <unistd.h>
+#include <time.h>
 
 using namespace CatchChallenger;
 
@@ -30,9 +31,9 @@ LoginLinkToMaster::LoginLinkToMaster(
             ,PacketModeTransmission_Client
             #endif
             ),
-        stat(Stat::None),
-        have_send_protocol_and_registred(false)
+        stat(Stat::None)
 {
+    rng.seed(time(0));
     queryNumberList.resize(30);
     unsigned int index=0;
     while(index<queryNumberList.size())
@@ -157,18 +158,60 @@ void LoginLinkToMaster::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QString &exportedXml)
+bool LoginLinkToMaster::setSettings(QSettings * const settings)
+{
+    this->settings=settings;
+
+    //token
+    settings->beginGroup(QStringLiteral("master"));
+    if(!settings->contains(QStringLiteral("token")))
+        generateToken();
+    QString token=settings->value(QStringLiteral("token")).toString();
+    if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
+        generateToken();
+    token=settings->value(QStringLiteral("token")).toString();
+    memcpy(LoginLinkToMaster::header_magic_number_and_private_token+8,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    settings->endGroup();
+
+    return true;
+}
+
+void LoginLinkToMaster::generateToken()
+{
+    FILE *fpRandomFile = fopen("/dev/urandom","rb");
+    if(fpRandomFile==NULL)
+    {
+        std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
+        abort();
+    }
+    const int &returnedSize=fread(LoginLinkToMaster::header_magic_number_and_private_token+8,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
+    {
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
+        abort();
+    }
+    settings->setValue(QStringLiteral("token"),QString(
+                          QByteArray(
+                              reinterpret_cast<char *>(LoginLinkToMaster::header_magic_number_and_private_token)
+                              +8,TOKEN_SIZE_FOR_MASTERAUTH)
+                          .toHex()));
+    fclose(fpRandomFile);
+    settings->sync();
+}
+
+bool LoginLinkToMaster::registerGameServer(const QString &exportedXml)
 {
     if(queryNumberList.empty())
         return false;
 
-    this->settings=settings;
-
     int pos=0;
     int newSizeCharactersGroup;
     char tempBuffer[65536*4+1024];
-    std::default_random_engine generator;
 
+    QString server_ip=settings->value(QLatin1Literal("server-ip")).toString();
+    QString server_port=settings->value(QLatin1Literal("server-port")).toString();
+
+    settings->beginGroup(QStringLiteral("master"));
     //group to find the catchchallenger_common database
     {
         if(!settings->value(QLatin1Literal("charactersGroup")).toString().isEmpty())
@@ -186,8 +229,7 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
         unsigned int uniqueKey;
         if(!settings->contains(QLatin1Literal("uniqueKey")))
         {
-            std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
-            uniqueKey = distribution(generator);
+            uniqueKey = rng();
             settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
         }
         else
@@ -196,8 +238,7 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
             uniqueKey=settings->value(QLatin1Literal("uniqueKey")).toUInt(&ok);
             if(!ok)
             {
-                std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
-                uniqueKey = distribution(generator);
+                uniqueKey = rng();
                 settings->setValue(QLatin1Literal("uniqueKey"),uniqueKey);
             }
         }
@@ -208,7 +249,7 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
     //the external information to connect the client or the login server as proxy
     {
         if(!settings->contains(QLatin1Literal("external-server-ip")))
-            settings->setValue(QLatin1Literal("external-server-ip"),settings->value(QLatin1Literal("server-ip")).toString());
+            settings->setValue(QLatin1Literal("external-server-ip"),server_ip);
         QString externalServerIp=settings->value(QLatin1Literal("external-server-ip")).toString();
         if(externalServerIp.isEmpty())
         {
@@ -216,24 +257,27 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
             settings->setValue(QLatin1Literal("external-server-ip"),externalServerIp);
         }
 
-        newSizeCharactersGroup=FacilityLibGeneral::toUTF8WithHeader(externalServerIp,tempBuffer+pos);
-        pos+=newSizeCharactersGroup;
+        unsigned int newSizeText=FacilityLibGeneral::toUTF8WithHeader(externalServerIp,tempBuffer+pos);
+        pos+=newSizeText;
     }
     {
         unsigned short int externalServerPort;
         if(!settings->contains(QLatin1Literal("external-server-port")))
-            settings->setValue(QLatin1Literal("external-server-port"),settings->value(QLatin1Literal("server-port")).toString());
+            settings->setValue(QLatin1Literal("external-server-port"),server_port);
         bool ok;
         externalServerPort=settings->value(QLatin1Literal("external-server-port")).toUInt(&ok);
         if(!ok)
+            settings->setValue(QLatin1Literal("external-server-port"),server_port);
+        externalServerPort=settings->value(QLatin1Literal("external-server-port")).toUInt(&ok);
+        if(!ok)
         {
-            std::uniform_int_distribution<unsigned short int> distribution(8192,65535);
-            externalServerPort = distribution(generator);
+            externalServerPort = rng()%(65535-8192)+8192;
             settings->setValue(QLatin1Literal("external-server-port"),externalServerPort);
         }
-        *reinterpret_cast<quint32 *>(tempBuffer+pos)=htole16(externalServerPort);
+        *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(externalServerPort);
         pos+=2;
     }
+    settings->endGroup();
 
     //the xml with name and description
     {
@@ -242,11 +286,12 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
         else
         {
             tempBuffer[pos]=0x00;
-            newSizeCharactersGroup=1;
+            newSizeCharactersGroup=2;
         }
         pos+=newSizeCharactersGroup;
     }
 
+    settings->beginGroup(QStringLiteral("master"));
     //logical group
     {
         if(!settings->value(QLatin1Literal("logicalGroup")).toString().isEmpty())
@@ -258,6 +303,9 @@ bool LoginLinkToMaster::registerGameServer(QSettings * const settings,const QStr
         }
         pos+=newSizeCharactersGroup;
     }
+    settings->endGroup();
+
+    settings->sync();
 
     //current player number and max player
     if(GlobalServerData::serverSettings.sendPlayerNumber)
@@ -317,5 +365,15 @@ void LoginLinkToMaster::askMoreMaxMonsterId()
 void LoginLinkToMaster::askMoreMaxClanId()
 {
     newFullOutputQuery(0x11,0x08,queryNumberList.back());
+    queryNumberList.pop_back();
+}
+
+void LoginLinkToMaster::sendProtocolHeader()
+{
+    packOutcommingQuery(0x01,
+                        queryNumberList.back(),
+                        reinterpret_cast<char *>(LoginLinkToMaster::header_magic_number_and_private_token),
+                        sizeof(LoginLinkToMaster::header_magic_number_and_private_token)
+                        );
     queryNumberList.pop_back();
 }

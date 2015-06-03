@@ -148,7 +148,10 @@ struct GameServerSettings
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
     };
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     Database database_login;
+    #endif
+    Database database_base;
     Database database_common;
     Database database_server;
 
@@ -264,7 +267,10 @@ struct ServerPrivateVariables
 {
     //bd
     #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     EpollPostgresql *db_login;
+    #endif
+    EpollPostgresql *db_base;
     EpollPostgresql *db_common;
     EpollPostgresql *db_server;//pointer to don't change the code for below preprocessor code
     QList<TimerEvents *> timerEvents;

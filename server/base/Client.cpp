@@ -3,7 +3,10 @@
 #include "../base/PreparedDBQuery.h"
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/GeneralType.h"
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LoginLinkToMaster.h"
+#endif
+
 #include "BaseServerLogin.h"
 
 #include <QCryptographicHash>
@@ -164,7 +167,11 @@ void Client::disconnectClient()
     if(character_id!=0)
         normalOutput("Disconnected client");
     #endif
+    /// \warning global clear from client call?
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.db_login->clear();
+    #endif
+    GlobalServerData::serverPrivateVariables.db_base->clear();
     GlobalServerData::serverPrivateVariables.db_common->clear();
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER

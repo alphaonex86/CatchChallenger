@@ -197,8 +197,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     gameServers[uniqueKey]=tempServer;
     gameServersLinkToUniqueKey[link]=uniqueKey;
 
-    EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
-    EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+    broadcastGameServerChange();
 
     return &gameServers[uniqueKey];
 }
@@ -208,8 +207,15 @@ void CharactersGroup::removeGameServerUniqueKey(void * const link)
     gameServers.remove(gameServersLinkToUniqueKey.value(link));
     gameServersLinkToUniqueKey.remove(link);
 
+    broadcastGameServerChange();
+}
+
+void CharactersGroup::broadcastGameServerChange()
+{
     EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
     EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+
+    EpollClientLoginMaster::broadcastGameServerChange();
 }
 
 bool CharactersGroup::containsGameServerUniqueKey(const quint32 &serverUniqueKey) const

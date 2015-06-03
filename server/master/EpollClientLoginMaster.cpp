@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <QString>
+#include <time.h>
 
 using namespace CatchChallenger;
 
@@ -28,6 +29,7 @@ EpollClientLoginMaster::EpollClientLoginMaster(
         charactersGroupForGameServer(NULL),
         charactersGroupForGameServerInformation(NULL)
 {
+    rng.seed(time(0));
 }
 
 EpollClientLoginMaster::~EpollClientLoginMaster()
@@ -172,4 +174,20 @@ void EpollClientLoginMaster::selectCharacter_ReturnFailed(const quint8 &query_id
 {
     charactersGroupForGameServer->lockedAccount.remove(characterId);
     postReplyData(query_id,reinterpret_cast<const char * const>(&errorCode),1);
+}
+
+void EpollClientLoginMaster::broadcastGameServerChange()
+{
+    int index=0;
+    while(index<EpollClientLoginMaster::loginServers.size())
+    {
+        EpollClientLoginMaster * const loginServer=EpollClientLoginMaster::loginServers.at(index);
+        loginServer->internalSendRawSmallPacket(EpollClientLoginMaster::serverServerList,EpollClientLoginMaster::serverServerListSize);
+        index++;
+    }
+}
+
+bool EpollClientLoginMaster::sendRawSmallPacket(const char * const data,const int &size)
+{
+    return internalSendRawSmallPacket(data,size);
 }
