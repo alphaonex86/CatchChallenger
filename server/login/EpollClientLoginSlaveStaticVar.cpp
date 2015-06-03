@@ -4,7 +4,7 @@
 
 using namespace CatchChallenger;
 
-char EpollClientLoginSlave::private_token[TOKEN_SIZE_FOR_MASTERAUTH];
+unsigned char EpollClientLoginSlave::header_magic_number_and_private_token[8+TOKEN_SIZE_FOR_MASTERAUTH]={/*magic number*/0x88,0x62,0xBC,0xBB,0x67,0x9E,0x3D,0xE7};
 LoginLinkToMaster *EpollClientLoginSlave::linkToMaster=NULL;
 QList<unsigned int> EpollClientLoginSlave::maxAccountIdList;
 QList<unsigned int> EpollClientLoginSlave::maxCharacterIdList;

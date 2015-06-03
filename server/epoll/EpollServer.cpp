@@ -19,7 +19,10 @@ EpollServer::EpollServer()
     #ifdef Q_OS_LINUX
     CommonSettingsServer::commonSettingsServer.tcpCork                      = true;
     #endif
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.db_login=new EpollPostgresql();
+    #endif
+    GlobalServerData::serverPrivateVariables.db_base=new EpollPostgresql();
     GlobalServerData::serverPrivateVariables.db_common=new EpollPostgresql();
     GlobalServerData::serverPrivateVariables.db_server=new EpollPostgresql();
 }
@@ -28,7 +31,10 @@ EpollServer::~EpollServer()
 {
     delete GlobalServerData::serverPrivateVariables.db_server;
     delete GlobalServerData::serverPrivateVariables.db_common;
+    delete GlobalServerData::serverPrivateVariables.db_base;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     delete GlobalServerData::serverPrivateVariables.db_login;
+    #endif
 }
 
 void EpollServer::preload_finish()

@@ -29,16 +29,13 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
+    ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::LoginServer);
     if(!Epoll::epoll.init())
         return EPOLLERR;
 
     //blocking due to db connexion
     EpollServerLoginSlave::epollServerLoginSlave=new EpollServerLoginSlave();
 
-    if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
-        return -99;
-
-    ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::LoginServer);
     #ifndef SERVERNOBUFFER
     #ifdef SERVERSSL
     EpollSslClient::staticInit();
@@ -200,8 +197,19 @@ int main(int argc, char *argv[])
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();*/
                 }
                 break;
+                case BaseClassSwitch::Type::Database:
+                {
+                    EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
+                    db->epollEvent(events[i].events);
+                    if(!db->isConnected())
+                    {
+                        std::cerr << "database disconnect, quit now" << std::endl;
+                        return EXIT_FAILURE;
+                    }
+                }
+                break;
                 default:
-                    std::cerr << "unknown event" << std::endl;
+                    std::cerr << "unknown event: " << static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType() << std::endl;
                 break;
             }
         }

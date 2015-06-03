@@ -192,7 +192,10 @@ void BaseServer::closeDB()
 {
     GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+    GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
+    #endif
 }
 
 void BaseServer::initAll()
@@ -1322,7 +1325,7 @@ void BaseServer::preload_market_items()
             load_character_max_id();
         else
         #endif
-            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
+            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
     }
 }
 
@@ -1378,7 +1381,7 @@ void BaseServer::preload_market_items_return()
         load_character_max_id();
     else
     #endif
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
+        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
 }
 
 void BaseServer::loadMonsterBuffs(const quint32 &index)
@@ -2454,6 +2457,7 @@ bool BaseServer::initialize_the_database()
                                  );
         GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
     }
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverPrivateVariables.db_login->isConnected())
     {
         DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
@@ -2462,6 +2466,16 @@ bool BaseServer::initialize_the_database()
                                  );
         GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     }
+    #endif
+    if(GlobalServerData::serverPrivateVariables.db_base->isConnected())
+    {
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2")
+                                 .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType()))
+                                 .arg(GlobalServerData::serverSettings.database_base.host)
+                                 );
+        GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
+    }
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
         default:
@@ -2520,6 +2534,67 @@ bool BaseServer::initialize_the_database()
             DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
                                      .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType()))
                                      .arg(GlobalServerData::serverSettings.database_login.host));
+        break;
+    }
+    #endif
+    switch(GlobalServerData::serverSettings.database_base.tryOpenType)
+    {
+        default:
+        DebugClass::debugConsole(QStringLiteral("database type unknown"));
+        return false;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::Type::Mysql:
+        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectMysql(
+                    GlobalServerData::serverSettings.database_base.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.pass.toLatin1()
+                    ))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_base->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.database_base.host));
+        break;
+
+        case DatabaseBase::Type::SQLite:
+        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectSqlite(GlobalServerData::serverSettings.database_base.file.toLatin1()))
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_base->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("SQLite db %1 open").arg(GlobalServerData::serverSettings.database_base.file));
+        break;
+        #endif
+
+        case DatabaseBase::Type::PostgreSQL:
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectPostgresql(
+                    GlobalServerData::serverSettings.database_base.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.pass.toLatin1()
+                    ))
+        #else
+        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
+                    GlobalServerData::serverSettings.database_base.host.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.db.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.login.toLatin1(),
+                    GlobalServerData::serverSettings.database_base.pass.toLatin1()
+                    ))
+        #endif
+        {
+            DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_base->errorMessage()));
+            return false;
+        }
+        else
+            DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2")
+                                     .arg(DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType()))
+                                     .arg(GlobalServerData::serverSettings.database_base.host));
         break;
     }
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
@@ -2649,7 +2724,10 @@ bool BaseServer::initialize_the_database()
 
 void BaseServer::initialize_the_database_prepared_query()
 {
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     PreparedDBQueryLogin::initDatabaseQueryLogin(GlobalServerData::serverPrivateVariables.db_login->databaseType());
+    #endif
+    //PreparedDBQueryBase::initDatabaseQueryBase(GlobalServerData::serverPrivateVariables.db_base->databaseType());//don't exist, allow dictionary and loaded without cache
     PreparedDBQueryCommon::initDatabaseQueryCommon(GlobalServerData::serverPrivateVariables.db_common->databaseType(),CommonSettingsServer::commonSettingsServer.useSP);
     PreparedDBQueryServer::initDatabaseQueryServer(GlobalServerData::serverPrivateVariables.db_server->databaseType());
 }
@@ -2929,6 +3007,7 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverPrivateVariables.server_message.removeLast();
     } while(removeTheLastList);
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverPrivateVariables.db_login->tryInterval<1)
     {
         qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->tryInterval<1");
@@ -2944,6 +3023,24 @@ void BaseServer::loadAndFixSettings()
         qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->tryInterval*GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry>(60*10)");
         GlobalServerData::serverPrivateVariables.db_login->tryInterval=5;
         GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry=3;
+    }
+    #endif
+
+    if(GlobalServerData::serverPrivateVariables.db_base->tryInterval<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_base->tryInterval<1");
+        GlobalServerData::serverPrivateVariables.db_base->tryInterval=5;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry<1");
+        GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry=3;
+    }
+    if(GlobalServerData::serverPrivateVariables.db_base->tryInterval*GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_base->tryInterval*GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry>(60*10)");
+        GlobalServerData::serverPrivateVariables.db_base->tryInterval=5;
+        GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry=3;
     }
 
     if(GlobalServerData::serverPrivateVariables.db_common->tryInterval<1)
@@ -3218,6 +3315,7 @@ void BaseServer::loadAndFixSettings()
     }
     GlobalServerData::serverPrivateVariables.ddosTimer.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000);
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
         case CatchChallenger::DatabaseBase::Type::SQLite:
@@ -3227,6 +3325,18 @@ void BaseServer::loadAndFixSettings()
         default:
             qDebug() << "Wrong db type";
             GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
+        break;
+    }
+    #endif
+    switch(GlobalServerData::serverSettings.database_base.tryOpenType)
+    {
+        case CatchChallenger::DatabaseBase::Type::SQLite:
+        case CatchChallenger::DatabaseBase::Type::Mysql:
+        case CatchChallenger::DatabaseBase::Type::PostgreSQL:
+        break;
+        default:
+            qDebug() << "Wrong db type";
+            GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
         break;
     }
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)

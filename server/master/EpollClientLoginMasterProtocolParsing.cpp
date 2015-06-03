@@ -47,7 +47,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
                 {
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
-                    errorParsingLayer("Wrong protocol");
+                    errorParsingLayer("Wrong protocol token");
                     return;
                 }
             }
@@ -55,7 +55,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
             {
                 *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));
-                errorParsingLayer("Wrong protocol");
+                errorParsingLayer("Wrong protocol magic number");
                 return;
             }
         break;
@@ -145,7 +145,10 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             {
                 EpollClientLoginMaster::tempBuffer[0x00]=0x03;
                 postReplyData(queryNumber,EpollClientLoginMaster::tempBuffer,1);
+                parseNetworkReadError("charactersGroup not found: "+charactersGroup);
+                return;
             }
+            charactersGroupForGameServer=CharactersGroup::hash.value(charactersGroup);
             //uniqueKey
             if((size-pos)<(int)sizeof(quint32))
             {
@@ -266,9 +269,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 quint32 newUniqueKey;
                 do
                 {
-                    std::default_random_engine generator;
-                    std::uniform_int_distribution<unsigned int> distribution(0,4000000000);
-                    newUniqueKey = distribution(generator);
+                    newUniqueKey = rng();
                 } while(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(newUniqueKey)));
                 uniqueKey=newUniqueKey;
                 unsigned int pos=1+4;
@@ -331,6 +332,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
 
             charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
                         this,uniqueKey,host,port,xml,logicalGroup,currentPlayer,maxPlayer);
+            stat=EpollClientLoginMasterStat::GameServer;
         }
         break;
         case 0x08:
@@ -346,13 +348,14 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             if(EpollClientLoginMaster::loginPreviousToReplyCacheSize!=0)
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginPreviousToReplyCache),sizeof(EpollClientLoginMaster::loginPreviousToReplyCacheSize));
             //send the id list
-            EpollClientLoginMaster::replyToRegisterLoginServer[0x01]=queryNumber;
+            unsigned int pos=EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset;
             int index=0;
             while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
             {
-                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset+(CATCHCHALLENGER_SERVER_MAXIDBLOCK*0+index)*4/*size of int*/)=(quint32)htole32(maxAccountId+1+index);
+                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToRegisterLoginServer+EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset+index*4/*size of int*/)=(quint32)htole32(maxAccountId+1+index);
                 index++;
             }
+            pos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
             maxAccountId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
             {
                 int charactersGroupIndex=0;
@@ -374,14 +377,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     }
                     charactersGroup->maxCharacterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
                     charactersGroup->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    pos+=2*4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
                     charactersGroupIndex++;
                 }
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            removeFromQueryReceived(queryNumber);
-            #endif
-            replyOutputSize.remove(queryNumber);
-            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::replyToRegisterLoginServer),sizeof(EpollClientLoginMaster::replyToRegisterLoginServer));
+            postReplyData(queryNumber,reinterpret_cast<char *>(EpollClientLoginMaster::replyToRegisterLoginServer),pos);
         }
         break;
         default:
