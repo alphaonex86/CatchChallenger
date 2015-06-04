@@ -1,6 +1,7 @@
 #include "EpollServerLoginSlave.h"
 #include "CharactersGroupForLogin.h"
 #include "../epoll/Epoll.h"
+#include "../../general/base/CommonSettingsCommon.h"
 
 using namespace CatchChallenger;
 
@@ -26,6 +27,16 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     server_ip(NULL),
     server_port(NULL)
 {
+    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation   = false;
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time        = 3600;
+    CommonSettingsCommon::commonSettingsCommon.min_character                = 0;
+    CommonSettingsCommon::commonSettingsCommon.max_character                = 3;
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size              = 20;
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters            = 8;
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
+
     QSettings settings(QCoreApplication::applicationDirPath()+"/login_slave.conf",QSettings::IniFormat);
 
     {
@@ -220,15 +231,15 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 settings.setValue(QStringLiteral("pass"),QStringLiteral("root"));
             if(!settings.contains(QStringLiteral("type")))
                 settings.setValue(QStringLiteral("type"),QStringLiteral("postgresql"));
-            if(!settings.contains(QStringLiteral("CharactersGroupForLogin")))
-                settings.setValue(QStringLiteral("CharactersGroupForLogin"),QString());
+            if(!settings.contains(QStringLiteral("charactersGroup")))
+                settings.setValue(QStringLiteral("charactersGroup"),QString());
             if(!settings.contains(QStringLiteral("comment")))
                 settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
         }
         settings.sync();
         if(settings.contains(QStringLiteral("login")))
         {
-            const QString &charactersGroup=settings.value(QStringLiteral("CharactersGroupForLogin")).toString();
+            const QString &charactersGroup=settings.value(QStringLiteral("charactersGroup")).toString();
             if(!CharactersGroupForLogin::hash.contains(charactersGroup))
             {
                 const quint8 &considerDownAfterNumberOfTry=settings.value(QStringLiteral("considerDownAfterNumberOfTry")).toUInt(&ok);
@@ -282,7 +293,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 abort();
             }
             EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=data.size();
-            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=2;
+            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=1;
             memcpy(EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup+EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize,data.constData(),data.size());
             EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=data.size();
             index++;
@@ -470,14 +481,14 @@ void EpollServerLoginSlave::compose04Reply()
 {
     EpollClientLoginSlave::loginGood[0x00]=0x01;//good
 
-    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::loginGood+0x01)=htole32(EpollClientLoginSlave::character_delete_time);
-    EpollClientLoginSlave::loginGood[0x05]=EpollClientLoginSlave::min_character;
-    EpollClientLoginSlave::loginGood[0x06]=EpollClientLoginSlave::max_character;
-    EpollClientLoginSlave::loginGood[0x07]=EpollClientLoginSlave::max_pseudo_size;
-    EpollClientLoginSlave::loginGood[0x08]=EpollClientLoginSlave::max_player_monsters;
-    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x09)=htole16(EpollClientLoginSlave::max_warehouse_player_monsters);
-    EpollClientLoginSlave::loginGood[0x0B]=EpollClientLoginSlave::max_player_items;
-    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(EpollClientLoginSlave::max_warehouse_player_items);
+    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::loginGood+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    EpollClientLoginSlave::loginGood[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
+    EpollClientLoginSlave::loginGood[0x06]=CommonSettingsCommon::commonSettingsCommon.max_character;
+    EpollClientLoginSlave::loginGood[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
+    EpollClientLoginSlave::loginGood[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+    *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
     EpollClientLoginSlave::loginGoodSize=0x0E;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
@@ -568,9 +579,9 @@ void EpollServerLoginSlave::preload_profile()
         index++;
     }
 
-    if(EpollServerLoginSlave::loginProfileList.size()==0 && EpollClientLoginSlave::min_character!=EpollClientLoginSlave::max_character)
+    if(EpollServerLoginSlave::loginProfileList.size()==0 && CommonSettingsCommon::commonSettingsCommon.min_character!=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        std::cout << "no profile loaded!" << std::endl;
+        std::cout << "no profile loaded! C211 never send? (abort)" << std::endl;
         abort();
     }
     std::cout << EpollServerLoginSlave::loginProfileList.size() << " profile loaded" << std::endl;

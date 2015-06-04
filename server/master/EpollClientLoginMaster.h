@@ -58,7 +58,6 @@ public:
     QList<DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     std::vector<quint8> queryNumberList;
 
-    static bool automatic_account_creation;
     static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];
     static unsigned char protocolReplyProtocolNotSupported[3];
@@ -74,15 +73,15 @@ public:
     static char tempBuffer[4096];
     static unsigned char replyToRegisterLoginServerBaseOffset;
     static char loginSettingsAndCharactersGroup[256*1024];
-    static int loginSettingsAndCharactersGroupSize;
+    static unsigned int loginSettingsAndCharactersGroupSize;
     static char serverPartialServerList[256*1024];
-    static int serverPartialServerListSize;
+    static unsigned int serverPartialServerListSize;
     static char serverServerList[256*1024];
-    static int serverServerListSize;
+    static unsigned int serverServerListSize;
     static char serverLogicalGroupList[256*1024];
-    static int serverLogicalGroupListSize;
+    static unsigned int serverLogicalGroupListSize;
     static char loginPreviousToReplyCache[256*1024*3];
-    static int loginPreviousToReplyCacheSize;
+    static unsigned int loginPreviousToReplyCacheSize;
     static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK];
 
     static QList<EpollClientLoginMaster *> gameServers;

@@ -1,4 +1,5 @@
 #include "EpollClientLoginMaster.h"
+#include "../../general/base/CommonSettingsCommon.h"
 
 #include <iostream>
 
@@ -346,7 +347,12 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             EpollClientLoginMaster::loginServers << this;
             //send logical group list + Raw server list master to login + Login settings and Characters group
             if(EpollClientLoginMaster::loginPreviousToReplyCacheSize!=0)
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginPreviousToReplyCache),sizeof(EpollClientLoginMaster::loginPreviousToReplyCacheSize));
+                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginPreviousToReplyCache),EpollClientLoginMaster::loginPreviousToReplyCacheSize);
+            else
+            {
+                std::cerr << "EpollClientLoginMaster::loginPreviousToReplyCacheSize==0 (abort)" << std::endl;
+                abort();
+            }
             //send the id list
             unsigned int pos=EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset;
             int index=0;
@@ -441,7 +447,7 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
                         parseNetworkReadError("stat==EpollClientLoginMasterStat::None: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;
                     }
-                    if(!EpollClientLoginMaster::automatic_account_creation)
+                    if(!CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
                     {
                         parseNetworkReadError("!EpollClientLoginMaster::automatic_account_creation then why ask account id? EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;

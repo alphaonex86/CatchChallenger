@@ -79,9 +79,10 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             }
             if(cursor!=(quint32)size)
             {
+                /* Muliple concatened packet */
                 qDebug() << "Bug at data-sending cursor != size:" << cursor << "!=" << size;
                 qDebug() << "raw write control bug:" << QString(QByteArray(data,size).toHex());
-                abort();
+                //abort();
             }
             protocolParsingCheck->valid=false;
         }
