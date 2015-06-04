@@ -5,6 +5,7 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <iostream>
+#include "../../general/base/CommonSettingsCommon.h"
 
 using namespace CatchChallenger;
 
@@ -87,7 +88,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         bool ok;
         if(!EpollServerLoginSlave::epollServerLoginSlave->databaseBaseLogin->next())
         {
-            if(EpollClientLoginSlave::automatic_account_creation)
+            if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
             {
                 //network send
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -277,15 +278,15 @@ void EpollClientLoginSlave::createAccount(const quint8 &query_id, const char *ra
         errorParsingLayer(QStringLiteral("createAccount() Query characters is empty, bug"));
         return;
     }
-    if(!automatic_account_creation)
+    if(!CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
         errorParsingLayer(QStringLiteral("createAccount() Creation account not premited"));
         return;
     }
     #endif
-    if(accountCharatersCount>=max_character)
+    if(accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        loginIsWrong(query_id,0x03,QStringLiteral("Have already the max charaters: %1/%2").arg(accountCharatersCount).arg(max_character));
+        loginIsWrong(query_id,0x03,QStringLiteral("Have already the max charaters: %1/%2").arg(accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
         return;
     }
     if(maxAccountIdList.isEmpty())

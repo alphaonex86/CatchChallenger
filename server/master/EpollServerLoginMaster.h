@@ -31,13 +31,6 @@ private:
     CatchChallenger::DatabaseBase *databaseBaseLogin;
     CatchChallenger::DatabaseBase *databaseBaseBase;
 
-    quint32 character_delete_time;
-    quint8 min_character;
-    quint8 max_character;
-    quint8 max_pseudo_size;
-
-    QByteArray datapackBaseHash;
-
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
 private:
     void generateToken(QSettings &settings);

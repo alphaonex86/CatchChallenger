@@ -7,6 +7,7 @@
 class CommonSettingsCommon
 {
 public:
+    bool automatic_account_creation;
     QString httpDatapackMirrorBase;
     quint8 max_character;//if 0, not allowed, else the character max allowed
     quint8 min_character;

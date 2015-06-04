@@ -107,19 +107,19 @@ public:
     static char maxMonsterIdRequest[3];
     static char selectCharaterRequest[3+4+1+4];
     static char replyToRegisterLoginServerCharactersGroup[1024];
-    static int replyToRegisterLoginServerCharactersGroupSize;
+    static unsigned int replyToRegisterLoginServerCharactersGroupSize;
     static char baseDatapackSum[28];
     static char loginGood[256*1024];
-    static int loginGoodSize;
+    static unsigned int loginGoodSize;
 
     static char serverPartialServerList[256*1024];
-    static int serverPartialServerListSize;
+    static unsigned int serverPartialServerListSize;
     static char serverServerList[256*1024];
-    static int serverServerListSize;
+    static unsigned int serverServerListSize;
     static char serverLogicalGroupList[256*1024];
-    static int serverLogicalGroupListSize;
+    static unsigned int serverLogicalGroupListSize;
     static char serverLogicalGroupAndServerList[512*1024];
-    static int serverLogicalGroupAndServerListSize;
+    static unsigned int serverLogicalGroupAndServerListSize;
 private:
     QList<DatabaseBase::CallBack *> callbackRegistred;
     QList<void *> paramToPassToCallBack;
@@ -212,16 +212,6 @@ private:
     quint8 serverPlayedTimeCount;
     AskLoginParam *askLoginParam;
 public:
-    static bool automatic_account_creation;
-    static unsigned int character_delete_time;
-    static QString httpDatapackMirror;
-    static unsigned int min_character;
-    static unsigned int max_character;
-    static unsigned int max_pseudo_size;
-    static quint8 max_player_monsters;// \warning Never put number greater than 10 here
-    static quint16 max_warehouse_player_monsters;
-    static quint8 max_player_items;
-    static quint16 max_warehouse_player_items;
     static EpollPostgresql databaseBaseLogin;
     static EpollPostgresql databaseBaseCommon;
 };

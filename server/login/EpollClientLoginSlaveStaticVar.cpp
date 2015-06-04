@@ -30,32 +30,22 @@ unsigned char EpollClientLoginSlave::addCharacterReply[]={0xC1/*reply server to 
 unsigned char EpollClientLoginSlave::removeCharacterReply[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 char EpollClientLoginSlave::baseDatapackSum[];
 char EpollClientLoginSlave::loginGood[];
-int EpollClientLoginSlave::loginGoodSize=0;
+unsigned int EpollClientLoginSlave::loginGoodSize=0;
 
 char EpollClientLoginSlave::serverPartialServerList[];
-int EpollClientLoginSlave::serverPartialServerListSize=0;
+unsigned int EpollClientLoginSlave::serverPartialServerListSize=0;
 char EpollClientLoginSlave::serverServerList[];
-int EpollClientLoginSlave::serverServerListSize=0;
+unsigned int EpollClientLoginSlave::serverServerListSize=0;
 char EpollClientLoginSlave::serverLogicalGroupList[];
-int EpollClientLoginSlave::serverLogicalGroupListSize=0;
+unsigned int EpollClientLoginSlave::serverLogicalGroupListSize=0;
 char EpollClientLoginSlave::serverLogicalGroupAndServerList[];
-int EpollClientLoginSlave::serverLogicalGroupAndServerListSize=0;
+unsigned int EpollClientLoginSlave::serverLogicalGroupAndServerListSize=0;
 EpollClientLoginSlave::ProxyMode EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
 
 const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER;
 
-bool EpollClientLoginSlave::automatic_account_creation=false;
-unsigned int EpollClientLoginSlave::character_delete_time=3600*24;
-QString EpollClientLoginSlave::httpDatapackMirror;
-unsigned int EpollClientLoginSlave::min_character=0;
-unsigned int EpollClientLoginSlave::max_character=3;
-unsigned int EpollClientLoginSlave::max_pseudo_size=20;
-quint8 EpollClientLoginSlave::max_player_monsters=5;// \warning Never put number greater than 10 here
-quint16 EpollClientLoginSlave::max_warehouse_player_monsters=30;
-quint8 EpollClientLoginSlave::max_player_items=30;
-quint16 EpollClientLoginSlave::max_warehouse_player_items=100;
 EpollPostgresql EpollClientLoginSlave::databaseBaseLogin;
 EpollPostgresql EpollClientLoginSlave::databaseBaseCommon;
 
 char EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[1024];
-int EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize=0;
+unsigned int EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize=0;

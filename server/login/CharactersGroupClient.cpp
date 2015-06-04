@@ -4,6 +4,7 @@
 #include "../base/SqlFunction.h"
 #include "../base/PreparedDBQuery.h"
 #include "../base/DictionaryLogin.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include <iostream>
 #include <QDebug>
 
@@ -11,7 +12,7 @@ using namespace CatchChallenger;
 
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const quint32 &account_id)
 {
-    const QString &queryText=QString(PreparedDBQueryCommon::db_query_characters).arg(account_id).arg(EpollClientLoginSlave::max_character*2);
+    const QString &queryText=QString(PreparedDBQueryCommon::db_query_characters).arg(account_id).arg(CommonSettingsCommon::commonSettingsCommon.max_character*2);
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::character_list_static);
     if(callback==NULL)
     {
@@ -40,7 +41,7 @@ void CharactersGroupForLogin::character_list_object()
     const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
     quint8 validCharaterCount=0;
-    while(databaseBaseCommon->next() && validCharaterCount<EpollClientLoginSlave::max_character)
+    while(databaseBaseCommon->next() && validCharaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         unsigned int character_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
@@ -159,7 +160,7 @@ void CharactersGroupForLogin::server_list_object()
     const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
     quint8 validServerCount=0;
-    while(databaseBaseCommon->next() && validServerCount<EpollClientLoginSlave::max_character)
+    while(databaseBaseCommon->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         const unsigned int server_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
@@ -312,9 +313,9 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
         //static_cast<EpollClientLoginSlave *>(client)->postReply(query_id,tempData,sizeof(tempData));
         return 0x03;
     }
-    if(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount>=EpollClientLoginSlave::max_character)
+    if(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount).arg(EpollClientLoginSlave::max_character));
+        qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
         return -1;
     }
     if(profileIndex>=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size())
@@ -322,9 +323,9 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
         qDebug() << (QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size()));
         return -1;
     }
-    if((quint32)pseudo.size()>EpollClientLoginSlave::max_pseudo_size)
+    if((quint32)pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
     {
-        qDebug() << (QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(EpollClientLoginSlave::max_pseudo_size));
+        qDebug() << (QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
         return -1;
     }
     if(skinId>=DictionaryLogin::dictionary_skin_internal_to_database.size())
@@ -571,7 +572,7 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(EpollClientLoginSlave::character_delete_time).toUtf8().constData());
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(CommonSettingsCommon::commonSettingsCommon.character_delete_time).toUtf8().constData());
     CharactersGroupForLogin::tempBuffer[0]=0x02;
     client->postReply(query_id,CharactersGroupForLogin::tempBuffer,1);
 }

@@ -3,6 +3,7 @@
 #include <iostream>
 #include "EpollServerLoginSlave.h"
 #include "CharactersGroupForLogin.h"
+#include "../../general/base/CommonSettingsCommon.h"
 
 using namespace CatchChallenger;
 
@@ -395,47 +396,53 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                 break;
                 case 0x11:
                 {
-                    if(size<(1+4+1+1+1+1))
+                    if(size<(1+4+1+1+1+1 +1+2+1+2))
                     {
                         std::cerr << "C211 base size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    EpollClientLoginSlave::automatic_account_creation=rawData[0x00];
-                    EpollClientLoginSlave::character_delete_time=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
-                    EpollClientLoginSlave::min_character=rawData[0x05];
-                    EpollClientLoginSlave::max_character=rawData[0x06];
-                    EpollClientLoginSlave::max_pseudo_size=rawData[0x07];
-                    EpollClientLoginSlave::max_player_monsters=rawData[0x08];
-                    EpollClientLoginSlave::max_warehouse_player_monsters=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+0x09)));
-                    EpollClientLoginSlave::max_player_items=rawData[0x0B];
-                    EpollClientLoginSlave::max_warehouse_player_items=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+0x0C)));
-                    if(EpollClientLoginSlave::min_character>EpollClientLoginSlave::max_character)
+                    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=rawData[0x00];
+                    CommonSettingsCommon::commonSettingsCommon.character_delete_time=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+0x01)));
+                    CommonSettingsCommon::commonSettingsCommon.min_character=rawData[0x05];
+                    CommonSettingsCommon::commonSettingsCommon.max_character=rawData[0x06];
+                    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=rawData[0x07];
+                    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=rawData[0x08];
+                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+0x09)));
+                    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=rawData[0x0B];
+                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+0x0C)));
+                    if(CommonSettingsCommon::commonSettingsCommon.min_character>CommonSettingsCommon::commonSettingsCommon.max_character)
                     {
                         std::cerr << "C211 min_character>max_character (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    if(EpollClientLoginSlave::max_character==0)
+                    if(CommonSettingsCommon::commonSettingsCommon.max_character==0)
                     {
                         std::cerr << "C211 max_character==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    if(EpollClientLoginSlave::max_pseudo_size<3)
+                    if(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size<3)
                     {
                         std::cerr << "C211 max_pseudo_size<3 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    if(EpollClientLoginSlave::character_delete_time==0)
+                    if(CommonSettingsCommon::commonSettingsCommon.character_delete_time==0)
                     {
                         std::cerr << "C211 character_delete_time==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    if(memcmp(rawData+0x0E,EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup,EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize)!=0)
+                    unsigned int cursor=0x0E;
+                    if((size-cursor)<EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize)
+                    {
+                        std::cerr << "C211 too small for different CharactersGroup (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+                    if(memcmp(rawData+cursor,EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup,EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize)!=0)
                     {
                         std::cerr << "C211 different CharactersGroup registred on master server (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
                     //dynamic data
-                    int cursor=0x0E +EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize;
+                    cursor+=EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize;
                     //skins
                     {
                         if((size-cursor)<1)
@@ -448,13 +455,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                         quint8 skinListIndex=0;
                         while(skinListIndex<skinListSize)
                         {
-                            if((size-cursor)<1)
-                            {
-                                std::cerr << "C211 too small for internalId skin (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                abort();
-                            }
-                            const quint8 &internalId=rawData[cursor];
-                            cursor+=1;
                             if((size-cursor)<(int)sizeof(quint16))
                             {
                                 std::cerr << "C211 too small for databaseId skin (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -462,7 +462,8 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                             }
                             const quint16 &databaseId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+cursor)));
                             cursor+=sizeof(quint16);
-                            EpollServerLoginSlave::epollServerLoginSlave->setSkinPair(internalId,databaseId);
+                            //index is the internal id
+                            EpollServerLoginSlave::epollServerLoginSlave->setSkinPair(skinListIndex,databaseId);
                             skinListIndex++;
                         }
                     }
@@ -474,7 +475,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                             abort();
                         }
                         const quint8 &profileListSize=rawData[cursor];
-                        if(profileListSize==0 && EpollClientLoginSlave::min_character!=EpollClientLoginSlave::max_character)
+                        if(profileListSize==0 && CommonSettingsCommon::commonSettingsCommon.min_character!=CommonSettingsCommon::commonSettingsCommon.max_character)
                         {
                             std::cout << "no profile loaded!" << std::endl;
                             abort();
@@ -505,7 +506,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                             }
                             profile.databaseId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+cursor)));
                             cursor+=sizeof(quint16);
-                            EpollServerLoginSlave::epollServerLoginSlave->setSkinPair(profileListIndex,profile.databaseId);
 
                             //skin
                             if((size-cursor)<1)
@@ -725,9 +725,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     }
 
                     EpollServerLoginSlave::epollServerLoginSlave->compose04Reply();
-
-                    if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
-                        abort();
                 }
                 break;
                 default:
@@ -848,6 +845,11 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
         break;
         case 0x08:
         {
+            if(CharactersGroupForLogin::list.size()==0)
+            {
+                std::cerr << "CharactersGroupForLogin::list.size()==0, C211 never send? (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                abort();
+            }
             unsigned int pos=0;
             {
                 int index=0;
@@ -895,6 +897,8 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                 }
             }
             stat=Stat::Logged;
+            if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
+                abort();
         }
         return;
         default:

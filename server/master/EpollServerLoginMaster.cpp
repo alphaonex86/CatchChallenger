@@ -1,6 +1,7 @@
 #include "EpollServerLoginMaster.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include "../VariableServer.h"
 #include "../../general/fight/CommonFightEngineBase.h"
 
@@ -34,12 +35,17 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     rawServerListForC211(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
     rawServerListForC211Size(0),
     databaseBaseLogin(NULL),
-    databaseBaseBase(NULL),
-    character_delete_time(3600),
-    min_character(0),
-    max_character(3),
-    max_pseudo_size(20)
+    databaseBaseBase(NULL)
 {
+    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation   = false;
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time        = 3600;
+    CommonSettingsCommon::commonSettingsCommon.min_character                = 0;
+    CommonSettingsCommon::commonSettingsCommon.max_character                = 3;
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size              = 20;
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters            = 8;
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
     {
         //empty buffer
         memset(EpollClientLoginMaster::replyToRegisterLoginServer,0x00,sizeof(EpollClientLoginMaster::replyToRegisterLoginServer));
@@ -59,7 +65,6 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     loadTheDatapack();
     doTheLogicalGroup(settings);
     doTheServerList();
-    doTheReplyCache();
 }
 
 EpollServerLoginMaster::~EpollServerLoginMaster()
@@ -147,36 +152,74 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
         settings.setValue(QStringLiteral("max_character"),3);
     if(!settings.contains(QStringLiteral("min_character")))
         settings.setValue(QStringLiteral("min_character"),1);
-    EpollClientLoginMaster::automatic_account_creation=settings.value(QStringLiteral("automatic_account_creation")).toBool();
-    character_delete_time=settings.value(QStringLiteral("character_delete_time")).toUInt();
-    if(character_delete_time==0)
+    CommonSettingsCommon::commonSettingsCommon.automatic_account_creation=settings.value(QStringLiteral("automatic_account_creation")).toBool();
+    bool ok;
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time=settings.value(QStringLiteral("character_delete_time")).toUInt(&ok);
+    if(CommonSettingsCommon::commonSettingsCommon.character_delete_time==0 || !ok)
     {
         std::cerr << "character_delete_time==0 (abort)" << std::endl;
         abort();
     }
-    min_character=settings.value(QStringLiteral("min_character")).toUInt();
-    max_character=settings.value(QStringLiteral("max_character")).toUInt();
-    if(max_character<=0)
+    CommonSettingsCommon::commonSettingsCommon.min_character=settings.value(QStringLiteral("min_character")).toUInt(&ok);
+    if(!ok)
+    {
+        std::cerr << "CommonSettingsCommon::commonSettingsCommon.min_character not number (abort)" << std::endl;
+        abort();
+    }
+    CommonSettingsCommon::commonSettingsCommon.max_character=settings.value(QStringLiteral("max_character")).toUInt(&ok);
+    if(CommonSettingsCommon::commonSettingsCommon.max_character<=0 || !ok)
     {
         std::cerr << "max_character<=0 (abort)" << std::endl;
         abort();
     }
-    if(max_character<min_character)
+    if(CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character)
     {
         std::cerr << "max_character<min_character (abort)" << std::endl;
         abort();
     }
-    max_pseudo_size=settings.value(QStringLiteral("max_pseudo_size")).toUInt();
-    if(max_pseudo_size==0)
+    CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=settings.value(QStringLiteral("max_pseudo_size")).toUInt(&ok);
+    if(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size==0 || !ok)
     {
         std::cerr << "max_pseudo_size==0 (abort)" << std::endl;
+        abort();
+    }
+    if(!settings.contains(QStringLiteral("maxPlayerMonsters")))
+        settings.setValue(QStringLiteral("maxPlayerMonsters"),8);
+    if(!settings.contains(QStringLiteral("maxWarehousePlayerMonsters")))
+        settings.setValue(QStringLiteral("maxWarehousePlayerMonsters"),30);
+    if(!settings.contains(QStringLiteral("maxPlayerItems")))
+        settings.setValue(QStringLiteral("maxPlayerItems"),30);
+    if(!settings.contains(QStringLiteral("maxWarehousePlayerItems")))
+        settings.setValue(QStringLiteral("maxWarehousePlayerItems"),150);
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=settings.value(QStringLiteral("maxPlayerMonsters")).toUInt(&ok);
+    if(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters==0 || !ok)
+    {
+        std::cerr << "maxPlayerMonsters==0 (abort)" << std::endl;
+        abort();
+    }
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=settings.value(QStringLiteral("maxWarehousePlayerMonsters")).toUInt(&ok);
+    if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters==0 || !ok)
+    {
+        std::cerr << "maxWarehousePlayerMonsters==0 (abort)" << std::endl;
+        abort();
+    }
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=settings.value(QStringLiteral("maxPlayerItems")).toUInt(&ok);
+    if(CommonSettingsCommon::commonSettingsCommon.maxPlayerItems==0 || !ok)
+    {
+        std::cerr << "maxPlayerItems==0 (abort)" << std::endl;
+        abort();
+    }
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=settings.value(QStringLiteral("maxWarehousePlayerItems")).toUInt(&ok);
+    if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems==0 || !ok)
+    {
+        std::cerr << "maxWarehousePlayerItems==0 (abort)" << std::endl;
         abort();
     }
 }
 
 void EpollServerLoginMaster::loadDBLoginSettings(QSettings &settings)
 {
-    if(EpollClientLoginMaster::automatic_account_creation)
+    if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
         QString db;
         QString host;
@@ -396,12 +439,16 @@ void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGro
 {
     charactersGroupList.sort();
 
-    rawServerListForC211[0x00]=EpollClientLoginMaster::automatic_account_creation;
-    *reinterpret_cast<quint32 *>(rawServerListForC211+0x03)=(quint32)htole32((quint32)character_delete_time);
-    rawServerListForC211[0x05]=min_character;
-    rawServerListForC211[0x06]=max_character;
-    rawServerListForC211[0x07]=max_pseudo_size;
-    rawServerListForC211Size=0x08;
+    rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
+    *reinterpret_cast<quint32 *>(rawServerListForC211+0x01)=(quint32)htole32((quint32)CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    rawServerListForC211[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
+    rawServerListForC211[0x06]=CommonSettingsCommon::commonSettingsCommon.max_character;
+    rawServerListForC211[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
+    rawServerListForC211[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+    *reinterpret_cast<quint16 *>(rawServerListForC211+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    rawServerListForC211[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+    *reinterpret_cast<quint16 *>(rawServerListForC211+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+    rawServerListForC211Size=0x0E;
     //do the Characters group
     rawServerListForC211[rawServerListForC211Size]=(unsigned char)charactersGroupList.size();
     rawServerListForC211Size+=sizeof(unsigned char);
@@ -596,17 +643,34 @@ void EpollServerLoginMaster::doTheServerList()
 
 void EpollServerLoginMaster::doTheReplyCache()
 {
+    if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
+    {
+        std::cerr << "loginSettingsAndCharactersGroupSize==0 (abort)" << std::endl;
+        abort();
+    }
+    if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
+    {
+        std::cerr << "loginSettingsAndCharactersGroupSize==0 (abort)" << std::endl;
+        abort();
+    }
+    if(EpollClientLoginMaster::serverServerListSize==0)
+    {
+        std::cerr << "loginSettingsAndCharactersGroupSize==0 (abort)" << std::endl;
+        abort();
+    }
     //do the reply cache
     EpollClientLoginMaster::loginPreviousToReplyCacheSize=0;
-    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
+    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize,
            EpollClientLoginMaster::loginSettingsAndCharactersGroup,
            EpollClientLoginMaster::loginSettingsAndCharactersGroupSize);
     EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::loginSettingsAndCharactersGroupSize;
-    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
+
+    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize,
            EpollClientLoginMaster::serverLogicalGroupList,
            EpollClientLoginMaster::serverLogicalGroupListSize);
     EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverLogicalGroupListSize;
-    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache,
+
+    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize,
            EpollClientLoginMaster::serverServerList,
            EpollClientLoginMaster::serverServerListSize);
     EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverServerListSize;
@@ -871,9 +935,9 @@ void EpollServerLoginMaster::loadTheProfile()
         index++;
     }
 
-    memcpy(rawServerListForC211,datapackBaseHash.constData(),datapackBaseHash.size());
-    rawServerListForC211Size+=datapackBaseHash.size();
-    datapackBaseHash.clear();
+    memcpy(rawServerListForC211+rawServerListForC211Size,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.constData(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+    rawServerListForC211Size+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
+    //CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();no memory gain
 
     EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=ProtocolParsingBase::computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -890,4 +954,6 @@ void EpollServerLoginMaster::loadTheProfile()
     CommonDatapack::commonDatapack.unload();
     baseServerMasterSendDatapack.unload();
     BaseServerMasterLoadDictionary::unload();
+
+    doTheReplyCache();
 }

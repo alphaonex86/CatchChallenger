@@ -1,5 +1,6 @@
 #include "EpollClientLoginSlave.h"
 #include "../base/BaseServerLogin.h"
+#include "../../general/base/CommonSettingsCommon.h"
 
 #include <iostream>
 
@@ -143,7 +144,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
             }
             else
             {
-                if(automatic_account_creation)
+                if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
                 {
                     is_logging_in_progess=true;
                     createAccount(queryNumber,data);
