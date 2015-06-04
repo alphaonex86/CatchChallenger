@@ -51,7 +51,8 @@ SOURCES += \
     ../base/BaseServerLogin.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
     ../base/SqlFunction.cpp \
-    ../base/DictionaryLogin.cpp
+    ../base/DictionaryLogin.cpp \
+    ../../general/base/CommonSettingsCommon.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -77,4 +78,5 @@ HEADERS += \
     ../base/SqlFunction.h \
     ../base/DictionaryLogin.h \
     ../VariableServer.h \
-    ../../general/base/GeneralVariable.h
+    ../../general/base/GeneralVariable.h \
+    ../../general/base/CommonSettingsCommon.h
