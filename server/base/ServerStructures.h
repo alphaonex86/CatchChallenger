@@ -276,6 +276,7 @@ struct ServerPrivateVariables
     QList<TimerEvents *> timerEvents;
     #else
     QtDatabase *db_login;
+    QtDatabase *db_base;
     QtDatabase *db_common;
     QtDatabase *db_server;
     QList<QtTimerEvents *> timerEvents;

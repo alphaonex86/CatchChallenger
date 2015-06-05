@@ -28,7 +28,9 @@ public:
     static quint32 tokenForAuthSize;
     #endif
 
+    #ifndef CATCHCHALLENGER_CLASS_LOGIN
     DatabaseBase *databaseBaseLogin;
+    #endif
 protected:
     void preload_the_randomData();
     void unload();

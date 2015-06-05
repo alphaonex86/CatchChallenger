@@ -20,8 +20,10 @@ BaseServerLogin::TokenLink BaseServerLogin::tokenForAuth[];
 quint32 BaseServerLogin::tokenForAuthSize=0;
 #endif
 
-BaseServerLogin::BaseServerLogin() :
-    databaseBaseLogin(NULL)
+BaseServerLogin::BaseServerLogin()
+    #ifndef CATCHCHALLENGER_CLASS_LOGIN
+    : databaseBaseLogin(NULL)
+    #endif
 {
 }
 

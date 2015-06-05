@@ -65,7 +65,7 @@ void EpollClientLoginSlave::askLogin_object()
         abort();
     }
     #endif
-    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());//but not delete because will reinster at the end
+    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.first());//but not delete because will reinster at the end, then not take!
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -77,7 +77,7 @@ void EpollClientLoginSlave::askLogin_object()
 void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.takeFirst()!=QStringLiteral("AskLoginParam"))
+    if(paramToPassToCallBackType.first()!=QStringLiteral("AskLoginParam"))
     {
         qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
         abort();
@@ -86,7 +86,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
     callbackRegistred.removeFirst();
     {
         bool ok;
-        if(!EpollServerLoginSlave::epollServerLoginSlave->databaseBaseLogin->next())
+        if(!databaseBaseLogin.next())
         {
             if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
             {
@@ -98,9 +98,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 *(EpollClientLoginSlave::loginIsWrongBuffer+3)=(quint8)0x07;
                 replyOutputSize.remove(askLoginParam->query_id);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBuffer),sizeof(EpollClientLoginSlave::loginIsWrongBuffer));
+                stat=EpollClientLoginStat::ProtocolGood;
+                paramToPassToCallBack.clear();
+                paramToPassToCallBackType.clear();
                 delete askLoginParam;
                 askLoginParam=NULL;
-                is_logging_in_progess=false;
                 return;
 /*                PreparedDBQuery::maxAccountId++;
                 account_id=PreparedDBQuery::maxAccountId;
@@ -112,6 +114,8 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                              .arg(QString(askLoginParam->login.toHex()))
                               .arg(QString(askLoginParam->pass.toHex()))
                               );
+                paramToPassToCallBack.clear();
+                paramToPassToCallBackType.clear();
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
@@ -128,7 +132,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
                     if(tokenLink.client==this)
                     {
-                        const QString &secretToken(EpollServerLoginSlave::epollServerLoginSlave->databaseBaseLogin->value(1));
+                        const QString &secretToken(databaseBaseLogin.value(1));
                         const QByteArray &secretTokenBinary=QByteArray::fromHex(secretToken.toLatin1());
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary);
@@ -162,17 +166,21 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             if(hashedToken!=askLoginParam->pass)
             {
                 loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Password wrong: %1 for the login: %2").arg(QString(askLoginParam->pass.toHex())).arg(QString(askLoginParam->login.toHex())));
+                paramToPassToCallBack.clear();
+                paramToPassToCallBackType.clear();
                 delete askLoginParam;
                 askLoginParam=NULL;
                 return;
             }
             else
             {
-                account_id=QString(EpollServerLoginSlave::epollServerLoginSlave->databaseBaseLogin->value(0)).toUInt(&ok);
+                account_id=QString(databaseBaseLogin.value(0)).toUInt(&ok);
                 if(!ok)
                 {
                     account_id=0;
                     loginIsWrong(askLoginParam->query_id,0x03,"Account id is not a number");
+                    paramToPassToCallBack.clear();
+                    paramToPassToCallBackType.clear();
                     delete askLoginParam;
                     askLoginParam=NULL;
                     return;
@@ -182,6 +190,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
     }
 
     {
+        serverListForReplyInSuspend+=CharactersGroupForLogin::list.size();
         int index=0;
         while(index<CharactersGroupForLogin::list.size())
         {
@@ -200,6 +209,7 @@ void EpollClientLoginSlave::askLogin_cancel()
         abort();
     }
     #endif
+    AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
     loginIsWrong(askLoginParam->query_id,0x04,QStringLiteral("Canceled by the Charaters group"));
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
@@ -215,7 +225,13 @@ void EpollClientLoginSlave::character_list_return(const quint8 &characterGroupIn
     characterTempListForReply[characterGroupIndex].rawDataSize=tempRawDataSize;
     characterListForReplyInSuspend--;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
+    if(
+            //if all the query is finished
+            (characterListForReplyInSuspend==0 && serverListForReplyInSuspend==0)
+            &&
+            //and the group character list size to send don't match with real character list size
+            (characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
+             )
     {
         qDebug() << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__;
         abort();
@@ -225,6 +241,8 @@ void EpollClientLoginSlave::character_list_return(const quint8 &characterGroupIn
 
 void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize)
 {
+    if(serverListForReplyRawData==NULL)
+        serverListForReplyRawData=static_cast<char *>(malloc(512*1024));
     memcpy(serverListForReplyRawData+serverListForReplyRawDataSize,tempRawData,tempRawDataSize);
     serverListForReplyRawDataSize+=tempRawDataSize;
     serverPlayedTimeCount+=serverCount;
@@ -232,7 +250,13 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
     if(serverListForReplyInSuspend==0)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
+        if(
+                //if all the query is finished
+                (characterListForReplyInSuspend==0 && serverListForReplyInSuspend==0)
+                &&
+                //and the group character list size to send don't match with real character list size
+                (characterTempListForReply.size()!=CharactersGroupForLogin::list.size())
+                 )
         {
             qDebug() << "serverListForReplyInSuspend==0 && characterTempListForReply.size()!=CharactersGroupForLogin::list.size()" << __FILE__ << __LINE__;
             abort();
@@ -243,18 +267,33 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
         QMapIterator<quint8,CharacterListForReply> i(characterTempListForReply);
         while (i.hasNext()) {
             i.next();
+            //copy buffer
             memcpy(EpollClientLoginSlave::loginGood+tempSize,i.value().rawData,i.value().rawDataSize);
             tempSize+=i.value().rawDataSize;
+            //remove the old buffer
+            delete i.value().rawData;
         }
+        characterTempListForReply.clear();
         //Server list
         memcpy(EpollClientLoginSlave::loginGood+tempSize,serverListForReplyRawData,serverListForReplyRawDataSize);
         tempSize+=serverListForReplyRawDataSize;
+        //delete serverListForReplyRawData;//do into caller: CharactersGroupForLogin::character_list_object()
 
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(paramToPassToCallBackType.first()!=QStringLiteral("AskLoginParam"))
+        {
+            qDebug() << "is not AskLoginParam" << paramToPassToCallBackType.join(";") << __FILE__ << __LINE__;
+            abort();
+        }
+        #endif
+        AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.takeFirst());
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(askLoginParam==NULL)
             abort();
         #endif
         postReply(askLoginParam->query_id,EpollClientLoginSlave::loginGood,tempSize);
+        paramToPassToCallBack.clear();
+        paramToPassToCallBackType.clear();
         delete askLoginParam;
         askLoginParam=NULL;
     }
@@ -284,11 +323,6 @@ void EpollClientLoginSlave::createAccount(const quint8 &query_id, const char *ra
         return;
     }
     #endif
-    if(accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
-    {
-        loginIsWrong(query_id,0x03,QStringLiteral("Have already the max charaters: %1/%2").arg(accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
-        return;
-    }
     if(maxAccountIdList.isEmpty())
     {
         loginIsWrong(query_id,0x04,QStringLiteral("maxAccountIdList is empty"));
@@ -309,7 +343,7 @@ void EpollClientLoginSlave::createAccount(const quint8 &query_id, const char *ra
     CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText.toLatin1(),this,&EpollClientLoginSlave::createAccount_static);
     if(callback==NULL)
     {
-        is_logging_in_progess=false;
+        stat=EpollClientLoginStat::ProtocolGood;
         loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseLogin.errorMessage()));
         delete askLoginParam;
         askLoginParam=NULL;
@@ -317,7 +351,6 @@ void EpollClientLoginSlave::createAccount(const quint8 &query_id, const char *ra
     }
     else
     {
-        accountCharatersCount++;
         paramToPassToCallBack << askLoginParam;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         paramToPassToCallBackType << QStringLiteral("AskLoginParam");
@@ -401,7 +434,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         QByteArray outputData;
         outputData[0x00]=0x01;
         postReply(askLoginParam->query_id,outputData.constData(),outputData.size());
-        is_logging_in_progess=false;
+        stat=EpollClientLoginStat::ProtocolGood;
     }
     else
         loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("Login already used: %1").arg(QString(askLoginParam->login.toHex())));
