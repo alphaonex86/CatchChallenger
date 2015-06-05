@@ -14,41 +14,51 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             removeFromQueryReceived(queryNumber);
             #endif
-            if(memcmp(data,EpollClientLoginMaster::protocolHeaderToMatch,sizeof(EpollClientLoginMaster::protocolHeaderToMatch))==0)
+            if(size==sizeof(EpollClientLoginMaster::protocolHeaderToMatch)+sizeof(EpollClientLoginMaster::private_token))
             {
-                if(memcmp(data+sizeof(EpollClientLoginMaster::protocolHeaderToMatch),EpollClientLoginMaster::private_token,sizeof(EpollClientLoginMaster::private_token))==0)
+                if(memcmp(data,EpollClientLoginMaster::protocolHeaderToMatch,sizeof(EpollClientLoginMaster::protocolHeaderToMatch))==0)
                 {
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                    switch(ProtocolParsing::compressionType)
+                    if(memcmp(data+sizeof(EpollClientLoginMaster::protocolHeaderToMatch),EpollClientLoginMaster::private_token,sizeof(EpollClientLoginMaster::private_token))==0)
                     {
-                        case CompressionType_None:
-                            *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
-                        break;
-                        case CompressionType_Zlib:
-                            *(EpollClientLoginMaster::protocolReplyCompresssionZlib+1)=queryNumber;
-                            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompresssionZlib),sizeof(EpollClientLoginMaster::protocolReplyCompresssionZlib));
-                        break;
-                        case CompressionType_Xz:
-                            *(EpollClientLoginMaster::protocolReplyCompressionXz+1)=queryNumber;
-                            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionXz),sizeof(EpollClientLoginMaster::protocolReplyCompressionXz));
-                        break;
-                        default:
-                            errorParsingLayer("Compression selected wrong");
+                        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                        switch(ProtocolParsing::compressionType)
+                        {
+                            case CompressionType_None:
+                                *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
+                                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
+                            break;
+                            case CompressionType_Zlib:
+                                *(EpollClientLoginMaster::protocolReplyCompresssionZlib+1)=queryNumber;
+                                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompresssionZlib),sizeof(EpollClientLoginMaster::protocolReplyCompresssionZlib));
+                            break;
+                            case CompressionType_Xz:
+                                *(EpollClientLoginMaster::protocolReplyCompressionXz+1)=queryNumber;
+                                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionXz),sizeof(EpollClientLoginMaster::protocolReplyCompressionXz));
+                            break;
+                            default:
+                                errorParsingLayer("Compression selected wrong");
+                            return;
+                        }
+                        #else
+                        *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
+                        #endif
+                        stat=EpollClientLoginMasterStat::Logged;
+                        messageParsingLayer("Protocol sended and replied");
+                    }
+                    else
+                    {
+                        *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
+                        errorParsingLayer("Wrong protocol token");
                         return;
                     }
-                    #else
-                    *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
-                    #endif
-                    stat=EpollClientLoginMasterStat::Logged;
-                    messageParsingLayer("Protocol sended and replied");
                 }
                 else
                 {
-                    *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
-                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
-                    errorParsingLayer("Wrong protocol token");
+                    *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));
+                    errorParsingLayer("Wrong protocol magic number");
                     return;
                 }
             }
@@ -273,6 +283,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     newUniqueKey = rng();
                 } while(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(newUniqueKey)));
                 uniqueKey=newUniqueKey;
+                std::cerr << "Generate new unique key for a game server" << std::endl;
                 unsigned int pos=1+4;
                 EpollClientLoginMaster::tempBuffer[0x00]=0x02;
                 *reinterpret_cast<quint32 *>(EpollClientLoginMaster::tempBuffer+1)=(quint32)htole32(newUniqueKey);
@@ -334,6 +345,9 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
                         this,uniqueKey,host,port,xml,logicalGroup,currentPlayer,maxPlayer);
             stat=EpollClientLoginMasterStat::GameServer;
+            EpollClientLoginMaster::gameServers << this;
+
+            std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
         }
         break;
         case 0x08:
@@ -344,7 +358,6 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 return;
             }
             stat=EpollClientLoginMasterStat::LoginServer;
-            EpollClientLoginMaster::loginServers << this;
             //send logical group list + Raw server list master to login + Login settings and Characters group
             if(EpollClientLoginMaster::loginPreviousToReplyCacheSize!=0)
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginPreviousToReplyCache),EpollClientLoginMaster::loginPreviousToReplyCacheSize);
@@ -389,6 +402,9 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             }
             postReplyData(queryNumber,reinterpret_cast<char *>(EpollClientLoginMaster::replyToRegisterLoginServer),pos);
         }
+        EpollClientLoginMaster::loginServers << this;
+
+        std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
         break;
         default:
             parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));

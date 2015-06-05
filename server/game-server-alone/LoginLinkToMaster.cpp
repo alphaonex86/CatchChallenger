@@ -170,7 +170,7 @@ bool LoginLinkToMaster::setSettings(QSettings * const settings)
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
     token=settings->value(QStringLiteral("token")).toString();
-    memcpy(LoginLinkToMaster::header_magic_number_and_private_token+8,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LoginLinkToMaster::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings->endGroup();
 
     return true;
@@ -184,7 +184,7 @@ void LoginLinkToMaster::generateToken()
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LoginLinkToMaster::header_magic_number_and_private_token+8,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(LoginLinkToMaster::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
@@ -193,7 +193,7 @@ void LoginLinkToMaster::generateToken()
     settings->setValue(QStringLiteral("token"),QString(
                           QByteArray(
                               reinterpret_cast<char *>(LoginLinkToMaster::header_magic_number_and_private_token)
-                              +8,TOKEN_SIZE_FOR_MASTERAUTH)
+                              +9,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
     fclose(fpRandomFile);
     settings->sync();

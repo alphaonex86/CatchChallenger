@@ -67,12 +67,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
                     break;
                     default:
-                        newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(queryNumber));
+                        newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 if(data.size()!=(sizeof(quint8)+CATCHCHALLENGER_TOKENSIZE))
                 {
-                    newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(queryNumber));
+                    newError(QStringLiteral("Procotol wrong or corrupted (Are you logged directly on game server?)"),QStringLiteral("compression type wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
                 token=data.right(CATCHCHALLENGER_TOKENSIZE);
@@ -89,8 +89,10 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     string=tr("Server full");
                 else
                     string=tr("Unknown error %1").arg(returnCode);
-                newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("the server have returned: %1").arg(string));
+                //newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("the server have returned: %1").arg(string));
+                //show the message box
                 disconnected(QStringLiteral("the server have returned: %1").arg(string));
+                closeSocket();
                 return;
             }
         }

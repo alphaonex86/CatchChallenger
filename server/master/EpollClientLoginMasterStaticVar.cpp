@@ -4,7 +4,7 @@
 
 using namespace CatchChallenger;
 
-const unsigned char EpollClientLoginMaster::protocolHeaderToMatch[]={0x88,0x62,0xBC,0xBB,0x67,0x9E,0x3D,0xE7};
+const unsigned char EpollClientLoginMaster::protocolHeaderToMatch[]=PROTOCOL_HEADER_MASTERSERVER;
 char EpollClientLoginMaster::private_token[TOKEN_SIZE_FOR_MASTERAUTH];
 char EpollClientLoginMaster::tempBuffer[4096];
 

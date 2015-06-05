@@ -4,7 +4,7 @@
 
 using namespace CatchChallenger;
 
-unsigned char EpollClientLoginSlave::header_magic_number_and_private_token[8+TOKEN_SIZE_FOR_MASTERAUTH]={/*magic number*/0x88,0x62,0xBC,0xBB,0x67,0x9E,0x3D,0xE7};
+unsigned char EpollClientLoginSlave::header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH]=PROTOCOL_HEADER_MASTERSERVER;
 LoginLinkToMaster *EpollClientLoginSlave::linkToMaster=NULL;
 QList<unsigned int> EpollClientLoginSlave::maxAccountIdList;
 QList<unsigned int> EpollClientLoginSlave::maxCharacterIdList;
@@ -42,7 +42,7 @@ char EpollClientLoginSlave::serverLogicalGroupAndServerList[];
 unsigned int EpollClientLoginSlave::serverLogicalGroupAndServerListSize=0;
 EpollClientLoginSlave::ProxyMode EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
 
-const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER;
+const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
 
 EpollPostgresql EpollClientLoginSlave::databaseBaseLogin;
 EpollPostgresql EpollClientLoginSlave::databaseBaseCommon;

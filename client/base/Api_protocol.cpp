@@ -2,7 +2,8 @@
 
 using namespace CatchChallenger;
 
-const unsigned char protocolHeaderToMatch[] = PROTOCOL_HEADER;
+const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
+const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERVER;
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -168,8 +169,7 @@ bool Api_protocol::sendProtocol()
         return false;
     }
     have_send_protocol=true;
-    QByteArray outputData(reinterpret_cast<char *>(const_cast<unsigned char *>(protocolHeaderToMatch)),sizeof(protocolHeaderToMatch));
-    packOutcommingQuery(0x03,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x03,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
     return true;
 }
 

@@ -50,9 +50,12 @@ public:
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const quint32 &characterId);
     qint8 addCharacter(void * const client,const quint8 &query_id, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
-    static void addCharacter_static(void *object);
-    void addCharacter_object();
-    void addCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
+    static void addCharacterStep1_static(void *object);
+    void addCharacterStep1_object();
+    void addCharacterStep1_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
+    static void addCharacterStep2_static(void *object);
+    void addCharacterStep2_object();
+    void addCharacterStep2_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId);
     bool removeCharacter(void * const client,const quint8 &query_id, const quint32 &characterId);
     static void removeCharacter_static(void *object);
     void removeCharacter_object();
