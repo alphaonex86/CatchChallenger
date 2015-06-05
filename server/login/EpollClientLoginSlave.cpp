@@ -23,18 +23,15 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             ,PacketModeTransmission_Server
             #endif
             ),
+        stat(EpollClientLoginStat::None),
         socketString(NULL),
         socketStringSize(0),
         account_id(0),
-        accountCharatersCount(255),
-        have_send_protocol(false),
-        is_logging_in_progess(false),
         characterListForReplyInSuspend(0),
         serverListForReplyRawData(NULL),
         serverListForReplyRawDataSize(0),
         serverListForReplyInSuspend(0),
-        serverPlayedTimeCount(0),
-        askLoginParam(NULL)
+        serverPlayedTimeCount(0)
 {
 }
 

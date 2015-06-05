@@ -853,7 +853,9 @@ void MainWindow::resetAll()
     if(socket!=NULL)
     {
         socket->disconnectFromHost();
-        socket->abort();
+        //can be above !=NULL but here ==NULL
+        if(socket!=NULL)
+            socket->abort();
     }
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();

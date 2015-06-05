@@ -9,7 +9,7 @@
 #include <QString>
 #include <QRegularExpression>
 
-#define BASE_PROTOCOL_MAGIC_SIZE 8
+#define BASE_PROTOCOL_MAGIC_SIZE 9
 
 namespace CatchChallenger {
 class EpollClientLoginMaster : public BaseClassSwitch, public ProtocolParsingInputOutput

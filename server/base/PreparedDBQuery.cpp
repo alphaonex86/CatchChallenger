@@ -69,6 +69,9 @@ QString PreparedDBQueryCommon::db_query_delete_allow=NULL;
 
 QString PreparedDBQueryCommon::db_query_select_clan_by_name=NULL;
 QString PreparedDBQueryCommon::db_query_select_character_by_pseudo=NULL;
+#ifdef CATCHCHALLENGER_CLASS_LOGIN
+QString PreparedDBQueryCommon::db_query_get_character_count_by_account;
+#endif
 QString PreparedDBQueryCommon::db_query_insert_monster=NULL;
 QString PreparedDBQueryCommon::db_query_insert_monster_full=NULL;
 QString PreparedDBQueryCommon::db_query_insert_warehouse_monster_full=NULL;
@@ -146,7 +149,7 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::Type &type
     }
 }
 
-void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &type,const bool &useSP)
+void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase::Type &type)
 {
     switch(type)
     {
@@ -177,26 +180,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_delete_allow=QStringLiteral("DELETE FROM `character_allow` WHERE `character`=%1");
 
         PreparedDBQueryCommon::db_query_select_character_by_pseudo=QStringLiteral("SELECT `id` FROM `character` WHERE `pseudo`='%1'");
+        #ifdef CATCHCHALLENGER_CLASS_LOGIN
+        PreparedDBQueryCommon::db_query_get_character_count_by_account=QStringLiteral("SELECT COUNT(*) FROM `character` WHERE `account`=%1");
+        #endif
         PreparedDBQueryCommon::db_query_select_clan_by_name=QStringLiteral("SELECT `id` FROM `clan` WHERE `name`='%1'");
         PreparedDBQueryCommon::db_query_insert_monster=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`place`) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8,0)");
         PreparedDBQueryCommon::db_query_insert_monster_full=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`place`) VALUES(%1,%2,0)");
         PreparedDBQueryCommon::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`place`) VALUES(%1,%2,1)");
-        if(useSP)
-        {
-            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1");
-            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=0 ORDER BY `position` ASC");
-            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=1 ORDER BY `position` ASC");
-            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4,`sp`=%5 WHERE `id`=%1");
-            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2,`sp`=%3 WHERE `id`=%1");
-        }
-        else
-        {
-            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`position`=%6 WHERE `id`=%1");
-            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=0 ORDER BY `position` ASC");
-            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=1 ORDER BY `position` ASC");
-            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4 WHERE `id`=%1");
-            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2 WHERE `id`=%1");
-        }
+
         PreparedDBQueryCommon::db_query_update_monster_move_to_player=QStringLiteral("UPDATE `monster` SET `place`=0,`position`=%1 WHERE `id`=%2");
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=QStringLiteral("UPDATE `monster` SET `place`=0,`character`=%1,`position`=%2 WHERE `id`=%3");
         PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse=QStringLiteral("UPDATE `monster` SET `place`=1,`position`=%1 WHERE `id`=%2");
@@ -273,25 +264,13 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
 
         PreparedDBQueryCommon::db_query_select_clan_by_name=QStringLiteral("SELECT id FROM clan WHERE name='%1'");
         PreparedDBQueryCommon::db_query_select_character_by_pseudo=QStringLiteral("SELECT id FROM character WHERE pseudo='%1'");
+        #ifdef CATCHCHALLENGER_CLASS_LOGIN
+        PreparedDBQueryCommon::db_query_get_character_count_by_account=QStringLiteral("SELECT COUNT(*) FROM character WHERE account=%1");
+        #endif
         PreparedDBQueryCommon::db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,place) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8,0)");
         PreparedDBQueryCommon::db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,place) VALUES(%1,%2,0)");
         PreparedDBQueryCommon::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,place) VALUES(%1,%2,1)");
-        if(useSP)
-        {
-            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
-        }
-        else
-        {
-            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
-        }
+
         PreparedDBQueryCommon::db_query_update_monster_move_to_player=QStringLiteral("UPDATE monster SET place=0,position=%1 WHERE id=%2");
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=QStringLiteral("UPDATE monster SET place=0,character=%1,position=%2 WHERE id=%3");
         PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse=QStringLiteral("UPDATE monster SET place=1,position=%1 WHERE id=%2");
@@ -367,25 +346,13 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
 
         PreparedDBQueryCommon::db_query_select_clan_by_name=QStringLiteral("SELECT id FROM clan WHERE name='%1'");
         PreparedDBQueryCommon::db_query_select_character_by_pseudo=QStringLiteral("SELECT id FROM character WHERE pseudo='%1'");
+        #ifdef CATCHCHALLENGER_CLASS_LOGIN
+        PreparedDBQueryCommon::db_query_get_character_count_by_account=QStringLiteral("SELECT COUNT(*) FROM character WHERE account=%1");
+        #endif
         PreparedDBQueryCommon::db_query_insert_monster=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,place) VALUES(%1,%2,%3,%4,%5,0,0,%6,%7,0,%3,%8,0)");
         PreparedDBQueryCommon::db_query_insert_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,place) VALUES(%1,%2,0)");
         PreparedDBQueryCommon::db_query_insert_warehouse_monster_full=QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,place) VALUES(%1,%2,1)");
-        if(useSP)
-        {
-            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
-        }
-        else
-        {
-            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
-            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
-            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
-        }
+
         PreparedDBQueryCommon::db_query_update_monster_move_to_player=QStringLiteral("UPDATE monster SET place=0,position=%1 WHERE id=%2");
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=QStringLiteral("UPDATE monster SET place=0,character=%1,position=%2 WHERE id=%3");
         PreparedDBQueryCommon::db_query_update_monster_move_to_warehouse=QStringLiteral("UPDATE monster SET place=1,position=%1 WHERE id=%2");
@@ -433,6 +400,75 @@ void PreparedDBQueryCommon::initDatabaseQueryCommon(const DatabaseBase::Type &ty
         PreparedDBQueryCommon::db_query_insert_server_time=QStringLiteral("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);");
         PreparedDBQueryCommon::db_query_update_server_time_played_time=QStringLiteral("UPDATE server_time SET played_time=played_time+%1 WHERE server=%2 AND account=%3;");
         PreparedDBQueryCommon::db_query_update_server_time_last_connect=QStringLiteral("UPDATE server_time SET last_connect=%1 WHERE server=%2 AND account=%3;");
+        break;
+    }
+}
+
+void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Type &type,const bool &useSP)
+{
+    switch(type)
+    {
+        default:
+        return;
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::Type::Mysql:
+        if(useSP)
+        {
+            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1");
+            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=0 ORDER BY `position` ASC");
+            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=1 ORDER BY `position` ASC");
+            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4,`sp`=%5 WHERE `id`=%1");
+            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2,`sp`=%3 WHERE `id`=%1");
+        }
+        else
+        {
+            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`position`=%6 WHERE `id`=%1");
+            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=0 ORDER BY `position` ASC");
+            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin` FROM `monster` WHERE `character`=%1 AND `place`=1 ORDER BY `position` ASC");
+            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4 WHERE `id`=%1");
+            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE `monster` SET `xp`=%2 WHERE `id`=%1");
+        }
+        break;
+        #endif
+
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::Type::SQLite:
+        if(useSP)
+        {
+            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
+        }
+        else
+        {
+            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
+        }
+        break;
+        #endif
+
+        case DatabaseBase::Type::PostgreSQL:
+        if(useSP)
+        {
+            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1");
+        }
+        else
+        {
+            PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,position=%6 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4 WHERE id=%1");
+            PreparedDBQueryCommon::db_query_select_monsters_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=0 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_select_monsters_warehouse_by_player_id=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character_origin FROM monster WHERE character=%1 AND place=1 ORDER BY position ASC");
+            PreparedDBQueryCommon::db_query_update_monster_xp=QStringLiteral("UPDATE monster SET xp=%2 WHERE id=%1");
+        }
         break;
     }
 }

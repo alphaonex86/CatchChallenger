@@ -90,7 +90,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
                 #endif
                 BaseServerLogin::tokenForAuthSize++;
-                have_send_protocol=true;
+                stat=EpollClientLoginStat::ProtocolGood;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                 normalOutput(QStringLiteral("Protocol sended and replied"));
                 #endif
@@ -103,13 +103,9 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 return;
             }
         break;
+        //login
         case 0x04:
-            if(!have_send_protocol)
-            {
-                parseNetworkReadError("send login before the protocol");
-                return;
-            }
-            if(is_logging_in_progess)
+            if(stat==EpollClientLoginStat::LoginInProgress)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
@@ -119,20 +115,21 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
                 parseNetworkReadError("Loggin already in progress");
             }
+            else if(stat!=EpollClientLoginStat::ProtocolGood)
+            {
+                parseNetworkReadError("send login before the protocol");
+                return;
+            }
             else
             {
-                is_logging_in_progess=true;
+                stat=EpollClientLoginStat::LoginInProgress;
                 askLogin(queryNumber,data);
                 return;
             }
         break;
+        //create account
         case 0x05:
-            if(!have_send_protocol)
-            {
-                parseNetworkReadError("send login before the protocol");
-                return;
-            }
-            if(is_logging_in_progess)
+            if(stat==EpollClientLoginStat::LoginInProgress)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 removeFromQueryReceived(queryNumber);
@@ -141,12 +138,17 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
                 parseNetworkReadError("Loggin already in progress");
+            }
+            else if(stat!=EpollClientLoginStat::ProtocolGood)
+            {
+                parseNetworkReadError("send login before the protocol");
+                return;
             }
             else
             {
                 if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
                 {
-                    is_logging_in_progess=true;
+                    stat=EpollClientLoginStat::LoginInProgress;
                     createAccount(queryNumber,data);
                     return;
                 }
@@ -199,7 +201,7 @@ void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const qu
 void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     Q_UNUSED(data);
-    if(!have_send_protocol)
+    if(stat!=EpollClientLoginStat::Logged)
     {
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
         return;

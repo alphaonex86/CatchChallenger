@@ -19,7 +19,8 @@ public:
 class PreparedDBQueryCommon
 {
 public:
-    static void initDatabaseQueryCommon(const DatabaseBase::Type &type,const bool &useSP);
+    static void initDatabaseQueryCommonWithoutSP(const DatabaseBase::Type &type);
+    static void initDatabaseQueryCommonWithSP(const DatabaseBase::Type &type,const bool &useSP);
 public:
     //query
     static QString db_query_select_allow;
@@ -58,6 +59,9 @@ public:
     static QString db_query_update_monster_move_to_market;
     static QString db_query_select_clan_by_name;
     static QString db_query_select_character_by_pseudo;
+    #ifdef CATCHCHALLENGER_CLASS_LOGIN
+    static QString db_query_get_character_count_by_account;
+    #endif
     static QString db_query_insert_monster;
     static QString db_query_insert_monster_full;
     static QString db_query_insert_warehouse_monster_full;

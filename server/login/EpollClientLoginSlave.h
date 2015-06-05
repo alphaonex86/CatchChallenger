@@ -79,6 +79,16 @@ public:
         Proxy=0x02
     };
     static ProxyMode proxyMode;
+    enum EpollClientLoginStat
+    {
+        None,
+        ProtocolGood,
+        LoginInProgress,
+        Logged,
+        CharacterSelecting,
+        CharacterSelected
+    };
+    EpollClientLoginStat stat;
 
     void parseIncommingData();
 
@@ -92,10 +102,11 @@ public:
     char *socketString;
     int socketStringSize;
     unsigned int account_id;
-    quint8 accountCharatersCount;
+    /** \warning Need be checked in real time because can be opened on multiple login server
+     * quint8 accountCharatersCount; */
 
     static LoginLinkToMaster *linkToMaster;
-    static unsigned char header_magic_number_and_private_token[8+TOKEN_SIZE_FOR_MASTERAUTH];
+    static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
     static QList<unsigned int> maxAccountIdList;
     static QList<unsigned int> maxCharacterIdList;
     static QList<unsigned int> maxClanIdList;
@@ -126,9 +137,6 @@ private:
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     QStringList paramToPassToCallBackType;
     #endif
-
-    bool have_send_protocol;
-    bool is_logging_in_progess;
 
     static unsigned char protocolReplyProtocolNotSupported[4];
     static unsigned char protocolReplyServerFull[4];
@@ -203,14 +211,15 @@ private:
         char *rawData;
         int rawDataSize;
     };
+    //to be ordered
     QMap<quint8,CharacterListForReply> characterTempListForReply;
     quint8 characterListForReplyInSuspend;
-
+    //by client because is where is merged all servers time reply from all catchchallenger_common*
     char *serverListForReplyRawData;
-    int serverListForReplyRawDataSize;
+    unsigned int serverListForReplyRawDataSize;
+
     quint8 serverListForReplyInSuspend;
     quint8 serverPlayedTimeCount;
-    AskLoginParam *askLoginParam;
 public:
     static EpollPostgresql databaseBaseLogin;
     static EpollPostgresql databaseBaseCommon;
