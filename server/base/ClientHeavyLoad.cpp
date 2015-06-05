@@ -269,11 +269,6 @@ void Client::createAccount(const quint8 &query_id, const char *rawdata)
         return;
     }
     #endif
-    if(number_of_character>=CommonSettingsCommon::commonSettingsCommon.max_character)
-    {
-        loginIsWrong(query_id,0x03,QStringLiteral("Have already the max charaters: %1/%2").arg(number_of_character).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
-        return;
-    }
     QByteArray login;
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);

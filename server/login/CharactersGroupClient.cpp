@@ -120,10 +120,9 @@ void CharactersGroupForLogin::character_list_object()
             qDebug() << (QStringLiteral("Server id is not number: %1 for %2").arg(databaseBaseCommon->value(0)).arg(character_id));
     }
     tempRawData[0]=validCharaterCount;
-    static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount=validCharaterCount;
 
     client->character_list_return(this->index,tempRawData,tempRawDataSize);
-    delete tempRawData;
+    //delete tempRawData;//delete later to order the list, see EpollClientLoginSlave::server_list_return(), QMapIterator<quint8,CharacterListForReply> i(characterTempListForReply);, delete i.value().rawData;
 
     //get server list
     server_list(client,client->account_id);
@@ -313,11 +312,12 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
         //static_cast<EpollClientLoginSlave *>(client)->postReply(query_id,tempData,sizeof(tempData));
         return 0x03;
     }
-    if(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
+    /** \warning Need be checked in real time because can be opened on multiple login server
+     * if(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
         return -1;
-    }
+    }*/
     if(profileIndex>=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size())
     {
         qDebug() << (QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size()));
@@ -346,8 +346,8 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
     addCharacterParam.skinId=skinId;
     addCharacterParam.client=client;
 
-    const QString &queryText=QString(PreparedDBQueryCommon::db_query_select_character_by_pseudo).arg(SqlFunction::quoteSqlVariable(pseudo));
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::addCharacter_static);
+    const QString &queryText=QString(PreparedDBQueryCommon::db_query_get_character_count_by_account).arg(static_cast<EpollClientLoginSlave *>(client)->account_id);
+    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::addCharacterStep1_static);
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
@@ -360,20 +360,79 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
     }
 }
 
-void CharactersGroupForLogin::addCharacter_static(void *object)
+void CharactersGroupForLogin::addCharacterStep1_static(void *object)
 {
     if(object!=NULL)
-        static_cast<CharactersGroupForLogin *>(object)->addCharacter_object();
+        static_cast<CharactersGroupForLogin *>(object)->addCharacterStep1_object();
 }
 
-void CharactersGroupForLogin::addCharacter_object()
+void CharactersGroupForLogin::addCharacterStep1_object()
 {
     AddCharacterParam addCharacterParam=addCharacterParamList.takeFirst();
-    addCharacter_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.skinId);
+    addCharacterStep1_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
+void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
+{
+    if(!databaseBaseCommon->next())
+    {
+        qDebug() << QStringLiteral("Character count query return nothing");
+        client->addCharacter_ReturnFailed(query_id,0x03);
+        return;
+    }
+    bool ok;
+    quint32 characterCount=QString(databaseBaseCommon->value(0)).toUInt(&ok);
+    if(!ok)
+    {
+        qDebug() << QStringLiteral("Character count query return not a number");
+        client->addCharacter_ReturnFailed(query_id,0x03);
+        return;
+    }
+    if(characterCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
+    {
+        qDebug() << (QStringLiteral("You can't create more account, you have already %1 on %2 allowed")
+                     .arg(characterCount)
+                     .arg(CommonSettingsCommon::commonSettingsCommon.max_character)
+                     );
+        client->addCharacter_ReturnFailed(query_id,0x02);
+        return;
+    }
+
+    const QString &queryText=QString(PreparedDBQueryCommon::db_query_select_character_by_pseudo).arg(SqlFunction::quoteSqlVariable(pseudo));
+    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseCommon->asyncRead(queryText.toLatin1(),this,&CharactersGroupForLogin::addCharacterStep2_static);
+    if(callback==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
+        return;
+    }
+    else
+    {
+        AddCharacterParam addCharacterParam;
+        addCharacterParam.query_id=query_id;
+        addCharacterParam.profileIndex=profileIndex;
+        addCharacterParam.pseudo=pseudo;
+        addCharacterParam.skinId=skinId;
+        addCharacterParam.client=client;
+        addCharacterParamList << addCharacterParam;
+        return;
+    }
+}
+
+void CharactersGroupForLogin::addCharacterStep2_static(void *object)
+{
+    if(object!=NULL)
+        static_cast<CharactersGroupForLogin *>(object)->addCharacterStep2_object();
+}
+
+void CharactersGroupForLogin::addCharacterStep2_object()
+{
+    AddCharacterParam addCharacterParam=addCharacterParamList.takeFirst();
+    addCharacterStep2_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.skinId);
+    databaseBaseCommon->clear();
+}
+
+void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const quint8 &query_id,const quint8 &profileIndex,const QString &pseudo,const quint8 &skinId)
 {
     if(databaseBaseCommon->next())
     {
@@ -381,8 +440,6 @@ void CharactersGroupForLogin::addCharacter_return(EpollClientLoginSlave * const 
         return;
     }
     const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
-
-    client->accountCharatersCount++;
 
     const quint32 &characterId=maxCharacterId.back();
     maxCharacterId.pop_back();

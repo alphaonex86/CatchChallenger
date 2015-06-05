@@ -40,7 +40,7 @@ public:
     static char protocolReplyNoMoreToken[4];
     static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static char sendDisconnectedPlayer[2+4];
-    static unsigned char header_magic_number_and_private_token[8+TOKEN_SIZE_FOR_MASTERAUTH];
+    static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
 
     static LoginLinkToMaster *loginLinkToMaster;
     std::vector<quint8> queryNumberList;

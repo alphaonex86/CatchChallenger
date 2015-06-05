@@ -32,14 +32,30 @@ const QString Client::text_unabletofoundthisrightslevel=QLatin1Literal("unable t
 
 unsigned char Client::protocolReplyProtocolNotSupported[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x02/*return code*/};
 unsigned char Client::protocolReplyServerFull[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x03/*return code*/};
-unsigned char Client::protocolReplyCompressionNone[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01+CATCHCHALLENGER_TOKENSIZE/*reply size*/,0x04/*return code*/};
-unsigned char Client::protocolReplyCompresssionZlib[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01+CATCHCHALLENGER_TOKENSIZE/*reply size*/,0x05/*return code*/};
-unsigned char Client::protocolReplyCompressionXz[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01+CATCHCHALLENGER_TOKENSIZE/*reply size*/,0x06/*return code*/};
+unsigned char Client::protocolReplyCompressionNone[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
+                                                      #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                                                      +CATCHCHALLENGER_TOKENSIZE/*reply size*/
+                                                      #endif
+                                                      ,0x04/*return code*/};
+unsigned char Client::protocolReplyCompresssionZlib[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
+                                                       #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                                                       +CATCHCHALLENGER_TOKENSIZE/*reply size*/
+                                                       #endif
+                                                       ,0x05/*return code*/};
+unsigned char Client::protocolReplyCompressionXz[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
+                                                    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                                                    +CATCHCHALLENGER_TOKENSIZE/*reply size*/
+                                                    #endif
+                                                    ,0x06/*return code*/};
 
 unsigned char Client::loginInProgressBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x06/*return code*/};
 unsigned char Client::loginIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
 
-const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER;
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
+#else
+const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_GAMESERVER;
+#endif
 
 QList<int> Client::generalChatDrop;
 int Client::generalChatDropTotalCache=0;

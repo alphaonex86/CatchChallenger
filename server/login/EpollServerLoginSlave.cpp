@@ -2,6 +2,7 @@
 #include "CharactersGroupForLogin.h"
 #include "../epoll/Epoll.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../base/PreparedDBQuery.h"
 
 using namespace CatchChallenger;
 
@@ -70,7 +71,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(EpollClientLoginSlave::header_magic_number_and_private_token+8,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(EpollClientLoginSlave::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings.endGroup();
 
     //mode
@@ -207,6 +208,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
         settings.endGroup();
         settings.sync();
+
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        PreparedDBQueryLogin::initDatabaseQueryLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType());
+        #endif
+        //PreparedDBQueryBase::initDatabaseQueryBase(EpollClientLoginSlave::databaseBaseLogin.databaseType());//don't exist, allow dictionary and loaded without cache
     }
 
     QStringList charactersGroupForLoginList;
@@ -235,8 +241,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 settings.setValue(QStringLiteral("charactersGroup"),QString());
             if(!settings.contains(QStringLiteral("comment")))
                 settings.setValue(QStringLiteral("comment"),QStringLiteral("to do maxClanId, maxCharacterId, maxMonsterId"));
+            settings.sync();
         }
-        settings.sync();
         if(settings.contains(QStringLiteral("login")))
         {
             const QString &charactersGroup=settings.value(QStringLiteral("charactersGroup")).toString();
@@ -268,6 +274,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 CharactersGroupForLogin::hash[charactersGroup]=CharactersGroupForLogin::list.last();
                 CharactersGroupForLogin::list.last()->index=CharactersGroupForLogin::list.size()-1;
                 charactersGroupForLoginList << charactersGroup;
+
+                if(CharactersGroupForLoginId==0)
+                {
+                    PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.last()->databaseType());
+                }
             }
             else
                 std::cerr << "CharactersGroupForLogin already found for group " << CharactersGroupForLoginId << std::endl;
@@ -289,7 +300,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             const QByteArray &data=CharactersGroupForLoginName.toUtf8();
             if(data.size()>20)
             {
-                std::cerr << "only db type postgresql supported (abort)" << std::endl;
+                std::cerr << "CharactersGroupForLoginName too big (abort)" << std::endl;
                 abort();
             }
             EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=data.size();
@@ -442,7 +453,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(EpollClientLoginSlave::header_magic_number_and_private_token+8,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(EpollClientLoginSlave::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
@@ -451,7 +462,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
     settings.setValue(QStringLiteral("token"),QString(
                           QByteArray(
                               reinterpret_cast<char *>(EpollClientLoginSlave::header_magic_number_and_private_token)
-                              +8,TOKEN_SIZE_FOR_MASTERAUTH)
+                              +9,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
     fclose(fpRandomFile);
     settings.sync();
@@ -502,7 +513,7 @@ void EpollServerLoginSlave::compose04Reply()
     }
     EpollClientLoginSlave::loginGood[EpollClientLoginSlave::loginGoodSize]=(quint8)httpDatapackMirrorData.size();
     EpollClientLoginSlave::loginGoodSize+=1;
-    memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),sizeof(httpDatapackMirrorData.size()));
+    memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),httpDatapackMirrorData.size());
     EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();
 }
 
@@ -556,23 +567,29 @@ void EpollServerLoginSlave::preload_profile()
             break;
         }
         unsigned int preparedQueryCharTempSize=0;
-        int sub_index=0;
-        while(sub_index<tempStringList.size())
+        //reservate the memory space
         {
-            const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
-            preparedQueryCharTempSize+=tempStringData.size();
-            sub_index++;
+            int sub_index=0;
+            while(sub_index<tempStringList.size())
+            {
+                const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
+                preparedQueryCharTempSize+=tempStringData.size();
+                sub_index++;
+            }
+            profile.preparedQueryChar=(char *)malloc(preparedQueryCharTempSize);
         }
-        profile.preparedQueryChar=(char *)malloc(preparedQueryCharTempSize);
-        sub_index=0;
-        while(sub_index<tempStringList.size())
+        //set the new memory space
         {
-            const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
-            profile.preparedQuerySize[sub_index]=tempStringData.size();
-            if(index>0)
-                profile.preparedQueryPos[sub_index]=profile.preparedQueryPos[sub_index-1]+profile.preparedQuerySize[sub_index-1];
-            memcpy(profile.preparedQueryChar+profile.preparedQueryPos[sub_index],tempStringData.constData(),tempStringData.size());
-            sub_index++;
+            int sub_index=0;
+            while(sub_index<tempStringList.size())
+            {
+                const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
+                profile.preparedQuerySize[sub_index]=tempStringData.size();
+                if(index>0)
+                    profile.preparedQueryPos[sub_index]=profile.preparedQueryPos[sub_index-1]+profile.preparedQuerySize[sub_index-1];
+                memcpy(profile.preparedQueryChar+profile.preparedQueryPos[sub_index],tempStringData.constData(),tempStringData.size());
+                sub_index++;
+            }
         }
         tempStringList.clear();
 
