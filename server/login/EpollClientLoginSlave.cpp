@@ -30,8 +30,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
         characterListForReplyInSuspend(0),
         serverListForReplyRawData(NULL),
         serverListForReplyRawDataSize(0),
-        serverListForReplyInSuspend(0),
-        serverPlayedTimeCount(0)
+        serverListForReplyInSuspend(0)
 {
 }
 
