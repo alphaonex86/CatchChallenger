@@ -241,11 +241,18 @@ void EpollClientLoginSlave::character_list_return(const quint8 &characterGroupIn
 
 void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * const tempRawData,const int &tempRawDataSize)
 {
-    if(serverListForReplyRawData==NULL)
-        serverListForReplyRawData=static_cast<char *>(malloc(512*1024));
-    memcpy(serverListForReplyRawData+serverListForReplyRawDataSize,tempRawData,tempRawDataSize);
-    serverListForReplyRawDataSize+=tempRawDataSize;
-    serverPlayedTimeCount+=serverCount;
+    if(serverCount>0)
+    {
+        if(serverListForReplyRawData==NULL)
+        {
+            serverListForReplyRawDataSize=1;
+            serverListForReplyRawData=static_cast<char *>(malloc(512*1024));
+            serverListForReplyRawData[0x00]=0;
+        }
+        serverListForReplyRawData[0x00]+=serverCount;
+        memcpy(serverListForReplyRawData+serverListForReplyRawDataSize,tempRawData,tempRawDataSize);
+        serverListForReplyRawDataSize+=tempRawDataSize;
+    }
     serverListForReplyInSuspend--;
     if(serverListForReplyInSuspend==0)
     {
@@ -262,8 +269,13 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
             abort();
         }
         #endif
+
+        unsigned int tempSize=EpollClientLoginSlave::loginGoodSize;
+
         //characters group
-        int tempSize=EpollClientLoginSlave::loginGoodSize;
+        EpollClientLoginSlave::loginGood[tempSize]=characterTempListForReply.size();
+        tempSize+=sizeof(quint8);
+
         QMapIterator<quint8,CharacterListForReply> i(characterTempListForReply);
         while (i.hasNext()) {
             i.next();
@@ -275,9 +287,17 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
         }
         characterTempListForReply.clear();
         //Server list
-        memcpy(EpollClientLoginSlave::loginGood+tempSize,serverListForReplyRawData,serverListForReplyRawDataSize);
-        tempSize+=serverListForReplyRawDataSize;
-        //delete serverListForReplyRawData;//do into caller: CharactersGroupForLogin::character_list_object()
+        if(serverListForReplyRawData!=NULL)
+        {
+            memcpy(EpollClientLoginSlave::loginGood+tempSize,serverListForReplyRawData,serverListForReplyRawDataSize);
+            tempSize+=serverListForReplyRawDataSize;
+            //delete serverListForReplyRawData;//do into caller: CharactersGroupForLogin::character_list_object()
+        }
+        else
+        {
+            EpollClientLoginSlave::loginGood[tempSize]=0;
+            tempSize+=sizeof(quint8);
+        }
 
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(paramToPassToCallBackType.first()!=QStringLiteral("AskLoginParam"))
@@ -291,6 +311,9 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
         if(askLoginParam==NULL)
             abort();
         #endif
+        //send C20F and C20E
+        internalSendRawSmallPacket(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
+        //send the reply
         postReply(askLoginParam->query_id,EpollClientLoginSlave::loginGood,tempSize);
         paramToPassToCallBack.clear();
         paramToPassToCallBackType.clear();
