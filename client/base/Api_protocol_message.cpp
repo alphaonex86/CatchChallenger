@@ -1462,6 +1462,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         serverOrdenedList << tempVar;
                         serverListIndex++;
                     }
+                    haveTheServerList=true;
                 }
                 break;
                 //Logical group
@@ -1551,6 +1552,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         logicialGroupIndexList << addLogicalGroup(path,xml,language);
                         logicalGroupIndex++;
                     }
+                    haveTheLogicalGroupList=true;
                 }
                 break;
                 //Logical group

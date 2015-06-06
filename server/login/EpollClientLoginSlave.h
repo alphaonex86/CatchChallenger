@@ -219,7 +219,6 @@ private:
     unsigned int serverListForReplyRawDataSize;
 
     quint8 serverListForReplyInSuspend;
-    quint8 serverPlayedTimeCount;
 public:
     static EpollPostgresql databaseBaseLogin;
     static EpollPostgresql databaseBaseCommon;

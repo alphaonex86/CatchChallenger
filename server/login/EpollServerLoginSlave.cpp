@@ -493,19 +493,26 @@ void EpollServerLoginSlave::compose04Reply()
     EpollClientLoginSlave::loginGood[0x00]=0x01;//good
 
     *reinterpret_cast<quint32 *>(EpollClientLoginSlave::loginGood+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
-    EpollClientLoginSlave::loginGood[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
-    EpollClientLoginSlave::loginGood[0x06]=CommonSettingsCommon::commonSettingsCommon.max_character;
+    EpollClientLoginSlave::loginGood[0x05]=CommonSettingsCommon::commonSettingsCommon.max_character;
+    EpollClientLoginSlave::loginGood[0x06]=CommonSettingsCommon::commonSettingsCommon.min_character;
     EpollClientLoginSlave::loginGood[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     EpollClientLoginSlave::loginGood[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
     *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
     EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
     *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
     EpollClientLoginSlave::loginGoodSize=0x0E;
+    qDebug() << QString(QByteArray(EpollClientLoginSlave::loginGood,EpollClientLoginSlave::loginGoodSize).toHex()) << __LINE__;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
     EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
+    qDebug() << QString(QByteArray(EpollClientLoginSlave::loginGood,EpollClientLoginSlave::loginGoodSize).toHex()) << __LINE__;
 
     const QByteArray &httpDatapackMirrorData=EpollClientLoginSlave::linkToMaster->httpDatapackMirror.toUtf8();
+    if(EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty())
+    {
+        std::cerr << "EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
+        abort();
+    }
     if(httpDatapackMirrorData.size()>255)
     {
         std::cerr << "httpDatapackMirrorData size>255 (abort)" << std::endl;
@@ -515,6 +522,7 @@ void EpollServerLoginSlave::compose04Reply()
     EpollClientLoginSlave::loginGoodSize+=1;
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),httpDatapackMirrorData.size());
     EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();
+    qDebug() << QString(QByteArray(EpollClientLoginSlave::loginGood,EpollClientLoginSlave::loginGoodSize).toHex()) << __LINE__;
 }
 
 void EpollServerLoginSlave::preload_profile()
