@@ -154,7 +154,7 @@ void CharactersGroupForLogin::server_list_object()
 
     char * const tempRawData=new char[4*1024];
     //memset(tempRawData,0x00,sizeof(4*1024));
-    int tempRawDataSize=0x01;
+    int tempRawDataSize=0x00;
 
     const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
     bool ok;
@@ -168,10 +168,11 @@ void CharactersGroupForLogin::server_list_object()
             if(server_id<(unsigned int)CharactersGroupForLogin::dictionary_server_database_to_index.size())
                 if(CharactersGroupForLogin::dictionary_server_database_to_index.at(server_id)!=-1)
                     serverIndex=CharactersGroupForLogin::dictionary_server_database_to_index.at(server_id);
+            //global over the server group
             if(serverIndex!=-1)
             {
                 //server index
-                tempRawData[tempRawDataSize]=serverIndex;
+                tempRawData[tempRawDataSize]=(quint8)serverIndex;
                 tempRawDataSize+=1;
 
                 //played_time
@@ -200,7 +201,6 @@ void CharactersGroupForLogin::server_list_object()
         else
             qDebug() << (QStringLiteral("Character id is not number: %1").arg(databaseBaseCommon->value(0)));
     }
-    tempRawData[0]=validServerCount;
 
     client->server_list_return(validServerCount,tempRawData,tempRawDataSize);
     delete tempRawData;

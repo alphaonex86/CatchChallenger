@@ -1517,6 +1517,8 @@ void Api_protocol::resetAll()
 {
     //status for the query
     token.clear();
+    haveTheServerList=false;
+    haveTheLogicalGroupList=false;
     is_logged=false;
     character_selected=false;
     have_send_protocol=false;

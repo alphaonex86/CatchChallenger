@@ -77,6 +77,8 @@ private:
     bool have_send_protocol;
     bool have_receive_protocol;
     bool tolerantMode;
+    bool haveTheServerList;
+    bool haveTheLogicalGroupList;
 
     static QString text_balise_root_start;
     static QString text_balise_root_stop;
