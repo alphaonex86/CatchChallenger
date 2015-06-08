@@ -38,7 +38,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
 
-    QSettings settings(QCoreApplication::applicationDirPath()+"/login_slave.conf",QSettings::IniFormat);
+    QSettings settings(QCoreApplication::applicationDirPath()+"/login.conf",QSettings::IniFormat);
 
     {
         memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));

@@ -1,32 +1,29 @@
 #QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
 #QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
 
-QT       -= gui widgets network sql
-QT       += xml
+QT       -= gui widgets network sql xml
 
 DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
-DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-//toremove
-DEFINES += EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-DEFINES += CATCHCHALLENGER_CLASS_MASTER
+#DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+DEFINES += CATCHCHALLENGER_CLASS_LOGIN
 
 #LIBS += -lssl -lcrypto
-LIBS    += -lpq
+LIBS    += -lpq -llzma
 
 CONFIG += c++11
 
-TARGET = catchchallenger-server-login-master
+TARGET = catchchallenger-server-login
 CONFIG   += console
 
 TEMPLATE = app
 
 SOURCES += \
-    main-epoll-login-master.cpp \
-    EpollClientLoginMaster.cpp \
-    EpollServerLoginMaster.cpp \
+    main-epoll-login-slave.cpp \
+    EpollClientLoginSlave.cpp \
+    EpollServerLoginSlave.cpp \
     ../epoll/Epoll.cpp \
     ../epoll/EpollGenericSslServer.cpp \
     ../epoll/EpollGenericServer.cpp \
@@ -36,24 +33,30 @@ SOURCES += \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
     ../../general/base/ProtocolParsingOutput.cpp \
-    EpollClientLoginMasterStaticVar.cpp \
+    EpollClientLoginSlaveStaticVar.cpp \
     ../epoll/EpollSslClient.cpp \
-    ../base/DatabaseBase.cpp \
+    EpollClientLoginSlaveHeavyLoad.cpp \
     ../epoll/db/EpollPostgresql.cpp \
-    EpollClientLoginMasterProtocolParsing.cpp \
-    CharactersGroup.cpp \
+    ../base/DatabaseBase.cpp \
+    ../base/PreparedDBQuery.cpp \
+    LoginLinkToMaster.cpp \
+    LoginLinkToMasterStaticVar.cpp \
+    LoginLinkToMasterProtocolParsing.cpp \
+    EpollClientLoginSlaveProtocolParsing.cpp \
+    ../epoll/EpollClientToServer.cpp \
+    ../epoll/EpollSslClientToServer.cpp \
+    EpollClientLoginSlaveWrite.cpp \
+    CharactersGroupForLogin.cpp \
+    CharactersGroupClient.cpp \
+    ../base/BaseServerLogin.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
-    ../../general/base/CommonDatapack.cpp \
-    ../../general/base/DatapackGeneralLoader.cpp \
-    ../../general/fight/CommonFightEngineBase.cpp \
-    ../base/BaseServerMasterLoadDictionary.cpp \
-    ../base/BaseServerMasterSendDatapack.cpp \
-    ../../general/fight/FightLoader.cpp \
+    ../base/SqlFunction.cpp \
+    ../base/DictionaryLogin.cpp \
     ../../general/base/CommonSettingsCommon.cpp
 
 HEADERS += \
-    EpollClientLoginMaster.h \
-    EpollServerLoginMaster.h \
+    EpollClientLoginSlave.h \
+    EpollServerLoginSlave.h \
     ../epoll/Epoll.h \
     ../epoll/EpollGenericSslServer.h \
     ../epoll/EpollGenericServer.h \
@@ -62,17 +65,18 @@ HEADERS += \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/ProtocolParsingCheck.h \
     ../epoll/EpollSslClient.h \
-    ../base/DatabaseBase.h \
     ../epoll/db/EpollPostgresql.h \
-    CharactersGroup.h \
-    ../../general/base/FacilityLibGeneral.h \
-    ../../general/base/CommonDatapack.h \
-    ../VariableServer.h \
-    ../../general/base/DatapackGeneralLoader.h \
-    ../../general/fight/CommonFightEngineBase.h \
+    ../base/DatabaseBase.h \
+    ../base/PreparedDBQuery.h \
+    LoginLinkToMaster.h \
+    ../epoll/EpollClientToServer.h \
+    ../epoll/EpollSslClientToServer.h \
+    CharactersGroupForLogin.h \
+    ../base/BaseServerLogin.h \
     ../../general/base/GeneralStructures.h \
-    ../../general/base/GeneralType.h \
-    ../base/BaseServerMasterLoadDictionary.h \
-    ../base/BaseServerMasterSendDatapack.h \
-    ../../general/fight/FightLoader.h \
+    ../../general/base/FacilityLibGeneral.h \
+    ../base/SqlFunction.h \
+    ../base/DictionaryLogin.h \
+    ../VariableServer.h \
+    ../../general/base/GeneralVariable.h \
     ../../general/base/CommonSettingsCommon.h

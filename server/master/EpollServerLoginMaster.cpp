@@ -54,7 +54,7 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
         memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
-    QSettings settings("login_master.conf",QSettings::IniFormat);
+    QSettings settings("master.conf",QSettings::IniFormat);
 
     srand(time(NULL));
 
