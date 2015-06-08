@@ -123,10 +123,10 @@ public:
     static char loginGood[256*1024];
     static unsigned int loginGoodSize;
 
-    static char serverPartialServerList[256*1024];
-    static unsigned int serverPartialServerListSize;
     static char serverServerList[256*1024];
     static unsigned int serverServerListSize;
+    static char serverServerListComputedMessage[256*1024];
+    static unsigned int serverServerListComputedMessageSize;
     static char serverLogicalGroupList[256*1024];
     static unsigned int serverLogicalGroupListSize;
     static char serverLogicalGroupAndServerList[512*1024];

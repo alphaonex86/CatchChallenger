@@ -164,15 +164,11 @@ void CharactersGroupForLogin::server_list_object()
         const unsigned int server_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
         if(ok)
         {
-            qint16 serverIndex=-1;
-            if(server_id<(unsigned int)CharactersGroupForLogin::dictionary_server_database_to_index.size())
-                if(CharactersGroupForLogin::dictionary_server_database_to_index.at(server_id)!=-1)
-                    serverIndex=CharactersGroupForLogin::dictionary_server_database_to_index.at(server_id);
             //global over the server group
-            if(serverIndex!=-1)
+            if(servers.contains(server_id))
             {
                 //server index
-                tempRawData[tempRawDataSize]=(quint8)serverIndex;
+                tempRawData[tempRawDataSize]=servers.value(server_id).indexOnFlatList;
                 tempRawDataSize+=1;
 
                 //played_time

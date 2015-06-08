@@ -87,7 +87,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(mode==QStringLiteral("direct"))
         {
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
-            EpollClientLoginSlave::serverPartialServerList[0x00]=0x01;//Reconnect mode
+            EpollClientLoginSlave::serverServerList[0x00]=0x01;//Reconnect mode
         }
         else
         {
@@ -95,7 +95,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             abort();
 
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
-            EpollClientLoginSlave::serverPartialServerList[0x00]=0x02;//proxy mode
+            EpollClientLoginSlave::serverServerList[0x00]=0x02;//proxy mode
         }
     }
 
@@ -270,18 +270,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                     std::cerr << "only db type postgresql supported (abort)" << std::endl;
                     abort();
                 }
-                CharactersGroupForLogin::list << new CharactersGroupForLogin(db.toUtf8().constData(),host.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
-                CharactersGroupForLogin::hash[charactersGroup]=CharactersGroupForLogin::list.last();
-                CharactersGroupForLogin::list.last()->index=CharactersGroupForLogin::list.size()-1;
+                CharactersGroupForLogin::hash[charactersGroup]=new CharactersGroupForLogin(db.toUtf8().constData(),host.toUtf8().constData(),login.toUtf8().constData(),pass.toUtf8().constData(),considerDownAfterNumberOfTry,tryInterval);
                 charactersGroupForLoginList << charactersGroup;
-
-                if(CharactersGroupForLoginId==0)
-                {
-                    PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.last()->databaseType());
-                }
             }
             else
+            {
                 std::cerr << "CharactersGroupForLogin already found for group " << CharactersGroupForLoginId << std::endl;
+                abort();
+            }
             CharactersGroupForLoginId++;
         }
         else
@@ -307,6 +303,13 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=1;
             memcpy(EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup+EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize,data.constData(),data.size());
             EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=data.size();
+
+            CharactersGroupForLogin::hash[CharactersGroupForLoginName]->index=index;
+            CharactersGroupForLogin::list << CharactersGroupForLogin::hash[CharactersGroupForLoginName];
+
+            if(index==0)
+                PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.last()->databaseType());
+
             index++;
         }
     }
