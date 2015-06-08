@@ -127,12 +127,12 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             unsigned int pos=0;
 
             QString charactersGroup;
-            quint32 uniqueKey;
             QString host;
-            quint16 port;
             QString xml;
-            QString logicalGroup;
-            quint16 currentPlayer,maxPlayer;
+            quint16 port=0;
+            quint32 uniqueKey=0;
+            quint32 logicalGroupIndex=0;
+            quint16 currentPlayer=0,maxPlayer=0;
             //charactersGroup
             {
                 if((size-pos)<(int)sizeof(quint8))
@@ -229,6 +229,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     parseNetworkReadError("wrong utf8 to QString size for text size");
                     return;
                 }
+                QString logicalGroup;
                 const quint8 &textSize=data[pos];
                 pos+=sizeof(quint8);
                 if(textSize>0)
@@ -240,6 +241,20 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     }
                     logicalGroup=QString::fromUtf8(data+pos,textSize);
                     pos+=textSize;
+                }
+                if(EpollClientLoginMaster::logicalGroupHash.contains(logicalGroup))
+                    logicalGroupIndex=EpollClientLoginMaster::logicalGroupHash.value(logicalGroup);
+                else
+                {
+                    logicalGroupIndex=0;
+                    parseNetworkReadError(QStringLiteral("logicalGroup \"%1\" not found for %2:%3 at %4:%5")
+                                          .arg(logicalGroup)
+                                          .arg(host)
+                                          .arg(port)
+                                          .arg(__FILE__)
+                                          .arg(__LINE__)
+                                          );
+                    return;
                 }
             }
             //current player
@@ -350,7 +365,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
 
             EpollClientLoginMaster::gameServers << this;
             charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
-                        this,uniqueKey,host,port,xml,logicalGroup,currentPlayer,maxPlayer);
+                        this,uniqueKey,host,port,xml,logicalGroupIndex,currentPlayer,maxPlayer);
             stat=EpollClientLoginMasterStat::GameServer;
             EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
             EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();

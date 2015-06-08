@@ -180,7 +180,7 @@ BaseClassSwitch::Type CharactersGroup::getType() const
 }
 
 CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host,
-                                                                              const quint16 &port, const QString &metaData, const QString &logicalGroup,
+                                                                              const quint16 &port, const QString &metaData, const quint32 &logicalGroupIndex,
                                                                               const quint16 &currentPlayer, const quint16 &maxPlayer)
 {
     InternalGameServer tempServer;
@@ -188,7 +188,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     tempServer.port=port;
     tempServer.link=link;
 
-    tempServer.logicalGroup=logicalGroup;
+    tempServer.logicalGroupIndex=logicalGroupIndex;
     tempServer.metaData=metaData;
     tempServer.uniqueKey=uniqueKey;
 
