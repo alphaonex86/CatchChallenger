@@ -83,6 +83,7 @@ public:
     static char loginPreviousToReplyCache[256*1024*3];
     static unsigned int loginPreviousToReplyCacheSize;
     static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK];
+    static QHash<QString,int> logicalGroupHash;
 
     static QList<EpollClientLoginMaster *> gameServers;
     static QList<EpollClientLoginMaster *> loginServers;
