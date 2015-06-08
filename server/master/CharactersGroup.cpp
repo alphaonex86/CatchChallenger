@@ -9,9 +9,10 @@ int CharactersGroup::serverWaitedToBeReady=0;
 QHash<QString,CharactersGroup *> CharactersGroup::hash;
 QList<CharactersGroup *> CharactersGroup::list;
 
-CharactersGroup::CharactersGroup(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval,const QString &name) :
+CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const quint8 &considerDownAfterNumberOfTry, const quint8 &tryInterval, const QString &name) :
     databaseBaseCommon(new EpollPostgresql())
 {
+    this->index=0;
     this->name=name;
     databaseBaseCommon->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;
     databaseBaseCommon->tryInterval=tryInterval;
@@ -197,8 +198,6 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     gameServers[uniqueKey]=tempServer;
     gameServersLinkToUniqueKey[link]=uniqueKey;
 
-    broadcastGameServerChange();
-
     return &gameServers[uniqueKey];
 }
 
@@ -206,16 +205,6 @@ void CharactersGroup::removeGameServerUniqueKey(void * const link)
 {
     gameServers.remove(gameServersLinkToUniqueKey.value(link));
     gameServersLinkToUniqueKey.remove(link);
-
-    broadcastGameServerChange();
-}
-
-void CharactersGroup::broadcastGameServerChange()
-{
-    EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
-    EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
-
-    EpollClientLoginMaster::broadcastGameServerChange();
 }
 
 bool CharactersGroup::containsGameServerUniqueKey(const quint32 &serverUniqueKey) const

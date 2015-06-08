@@ -60,16 +60,6 @@ CREATE TABLE clan (
 
 
 --
--- Name: dictionary_server; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE dictionary_server (
-    id integer NOT NULL,
-    key text
-);
-
-
---
 -- Name: item; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -183,14 +173,6 @@ ALTER TABLE ONLY "character"
 
 ALTER TABLE ONLY clan
     ADD CONSTRAINT clan_pkey PRIMARY KEY (id);
-
-
---
--- Name: dictionary_server_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
---
-
-ALTER TABLE ONLY dictionary_server
-    ADD CONSTRAINT dictionary_server_pkey PRIMARY KEY (id);
 
 
 --

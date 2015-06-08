@@ -1,4 +1,5 @@
 #include "EpollClientLoginMaster.h"
+#include "EpollServerLoginMaster.h"
 #include "../../general/base/CommonSettingsCommon.h"
 
 #include <iostream>
@@ -187,6 +188,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     host=QString::fromUtf8(data+pos,textSize);
                     pos+=textSize;
                 }
+                else
+                {
+                    parseNetworkReadError("host can't be empty");
+                    return;
+                }
             }
             //port
             if((size-pos)<(int)sizeof(quint16))
@@ -342,10 +348,13 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 postReplyData(queryNumber,EpollClientLoginMaster::tempBuffer,pos);
             }
 
+            EpollClientLoginMaster::gameServers << this;
             charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
                         this,uniqueKey,host,port,xml,logicalGroup,currentPlayer,maxPlayer);
             stat=EpollClientLoginMasterStat::GameServer;
-            EpollClientLoginMaster::gameServers << this;
+            EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
+            EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+            EpollClientLoginMaster::broadcastGameServerChange();
 
             std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
         }

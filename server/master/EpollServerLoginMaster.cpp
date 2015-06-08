@@ -425,20 +425,22 @@ QStringList EpollServerLoginMaster::loadCharactersGroup(QSettings &settings)
                 charactersGroupList << charactersGroup;
             }
             else
+            {
                 std::cerr << "charactersGroup already found for group " << charactersGroupId << std::endl;
+                abort();
+            }
             charactersGroupId++;
         }
         else
             continueCharactersGroupSettings=false;
         settings.endGroup();
     }
+    charactersGroupList.sort();
     return charactersGroupList;
 }
 
 void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGroupList)
 {
-    charactersGroupList.sort();
-
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
     *reinterpret_cast<quint32 *>(rawServerListForC211+0x01)=(quint32)htole32((quint32)CommonSettingsCommon::commonSettingsCommon.character_delete_time);
     rawServerListForC211[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
@@ -470,8 +472,10 @@ void EpollServerLoginMaster::charactersGroupListReply(QStringList &charactersGro
             abort();
         }
         rawServerListForC211Size+=newSize;
-        index++;
         CharactersGroup::list << CharactersGroup::hash.value(charactersGroupName);
+        CharactersGroup::list.last()->index=index;
+
+        index++;
     }
 }
 
@@ -483,7 +487,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
     int rawServerListSize=0x01;
 
     QString textToConvert;
-    int logicalGroup=0;
+    quint8 logicalGroup=0;
     bool logicalGroupContinue=true;
     while(logicalGroupContinue)
     {
@@ -492,35 +496,39 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
         if(logicalGroupContinue)
         {
             //path
-            textToConvert=settings.value(QStringLiteral("path")).toString();
-            if(textToConvert.size()>20)
             {
-                std::cerr << "path too hurge (abort)" << std::endl;
-                abort();
+                textToConvert=settings.value(QStringLiteral("path")).toString();
+                if(textToConvert.size()>20)
+                {
+                    std::cerr << "path too hurge (abort)" << std::endl;
+                    abort();
+                }
+                int newSize=FacilityLibGeneral::toUTF8WithHeader(textToConvert,rawServerList+rawServerListSize);
+                if(newSize==0)
+                {
+                    std::cerr << "path null or unable to translate in utf8 (abort)" << std::endl;
+                    abort();
+                }
+                rawServerListSize+=newSize;
             }
-            int newSize=FacilityLibGeneral::toUTF8WithHeader(textToConvert,rawServerList+rawServerListSize);
-            if(newSize==0)
-            {
-                std::cerr << "path null or unable to translate in utf8 (abort)" << std::endl;
-                abort();
-            }
-            rawServerListSize+=newSize;
             //translation
-            textToConvert=settings.value(QStringLiteral("translation")).toString();
-            if(textToConvert.size()>4*1024)
             {
-                std::cerr << "translation too hurge (abort)" << std::endl;
-                abort();
+                textToConvert=settings.value(QStringLiteral("translation")).toString();
+                if(textToConvert.size()>4*1024)
+                {
+                    std::cerr << "translation too hurge (abort)" << std::endl;
+                    abort();
+                }
+                int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,rawServerList+rawServerListSize);
+                if(newSize==0)
+                {
+                    std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
+                    abort();
+                }
+                rawServerListSize+=newSize;
             }
-            newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,rawServerList+rawServerListSize);
-            if(newSize==0)
-            {
-                std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
-                abort();
-            }
-            rawServerListSize+=newSize;
+            logicalGroup++;
         }
-        logicalGroup++;
         settings.endGroup();
     }
     rawServerList[0x00]=logicalGroup;
@@ -530,7 +538,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
             false,
             #endif
             EpollClientLoginMaster::serverLogicalGroupList,
-            0xC2,0x000F,rawServerList,rawServerListSize);
+            0xC2,0x0F,rawServerList,rawServerListSize);
     if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
@@ -553,60 +561,81 @@ void EpollServerLoginMaster::doTheServerList()
     {
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
+        if(gameServerOnCharactersGroup==NULL)
+        {
+            std::cerr << "charactersGroup==NULL (abort)" << std::endl;
+            abort();
+        }
 
         //charactersGroup
-        if(gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->name.size()>20)
         {
-            std::cerr << "charactersGroup too hurge (abort)" << std::endl;
-            abort();
+            EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
+            rawServerListSize+=1;
         }
-        int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->name,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
-        if(newSize==0)
-        {
-            std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
-            abort();
-        }
-        rawServerListSize+=newSize;
         //key
-        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole32(gameServerOnCharactersGroup->uniqueKey);
-        rawServerListSize+=sizeof(gameServerOnCharactersGroup->uniqueKey);
+        {
+            *reinterpret_cast<quint32 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=htole32(gameServerOnCharactersGroup->uniqueKey);
+            rawServerListSize+=sizeof(gameServerOnCharactersGroup->uniqueKey);
+        }
         //host
-        newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
-        if(newSize==0)
         {
-            std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
-            abort();
+            int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
+            if(newSize==0)
+            {
+                std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
+                abort();
+            }
+            rawServerListSize+=newSize;
         }
-        rawServerListSize+=newSize;
         //port
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)gameServerOnCharactersGroup->port);
-        rawServerListSize+=sizeof(unsigned short int);
+        {
+            *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16((unsigned short int)gameServerOnCharactersGroup->port);
+            rawServerListSize+=sizeof(unsigned short int);
+        }
         //metaData
-        if(gameServerOnCharactersGroup->metaData.size()>4*1024)
         {
-            std::cerr << "metaData too hurge (abort)" << std::endl;
-            abort();
+            if(gameServerOnCharactersGroup->metaData.size()>4*1024)
+            {
+                std::cerr << "metaData too hurge (abort)" << std::endl;
+                abort();
+            }
+            {
+                const QByteArray &utf8data=gameServerOnCharactersGroup->metaData.toUtf8();
+                if(utf8data.size()>65535)
+                {
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=0;
+                    rawServerListSize+=2;
+                }
+                else
+                {
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(quint16)htole16((quint16)utf8data.size());
+                    rawServerListSize+=2;
+                    memcpy(EpollClientLoginMaster::serverPartialServerList+rawServerListSize,utf8data.constData(),utf8data.size());
+                    rawServerListSize+=utf8data.size();
+                }
+            }
         }
-        newSize=FacilityLibGeneral::toUTF8With16BitsHeader(gameServerOnCharactersGroup->metaData,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
-        if(newSize==0)
-        {
-            std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
-            abort();
-        }
-        rawServerListSize+=newSize;
         //logicalGroup
-        if(gameServerOnCharactersGroup->logicalGroup.size()>20)
         {
-            std::cerr << "logicalGroup too hurge (abort)" << std::endl;
-            abort();
+            if(gameServerOnCharactersGroup->logicalGroup.size()>20)
+            {
+                std::cerr << "logicalGroup too hurge (abort)" << std::endl;
+                abort();
+            }
+            const QByteArray &utf8data=gameServerOnCharactersGroup->logicalGroup.toUtf8();
+            if(utf8data.size()>255)
+            {
+                EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=0;
+                rawServerListSize+=1;
+            }
+            else
+            {
+                EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=utf8data.size();
+                rawServerListSize+=1;
+                memcpy(EpollClientLoginMaster::serverPartialServerList+rawServerListSize,utf8data.constData(),utf8data.size());
+                rawServerListSize+=utf8data.size();
+            }
         }
-        newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->logicalGroup,EpollClientLoginMaster::serverPartialServerList+rawServerListSize);
-        if(newSize==0)
-        {
-            std::cerr << "charactersGroup null or unable to translate in utf8 (abort)" << std::endl;
-            abort();
-        }
-        rawServerListSize+=newSize;
 
         serverListIndex++;
     }
@@ -619,21 +648,23 @@ void EpollServerLoginMaster::doTheServerList()
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
         //max player
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
         rawServerListSize+=sizeof(unsigned short int);
         //connected player
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
         rawServerListSize+=sizeof(unsigned short int);
 
         serverListIndex++;
     }
 
+    qDebug() << QString(QByteArray(EpollClientLoginMaster::serverPartialServerList,rawServerListSize).toHex()) << __LINE__;
     EpollClientLoginMaster::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
             EpollClientLoginMaster::serverServerList,
             0xC2,0x10,EpollClientLoginMaster::serverPartialServerList,rawServerListSize);
+    qDebug() << QString(QByteArray(EpollClientLoginMaster::serverServerList,EpollClientLoginMaster::serverServerListSize).toHex()) << __LINE__;
     if(EpollClientLoginMaster::serverServerListSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;

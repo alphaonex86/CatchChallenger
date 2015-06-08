@@ -1794,16 +1794,18 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
         }
     }
 
+    LogicialGroup * logicialGroupCursor;
     if(server.logicalGroupIndex>=logicialGroupIndexList.size())
     {
-        qDebug() << (QStringLiteral("out of range for addLogicalGroup: %1, server.logicalGroupIndex %2 <= logicialGroupIndexList.size() %3")
+        qDebug() << (QStringLiteral("out of range for addLogicalGroup: %1, server.logicalGroupIndex %2 <= logicialGroupIndexList.size() %3 (defaulting to root folder)")
                      .arg(server.xml)
                      .arg(server.logicalGroupIndex)
                      .arg(logicialGroupIndexList.size())
                      );
-        return NULL;
+        logicialGroupCursor=&logicialGroup;
     }
-    LogicialGroup * const logicialGroupCursor=logicialGroupIndexList.at(server.logicalGroupIndex);
+    else
+        logicialGroupCursor=logicialGroupIndexList.at(server.logicalGroupIndex);
 
     ServerFromPoolForDisplay newServer;
     newServer.charactersGroupIndex=server.charactersGroupIndex;
