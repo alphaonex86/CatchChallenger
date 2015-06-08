@@ -56,6 +56,8 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
             {
                 case 0x0F:
                 {
+                    qDebug() << QString(QByteArray(rawData,size).toHex()) << __FILE__ << __LINE__;
+
                     //control it
                     quint32 pos=1;
                     quint8 logicalGroupSize=rawData[0x00];
@@ -70,6 +72,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 abort();
                             }
                             const quint8 &pathSize=rawData[pos];
+                            pos+=sizeof(quint8);
                             if((size-pos)<pathSize)
                             {
                                 std::cerr << "Wrong remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -86,6 +89,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 abort();
                             }
                             const quint16 &xmlSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
+                            pos+=sizeof(quint16);
                             if((size-pos)<xmlSize)
                             {
                                 std::cerr << "Wrong remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -420,15 +424,9 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size logicalGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                const quint8 &logicalGroupStringSize=rawData[pos];
-                                if((size-pos)<static_cast<unsigned int>(logicalGroupStringSize+1))
-                                {
-                                    std::cerr << "C210 size logicalGroupString + size 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                    abort();
-                                }
-                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,1+logicalGroupStringSize);
-                                pos+=1+logicalGroupStringSize;
-                                EpollClientLoginSlave::serverServerListSize+=1+logicalGroupStringSize;
+                                EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=rawData[pos];
+                                pos+=1;
+                                EpollClientLoginSlave::serverServerListSize+=1;
                             }
 
                             std::cerr << "rawData: "
