@@ -17,8 +17,7 @@ public:
     BaseClassSwitch::Type getType() const;
 
     void clearServerPair();
-    void setServerPair(const quint8 &index,const quint16 &databaseId);
-    void setServerUniqueKey(const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port);
+    void setServerUniqueKey(const quint8 &indexOnFlatList,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port);
     bool containsServerUniqueKey(const quint32 &serverUniqueKey) const;
 
     QList<EpollClientLoginSlave *> clientQueryForReadReturn;
@@ -85,15 +84,15 @@ private:
     {
         QString host;
         quint16 port;
+        quint8 indexOnFlatList;
     };
 private:
     EpollPostgresql *databaseBaseCommon;
-    QList<qint16/*allow -1 to not found*/> dictionary_server_database_to_index;
-    QList<quint32> dictionary_server_index_to_database;
     QHash<quint32,InternalLoginServer> servers;
     QList<void * const> clientAddReturnList;
     QList<void * const> clientRemoveReturnList;
     QList<quint32> deleteCharacterNowCharacterIdList;
+    QHash<quint32,quint8> uniqueKeyToIndex;
 
     static char tempBuffer[4096];
 };

@@ -11,7 +11,7 @@ namespace CatchChallenger {
 class CharactersGroup : public BaseClassSwitch
 {
 public:
-    explicit CharactersGroup(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval,const QString &name);
+    explicit CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const quint8 &considerDownAfterNumberOfTry, const quint8 &tryInterval, const QString &name);
     ~CharactersGroup();
 
     struct InternalGameServer
@@ -36,7 +36,6 @@ public:
                                 const quint16 &currentPlayer,const quint16 &maxPlayer);
     void removeGameServerUniqueKey(void * const link);
     bool containsGameServerUniqueKey(const quint32 &serverUniqueKey) const;
-    void broadcastGameServerChange();
 
     quint32 maxClanId;
     quint32 maxCharacterId;
@@ -50,6 +49,7 @@ public:
     static QList<CharactersGroup *> list;
     QSet<quint32> lockedAccount;
     QString name;
+    quint8 index;
 private:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);

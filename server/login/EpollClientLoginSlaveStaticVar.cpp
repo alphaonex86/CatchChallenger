@@ -32,10 +32,10 @@ char EpollClientLoginSlave::baseDatapackSum[];
 char EpollClientLoginSlave::loginGood[];
 unsigned int EpollClientLoginSlave::loginGoodSize=0;
 
-char EpollClientLoginSlave::serverPartialServerList[];
-unsigned int EpollClientLoginSlave::serverPartialServerListSize=0;
 char EpollClientLoginSlave::serverServerList[];
 unsigned int EpollClientLoginSlave::serverServerListSize=0;
+char EpollClientLoginSlave::serverServerListComputedMessage[];
+unsigned int EpollClientLoginSlave::serverServerListComputedMessageSize=0;
 char EpollClientLoginSlave::serverLogicalGroupList[];
 unsigned int EpollClientLoginSlave::serverLogicalGroupListSize=0;
 char EpollClientLoginSlave::serverLogicalGroupAndServerList[];

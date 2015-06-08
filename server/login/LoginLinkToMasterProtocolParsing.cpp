@@ -56,6 +56,52 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
             {
                 case 0x0F:
                 {
+                    //control it
+                    quint32 pos=1;
+                    quint8 logicalGroupSize=rawData[0x00];
+                    quint8 logicalGroupIndex=0;
+                    while(logicalGroupIndex<logicalGroupSize)
+                    {
+                        //path
+                        {
+                            if((size-pos)<sizeof(quint8))
+                            {
+                                std::cerr << "Wrong remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const quint8 &pathSize=rawData[pos];
+                            if((size-pos)<pathSize)
+                            {
+                                std::cerr << "Wrong remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            pos+=pathSize;
+                        }
+
+                        //xml
+                        {
+                            if((size-pos)<sizeof(quint16))
+                            {
+                                std::cerr << "Wrong remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const quint16 &xmlSize=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
+                            if((size-pos)<xmlSize)
+                            {
+                                std::cerr << "Wrong remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            pos+=xmlSize;
+                        }
+
+                        logicalGroupIndex++;
+                    }
+                    if(pos!=size)
+                    {
+                        std::cerr << "Wrong remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+                    //copy it
                     EpollClientLoginSlave::serverLogicalGroupListSize=ProtocolParsingBase::computeFullOutcommingData(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             false,
@@ -67,68 +113,80 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    if(EpollClientLoginSlave::serverServerListSize>0)
+                    if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
                     {
-                        EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListSize+EpollClientLoginSlave::serverLogicalGroupListSize;
+                        EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
                         if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
                             memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,
                                    EpollClientLoginSlave::serverLogicalGroupList,
                                    EpollClientLoginSlave::serverLogicalGroupListSize);
-                        if(EpollClientLoginSlave::serverServerListSize>0)
+                        if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
                             memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,
-                                   EpollClientLoginSlave::serverServerList,
-                                   EpollClientLoginSlave::serverServerListSize);
+                                   EpollClientLoginSlave::serverServerListComputedMessage,
+                                   EpollClientLoginSlave::serverServerListComputedMessageSize);
+                    }
+                    else
+                    {
+                        memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,
+                               EpollClientLoginSlave::serverLogicalGroupList,
+                               EpollClientLoginSlave::serverLogicalGroupListSize);
                     }
                 }
                 break;
                 case 0x10:
                 {
-                    QHashIterator<QString,CharactersGroupForLogin *> i(CharactersGroupForLogin::hash);
-                    while (i.hasNext()) {
-                        i.next();
-                        i.value()->clearServerPair();
-                    }
+                    qDebug() << QString(QByteArray(rawData,size).toHex()) << __LINE__;
 
-                    EpollClientLoginSlave::serverPartialServerListSize=0;
-                    memset(EpollClientLoginSlave::serverPartialServerList,0x00,sizeof(EpollClientLoginSlave::serverPartialServerList));
-                    int rawServerListSize=0x01;
+                    //purge the internal data
+                    {
+                        int index=0;
+                        while(index<CharactersGroupForLogin::list.size())
+                        {
+                            CharactersGroupForLogin::list.at(index)->clearServerPair();
+                            index++;
+                        }
+                    }
 
                     if(size<1)
                     {
                         std::cerr << "C210 missing first bytes (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
+                    int pos=0;
+
                     const unsigned short int &serverListSize=rawData[0x00];
-                    int pos;
+                    pos+=1;
+
                     int serverListIndex=0;
                     quint32 serverUniqueKey;const char * hostData;quint8 hostDataSize;quint16 port;
 
+                    std::cerr << "rawData: "
+                              << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                              << " "
+                              << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                              << " "
+                              << __FILE__ << ":" <<__LINE__ << std::endl;
+
                     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
                     {
-                        EpollClientLoginSlave::serverPartialServerList[0x01]=serverListSize;
+                        //EpollClientLoginSlave::serverServerList[0x00]=0x02;//do into EpollServerLoginSlave::EpollServerLoginSlave()
+                        EpollClientLoginSlave::serverServerList[0x01]=serverListSize;
                         /// \warning not linked with above
-                        pos=0x01;
+                        EpollClientLoginSlave::serverServerListSize=0x02;
+                        quint8 charactersGroupIndex;
                         while(serverListIndex<serverListSize)
                         {
-                            QString charactersGroupString;
-
                             //copy the charactersgroup
                             {
                                 if((size-pos)<1)
                                 {
-                                    std::cerr << "C210 size charactersGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    std::cerr << "C210 size charactersGroupIndex 8Bits too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                const quint8 &charactersGroupStringSize=rawData[pos];
-                                if((size-pos)<static_cast<unsigned int>(charactersGroupStringSize+1))
-                                {
-                                    std::cerr << "C210 size charactersGroupString + size 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                    abort();
-                                }
-                                charactersGroupString=QString::fromUtf8(rawData+pos+1,charactersGroupStringSize);
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,1+charactersGroupStringSize);
-                                pos+=1+charactersGroupStringSize;
-                                rawServerListSize+=1+charactersGroupStringSize;
+                                charactersGroupIndex=rawData[pos];
+                                pos+=1;
+                                EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=charactersGroupIndex;
+                                EpollClientLoginSlave::serverServerListSize+=1;
                             }
 
                             //copy the key
@@ -138,14 +196,14 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size key 32Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,4);
-                                if(!CharactersGroupForLogin::hash.contains(charactersGroupString))
+                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
+                                if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                                 {
                                     std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
                                 pos+=4;
-                                rawServerListSize+=4;
+                                EpollClientLoginSlave::serverServerListSize+=4;
                                 serverUniqueKey=*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos));
                             }
 
@@ -168,7 +226,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 pos+=1+hostStringSize+2;
                             }
 
-                            CharactersGroupForLogin::hash[charactersGroupString]->setServerUniqueKey(serverUniqueKey,hostData,hostDataSize,port);
+                            CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
 
                             //copy the xml string
                             {
@@ -183,9 +241,9 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size xmlString + size 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,2+xmlStringSize);
+                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,2+xmlStringSize);
                                 pos+=2+xmlStringSize;
-                                rawServerListSize+=2+xmlStringSize;
+                                EpollClientLoginSlave::serverServerListSize+=2+xmlStringSize;
                             }
 
                             //copy the logical group
@@ -201,28 +259,9 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size logicalGroupString + size 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,1+logicalGroupStringSize);
+                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,1+logicalGroupStringSize);
                                 pos+=1+logicalGroupStringSize;
-                                rawServerListSize+=1+logicalGroupStringSize;
-                            }
-
-                            //internal id
-                            {
-                                if((size-pos)<2)
-                                {
-                                    std::cerr << "C210 size xmlString 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                    abort();
-                                }
-                                const quint16 &databaseInternalId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
-                                pos+=2;
-                                rawServerListSize+=2;
-
-                                if(!CharactersGroupForLogin::hash.contains(charactersGroupString))
-                                {
-                                    std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                    abort();
-                                }
-                                CharactersGroupForLogin::hash[charactersGroupString]->setServerPair(serverListIndex,databaseInternalId);
+                                EpollClientLoginSlave::serverServerListSize+=1+logicalGroupStringSize;
                             }
 
                             serverListIndex++;
@@ -230,49 +269,76 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     }
                     else
                     {
-                        EpollClientLoginSlave::serverPartialServerList[0x01]=serverListSize;
+                        //EpollClientLoginSlave::serverServerList[0x00]=0x01;//do into EpollServerLoginSlave::EpollServerLoginSlave()
+                        EpollClientLoginSlave::serverServerList[0x01]=serverListSize;
                         /// \warning not linked with above
-                        pos=0x01;
+                        EpollClientLoginSlave::serverServerListSize=0x02;
+                        quint8 charactersGroupIndex;
                         while(serverListIndex<serverListSize)
                         {
-                            QString charactersGroupString;
+                            std::cerr << "rawData: "
+                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                      << " "
+                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "EpollClientLoginSlave::serverServerList: "
+                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
 
                             //copy the charactersgroup
                             {
                                 if((size-pos)<1)
                                 {
-                                    std::cerr << "C210 size charactersGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    std::cerr << "C210 size charactersGroupIndex 8Bits too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                const quint8 &charactersGroupStringSize=rawData[pos];
-                                if((size-pos)<static_cast<unsigned int>(charactersGroupStringSize+1))
-                                {
-                                    std::cerr << "C210 size charactersGroupString + size 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                    abort();
-                                }
-                                charactersGroupString=QString::fromUtf8(rawData+pos+1,charactersGroupStringSize);
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,1+charactersGroupStringSize);
-                                pos+=1+charactersGroupStringSize;
-                                rawServerListSize+=1+charactersGroupStringSize;
+                                charactersGroupIndex=rawData[pos];
+                                pos+=1;
+                                EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=charactersGroupIndex;
+                                EpollClientLoginSlave::serverServerListSize+=1;
                             }
 
-                            //copy the key
+                            std::cerr << "rawData: "
+                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                      << " "
+                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "EpollClientLoginSlave::serverServerList: "
+                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+
+                            //copy the unique key
                             {
                                 if((size-pos)<4)
                                 {
                                     std::cerr << "C210 size key 32Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,4);
-                                if(!CharactersGroupForLogin::hash.contains(charactersGroupString))
+                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
+                                if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                                 {
                                     std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
                                 pos+=4;
-                                rawServerListSize+=4;
+                                EpollClientLoginSlave::serverServerListSize+=4;
                                 serverUniqueKey=*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos));
                             }
+
+                            std::cerr << "rawData: "
+                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                      << " "
+                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "EpollClientLoginSlave::serverServerList: "
+                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
 
                             //copy the host + port
                             {
@@ -287,15 +353,36 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size charactersGroupString + size 8Bits header + port too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,1+hostStringSize+2);
+                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,1+hostStringSize+2);
                                 hostData=rawData+pos+1;
                                 hostDataSize=hostStringSize;
                                 port=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos+1+hostStringSize)));
+                                if(port<=0)
+                                {
+                                    std::cerr << "C210 port can't be <= 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
+                                if(hostStringSize<=0)
+                                {
+                                    std::cerr << "C210 hostStringSize can't be <= 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
                                 pos+=1+hostStringSize+2;
-                                rawServerListSize+=1+hostStringSize+2;
+                                EpollClientLoginSlave::serverServerListSize+=1+hostStringSize+2;
                             }
 
-                            CharactersGroupForLogin::hash[charactersGroupString]->setServerUniqueKey(serverUniqueKey,hostData,hostDataSize,port);
+                            std::cerr << "rawData: "
+                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                      << " "
+                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "EpollClientLoginSlave::serverServerList: "
+                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+
+                            CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
 
                             //copy the xml string
                             {
@@ -310,10 +397,21 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size xmlString + size 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,2+xmlStringSize);
+                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,2+xmlStringSize);
                                 pos+=2+xmlStringSize;
-                                rawServerListSize+=2+xmlStringSize;
+                                EpollClientLoginSlave::serverServerListSize+=2+xmlStringSize;
                             }
+
+                            std::cerr << "rawData: "
+                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                      << " "
+                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "EpollClientLoginSlave::serverServerList: "
+                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
 
                             //copy the logical group
                             {
@@ -328,33 +426,25 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 size logicalGroupString + size 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                memcpy(EpollClientLoginSlave::serverServerList,rawData+pos,1+logicalGroupStringSize);
+                                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,1+logicalGroupStringSize);
                                 pos+=1+logicalGroupStringSize;
-                                rawServerListSize+=1+logicalGroupStringSize;
+                                EpollClientLoginSlave::serverServerListSize+=1+logicalGroupStringSize;
                             }
-                            //internal id
-                            {
-                                if((size-pos)<2)
-                                {
-                                    std::cerr << "C210 size xmlString 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                    abort();
-                                }
-                                const quint16 &databaseInternalId=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData+pos)));
-                                pos+=2;
-                                rawServerListSize+=2;
 
-                                if(!CharactersGroupForLogin::hash.contains(charactersGroupString))
-                                {
-                                    std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                                    abort();
-                                }
-                                CharactersGroupForLogin::hash[charactersGroupString]->setServerPair(serverListIndex,databaseInternalId);
-                            }
+                            std::cerr << "rawData: "
+                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                      << " "
+                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "EpollClientLoginSlave::serverServerList: "
+                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
+                                      << " "
+                                      << __FILE__ << ":" <<__LINE__ << std::endl;
 
                             serverListIndex++;
                         }
                     }
-                    EpollClientLoginSlave::serverPartialServerListSize=rawServerListSize;
                     if(serverListSize>0)
                     {
                         if((size-pos)<static_cast<unsigned int>(serverListSize*(sizeof(quint16)+sizeof(quint16))))
@@ -362,23 +452,28 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                             std::cerr << "C210 co player list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        memcpy(EpollClientLoginSlave::serverPartialServerList,rawData+pos,serverListSize*(sizeof(quint16)+sizeof(quint16)));
+                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,serverListSize*(sizeof(quint16)+sizeof(quint16)));
                         pos+=serverListSize*(sizeof(quint16)+sizeof(quint16));
-                        rawServerListSize+=serverListSize*(sizeof(quint16)+sizeof(quint16));
+                        EpollClientLoginSlave::serverServerListSize+=serverListSize*(sizeof(quint16)+sizeof(quint16));
                     }
 
                     if((size-pos)!=0)
                     {
                         std::cerr << "C210 remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                        std::cerr << "Data: " << QString(QByteArray(rawData,size).toHex()).toStdString() << std::endl;
+                        std::cerr << "Data: "
+                                  << QString(QByteArray(rawData,pos).toHex()).toStdString()
+                                  << " "
+                                  << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
+                                  << " "
+                                  << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    EpollClientLoginSlave::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
+                    EpollClientLoginSlave::serverServerListComputedMessageSize=ProtocolParsingBase::computeFullOutcommingData(
                             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                             false,
                             #endif
-                            EpollClientLoginSlave::serverServerList,
-                            0xC2,0x0E,rawData,size);
+                            EpollClientLoginSlave::serverServerListComputedMessage,
+                            0xC2,0x0E,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
                     if(EpollClientLoginSlave::serverServerListSize==0)
                     {
                         std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -386,11 +481,15 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     }
                     if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
                     {
-                        EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListSize+EpollClientLoginSlave::serverLogicalGroupListSize;
+                        std::cerr << "Concat: " << QString(QByteArray(EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize).toHex()).toStdString() << __FILE__ << ":" << __LINE__ << std::endl;
+                        std::cerr << "and: " << QString(QByteArray(EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize).toHex()).toStdString() << __FILE__ << ":" << __LINE__ << std::endl;
+                        EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
+                        /* First query already set
                         if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
-                            memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize);
-                        if(EpollClientLoginSlave::serverServerListSize>0)
-                            memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
+                            memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize);*/
+                        if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
+                            memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+                        std::cerr << "Result: " << QString(QByteArray(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupAndServerListSize).toHex()).toStdString() << __FILE__ << ":" << __LINE__ << std::endl;
                     }
                 }
                 break;

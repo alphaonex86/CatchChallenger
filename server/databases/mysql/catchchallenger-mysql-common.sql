@@ -62,18 +62,6 @@ CREATE TABLE IF NOT EXISTS `clan` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dictionary_server`
---
-
-CREATE TABLE IF NOT EXISTS `dictionary_server` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `key` text NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `item`
 --
 
