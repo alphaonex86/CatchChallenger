@@ -1028,6 +1028,7 @@ void DatapackClientLoader::resetAll()
     language.clear();
     mapToId.clear();
     fullMapPathToId.clear();
+    visualCategories.clear();
     if(mDefaultInventoryImage==NULL)
     {
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));

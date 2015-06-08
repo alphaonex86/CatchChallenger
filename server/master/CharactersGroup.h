@@ -24,16 +24,16 @@ public:
         //CharactersGroup * charactersGroup;
         quint32 uniqueKey;
         QString metaData;
-        QString logicalGroup;
+        quint32 logicalGroupIndex;
 
         quint16 currentPlayer;
         quint16 maxPlayer;
     };
 
     BaseClassSwitch::Type getType() const;
-    InternalGameServer * addGameServerUniqueKey(void * const link,const quint32 &uniqueKey,const QString &host,const quint16 &port,
-                                const QString &metaData,const QString &logicalGroup,
-                                const quint16 &currentPlayer,const quint16 &maxPlayer);
+    InternalGameServer * addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host, const quint16 &port,
+                                const QString &metaData, const quint32 &logicalGroupIndex,
+                                const quint16 &currentPlayer, const quint16 &maxPlayer);
     void removeGameServerUniqueKey(void * const link);
     bool containsGameServerUniqueKey(const quint32 &serverUniqueKey) const;
 

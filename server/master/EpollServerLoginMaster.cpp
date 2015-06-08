@@ -492,7 +492,15 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
     while(logicalGroupContinue)
     {
         settings.beginGroup(QStringLiteral("logical-group-")+QString::number(logicalGroup));
-        logicalGroupContinue=settings.contains(QStringLiteral("path")) && settings.contains(QStringLiteral("translation")) && logicalGroup<255;
+        logicalGroupContinue=settings.contains(QStringLiteral("path")) && settings.contains(QStringLiteral("xml")) && logicalGroup<255;
+        if(!logicalGroupContinue && logicalGroup==0)
+        {
+            if(!settings.contains(QStringLiteral("path")))
+                settings.setValue(QStringLiteral("path"),QString());
+            if(!settings.contains(QStringLiteral("xml")))
+                settings.setValue(QStringLiteral("xml"),QStringLiteral("<name>root</name>"));
+            logicalGroupContinue=true;
+        }
         if(logicalGroupContinue)
         {
             //path
@@ -503,17 +511,23 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
                     std::cerr << "path too hurge (abort)" << std::endl;
                     abort();
                 }
-                int newSize=FacilityLibGeneral::toUTF8WithHeader(textToConvert,rawServerList+rawServerListSize);
-                if(newSize==0)
+
+                EpollClientLoginMaster::logicalGroupHash[textToConvert]=logicalGroup;
+
+                const QByteArray &utf8data=textToConvert.toUtf8();
+                if(utf8data.size()>255)
                 {
-                    std::cerr << "path null or unable to translate in utf8 (abort)" << std::endl;
+                    std::cerr << "logical group converted too big (abort)" << std::endl;
                     abort();
                 }
-                rawServerListSize+=newSize;
+                rawServerList[rawServerListSize]=utf8data.size();
+                rawServerListSize+=1;
+                memcpy(rawServerList+rawServerListSize,utf8data.constData(),utf8data.size());
+                rawServerListSize+=utf8data.size();
             }
             //translation
             {
-                textToConvert=settings.value(QStringLiteral("translation")).toString();
+                textToConvert=settings.value(QStringLiteral("xml")).toString();
                 if(textToConvert.size()>4*1024)
                 {
                     std::cerr << "translation too hurge (abort)" << std::endl;
@@ -527,6 +541,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
                 }
                 rawServerListSize+=newSize;
             }
+
             logicalGroup++;
         }
         settings.endGroup();
@@ -617,24 +632,8 @@ void EpollServerLoginMaster::doTheServerList()
         }
         //logicalGroup
         {
-            if(gameServerOnCharactersGroup->logicalGroup.size()>20)
-            {
-                std::cerr << "logicalGroup too hurge (abort)" << std::endl;
-                abort();
-            }
-            const QByteArray &utf8data=gameServerOnCharactersGroup->logicalGroup.toUtf8();
-            if(utf8data.size()>255)
-            {
-                EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=0;
-                rawServerListSize+=1;
-            }
-            else
-            {
-                EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=utf8data.size();
-                rawServerListSize+=1;
-                memcpy(EpollClientLoginMaster::serverPartialServerList+rawServerListSize,utf8data.constData(),utf8data.size());
-                rawServerListSize+=utf8data.size();
-            }
+            EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=gameServerOnCharactersGroup->logicalGroupIndex;
+            rawServerListSize+=1;
         }
 
         serverListIndex++;
