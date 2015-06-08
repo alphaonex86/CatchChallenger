@@ -322,6 +322,7 @@ void BaseWindow::addToServerList(const LogicialGroup &logicialGroup, QTreeWidget
 
             }
             //do server.currentPlayer/server.maxPlayer icon
+            if(server.maxPlayer>0)
             {
                 int percent=(server.currentPlayer*100)/server.maxPlayer;
                 if(server.currentPlayer==server.maxPlayer || (server.maxPlayer>50 && percent>98))

@@ -31,8 +31,7 @@ int FacilityLibGeneral::toUTF8WithHeader(const QString &text,char * const data)
 {
     if(text.isEmpty() || text.size()>255)
         return 0;
-    QByteArray utf8data;
-    utf8data=text.toUtf8();
+    const QByteArray &utf8data=text.toUtf8();
     if(utf8data.size()==0 || utf8data.size()>255)
         return 0;
     data[0]=utf8data.size();
@@ -44,8 +43,7 @@ int FacilityLibGeneral::toUTF8With16BitsHeader(const QString &text,char * const 
 {
     if(text.isEmpty() || text.size()>65535)
         return 0;
-    QByteArray utf8data;
-    utf8data=text.toUtf8();
+    const QByteArray &utf8data=text.toUtf8();
     if(utf8data.size()==0 || utf8data.size()>65535)
         return 0;
     *reinterpret_cast<quint16 *>(data+0)=(quint16)htole16((quint16)utf8data.size());

@@ -1,4 +1,5 @@
 #include "EpollClientLoginMaster.h"
+#include "EpollServerLoginMaster.h"
 
 #include <iostream>
 #include <QString>
@@ -55,8 +56,8 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
     }
     if(stat==EpollClientLoginMasterStat::GameServer)
     {
-        charactersGroupForGameServer->removeGameServerUniqueKey(this);
         EpollClientLoginMaster::gameServers.removeOne(this);
+        charactersGroupForGameServer->removeGameServerUniqueKey(this);
         int index=0;
         while(index<loginServerReturnForCharaterSelect.size())
         {
@@ -65,6 +66,9 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
                 dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04,dataForSelectedCharacterReturn.characterId);
             index++;
         }
+        EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
+        EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+        EpollClientLoginMaster::broadcastGameServerChange();
     }
 }
 

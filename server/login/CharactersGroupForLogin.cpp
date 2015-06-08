@@ -31,26 +31,15 @@ CharactersGroupForLogin::~CharactersGroupForLogin()
 
 void CharactersGroupForLogin::clearServerPair()
 {
-    dictionary_server_database_to_index.clear();
-    dictionary_server_index_to_database.clear();
     servers.clear();
 }
 
-void CharactersGroupForLogin::setServerPair(const quint8 &index, const quint16 &databaseId)
-{
-    while(dictionary_server_database_to_index.size()<(databaseId+1))
-        dictionary_server_database_to_index << -1;
-    while(dictionary_server_index_to_database.size()<(index+1))
-        dictionary_server_index_to_database << 0;
-    dictionary_server_index_to_database[index]=databaseId;
-    dictionary_server_database_to_index[databaseId]=index;
-}
-
-void CharactersGroupForLogin::setServerUniqueKey(const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port)
+void CharactersGroupForLogin::setServerUniqueKey(const quint8 &indexOnFlatList,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port)
 {
     InternalLoginServer tempServer;
     tempServer.host=QString::fromUtf8(hostData,hostDataSize);
     tempServer.port=port;
+    tempServer.indexOnFlatList=indexOnFlatList,
     servers[serverUniqueKey]=tempServer;
 }
 
