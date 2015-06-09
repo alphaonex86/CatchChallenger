@@ -1196,7 +1196,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("!haveTheLogicalGroupList main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return;
                     }
-                    qDebug() << QString(data.toHex());
 
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {

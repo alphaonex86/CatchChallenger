@@ -46,7 +46,6 @@ public:
     static QString db_query_delete_all_item;
     static QString db_query_delete_all_item_warehouse;
     static QString db_query_delete_monster_by_character;
-    static QString db_query_delete_monster_warehouse_by_character;
     static QString db_query_delete_monster_by_id;
     static QString db_query_delete_monster_warehouse_by_id;
     static QString db_query_delete_recipes;

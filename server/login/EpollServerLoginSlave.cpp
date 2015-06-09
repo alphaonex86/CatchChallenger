@@ -504,11 +504,9 @@ void EpollServerLoginSlave::compose04Reply()
     EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
     *reinterpret_cast<quint16 *>(EpollClientLoginSlave::loginGood+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
     EpollClientLoginSlave::loginGoodSize=0x0E;
-    qDebug() << QString(QByteArray(EpollClientLoginSlave::loginGood,EpollClientLoginSlave::loginGoodSize).toHex()) << __LINE__;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
     EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
-    qDebug() << QString(QByteArray(EpollClientLoginSlave::loginGood,EpollClientLoginSlave::loginGoodSize).toHex()) << __LINE__;
 
     const QByteArray &httpDatapackMirrorData=EpollClientLoginSlave::linkToMaster->httpDatapackMirror.toUtf8();
     if(EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty())
@@ -525,7 +523,6 @@ void EpollServerLoginSlave::compose04Reply()
     EpollClientLoginSlave::loginGoodSize+=1;
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,httpDatapackMirrorData.constData(),httpDatapackMirrorData.size());
     EpollClientLoginSlave::loginGoodSize+=httpDatapackMirrorData.size();
-    qDebug() << QString(QByteArray(EpollClientLoginSlave::loginGood,EpollClientLoginSlave::loginGoodSize).toHex()) << __LINE__;
 }
 
 void EpollServerLoginSlave::preload_profile()
@@ -547,32 +544,32 @@ void EpollServerLoginSlave::preload_profile()
         {
             default:
             case DatabaseBase::Type::Mysql:
-                tempStringList << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`market_cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
+                tempStringList << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        QString::number(profile.cash)+QLatin1String(",0,");
+                        QString::number(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
                         QString::number(profile.databaseId)+QLatin1String(");");
             break;
             case DatabaseBase::Type::SQLite:
-                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        QString::number(profile.cash)+QLatin1String(",0,");
+                        QString::number(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
                         QString::number(index)+QLatin1String(");");
             break;
             case DatabaseBase::Type::PostgreSQL:
-                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,market_cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
+                tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
                 tempStringList << QLatin1String("',");
                 tempStringList << QLatin1String(",0,0,")+
-                        QString::number(profile.cash)+QLatin1String(",0,");
+                        QString::number(profile.cash)+QLatin1String(",");
                 tempStringList << QLatin1String(",0,FALSE,0,0,0,")+
                         QString::number(index)+QLatin1String(");");
             break;
@@ -596,7 +593,7 @@ void EpollServerLoginSlave::preload_profile()
             {
                 const QByteArray &tempStringData=tempStringList.at(sub_index).toUtf8();
                 profile.preparedQuerySize[sub_index]=tempStringData.size();
-                if(index>0)
+                if(sub_index>0)
                     profile.preparedQueryPos[sub_index]=profile.preparedQueryPos[sub_index-1]+profile.preparedQuerySize[sub_index-1];
                 memcpy(profile.preparedQueryChar+profile.preparedQueryPos[sub_index],tempStringData.constData(),tempStringData.size());
                 sub_index++;

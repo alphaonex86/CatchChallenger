@@ -517,6 +517,7 @@ private:
     bool isLogged;
     quint32 averagePlayedTime,averageLastConnect;
     QList<ServerFromPoolForDisplay *> serverOrdenedList;
+    QHash<quint8/*character group index*/,QPair<quint8/*server count*/,quint8/*temp Index to display*/> > serverByCharacterGroup;
     QList<QList<CharacterEntry> > characterListForSelection;
     QList<CharacterEntry> characterEntryListInWaiting;
     int serverSelected;
@@ -679,6 +680,7 @@ private:
     static QIcon icon_server_list_stat2;
     static QIcon icon_server_list_stat3;
     static QIcon icon_server_list_stat4;
+    static QIcon icon_server_list_bug;
 
     bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;

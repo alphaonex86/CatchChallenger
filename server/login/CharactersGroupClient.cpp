@@ -35,7 +35,7 @@ void CharactersGroupForLogin::character_list_object()
     EpollClientLoginSlave * const client=clientQueryForReadReturn.takeFirst();
 
     char * const tempRawData=new char[4*1024];
-    //memset(tempRawData,0x00,sizeof(4*1024));
+    //memset(tempRawData,0x00,sizeof(4*1024));//performance
     int tempRawDataSize=0x01;
 
     const quint64 &current_time=QDateTime::currentDateTime().toTime_t();
@@ -53,65 +53,90 @@ void CharactersGroupForLogin::character_list_object()
                 qDebug() << (QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(QString(databaseBaseCommon->value(3))).arg(character_id));
                 time_to_delete=0;
             }
-            if(current_time<time_to_delete && time_to_delete!=0)
+            if(time_to_delete==0 || current_time<time_to_delete)
             {
+                //send the char, not delete
+
                 validCharaterCount++;
 
                 //Character id
-                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(character_id);
-                tempRawDataSize+=sizeof(quint32);
+                {
+                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(character_id);
+                    tempRawDataSize+=sizeof(quint32);
+                }
 
+                //can't be empty or have wrong or too large utf8 data
                 //pseudo
-                tempRawDataSize+=FacilityLibGeneral::toUTF8WithHeader(databaseBaseCommon->value(1),tempRawData);
+                {
+                    const quint8 &newSize=FacilityLibGeneral::toUTF8WithHeader(databaseBaseCommon->value(1),tempRawData+tempRawDataSize);
+                    if(newSize==0)
+                    {
+                        qDebug() << (QStringLiteral("can't be empty or have wrong or too large utf8 data: %1 by hide this char").arg(databaseBaseCommon->value(1)));
+                        tempRawDataSize-=sizeof(quint32);
+                        validCharaterCount--;
+                        continue;
+                    }
+                    tempRawDataSize+=newSize;
+                }
 
                 //skin
-                tempRawData[tempRawDataSize]=QString(databaseBaseCommon->value(2)).toUInt(&ok);
-                if(!ok)//if not number
                 {
-                    qDebug() << (QStringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
-                    tempRawData[tempRawDataSize]=0;
-                    ok=true;
-                }
-                else
-                {
-                    if(tempRawData[tempRawDataSize]>=DictionaryLogin::dictionary_skin_internal_to_database.size())//out of range
+                    const quint32 databaseSkinId=QString(databaseBaseCommon->value(2)).toUInt(&ok);
+                    if(!ok)//if not number
                     {
-                        qDebug() << (QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
+                        qDebug() << (QStringLiteral("character return skin is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
                         tempRawData[tempRawDataSize]=0;
                         ok=true;
                     }
-                    //else all is good
+                    else
+                    {
+                        if(databaseSkinId>=(quint32)DictionaryLogin::dictionary_skin_database_to_internal.size())//out of range
+                        {
+                            qDebug() << (QStringLiteral("character return skin out of range: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
+                            tempRawData[tempRawDataSize]=0;
+                            ok=true;
+                        }
+                        //else all is good
+                        else
+                            tempRawData[tempRawDataSize]=DictionaryLogin::dictionary_skin_database_to_internal.at(databaseSkinId);
+                    }
+                    tempRawDataSize+=1;
                 }
-                tempRawDataSize+=1;
 
                 //delete register
-                unsigned int delete_time_left=0;
-                if(time_to_delete==0)
-                    delete_time_left=0;
-                else
-                    delete_time_left=time_to_delete-current_time;
-                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(delete_time_left);
-                tempRawDataSize+=sizeof(quint32);
+                {
+                    unsigned int delete_time_left=0;
+                    if(time_to_delete==0)
+                        delete_time_left=0;
+                    else
+                        delete_time_left=time_to_delete-current_time;
+                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(delete_time_left);
+                    tempRawDataSize+=sizeof(quint32);
+                }
 
                 //played_time
-                unsigned int played_time=QString(databaseBaseCommon->value(4)).toUInt(&ok);
-                if(!ok)
                 {
-                    qDebug() << (QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(4)).arg(character_id));
-                    played_time=0;
+                    unsigned int played_time=QString(databaseBaseCommon->value(4)).toUInt(&ok);
+                    if(!ok)
+                    {
+                        qDebug() << (QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(4)).arg(character_id));
+                        played_time=0;
+                    }
+                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(played_time);
+                    tempRawDataSize+=sizeof(quint32);
                 }
-                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(played_time);
-                tempRawDataSize+=sizeof(quint32);
 
                 //last_connect
-                unsigned int last_connect=QString(databaseBaseCommon->value(5)).toUInt(&ok);
-                if(!ok)
                 {
-                    qDebug() << (QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
-                    last_connect=current_time;
+                    unsigned int last_connect=QString(databaseBaseCommon->value(5)).toUInt(&ok);
+                    if(!ok)
+                    {
+                        qDebug() << (QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(databaseBaseCommon->value(5)).arg(character_id));
+                        last_connect=current_time;
+                    }
+                    *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(last_connect);
+                    tempRawDataSize+=sizeof(quint32);
                 }
-                *reinterpret_cast<quint32 *>(tempRawData+tempRawDataSize)=htole32(last_connect);
-                tempRawDataSize+=sizeof(quint32);
             }
             else
                 deleteCharacterNow(character_id);
@@ -286,7 +311,6 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const quint32 &character
     dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_all_item).arg(characterId).toUtf8().constData());
     dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_all_item_warehouse).arg(characterId).toUtf8().constData());
     dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_by_character).arg(characterId).toUtf8().constData());
-    dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_character).arg(characterId).toUtf8().constData());
     dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_recipes).arg(characterId).toUtf8().constData());
     dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_reputation).arg(characterId).toUtf8().constData());
     dbQueryWriteCommon(QString(PreparedDBQueryCommon::db_query_delete_allow).arg(characterId).toUtf8().constData());
@@ -317,6 +341,11 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
     if(profileIndex>=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size())
     {
         qDebug() << (QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size()));
+        return -1;
+    }
+    if(pseudo.isEmpty())
+    {
+        qDebug() << (QStringLiteral("pseudo is empty, not allowed"));
         return -1;
     }
     if((quint32)pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
@@ -445,42 +474,42 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     QByteArray numberBuffer;
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[0],profile.preparedQuerySize[0]);
-    tempBufferSize+=profile.preparedQueryPos[0];
+    tempBufferSize+=profile.preparedQuerySize[0];
 
     numberBuffer=QString::number(characterId).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[1],profile.preparedQuerySize[1]);
-    tempBufferSize+=profile.preparedQueryPos[1];
+    tempBufferSize+=profile.preparedQuerySize[1];
 
     numberBuffer=QString::number(client->account_id).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[2],profile.preparedQuerySize[2]);
-    tempBufferSize+=profile.preparedQueryPos[2];
+    tempBufferSize+=profile.preparedQuerySize[2];
 
     numberBuffer=SqlFunction::quoteSqlVariable(pseudo).toUtf8();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[3],profile.preparedQuerySize[3]);
-    tempBufferSize+=profile.preparedQueryPos[3];
+    tempBufferSize+=profile.preparedQuerySize[3];
 
     numberBuffer=QString::number(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[4],profile.preparedQuerySize[4]);
-    tempBufferSize+=profile.preparedQueryPos[4];
+    tempBufferSize+=profile.preparedQuerySize[4];
 
     numberBuffer=QString::number(QDateTime::currentMSecsSinceEpoch()/1000).toLatin1();
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,numberBuffer.constData(),numberBuffer.size());
     tempBufferSize+=numberBuffer.size();
 
     memcpy(CharactersGroupForLogin::tempBuffer+tempBufferSize,profile.preparedQueryChar+profile.preparedQueryPos[5],profile.preparedQuerySize[5]);
-    tempBufferSize+=profile.preparedQueryPos[5];
+    tempBufferSize+=profile.preparedQuerySize[5];
 
     CharactersGroupForLogin::tempBuffer[tempBufferSize]='\0';
 
@@ -625,7 +654,11 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
         client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
         return;
     }
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(CommonSettingsCommon::commonSettingsCommon.character_delete_time).toUtf8().constData());
+    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(
+                           //date to delete, not time (no sens)
+                           QDateTime::currentDateTime().toTime_t()+
+                           CommonSettingsCommon::commonSettingsCommon.character_delete_time
+                           ).toUtf8().constData());
     CharactersGroupForLogin::tempBuffer[0]=0x02;
     client->postReply(query_id,CharactersGroupForLogin::tempBuffer,1);
 }
@@ -640,7 +673,7 @@ void CharactersGroupForLogin::dbQueryWriteCommon(const char * const queryText)
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    qDebug() << (QStringLiteral("Do db write: ")+queryText);
+    qDebug() << (QStringLiteral("Do common db write: ")+queryText);
     #endif
     databaseBaseCommon->asyncWrite(queryText);
 }
