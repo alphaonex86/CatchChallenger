@@ -29,5 +29,6 @@
         <file>images/interface/server_list/stat2.png</file>
         <file>images/interface/server_list/stat3.png</file>
         <file>images/interface/server_list/stat4.png</file>
+        <file>images/interface/server_list/bug.png</file>
     </qresource>
 </RCC>

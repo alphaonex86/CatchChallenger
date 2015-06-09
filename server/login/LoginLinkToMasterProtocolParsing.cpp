@@ -56,8 +56,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
             {
                 case 0x0F:
                 {
-                    qDebug() << QString(QByteArray(rawData,size).toHex()) << __FILE__ << __LINE__;
-
                     //control it
                     quint32 pos=1;
                     quint8 logicalGroupSize=rawData[0x00];
@@ -139,8 +137,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                 break;
                 case 0x10:
                 {
-                    qDebug() << QString(QByteArray(rawData,size).toHex()) << __LINE__;
-
                     //purge the internal data
                     {
                         int index=0;
@@ -163,13 +159,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
 
                     int serverListIndex=0;
                     quint32 serverUniqueKey;const char * hostData;quint8 hostDataSize;quint16 port;
-
-                    std::cerr << "rawData: "
-                              << QString(QByteArray(rawData,pos).toHex()).toStdString()
-                              << " "
-                              << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
-                              << " "
-                              << __FILE__ << ":" <<__LINE__ << std::endl;
 
                     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
                     {
@@ -280,17 +269,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                         quint8 charactersGroupIndex;
                         while(serverListIndex<serverListSize)
                         {
-                            std::cerr << "rawData: "
-                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
-                                      << " "
-                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-                            std::cerr << "EpollClientLoginSlave::serverServerList: "
-                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-
                             //copy the charactersgroup
                             {
                                 if((size-pos)<1)
@@ -303,17 +281,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=charactersGroupIndex;
                                 EpollClientLoginSlave::serverServerListSize+=1;
                             }
-
-                            std::cerr << "rawData: "
-                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
-                                      << " "
-                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-                            std::cerr << "EpollClientLoginSlave::serverServerList: "
-                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
 
                             //copy the unique key
                             {
@@ -332,17 +299,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 EpollClientLoginSlave::serverServerListSize+=4;
                                 serverUniqueKey=*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos));
                             }
-
-                            std::cerr << "rawData: "
-                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
-                                      << " "
-                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-                            std::cerr << "EpollClientLoginSlave::serverServerList: "
-                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
 
                             //copy the host + port
                             {
@@ -375,17 +331,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 EpollClientLoginSlave::serverServerListSize+=1+hostStringSize+2;
                             }
 
-                            std::cerr << "rawData: "
-                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
-                                      << " "
-                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-                            std::cerr << "EpollClientLoginSlave::serverServerList: "
-                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-
                             CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
 
                             //copy the xml string
@@ -406,17 +351,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 EpollClientLoginSlave::serverServerListSize+=2+xmlStringSize;
                             }
 
-                            std::cerr << "rawData: "
-                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
-                                      << " "
-                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-                            std::cerr << "EpollClientLoginSlave::serverServerList: "
-                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-
                             //copy the logical group
                             {
                                 if((size-pos)<1)
@@ -428,17 +362,6 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 pos+=1;
                                 EpollClientLoginSlave::serverServerListSize+=1;
                             }
-
-                            std::cerr << "rawData: "
-                                      << QString(QByteArray(rawData,pos).toHex()).toStdString()
-                                      << " "
-                                      << QString(QByteArray(rawData+pos,size-pos).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
-                            std::cerr << "EpollClientLoginSlave::serverServerList: "
-                                      << QString(QByteArray(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize).toHex()).toStdString()
-                                      << " "
-                                      << __FILE__ << ":" <<__LINE__ << std::endl;
 
                             serverListIndex++;
                         }
@@ -479,15 +402,12 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     }
                     if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
                     {
-                        std::cerr << "Concat: " << QString(QByteArray(EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize).toHex()).toStdString() << __FILE__ << ":" << __LINE__ << std::endl;
-                        std::cerr << "and: " << QString(QByteArray(EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize).toHex()).toStdString() << __FILE__ << ":" << __LINE__ << std::endl;
                         EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
                         /* First query already set
                         if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
                             memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize);*/
                         if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
                             memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
-                        std::cerr << "Result: " << QString(QByteArray(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupAndServerListSize).toHex()).toStdString() << __FILE__ << ":" << __LINE__ << std::endl;
                     }
                 }
                 break;

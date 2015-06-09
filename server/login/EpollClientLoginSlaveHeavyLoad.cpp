@@ -473,7 +473,7 @@ void EpollClientLoginSlave::dbQueryWriteLogin(const char * const queryText)
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << "Do db write: " << queryText << std::endl;
+    std::cout << "Do login db write: " << queryText << std::endl;
     #endif
     databaseBaseLogin.asyncWrite(queryText);
 }
@@ -495,7 +495,7 @@ void EpollClientLoginSlave::loginIsWrong(const quint8 &query_id, const quint8 &r
 
 void EpollClientLoginSlave::selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
 {
-    if(charactersGroupIndex<=CharactersGroupForLogin::list.size())
+    if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
     {
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
@@ -552,7 +552,7 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const quint8 &query_id,
 
 void EpollClientLoginSlave::addCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId)
 {
-    if(characterGroupIndex<=CharactersGroupForLogin::list.size())
+    if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
@@ -578,7 +578,7 @@ void EpollClientLoginSlave::addCharacter(const quint8 &query_id, const quint8 &c
 
 void EpollClientLoginSlave::removeCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint32 &characterId)
 {
-    if(characterGroupIndex<=CharactersGroupForLogin::list.size())
+    if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
