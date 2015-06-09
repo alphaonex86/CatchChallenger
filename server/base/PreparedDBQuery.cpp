@@ -60,7 +60,6 @@ QString PreparedDBQueryCommon::db_query_delete_character=NULL;
 QString PreparedDBQueryCommon::db_query_delete_all_item=NULL;
 QString PreparedDBQueryCommon::db_query_delete_all_item_warehouse=NULL;
 QString PreparedDBQueryCommon::db_query_delete_monster_by_character=NULL;
-QString PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_character=NULL;
 QString PreparedDBQueryCommon::db_query_delete_monster_by_id=NULL;
 QString PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_id=NULL;
 QString PreparedDBQueryCommon::db_query_delete_recipes=NULL;

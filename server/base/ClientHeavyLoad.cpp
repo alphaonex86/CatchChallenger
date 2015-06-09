@@ -884,7 +884,6 @@ void Client::deleteCharacterNow_return(const quint32 &characterId)
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_all_item_warehouse.arg(characterId));
     dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_all_item_market.arg(characterId));
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_by_character.arg(characterId));
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_monster_warehouse_by_character.arg(characterId));
     dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant.arg(characterId));
     dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_quest.arg(characterId));
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_delete_recipes.arg(characterId));
@@ -957,6 +956,11 @@ void Client::addCharacter(const quint8 &query_id, const quint8 &profileIndex, co
     if(!GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).valid)
     {
         errorOutput(QStringLiteral("profile index: %1 profil not valid").arg(profileIndex));
+        return;
+    }
+    if(pseudo.isEmpty())
+    {
+        errorOutput(QStringLiteral("pseudo is empty, not allowed"));
         return;
     }
     if(pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)

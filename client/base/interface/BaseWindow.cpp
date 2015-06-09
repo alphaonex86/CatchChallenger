@@ -51,6 +51,7 @@ QIcon BaseWindow::icon_server_list_stat1;
 QIcon BaseWindow::icon_server_list_stat2;
 QIcon BaseWindow::icon_server_list_stat3;
 QIcon BaseWindow::icon_server_list_stat4;
+QIcon BaseWindow::icon_server_list_bug;
 
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)

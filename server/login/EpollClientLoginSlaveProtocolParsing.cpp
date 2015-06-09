@@ -241,43 +241,49 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                 QString pseudo;
                 quint8 skinId;
                 quint8 pseudoSize;
-                if((size-cursor)<(int)sizeof(quint8))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
-                    return;
+                    if((size-cursor)<(int)sizeof(quint8))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        return;
+                    }
+                    charactersGroupIndex=rawData[cursor];
+                    cursor+=1;
                 }
-                charactersGroupIndex=rawData[cursor];
-                cursor+=1;
-                if((size-cursor)<(int)sizeof(quint8))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
-                    return;
+                    if((size-cursor)<(int)sizeof(quint8))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        return;
+                    }
+                    profileIndex=rawData[cursor];
+                    cursor+=1;
                 }
-                profileIndex=rawData[cursor];
-                cursor+=1;
-                if((size-cursor)<(int)sizeof(quint8))
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
-                    return;
+                    if((size-cursor)<(int)sizeof(quint8))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        return;
+                    }
+                    pseudoSize=rawData[cursor];
+                    cursor+=1;
+                    if((size-cursor)<(int)pseudoSize)
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        return;
+                    }
+                    pseudo=QString::fromUtf8(rawData+cursor,pseudoSize);
+                    cursor+=pseudoSize;
                 }
-                pseudoSize=rawData[cursor];
-                cursor+=1;
-                if((size-cursor)<(int)pseudoSize)
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
-                    return;
+                    if((size-cursor)<(int)sizeof(quint8))
+                    {
+                        parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        return;
+                    }
+                    skinId=rawData[cursor];
+                    cursor+=1;
                 }
-                pseudo=QString::fromUtf8(rawData+cursor,pseudoSize);
-                if((size-cursor)<(int)sizeof(quint8))
-                {
-                    parseNetworkReadError(QStringLiteral("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
-                    return;
-                }
-                skinId=rawData[cursor];
-                cursor+=1;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                removeFromQueryReceived(queryNumber);
-                #endif
                 addCharacter(queryNumber,charactersGroupIndex,profileIndex,pseudo,skinId);
                 if((size-cursor)!=0)
                 {
@@ -301,9 +307,6 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                     return;
                 }
                 #endif
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                removeFromQueryReceived(queryNumber);
-                #endif
                 const quint8 &charactersGroupIndex=rawData[0];
                 const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
                 removeCharacter(queryNumber,charactersGroupIndex,characterId);
@@ -315,9 +318,6 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
                 const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+0)));
                 const quint8 &charactersGroupIndex=rawData[4];
                 const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+5)));
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                removeFromQueryReceived(queryNumber);
-                #endif
                 selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId);
             }
             default:

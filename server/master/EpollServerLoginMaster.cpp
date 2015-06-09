@@ -656,14 +656,12 @@ void EpollServerLoginMaster::doTheServerList()
         serverListIndex++;
     }
 
-    qDebug() << QString(QByteArray(EpollClientLoginMaster::serverPartialServerList,rawServerListSize).toHex()) << __LINE__;
     EpollClientLoginMaster::serverServerListSize=ProtocolParsingBase::computeFullOutcommingData(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             false,
             #endif
             EpollClientLoginMaster::serverServerList,
             0xC2,0x10,EpollClientLoginMaster::serverPartialServerList,rawServerListSize);
-    qDebug() << QString(QByteArray(EpollClientLoginMaster::serverServerList,EpollClientLoginMaster::serverServerListSize).toHex()) << __LINE__;
     if(EpollClientLoginMaster::serverServerListSize==0)
     {
         std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
