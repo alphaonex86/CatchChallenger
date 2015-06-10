@@ -103,14 +103,17 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
                     }
                     else
                     {
-                        const char * const token=Client::addAuthGetToken(
-                                    le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData))),
-                                    le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4)))
-                                    );
+                        const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                        const quint32 &accountId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4)));
+                        const char * const token=Client::addAuthGetToken(characterId,accountId);
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        queryReceived.remove(queryNumber);
+                        #endif
                         if(token!=NULL)
                         {
+                            LoginLinkToMaster::protocolReplyGetToken[0x01]=queryNumber;
                             memcpy(LoginLinkToMaster::protocolReplyGetToken+0x03,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                            internalSendRawSmallPacket(LoginLinkToMaster::protocolReplyNoMoreToken,sizeof(LoginLinkToMaster::protocolReplyNoMoreToken));
+                            internalSendRawSmallPacket(LoginLinkToMaster::protocolReplyGetToken,sizeof(LoginLinkToMaster::protocolReplyGetToken));
                         }
                         else
                         {
@@ -228,6 +231,7 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                         index++;
                     }
                 }
+                stat=Stat::Logged;
                 return;
                 case 0x03:
                     std::cerr << "charactersGroup not found" << settings->value(QLatin1Literal("charactersGroup")).toString().toStdString() << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -238,8 +242,6 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                     abort();
                 break;
             }
-
-            stat=Stat::Logged;
         }
         break;
         default:

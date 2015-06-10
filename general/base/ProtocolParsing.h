@@ -210,7 +210,16 @@ public:
             char *buffer,
             const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const int &size);
     //send reply
-    int computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char * const data, const int &size);
+    static int computeReplyData(
+        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+        const bool &isClient,
+        #endif
+        char *dataBuffer, const quint8 &queryNumber, const char * const data, const int &size,
+        const qint32 &replyOutputSizeInt
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        , const CompressionType &compressionType
+        #endif
+        );
     //compression
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static QByteArray computeCompression(const QByteArray &data, const CompressionType &compressionType);

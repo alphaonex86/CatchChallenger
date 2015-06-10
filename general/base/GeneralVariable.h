@@ -35,7 +35,7 @@
 //*/
 #define CATCHCHALLENGER_DEBUG_FIGHT
 
-#define CATCHCHALLENGER_TOKENSIZE 16//can't be more than 250 due to server conception, and useless, with 8bytes, at 2 billions connexion rate, it's 300years to crack
+//name better:#define CATCHCHALLENGER_TOKENSIZE 16//can't be more than 250 due to server conception, and useless, with 8bytes, at 2 billions connexion rate, it's 300years to crack
 #define CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER 64
 #define CATCHCHALLENGER_MONSTER_LEVEL_MAX 100
 #define CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER 5
@@ -46,7 +46,7 @@
 #define CATCHCHALLENGER_MAX_PACKET_SIZE 1024*1024
 //here to ProtocolParsingGeneral
 #define TOKEN_SIZE_FOR_MASTERAUTH 32
-#define TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT 32
+#define TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT 16
 
 #define RANDOM_FLOAT_PART_DIVIDER 10000
 

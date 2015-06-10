@@ -65,12 +65,65 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     loadTheDatapack();
     doTheLogicalGroup(settings);
     doTheServerList();
+
+    {
+        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterNotFound,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterNotFound));
+        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline));
+        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferServerInternalProblem,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferServerInternalProblem));
+        memset(EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound,0x00,sizeof(EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound));
+        char tempBuff;
+
+        tempBuff=2;
+        //size will be the same
+        EpollClientLoginMaster::characterSelectionIsWrongBufferSize=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterNotFound,0,&tempBuff,1,-1/*not fixed size*/
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                    ,ProtocolParsing::compressionTypeServer
+                    #endif
+                    );
+        tempBuff=3;
+        if(EpollClientLoginMaster::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline,0,&tempBuff,1,-1/*not fixed size*/
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            ,ProtocolParsing::compressionTypeServer
+            #endif
+            ))
+            abort();
+        tempBuff=4;
+        if(EpollClientLoginMaster::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginMaster::characterSelectionIsWrongBufferServerInternalProblem,0,&tempBuff,1,-1/*not fixed size*/
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            ,ProtocolParsing::compressionTypeServer
+            #endif
+            ))
+            abort();
+        tempBuff=5;
+        if(EpollClientLoginMaster::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound,0,&tempBuff,1,-1/*not fixed size*/
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            ,ProtocolParsing::compressionTypeServer
+            #endif
+            ))
+            abort();
+    }
 }
 
 EpollServerLoginMaster::~EpollServerLoginMaster()
 {
     if(EpollClientLoginMaster::private_token!=NULL)
-        memset(EpollClientLoginMaster::private_token,0x00,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        memset(EpollClientLoginMaster::private_token,0x00,sizeof(EpollClientLoginMaster::private_token));
     if(server_ip!=NULL)
     {
         delete server_ip;
@@ -126,10 +179,10 @@ void EpollServerLoginMaster::loadLoginSettings(QSettings &settings)
     if(!settings.contains(QStringLiteral("token")))
         generateToken(settings);
     QString token=settings.value(QStringLiteral("token")).toString();
-    if(token.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2))
+    if(token.size()!=(TOKEN_SIZE_FOR_MASTERAUTH*2))
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(EpollClientLoginMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    memcpy(EpollClientLoginMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -739,13 +792,13 @@ void EpollServerLoginMaster::generateToken(QSettings &settings)
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(EpollClientLoginMaster::private_token,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+    const int &returnedSize=fread(EpollClientLoginMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from /dev/urandom" << std::endl;
+        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
         abort();
     }
-    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()));
+    settings.setValue(QStringLiteral("token"),QString(QByteArray(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).toHex()));
     fclose(fpRandomFile);
 }
 

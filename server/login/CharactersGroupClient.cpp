@@ -376,7 +376,7 @@ qint8 CharactersGroupForLogin::addCharacter(void * const client,const quint8 &qu
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(databaseBaseCommon->errorMessage());
-        return 0x02;
+        return 0x03;
     }
     else
     {
@@ -633,25 +633,25 @@ void CharactersGroupForLogin::removeCharacter_return(EpollClientLoginSlave * con
 {
     if(!databaseBaseCommon->next())
     {
-        client->characterSelectionIsWrong(query_id,0x02,"Result return query to remove wrong");
+        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Result return query to remove wrong"));
         return;
     }
     bool ok;
     const quint32 &account_id=QString(databaseBaseCommon->value(0)).toUInt(&ok);
     if(!ok)
     {
-        client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(databaseBaseCommon->value(0)));
+        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Account for character: %1 is not an id").arg(databaseBaseCommon->value(0)));
         return;
     }
     if(client->account_id!=account_id)
     {
-        client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
+        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(account_id));
         return;
     }
     const quint32 &time_to_delete=QString(databaseBaseCommon->value(1)).toUInt(&ok);
     if(ok && time_to_delete>0)
     {
-        client->characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
+        client->removeCharacter_ReturnFailed(query_id,0x02,QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(account_id));
         return;
     }
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_time_to_delete_by_id.arg(characterId).arg(

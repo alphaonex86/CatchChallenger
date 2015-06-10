@@ -34,22 +34,23 @@ unsigned char Client::protocolReplyProtocolNotSupported[]={0xC1/*reply server to
 unsigned char Client::protocolReplyServerFull[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x03/*return code*/};
 unsigned char Client::protocolReplyCompressionNone[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                       #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                                                      +CATCHCHALLENGER_TOKENSIZE/*reply size*/
+                                                      +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                       #endif
                                                       ,0x04/*return code*/};
 unsigned char Client::protocolReplyCompresssionZlib[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                                                       +CATCHCHALLENGER_TOKENSIZE/*reply size*/
+                                                       +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                        #endif
                                                        ,0x05/*return code*/};
 unsigned char Client::protocolReplyCompressionXz[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                                                    +CATCHCHALLENGER_TOKENSIZE/*reply size*/
+                                                    +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                     #endif
                                                     ,0x06/*return code*/};
 
-unsigned char Client::loginInProgressBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x06/*return code*/};
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 unsigned char Client::loginIsWrongBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/,0x01/*reply size*/,0x00/*temp return code*/};
+#endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;

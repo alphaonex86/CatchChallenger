@@ -91,17 +91,18 @@ public:
     static unsigned char protocolReplyProtocolNotSupported[4];
     static unsigned char protocolReplyServerFull[4];
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    static unsigned char protocolReplyCompressionNone[4+CATCHCHALLENGER_TOKENSIZE];
-    static unsigned char protocolReplyCompresssionZlib[4+CATCHCHALLENGER_TOKENSIZE];
-    static unsigned char protocolReplyCompressionXz[4+CATCHCHALLENGER_TOKENSIZE];
+    static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #else
     static unsigned char protocolReplyCompressionNone[4];
     static unsigned char protocolReplyCompresssionZlib[4];
     static unsigned char protocolReplyCompressionXz[4];
     #endif
 
-    static unsigned char loginInProgressBuffer[4];
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     static unsigned char loginIsWrongBuffer[4];
+    #endif
 
     static const unsigned char protocolHeaderToMatch[5];
 protected:
@@ -350,6 +351,7 @@ private:
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const quint32 &characterId);
     #endif
+    void parseCharacterBlock(const &QByteArray data);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
     static QHash<QString,quint32> datapack_file_list(const bool withHash=true);
@@ -671,17 +673,19 @@ private:
     // ------------------------------
     bool sendFile(const QString &fileName);
 
-    void loginIsRight(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
-    void loginIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
+    void characterIsRight(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
+    void characterIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
                       CommonMap* rescue_map, const /*COORD_TYPE*/ quint8 &rescue_x, const /*COORD_TYPE*/ quint8 &rescue_y, const Orientation &rescue_orientation,
                       CommonMap* unvalidated_rescue_map, const /*COORD_TYPE*/ quint8 &unvalidated_rescue_x, const /*COORD_TYPE*/ quint8 &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                       );
-    void loginIsRightWithRescue(const quint8 &query_id,quint32 characterId,CommonMap* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
+    void characterIsRightWithRescue(const quint8 &query_id,quint32 characterId,CommonMap* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
                       const QVariant &rescue_map,const QVariant &rescue_x,const QVariant &rescue_y,const QVariant &rescue_orientation,
                       const QVariant &unvalidated_rescue_map,const QVariant &unvalidated_rescue_x,const QVariant &unvalidated_rescue_y,const QVariant &unvalidated_rescue_orientation
                       );
-    void loginIsRightFinalStep();
+    void characterIsRightFinalStep();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void loginIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
+    #endif
     void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
     //load linked data (like item, quests, ...)
     void loadLinkedData();

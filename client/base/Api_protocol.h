@@ -38,6 +38,7 @@ public:
     bool tryLogin(const QString &login,const QString &pass);
     bool tryCreate();
     bool sendProtocol();
+    bool protocolWrong() const;
 
     //get the stored data
     Player_private_and_public_informations get_player_informations();
@@ -166,6 +167,7 @@ protected:
     QByteArray loginHash;
 
     //server list
+    qint32 selectedServerIndex;
     QList<ServerFromPoolForDisplay *> serverOrdenedList;
     QList<LogicialGroup *> logicialGroupIndexList;
     QList<QList<CharacterEntry> > characterListForSelection;
@@ -187,6 +189,7 @@ signals:
     //character
     void newCharacterId(const quint8 &returnCode,const quint32 &characterId) const;
     void haveCharacter() const;
+    void parseCharacterBlock(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
     //events
     void setEvents(const QList<QPair<quint8,quint8> > &events) const;
     void newEvent(const quint8 &event,const quint8 &event_value) const;
@@ -302,7 +305,7 @@ public:
     //character
     bool addCharacter(const quint8 &charactersGroupIndex,const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);
     bool removeCharacter(const quint8 &charactersGroupIndex,const quint32 &characterId);
-    bool selectCharacter(const quint8 &charactersGroupIndex, const quint32 &serverUniqueKey, const quint32 &characterId);
+    bool selectCharacter(const quint8 &charactersGroupIndex, const quint32 &serverUniqueKey, const quint32 &characterId, const quint8 &selectedServerIndex);
     LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish
