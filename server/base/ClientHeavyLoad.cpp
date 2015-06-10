@@ -180,7 +180,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         const QByteArray &secretTokenBinary=QByteArray::fromHex(secretToken.toLatin1());
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary);
-                        hash.addData(tokenLink.value,CATCHCHALLENGER_TOKENSIZE);
+                        hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         hashedToken=hash.result();
                         BaseServerLogin::tokenForAuthSize--;
                         if(BaseServerLogin::tokenForAuthSize>0)

@@ -186,45 +186,45 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
     switch(mainCodeType)
     {
         case 0x03:
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            removeFromQueryReceived(queryNumber);
-            #endif
-            replyOutputSize.remove(queryNumber);
-            if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
-            {
-                *(Client::protocolReplyServerFull+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyServerFull),sizeof(Client::protocolReplyServerFull));
-                disconnectClient();
-                //errorOutput(Client::text_server_full);DDOS -> full the log
-                return;
-            }
-            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-            //if lot of un logged connection, remove the first
-            if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
-            {
-                Client *client=static_cast<Client *>(BaseServerLogin::tokenForAuth[0].client);
-                client->disconnectClient();
-                delete client;
-                BaseServerLogin::tokenForAuthSize--;
-                if(BaseServerLogin::tokenForAuthSize>0)
-                {
-                    quint32 index=0;
-                    while(index<BaseServerLogin::tokenForAuthSize)
-                    {
-                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
-                        index++;
-                    }
-                    //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
-                        abort();
-                    #endif
-                }
-                return;
-            }
-            #endif
             if(memcmp(data,Client::protocolHeaderToMatch,sizeof(Client::protocolHeaderToMatch))==0)
             {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                removeFromQueryReceived(queryNumber);
+                #endif
+                replyOutputSize.remove(queryNumber);
+                if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
+                {
+                    *(Client::protocolReplyServerFull+1)=queryNumber;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyServerFull),sizeof(Client::protocolReplyServerFull));
+                    disconnectClient();
+                    //errorOutput(Client::text_server_full);DDOS -> full the log
+                    return;
+                }
+                #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                //if lot of un logged connection, remove the first
+                if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
+                {
+                    Client *client=static_cast<Client *>(BaseServerLogin::tokenForAuth[0].client);
+                    client->disconnectClient();
+                    delete client;
+                    BaseServerLogin::tokenForAuthSize--;
+                    if(BaseServerLogin::tokenForAuthSize>0)
+                    {
+                        quint32 index=0;
+                        while(index<BaseServerLogin::tokenForAuthSize)
+                        {
+                            BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
+                            index++;
+                        }
+                        //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        if(BaseServerLogin::tokenForAuth[0].client==NULL)
+                            abort();
+                        #endif
+                    }
+                    return;
+                }
+                #endif
                 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                 BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
                 {
@@ -236,7 +236,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                         /// \warning total insecure implementation
                         abort();
                         int index=0;
-                        while(index<CATCHCHALLENGER_TOKENSIZE)
+                        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             token->value[index]=rand()%256;
                             index++;
@@ -244,7 +244,7 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                     }
                     else
                     {
-                        if(fread(token->value,CATCHCHALLENGER_TOKENSIZE,1,GlobalServerData::serverPrivateVariables.fpRandomFile)!=CATCHCHALLENGER_TOKENSIZE)
+                        if(fread(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,1,GlobalServerData::serverPrivateVariables.fpRandomFile)!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             errorOutput("Not correct number of byte to generate the token");
                             return;
@@ -268,21 +268,21 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                     case CompressionType_None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(Client::protocolReplyCompressionNone+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
                     case CompressionType_Zlib:
                         *(Client::protocolReplyCompresssionZlib+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompresssionZlib+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(Client::protocolReplyCompresssionZlib+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZlib),sizeof(Client::protocolReplyCompresssionZlib));
                     break;
                     case CompressionType_Xz:
                         *(Client::protocolReplyCompressionXz+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompressionXz+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(Client::protocolReplyCompressionXz+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionXz),sizeof(Client::protocolReplyCompressionXz));
                     break;
@@ -305,8 +305,9 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
             }
             else
             {
+                /*don't send packet to prevent DDOS
                 *(Client::protocolReplyProtocolNotSupported+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyProtocolNotSupported),sizeof(Client::protocolReplyProtocolNotSupported));
+                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyProtocolNotSupported),sizeof(Client::protocolReplyProtocolNotSupported));*/
                 errorOutput("Wrong protocol");
                 return;
             }
@@ -321,11 +322,9 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
             if(is_logging_in_progess)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                removeFromQueryReceived(queryNumber);
+                //removeFromQueryReceived(queryNumber);
                 #endif
-                replyOutputSize.remove(queryNumber);
-                *(Client::loginInProgressBuffer+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
+                //replyOutputSize.remove(queryNumber);
                 errorOutput("Loggin already in progress");
             }
             else
@@ -344,12 +343,11 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
             if(is_logging_in_progess)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                removeFromQueryReceived(queryNumber);
+                //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                 #endif
-                replyOutputSize.remove(queryNumber);
-                *(Client::loginInProgressBuffer+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
-                errorOutput("Loggin already in progress");
+                //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
+                //not reply to prevent DDOS attack
+                errorOutput("Loggin already in progress at create account");
             }
             else
             {
@@ -362,11 +360,10 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 else
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    removeFromQueryReceived(queryNumber);
+                    //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                     #endif
-                    replyOutputSize.remove(queryNumber);
-                    *(Client::loginInProgressBuffer+1)=queryNumber;
-                    internalSendRawSmallPacket(reinterpret_cast<char *>(Client::loginInProgressBuffer),sizeof(Client::loginInProgressBuffer));
+                    //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
+                    //not reply to prevent DDOS attack
                     errorOutput("Account creation not premited");
                 }
             }
@@ -1248,6 +1245,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             //Add character
             case 0x03:
             {
+                if(character_loaded)
+                {
+                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    return;
+                }
                 QByteArray data(rawData,size);
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
@@ -1317,6 +1319,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             //Remove character
             case 0x04:
             {
+                if(character_loaded)
+                {
+                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    return;
+                }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint8)+sizeof(quint32))
                 {
@@ -1332,6 +1339,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             //Select character
             case 0x05:
             {
+                if(character_loaded)
+                {
+                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    return;
+                }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=(int)sizeof(quint8)+sizeof(quint32)+sizeof(quint32))
                 {
@@ -1340,7 +1352,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 }
                 #endif
                 //skip charactersGroupIndex with rawData+4+1
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4+1)));
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1+4)));
                 selectCharacter(queryNumber,characterId);
             }
             break;
@@ -1348,6 +1360,11 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             //Select character on game server
             case 0x06:
             {
+                if(character_loaded)
+                {
+                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    return;
+                }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(size!=4)
                 {

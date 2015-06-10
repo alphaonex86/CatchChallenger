@@ -12,42 +12,42 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
     switch(mainCodeType)
     {
         case 0x03:
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            removeFromQueryReceived(queryNumber);
-            #endif
-            replyOutputSize.remove(queryNumber);
-            //if lot of un logged connection, remove the first
-            if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
-            {
-                EpollClientLoginSlave *client=static_cast<EpollClientLoginSlave *>(BaseServerLogin::tokenForAuth[0].client);
-                client->disconnectClient();
-                delete client;
-                BaseServerLogin::tokenForAuthSize--;
-                if(BaseServerLogin::tokenForAuthSize>0)
-                {
-                    quint32 index=0;
-                    while(index<BaseServerLogin::tokenForAuthSize)
-                    {
-                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
-                        index++;
-                    }
-                    //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
-                        abort();
-                    #endif
-                }
-                return;
-            }
             if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
             {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                removeFromQueryReceived(queryNumber);
+                #endif
+                replyOutputSize.remove(queryNumber);
+                //if lot of un logged connection, remove the first
+                if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
+                {
+                    EpollClientLoginSlave *client=static_cast<EpollClientLoginSlave *>(BaseServerLogin::tokenForAuth[0].client);
+                    client->disconnectClient();
+                    delete client;
+                    BaseServerLogin::tokenForAuthSize--;
+                    if(BaseServerLogin::tokenForAuthSize>0)
+                    {
+                        quint32 index=0;
+                        while(index<BaseServerLogin::tokenForAuthSize)
+                        {
+                            BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
+                            index++;
+                        }
+                        //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        if(BaseServerLogin::tokenForAuth[0].client==NULL)
+                            abort();
+                        #endif
+                    }
+                    return;
+                }
                 BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
                 {
                     token->client=this;
                     if(BaseServerLogin::fpRandomFile==NULL)
                     {
                         int index=0;
-                        while(index<CATCHCHALLENGER_TOKENSIZE)
+                        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             token->value[index]=rand()%256;
                             index++;
@@ -55,7 +55,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                     }
                     else
                     {
-                        if(fread(token->value,CATCHCHALLENGER_TOKENSIZE,1,BaseServerLogin::fpRandomFile)!=CATCHCHALLENGER_TOKENSIZE)
+                        if(fread(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,1,BaseServerLogin::fpRandomFile)!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             parseNetworkReadError("Not correct number of byte to generate the token");
                             return;
@@ -67,17 +67,17 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 {
                     case ProtocolParsing::CompressionType::None:
                         *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
                     break;
                     case ProtocolParsing::CompressionType::Zlib:
                         *(EpollClientLoginSlave::protocolReplyCompresssionZlib+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZlib+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZlib+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompresssionZlib),sizeof(EpollClientLoginSlave::protocolReplyCompresssionZlib));
                     break;
                     case ProtocolParsing::CompressionType::Xz:
                         *(EpollClientLoginSlave::protocolReplyCompressionXz+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionXz+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                        memcpy(EpollClientLoginSlave::protocolReplyCompressionXz+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionXz),sizeof(EpollClientLoginSlave::protocolReplyCompressionXz));
                     break;
                     default:
@@ -97,8 +97,9 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
             }
             else
             {
+                /*don't send packet to prevent DDOS
                 *(EpollClientLoginSlave::protocolReplyProtocolNotSupported+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginSlave::protocolReplyProtocolNotSupported));
+                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginSlave::protocolReplyProtocolNotSupported));*/
                 parseNetworkReadError("Wrong protocol");
                 return;
             }
@@ -132,12 +133,12 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
             if(stat==EpollClientLoginStat::LoginInProgress)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                removeFromQueryReceived(queryNumber);
+                removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                 #endif
-                replyOutputSize.remove(queryNumber);
-                *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
+                replyOutputSize.remove(queryNumber);//all list dropped at client destruction
+                //not reply to prevent DDOS attack
                 parseNetworkReadError("Loggin already in progress");
+                return;
             }
             else if(stat!=EpollClientLoginStat::ProtocolGood)
             {
@@ -155,12 +156,12 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 else
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    removeFromQueryReceived(queryNumber);
+                    //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                     #endif
-                    replyOutputSize.remove(queryNumber);
-                    *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
-                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
+                    //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
+                    //not reply to prevent DDOS attack
                     parseNetworkReadError("Account creation not premited");
+                    return;
                 }
             }
         break;
@@ -315,11 +316,13 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
             //Select character
             case 0x05:
             {
-                const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+0)));
-                const quint8 &charactersGroupIndex=rawData[4];
+                const quint8 &charactersGroupIndex=rawData[0];
+                const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
                 const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+5)));
                 selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId);
+                return;
             }
+            break;
             default:
                 parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;

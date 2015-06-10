@@ -57,17 +57,19 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
                 }
                 else
                 {
+                    /*don't send packet to prevent DDOS
                     *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
-                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));*/
                     errorParsingLayer("Wrong protocol magic number");
                     return;
                 }
             }
             else
             {
+                /*don't send packet to prevent DDOS
                 *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));
-                errorParsingLayer("Wrong protocol magic number");
+                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));*/
+                errorParsingLayer("Wrong protocol magic number size");
                 return;
             }
         break;
@@ -363,6 +365,16 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 postReplyData(queryNumber,EpollClientLoginMaster::tempBuffer,pos);
             }
 
+            //only game server will receive query
+            {
+                queryNumberList.reserve(50);
+                int index=0;
+                while(index<50)
+                {
+                    queryNumberList.push_back(index);
+                    index++;
+                }
+            }
             EpollClientLoginMaster::gameServers << this;
             charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
                         this,uniqueKey,host,port,xml,logicalGroupIndex,currentPlayer,maxPlayer);
@@ -458,12 +470,13 @@ void EpollClientLoginMaster::parseFullQuery(const quint8 &mainCodeType,const qui
             }
             switch(subCodeType)
             {
-                case 0x05:
+                case 0x07:
                 {
-                    const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+0)));
-                    const quint8 &charactersGroupIndex=rawData[4];
+                    const quint8 &charactersGroupIndex=rawData[0];
+                    const quint32 &serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+1)));
                     const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+5)));
-                    selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId);
+                    const quint32 &accountId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+9)));
+                    selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId,accountId);
                 }
                 break;
                 default:
@@ -684,21 +697,28 @@ void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const
                         parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer: "+QString::number(stat)+" EpollClientLoginMaster::parseFullQuery()"+QString::number(mainCodeType)+" "+QString::number(subCodeType));
                         return;
                     }
-                    //orderned mode if(loginServerReturnForCharaterSelect.contains(queryNumber))
+                    //orderned mode drop: if(loginServerReturnForCharaterSelect.contains(queryNumber)), use first
                     {
-                        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=loginServerReturnForCharaterSelect.value(queryNumber);
-                        if(size==32/*256/8*/)
-                            dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
+                        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=loginServerReturnForCharaterSelect.first();
+                        if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER/*512/8*/)
+                        {
+                            if(dataForSelectedCharacterReturn.loginServer!=NULL)
+                                dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
+                        }
                         else if(size==1)
-                            dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0],dataForSelectedCharacterReturn.characterId);
+                        {
+                            charactersGroupForGameServer->lockedAccount.remove(dataForSelectedCharacterReturn.characterId);
+                            if(dataForSelectedCharacterReturn.loginServer!=NULL)
+                                dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
+                        }
                         else
-                            parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0205 wrong");
+                            parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 8101 wrong");
                         loginServerReturnForCharaterSelect.removeFirst();
                     }
                     /*orderned mode else
                         std::cerr << "parseFullReplyData() !loginServerReturnForCharaterSelect.contains(queryNumber): mainCodeType: " << mainCodeType << ", subCodeType: " << subCodeType << ", queryNumber: " << queryNumber << std::endl;*/
                 }
-                break;
+                return;
                 default:
                     parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType));
                     return;

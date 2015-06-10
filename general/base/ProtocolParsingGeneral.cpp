@@ -219,8 +219,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeOnlyMainCodePacketClientToServer[0x05]=CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE*2;
             sizeOnlyMainCodePacketClientToServer[0x61]=2;
             sizeMultipleCodePacketClientToServer[0x02][0x04]=1+4;
-            sizeMultipleCodePacketClientToServer[0x02][0x05]=4+1+4;
-            sizeMultipleCodePacketClientToServer[0x02][0x06]=32;
+            sizeMultipleCodePacketClientToServer[0x02][0x05]=1+4+4;
+            sizeMultipleCodePacketClientToServer[0x02][0x06]=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
+            sizeMultipleCodePacketClientToServer[0x02][0x07]=1+4+4+4;
             sizeMultipleCodePacketClientToServer[0x10][0x07]=0;
             sizeMultipleCodePacketClientToServer[0x10][0x08]=2;
             sizeMultipleCodePacketClientToServer[0x10][0x09]=2;
@@ -295,7 +296,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
 
             //main code for query with reply
             ProtocolParsing::mainCode_IsQueryClientToServer << 0x01 << 0x02 << 0x03 << 0x04 << 0x05 << 0x07 << 0x08 << 0x09 << 0x10 << 0x20 << 0x30;//replySizeMultipleCodePacketServerToClient
-            ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x80 << 0x90 << 0xA0;//replySizeMultipleCodePacketClientToServer
+            ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x80 << 0x81 << 0x90 << 0xA0;//replySizeMultipleCodePacketClientToServer
 
             //register meta type
             #ifndef EPOLLCATCHCHALLENGERSERVER

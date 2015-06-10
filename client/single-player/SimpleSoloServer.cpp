@@ -192,6 +192,9 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
+        /*never be wrong, single player
+        if(CatchChallenger::Api_client_real::client!=NULL && CatchChallenger::Api_client_real::client->protocolWrong())
+            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/1
         if(internalServer!=NULL)
             internalServer->stop();
         resetAll();
