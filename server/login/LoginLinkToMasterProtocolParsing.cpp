@@ -295,9 +295,9 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                     std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
-                                pos+=4;
+                                serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
                                 EpollClientLoginSlave::serverServerListSize+=4;
-                                serverUniqueKey=*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos));
+                                pos+=4;
                             }
 
                             //copy the host + port
@@ -943,21 +943,27 @@ void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quin
         case 0x02:
             switch(subCodeType)
             {
-                case 0x05:
+                case 0x07:
                 {
                     if(selectCharacterClients.contains(queryNumber))
                     {
                         const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.value(queryNumber);
                         if(dataForSelectedCharacterReturn.client!=NULL)
                         {
-                            if(size==32/*256/8*/)
-                                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                            if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER/*512/8*/)
+                            {
+                                if(dataForSelectedCharacterReturn.client!=NULL)
+                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
                                     ->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
+                            }
                             else if(size==1)
-                                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                            {
+                                if(dataForSelectedCharacterReturn.client!=NULL)
+                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
                                     ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
+                            }
                             else
-                                parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0205 wrong");
+                                parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
                         }
                         selectCharacterClients.remove(queryNumber);
                     }

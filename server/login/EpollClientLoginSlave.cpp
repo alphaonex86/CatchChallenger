@@ -79,11 +79,14 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         }
 
         //selected char
-        QHash<quint8/*queryNumber*/,LoginLinkToMaster::DataForSelectedCharacterReturn>::const_iterator j = EpollClientLoginSlave::linkToMaster->selectCharacterClients.constBegin();
-        while (j != EpollClientLoginSlave::linkToMaster->selectCharacterClients.constEnd()) {
-            if(j.value().client==this)
-                EpollClientLoginSlave::linkToMaster->selectCharacterClients[j.key()].client=NULL;
-            ++j;
+        /// \todo check by crash with ASSERT failure in QHash: "Iterating beyond end()"
+        {
+            QHashIterator<quint8/*queryNumber*/,LoginLinkToMaster::DataForSelectedCharacterReturn> j(EpollClientLoginSlave::linkToMaster->selectCharacterClients);
+            while (j.hasNext()) {
+                j.next();
+                if(j.value().client==this)
+                    EpollClientLoginSlave::linkToMaster->selectCharacterClients[j.key()].client=NULL;
+            }
         }
     }
 }

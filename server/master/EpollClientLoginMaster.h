@@ -24,10 +24,10 @@ public:
         );
     ~EpollClientLoginMaster();
     void parseIncommingData();
-    void selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
-    bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
+    void selectCharacter(const quint8 &query_id, const quint32 &serverUniqueKey, const quint8 &charactersGroupIndex, const quint32 &characterId, const quint32 &accountId);
+    bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId, const quint32 &accountId);
     void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
-    void selectCharacter_ReturnFailed(const quint8 &query_id, const quint8 &errorCode, const quint32 &characterId);
+    void selectCharacter_ReturnFailed(const quint8 &query_id, const quint8 &errorCode);
     static void broadcastGameServerChange();
     bool sendRawSmallPacket(const char * const data,const int &size);
     enum EpollClientLoginMasterStat
@@ -65,8 +65,13 @@ public:
     static unsigned char protocolReplyCompressionNone[3];
     static unsigned char protocolReplyCompresssionZlib[3];
     static unsigned char protocolReplyCompressionXz[3];
-    static unsigned char loginIsWrongBuffer[4];
-    static char selectCharaterRequest[3+4];
+    static char characterSelectionIsWrongBufferCharacterNotFound[64];
+    static char characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[64];
+    static char characterSelectionIsWrongBufferServerInternalProblem[64];
+    static char characterSelectionIsWrongBufferServerNotFound[64];
+    static quint8 characterSelectionIsWrongBufferSize;
+    static char selectCharaterRequestOnGameServer[3/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    static char getTokenForCharacterSelect[3/*header*/+4+4];
     static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
     +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
     +1000];

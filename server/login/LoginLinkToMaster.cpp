@@ -159,15 +159,16 @@ bool LoginLinkToMaster::trySelectCharacter(void * const client,const quint8 &cli
     dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
     selectCharacterClients[queryNumberList.back()]=dataForSelectedCharacterReturn;
     //register it
-    newFullOutputQuery(0x02,0x05,queryNumberList.back());
+    newFullOutputQuery(0x02,0x07,queryNumberList.back());
     //the data
-    EpollClientLoginSlave::selectCharaterRequest[0x02]=queryNumberList.back();
-    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequest+0x03)=serverUniqueKey;
-    EpollClientLoginSlave::selectCharaterRequest[0x07]=charactersGroupIndex;
-    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequest+0x08)=htole32(characterId);
+    EpollClientLoginSlave::selectCharaterRequestOnMaster[0x02]=queryNumberList.back();
+    EpollClientLoginSlave::selectCharaterRequestOnMaster[0x03]=charactersGroupIndex;
+    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x04)=serverUniqueKey;
+    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x08)=htole32(characterId);
+    *reinterpret_cast<quint32 *>(EpollClientLoginSlave::selectCharaterRequestOnMaster+0x0C)=htole32(static_cast<EpollClientLoginSlave *>(client)->account_id);
 
     queryNumberList.pop_back();
-    return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::selectCharaterRequest),sizeof(EpollClientLoginSlave::selectCharaterRequest));
+    return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::selectCharaterRequestOnMaster),sizeof(EpollClientLoginSlave::selectCharaterRequestOnMaster));
 }
 
 void LoginLinkToMaster::sendProtocolHeader()

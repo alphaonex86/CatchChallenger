@@ -386,7 +386,7 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
                      serverProfileInternal.preparedQuerySelect.at(2)
                      );
         dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_last_connect.arg(characterId).arg(QDateTime::currentDateTime().toTime_t()));
-        loginIsRightWithParsedRescue(query_id,
+        characterIsRightWithParsedRescue(query_id,
             characterId,
             serverProfileInternal.map,
             serverProfileInternal.x,
@@ -492,7 +492,7 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
         characterSelectionIsWrong(query_id,0x04,QStringLiteral("y to out of map: %1 > %2 (%3)").arg(y).arg(map->height).arg(map->map_file));
         return;
     }
-    loginIsRightWithRescue(query_id,
+    characterIsRightWithRescue(query_id,
         characterId,
         map,
         x,
@@ -543,7 +543,7 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
 
 
 
-void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
+void Client::characterIsRightWithRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
                   const QVariant &rescue_map, const QVariant &rescue_x, const QVariant &rescue_y, const QVariant &rescue_orientation,
                   const QVariant &unvalidated_rescue_map, const QVariant &unvalidated_rescue_x, const QVariant &unvalidated_rescue_y, const QVariant &unvalidated_rescue_orientation
                                              )
@@ -553,52 +553,52 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
     if(!ok)
     {
         normalOutput(QLatin1String("rescue_map_database_id is not a number"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_map_database_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput(QLatin1String("rescue_map_database_id out of range"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id)==NULL)
     {
         normalOutput(QLatin1String("rescue_map_database_id have not reverse"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     CommonMap *rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id);
     if(rescue_map_final==NULL)
     {
         normalOutput(QStringLiteral("rescue map not resolved"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint8 &rescue_new_x=rescue_x.toUInt(&ok);
     if(!ok)
     {
         normalOutput(QStringLiteral("rescue x coord is not a number"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint8 &rescue_new_y=rescue_y.toUInt(&ok);
     if(!ok)
     {
         normalOutput(QStringLiteral("rescue y coord is not a number"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_x>=rescue_map_final->width)
     {
         normalOutput(QStringLiteral("rescue x to out of map"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_y>=rescue_map_final->height)
     {
         normalOutput(QStringLiteral("rescue y to out of map"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint32 &orientationInt=rescue_orientation.toUInt(&ok);
@@ -627,52 +627,52 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
     if(!ok)
     {
         normalOutput(QLatin1String("unvalidated_rescue_map_database_id is not a number"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_map_database_id>=(quint32)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput(QLatin1String("unvalidated_rescue_map_database_id out of range"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id)==NULL)
     {
         normalOutput(QLatin1String("unvalidated_rescue_map_database_id have not reverse"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     CommonMap *unvalidated_rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id);
     if(unvalidated_rescue_map_final==NULL)
     {
         normalOutput(QStringLiteral("unvalidated rescue map not resolved"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint8 &unvalidated_rescue_new_x=unvalidated_rescue_x.toUInt(&ok);
     if(!ok)
     {
         normalOutput(QStringLiteral("unvalidated rescue x coord is not a number"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     const quint8 &unvalidated_rescue_new_y=unvalidated_rescue_y.toUInt(&ok);
     if(!ok)
     {
         normalOutput(QStringLiteral("unvalidated rescue y coord is not a number"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_x>=unvalidated_rescue_map_final->width)
     {
         normalOutput(QStringLiteral("unvalidated rescue x to out of map"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_y>=unvalidated_rescue_map_final->height)
     {
         normalOutput(QStringLiteral("unvalidated rescue y to out of map"));
-        loginIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     Orientation unvalidated_rescue_new_orientation;
@@ -697,18 +697,18 @@ void Client::loginIsRightWithRescue(const quint8 &query_id, quint32 characterId,
 
 
 
-    loginIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,
+    characterIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,
                                  rescue_map_final,rescue_new_x,rescue_new_y,rescue_new_orientation,
                                  unvalidated_rescue_map_final,unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
             );
 }
 
-void Client::loginIsRight(const quint8 &query_id,quint32 characterId, CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
+void Client::characterIsRight(const quint8 &query_id,quint32 characterId, CommonMap *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
 {
-    loginIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,map,x,y,orientation,map,x,y,orientation);
+    characterIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,map,x,y,orientation,map,x,y,orientation);
 }
 
-void Client::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
+void Client::characterIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, CommonMap* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
                   CommonMap* rescue_map, const /*COORD_TYPE*/ quint8 &rescue_x, const /*COORD_TYPE*/ quint8 &rescue_y, const Orientation &rescue_orientation,
                   CommonMap *unvalidated_rescue_map, const quint8 &unvalidated_rescue_x, const quint8 &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                   )
@@ -814,7 +814,7 @@ void Client::loadItemOnMap()
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
-        loginIsRightFinalStep();
+        characterIsRightFinalStep();
         return;
     }
     else
@@ -852,10 +852,10 @@ void Client::loadItemOnMap_return()
         }
         public_and_private_informations.itemOnMap << DictionaryServer::dictionary_itemOnMap_database_to_internal[itemDbCode];
     }
-    loginIsRightFinalStep();
+    characterIsRightFinalStep();
 }
 
-void Client::loginIsRightFinalStep()
+void Client::characterIsRightFinalStep()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -1161,6 +1161,7 @@ void Client::selectClan_return()
     loadLinkedData();
 }
 
+#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::loginIsWrong(const quint8 &query_id, const quint8 &returnCode, const QString &debugMessage)
 {
     //network send
@@ -1175,6 +1176,7 @@ void Client::loginIsWrong(const quint8 &query_id, const quint8 &returnCode, cons
     //send to server to stop the connection
     errorOutput(debugMessage);
 }
+#endif
 
 void Client::loadPlayerAllow()
 {

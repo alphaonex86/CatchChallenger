@@ -63,7 +63,10 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
         {
             const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=loginServerReturnForCharaterSelect.at(index);
             if(dataForSelectedCharacterReturn.loginServer!=NULL)
-                dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04,dataForSelectedCharacterReturn.characterId);
+            {
+                charactersGroupForGameServer->lockedAccount.remove(dataForSelectedCharacterReturn.characterId);
+                dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04);
+            }
             index++;
         }
         EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
@@ -111,47 +114,69 @@ void EpollClientLoginMaster::parseIncommingData()
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-void EpollClientLoginMaster::selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
+void EpollClientLoginMaster::selectCharacter(const quint8 &query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId,const quint32 &accountId)
 {
-    if(charactersGroupIndex<=CharactersGroup::list.size())
+    if(charactersGroupIndex>=CharactersGroup::list.size())
     {
         errorParsingLayer("EpollClientLoginMaster::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
     if(!CharactersGroup::list.at(charactersGroupIndex)->containsGameServerUniqueKey(serverUniqueKey))
     {
-        EpollClientLoginMaster::loginIsWrongBuffer[1]=query_id;
-        EpollClientLoginMaster::loginIsWrongBuffer[3]=0x05;
+        EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound[1]=query_id;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         removeFromQueryReceived(query_id);
         #endif
-        replyOutputSize.remove(query_id);
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginIsWrongBuffer),sizeof(EpollClientLoginMaster::loginIsWrongBuffer));
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        replyOutputCompression.remove(query_id);
+        #endif
+        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound),EpollClientLoginMaster::characterSelectionIsWrongBufferSize);
         return;
     }
     if(CharactersGroup::list.at(charactersGroupIndex)->lockedAccount.contains(characterId))
     {
-        EpollClientLoginMaster::loginIsWrongBuffer[1]=query_id;
-        EpollClientLoginMaster::loginIsWrongBuffer[3]=0x03;
+        EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[1]=query_id;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         removeFromQueryReceived(query_id);
         #endif
-        replyOutputSize.remove(query_id);
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::loginIsWrongBuffer),sizeof(EpollClientLoginMaster::loginIsWrongBuffer));
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        replyOutputCompression.remove(query_id);
+        #endif
+        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline),EpollClientLoginMaster::characterSelectionIsWrongBufferSize);
+        return;
+    }
+    EpollClientLoginMaster * gameServer=static_cast<EpollClientLoginMaster *>(CharactersGroup::list.at(charactersGroupIndex)->gameServers.value(serverUniqueKey).link);
+    if(!gameServer->trySelectCharacterGameServer(this,query_id,serverUniqueKey,charactersGroupIndex,characterId,accountId))
+    {
+        EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound[1]=query_id;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        removeFromQueryReceived(query_id);
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        replyOutputCompression.remove(query_id);
+        #endif
+        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::characterSelectionIsWrongBufferServerNotFound),EpollClientLoginMaster::characterSelectionIsWrongBufferSize);
         return;
     }
     CharactersGroup::list[charactersGroupIndex]->lockedAccount << characterId;
-    EpollClientLoginMaster * gameServer=static_cast<EpollClientLoginMaster *>(CharactersGroup::list.at(charactersGroupIndex)->gameServers.value(serverUniqueKey).link);
-    gameServer->trySelectCharacterGameServer(this,query_id,serverUniqueKey,charactersGroupIndex,characterId);
 }
 
-bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId)
+bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId, const quint32 &accountId)
 {
     //here you are on game server link
 
     //check if the characterId is linked to the correct account on login server
     if(queryNumberList.empty())
+    {
+        std::cerr << "queryNumberList.empty() on game server to server it: "
+                  << charactersGroupForGameServerInformation->uniqueKey
+                  << ", host: "
+                  << charactersGroupForGameServerInformation->host.toStdString()
+                  << ":"
+                  << charactersGroupForGameServerInformation->port
+                  << std::endl;
         return false;
+    }
     DataForSelectedCharacterReturn dataForSelectedCharacterReturn;
     dataForSelectedCharacterReturn.loginServer=loginServer;
     dataForSelectedCharacterReturn.client_query_id=client_query_id;
@@ -163,10 +188,11 @@ bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster
     const quint8 &queryNumber=queryNumberList.back();
     waitedReply_mainCodeType[queryNumber]=0x81;
     waitedReply_subCodeType[queryNumber]=0x01;
-    EpollClientLoginMaster::selectCharaterRequest[0x02]=queryNumber;
-    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::selectCharaterRequest+0x03)=htole32(characterId);
+    EpollClientLoginMaster::getTokenForCharacterSelect[0x02]=queryNumber;
+    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x03)=htole32(characterId);
+    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x07)=htole32(accountId);
     queryNumberList.pop_back();
-    return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::selectCharaterRequest),sizeof(EpollClientLoginMaster::selectCharaterRequest));
+    return internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::getTokenForCharacterSelect),sizeof(EpollClientLoginMaster::getTokenForCharacterSelect));
 }
 
 void EpollClientLoginMaster::selectCharacter_ReturnToken(const quint8 &query_id,const char * const token)
@@ -174,9 +200,9 @@ void EpollClientLoginMaster::selectCharacter_ReturnToken(const quint8 &query_id,
     postReplyData(query_id,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 }
 
-void EpollClientLoginMaster::selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode,const quint32 &characterId)
+void EpollClientLoginMaster::selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode)
 {
-    charactersGroupForGameServer->lockedAccount.remove(characterId);
+    //you are on login server
     postReplyData(query_id,reinterpret_cast<const char * const>(&errorCode),1);
 }
 

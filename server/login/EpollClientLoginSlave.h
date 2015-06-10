@@ -97,7 +97,7 @@ public:
     void addCharacter_ReturnOk(const quint8 &query_id,const quint32 &characterId);
     void addCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
     void removeCharacter_ReturnOk(const quint8 &query_id);
-    void removeCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
+    void removeCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode,const QString &errorString=QString());
 
     char *socketString;
     int socketStringSize;
@@ -116,7 +116,7 @@ public:
     static char maxAccountIdRequest[3];
     static char maxCharacterIdRequest[3];
     static char maxMonsterIdRequest[3];
-    static char selectCharaterRequest[3+4+1+4];
+    static char selectCharaterRequestOnMaster[3/*header*/+1+4+4+4];
     static char replyToRegisterLoginServerCharactersGroup[1024];
     static unsigned int replyToRegisterLoginServerCharactersGroupSize;
     static char baseDatapackSum[28];
@@ -131,6 +131,14 @@ public:
     static unsigned int serverLogicalGroupListSize;
     static char serverLogicalGroupAndServerList[512*1024];
     static unsigned int serverLogicalGroupAndServerListSize;
+
+    static unsigned char loginIsWrongBufferReply[4];
+
+    static char characterSelectionIsWrongBufferCharacterNotFound[64];
+    static char characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[64];
+    static char characterSelectionIsWrongBufferServerInternalProblem[64];
+    static char characterSelectionIsWrongBufferServerNotFound[64];
+    static quint8 characterSelectionIsWrongBufferSize;
 private:
     QList<DatabaseBase::CallBack *> callbackRegistred;
     QList<void *> paramToPassToCallBack;
@@ -140,12 +148,11 @@ private:
 
     static unsigned char protocolReplyProtocolNotSupported[4];
     static unsigned char protocolReplyServerFull[4];
-    static unsigned char protocolReplyCompressionNone[4+CATCHCHALLENGER_TOKENSIZE];
-    static unsigned char protocolReplyCompresssionZlib[4+CATCHCHALLENGER_TOKENSIZE];
-    static unsigned char protocolReplyCompressionXz[4+CATCHCHALLENGER_TOKENSIZE];
+    static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
     static unsigned char loginInProgressBuffer[4];
-    static unsigned char loginIsWrongBuffer[4];
     static unsigned char addCharacterIsWrongBuffer[8];
     static char loginCharacterList[1024];
     static unsigned char addCharacterReply[3+1+4];
@@ -196,7 +203,6 @@ public:
     void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber);
     void postReply(const quint8 &queryNumber,const char * const data, const unsigned int &size);
     void postReply(const quint8 &queryNumber);
-    void characterSelectionIsWrong(const quint8 &query_id,const quint8 &returnCode,const QString &debugMessage);
 private:
     void deleteCharacterNow(const quint32 &characterId);
     void addCharacter(const quint8 &query_id, const quint8 &characterGroupIndex, const quint8 &profileIndex, const QString &pseudo, const quint8 &skinId);

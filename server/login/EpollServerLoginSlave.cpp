@@ -45,6 +45,58 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         memset(EpollClientLoginSlave::serverLogicalGroupList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupList));
         memset(EpollClientLoginSlave::serverLogicalGroupAndServerList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupAndServerList));
     }
+    {
+        memset(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound,0x00,sizeof(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound));
+        memset(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline,0x00,sizeof(EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline));
+        memset(EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem,0x00,sizeof(EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem));
+        memset(EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound,0x00,sizeof(EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound));
+        char tempBuff;
+
+        tempBuff=2;
+        //size will be the same
+        EpollClientLoginSlave::characterSelectionIsWrongBufferSize=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterNotFound,0,&tempBuff,1,-1/*not fixed size*/
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            ,ProtocolParsing::compressionTypeServer
+            #endif
+            );
+        tempBuff=3;
+        if(EpollClientLoginSlave::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginSlave::characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline,0,&tempBuff,1,-1/*not fixed size*/
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            ,ProtocolParsing::compressionTypeServer
+            #endif
+            ))
+            abort();
+        tempBuff=4;
+        if(EpollClientLoginSlave::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem,0,&tempBuff,1,-1/*not fixed size*/
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            ,ProtocolParsing::compressionTypeServer
+            #endif
+            ))
+            abort();
+        tempBuff=5;
+        if(EpollClientLoginSlave::characterSelectionIsWrongBufferSize!=ProtocolParsingBase::computeReplyData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound,0,&tempBuff,1,-1/*not fixed size*/
+            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            ,ProtocolParsing::compressionTypeServer
+            #endif
+            ))
+            abort();
+    }
 
     srand(time(NULL));
 

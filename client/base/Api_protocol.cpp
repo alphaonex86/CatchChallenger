@@ -95,6 +95,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
 Api_protocol::~Api_protocol()
 {
+    qDebug() << "Api_protocol::~Api_protocol()";
 }
 
 void Api_protocol::disconnectClient()
@@ -171,6 +172,11 @@ bool Api_protocol::sendProtocol()
     have_send_protocol=true;
     packOutcommingQuery(0x03,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
     return true;
+}
+
+bool Api_protocol::protocolWrong() const
+{
+    return have_send_protocol && !have_receive_protocol;
 }
 
 bool Api_protocol::tryLogin(const QString &login, const QString &pass)
@@ -431,7 +437,7 @@ bool Api_protocol::removeCharacter(const quint8 &charactersGroupIndex,const quin
     return true;
 }
 
-bool Api_protocol::selectCharacter(const quint8 &charactersGroupIndex,const quint32 &serverUniqueKey,const quint32 &characterId)
+bool Api_protocol::selectCharacter(const quint8 &charactersGroupIndex,const quint32 &serverUniqueKey,const quint32 &characterId,const quint8 &selectedServerIndex)
 {
     if(!is_logged)
     {
@@ -445,7 +451,7 @@ bool Api_protocol::selectCharacter(const quint8 &charactersGroupIndex,const quin
     out << (quint32)serverUniqueKey;
     out << characterId;
     is_logged=packFullOutcommingQuery(0x02,0x05,queryNumber(),outputData.constData(),outputData.size());
-    unloadSelection();
+    this->selectedServerIndex=selectedServerIndex;
     return true;
 }
 
@@ -1525,6 +1531,7 @@ void Api_protocol::resetAll()
     have_receive_protocol=false;
     max_players=65535;
     number_of_map=0;
+    selectedServerIndex=-1;
     player_informations.allow.clear();
     player_informations.bot_already_beaten.clear();
     player_informations.cash=0;
