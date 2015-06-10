@@ -1128,6 +1128,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
+        if(CatchChallenger::Api_client_real::client!=NULL && CatchChallenger::Api_client_real::client->protocolWrong())
+            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
         if(internalServer!=NULL)
             internalServer->stop();
         /* to fix bug: firstly try connect but connexion refused on localhost, secondly try local game */

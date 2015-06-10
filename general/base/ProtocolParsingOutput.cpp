@@ -156,6 +156,52 @@ void ProtocolParsingBase::newFullOutputQuery(const quint8 &mainCodeType,const qu
 
 bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char * const data,const int &size)
 {
+    int replyOutputSizeInt=-1;
+    if(replyOutputSize.contains(queryNumber))
+    {
+        replyOutputSizeInt=replyOutputSize.value(queryNumber);
+        replyOutputSize.remove(queryNumber);
+    }
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    CompressionType compressionType=CompressionType::None;
+    if(replyOutputSizeInt==-1)
+    {
+        if(replyOutputCompression.contains(queryNumber))
+        {
+            compressionType=getCompressType();
+            replyOutputCompression.remove(queryNumber);
+        }
+    }
+    else
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(replyOutputCompression.contains(queryNumber))
+        {
+            qDebug() << (
+                        #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                        QString::number(isClient)+
+                        #endif
+            QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+            abort();
+        }
+        #endif
+    }
+    #endif
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!queryReceived.contains(queryNumber))
+    {
+        qDebug() << (
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    QString::number(isClient)+
+                    #endif
+        QStringLiteral(" ProtocolParsingInputOutput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
+        return 0;
+    }
+    else
+        queryReceived.remove(queryNumber);
+    #endif
+
     #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(size>(CATCHCHALLENGER_BIGBUFFERSIZE-16))
@@ -165,14 +211,26 @@ bool ProtocolParsingBase::postReplyData(const quint8 &queryNumber, const char * 
     }
     #endif
 
-    const int &newSize=ProtocolParsingBase::computeReplyData(ProtocolParsingBase::tempBigBufferForOutput,queryNumber,data,size);
+    const int &newSize=ProtocolParsingBase::computeReplyData(
+                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                isClient,
+                #endif
+                ProtocolParsingBase::tempBigBufferForOutput,queryNumber,data,size,replyOutputSizeInt
+                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                ,compressionType
+                #endif
+                );
     if(newSize==0)
         return false;
     return internalPackOutcommingData(ProtocolParsingBase::tempBigBufferForOutput,newSize);
     #else
     QByteArray bigBufferForOutput;
     bigBufferForOutput.resize(16+size);
-    const int &newSize=ProtocolParsingBase::computeReplyData(bigBufferForOutput.data(),queryNumber,data,size);
+    const int &newSize=ProtocolParsingBase::computeReplyData(
+                #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                isClient,
+                #endif
+                bigBufferForOutput.data(),queryNumber,data,size,replyOutputSizeInt,compressionType);
     if(newSize==0)
         return false;
     return internalPackOutcommingData(bigBufferForOutput.data(),newSize);
@@ -1518,21 +1576,17 @@ bool ProtocolParsingBase::removeFromQueryReceived(const quint8 &queryNumber)
 }
 #endif
 
-int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryNumber, const char * const data, const int &size)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!queryReceived.contains(queryNumber))
-    {
-        qDebug() << (
-                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-                    QString::number(isClient)+
-                    #endif
-        QStringLiteral(" ProtocolParsingInputOutput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
-        return 0;
-    }
-    else
-        queryReceived.remove(queryNumber);
+int ProtocolParsingBase::computeReplyData(
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    const bool &isClient,
     #endif
+    char *dataBuffer, const quint8 &queryNumber, const char * const data, const int &size,
+    const qint32 &replyOutputSizeInt
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    , const CompressionType &compressionType
+    #endif
+    )
+{
 
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(isClient)
@@ -1542,10 +1596,10 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
         memcpy(dataBuffer,&replyCodeServerToClient,sizeof(quint8));
     memcpy(dataBuffer+sizeof(quint8),&queryNumber,sizeof(quint8));
 
-    if(!replyOutputSize.contains(queryNumber))
+    if(replyOutputSizeInt==-1)
     {
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        if(replyOutputCompression.contains(queryNumber))
+        if(compressionType!=CompressionType::None)
         {
             #ifdef PROTOCOLPARSINGDEBUG
             qDebug() << (
@@ -1554,7 +1608,6 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
                         #endif
             QStringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
             #endif
-            const CompressionType &compressionType=getCompressType();
             switch(compressionType)
             {
                 case CompressionType::Xz:
@@ -1583,10 +1636,7 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
                         return fullSize;
                 }
                 break;
-                case CompressionType::None:
-                break;
             }
-            replyOutputCompression.remove(queryNumber);
         }
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1613,16 +1663,17 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        if(replyOutputCompression.contains(queryNumber))
+        if(compressionType!=CompressionType::None)
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                         QString::number(isClient)+
                         #endif
             QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+            abort();
         }
         #endif
-        if(size!=replyOutputSize.value(queryNumber))
+        if(size!=replyOutputSizeInt)
         {
             qDebug() << (
                         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -1632,7 +1683,6 @@ int ProtocolParsingBase::computeReplyData(char *dataBuffer, const quint8 &queryN
             return 0;
         }
         #endif
-        replyOutputSize.remove(queryNumber);
         if(size>0)
         {
             memcpy(dataBuffer+sizeof(quint8)*2,data,size);

@@ -445,6 +445,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
+        if(CatchChallenger::Api_client_real::client!=NULL && CatchChallenger::Api_client_real::client->protocolWrong())
+            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
         /*socket will do that's if(realSocket!=NULL)
         {
             realSocket->deleteLater;
