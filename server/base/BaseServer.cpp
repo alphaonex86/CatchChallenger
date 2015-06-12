@@ -93,9 +93,6 @@ BaseServer::BaseServer() :
     #ifndef EPOLLCATCHCHALLENGERSERVER
     GlobalServerData::serverPrivateVariables.timer_city_capture     = NULL;
     #endif
-    #ifdef Q_OS_LINUX
-    GlobalServerData::serverPrivateVariables.fpRandomFile           = NULL;
-    #endif
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
@@ -256,26 +253,7 @@ void BaseServer::preload_the_data()
 
 void BaseServer::preload_randomBlock()
 {
-    #ifdef Q_OS_LINUX
-    if(BaseServerLogin::fpRandomFile!=NULL)
-        fclose(BaseServerLogin::fpRandomFile);
-    BaseServerLogin::fpRandomFile = fopen("/dev/urandom","rb");
-    if(BaseServerLogin::fpRandomFile==NULL)
-        qDebug() << "Unable to open /dev/urandom to have trusted number generator";
-    //fclose(BaseServerLogin::fpRandomFile);-> used later into ./base/ClientNetworkRead.cpp for token
-    GlobalServerData::serverPrivateVariables.randomData.resize(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
-    const int &returnedSize=fread(GlobalServerData::serverPrivateVariables.randomData.data(),1,CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE,BaseServerLogin::fpRandomFile);
-    if(returnedSize!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
-    {
-        qDebug() << QStringLiteral("CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE don't match with urandom size: %1").arg(returnedSize);
-        abort();
-    }
-    if(GlobalServerData::serverPrivateVariables.randomData.size()!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
-    {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.randomData.size() don't match with urandom size");
-        abort();
-    }
-    #else
+    //don't use BaseServerLogin::fpRandomFile to prevent lost entropy
     QDataStream randomDataStream(&GlobalServerData::serverPrivateVariables.randomData, QIODevice::WriteOnly);
     randomDataStream.setVersion(QDataStream::Qt_4_4);
     int index=0;
@@ -284,7 +262,6 @@ void BaseServer::preload_randomBlock()
         randomDataStream << quint8(rand()%256);
         index++;
     }
-    #endif
 }
 
 void BaseServer::unload_randomBlock()
@@ -3501,7 +3478,7 @@ void BaseServer::load_account_max_id()
         if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
-            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_common);
+            BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
@@ -3530,7 +3507,7 @@ void BaseServer::load_account_max_id_return()
     if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
+        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
 }
 
 void BaseServer::load_character_max_id()
@@ -3552,7 +3529,7 @@ void BaseServer::load_character_max_id()
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::load_character_max_id_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
-        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_common);
+        BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
     }
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
@@ -3578,6 +3555,6 @@ void BaseServer::load_character_max_id_return()
             continue;
         }
     }
-    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_login);
+    BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
 }
 #endif

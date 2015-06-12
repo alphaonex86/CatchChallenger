@@ -39,6 +39,7 @@ public:
     bool tryCreate();
     bool sendProtocol();
     bool protocolWrong() const;
+    virtual void socketDisconnectedForReconnect();
 
     //get the stored data
     Player_private_and_public_informations get_player_informations();
@@ -54,6 +55,14 @@ public:
     virtual QString mainDatapackCode() const;
     virtual QString subDatapackCode() const;
     void setDatapackPath(const QString &datapackPath);
+
+    enum StageConnexion
+    {
+        Stage1=0x01,//Connect on login server
+        Stage2=0x02,//reconnexion in progress
+        Stage3=0x03,//connected on game server
+    };
+    StageConnexion stage() const;
 
     //to reset all
     void resetAll();
@@ -73,6 +82,7 @@ public:
     ProxyMode proxyMode;
 private:
     //status for the query
+    bool haveFirstHeader;
     bool is_logged;
     bool character_selected;
     bool have_send_protocol;
@@ -91,6 +101,8 @@ private:
 
     LogicialGroup logicialGroup;
 
+    StageConnexion stageConnexion;
+
     //to send trame
     std::vector<quint8> lastQueryNumber;
 
@@ -102,9 +114,15 @@ private:
 protected:
     virtual void socketDestroyed();
     void parseIncommingData();
+    void readForFirstHeader();
+    void sslHandcheckIsFinished();
+    void connectTheExternalSocketInternal();
+    void saveCert(const QString &file);
 
     void errorParsingLayer(const QString &error);
     void messageParsingLayer(const QString &message) const;
+
+    void parseCharacterBlock(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
@@ -171,6 +189,7 @@ protected:
     QList<ServerFromPoolForDisplay *> serverOrdenedList;
     QList<LogicialGroup *> logicialGroupIndexList;
     QList<QList<CharacterEntry> > characterListForSelection;
+    QByteArray tokenForGameServer;
 signals:
     void newError(const QString &error,const QString &detailedError) const;
     void message(const QString &message) const;
@@ -181,6 +200,9 @@ signals:
     void notLogged(const QString &reason) const;
     void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList) const;
     void protocol_is_good() const;
+    void connectedOnLoginServer() const;
+    void connectingOnGameServer() const;
+    void connectedOnGameServer() const;
 
     //general info
     void number_of_player(const quint16 &number,const quint16 &max_players) const;
@@ -189,7 +211,6 @@ signals:
     //character
     void newCharacterId(const quint8 &returnCode,const quint32 &characterId) const;
     void haveCharacter() const;
-    void parseCharacterBlock(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
     //events
     void setEvents(const QList<QPair<quint8,quint8> > &events) const;
     void newEvent(const quint8 &event,const quint8 &event_value) const;

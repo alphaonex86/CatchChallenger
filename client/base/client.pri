@@ -4,6 +4,7 @@ LIBS += -lvlc
 QT       += script opengl widgets qml quick
 
 win32:CONFIG   += console
+DEFINES += CATCHCHALLENGER_CLIENT
 
 SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/DatapackChecksum.cpp \

@@ -230,11 +230,16 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                 {
                     token->client=this;
                     #ifdef Q_OS_LINUX
-                    if(GlobalServerData::serverPrivateVariables.fpRandomFile==NULL)
+                    if(BaseServerLogin::fpRandomFile==NULL)
                     {
                         //failback
+                        /* allow poor quality number:
+                         * 1) more easy to run, allow start include if /dev/urandom can't be read
+                         * 2) it's for very small server (Lan) or internal communication */
+                        #if ! defined(CATCHCHALLENGER_CLIENT) && ! defined(CATCHCHALLENGER_SOLO)
                         /// \warning total insecure implementation
                         abort();
+                        #endif
                         int index=0;
                         while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
@@ -244,9 +249,16 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
                     }
                     else
                     {
-                        if(fread(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,1,GlobalServerData::serverPrivateVariables.fpRandomFile)!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                        const qint32 readedByte=fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile);
+                        if(readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
-                            errorOutput("Not correct number of byte to generate the token");
+                            /// \todo check why client not disconnected if pass here
+                            errorOutput(
+                                        QStringLiteral("Not correct number of byte to generate the token readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2, errno: %3")
+                                        .arg(readedByte)
+                                        .arg(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                                        .arg(errno)
+                                        );
                             return;
                         }
                     }
