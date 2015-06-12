@@ -351,7 +351,6 @@ private:
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const quint32 &characterId);
     #endif
-    void parseCharacterBlock(const &QByteArray data);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
     static QHash<QString,quint32> datapack_file_list(const bool withHash=true);
