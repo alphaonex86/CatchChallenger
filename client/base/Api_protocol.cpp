@@ -19,9 +19,12 @@ const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERV
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/GeneralType.h"
+#include "SslCert.h"
 #include "LanguagesSelect.h"
 
 #include <QCoreApplication>
+#include <QStandardPaths>
+#include <QSslKey>
 
 #ifdef BENCHMARKMUTIPLECLIENT
 char Api_protocol::hurgeBufferForBenchmark[4096];
@@ -62,11 +65,23 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     if(extensionAllowed.isEmpty())
         extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
 
+    resetAll();
+
     connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
     //connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::DirectConnection);-> why direct?
-    connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
-
-    resetAll();
+    connect(socket,&ConnectedSocket::disconnected,this,&Api_protocol::socketDisconnectedForReconnect,Qt::QueuedConnection);
+    if(socket->sslSocket!=NULL)
+    {
+        connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection);
+        if(socket->bytesAvailable())
+            readForFirstHeader();
+    }
+    else
+    {
+        connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
+        if(socket->bytesAvailable())
+            parseIncommingData();
+    }
 
     if(!Api_protocol::internalVersionDisplayed)
     {
@@ -169,9 +184,44 @@ bool Api_protocol::sendProtocol()
         newError(QStringLiteral("Internal problem"),QStringLiteral("Have already send the protocol"));
         return false;
     }
+    if(!haveFirstHeader)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("!haveFirstHeader"));
+        return false;
+    }
+
     have_send_protocol=true;
-    packOutcommingQuery(0x03,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
+    if(stageConnexion==StageConnexion::Stage1)
+        packOutcommingQuery(0x03,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
+    else if(stageConnexion==StageConnexion::Stage3)
+        packOutcommingQuery(0x03,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+    else
+        newError(QStringLiteral("Internal problem"),QStringLiteral("stageConnexion!=StageConnexion::Stage1/3"));
     return true;
+}
+
+void Api_protocol::socketDisconnectedForReconnect()
+{
+    if(stageConnexion!=StageConnexion::Stage2)
+        return;
+    qDebug() << "Api_protocol::socketDisconnectedForReconnect()";
+    if(selectedServerIndex==-1)
+    {
+        parseError(QStringLiteral("Internal error"),QStringLiteral("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
+        return;
+    }
+    const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
+    if(serverFromPoolForDisplay.host.isEmpty())
+    {
+        parseError(QStringLiteral("Internal error"),QStringLiteral("serverFromPoolForDisplay.host.isEmpty() with Api_protocol::socketDisconnectedForReconnect()"));
+        return;
+    }
+    if(socket==NULL)
+    {
+        parseError(QStringLiteral("Internal error"),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
+        return;
+    }
+    socket->connectToHost(serverFromPoolForDisplay.host,serverFromPoolForDisplay.port);
 }
 
 bool Api_protocol::protocolWrong() const
@@ -213,8 +263,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
         hashAndToken.addData(token);
         outputData+=hashAndToken.result();
     }
-    const quint8 &query_number=queryNumber();
-    packOutcommingQuery(0x04,query_number,outputData.constData(),outputData.size());
+    packOutcommingQuery(0x04,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
@@ -233,8 +282,7 @@ bool Api_protocol::tryCreate()
     QByteArray outputData;
     outputData+=loginHash;
     outputData+=passHash;
-    const quint8 &query_number=queryNumber();
-    packOutcommingQuery(0x05,query_number,outputData.constData(),outputData.size());
+    packOutcommingQuery(0x05,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
 
@@ -1518,11 +1566,18 @@ void Api_protocol::addMonster(const quint32 &monsterId)
     is_logged=character_selected=packFullOutcommingData(0x50,0x03,outputData.constData(),outputData.size());
 }
 
+Api_protocol::StageConnexion Api_protocol::stage() const
+{
+    return stageConnexion;
+}
+
 //to reset all
 void Api_protocol::resetAll()
 {
     //status for the query
     token.clear();
+    stageConnexion=StageConnexion::Stage1;
+    haveFirstHeader=false;
     haveTheServerList=false;
     haveTheLogicalGroupList=false;
     is_logged=false;
@@ -1552,6 +1607,7 @@ void Api_protocol::resetAll()
     player_informations.reputation.clear();
     player_informations.quests.clear();
     player_informations.itemOnMap.clear();
+    tokenForGameServer.clear();
     unloadSelection();
     isInTrade=false;
     tradeRequestId.clear();
@@ -1568,6 +1624,7 @@ void Api_protocol::resetAll()
 
 void Api_protocol::unloadSelection()
 {
+    selectedServerIndex=-1;
     logicialGroup.logicialGroupList.clear();
     serverOrdenedList.clear();
     characterListForSelection.clear();
@@ -1578,7 +1635,8 @@ void Api_protocol::unloadSelection()
 ServerFromPoolForDisplay Api_protocol::getCurrentServer(const int &index)
 {
     ServerFromPoolForDisplay tempVar=*serverOrdenedList.at(index);
-    serverOrdenedList.clear();
+    /*selectedServerIndex=-1;
+    serverOrdenedList.clear();*/
     return tempVar;
 }
 
@@ -1833,4 +1891,154 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
 LogicialGroup Api_protocol::getLogicialGroup() const
 {
     return logicialGroup;
+}
+
+void Api_protocol::readForFirstHeader()
+{
+    if(haveFirstHeader)
+        return;
+    if(socket->sslSocket==NULL)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+        return;
+    }
+    {
+        if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
+        {
+            newError(QStringLiteral("Internal problem"),QStringLiteral("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
+            return;
+        }
+        quint8 value;
+        if(socket->sslSocket->read((char*)&value,sizeof(value))==sizeof(value))
+        {
+            haveFirstHeader=true;
+            if(value==0x01)
+            {
+                socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
+                socket->sslSocket->ignoreSslErrors();
+                socket->sslSocket->startClientEncryption();
+                connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished);
+            }
+            else
+                connectTheExternalSocketInternal();
+        }
+    }
+}
+
+void Api_protocol::sslHandcheckIsFinished()
+{
+    connectTheExternalSocketInternal();
+}
+
+void Api_protocol::connectTheExternalSocketInternal()
+{
+    if(socket->sslSocket==NULL)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
+        return;
+    }
+    if(socket->sslSocket->peerAddress()==QHostAddress::Null)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null"));
+        return;
+    }
+    //check the certificat
+    {
+        QDir datapackCert(QStringLiteral("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
+        datapackCert.mkpath(datapackCert.absolutePath());
+        QFile certFile;
+        if(stageConnexion==StageConnexion::Stage1)
+            certFile.setFileName(datapackCert.absolutePath()+QStringLiteral("/")+socket->peerName()+QStringLiteral("-")+socket->peerPort());
+        else if(stageConnexion==StageConnexion::Stage3)
+        {
+            if(selectedServerIndex==-1)
+            {
+                parseError(QStringLiteral("Internal error"),QStringLiteral("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
+                return;
+            }
+            const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
+            certFile.setFileName(datapackCert.absolutePath()+QStringLiteral("/")+serverFromPoolForDisplay.host+QStringLiteral("-")+serverFromPoolForDisplay.port);
+        }
+        else
+        {
+            parseError(QStringLiteral("Internal error"),QStringLiteral("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
+            return;
+        }
+        if(certFile.exists())
+        {
+            if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
+            {
+                SslCert sslCert(NULL);
+                sslCert.exec();
+                if(sslCert.validated())
+                    saveCert(certFile.fileName());
+                else
+                {
+                    socket->sslSocket->disconnectFromHost();
+                    return;
+                }
+            }
+            else if(certFile.open(QIODevice::ReadOnly))
+            {
+                if(socket->sslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
+                {
+                    SslCert sslCert(NULL);
+                    sslCert.exec();
+                    if(sslCert.validated())
+                        saveCert(certFile.fileName());
+                    else
+                    {
+                        socket->sslSocket->disconnectFromHost();
+                        return;
+                    }
+                }
+                certFile.close();
+            }
+        }
+        else
+        {
+            if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
+                saveCert(certFile.fileName());
+
+        }
+    }
+    //continue the normal procedure
+    if(stageConnexion==StageConnexion::Stage1)
+        connectedOnLoginServer();
+    if(stageConnexion==StageConnexion::Stage2)
+    {
+        stageConnexion=StageConnexion::Stage3;
+        connectedOnGameServer();
+    }
+
+    connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
+    //need wait the sslHandcheck
+    sendProtocol();
+    if(socket->bytesAvailable())
+        parseIncommingData();
+}
+
+void Api_protocol::saveCert(const QString &file)
+{
+    if(socket->sslSocket==NULL)
+        return;
+    QFile certFile(file);
+    if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
+        certFile.remove();
+    else
+    {
+        if(certFile.open(QIODevice::WriteOnly))
+        {
+            qDebug() << "Register the certificate into" << certFile.fileName();
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::Organization);
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::CommonName);
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::LocalityName);
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::OrganizationalUnitName);
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::CountryName);
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::StateOrProvinceName);
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::EmailAddress);
+            certFile.write(socket->sslSocket->peerCertificate().publicKey().toPem());
+            certFile.close();
+        }
+    }
 }

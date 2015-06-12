@@ -337,9 +337,6 @@ struct ServerPrivateVariables
     qint8 sizeofInsertRequest;
 
     //connection
-    #ifdef Q_OS_LINUX
-    FILE *fpRandomFile;
-    #endif
     quint16 connected_players;
     PlayerUpdater player_updater;
     QSet<quint32> connected_players_id_list;
