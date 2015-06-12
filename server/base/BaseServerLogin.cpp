@@ -36,6 +36,21 @@ void BaseServerLogin::preload_the_randomData()
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     BaseServerLogin::tokenForAuthSize=0;
     #endif
+    #ifdef Q_OS_LINUX
+    if(BaseServerLogin::fpRandomFile!=NULL)
+        fclose(BaseServerLogin::fpRandomFile);
+    BaseServerLogin::fpRandomFile = fopen("/dev/urandom","rb");
+    if(fpRandomFile==NULL)
+    {
+        std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
+        /* allow poor quality number:
+         * 1) more easy to run, allow start include if /dev/urandom can't be read
+         * 2) it's for very small server (Lan) or internal communication */
+        #if ! defined(CATCHCHALLENGER_CLIENT) && ! defined(CATCHCHALLENGER_SOLO)
+        abort();
+        #endif
+    }
+    #endif
 
     //to have previsible data
     /*if(GlobalServerData::serverSettings.benchmark)

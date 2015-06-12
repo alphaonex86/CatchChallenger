@@ -170,10 +170,9 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("You can't play with this buggy charater"));
         return;
     }*/
-    Api_client_real::client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt());
+    Api_client_real::client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt(),serverSelected);
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
-    Api_client_real::client->unloadSelection();
 }
 
 

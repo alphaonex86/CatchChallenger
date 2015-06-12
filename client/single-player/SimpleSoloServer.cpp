@@ -185,6 +185,9 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
     {
+        if(CatchChallenger::Api_client_real::client!=NULL)
+            if(CatchChallenger::Api_client_real::client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2)
+                return;
         const QByteArray &data=socket->readAll();
         //CatchChallenger::Api_client_real::client->rea
         if(!isVisible() && internalServer==NULL)

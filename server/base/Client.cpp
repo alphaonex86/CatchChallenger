@@ -326,6 +326,7 @@ void Client::errorOutput(const QString &errorString)
     if(account_id==0)
     {
         normalOutput(QStringLiteral("Kicked by: ")+errorString);
+        disconnectClient();
         return;
     }
     if(character_loaded)

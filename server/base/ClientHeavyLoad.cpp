@@ -676,13 +676,20 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
         out << (quint8)0x00;//charactersgroup empty
         out << (quint32)0x00000000;//unique key, useless here
         {
-            const int &newSize=FacilityLibGeneral::toUTF8With16BitsHeader(CommonSettingsServer::commonSettingsServer.exportedXml,outputData.data());
-            if(newSize>65535 || newSize<=0)
+            if(CommonSettingsServer::commonSettingsServer.exportedXml.size()>65535)
             {
-                errorOutput(QLatin1Literal("file path too big or not compatible with utf8"));
+                errorOutput(QLatin1Literal("text too big with utf8 for exported xml"));
                 return;
             }
-            out.device()->seek(out.device()->pos()+newSize);
+            const QByteArray &utf8data=CommonSettingsServer::commonSettingsServer.exportedXml.toUtf8();
+            if(utf8data.size()>65535)
+            {
+                errorOutput(QLatin1Literal("text converted big with utf8 for exported xml"));
+                return;
+            }
+            *reinterpret_cast<quint16 *>(outputData.data()+out.device()->pos()+0)=(quint16)htole16((quint16)utf8data.size());
+            memcpy(out.device()->pos()+outputData.data()+2,utf8data.constData(),utf8data.size());
+            out.device()->seek(out.device()->pos()+2+utf8data.size());
         }
         out << (quint8)0x00;//logical group empty
         if(GlobalServerData::serverSettings.sendPlayerNumber)

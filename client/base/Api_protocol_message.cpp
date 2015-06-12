@@ -1190,6 +1190,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                 //Internal server list for the current pool
                 case 0x0E:
                 {
+                    qDebug() << QString(QByteArray(data).toHex());
                     //for addLogicalServer(
                     if(!haveTheLogicalGroupList)
                     {
@@ -1461,6 +1462,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         in >> serverTempList[serverListIndex].currentPlayer;
                         serverListIndex++;
                     }
+                    selectedServerIndex=-1;
                     serverOrdenedList.clear();
                     characterListForSelection.clear();
                     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();

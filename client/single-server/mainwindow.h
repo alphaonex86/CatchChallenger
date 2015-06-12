@@ -78,7 +78,6 @@ private:
     QHash<QString,quint32> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
-    bool haveFirstHeader;
     libvlc_media_player_t *vlcPlayer;
 
     QString server_name;

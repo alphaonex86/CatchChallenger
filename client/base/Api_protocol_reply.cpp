@@ -70,14 +70,33 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
-                if(data.size()!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(stageConnexion==StageConnexion::Stage1)
                 {
-                    newError(QStringLiteral("Procotol wrong or corrupted (Are you logged directly on game server?)"),QStringLiteral("compression type wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                    if(data.size()!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                    {
+                        newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong size (stage 1) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                    token=data.right(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    have_receive_protocol=true;
+                    protocol_is_good();
+                }
+                else if(stageConnexion==StageConnexion::Stage3)
+                {
+                    if(data.size()!=(sizeof(quint8)))
+                    {
+                        newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                    have_receive_protocol=true;
+                    //send token to game server
+                    packFullOutcommingQuery(0x02,0x06,this->queryNumber(),tokenForGameServer.constData(),tokenForGameServer.size());
+                }
+                else
+                {
+                    newError(QStringLiteral("Internal problem"),QStringLiteral("stageConnexion!=StageConnexion::Stage1/3"));
                     return;
                 }
-                token=data.right(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                have_receive_protocol=true;
-                protocol_is_good();
                 return;
             }
             else
@@ -507,6 +526,8 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                 break;
                 //get the character selection return
                 case 0x05:
+                //get the character selection return on game server
+                case 0x06:
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
@@ -516,7 +537,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                     quint8 returnCode;
                     in >> returnCode;
 
-                    const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
+                    if(selectedServerIndex==-1)
+                    {
+                        parseError(QStringLiteral("Internal error"),QStringLiteral("selectedServerIndex==-1 with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                        return;
+                    }
+                    const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
 
                     if(returnCode!=0x01 && (data.size()==1 || serverFromPoolForDisplay.host.isEmpty()))
                     {
@@ -537,14 +563,31 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                     }
                     else
                     {
-                        if(serverFromPoolForDisplay.host.isEmpty())
-                            parseCharacterBlock(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())));
+                        if(stageConnexion==StageConnexion::Stage3 || serverFromPoolForDisplay.host.isEmpty())
+                        {
+                            parseCharacterBlock(
+                                        mainCodeType,subCodeType,queryNumber,
+                                        data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos()))
+                                        );
+                            return;
+                        }
                         else
                         {
-                            disconnect
-                                    reconnect
-                                    send protocol
-                                    send token
+                            tokenForGameServer=data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos()));
+                            if(tokenForGameServer.size()==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
+                            {
+                                connectingOnGameServer();
+                                have_send_protocol=false;
+                                stageConnexion=StageConnexion::Stage2;
+                                if(socket!=NULL)
+                                    socket->disconnect();
+                                return;
+                            }
+                            else
+                            {
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("tokenForGameServer.size()!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                                return;
+                            }
                         }
                     }
                 }

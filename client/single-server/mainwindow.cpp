@@ -33,7 +33,6 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QList<RssNews::RssEntry> >("QList<RssNews::RssEntry>");
 
     realSslSocket=new QSslSocket();
-    haveFirstHeader=false;
     socket=NULL;
     realSslSocket=NULL;
     CatchChallenger::Api_client_real::client=NULL;
@@ -314,6 +313,8 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     realSslSocket=new QSslSocket();
+    socket=new CatchChallenger::ConnectedSocket(realSslSocket);
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     if(!proxy_dns_or_ip.isEmpty())
     {
         QNetworkProxy proxy=realSslSocket->proxy();
@@ -322,7 +323,6 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         proxy.setType(QNetworkProxy::Socks5Proxy);
         realSslSocket->setProxy(proxy);
     }
-    haveFirstHeader=false;
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     connect(realSslSocket,&QSslSocket::readyRead,this,&MainWindow::readForFirstHeader,Qt::DirectConnection);
 
@@ -331,80 +331,12 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
     connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
     realSslSocket->connectToHost(host,port);
-}
-
-void MainWindow::saveCert(const QString &file)
-{
-    QFile certFile(file);
-    if(realSslSocket->mode()==QSslSocket::UnencryptedMode)
-        certFile.remove();
-    else
-    {
-        if(certFile.open(QIODevice::WriteOnly))
-        {
-            qDebug() << "Register the certificate into" << certFile.fileName();
-            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::Organization);
-            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::CommonName);
-            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::LocalityName);
-            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::OrganizationalUnitName);
-            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::CountryName);
-            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::StateOrProvinceName);
-            qDebug() << realSslSocket->peerCertificate().issuerInfo(QSslCertificate::EmailAddress);
-            certFile.write(realSslSocket->peerCertificate().publicKey().toPem());
-            certFile.close();
-        }
-    }
+    connectTheExternalSocket();
 }
 
 void MainWindow::connectTheExternalSocket()
 {
-    //check the certificat
-    {
-        QDir datapack(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-        datapack.mkpath(datapack.absolutePath());
-        QFile certFile;
-        certFile.setFileName(datapack.absolutePath()+QStringLiteral("/pub.key"));
-        if(certFile.exists())
-        {
-            if(realSslSocket->mode()==QSslSocket::UnencryptedMode)
-            {
-                SslCert sslCert(this);
-                sslCert.exec();
-                if(sslCert.validated())
-                    saveCert(certFile.fileName());
-                else
-                {
-                    realSslSocket->disconnectFromHost();
-                    return;
-                }
-            }
-            else if(certFile.open(QIODevice::ReadOnly))
-            {
-                if(realSslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
-                {
-                    SslCert sslCert(this);
-                    sslCert.exec();
-                    if(sslCert.validated())
-                        saveCert(certFile.fileName());
-                    else
-                    {
-                        realSslSocket->disconnectFromHost();
-                        return;
-                    }
-                }
-                certFile.close();
-            }
-        }
-        else
-        {
-            if(realSslSocket->mode()!=QSslSocket::UnencryptedMode)
-                saveCert(certFile.fileName());
-
-        }
-    }
     //continue the normal procedure
-    socket=new CatchChallenger::ConnectedSocket(realSslSocket);
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     if(!proxy_dns_or_ip.isEmpty())
     {
         QNetworkProxy proxy=realSslSocket->proxy();
@@ -429,7 +361,6 @@ void MainWindow::connectTheExternalSocket()
     CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
     CatchChallenger::BaseWindow::baseWindow->stateChanged(QAbstractSocket::ConnectedState);
-    CatchChallenger::Api_client_real::client->sendProtocol();
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -440,6 +371,9 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     qDebug() << QStringLiteral("socketState:") << (int)socketState;
     if(socketState==QAbstractSocket::UnconnectedState)
     {
+        if(CatchChallenger::Api_client_real::client!=NULL)
+            if(CatchChallenger::Api_client_real::client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2)
+                return;
         if(!isVisible())
         {
             QCoreApplication::quit();
@@ -465,6 +399,9 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 
 void MainWindow::error(QAbstractSocket::SocketError socketError)
 {
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        if(CatchChallenger::Api_client_real::client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2)
+            return;
     qDebug() << QStringLiteral("socketError:") << (int)socketError;
     resetAll();
     switch(socketError)
@@ -626,36 +563,6 @@ void MainWindow::updateTheOkButton()
         ui->pushButtonTryLogin->setEnabled(false);
         ui->pushButtonTryLogin->setText(tr("Ok (%1)").arg(timeToWait-secondLstSinceConnexion));
         return;
-    }
-}
-
-void MainWindow::sslHandcheckIsFinished()
-{
-    connectTheExternalSocket();
-}
-
-void MainWindow::readForFirstHeader()
-{
-    if(haveFirstHeader)
-        return;
-    if(realSslSocket==NULL)
-        return;
-    QSslSocket *socket=qobject_cast<QSslSocket *>(sender());
-    if(socket==NULL)
-        return;
-    quint8 value;
-    if(socket->read((char*)&value,sizeof(value))==sizeof(value))
-    {
-        haveFirstHeader=true;
-        if(value==0x01)
-        {
-            socket->setPeerVerifyMode(QSslSocket::VerifyNone);
-            socket->ignoreSslErrors();
-            socket->startClientEncryption();
-            connect(socket,&QSslSocket::encrypted,this,&MainWindow::sslHandcheckIsFinished);
-        }
-        else
-            connectTheExternalSocket();
     }
 }
 

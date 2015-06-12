@@ -577,6 +577,7 @@ void BaseWindow::updateConnectingStatus()
         warehouse_playerMonster=player_private_and_public_informations.warehouse_playerMonster;
         MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
         MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap);
+        Api_client_real::client->unloadSelection();
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();
