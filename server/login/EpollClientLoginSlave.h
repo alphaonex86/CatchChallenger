@@ -125,6 +125,7 @@ public:
 
     static char serverServerList[256*1024];
     static unsigned int serverServerListSize;
+    static unsigned int serverServerListCurrentPlayerSize;
     static char serverServerListComputedMessage[256*1024];
     static unsigned int serverServerListComputedMessageSize;
     static char serverLogicalGroupList[256*1024];

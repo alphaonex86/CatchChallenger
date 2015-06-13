@@ -40,6 +40,7 @@ public:
     static char protocolReplyNoMoreToken[4];
     static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static char sendDisconnectedPlayer[2+4];
+    static char sendCurrentPlayer[2+2];
     static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
 
     static LoginLinkToMaster *loginLinkToMaster;
@@ -53,6 +54,7 @@ public:
     void sendProtocolHeader();
     bool setSettings(QSettings * const settings);
     void characterDisconnected(const quint32 &characterId);
+    void currentPlayerChange(const quint16 &currentPlayer);
     void askMoreMaxMonsterId();
     void askMoreMaxClanId();
 protected:
