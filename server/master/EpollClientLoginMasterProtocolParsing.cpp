@@ -125,6 +125,42 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
                 charactersGroupForGameServer->lockedAccount.remove(characterId);
             }
             break;
+            case 0x02:
+            {
+                if(stat!=EpollClientLoginMasterStat::GameServer)
+                {
+                    parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    return;
+                }
+                if(charactersGroupForGameServerInformation==NULL)
+                {
+                    parseNetworkReadError("charactersGroupForGameServerInformation==NULL main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    return;
+                }
+                charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
+                if(charactersGroupForGameServerInformation->currentPlayer>charactersGroupForGameServerInformation->maxPlayer)
+                {
+                    disconnectClient();
+                    return;
+                }
+                {
+                    /*do the partial alteration of:
+                    EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
+                    EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();*/
+                    const int index=gameServers.indexOf(this);
+                    if(index==-1)
+                    {
+                        parseNetworkReadError("gameServers.indexOf(this)==-1 main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                        return;
+                    }
+                    const int posFromZero=gameServers.size()-1-index;
+                    const unsigned int bufferPos=2-2*/*last is zero*/posFromZero;
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+EpollClientLoginMaster::serverPartialServerListSize-bufferPos)=*reinterpret_cast<quint16 *>(const_cast<char *>(rawData));
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=*reinterpret_cast<quint16 *>(const_cast<char *>(rawData));
+                }
+                currentPlayerForGameServerToUpdate=true;
+            }
+            break;
             default:
                 parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
                 return;
@@ -406,6 +442,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             stat=EpollClientLoginMasterStat::GameServer;
             EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
             EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
+            currentPlayerForGameServerToUpdate=false;
             EpollClientLoginMaster::broadcastGameServerChange();
 
             std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;

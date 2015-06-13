@@ -22,6 +22,9 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "PlayerUpdaterToMaster.h"
+#endif
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
@@ -339,6 +342,9 @@ struct ServerPrivateVariables
     //connection
     quint16 connected_players;
     PlayerUpdater player_updater;
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    PlayerUpdaterToMaster player_updater_to_master;
+    #endif
     QSet<quint32> connected_players_id_list;
     QStringList server_message;
 
