@@ -18,6 +18,8 @@ class PlayerUpdater
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
+    #else
+    friend class PlayerUpdaterToMaster;
     #endif
 public:
     explicit PlayerUpdater();
@@ -37,7 +39,8 @@ private:
     void exec();
     void initAll();
 private:
-    quint16 connected_players,sended_connected_players;
+    static quint16 connected_players;
+    static quint16 sended_connected_players;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     QTimer *next_send_timer;
     #else

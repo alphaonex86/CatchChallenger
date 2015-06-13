@@ -38,6 +38,7 @@ public:
         LoginServer,
     };
 
+    static bool currentPlayerForGameServerToUpdate;
     EpollClientLoginMasterStat stat;
     std::mt19937 rng;
     char *socketString;
@@ -94,6 +95,7 @@ public:
     static QList<EpollClientLoginMaster *> loginServers;
 
     BaseClassSwitch::Type getType() const;
+    static void sendCurrentPlayer();
     static quint32 maxAccountId;
 private:
     void parseNetworkReadError(const QString &errorString);

@@ -57,7 +57,7 @@ public:
     void disconnectClient();
     Client *getClientFight();
     void doDDOSCompute();
-    void receive_instant_player_number(const quint16 &connected_players, const QByteArray &outputData);
+    void receive_instant_player_number(const quint16 &connected_players, const char * const data, const quint8 &size);
     QByteArray getRawPseudo() const;
     void parseIncommingData();
     static void startTheCityCapture();
@@ -218,6 +218,7 @@ private:
         char *token;
         quint32 characterId;
         quint32 accountIdRequester;
+        quint32 createTime;
     };
     static std::vector<TokenAuth> tokenAuthList;
     #endif

@@ -5,6 +5,8 @@
 
 using namespace CatchChallenger;
 
+char BroadCastWithoutSender::bufferSendPlayer[]={0xC3/*reply server to client*/,0x00,0x00};
+
 BroadCastWithoutSender BroadCastWithoutSender::broadCastWithoutSender;
 
 BroadCastWithoutSender::BroadCastWithoutSender()
@@ -40,28 +42,23 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
         if(Client::clientBroadCastList.isEmpty())
             return;
 
-        QByteArray finalData;
+        quint8 outputSize;
+        if(GlobalServerData::serverSettings.max_players<=255)
         {
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            if(GlobalServerData::serverSettings.max_players<=255)
-                out << (qint8)connected_players;
-            else
-                out << (qint16)connected_players;
-            finalData.resize(16+outputData.size());
-            finalData.resize(ProtocolParsingBase::computeOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-                    finalData.data(),0xC3,outputData.constData(),outputData.size()));
+            bufferSendPlayer[0x01]=connected_players;
+            outputSize=2;
+        }
+        else
+        {
+            *reinterpret_cast<quint16 *>(bufferSendPlayer+0x01)=htole16(connected_players);
+            outputSize=3;
         }
 
         int index=0;
         const int &list_size=Client::clientBroadCastList.size();
         while(index<list_size)
         {
-            Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,finalData);
+            Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,bufferSendPlayer,outputSize);
             index++;
         }
     }

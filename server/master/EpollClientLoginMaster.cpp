@@ -221,3 +221,39 @@ bool EpollClientLoginMaster::sendRawSmallPacket(const char * const data,const in
 {
     return internalSendRawSmallPacket(data,size);
 }
+
+void EpollClientLoginMaster::sendCurrentPlayer()
+{
+    if(!currentPlayerForGameServerToUpdate)
+        return;
+    if(EpollClientLoginMaster::gameServers.size()==0)
+        return;
+    //do the list
+    int size=0;
+    {
+        int index=0;
+        while(index<EpollClientLoginMaster::gameServers.size())
+        {
+            EpollClientLoginMaster * const gameServer=EpollClientLoginMaster::gameServers.at(index);
+            *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+index*2)=htole16(gameServer->charactersGroupForGameServerInformation->currentPlayer);
+            index++;
+        }
+        size=computeFullOutcommingData(
+                    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                    false,
+                    #endif
+                    EpollClientLoginMaster::tempBuffer,
+                    0xE1,0x01,EpollClientLoginMaster::serverPartialServerList,EpollClientLoginMaster::gameServers.size()*2
+                    );
+    }
+    //broadcast all
+    {
+        int index=0;
+        while(index<EpollClientLoginMaster::loginServers.size())
+        {
+            EpollClientLoginMaster * const loginServer=EpollClientLoginMaster::loginServers.at(index);
+            loginServer->internalSendRawSmallPacket(EpollClientLoginMaster::tempBuffer,size);
+            index++;
+        }
+    }
+}

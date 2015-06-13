@@ -674,11 +674,18 @@ int main(int argc, char *argv[])
     }
     {
         if(GlobalServerData::serverSettings.sendPlayerNumber)
+        {
             if(!GlobalServerData::serverPrivateVariables.player_updater.start())
             {
                 std::cerr << "player_updater timer fail to set" << std::endl;
                 return EXIT_FAILURE;
             }
+            if(!GlobalServerData::serverPrivateVariables.player_updater_to_master.start())
+            {
+                std::cerr << "player_updater_to_master timer fail to set" << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
     }
 
     #ifndef SERVERNOBUFFER

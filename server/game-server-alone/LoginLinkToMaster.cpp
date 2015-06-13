@@ -356,6 +356,12 @@ void LoginLinkToMaster::characterDisconnected(const quint32 &characterId)
     internalSendRawSmallPacket(LoginLinkToMaster::sendDisconnectedPlayer,sizeof(LoginLinkToMaster::sendDisconnectedPlayer));
 }
 
+void LoginLinkToMaster::currentPlayerChange(const quint16 &currentPlayer)
+{
+    *reinterpret_cast<quint16 *>(LoginLinkToMaster::sendCurrentPlayer+0x02)=htole16(currentPlayer);
+    internalSendRawSmallPacket(LoginLinkToMaster::sendCurrentPlayer,sizeof(LoginLinkToMaster::sendCurrentPlayer));
+}
+
 void LoginLinkToMaster::askMoreMaxMonsterId()
 {
     newFullOutputQuery(0x11,0x07,queryNumberList.back());
