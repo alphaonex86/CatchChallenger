@@ -205,10 +205,13 @@ void Api_client_real::tryConnect(QString host,quint16 port)
 
 void Api_client_real::disconnected()
 {
-    wait_datapack_content_base=false;
-    wait_datapack_content_main=false;
-    wait_datapack_content_sub=false;
-    resetAll();
+    if(stage()==StageConnexion::Stage1 || stage()==StageConnexion::Stage3)
+    {
+        wait_datapack_content_base=false;
+        wait_datapack_content_main=false;
+        wait_datapack_content_sub=false;
+        resetAll();
+    }
 }
 
 void Api_client_real::tryDisconnect()

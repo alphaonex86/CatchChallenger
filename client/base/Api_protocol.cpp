@@ -181,12 +181,12 @@ bool Api_protocol::sendProtocol()
 {
     if(have_send_protocol)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Have already send the protocol"));
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::sendProtocol() Have already send the protocol"));
         return false;
     }
     if(!haveFirstHeader)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("!haveFirstHeader"));
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::sendProtocol() !haveFirstHeader"));
         return false;
     }
 
@@ -203,7 +203,10 @@ bool Api_protocol::sendProtocol()
 void Api_protocol::socketDisconnectedForReconnect()
 {
     if(stageConnexion!=StageConnexion::Stage2)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::socketDisconnectedForReconnect() "));
         return;
+    }
     qDebug() << "Api_protocol::socketDisconnectedForReconnect()";
     if(selectedServerIndex==-1)
     {
@@ -221,6 +224,7 @@ void Api_protocol::socketDisconnectedForReconnect()
         parseError(QStringLiteral("Internal error"),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
         return;
     }
+    haveFirstHeader=false;
     socket->connectToHost(serverFromPoolForDisplay.host,serverFromPoolForDisplay.port);
 }
 
@@ -1574,6 +1578,8 @@ Api_protocol::StageConnexion Api_protocol::stage() const
 //to reset all
 void Api_protocol::resetAll()
 {
+    if(stageConnexion==StageConnexion::Stage2)
+        qDebug() << "Api_protocol::resetAll() Suspect internal bug";
     //status for the query
     token.clear();
     stageConnexion=StageConnexion::Stage1;
@@ -1902,6 +1908,13 @@ void Api_protocol::readForFirstHeader()
         newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
+    if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
+        return;
+    }
+    if(stageConnexion==StageConnexion::Stage2)
+        stageConnexion=StageConnexion::Stage3;
     {
         if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
@@ -2011,7 +2024,8 @@ void Api_protocol::connectTheExternalSocketInternal()
         connectedOnGameServer();
     }
 
-    connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
+    if(stageConnexion==StageConnexion::Stage1)
+        connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
     //need wait the sslHandcheck
     sendProtocol();
     if(socket->bytesAvailable())

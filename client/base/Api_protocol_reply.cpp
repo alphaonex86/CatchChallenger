@@ -573,19 +573,28 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                         }
                         else
                         {
-                            tokenForGameServer=data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos()));
+                            tokenForGameServer=data;
+                            qDebug() << QStringLiteral("new token to go on game server: %1").arg(QString(tokenForGameServer.toHex()));
                             if(tokenForGameServer.size()==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                             {
                                 connectingOnGameServer();
                                 have_send_protocol=false;
                                 stageConnexion=StageConnexion::Stage2;
                                 if(socket!=NULL)
-                                    socket->disconnect();
+                                    socket->disconnectFromHost();
                                 return;
                             }
                             else
                             {
-                                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("tokenForGameServer.size()!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                                parseError(QStringLiteral("Procotol wrong or corrupted"),
+                                           QStringLiteral("tokenForGameServer.size()!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER: %5/%6 with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4")
+                                           .arg(mainCodeType)
+                                           .arg(subCodeType)
+                                           .arg(queryNumber)
+                                           .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                                           .arg(tokenForGameServer.size())
+                                           .arg(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
+                                           );
                                 return;
                             }
                         }
