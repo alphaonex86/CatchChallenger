@@ -7,11 +7,13 @@
 #endif
 
 using namespace CatchChallenger;
-PlayerUpdater::PlayerUpdater() :
-    connected_players(0),
-    sended_connected_players(0)
+
+quint16 PlayerUpdater::connected_players=0;
+quint16 PlayerUpdater::sended_connected_players=0;
+
+PlayerUpdater::PlayerUpdater()
       #ifndef EPOLLCATCHCHALLENGERSERVER
-      ,
+      :
         next_send_timer(NULL)
       #endif
 {

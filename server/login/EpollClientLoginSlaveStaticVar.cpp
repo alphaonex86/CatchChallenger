@@ -42,6 +42,7 @@ char EpollClientLoginSlave::serverServerList[];
 unsigned int EpollClientLoginSlave::serverServerListSize=0;
 char EpollClientLoginSlave::serverServerListComputedMessage[];
 unsigned int EpollClientLoginSlave::serverServerListComputedMessageSize=0;
+unsigned int EpollClientLoginSlave::serverServerListCurrentPlayerSize=0;
 char EpollClientLoginSlave::serverLogicalGroupList[];
 unsigned int EpollClientLoginSlave::serverLogicalGroupListSize=0;
 char EpollClientLoginSlave::serverLogicalGroupAndServerList[];

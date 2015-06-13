@@ -31,19 +31,25 @@ void Client::characterSelectionIsWrong(const quint8 &query_id,const quint8 &retu
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::selectCharacter(const quint8 &query_id, const char * const token)
 {
+    const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {
         const TokenAuth &tokenAuth=tokenAuthList.at(index);
-        if(memcmp(tokenAuth.token,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)==0)
+        if(tokenAuth.createTime>(time-CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVERMAXTIME))
         {
-            delete tokenAuth.token;
-            account_id=tokenAuth.accountIdRequester;/// \warning need take care of only write if character is selected
-            selectCharacter(query_id,tokenAuth.characterId);
-            tokenAuthList.erase(tokenAuthList.begin()+index);
-            return;
+            if(memcmp(tokenAuth.token,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)==0)
+            {
+                delete tokenAuth.token;
+                account_id=tokenAuth.accountIdRequester;/// \warning need take care of only write if character is selected
+                selectCharacter(query_id,tokenAuth.characterId);
+                tokenAuthList.erase(tokenAuthList.begin()+index);
+                return;
+            }
+            index++;
         }
-        index++;
+        else
+            tokenAuthList.erase(tokenAuthList.begin()+index);
     }
     //if never found
     errorOutput(QStringLiteral("selectCharacter() Token never found to login, bug"));

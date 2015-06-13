@@ -257,6 +257,19 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 EpollClientLoginSlave::serverServerListSize+=1+logicalGroupStringSize;
                             }
 
+                            //copy the max player
+                            {
+                                if((size-pos)<1)
+                                {
+                                    std::cerr << "C210 size the max player 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
+                                EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+0]=rawData[pos+0];
+                                EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+1]=rawData[pos+1];
+                                pos+=2;
+                                EpollClientLoginSlave::serverServerListSize+=2;
+                            }
+
                             serverListIndex++;
                         }
                     }
@@ -363,19 +376,33 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                                 EpollClientLoginSlave::serverServerListSize+=1;
                             }
 
+                            //copy the max player
+                            {
+                                if((size-pos)<1)
+                                {
+                                    std::cerr << "C210 size the max player 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                    abort();
+                                }
+                                EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+0]=rawData[pos+0];
+                                EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+1]=rawData[pos+1];
+                                pos+=2;
+                                EpollClientLoginSlave::serverServerListSize+=2;
+                            }
+
                             serverListIndex++;
                         }
                     }
+                    EpollClientLoginSlave::serverServerListCurrentPlayerSize=serverListSize*sizeof(quint16);
                     if(serverListSize>0)
                     {
-                        if((size-pos)<static_cast<unsigned int>(serverListSize*(sizeof(quint16)+sizeof(quint16))))
+                        if((size-pos)<static_cast<unsigned int>(serverListSize*(sizeof(quint16))))
                         {
                             std::cerr << "C210 co player list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,serverListSize*(sizeof(quint16)+sizeof(quint16)));
-                        pos+=serverListSize*(sizeof(quint16)+sizeof(quint16));
-                        EpollClientLoginSlave::serverServerListSize+=serverListSize*(sizeof(quint16)+sizeof(quint16));
+                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,serverListSize*(sizeof(quint16)));
+                        pos+=serverListSize*(sizeof(quint16));
+                        EpollClientLoginSlave::serverServerListSize+=serverListSize*(sizeof(quint16));
                     }
 
                     if((size-pos)!=0)
@@ -749,6 +776,31 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
                     return;
                 break;
             }
+        break;
+        case 0xE1:
+        switch(mainCodeType)
+        {
+            case 0x01:
+                /// \todo broadcast to client
+                if(size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize)
+                {
+                    parseNetworkReadError("size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize main ident: "+QString::number(mainCodeType)+", sub ident: "+QString::number(subCodeType));
+                    return;
+                }
+                memcpy(EpollClientLoginSlave::serverServerListComputedMessage+
+                       (EpollClientLoginSlave::serverServerListComputedMessageSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
+                        rawData,
+                        EpollClientLoginSlave::serverServerListCurrentPlayerSize);
+                memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+
+                       (EpollClientLoginSlave::serverLogicalGroupAndServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
+                        rawData,
+                        EpollClientLoginSlave::serverServerListCurrentPlayerSize);
+            break;
+            default:
+                parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", sub ident: "+QString::number(subCodeType));
+                return;
+            break;
+        }
         break;
         default:
             parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));

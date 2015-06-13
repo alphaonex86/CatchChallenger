@@ -688,6 +688,9 @@ void EpollServerLoginMaster::doTheServerList()
             EpollClientLoginMaster::serverPartialServerList[rawServerListSize]=gameServerOnCharactersGroup->logicalGroupIndex;
             rawServerListSize+=1;
         }
+        //max player
+        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
+        rawServerListSize+=sizeof(unsigned short int);
 
         serverListIndex++;
     }
@@ -699,9 +702,6 @@ void EpollServerLoginMaster::doTheServerList()
     {
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
-        //max player
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
-        rawServerListSize+=sizeof(unsigned short int);
         //connected player
         *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+rawServerListSize)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
         rawServerListSize+=sizeof(unsigned short int);

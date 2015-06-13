@@ -35,6 +35,8 @@ unsigned int EpollClientLoginMaster::loginPreviousToReplyCacheSize=0;
 unsigned char EpollClientLoginMaster::replyToIdListBuffer[]={0xC1/*reply server to client*/,0x00/*the init reply query number*/};
 QHash<QString,int> EpollClientLoginMaster::logicalGroupHash;
 
+bool EpollClientLoginMaster::currentPlayerForGameServerToUpdate=false;
+
 //start to 0 due to pre incrementation before use
 quint32 EpollClientLoginMaster::maxAccountId=0;
 

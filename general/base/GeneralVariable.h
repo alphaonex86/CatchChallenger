@@ -37,6 +37,7 @@
 
 //name better:#define CATCHCHALLENGER_TOKENSIZE 16//can't be more than 250 due to server conception, and useless, with 8bytes, at 2 billions connexion rate, it's 300years to crack
 #define CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER 32
+#define CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVERMAXTIME 30//in seconds
 #define CATCHCHALLENGER_MONSTER_LEVEL_MAX 100
 #define CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER 5
 //32Bits for the monster, 8Bits for the gender, 8Bits for level, 8Bits for the next step

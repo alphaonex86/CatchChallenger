@@ -7,9 +7,11 @@ DEFINES += CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 DEFINES -= CATCHCHALLENGERSERVERDROPIFCLENT
 
 HEADERS += \
-    game-server-alone/LoginLinkToMaster.h
+    $$PWD/game-server-alone/LoginLinkToMaster.h \
+    $$PWD/base/PlayerUpdaterToMaster.h
 
 SOURCES += \
-    game-server-alone/LoginLinkToMaster.cpp \
-    game-server-alone/LoginLinkToMasterProtocolParsing.cpp \
-    game-server-alone/LoginLinkToMasterStaticVar.cpp
+    $$PWD/game-server-alone/LoginLinkToMaster.cpp \
+    $$PWD/game-server-alone/LoginLinkToMasterProtocolParsing.cpp \
+    $$PWD/game-server-alone/LoginLinkToMasterStaticVar.cpp \
+    $$PWD/base/PlayerUpdaterToMaster.cpp

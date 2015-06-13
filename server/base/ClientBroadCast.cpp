@@ -272,14 +272,18 @@ void Client::sendChatText(const Chat_type &chatType,const QString &text)
     }
 }
 
-void Client::receive_instant_player_number(const quint16 &connected_players,const QByteArray &outputData)
+void Client::receive_instant_player_number(const quint16 &connected_players, const char * const data, const quint8 &size)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size!=2 && size!=3)
+        return;
+    #endif
     if(!character_loaded)
         return;
     if(this->connected_players==connected_players)
         return;
     this->connected_players=connected_players;
-    sendRawSmallPacket(outputData.constData(),outputData.size());
+    sendRawSmallPacket(data,size);
 }
 
 void Client::sendBroadCastCommand(const QString &command,const QString &extraText)
