@@ -434,8 +434,8 @@ char *Client::addAuthGetToken(const quint32 &characterId, const quint32 &account
     newEntry.characterId=characterId;
     newEntry.accountIdRequester=accountIdRequester;
     newEntry.token=new char[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
-    const int &returnedSize=fread(newEntry.token,1,sizeof(newEntry.token),BaseServerLogin::fpRandomFile);
-    if(returnedSize!=sizeof(newEntry.token))
+    const int &returnedSize=fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
+    if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
         qDebug() << QStringLiteral("sizeof(newEntry.token) don't match with urandom size: %1").arg(returnedSize);
         delete newEntry.token;

@@ -45,6 +45,8 @@ void Client::selectCharacter(const quint8 &query_id, const char * const token)
         }
         index++;
     }
+    //if never found
+    errorOutput(QStringLiteral("selectCharacter() Token never found to login, bug"));
 }
 #endif
 
