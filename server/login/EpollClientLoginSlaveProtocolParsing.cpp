@@ -46,6 +46,8 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                     token->client=this;
                     if(BaseServerLogin::fpRandomFile==NULL)
                     {
+                        //insercure implementation
+                        abort();
                         int index=0;
                         while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
@@ -55,9 +57,14 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                     }
                     else
                     {
-                        if(fread(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,1,BaseServerLogin::fpRandomFile)!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                        const int &size=fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile);
+                        if(size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
-                            parseNetworkReadError("Not correct number of byte to generate the token");
+                            parseNetworkReadError(
+                                        QStringLiteral("Not correct number of byte to generate the token: size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2")
+                                        .arg(size)
+                                        .arg(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                                                  );
                             return;
                         }
                     }

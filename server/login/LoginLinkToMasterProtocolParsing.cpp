@@ -950,7 +950,7 @@ void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quin
                         const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.value(queryNumber);
                         if(dataForSelectedCharacterReturn.client!=NULL)
                         {
-                            if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER/*512/8*/)
+                            if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                             {
                                 if(dataForSelectedCharacterReturn.client!=NULL)
                                     static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)

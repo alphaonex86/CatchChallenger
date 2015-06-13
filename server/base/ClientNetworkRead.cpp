@@ -1217,9 +1217,14 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
 {
     if(stopIt)
         return;
-    if(account_id==0)
+    if(account_id==0
+            #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            &&
+            !(mainCodeType==0x02 && subCodeType==0x06)
+            #endif
+            )
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
     const bool goodQueryBeforeCharacterLoaded=mainCodeType==0x02 &&
@@ -1374,18 +1379,17 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             {
                 if(character_loaded)
                 {
-                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                    parseNetworkReadError(QStringLiteral("charaters is logged, deny charaters add/select/delete, parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     return;
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(size!=4)
+                if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                 {
-                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, subCodeType: %2, data: %3").arg(mainCodeType).arg(subCodeType).arg(QString(QByteArray(rawData,size).toHex())));
                     return;
                 }
                 #endif
-                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4+1)));
-                selectCharacter(queryNumber,characterId);
+                selectCharacter(queryNumber,rawData);
             }
             break;
             #endif

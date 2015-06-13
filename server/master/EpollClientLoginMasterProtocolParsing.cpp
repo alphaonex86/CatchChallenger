@@ -106,6 +106,31 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
     (void)subCodeType;
     switch(mainCodeType)
     {
+        case 0x45:
+        switch(subCodeType)
+        {
+            case 0x01:
+            {
+                if(stat!=EpollClientLoginMasterStat::GameServer)
+                {
+                    parseNetworkReadError("stat!=EpollClientLoginMasterStat::GameServer main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    return;
+                }
+                if(charactersGroupForGameServer==NULL)
+                {
+                    parseNetworkReadError("charactersGroupForGameServer==NULL main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    return;
+                }
+                const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                charactersGroupForGameServer->lockedAccount.remove(characterId);
+            }
+            break;
+            default:
+                parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                return;
+            break;
+        }
+        break;
         default:
             parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
             return;
@@ -700,7 +725,7 @@ void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const
                     //orderned mode drop: if(loginServerReturnForCharaterSelect.contains(queryNumber)), use first
                     {
                         const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=loginServerReturnForCharaterSelect.first();
-                        if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER/*512/8*/)
+                        if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                         {
                             if(dataForSelectedCharacterReturn.loginServer!=NULL)
                                 dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
