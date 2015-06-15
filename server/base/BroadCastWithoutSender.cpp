@@ -5,7 +5,7 @@
 
 using namespace CatchChallenger;
 
-char BroadCastWithoutSender::bufferSendPlayer[]={0xC3/*reply server to client*/,0x00,0x00};
+unsigned char BroadCastWithoutSender::bufferSendPlayer[]={0xC3/*reply server to client*/,0x00,0x00};
 
 BroadCastWithoutSender BroadCastWithoutSender::broadCastWithoutSender;
 
@@ -58,7 +58,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
         const int &list_size=Client::clientBroadCastList.size();
         while(index<list_size)
         {
-            Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,bufferSendPlayer,outputSize);
+            Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,reinterpret_cast<char *>(bufferSendPlayer),outputSize);
             index++;
         }
     }

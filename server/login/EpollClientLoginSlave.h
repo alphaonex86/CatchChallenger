@@ -6,7 +6,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../VariableServer.h"
 #include "../epoll/db/EpollPostgresql.h"
-#include "LoginLinkToMaster.h"
+#include "LinkToMaster.h"
 
 #include <QString>
 
@@ -105,8 +105,6 @@ public:
     /** \warning Need be checked in real time because can be opened on multiple login server
      * quint8 accountCharatersCount; */
 
-    static LoginLinkToMaster *linkToMaster;
-    static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
     static QList<unsigned int> maxAccountIdList;
     static QList<unsigned int> maxCharacterIdList;
     static QList<unsigned int> maxClanIdList;

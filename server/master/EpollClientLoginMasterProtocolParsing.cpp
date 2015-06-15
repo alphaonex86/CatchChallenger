@@ -3,6 +3,7 @@
 #include "../../general/base/CommonSettingsCommon.h"
 
 #include <iostream>
+#include <QDateTime>
 
 using namespace CatchChallenger;
 
@@ -122,7 +123,8 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
                     return;
                 }
                 const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
-                charactersGroupForGameServer->lockedAccount.remove(characterId);
+                charactersGroupForGameServer->unlockTheCharacter(characterId);
+                charactersGroupForGameServerInformation->lockedAccount.remove(characterId);
             }
             break;
             case 0x02:
@@ -137,10 +139,17 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
                     parseNetworkReadError("charactersGroupForGameServerInformation==NULL main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
                     return;
                 }
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(size!=2)
+                {
+                    parseNetworkReadError("size!=2 main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
+                    return;
+                }
+                #endif
                 charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(rawData)));
                 if(charactersGroupForGameServerInformation->currentPlayer>charactersGroupForGameServerInformation->maxPlayer)
                 {
-                    disconnectClient();
+                    parseNetworkReadError("charactersGroupForGameServerInformation->currentPlayer > charactersGroupForGameServerInformation->maxPlayer main ident: "+QString::number(mainCodeType)+" sub ident: "+QString::number(subCodeType));
                     return;
                 }
                 {
@@ -155,7 +164,7 @@ void EpollClientLoginMaster::parseFullMessage(const quint8 &mainCodeType,const q
                     }
                     const int posFromZero=gameServers.size()-1-index;
                     const unsigned int bufferPos=2-2*/*last is zero*/posFromZero;
-                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverPartialServerList+EpollClientLoginMaster::serverPartialServerListSize-bufferPos)=*reinterpret_cast<quint16 *>(const_cast<char *>(rawData));
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=*reinterpret_cast<quint16 *>(const_cast<char *>(rawData));
                     *reinterpret_cast<quint16 *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=*reinterpret_cast<quint16 *>(const_cast<char *>(rawData));
                 }
                 currentPlayerForGameServerToUpdate=true;
@@ -336,7 +345,8 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             }
             maxPlayer=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
             pos+=sizeof(quint16);
-            //disconnected player
+            QSet<quint32/*characterId*/> connectedPlayer;
+            //connected player
             {
                 unsigned int index=0;
                 if((size-pos)<(int)sizeof(quint16))
@@ -355,7 +365,8 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     }
                     unsigned int characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos)));
                     pos+=sizeof(quint32);
-                    charactersGroupForGameServer->lockedAccount.remove(characterId);
+                    connectedPlayer << characterId;
+                    charactersGroupForGameServerInformation->lockedAccount.remove(characterId);
                     index++;
                 }
             }
@@ -438,7 +449,7 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             }
             EpollClientLoginMaster::gameServers << this;
             charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
-                        this,uniqueKey,host,port,xml,logicalGroupIndex,currentPlayer,maxPlayer);
+                        this,uniqueKey,host,port,xml,logicalGroupIndex,currentPlayer,maxPlayer,connectedPlayer);
             stat=EpollClientLoginMasterStat::GameServer;
             EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
             EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
@@ -769,7 +780,19 @@ void EpollClientLoginMaster::parseFullReplyData(const quint8 &mainCodeType,const
                         }
                         else if(size==1)
                         {
-                            charactersGroupForGameServer->lockedAccount.remove(dataForSelectedCharacterReturn.characterId);
+                            if(data[0]!=0x03)
+                            {
+                                //internal error, no more token, ...
+                                charactersGroupForGameServer->unlockTheCharacter(dataForSelectedCharacterReturn.characterId);
+                                charactersGroupForGameServerInformation->lockedAccount.remove(dataForSelectedCharacterReturn.characterId);
+                            }
+                            else
+                            {
+                                //account already locked
+                                charactersGroupForGameServer->lockTheCharacter(dataForSelectedCharacterReturn.characterId);
+                                charactersGroupForGameServerInformation->lockedAccount << dataForSelectedCharacterReturn.characterId;
+                                qDebug() << "The master have not detected nothing but the game server " << charactersGroupForGameServerInformation->host << ":" << charactersGroupForGameServerInformation->port << " have reply than the account " << dataForSelectedCharacterReturn.characterId << " is already locked";
+                            }
                             if(dataForSelectedCharacterReturn.loginServer!=NULL)
                                 dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
                         }

@@ -30,7 +30,10 @@
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 #include "../general/base/FacilityLib.h"
 #include "../general/base/GeneralVariable.h"
-#include "game-server-alone/LoginLinkToMaster.h"
+
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "game-server-alone/LinkToMaster.h"
+#endif
 
 #define MAXEVENTS 512
 
@@ -452,36 +455,29 @@ int main(int argc, char *argv[])
     send_settings();
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    const int &linkfd=LoginLinkToMaster::tryConnect(
-                master_host.toLocal8Bit().constData(),
-                master_port,
-                master_tryInterval,
-                master_considerDownAfterNumberOfTry
-                );
-    if(linkfd<0)
     {
-        std::cerr << "Unable to connect on master" << std::endl;
-        abort();
-    }
-    #ifdef SERVERSSL
-    ctx from what?
-    LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd,ctx);
-    #else
-    LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd);
-    #endif
-    {
-        epoll_event event;
-        event.data.ptr = LoginLinkToMaster::loginLinkToMaster;
-        event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, linkfd, &event);
-        if(s == -1)
+        const int &linkfd=LinkToMaster::tryConnect(
+                    master_host.toLocal8Bit().constData(),
+                    master_port,
+                    master_tryInterval,
+                    master_considerDownAfterNumberOfTry
+                    );
+        if(linkfd<0)
         {
-            std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
+            std::cerr << "Unable to connect on master" << std::endl;
             abort();
         }
+        #ifdef SERVERSSL
+        ctx from what?
+        LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd,ctx);
+        #else
+        LinkToMaster::linkToMaster=new LinkToMaster(linkfd);
+        #endif
+        LinkToMaster::linkToMaster->stat=LinkToMaster::Stat::Connected;
+        LinkToMaster::linkToMaster->setSettings(settings);
+        LinkToMaster::linkToMaster->readTheFirstSslHeader();
+        LinkToMaster::linkToMaster->setConnexionSettings();
     }
-    LoginLinkToMaster::loginLinkToMaster->setSettings(settings);
-    LoginLinkToMaster::loginLinkToMaster->sendProtocolHeader();
     #endif
 
     bool tcpCork,tcpNodelay;
@@ -680,11 +676,13 @@ int main(int argc, char *argv[])
                 std::cerr << "player_updater timer fail to set" << std::endl;
                 return EXIT_FAILURE;
             }
+            #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             if(!GlobalServerData::serverPrivateVariables.player_updater_to_master.start())
             {
                 std::cerr << "player_updater_to_master timer fail to set" << std::endl;
                 return EXIT_FAILURE;
             }
+            #endif
         }
     }
 
@@ -935,7 +933,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addClientCount();
                     #endif
-                    Client *client=static_cast<Client *>(events[i].data.ptr);
+                    Client * const client=static_cast<Client *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -975,7 +973,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addClientCount();
                     #endif
-                    EpollUnixSocketClientFinal *client=static_cast<EpollUnixSocketClientFinal *>(events[i].data.ptr);
+                    EpollUnixSocketClientFinal * const client=static_cast<EpollUnixSocketClientFinal *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -1023,7 +1021,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
-                    EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
+                    EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                     db->epollEvent(events[i].events);
                     if(!datapack_loaded)
                     {
@@ -1047,6 +1045,35 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
+                #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                case BaseClassSwitch::Type::MasterLink:
+                {
+                    LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
+                    if((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
+                    {
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        if(!(events[i].events & EPOLLHUP))
+                            std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        client->tryReconnect();
+                        continue;
+                    }
+                    //ready to read
+                    if(events[i].events & EPOLLIN)
+                        client->parseIncommingData();
+                    #ifndef SERVERNOBUFFER
+                    //ready to write
+                    if(events[i].events & EPOLLOUT)
+                        if(!closed)
+                            client->flush();
+                    #endif
+                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                        client->tryReconnect();
+                }
+                break;
+                #endif
                 default:
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addOtherCount();
@@ -1062,8 +1089,12 @@ int main(int argc, char *argv[])
     }
     server->close();
     server->unload_the_data();
-    LoginLinkToMaster::loginLinkToMaster->closeSocket();
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    LinkToMaster::linkToMaster->closeSocket();
+    #endif
     delete server;
-    delete LoginLinkToMaster::loginLinkToMaster;
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    delete LinkToMaster::linkToMaster;
+    #endif
     return EXIT_SUCCESS;
 }

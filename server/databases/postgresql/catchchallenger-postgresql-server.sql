@@ -32,10 +32,10 @@ CREATE TABLE bot_already_beaten (
 
 CREATE TABLE character_forserver (
     "character" integer NOT NULL,
+    map smallint,
     x smallint,
     y smallint,
     orientation smallint,
-    map smallint,
     rescue_map smallint,
     rescue_x smallint,
     rescue_y smallint,

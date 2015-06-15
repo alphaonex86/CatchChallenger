@@ -187,9 +187,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
             #endif
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            compressionTypeServer=CompressionType::Zlib;
+            ProtocolParsing::compressionTypeServer=CompressionType::Zlib;
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            compressionTypeClient=CompressionType::Zlib;
+            ProtocolParsing::compressionTypeClient=CompressionType::Zlib;
             #endif
             #endif
 
@@ -201,7 +201,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xCA << 0xD1 << 0xD2;
             mainCodeWithoutSubCodeTypeClientToServer << 0x01 << 0x03 << 0x04 << 0x05  << 0x07 << 0x08 << 0x40 << 0x43 << 0x61;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            toDebugValidMainCodeServerToClient << 0x79 << 0xC2 << 0x90 << 0xE0 << 0xD0 << 0x80 << 0x81 << 0xF0;
+            toDebugValidMainCodeServerToClient << 0x79 << 0xC2 << 0x90 << 0xE0 << 0xE1 << 0xD0 << 0x80 << 0x81 << 0xF0;
             toDebugValidMainCodeClientToServer << 0x02 << 0x42 << 0x60 << 0x50 << 0x6a;
             #endif
 
@@ -240,7 +240,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeMultipleCodePacketClientToServer[0x11][0x07]=0;
             sizeMultipleCodePacketClientToServer[0x11][0x08]=0;
             sizeMultipleCodePacketClientToServer[0x45][0x01]=4;
-            sizeMultipleCodePacketClientToServer[0x45][0x01]=2;
+            sizeMultipleCodePacketClientToServer[0x45][0x02]=2;
             sizeMultipleCodePacketClientToServer[0x50][0x02]=2+4;
             sizeMultipleCodePacketClientToServer[0x50][0x04]=0;
             sizeMultipleCodePacketClientToServer[0x50][0x05]=0;
@@ -264,6 +264,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeMultipleCodePacketServerToClient[0xD0][0x07]=0;
             sizeMultipleCodePacketServerToClient[0xD0][0x08]=0;
             sizeMultipleCodePacketServerToClient[0xE0][0x07]=0;
+            sizeMultipleCodePacketServerToClient[0xE1][0x02]=4;
             sizeMultipleCodePacketServerToClient[0x81][0x01]=4+4;
             sizeMultipleCodePacketServerToClient[0x79][0x02]=2;
             //define the size of the reply
@@ -283,12 +284,12 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             replySizeMultipleCodePacketServerToClient[0x11][0x08]=5*4;
 
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x0004;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x000D;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x000E;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x000F;
-            compressionMultipleCodePacketServerToClient[0xC2] << 0x0010;
+            compressionMultipleCodePacketClientToServer[0x02] << 0x0C;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x04;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x0D;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x0E;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x0F;
+            compressionMultipleCodePacketServerToClient[0xC2] << 0x10;
             //define the compression of the reply
             /** \note previously send by: sizeMultipleCodePacketClientToServer */
             replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;

@@ -779,17 +779,17 @@ void BaseServer::preload_profile()
             {
                 default:
                 case DatabaseBase::Type::Mysql:
-                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO `character_forserver`(`character`,`x`,`y`,`orientation`,`map`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;
                 case DatabaseBase::Type::SQLite:
-                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;
                 case DatabaseBase::Type::PostgreSQL:
-                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,x,y,orientation,map,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
+                    serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;

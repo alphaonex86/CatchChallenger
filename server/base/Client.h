@@ -54,7 +54,9 @@ public:
     //to get some info
     QString getPseudo();
     void savePosition();
+    static bool characterConnected(const quint32 &characterId);
     void disconnectClient();
+    static void disconnectClientById(const quint32 &characterId);
     Client *getClientFight();
     void doDDOSCompute();
     void receive_instant_player_number(const quint16 &connected_players, const char * const data, const quint8 &size);
@@ -65,6 +67,9 @@ public:
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     static char * addAuthGetToken(const quint32 &characterId,const quint32 &accountIdRequester);
     #endif
+    quint32 getPlayerId() const;
+    quint32 getClanId() const;
+    bool haveAClan() const;
 
     void sendFullPacket(const quint8 &mainIdent,const quint8 &subIdent,const char * const data,const unsigned int &size);
     void sendPacket(const quint8 &mainIdent,const char * const data,const unsigned int &size);
@@ -627,13 +632,10 @@ private:
     PlayerMonster &getSelectedMonster();
     quint8 getSelectedMonsterNumber();
     PlayerMonster& getEnemyMonster();
-    quint32 getPlayerId() const;
     void dissolvedClan();
     bool inviteToClan(const quint32 &clanId);
     void insertIntoAClan(const quint32 &clanId);
     void ejectToClan();
-    quint32 getClanId() const;
-    bool haveAClan() const;
 
     void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber,const char * const data,const unsigned int &size);
     void sendQuery(const quint8 &mainIdent,const quint8 &subIdent,const quint8 &queryNumber);

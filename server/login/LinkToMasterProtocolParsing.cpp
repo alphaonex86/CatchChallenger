@@ -1,4 +1,4 @@
-#include "LoginLinkToMaster.h"
+#include "LinkToMaster.h"
 #include "EpollClientLoginSlave.h"
 #include <iostream>
 #include "EpollServerLoginSlave.h"
@@ -7,7 +7,7 @@
 
 using namespace CatchChallenger;
 
-void LoginLinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
+void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -20,20 +20,20 @@ void LoginLinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const 
     }
 }
 
-void LoginLinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
+void LinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
 {
     (void)data;
     (void)size;
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
 }
 
-void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
+void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -778,39 +778,60 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
             }
         break;
         case 0xE1:
-        switch(mainCodeType)
+        switch(subCodeType)
         {
             case 0x01:
-                /// \todo broadcast to client
+                /// \todo broadcast to client before the logged step
                 if(size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize)
                 {
                     parseNetworkReadError("size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize main ident: "+QString::number(mainCodeType)+", sub ident: "+QString::number(subCodeType));
                     return;
                 }
-                memcpy(EpollClientLoginSlave::serverServerListComputedMessage+
-                       (EpollClientLoginSlave::serverServerListComputedMessageSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
-                        rawData,
-                        EpollClientLoginSlave::serverServerListCurrentPlayerSize);
-                memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+
-                       (EpollClientLoginSlave::serverLogicalGroupAndServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
-                        rawData,
-                        EpollClientLoginSlave::serverServerListCurrentPlayerSize);
-            break;
+                /// \warning C20E compressed! can't direct alter!
+                if(compressionTypeServer==CompressionType::None)
+                {
+                    memcpy(EpollClientLoginSlave::serverServerListComputedMessage+
+                           (EpollClientLoginSlave::serverServerListComputedMessageSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
+                            rawData,
+                            EpollClientLoginSlave::serverServerListCurrentPlayerSize);
+                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+
+                           (EpollClientLoginSlave::serverLogicalGroupAndServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
+                            rawData,
+                            EpollClientLoginSlave::serverServerListCurrentPlayerSize);
+                }
+                else
+                {
+                    {
+                        memcpy(EpollClientLoginSlave::serverServerList+
+                           (EpollClientLoginSlave::serverServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
+                            rawData,
+                            EpollClientLoginSlave::serverServerListCurrentPlayerSize);
+                        EpollClientLoginSlave::serverServerListComputedMessageSize=ProtocolParsingBase::computeFullOutcommingData(
+                            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+                            false,
+                            #endif
+                            EpollClientLoginSlave::serverServerListComputedMessage,
+                            0xC2,0x0E,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
+                    }
+                    if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
+                        memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+                }
+            return;
             default:
-                parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", sub ident: "+QString::number(subCodeType));
+                parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", sub ident: "+QString::number(subCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
                 return;
             break;
         }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
 }
 
 //have query with reply
-void LoginLinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
@@ -821,13 +842,13 @@ void LoginLinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &quer
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
 }
 
-void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -842,19 +863,19 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
     switch(mainCodeType)
     {
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
 }
 
 //send reply
-void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
     if(stat!=Stat::Logged)
     {
-        if(stat==Stat::None && mainCodeType==0x01)
+        if(stat==Stat::Connected && mainCodeType==0x01)
         {}
         else if(stat==Stat::ProtocolGood && mainCodeType==0x08)
         {}
@@ -966,12 +987,13 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
                 }
             }
             stat=Stat::Logged;
-            if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
-                abort();
+            if(EpollServerLoginSlave::epollServerLoginSlave->getSfd()==-1)
+                if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
+                    abort();
         }
         return;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
@@ -979,7 +1001,7 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
     return;
 }
 
-void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
     if(stat!=Stat::Logged)
@@ -1024,20 +1046,20 @@ void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quin
                 }
                 return;
                 default:
-                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType));
+                    parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
                     return;
                 break;
             }
         break;
         default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
+            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType)+QString(", file:%1:%2").arg(__FILE__).arg(__LINE__));
             return;
         break;
     }
     parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 
-void LoginLinkToMaster::parseNetworkReadError(const QString &errorString)
+void LinkToMaster::parseNetworkReadError(const QString &errorString)
 {
     errorParsingLayer(errorString);
 }

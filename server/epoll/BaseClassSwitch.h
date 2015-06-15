@@ -12,7 +12,8 @@ public:
         Client=0x02,
         UnixClient=0x03,
         Timer=0x04,
-        Database=0x05
+        Database=0x05,
+        MasterLink=0x06,
     };
     virtual Type getType() const = 0;
 };
