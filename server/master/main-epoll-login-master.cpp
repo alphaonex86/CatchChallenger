@@ -15,6 +15,7 @@
 #include "../epoll/Epoll.h"
 #include "EpollServerLoginMaster.h"
 #include "EpollClientLoginMaster.h"
+#include "PlayerUpdaterToLogin.h"
 
 #define MAXEVENTS 512
 #define MAXCLIENTSINSUSPEND 16
@@ -76,6 +77,13 @@ int main(int argc, char *argv[])
     #else
     encodingBuff[0]=0x00;
     #endif
+
+    PlayerUpdaterToLogin playerUpdaterToLogin;
+    if(!playerUpdaterToLogin.start())
+    {
+        std::cerr << "timerPositionSync fail to set" << std::endl;
+        return EXIT_FAILURE;
+    }
 
     int numberOfConnectedClient=0;
     /* The event loop */
@@ -193,7 +201,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Client:
                 {
-                    EpollClientLoginMaster *client=static_cast<EpollClientLoginMaster *>(events[i].data.ptr);
+                    EpollClientLoginMaster * const client=static_cast<EpollClientLoginMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -224,13 +232,13 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::Type::Timer:
                 {
-                    /*static_cast<EpollTimer *>(events[i].data.ptr)->exec();
-                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();*/
+                    static_cast<EpollTimer *>(events[i].data.ptr)->exec();
+                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
                 break;
                 case BaseClassSwitch::Type::Database:
                 {
-                    EpollPostgresql *db=static_cast<EpollPostgresql *>(events[i].data.ptr);
+                    EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                     db->epollEvent(events[i].events);
 
                     //disconnected after finish of use

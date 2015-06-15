@@ -31,6 +31,12 @@ EpollClient::~EpollClient()
     close();
 }
 
+void EpollClient::reopen(const int &infd)
+{
+    close();
+    this->infd=infd;
+}
+
 void EpollClient::close()
 {
     #ifndef SERVERNOBUFFER

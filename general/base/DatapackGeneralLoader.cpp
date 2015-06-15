@@ -287,6 +287,7 @@ QList<Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
     return reputation;
 }
 
+#ifndef CATCHCHALLENGER_CLASS_MASTER
 QHash<quint16, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
 {
     bool ok;
@@ -2042,13 +2043,18 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
     }
     return items;
 }
+#endif
 
 QList<QString> DatapackGeneralLoader::loadSkins(const QString &folder)
 {
     return FacilityLibGeneral::skinIdList(folder);
 }
 
-QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations)
+QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file,
+                                                                                  #ifndef CATCHCHALLENGER_CLASS_MASTER
+                                                                                  const QHash<quint16, Item> &items,
+                                                                                  #endif // CATCHCHALLENGER_CLASS_MASTER
+                                                                                  const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations)
 {
     QSet<QString> idDuplicate;
     QHash<QString,int> reputationNameToId;
@@ -2240,8 +2246,10 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                         }
                         if(ok)
                         {
+                            #ifndef CATCHCHALLENGER_CLASS_MASTER
                             if(!items.contains(monster.captured_with))
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, starter don't found the monster capture item %4: child.tagName(): %2 (at line: %3)").arg(file).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(monster.id));
+                            #endif // CATCHCHALLENGER_CLASS_MASTER
                         }
                         if(ok)
                             profile.monsters << monster;
@@ -2340,6 +2348,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                                         ok=false;
                                     }
                                 }
+                                #ifndef CATCHCHALLENGER_CLASS_MASTER
                                 if(ok)
                                 {
                                     if(!items.contains(itemTemp.id))
@@ -2348,6 +2357,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
                                         ok=false;
                                     }
                                 }
+                                #endif // CATCHCHALLENGER_CLASS_MASTER
                             }
                         }
                         if(ok)
@@ -2367,6 +2377,7 @@ QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileLis
     return returnVar;
 }
 
+#ifndef CATCHCHALLENGER_CLASS_MASTER
 QList<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const QString &file, const QHash<quint16, Item> &items,const QList<Event> &events)
 {
     QHash<QString,quint8> eventStringToId;
@@ -2813,6 +2824,7 @@ QHash<quint32,Shop> DatapackGeneralLoader::preload_shop(const QString &file, con
     }
     return shops;
 }
+#endif
 
 QList<ServerProfile> DatapackGeneralLoader::loadServerProfileList(const QString &datapackPath, const QString &mainDatapackCode, const QString &file,const QList<Profile> &profileCommon)
 {

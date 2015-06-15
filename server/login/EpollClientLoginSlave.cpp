@@ -81,11 +81,11 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         //selected char
         /// \todo check by crash with ASSERT failure in QHash: "Iterating beyond end()"
         {
-            QHashIterator<quint8/*queryNumber*/,LoginLinkToMaster::DataForSelectedCharacterReturn> j(EpollClientLoginSlave::linkToMaster->selectCharacterClients);
+            QHashIterator<quint8/*queryNumber*/,LinkToMaster::DataForSelectedCharacterReturn> j(LinkToMaster::linkToMaster->selectCharacterClients);
             while (j.hasNext()) {
                 j.next();
                 if(j.value().client==this)
-                    EpollClientLoginSlave::linkToMaster->selectCharacterClients[j.key()].client=NULL;
+                    LinkToMaster::linkToMaster->selectCharacterClients[j.key()].client=NULL;
             }
         }
     }

@@ -1,9 +1,14 @@
-#include "LoginLinkToMaster.h"
+#include "LinkToMaster.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../base/GlobalServerData.h"
+#include "../base/Client.h"
+#include "../epoll/Epoll.h"
+#include "../epoll/EpollSocket.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
+#include <sys/ioctl.h>
 #include <iostream>
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
@@ -12,9 +17,12 @@
 
 using namespace CatchChallenger;
 
-LoginLinkToMaster *LoginLinkToMaster::loginLinkToMaster;
+LinkToMaster *LinkToMaster::linkToMaster=NULL;
+int LinkToMaster::linkToMasterSocketFd=-1;
+bool LinkToMaster::haveTheFirstSslHeader=false;
+sockaddr_in LinkToMaster::serv_addr;
 
-LoginLinkToMaster::LoginLinkToMaster(
+LinkToMaster::LinkToMaster(
         #ifdef SERVERSSL
             const int &infd, SSL_CTX *ctx
         #else
@@ -31,7 +39,7 @@ LoginLinkToMaster::LoginLinkToMaster(
             ,PacketModeTransmission_Client
             #endif
             ),
-        stat(Stat::None)
+        stat(Stat::Unconnected)
 {
     rng.seed(time(0));
     queryNumberList.resize(30);
@@ -43,24 +51,26 @@ LoginLinkToMaster::LoginLinkToMaster(
     }
 }
 
-LoginLinkToMaster::~LoginLinkToMaster()
+LinkToMaster::~LinkToMaster()
 {
+    LinkToMaster::linkToMasterSocketFd=-1;
     closeSocket();
+    //critical bug, need be reopened, never closed
+    abort();
 }
 
-int LoginLinkToMaster::tryConnect(const char * const host, const quint16 &port,const quint8 &tryInterval,const quint8 &considerDownAfterNumberOfTry)
+int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const quint8 &tryInterval,const quint8 &considerDownAfterNumberOfTry)
 {
     if(port==0)
     {
         std::cerr << "ERROR port is 0 (abort)" << std::endl;
         abort();
     }
-    int sockfd,n;
-    struct sockaddr_in serv_addr;
+
     struct hostent *server;
 
-    sockfd=socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd<0)
+    LinkToMaster::linkToMasterSocketFd=socket(AF_INET, SOCK_STREAM, 0);
+    if(LinkToMaster::linkToMasterSocketFd<0)
     {
         std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
         abort();
@@ -78,15 +88,23 @@ int LoginLinkToMaster::tryConnect(const char * const host, const quint16 &port,c
          server->h_length);
     serv_addr.sin_port = htons(port);
 
-    std::cout << "Try connect to master..." << std::endl;
-    int connStatusType=::connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+    std::cout << "Try first connect to master..." << std::endl;
+    int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(connStatusType<0)
     {
         unsigned int index=0;
         while(index<considerDownAfterNumberOfTry && connStatusType<0)
         {
             std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
-            connStatusType=::connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+            auto start = std::chrono::high_resolution_clock::now();
+            connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> elapsed = end-start;
+            if(elapsed.count()<(quint32)tryInterval*1000 && connStatusType<0)
+            {
+                const unsigned int ms=(quint32)tryInterval*1000-elapsed.count();
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+            }
             index++;
         }
         if(connStatusType<0)
@@ -96,12 +114,103 @@ int LoginLinkToMaster::tryConnect(const char * const host, const quint16 &port,c
         }
     }
     std::cout << "Connected to master" << std::endl;
+    haveTheFirstSslHeader=false;
+
+    return LinkToMaster::linkToMasterSocketFd;
+}
+
+void LinkToMaster::setConnexionSettings()
+{
+    if(LinkToMaster::linkToMasterSocketFd==-1)
+    {
+        std::cerr << "LoginLinkToMaster::setConnexionSettings() LoginLinkToMaster::linkToMasterSocketFd==-1 (abort)" << std::endl;
+        abort();
+    }
+    {
+        epoll_event event;
+        event.data.ptr = LinkToMaster::linkToMaster;
+        event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToMaster::linkToMasterSocketFd, &event);
+        if(s == -1)
+        {
+            std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
+            abort();
+        }
+    }
+    {
+        /*const int s = EpollSocket::make_non_blocking(LoginLinkToMaster::linkToMasterSocketFd);
+        if(s == -1)
+        {
+            std::cerr << "unable to make to socket non blocking" << std::endl;
+            abort();
+        }
+        else*/
+        {
+            //if(tcpCork)
+            {
+                //set cork for CatchChallener because don't have real time part
+                int state = 1;
+                if(setsockopt(LinkToMaster::linkToMasterSocketFd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                {
+                    std::cerr << "Unable to apply tcp cork" << std::endl;
+                    abort();
+                }
+            }
+            /*else if(tcpNodelay)
+            {
+                //set no delay to don't try group the packet and improve the performance
+                int state = 1;
+                if(setsockopt(LoginLinkToMaster::linkToMasterSocketFd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
+                {
+                    std::cerr << "Unable to apply tcp no delay" << std::endl;
+                    abort();
+                }
+            }*/
+        }
+    }
+}
+
+void LinkToMaster::connectInternal()
+{
+    LinkToMaster::linkToMasterSocketFd=socket(AF_INET, SOCK_STREAM, 0);
+    if(LinkToMaster::linkToMasterSocketFd<0)
+    {
+        std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
+        abort();
+    }
+    epollSocket.reopen(LinkToMaster::linkToMasterSocketFd);
+
+    int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+    if(connStatusType<0)
+    {
+        stat=Stat::Unconnected;
+        return;
+    }
+    haveTheFirstSslHeader=false;
+    if(connStatusType==0)
+    {
+        stat=Stat::Connected;
+        std::cout << "(Re)Connected to master" << std::endl;
+    }
+    else
+    {
+        stat=Stat::Connecting;
+        std::cout << "(Re)Connecting in progress to master" << std::endl;
+    }
+    setConnexionSettings();
+}
+
+void LinkToMaster::readTheFirstSslHeader()
+{
+    if(haveTheFirstSslHeader)
+        return;
+    std::cout << "LoginLinkToMaster::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
-    n=::read(sockfd,buffer,1);
-    if(n<0)
+    if(::read(LinkToMaster::linkToMasterSocketFd,buffer,1)<0)
     {
         std::cerr << "ERROR reading from socket to master server (abort)" << std::endl;
         abort();
+        return;
     }
     #ifdef SERVERSSL
     if(buffer[0]!=0x01)
@@ -116,49 +225,54 @@ int LoginLinkToMaster::tryConnect(const char * const host, const quint16 &port,c
         abort();
     }
     #endif
-    return sockfd;
+    haveTheFirstSslHeader=true;
+    stat=Stat::Connected;
+    sendProtocolHeader();
 }
 
-void LoginLinkToMaster::disconnectClient()
+void LinkToMaster::disconnectClient()
 {
     epollSocket.close();
-    messageParsingLayer("Disconnected client");
+    messageParsingLayer("Disconnected master link... try connect in loop");
 }
 
 //input/ouput layer
-void LoginLinkToMaster::errorParsingLayer(const QString &error)
+void LinkToMaster::errorParsingLayer(const QString &error)
 {
     std::cerr << error.toLocal8Bit().constData() << std::endl;
+    //critical error, prefer restart from 0
+    abort();
+
     disconnectClient();
 }
 
-void LoginLinkToMaster::messageParsingLayer(const QString &message) const
+void LinkToMaster::messageParsingLayer(const QString &message) const
 {
     std::cout << message.toLocal8Bit().constData() << std::endl;
 }
 
-void LoginLinkToMaster::errorParsingLayer(const char * const error)
+void LinkToMaster::errorParsingLayer(const char * const error)
 {
     std::cerr << error << std::endl;
     disconnectClient();
 }
 
-void LoginLinkToMaster::messageParsingLayer(const char * const message) const
+void LinkToMaster::messageParsingLayer(const char * const message) const
 {
     std::cout << message << std::endl;
 }
 
-BaseClassSwitch::Type LoginLinkToMaster::getType() const
+BaseClassSwitch::Type LinkToMaster::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::Type::MasterLink;
 }
 
-void LoginLinkToMaster::parseIncommingData()
+void LinkToMaster::parseIncommingData()
 {
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool LoginLinkToMaster::setSettings(QSettings * const settings)
+bool LinkToMaster::setSettings(QSettings * const settings)
 {
     this->settings=settings;
 
@@ -170,13 +284,13 @@ bool LoginLinkToMaster::setSettings(QSettings * const settings)
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
     token=settings->value(QStringLiteral("token")).toString();
-    memcpy(LoginLinkToMaster::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LinkToMaster::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings->endGroup();
 
     return true;
 }
 
-void LoginLinkToMaster::generateToken()
+void LinkToMaster::generateToken()
 {
     FILE *fpRandomFile = fopen("/dev/urandom","rb");
     if(fpRandomFile==NULL)
@@ -184,7 +298,7 @@ void LoginLinkToMaster::generateToken()
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LoginLinkToMaster::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(LinkToMaster::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
@@ -192,14 +306,14 @@ void LoginLinkToMaster::generateToken()
     }
     settings->setValue(QStringLiteral("token"),QString(
                           QByteArray(
-                              reinterpret_cast<char *>(LoginLinkToMaster::header_magic_number_and_private_token)
+                              reinterpret_cast<char *>(LinkToMaster::header_magic_number_and_private_token)
                               +9,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
     fclose(fpRandomFile);
     settings->sync();
 }
 
-bool LoginLinkToMaster::registerGameServer(const QString &exportedXml)
+bool LinkToMaster::registerGameServer(const QString &exportedXml)
 {
     if(queryNumberList.empty())
         return false;
@@ -329,20 +443,26 @@ bool LoginLinkToMaster::registerGameServer(const QString &exportedXml)
         pos+=2;
     }
 
-    //send the disconnected player
+    //send the connected player
     {
-        *reinterpret_cast<quint16 *>(tempBuffer+pos)=htole16(disconnectedClientsDatabaseId.size());
+        quint32 character_count=0;
+        unsigned int sizePos=pos;
         pos+=2;
         unsigned short int index=0;
-        while(index<disconnectedClientsDatabaseId.size())
+        while(index<Client::clientBroadCastList.size())
         {
-            *reinterpret_cast<quint32 *>(tempBuffer+pos)=htole32(disconnectedClientsDatabaseId.at(index));
-            pos+=4;
+            const quint32 &character_id=Client::clientBroadCastList.at(index)->getPlayerId();
+            if(character_id!=0)
+            {
+                *reinterpret_cast<quint32 *>(tempBuffer+pos)=htole32(character_id);
+                pos+=4;
+                character_count++;
+            }
             if(index==65535)
                 break;
             index++;
         }
-        disconnectedClientsDatabaseId.clear();
+        *reinterpret_cast<quint16 *>(tempBuffer+sizePos)=htole16(character_count);
     }
 
     packOutcommingQuery(0x07,queryNumberList.back(),tempBuffer,pos);
@@ -350,36 +470,62 @@ bool LoginLinkToMaster::registerGameServer(const QString &exportedXml)
     return true;
 }
 
-void LoginLinkToMaster::characterDisconnected(const quint32 &characterId)
+void LinkToMaster::characterDisconnected(const quint32 &characterId)
 {
-    *reinterpret_cast<quint32 *>(LoginLinkToMaster::sendDisconnectedPlayer+0x02)=htole32(characterId);
-    internalSendRawSmallPacket(LoginLinkToMaster::sendDisconnectedPlayer,sizeof(LoginLinkToMaster::sendDisconnectedPlayer));
+    *reinterpret_cast<quint32 *>(LinkToMaster::sendDisconnectedPlayer+0x02)=htole32(characterId);
+    internalSendRawSmallPacket(LinkToMaster::sendDisconnectedPlayer,sizeof(LinkToMaster::sendDisconnectedPlayer));
 }
 
-void LoginLinkToMaster::currentPlayerChange(const quint16 &currentPlayer)
+void LinkToMaster::currentPlayerChange(const quint16 &currentPlayer)
 {
-    *reinterpret_cast<quint16 *>(LoginLinkToMaster::sendCurrentPlayer+0x02)=htole16(currentPlayer);
-    internalSendRawSmallPacket(LoginLinkToMaster::sendCurrentPlayer,sizeof(LoginLinkToMaster::sendCurrentPlayer));
+    *reinterpret_cast<quint16 *>(LinkToMaster::sendCurrentPlayer+0x02)=htole16(currentPlayer);
+    internalSendRawSmallPacket(LinkToMaster::sendCurrentPlayer,sizeof(LinkToMaster::sendCurrentPlayer));
 }
 
-void LoginLinkToMaster::askMoreMaxMonsterId()
+void LinkToMaster::askMoreMaxMonsterId()
 {
     newFullOutputQuery(0x11,0x07,queryNumberList.back());
     queryNumberList.pop_back();
 }
 
-void LoginLinkToMaster::askMoreMaxClanId()
+void LinkToMaster::askMoreMaxClanId()
 {
     newFullOutputQuery(0x11,0x08,queryNumberList.back());
     queryNumberList.pop_back();
 }
 
-void LoginLinkToMaster::sendProtocolHeader()
+void LinkToMaster::tryReconnect()
+{
+    stat=Stat::Unconnected;
+    if(stat!=Stat::Unconnected)
+        return;
+    else
+    {
+        std::cout << "Try reconnect to master..." << std::endl;
+        do
+        {
+            stat=Stat::Connecting;
+            //start to connect
+            auto start = std::chrono::high_resolution_clock::now();
+            connectInternal();
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> elapsed = end-start;
+            if(elapsed.count()<5000 && stat!=Stat::Connected)
+            {
+                const unsigned int ms=5000-elapsed.count();
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+            }
+        } while(stat!=Stat::Connected);
+        readTheFirstSslHeader();
+    }
+}
+
+void LinkToMaster::sendProtocolHeader()
 {
     packOutcommingQuery(0x01,
                         queryNumberList.back(),
-                        reinterpret_cast<char *>(LoginLinkToMaster::header_magic_number_and_private_token),
-                        sizeof(LoginLinkToMaster::header_magic_number_and_private_token)
+                        reinterpret_cast<char *>(LinkToMaster::header_magic_number_and_private_token),
+                        sizeof(LinkToMaster::header_magic_number_and_private_token)
                         );
     queryNumberList.pop_back();
 }

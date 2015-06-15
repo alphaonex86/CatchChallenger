@@ -4,7 +4,7 @@
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/GeneralType.h"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "../game-server-alone/LoginLinkToMaster.h"
+#include "../game-server-alone/LinkToMaster.h"
 #endif
 
 #include "BaseServerLogin.h"
@@ -234,7 +234,7 @@ void Client::disconnectClient()
         simplifiedIdList << public_and_private_informations.public_informations.simplifiedId;
         GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(character_id);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        LoginLinkToMaster::loginLinkToMaster->characterDisconnected(character_id);
+        LinkToMaster::linkToMaster->characterDisconnected(character_id);
         #endif
         playerByPseudo.remove(public_and_private_informations.public_informations.pseudo);
         clanChangeWithoutDb(0);
@@ -446,7 +446,7 @@ char *Client::addAuthGetToken(const quint32 &characterId, const quint32 &account
 
     if(tokenAuthList.size()>50)
     {
-        LoginLinkToMaster::loginLinkToMaster->characterDisconnected(tokenAuthList.at(0).characterId);
+        LinkToMaster::linkToMaster->characterDisconnected(tokenAuthList.at(0).characterId);
         tokenAuthList.erase(tokenAuthList.begin());
     }
     return newEntry.token;
@@ -465,7 +465,7 @@ quint32 Client::getMonsterId(bool * const ok)
     const quint32 monsterId=GlobalServerData::serverPrivateVariables.maxMonsterId.front();
     GlobalServerData::serverPrivateVariables.maxMonsterId.erase(GlobalServerData::serverPrivateVariables.maxMonsterId.begin());
     if(GlobalServerData::serverPrivateVariables.maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
-        LoginLinkToMaster::loginLinkToMaster->askMoreMaxMonsterId();
+        LinkToMaster::linkToMaster->askMoreMaxMonsterId();
     return monsterId;
 }
 
@@ -482,7 +482,7 @@ quint32 Client::getClanId(bool * const ok)
     const quint32 clanId=GlobalServerData::serverPrivateVariables.maxClanId.front();
     GlobalServerData::serverPrivateVariables.maxClanId.erase(GlobalServerData::serverPrivateVariables.maxClanId.begin());
     if(GlobalServerData::serverPrivateVariables.maxClanId.size()<CATCHCHALLENGER_SERVER_MINCLANIDBLOCK)
-        LoginLinkToMaster::loginLinkToMaster->askMoreMaxClanId();
+        LinkToMaster::linkToMaster->askMoreMaxClanId();
     return clanId;
 }
 #else
@@ -500,3 +500,14 @@ quint32 Client::getClanId(bool * const)
     return clanId;
 }
 #endif
+
+bool Client::characterConnected(const quint32 &characterId)
+{
+    return playerById.contains(characterId);
+}
+
+void Client::disconnectClientById(const quint32 &characterId)
+{
+    if(playerById.contains(characterId))
+        playerById.value(characterId)->disconnectClient();
+}

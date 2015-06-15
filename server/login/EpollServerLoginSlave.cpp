@@ -123,7 +123,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(EpollClientLoginSlave::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LinkToMaster::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings.endGroup();
 
     //mode
@@ -396,38 +396,33 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
             abort();
         }
-        const int &linkfd=LoginLinkToMaster::tryConnect(host.toLocal8Bit().constData(),port,tryInterval,considerDownAfterNumberOfTry);
-        if(linkfd<0)
+
         {
-            std::cerr << "Unable to connect on master" << std::endl;
-            abort();
-        }
-        #ifdef SERVERSSL
-        EpollClientLoginSlave::linkToMaster=new LoginLinkToMaster(linkfd,ctx);
-        #else
-        EpollClientLoginSlave::linkToMaster=new LoginLinkToMaster(linkfd);
-        #endif
-        //add to epoll
-        {
-            epoll_event event;
-            event.data.ptr = EpollClientLoginSlave::linkToMaster;
-            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-            int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, linkfd, &event);
-            if(s == -1)
+            const int &linkfd=LinkToMaster::tryConnect(host.toLocal8Bit().constData(),port,tryInterval,considerDownAfterNumberOfTry);
+            if(linkfd<0)
             {
-                std::cerr << "epoll_ctl on socket (client) error" << std::endl;
+                std::cerr << "Unable to connect on master" << std::endl;
                 abort();
             }
+            #ifdef SERVERSSL
+            ctx from what?
+            linkToMaster::linkToMaster=new linkToMaster(linkfd,ctx);
+            #else
+            LinkToMaster::linkToMaster=new LinkToMaster(linkfd);
+            #endif
+            LinkToMaster::linkToMaster->stat=LinkToMaster::Stat::Connected;
+            LinkToMaster::linkToMaster->readTheFirstSslHeader();
+            LinkToMaster::linkToMaster->setConnexionSettings();
         }
-        EpollClientLoginSlave::linkToMaster->httpDatapackMirror=httpDatapackMirror;
-        EpollClientLoginSlave::linkToMaster->sendProtocolHeader();
+
+        LinkToMaster::linkToMaster->httpDatapackMirror=httpDatapackMirror;
         settings.endGroup();
     }
 }
 
 EpollServerLoginSlave::~EpollServerLoginSlave()
 {
-    memset(EpollClientLoginSlave::header_magic_number_and_private_token,0x00,sizeof(EpollClientLoginSlave::header_magic_number_and_private_token));
+    memset(LinkToMaster::header_magic_number_and_private_token,0x00,sizeof(LinkToMaster::header_magic_number_and_private_token));
     if(server_ip!=NULL)
     {
         delete server_ip;
@@ -438,10 +433,10 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
         delete server_port;
         server_port=NULL;
     }
-    if(EpollClientLoginSlave::linkToMaster!=NULL)
+    if(LinkToMaster::linkToMaster!=NULL)
     {
-        delete EpollClientLoginSlave::linkToMaster;
-        EpollClientLoginSlave::linkToMaster=NULL;
+        delete LinkToMaster::linkToMaster;
+        LinkToMaster::linkToMaster=NULL;
     }
     unsigned int index=0;
     while(index<EpollServerLoginSlave::loginProfileList.size())
@@ -454,17 +449,17 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
 
 void EpollServerLoginSlave::close()
 {
-    if(EpollClientLoginSlave::linkToMaster!=NULL)
+    if(LinkToMaster::linkToMaster!=NULL)
     {
-        delete EpollClientLoginSlave::linkToMaster;
-        EpollClientLoginSlave::linkToMaster=NULL;
+        delete LinkToMaster::linkToMaster;
+        LinkToMaster::linkToMaster=NULL;
     }
     EpollGenericServer::close();
 }
 
 void EpollServerLoginSlave::SQL_common_load_finish()
 {
-    if(!EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty())
+    if(!LinkToMaster::linkToMaster->httpDatapackMirror.isEmpty())
         serverReady=true;
     else
     {
@@ -508,7 +503,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(EpollClientLoginSlave::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(LinkToMaster::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
@@ -516,7 +511,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
     }
     settings.setValue(QStringLiteral("token"),QString(
                           QByteArray(
-                              reinterpret_cast<char *>(EpollClientLoginSlave::header_magic_number_and_private_token)
+                              reinterpret_cast<char *>(LinkToMaster::header_magic_number_and_private_token)
                               +9,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
     fclose(fpRandomFile);
@@ -560,8 +555,8 @@ void EpollServerLoginSlave::compose04Reply()
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
     EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
 
-    const QByteArray &httpDatapackMirrorData=EpollClientLoginSlave::linkToMaster->httpDatapackMirror.toUtf8();
-    if(EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty())
+    const QByteArray &httpDatapackMirrorData=LinkToMaster::linkToMaster->httpDatapackMirror.toUtf8();
+    if(LinkToMaster::linkToMaster->httpDatapackMirror.isEmpty())
     {
         std::cerr << "EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
         abort();

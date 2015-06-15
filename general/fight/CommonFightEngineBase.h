@@ -16,7 +16,9 @@ class CommonFightEngineBase
 public:
     static QList<PlayerMonster::PlayerSkill> generateWildSkill(const Monster &monster, const quint8 &level);
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
+    #endif
 };
 }
 

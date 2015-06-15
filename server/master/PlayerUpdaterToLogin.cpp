@@ -3,8 +3,7 @@
 
 using namespace CatchChallenger;
 
-PlayerUpdaterToLogin::PlayerUpdaterToLogin() :
-    sended_connected_players(0)
+PlayerUpdaterToLogin::PlayerUpdaterToLogin()
 {
     setInterval(15*1000);
 }

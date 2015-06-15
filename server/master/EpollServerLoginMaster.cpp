@@ -618,7 +618,7 @@ void EpollServerLoginMaster::doTheServerList()
 {
     //do the server list
     EpollClientLoginMaster::serverPartialServerListSize=0;
-    memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));
+    //memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));//improve the performance
     int rawServerListSize=0x00;
 
     const int &serverListSize=EpollClientLoginMaster::gameServers.size();
