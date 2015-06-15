@@ -14,6 +14,7 @@ class EpollClient : public BaseClassSwitch
 public:
     EpollClient(const int &infd);
     ~EpollClient();
+    void reopen(const int &infd);
     void close();
     ssize_t read(char *buffer,const size_t &bufferSize);
     ssize_t write(const char *buffer,const size_t &bufferSize);

@@ -91,6 +91,7 @@ bool CatchChallenger::operator<(const Monster::AttackToLearn &entry1, const Mons
         return entry1.learnSkill < entry2.learnSkill;
 }
 
+#ifndef CATCHCHALLENGER_CLASS_MASTER
 QList<Type> FightLoader::loadTypes(const QString &file)
 {
     QHash<QString,quint8> nameToId;
@@ -227,8 +228,13 @@ QList<Type> FightLoader::loadTypes(const QString &file)
     }
     return types;
 }
+#endif
 
-QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHash<quint16, Skill> &monsterSkills,const QList<Type> &types,const QHash<quint16, Item> &items)
+QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHash<quint16, Skill> &monsterSkills
+                                                #ifndef CATCHCHALLENGER_CLASS_MASTER
+                                                ,const QList<Type> &types,const QHash<quint16, Item> &items
+                                                #endif
+                                                )
 {
     QHash<quint16,Monster> monsters;
     QDir dir(folder);
@@ -247,13 +253,17 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
             file_index++;
             continue;
         }
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
         QHash<QString,quint8> typeNameToId;
-        int index=0;
-        while(index<types.size())
         {
-            typeNameToId[types.at(index).name]=index;
-            index++;
+            int index=0;
+            while(index<types.size())
+            {
+                typeNameToId[types.at(index).name]=index;
+                index++;
+            }
         }
+        #endif
         QDomDocument domDocument;
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -305,6 +315,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"id\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     attributeIsOk=false;
                 }
+                #ifndef CATCHCHALLENGER_CLASS_MASTER
                 if(!item.hasAttribute(FightLoader::text_egg_step))
                 {
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"egg_step\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
@@ -360,6 +371,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the monster attribute \"give_xp\": child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     attributeIsOk=false;
                 }
+                #endif // CATCHCHALLENGER_CLASS_MASTER
                 if(attributeIsOk)
                 {
                     Monster monster;
@@ -374,6 +386,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         qDebug() << (QStringLiteral("monster loading: %1").arg(id));
                         #endif
+                        #ifndef CATCHCHALLENGER_CLASS_MASTER
                         if(item.hasAttribute(FightLoader::text_catch_rate))
                         {
                             bool ok2;
@@ -453,12 +466,14 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                             if(!ok)
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, xp_for_max_level is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
+                        #endif
                         if(ok)
                         {
                             monster.stat.hp=item.attribute(FightLoader::text_hp).toUInt(&ok);
                             if(!ok)
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, hp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
+                        #ifndef CATCHCHALLENGER_CLASS_MASTER
                         if(ok)
                         {
                             monster.stat.attack=item.attribute(FightLoader::text_attack).toUInt(&ok);
@@ -505,6 +520,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                         #else
                         monster.give_xp=0;
                         monster.give_sp=0;
+                        #endif
                         #endif
                         if(ok)
                         {
@@ -644,6 +660,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                                     }
                                                     else
                                                     {
+                                                        #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                         if(attack.hasAttribute(FightLoader::text_byitem))
                                                         {
                                                             quint32 itemId;
@@ -682,6 +699,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, level and byitem is not found: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
                                                             ok=false;
                                                         }
+                                                        #endif // CATCHCHALLENGER_CLASS_MASTER
                                                     }
                                                 }
                                                 else
@@ -699,6 +717,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                 else
                                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not attack_list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                             }
+                            #ifndef CATCHCHALLENGER_CLASS_MASTER
                             {
                                 QDomElement evolutionsItem = item.firstChildElement(FightLoader::text_evolutions);
                                 if(!evolutionsItem.isNull())
@@ -807,6 +826,7 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                             }
                             qDebug() << (QStringLiteral("monster.level_to_xp.size(): %1").arg(monster.level_to_xp.size()));
                             #endif
+
                             #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(monster.give_xp!=0)
@@ -814,6 +834,8 @@ QHash<quint16,Monster> FightLoader::loadMonster(const QString &folder, const QHa
                                     qDebug() << (QStringLiteral("Warning: you need more than %1 monster(s) to pass the last level, prefer do that's with the rate for the monster id: %2").arg(monster.xp_for_max_level/monster.give_xp).arg(id));
                             #endif
                             #endif
+
+                            #endif // CATCHCHALLENGER_CLASS_MASTER
                             monsters[id]=monster;
                         }
                         else
@@ -1192,7 +1214,12 @@ QHash<quint16,BotFight> FightLoader::loadFight(const QString &folder, const QHas
 }
 #endif
 
-QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const QHash<quint8, Buff> &monsterBuffs, const QList<Type> &types)
+QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder
+                                                   #ifndef CATCHCHALLENGER_CLASS_MASTER
+                                                   , const QHash<quint8, Buff> &monsterBuffs
+                                                   , const QList<Type> &types
+                                                   #endif
+                                                   )
 {
     QHash<quint16,Skill> monsterSkills;
     QDir dir(folder);
@@ -1211,13 +1238,17 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
             file_index++;
             continue;
         }
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
         QHash<QString,quint8> typeNameToId;
-        int index=0;
-        while(index<types.size())
         {
-            typeNameToId[types.at(index).name]=index;
-            index++;
+            int index=0;
+            while(index<types.size())
+            {
+                typeNameToId[types.at(index).name]=index;
+                index++;
+            }
         }
+        #endif // CATCHCHALLENGER_CLASS_MASTER
         QDomDocument domDocument;
         //open and quick check the file
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1257,7 +1288,10 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
         }
 
         //load the content
-        bool ok,ok2;
+        bool ok;
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
+        bool ok2;
+        #endif
         QDomElement item = root.firstChildElement(FightLoader::text_skill);
         while(!item.isNull())
         {
@@ -1317,6 +1351,7 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
                                                 levelDef[number].endurance=endurance;
                                                 if(number>0)
                                                 {
+                                                    #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
                                                         QDomElement life = level.firstChildElement(FightLoader::text_life);
                                                         while(!life.isNull())
@@ -1377,6 +1412,8 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
                                                             life = life.nextSiblingElement(FightLoader::text_life);
                                                         }
                                                     }
+                                                    #endif // CATCHCHALLENGER_CLASS_MASTER
+                                                    #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                     {
                                                         QDomElement buff = level.firstChildElement(FightLoader::text_buff);
                                                         while(!buff.isNull())
@@ -1460,6 +1497,7 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
                                                             buff = buff.nextSiblingElement(FightLoader::text_buff);
                                                         }
                                                     }
+                                                    #endif // CATCHCHALLENGER_CLASS_MASTER
                                                 }
                                                 else
                                                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
@@ -1477,6 +1515,7 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
                                 else
                                 {
                                     monsterSkills[id].type=255;
+                                    #ifndef CATCHCHALLENGER_CLASS_MASTER
                                     if(item.hasAttribute(FightLoader::text_type))
                                     {
                                         if(typeNameToId.contains(item.attribute(FightLoader::text_type)))
@@ -1484,6 +1523,7 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder, const 
                                         else
                                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, type not found: %4: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(FightLoader::text_type)));
                                     }
+                                    #endif // CATCHCHALLENGER_CLASS_MASTER
                                 }
                                 //order by level to learn
                                 quint8 index=1;

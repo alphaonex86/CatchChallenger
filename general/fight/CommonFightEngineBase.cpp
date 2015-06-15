@@ -76,6 +76,7 @@ Monster::Stat CommonFightEngineBase::getStat(const Monster &monster, const quint
     return stat;
 }
 
+#ifndef CATCHCHALLENGER_CLASS_MASTER
 bool CommonFightEngineBase::buffIsValid(const Skill::BuffEffect &buffEffect)
 {
     if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buffEffect.buff))
@@ -99,3 +100,4 @@ bool CommonFightEngineBase::buffIsValid(const Skill::BuffEffect &buffEffect)
     }
     return true;
 }
+#endif

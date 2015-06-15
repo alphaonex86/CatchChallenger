@@ -6,6 +6,7 @@ class EpollSocket
 {
 public:
     static int make_non_blocking(int sfd);
+    static int make_blocking(int sfd);
 };
 }
 

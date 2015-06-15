@@ -15,6 +15,7 @@ class DatapackGeneralLoader
 public:
     static QList<QString> loadSkins(const QString &folder);
     static QList<Reputation> loadReputation(const QString &file);
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     static QHash<quint16, Quest> loadQuests(const QString &folder);
     static QPair<bool,Quest> loadSingleQuest(const QString &file);
     static QHash<quint8,Plant> loadPlants(const QString &file);
@@ -22,13 +23,20 @@ public:
     static ItemFull loadItems(const QString &folder, const QHash<quint8, Buff> &monsterBuffs);
     static QHash<quint16,Industry> loadIndustries(const QString &folder,const QHash<quint16, Item> &items);
     static QHash<quint16,IndustryLink> loadIndustriesLink(const QString &file,const QHash<quint16,Industry> &industries);
-    static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,const QHash<quint16, Item> &items,const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations);
+    #endif
+    static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file,
+                                                                      #ifndef CATCHCHALLENGER_CLASS_MASTER
+                                                                      const QHash<quint16, Item> &items,
+                                                                      #endif // CATCHCHALLENGER_CLASS_MASTER
+                                                                      const QHash<quint16,Monster> &monsters,const QList<Reputation> &reputations);
     static QList<ServerProfile> loadServerProfileList(const QString &datapackPath, const QString &mainDatapackCode, const QString &file, const QList<Profile> &profileCommon);
     static QList<ServerProfile> loadServerProfileListInternal(const QString &datapackPath, const QString &mainDatapackCode, const QString &file);
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     static QList<MonstersCollision> loadMonstersCollision(const QString &file, const QHash<quint16, Item> &items, const QList<Event> &events);
     static LayersOptions loadLayersOptions(const QString &file);
     static QList<Event> loadEvents(const QString &file);
     static QHash<quint32,Shop> preload_shop(const QString &file, const QHash<quint16, Item> &items);
+    #endif
 protected:
     static const QString text_list;
     static const QString text_dotxml;

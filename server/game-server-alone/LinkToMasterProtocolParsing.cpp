@@ -1,11 +1,11 @@
-#include "LoginLinkToMaster.h"
+#include "LinkToMaster.h"
 #include "../base/Client.h"
 #include "../base/GlobalServerData.h"
 #include <iostream>
 
 using namespace CatchChallenger;
 
-void LoginLinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
+void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
 {
     Q_UNUSED(queryNumber);
     Q_UNUSED(size);
@@ -18,7 +18,7 @@ void LoginLinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const 
     }
 }
 
-void LoginLinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
+void LinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
 {
     (void)data;
     (void)size;
@@ -31,7 +31,7 @@ void LoginLinkToMaster::parseMessage(const quint8 &mainCodeType,const char *data
     }
 }
 
-void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
+void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -42,6 +42,28 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
     (void)size;
     switch(mainCodeType)
     {
+        case 0xE1:
+            switch(subCodeType)
+            {
+                case 0x02:
+                {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(size!=4)
+                    {
+                        parseNetworkReadError("size wrong ident: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                        return;
+                    }
+                    #endif
+                    const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
+                    Client::disconnectClientById(characterId);
+                }
+                return;
+                default:
+                    parseNetworkReadError("unknown sub ident: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+                    return;
+                break;
+            }
+        break;
         case 0xF1:
             switch(subCodeType)
             {
@@ -59,7 +81,7 @@ void LoginLinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8
 }
 
 //have query with reply
-void LoginLinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     Q_UNUSED(data);
     if(stat!=Stat::Logged)
@@ -76,7 +98,7 @@ void LoginLinkToMaster::parseQuery(const quint8 &mainCodeType,const quint8 &quer
     }
 }
 
-void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+void LinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -104,21 +126,29 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
                     else
                     {
                         const quint32 &characterId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData)));
-                        const quint32 &accountId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4)));
-                        const char * const token=Client::addAuthGetToken(characterId,accountId);
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        queryReceived.remove(queryNumber);
-                        #endif
-                        if(token!=NULL)
+                        if(Q_LIKELY(!Client::characterConnected(characterId)))
                         {
-                            LoginLinkToMaster::protocolReplyGetToken[0x01]=queryNumber;
-                            memcpy(LoginLinkToMaster::protocolReplyGetToken+0x03,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                            internalSendRawSmallPacket(LoginLinkToMaster::protocolReplyGetToken,sizeof(LoginLinkToMaster::protocolReplyGetToken));
+                            const quint32 &accountId=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+4)));
+                            const char * const token=Client::addAuthGetToken(characterId,accountId);
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            queryReceived.remove(queryNumber);
+                            #endif
+                            if(token!=NULL)
+                            {
+                                LinkToMaster::protocolReplyGetToken[0x01]=queryNumber;
+                                memcpy(LinkToMaster::protocolReplyGetToken+0x03,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                                internalSendRawSmallPacket(LinkToMaster::protocolReplyGetToken,sizeof(LinkToMaster::protocolReplyGetToken));
+                            }
+                            else
+                            {
+                                LinkToMaster::protocolReplyNoMoreToken[0x01]=queryNumber;
+                                internalSendRawSmallPacket(LinkToMaster::protocolReplyNoMoreToken,sizeof(LinkToMaster::protocolReplyNoMoreToken));
+                            }
                         }
                         else
                         {
-                            LoginLinkToMaster::protocolReplyNoMoreToken[0x01]=queryNumber;
-                            internalSendRawSmallPacket(LoginLinkToMaster::protocolReplyNoMoreToken,sizeof(LoginLinkToMaster::protocolReplyNoMoreToken));
+                            LinkToMaster::protocolReplyAlreadyConnectedToken[0x01]=queryNumber;
+                            internalSendRawSmallPacket(LinkToMaster::protocolReplyAlreadyConnectedToken,sizeof(LinkToMaster::protocolReplyAlreadyConnectedToken));
                         }
                     }
                 break;
@@ -136,7 +166,7 @@ void LoginLinkToMaster::parseFullQuery(const quint8 &mainCodeType,const quint8 &
 }
 
 //send reply
-void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     queryNumberList.push_back(queryNumber);
     Q_UNUSED(data);
@@ -253,7 +283,7 @@ void LoginLinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &
     return;
 }
 
-void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     if(stat!=Stat::Logged)
     {
@@ -321,7 +351,7 @@ void LoginLinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quin
     parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 
-void LoginLinkToMaster::parseNetworkReadError(const QString &errorString)
+void LinkToMaster::parseNetworkReadError(const QString &errorString)
 {
     errorParsingLayer(errorString);
 }
