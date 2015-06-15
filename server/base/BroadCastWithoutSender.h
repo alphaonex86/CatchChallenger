@@ -16,7 +16,7 @@ class BroadCastWithoutSender
     #endif
 private:
     explicit BroadCastWithoutSender();
-    static char bufferSendPlayer[3];
+    static unsigned char bufferSendPlayer[3];
 public:
     static BroadCastWithoutSender broadCastWithoutSender;
 #ifndef EPOLLCATCHCHALLENGERSERVER

@@ -39,9 +39,9 @@ SOURCES += \
     ../epoll/db/EpollPostgresql.cpp \
     ../base/DatabaseBase.cpp \
     ../base/PreparedDBQuery.cpp \
-    LoginLinkToMaster.cpp \
-    LoginLinkToMasterStaticVar.cpp \
-    LoginLinkToMasterProtocolParsing.cpp \
+    LinkToMaster.cpp \
+    LinkToMasterStaticVar.cpp \
+    LinkToMasterProtocolParsing.cpp \
     EpollClientLoginSlaveProtocolParsing.cpp \
     ../epoll/EpollClientToServer.cpp \
     ../epoll/EpollSslClientToServer.cpp \
@@ -68,7 +68,7 @@ HEADERS += \
     ../epoll/db/EpollPostgresql.h \
     ../base/DatabaseBase.h \
     ../base/PreparedDBQuery.h \
-    LoginLinkToMaster.h \
+    LinkToMaster.h \
     ../epoll/EpollClientToServer.h \
     ../epoll/EpollSslClientToServer.h \
     CharactersGroupForLogin.h \

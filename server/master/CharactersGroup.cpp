@@ -2,6 +2,7 @@
 #include "EpollServerLoginMaster.h"
 #include <iostream>
 #include <QDebug>
+#include <QDateTime>
 
 using namespace CatchChallenger;
 
@@ -181,8 +182,23 @@ BaseClassSwitch::Type CharactersGroup::getType() const
 
 CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host,
                                                                               const quint16 &port, const QString &metaData, const quint32 &logicalGroupIndex,
-                                                                              const quint16 &currentPlayer, const quint16 &maxPlayer)
+                                                                              const quint16 &currentPlayer, const quint16 &maxPlayer,const QSet<quint32> &lockedAccount)
 {
+    //old locked account
+    if(lockedAccountByDisconnectedServer.contains(uniqueKey))
+    {
+        //new key found on master server
+        QSet<quint32>::const_iterator i = lockedAccountByDisconnectedServer.value(uniqueKey).constBegin();
+        while (i != lockedAccountByDisconnectedServer.value(uniqueKey).constEnd()) {
+            if(!lockedAccount.contains(*i))
+            {
+                //was disconnected from the last game server disconnection
+                this->lockedAccount[*i]=QDateTime::currentMSecsSinceEpoch()/1000+5;//wait 5s before reconnect
+            }
+            ++i;
+        }
+        lockedAccountByDisconnectedServer.remove(uniqueKey);
+    }
     InternalGameServer tempServer;
     tempServer.host=host;//QString::fromUtf8(hostData,hostDataSize)
     tempServer.port=port;
@@ -195,6 +211,53 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
     tempServer.currentPlayer=currentPlayer;
     tempServer.maxPlayer=maxPlayer;
 
+    //new key found on game server, mostly when the master server is restarted
+    {
+        QSet<quint32>::const_iterator i = lockedAccount.constBegin();
+        while (i != lockedAccount.constEnd()) {
+            if(this->lockedAccount.contains(*i))
+            {
+                const quint64 &timeLock=this->lockedAccount.value(*i);
+                //drop the timeouted lock
+                if(timeLock>0 && timeLock<(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
+                {
+                    tempServer.lockedAccount << *i;
+                    this->lockedAccount[*i]=0;
+                }
+                /// \todo already locked, diconnect all to be more safe, but bug here! network split? block during 5min this character login
+                else
+                {
+                    //find the other game server and disconnect character on it
+                    if(Q_UNLIKELY(timeLock==0))
+                    {
+                        QHashIterator<quint32/*serverUniqueKey*/,InternalGameServer> j(gameServers);
+                        while (j.hasNext()) {
+                            j.next();
+                            if(j.value().lockedAccount.contains(*i))
+                            {
+                                static_cast<EpollClientLoginMaster *>(j.value().link)->disconnectForDuplicateConnexionDetected(*i);
+                                gameServers[j.key()].lockedAccount.remove(*i);
+                            }
+                        }
+                        this->lockedAccount[*i]=QDateTime::currentMSecsSinceEpoch()/1000+5*60;//wait 5min before reconnect
+                        static_cast<EpollClientLoginMaster *>(link)->disconnectForDuplicateConnexionDetected(*i);
+                    }
+                    else
+                    {
+                        //recent normal disconnected, just wait the 5s timeout
+                        static_cast<EpollClientLoginMaster *>(link)->disconnectForDuplicateConnexionDetected(*i);
+                    }
+                }
+            }
+            else
+            {
+                tempServer.lockedAccount << *i;
+                this->lockedAccount[*i]=0;
+            }
+            ++i;
+        }
+    }
+
     gameServers[uniqueKey]=tempServer;
     gameServersLinkToUniqueKey[link]=uniqueKey;
 
@@ -203,11 +266,114 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(vo
 
 void CharactersGroup::removeGameServerUniqueKey(void * const link)
 {
-    gameServers.remove(gameServersLinkToUniqueKey.value(link));
+    const quint32 &uniqueKey=gameServersLinkToUniqueKey.value(link);
+    const InternalGameServer &internalGameServer=gameServers.value(uniqueKey);
+    lockedAccountByDisconnectedServer.insert(uniqueKey,internalGameServer.lockedAccount);
+    gameServers.remove(uniqueKey);
     gameServersLinkToUniqueKey.remove(link);
 }
 
 bool CharactersGroup::containsGameServerUniqueKey(const quint32 &serverUniqueKey) const
 {
     return gameServers.contains(serverUniqueKey);
+}
+
+bool CharactersGroup::characterIsLocked(const quint32 &characterId)
+{
+    if(lockedAccount.contains(characterId))
+    {
+        if(lockedAccount.value(characterId)==0)
+            return true;
+        if(lockedAccount.value(characterId)<(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
+        {
+            lockedAccount.remove(characterId);
+            return false;
+        }
+        else
+            return true;
+    }
+    else
+        return false;
+}
+
+//need check if is already locked before this call
+//don't apply on InternalGameServer
+void CharactersGroup::lockTheCharacter(const quint32 &characterId)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(lockedAccount.contains(characterId))
+    {
+        if(lockedAccount.contains(characterId)==0)
+        {
+            qDebug() << QStringLiteral("lockedAccount already contains: %1").arg(characterId);
+            return;
+        }
+        if(lockedAccount.contains(characterId)>QDateTime::currentMSecsSinceEpoch()/1000)
+        {
+            qDebug() << QStringLiteral("lockedAccount already contains not finished timeout: %1").arg(characterId);
+            return;
+        }
+    }
+    QHashIterator<quint32/*serverUniqueKey*/,InternalGameServer> j(gameServers);
+    while (j.hasNext()) {
+        j.next();
+        if(j.value().lockedAccount.contains(characterId))
+        {
+            qDebug() << QStringLiteral("lockedAccount already contains on a game server: %1").arg(characterId);
+            return;
+        }
+    }
+    #endif
+    lockedAccount[characterId]=0;
+}
+
+//don't apply on InternalGameServer
+void CharactersGroup::unlockTheCharacter(const quint32 &characterId)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!lockedAccount.contains(characterId))
+        qDebug() << QStringLiteral("lockedAccount not contains: %1").arg(characterId);
+    else if(lockedAccount.value(characterId)!=0)
+        qDebug() << QStringLiteral("lockedAccount contains set timeout: %1").arg(characterId);
+    #endif
+    lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
+}
+
+void CharactersGroup::waitBeforeReconnect(const quint32 &characterId)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!lockedAccount.contains(characterId))
+        qDebug() << QStringLiteral("lockedAccount not contains: %1").arg(characterId);
+    else if(lockedAccount.value(characterId)!=0)
+        qDebug() << QStringLiteral("lockedAccount contains set timeout: %1").arg(characterId);
+    #endif
+    lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
+}
+
+void CharactersGroup::purgeTheLockedAccount()
+{
+    bool clockDriftDetected=false;
+    QList<quint32> charactedToUnlock;
+    QHashIterator<quint32/*uniqueKey*/,quint64/*can reconnect after this time stamps if !=0, else locked*/> i(lockedAccount);
+    while (i.hasNext()) {
+        i.next();
+        if(i.value()!=0)
+        {
+            if(i.value()<(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
+                charactedToUnlock << i.key();
+            else if(i.value()>((quint64)QDateTime::currentMSecsSinceEpoch()/1000)+3600)
+            {
+                charactedToUnlock << i.key();
+                clockDriftDetected=true;
+            }
+        }
+    }
+    int index=0;
+    while(index<charactedToUnlock.size())
+    {
+        lockedAccount.remove(charactedToUnlock.at(index));
+        index++;
+    }
+    if(clockDriftDetected)
+        qDebug() << QStringLiteral("Some locked account for more than 1h, clock drift?");
 }

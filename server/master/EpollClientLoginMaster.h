@@ -28,6 +28,7 @@ public:
     bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId, const quint32 &accountId);
     void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
     void selectCharacter_ReturnFailed(const quint8 &query_id, const quint8 &errorCode);
+    void disconnectForDuplicateConnexionDetected(const quint32 &characterId);
     static void broadcastGameServerChange();
     bool sendRawSmallPacket(const char * const data,const int &size);
     enum EpollClientLoginMasterStat
@@ -72,11 +73,13 @@ public:
     static char characterSelectionIsWrongBufferServerNotFound[64];
     static quint8 characterSelectionIsWrongBufferSize;
     static char selectCharaterRequestOnGameServer[3/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
-    static char getTokenForCharacterSelect[3/*header*/+4+4];
+    static unsigned char duplicateConnexionDetected[2/*header*/+4];
+    static unsigned char getTokenForCharacterSelect[3/*header*/+4+4];
     static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
     +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
     +1000];
-    static char tempBuffer[4096];
+    static char tempBuffer[16*4096];
+    static char tempBuffer2[16*4096];
     static unsigned char replyToRegisterLoginServerBaseOffset;
     static char loginSettingsAndCharactersGroup[256*1024];
     static unsigned int loginSettingsAndCharactersGroupSize;

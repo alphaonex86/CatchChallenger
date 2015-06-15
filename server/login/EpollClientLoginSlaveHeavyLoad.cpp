@@ -433,13 +433,13 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         if(maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !EpollClientLoginSlave::maxAccountIdRequested)
         {
             EpollClientLoginSlave::maxAccountIdRequested=true;
-            if(linkToMaster->queryNumberList.empty())
+            if(LinkToMaster::linkToMaster->queryNumberList.empty())
             {
                 errorParsingLayer("Unable to get query id at createAccount_return");
                 return;
             }
-            const quint8 &queryNumber=linkToMaster->queryNumberList.back();
-            linkToMaster->queryNumberList.pop_back();
+            const quint8 &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
+            LinkToMaster::linkToMaster->queryNumberList.pop_back();
             EpollClientLoginSlave::maxAccountIdRequest[0x03]=queryNumber;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             queryReceived.remove(queryNumber);
@@ -450,7 +450,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
                 errorParsingLayer("Unable to send at createAccount_return");
                 return;
             }
-            linkToMaster->newFullOutputQuery(0x11,0x01,queryNumber);
+            LinkToMaster::linkToMaster->newFullOutputQuery(0x11,0x01,queryNumber);
         }
         account_id=maxAccountIdList.takeFirst();
         dbQueryWriteLogin(QString(PreparedDBQueryLogin::db_query_insert_login).arg(account_id).arg(QString(askLoginParam->login.toHex())).arg(QString(askLoginParam->pass.toHex())).arg(QDateTime::currentDateTime().toTime_t()).toUtf8().constData());
@@ -515,7 +515,7 @@ void EpollClientLoginSlave::selectCharacter(const quint8 &query_id,const quint32
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::characterSelectionIsWrongBufferServerNotFound),EpollClientLoginSlave::characterSelectionIsWrongBufferSize);
         return;
     }
-    if(!EpollClientLoginSlave::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
+    if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
         EpollClientLoginSlave::characterSelectionIsWrongBufferServerInternalProblem[1]=query_id;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK

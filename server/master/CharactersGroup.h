@@ -28,14 +28,24 @@ public:
 
         quint16 currentPlayer;
         quint16 maxPlayer;
+
+        QSet<quint32> lockedAccount;
     };
 
     BaseClassSwitch::Type getType() const;
     InternalGameServer * addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host, const quint16 &port,
                                 const QString &metaData, const quint32 &logicalGroupIndex,
-                                const quint16 &currentPlayer, const quint16 &maxPlayer);
+                                const quint16 &currentPlayer, const quint16 &maxPlayer, const QSet<quint32> &lockedAccount);
     void removeGameServerUniqueKey(void * const link);
     bool containsGameServerUniqueKey(const quint32 &serverUniqueKey) const;
+    bool characterIsLocked(const quint32 &characterId);
+    //need check if is already locked before this call
+    //don't apply on InternalGameServer
+    void lockTheCharacter(const quint32 &characterId);
+    //don't apply on InternalGameServer
+    void unlockTheCharacter(const quint32 &characterId);
+    void waitBeforeReconnect(const quint32 &characterId);
+    void purgeTheLockedAccount();
 
     quint32 maxClanId;
     quint32 maxCharacterId;
@@ -47,7 +57,6 @@ public:
     static int serverWaitedToBeReady;
     static QHash<QString,CharactersGroup *> hash;
     static QList<CharactersGroup *> list;
-    QSet<quint32> lockedAccount;
     QString name;
     quint8 index;
 private:
@@ -63,6 +72,8 @@ private:
 
 private:
     EpollPostgresql *databaseBaseCommon;
+    QHash<quint32/*uniqueKey*/,quint64/*can reconnect after this time stamps if !=0, else locked*/> lockedAccount;
+    QHash<quint32/*uniqueKey*/,QSet<quint32/*lockedAccount*/> > lockedAccountByDisconnectedServer;
 };
 }
 

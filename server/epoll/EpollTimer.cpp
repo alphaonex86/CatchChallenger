@@ -18,6 +18,13 @@ EpollTimer::EpollTimer() :
 {
 }
 
+EpollTimer::~EpollTimer()
+{
+    stop();
+    //mostly bad usage for my own upper class
+    abort();
+}
+
 BaseClassSwitch::Type EpollTimer::getType() const
 {
     return BaseClassSwitch::Type::Timer;
@@ -109,6 +116,11 @@ bool EpollTimer::stop()
     ::close(tfd);
     tfd=-1;
     return true;
+}
+
+bool EpollTimer::active()
+{
+    return tfd!=-1;
 }
 
 void EpollTimer::setInterval(const unsigned int &msec,const unsigned int &offset)

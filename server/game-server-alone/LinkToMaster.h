@@ -2,25 +2,31 @@
 #define LOGINLINKTOMASTER_H
 
 #include "../../general/base/ProtocolParsing.h"
+#include "TimerReconnectOnTheMaster.h"
 #include <vector>
 #include <random>
 #include <QSettings>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 namespace CatchChallenger {
-class LoginLinkToMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
+class LinkToMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
 {
 public:
-    explicit LoginLinkToMaster(
+    explicit LinkToMaster(
         #ifdef SERVERSSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
         #endif
             );
-    ~LoginLinkToMaster();
+    ~LinkToMaster();
     enum Stat
     {
-        None,
+        Unconnected,
+        Connecting,
+        Connected,
         ProtocolGood,
         LoginInProgress,
         Logged,
@@ -38,17 +44,21 @@ public:
     //to unordered reply
     QHash<quint8/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
     static char protocolReplyNoMoreToken[4];
+    static char protocolReplyAlreadyConnectedToken[4];
     static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static char sendDisconnectedPlayer[2+4];
     static char sendCurrentPlayer[2+2];
     static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
 
-    static LoginLinkToMaster *loginLinkToMaster;
+    static LinkToMaster *linkToMaster;
+    static int linkToMasterSocketFd;
+    static bool haveTheFirstSslHeader;
     std::vector<quint8> queryNumberList;
-    std::vector<quint32> disconnectedClientsDatabaseId;
     BaseClassSwitch::Type getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
+    void connectInternal();
+    void setConnexionSettings();
     bool registerGameServer(const QString &exportedXml);
     void generateToken();
     void sendProtocolHeader();
@@ -57,6 +67,8 @@ public:
     void currentPlayerChange(const quint16 &currentPlayer);
     void askMoreMaxMonsterId();
     void askMoreMaxClanId();
+    void tryReconnect();
+    void readTheFirstSslHeader();
 protected:
     void disconnectClient();
     void errorParsingLayer(const QString &error);
@@ -79,6 +91,7 @@ protected:
 private:
     QSettings * settings;
     std::mt19937 rng;
+    static sockaddr_in serv_addr;
 };
 }
 

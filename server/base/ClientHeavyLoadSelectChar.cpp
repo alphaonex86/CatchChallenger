@@ -12,6 +12,9 @@
 #include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
 #include "DictionaryServer.h"
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "../game-server-alone/LinkToMaster.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -156,6 +159,11 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
         public_and_private_informations.clan_leader=false;//no clan
     }
 
+    if(character_loaded)
+    {
+        characterSelectionIsWrong(query_id,0x03,QLatin1String("character_loaded already to true"));
+        return;
+    }
     const quint32 &account_id=QString(GlobalServerData::serverPrivateVariables.db_common->value(0)).toUInt(&ok);
     if(!ok)
     {
@@ -165,11 +173,6 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     if(this->account_id!=account_id)
     {
         characterSelectionIsWrong(query_id,0x02,QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(this->account_id));
-        return;
-    }
-    if(character_loaded)
-    {
-        characterSelectionIsWrong(query_id,0x03,QLatin1String("character_loaded already to true"));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.connected_players_id_list.contains(characterId))
@@ -260,24 +263,27 @@ void Client::selectCharacter_return(const quint8 &query_id,const quint32 &charac
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
-        errorOutput(QStringLiteral("profile common and server don't match"));
+        characterSelectionIsWrong(query_id,0x04,QStringLiteral("profile common and server don't match"));
         return;
     }
     #endif
     if(starter>=DictionaryLogin::dictionary_starter_database_to_internal.size())
     {
-        errorOutput(QStringLiteral("starter %1 >= DictionaryLogin::dictionary_starter_database_to_internal.size() %2").arg(starter).arg(DictionaryLogin::dictionary_starter_database_to_internal.size()));
+        characterSelectionIsWrong(query_id,0x04,QStringLiteral("starter %1 >= DictionaryLogin::dictionary_starter_database_to_internal.size() %2").arg(starter).arg(DictionaryLogin::dictionary_starter_database_to_internal.size()));
         return;
     }
     profileIndex=DictionaryLogin::dictionary_starter_database_to_internal.at(starter);
     if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
     {
         errorOutput(QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
+        #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        LinkToMaster::linkToMaster->characterDisconnected(characterId);
+        #endif
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).valid)
     {
-        errorOutput(QStringLiteral("profile index: %1 profil not valid").arg(profileIndex));
+        characterSelectionIsWrong(query_id,0x04,QStringLiteral("profile index: %1 profil not valid").arg(profileIndex));
         return;
     }
 
@@ -317,7 +323,7 @@ void Client::selectCharacterServer(const quint8 &query_id, const quint32 &charac
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryServer::db_query_character_server_by_id.isEmpty())
     {
-        errorOutput(QStringLiteral("selectCharacterServer() Query is empty, bug"));
+        characterSelectionIsWrong(query_id,0x04,QStringLiteral("selectCharacterServer() Query is empty, bug"));
         return;
     }
     #endif
@@ -379,7 +385,7 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
         abort();
     }
     #endif
-    /*x(0),y(1),orientation(2),map(3),
+    /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
     market_cash(12)*/
@@ -444,7 +450,7 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
         return;
     }
     Orientation orientation;
-    const quint32 &orientationInt=QString(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+    const quint32 &orientationInt=QString(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
     if(ok)
     {
         if(orientationInt>=1 && orientationInt<=4)
@@ -461,7 +467,7 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
         normalOutput(QStringLiteral("Wrong orientation (not number) corrected with bottom: %1").arg(QString(GlobalServerData::serverPrivateVariables.db_server->value(5))));
     }
     //all is rights
-    const quint32 &map_database_id=QString(GlobalServerData::serverPrivateVariables.db_server->value(3)).toUInt(&ok);
+    const quint32 &map_database_id=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id is not a number"));
@@ -478,13 +484,13 @@ void Client::selectCharacterServer_return(const quint8 &query_id,const quint32 &
         characterSelectionIsWrong(query_id,0x04,QLatin1String("map_database_id have not reverse"));
         return;
     }
-    const quint8 &x=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+    const quint8 &x=QString(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("x coord is not a number"));
         return;
     }
-    const quint8 &y=QString(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+    const quint8 &y=QString(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,QLatin1String("y coord is not a number"));
