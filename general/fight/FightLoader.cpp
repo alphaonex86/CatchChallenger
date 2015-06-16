@@ -1571,6 +1571,7 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder
         }
         else
         {
+            #ifndef CATCHCHALLENGER_CLASS_MASTER
             if(monsterSkills.value(0).level.first().life.isEmpty())
             {
                 monsterSkills.remove(0);
@@ -1594,6 +1595,7 @@ QHash<quint16,Skill> FightLoader::loadMonsterSkill(const QString &folder
                     qDebug() << (QStringLiteral("Warning: no valid life effect for the default attack (id: 0): success=100%: %1, on=ApplyOn_AloneEnemy: %2, quantity<0: %3 for skill").arg(life.success).arg(life.effect.on).arg(life.effect.quantity));
                 }
             }
+            #endif
         }
         file_index++;
     }
