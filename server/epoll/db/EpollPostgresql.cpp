@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include "../Epoll.h"
 #include "../../../general/base/GeneralVariable.h"
+#include <chrono>
+#include <ctime>
+#include <thread>
 
 char EpollPostgresql::emptyString[]={'\0'};
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
@@ -104,14 +107,21 @@ bool EpollPostgresql::syncConnect(const char * const fullConenctString)
     if(connStatusType==CONNECTION_BAD)
     {
         std::cerr << "pg connexion not OK, retrying..." << std::endl;
+
         unsigned int index=0;
         while(index<considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
         {
-            sleep(tryInterval);
-            //std::cerr << "Connecting to postgresql ... (" << (index+1) << ")" << std::endl;
+            auto start = std::chrono::high_resolution_clock::now();
             PQfinish(conn);
             conn=PQconnectdb(strCoPG);
             connStatusType=PQstatus(conn);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> elapsed = end-start;
+            if(elapsed.count()<5*tryInterval && connStatusType==CONNECTION_BAD)
+            {
+                const unsigned int ms=5*tryInterval-elapsed.count();
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+            }
             index++;
         }
         if(connStatusType==CONNECTION_BAD)
