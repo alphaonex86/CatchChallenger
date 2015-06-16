@@ -1,13 +1,75 @@
-createuser -P login -U postgres
-echo 'CREATE DATABASE catchchallenger_login;' | psql postgres login
-echo 'CREATE DATABASE catchchallenger_base;' | psql postgres base
-echo 'CREATE DATABASE catchchallenger_common;' | psql postgres common
-echo 'CREATE DATABASE catchchallenger_server;' | psql postgres server
-psql catchchallenger_login login < catchchallenger-postgresql-login.sql
-psql catchchallenger_base base < catchchallenger-postgresql-base.sql
-psql catchchallenger_common common < catchchallenger-postgresql-common.sql
-psql catchchallenger_server server < catchchallenger-postgresql-server.sql
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_login login
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_base base
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_common common
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_server server
+= Simplified part =
+echo 'CREATE DATABASE catchchallenger_login;' | psql postgres postgres
+echo 'CREATE DATABASE catchchallenger_base;' | psql postgres postgres
+echo 'CREATE DATABASE catchchallenger_common;' | psql postgres postgres
+echo 'CREATE DATABASE catchchallenger_server;' | psql postgres postgres
+psql catchchallenger_login postgres < catchchallenger-postgresql-login.sql
+psql catchchallenger_base postgres < catchchallenger-postgresql-base.sql
+psql catchchallenger_common postgres < catchchallenger-postgresql-common.sql
+psql catchchallenger_server postgres < catchchallenger-postgresql-server.sql
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_login postgres
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_base postgres
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_common postgres
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_server postgres
+
+= Custom part =
+Based on my usage (automatic account creation and character creation/delete):
+* Login db
+createuser -P master -U postgres
+createuser -P login1 -U postgres
+createuser -P login2 -U postgres
+echo 'CREATE DATABASE catchchallenger_login;' | psql postgres postgres
+psql catchchallenger_login postgres < catchchallenger-postgresql-login.sql
+echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO master;' | psql catchchallenger_login postgres
+echo 'GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO login1;' | psql catchchallenger_login postgres
+echo 'GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO login2;' | psql catchchallenger_login postgres
+* Base db
+createuser -P master -U postgres
+createuser -P server1 -U postgres
+createuser -P server2 -U postgres
+createuser -P server3 -U postgres
+echo 'CREATE DATABASE catchchallenger_base;' | psql postgres postgres
+psql catchchallenger_base postgres < catchchallenger-postgresql-base.sql
+echo 'GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO master;' | psql catchchallenger_base postgres
+echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO server1;' | psql catchchallenger_base postgres
+echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO server2;' | psql catchchallenger_base postgres
+echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO server3;' | psql catchchallenger_base postgres
+* Base common 1
+createuser -P master -U postgres
+createuser -P login1 -U postgres
+createuser -P login2 -U postgres
+createuser -P server1 -U postgres
+createuser -P server2 -U postgres
+echo 'CREATE DATABASE catchchallenger_common;' | psql postgres postgres
+psql catchchallenger_common postgres < catchchallenger-postgresql-common.sql
+echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO master;' | psql catchchallenger_common postgres
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO login1;' | psql catchchallenger_common postgres
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO login2;' | psql catchchallenger_common postgres
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO server1;' | psql catchchallenger_common postgres
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO server2;' | psql catchchallenger_common postgres
+* Base common 2
+createuser -P master -U postgres
+createuser -P login1 -U postgres
+createuser -P login2 -U postgres
+createuser -P server3 -U postgres
+echo 'CREATE DATABASE catchchallenger_common;' | psql postgres postgres
+psql catchchallenger_common postgres < catchchallenger-postgresql-common.sql
+echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO master;' | psql catchchallenger_common postgres
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO login1;' | psql catchchallenger_common postgres
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO login2;' | psql catchchallenger_common postgres
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO server3;' | psql catchchallenger_common postgres
+* Base server 1
+createuser -P server1 -U postgres
+echo 'CREATE DATABASE catchchallenger_server;' | psql postgres postgres
+psql catchchallenger_server postgres < catchchallenger-postgresql-server.sql
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO server1;' | psql catchchallenger_server postgres
+* Base server 2
+createuser -P server2 -U postgres
+echo 'CREATE DATABASE catchchallenger_server;' | psql postgres postgres
+psql catchchallenger_server postgres < catchchallenger-postgresql-server.sql
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO server2;' | psql catchchallenger_server postgres
+* Base server 3
+createuser -P server3 -U postgres
+echo 'CREATE DATABASE catchchallenger_server;' | psql postgres postgres
+psql catchchallenger_server postgres < catchchallenger-postgresql-server.sql
+echo 'GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO server3;' | psql catchchallenger_server postgres
