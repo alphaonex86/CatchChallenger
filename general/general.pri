@@ -1,4 +1,4 @@
-!mac:CONFIG += c++11
+CONFIG += c++11
 
 QT       += core gui network xml
 

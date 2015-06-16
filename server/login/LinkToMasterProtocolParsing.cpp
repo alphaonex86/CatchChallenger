@@ -572,8 +572,15 @@ void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                                 forcedskinListIndex++;
                             }
                             //cash
-                            profile.cash=le64toh(*reinterpret_cast<quint64 *>(const_cast<char *>(rawData+cursor)));
-                            cursor+=sizeof(quint64);
+                            {
+                                /* will crash on ARM with grsec due to unaligned 64Bits access
+                                profile.cash=le64toh(*reinterpret_cast<quint64 *>(const_cast<char *>(rawData+cursor))); */
+
+                                quint64 tempCash=0;
+                                memcpy(&tempCash,rawData+cursor,8);
+                                profile.cash=le64toh(tempCash);
+                                cursor+=sizeof(quint64);
+                            }
 
                             //monster
                             if((size-cursor)<1)

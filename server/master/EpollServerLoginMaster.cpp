@@ -581,18 +581,26 @@ void EpollServerLoginMaster::doTheLogicalGroup(QSettings &settings)
             //translation
             {
                 textToConvert=settings.value(QStringLiteral("xml")).toString();
-                if(textToConvert.size()>4*1024)
+                if(textToConvert.size()>0)
                 {
-                    std::cerr << "translation too hurge (abort)" << std::endl;
-                    abort();
+                    if(textToConvert.size()>4*1024)
+                    {
+                        std::cerr << "translation too hurge (abort)" << std::endl;
+                        abort();
+                    }
+                    int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,rawServerList+rawServerListSize);
+                    if(newSize==0)
+                    {
+                        std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
+                        abort();
+                    }
+                    rawServerListSize+=newSize;
                 }
-                int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,rawServerList+rawServerListSize);
-                if(newSize==0)
+                else
                 {
-                    std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
-                    abort();
+                    *reinterpret_cast<quint16 *>(rawServerList+rawServerListSize)=0;//not convert to le16... 0 remain 0
+                    rawServerListSize+=2;
                 }
-                rawServerListSize+=newSize;
             }
 
             logicalGroup++;
@@ -918,7 +926,9 @@ void EpollServerLoginMaster::loadTheProfile()
                 }
             }
             //cash
-            *reinterpret_cast<quint64 *>(rawServerListForC211+rawServerListForC211Size)=htole64(profile.cash);
+            /* crash for unaligned 64Bits on ARM + grsec
+            *reinterpret_cast<quint64 *>(rawServerListForC211+rawServerListForC211Size)=htole64(profile.cash); */
+            memcpy(rawServerListForC211+rawServerListForC211Size,&htole64(profile.cash),8);
             rawServerListForC211Size+=sizeof(quint64);
 
             //monster
