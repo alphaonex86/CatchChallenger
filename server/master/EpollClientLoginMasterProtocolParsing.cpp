@@ -384,6 +384,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 *reinterpret_cast<quint32 *>(EpollClientLoginMaster::tempBuffer+1)=(quint32)htole32(newUniqueKey);
                 //monster id list
                 {
+                    if((pos+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                    {
+                        std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
@@ -395,6 +400,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 }
                 //clan id list
                 {
+                    if((pos+4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                    {
+                        std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
                     {
@@ -413,6 +423,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 EpollClientLoginMaster::tempBuffer[0x00]=0x01;
                 //monster id list
                 {
+                    if((pos+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                    {
+                        std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
@@ -424,6 +439,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                 }
                 //clan id list
                 {
+                    if((pos+4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                    {
+                        std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
                     {
@@ -477,6 +497,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             }
             //send the id list
             unsigned int pos=EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset;
+            if((pos+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToRegisterLoginServer))
+            {
+                std::cerr << "EpollClientLoginMaster::replyToRegisterLoginServer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
             int index=0;
             while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
             {
@@ -486,6 +511,11 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             pos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
             maxAccountId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
             {
+                if((pos+2*4*CATCHCHALLENGER_SERVER_MAXIDBLOCK*CharactersGroup::list.size())>=sizeof(EpollClientLoginMaster::replyToRegisterLoginServer))
+                {
+                    std::cerr << "EpollClientLoginMaster::replyToRegisterLoginServer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
                 int charactersGroupIndex=0;
                 while(charactersGroupIndex<CharactersGroup::list.size())
                 {

@@ -92,12 +92,12 @@ int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const 
             connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
-            if(elapsed.count()<(quint32)tryInterval*1000 && connStatusType<0)
+            index++;
+            if(elapsed.count()<(quint32)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
             {
                 const unsigned int ms=(quint32)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
-            index++;
         }
         if(connStatusType<0)
         {

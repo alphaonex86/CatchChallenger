@@ -119,16 +119,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
         //Get first data and send the login
         case 0x04:
         {
-            if(!haveTheServerList)
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("don't have server list before this reply main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return;
-            }
-            if(!haveTheLogicalGroupList)
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("don't have logical group list before this reply main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return;
-            }
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
             {
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -162,6 +152,16 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
             }
             else
             {
+                if(!haveTheServerList)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("don't have server list before this reply main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    return;
+                }
+                if(!haveTheLogicalGroupList)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("don't have logical group list before this reply main ident: %1 and queryNumber: %2, line: %3").arg(mainCodeType).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    return;
+                }
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_pseudo_size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
