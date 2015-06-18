@@ -192,6 +192,7 @@ void BaseWindow::updateServerList()
             {
                 serverByCharacterGroup[server.charactersGroupIndex].first=1;
                 serverByCharacterGroup[server.charactersGroupIndex].second=serverByCharacterGroupTempIndexToDisplay;
+                serverByCharacterGroupTempIndexToDisplay++;
             }
             index++;
         }
@@ -247,19 +248,32 @@ void BaseWindow::updateServerList()
     ui->serverList->expandAll();
 }
 
-void BaseWindow::addToServerList(const LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView)
+bool ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverFromPoolForDisplay) const
+{
+    if(serverFromPoolForDisplay.uniqueKey<this->uniqueKey)
+        return true;
+    else
+        return false;
+}
+
+void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView)
 {
     item->setText(0,logicialGroup.name);
     {
+        //to order the group
+        QStringList keys=logicialGroup.logicialGroupList.keys();
+        keys.sort();
         //list the group
-        QHashIterator<QString,LogicialGroup> i(logicialGroup.logicialGroupList);
-        while (i.hasNext()) {
-            i.next();
-            QTreeWidgetItem *itemGroup=new QTreeWidgetItem(item);
-            addToServerList(i.value(),itemGroup,currentDate,fullView);
+        int index=0;
+        while(index<keys.size())
+        {
+            QTreeWidgetItem * const itemGroup=new QTreeWidgetItem(item);
+            addToServerList(logicialGroup.logicialGroupList[keys.value(index)],itemGroup,currentDate,fullView);
+            index++;
         }
     }
     {
+        qSort(logicialGroup.servers);
         //list the server
         int index=0;
         while(index<logicialGroup.servers.size())
