@@ -443,7 +443,7 @@ private slots:
     void updateTheTurtle();
     void on_serverListBack_clicked();
     void updateServerList();
-    void addToServerList(const LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView=true);
+    void addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const quint64 &currentDate, const bool &fullView=true);
     void on_serverList_activated(const QModelIndex &index);
     void on_serverListSelect_clicked();
 protected slots:

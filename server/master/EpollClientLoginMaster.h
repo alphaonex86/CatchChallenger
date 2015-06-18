@@ -77,7 +77,7 @@ public:
     static unsigned char getTokenForCharacterSelect[3/*header*/+4+4];
     static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
     +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
-    +1000];
+    +16*1024];
     static char tempBuffer[16*4096];
     static char tempBuffer2[16*4096];
     static unsigned char replyToRegisterLoginServerBaseOffset;
@@ -91,7 +91,7 @@ public:
     static unsigned int serverLogicalGroupListSize;
     static char loginPreviousToReplyCache[256*1024*3];
     static unsigned int loginPreviousToReplyCacheSize;
-    static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK];
+    static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+1024];
     static QHash<QString,int> logicalGroupHash;
 
     static QList<EpollClientLoginMaster *> gameServers;

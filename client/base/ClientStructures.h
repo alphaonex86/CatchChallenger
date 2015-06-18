@@ -11,8 +11,9 @@ enum MapEvent
     MapEvent_DoubleClick,
     MapEvent_SimpleClick
 };
-struct ServerFromPoolForDisplay
+class ServerFromPoolForDisplay
 {
+public:
     //connect info
     QString host;
     quint16 port;
@@ -29,6 +30,8 @@ struct ServerFromPoolForDisplay
 
     //select info
     quint8 serverOrdenedListIndex;
+
+    bool operator<(const ServerFromPoolForDisplay &serverFromPoolForDisplay) const;
 };
 struct ServerFromPoolForDisplayTemp
 {

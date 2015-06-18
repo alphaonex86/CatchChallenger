@@ -9,42 +9,45 @@
 
 QXzDecodeThread::QXzDecodeThread()
 {
-	moveToThread(this);
-	DataToDecode=NULL;
-	error=false;
+    moveToThread(this);
+    DataToDecode=NULL;
+    error=false;
 }
 
 QXzDecodeThread::~QXzDecodeThread()
 {
-	if(DataToDecode!=NULL)
-		delete DataToDecode;
+    if(DataToDecode!=NULL)
+        delete DataToDecode;
 }
 
 void QXzDecodeThread::setData(QByteArray data,quint64 maxSize)
 {
-	if(DataToDecode!=NULL)
-		delete DataToDecode;
-	DataToDecode=new QXzDecode(data,maxSize);
+    if(DataToDecode!=NULL)
+        delete DataToDecode;
+    DataToDecode=new QXzDecode(data,maxSize);
 }
 
 bool QXzDecodeThread::errorFound()
 {
-	return error;
+    return error;
 }
 
 QString QXzDecodeThread::errorString()
 {
-	return DataToDecode->errorString();
+    return DataToDecode->errorString();
 }
 
 QByteArray QXzDecodeThread::decodedData()
 {
-	return DataToDecode->decodedData();
+    return DataToDecode->decodedData();
 }
 
 void QXzDecodeThread::run()
 {
-	error=!DataToDecode->decode();
-	emit decodedIsFinish();
+    if(DataToDecode!=NULL)
+        error=!DataToDecode->decode();
+    else
+        error=true;
+    emit decodedIsFinish();
 }
 
