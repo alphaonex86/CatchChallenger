@@ -821,7 +821,10 @@ void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             0xC2,0x0E,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
                     }
                     if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
+                    {
+                        EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
                         memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+                    }
                 }
             return;
             default:

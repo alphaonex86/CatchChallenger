@@ -703,7 +703,7 @@ void Client::server_list_return(const quint8 &query_id, const QByteArray &previo
                 out << (quint16)255;
             else
                 out << (quint16)65535;
-            out << (quint16)0x0000;//current player
+            out << (quint16)255/2;//current player
         }
         sendFullPacket(0xC2,0x0E,outputData.constData(),outputData.size());
     }

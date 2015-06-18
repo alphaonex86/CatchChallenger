@@ -1190,13 +1190,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                 //Internal server list for the current pool
                 case 0x0E:
                 {
-                    qDebug() << QString(QByteArray(data).toHex());
-                    //for addLogicalServer(
-                    if(!haveTheLogicalGroupList)
-                    {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("!haveTheLogicalGroupList main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                        return;
-                    }
+                    haveTheServerList=true;
 
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
@@ -1504,7 +1498,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                         }
                         serverListIndex++;
                     }
-                    haveTheServerList=true;
                 }
                 break;
                 //Logical group
