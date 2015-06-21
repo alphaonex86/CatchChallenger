@@ -1,6 +1,7 @@
 #include "LinkToMaster.h"
 #include "../base/Client.h"
 #include "../base/GlobalServerData.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -196,6 +197,11 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         abort();
                     return;
                 }
+                if(size!=1)
+                {
+                    std::cerr << "reply to 07 size remaining != 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
                 stat=Stat::ProtocolGood;
                 registerGameServer(CommonSettingsServer::commonSettingsServer.exportedXml);
                 return;
@@ -259,6 +265,24 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         GlobalServerData::serverPrivateVariables.maxClanId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
                         pos+=4;
                         index++;
+                    }
+                    if((size-pos)<(1+2+1+2))
+                    {
+                        std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+                    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=data[pos];
+                    pos+=1;
+                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                    pos+=2;
+                    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=data[pos];
+                    pos+=1;
+                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<quint16 *>(const_cast<char *>(data+pos)));
+                    pos+=2;
+                    if((size-pos)!=0)
+                    {
+                        std::cerr << "reply to 07 size remaining != 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
                     }
                 }
                 stat=Stat::Logged;

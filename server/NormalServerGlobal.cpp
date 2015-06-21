@@ -28,8 +28,28 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
 
     if(!settings->contains(QLatin1Literal("max-players")))
         settings->setValue(QLatin1Literal("max-players"),200);
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(!settings->contains(QLatin1Literal("announce")))
         settings->setValue(QLatin1Literal("announce"),false);
+    if(!settings->contains(QLatin1Literal("character_delete_time")))
+        settings->setValue(QLatin1Literal("character_delete_time"),604800);
+    if(!settings->contains(QLatin1Literal("max_pseudo_size")))
+        settings->setValue(QLatin1Literal("max_pseudo_size"),20);
+    if(!settings->contains(QLatin1Literal("max_character")))
+        settings->setValue(QLatin1Literal("max_character"),3);
+    if(!settings->contains(QLatin1Literal("min_character")))
+        settings->setValue(QLatin1Literal("min_character"),1);
+    if(!settings->contains(QLatin1Literal("automatic_account_creation")))
+        settings->setValue(QLatin1Literal("automatic_account_creation"),false);
+    if(!settings->contains(QLatin1Literal("maxPlayerMonsters")))
+        settings->setValue(QLatin1Literal("maxPlayerMonsters"),8);
+    if(!settings->contains(QLatin1Literal("maxWarehousePlayerMonsters")))
+        settings->setValue(QLatin1Literal("maxWarehousePlayerMonsters"),30);
+    if(!settings->contains(QLatin1Literal("maxPlayerItems")))
+        settings->setValue(QLatin1Literal("maxPlayerItems"),30);
+    if(!settings->contains(QLatin1Literal("maxWarehousePlayerItems")))
+        settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),150);
+    #endif
     if(!settings->contains(QLatin1Literal("server-ip")))
         settings->setValue(QLatin1Literal("server-ip"),QString());
     if(!settings->contains(QLatin1Literal("pvp")))
@@ -46,16 +66,6 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("tolerantMode"),false);
     if(!settings->contains(QLatin1Literal("compression")))
         settings->setValue(QLatin1Literal("compression"),QLatin1Literal("zlib"));
-    if(!settings->contains(QLatin1Literal("character_delete_time")))
-        settings->setValue(QLatin1Literal("character_delete_time"),604800);
-    if(!settings->contains(QLatin1Literal("max_pseudo_size")))
-        settings->setValue(QLatin1Literal("max_pseudo_size"),20);
-    if(!settings->contains(QLatin1Literal("max_character")))
-        settings->setValue(QLatin1Literal("max_character"),3);
-    if(!settings->contains(QLatin1Literal("min_character")))
-        settings->setValue(QLatin1Literal("min_character"),1);
-    if(!settings->contains(QLatin1Literal("automatic_account_creation")))
-        settings->setValue(QLatin1Literal("automatic_account_creation"),false);
     if(!settings->contains(QLatin1Literal("anonymous")))
         settings->setValue(QLatin1Literal("anonymous"),false);
     if(!settings->contains(QLatin1Literal("server_message")))
@@ -76,6 +86,8 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("httpDatapackMirror"),QString());
     if(!settings->contains(QLatin1Literal("datapackCache")))
         settings->setValue(QLatin1Literal("datapackCache"),-1);
+    if(!settings->contains(QLatin1Literal("plantOnlyVisibleByPlayer")))
+        settings->setValue(QLatin1Literal("plantOnlyVisibleByPlayer"),true);
     if(!settings->contains(QLatin1Literal("useSsl")))
     #ifdef Q_OS_LINUX
         settings->setValue(QLatin1Literal("useSsl"),false);
@@ -97,14 +109,6 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
     }
     if(!settings->contains(QLatin1Literal("subDatapackCode")))
         settings->setValue(QLatin1Literal("subDatapackCode"),QString());
-    if(!settings->contains(QLatin1Literal("maxPlayerMonsters")))
-        settings->setValue(QLatin1Literal("maxPlayerMonsters"),8);
-    if(!settings->contains(QLatin1Literal("maxWarehousePlayerMonsters")))
-        settings->setValue(QLatin1Literal("maxWarehousePlayerMonsters"),30);
-    if(!settings->contains(QLatin1Literal("maxPlayerItems")))
-        settings->setValue(QLatin1Literal("maxPlayerItems"),30);
-    if(!settings->contains(QLatin1Literal("maxWarehousePlayerItems")))
-        settings->setValue(QLatin1Literal("maxWarehousePlayerItems"),150);
 
     if(!settings->contains(QLatin1Literal("exportedXml")))
         settings->setValue(QLatin1Literal("exportedXml"),QString());
