@@ -57,10 +57,12 @@ void send_settings()
     NormalServerSettings formatedServerNormalSettings=server->getNormalSettings();
 
     //common var
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     CommonSettingsCommon::commonSettingsCommon.min_character					= settings->value(QLatin1Literal("min_character")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.max_character					= settings->value(QLatin1Literal("max_character")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= settings->value(QLatin1Literal("max_pseudo_size")).toUInt();
     CommonSettingsCommon::commonSettingsCommon.character_delete_time			= settings->value(QLatin1Literal("character_delete_time")).toUInt();
+    #endif
     CommonSettingsServer::commonSettingsServer.useSP                            = settings->value(QLatin1Literal("useSP")).toBool();
     CommonSettingsServer::commonSettingsServer.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettingsServer::commonSettingsServer.useSP;
     CommonSettingsServer::commonSettingsServer.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();

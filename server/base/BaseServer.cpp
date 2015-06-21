@@ -124,15 +124,17 @@ BaseServer::BaseServer() :
     CommonSettingsServer::commonSettingsServer.chat_allow_local       = true;
     CommonSettingsServer::commonSettingsServer.chat_allow_all         = true;
     CommonSettingsServer::commonSettingsServer.chat_allow_private     = true;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     CommonSettingsCommon::commonSettingsCommon.max_character          = 3;
     CommonSettingsCommon::commonSettingsCommon.min_character          = 0;
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size        = 20;
+    CommonSettingsCommon::commonSettingsCommon.character_delete_time  = 604800; // 7 day
+    #endif
     CommonSettingsServer::commonSettingsServer.rates_gold             = 1.0;
     CommonSettingsServer::commonSettingsServer.rates_drop             = 1.0;
     CommonSettingsServer::commonSettingsServer.rates_xp               = 1.0;
     CommonSettingsServer::commonSettingsServer.rates_xp_pow           = 1.0;
     CommonSettingsServer::commonSettingsServer.factoryPriceChange     = 20;
-    CommonSettingsCommon::commonSettingsCommon.character_delete_time  = 604800; // 7 day
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=30;
     GlobalServerData::serverSettings.fightSync                         = GameServerSettings::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.positionTeleportSync              = true;
@@ -3101,6 +3103,7 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval=1;
     }
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     /*if(CommonSettingsCommon::commonSettingsCommon.min_character<0)
     {
         qDebug() << QStringLiteral("CommonSettingsCommon::commonSettingsCommon.min_character<0");
@@ -3121,6 +3124,7 @@ void BaseServer::loadAndFixSettings()
         qDebug() << QStringLiteral("CommonSettingsCommon::commonSettingsCommon.character_delete_time<=0");
         CommonSettingsCommon::commonSettingsCommon.character_delete_time=7*24*3600;
     }
+    #endif
     if(CommonSettingsServer::commonSettingsServer.useSP)
     {
         if(CommonSettingsServer::commonSettingsServer.autoLearn)
