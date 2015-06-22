@@ -41,7 +41,7 @@ void BaseServer::preload_plant_on_map_sql()
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_plant_on_map_static)==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
-        preload_dictionary_map();
+        preload_market_monsters_sql();
     }
 }
 
@@ -168,7 +168,7 @@ void BaseServer::preload_plant_on_map_return()
         plant_on_the_map++;
     }
 
-    preload_dictionary_map();
+    preload_market_monsters_sql();
 }
 
 void BaseServer::unload_the_plant_on_map()

@@ -235,8 +235,8 @@ void BaseServer::preload_the_data()
      * Load order:
     void preload_itemOnMap_sql();
     void preload_zone_sql();
-    void preload_plant_on_map_sql();
     void preload_dictionary_map();
+    void preload_plant_on_map_sql();
     void preload_market_monsters_sql();
     void preload_market_items();
 
@@ -481,13 +481,13 @@ void BaseServer::preload_zone_sql()
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
             entryListIndex++;
-            preload_plant_on_map_sql();
+            preload_dictionary_map();
             return;
         }
         else
             return;
     }
-    preload_plant_on_map_sql();
+    preload_dictionary_map();
 }
 
 void BaseServer::preload_itemOnMap_sql()
@@ -689,7 +689,7 @@ void BaseServer::preload_dictionary_map_return()
     DebugClass::debugConsole(QStringLiteral("%1 SQL map dictionary").arg(DictionaryServer::dictionary_map_database_to_internal.size()));
 
     plant_on_the_map=0;
-    preload_market_monsters_sql();
+    preload_plant_on_map_sql();
 }
 
 /**
@@ -837,7 +837,7 @@ void BaseServer::preload_zone_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
-    preload_plant_on_map_sql();
+    preload_dictionary_map();
 }
 
 void BaseServer::preload_industries()
