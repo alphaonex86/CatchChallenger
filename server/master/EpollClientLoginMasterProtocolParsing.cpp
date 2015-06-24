@@ -46,7 +46,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
                         #endif
                         stat=EpollClientLoginMasterStat::Logged;
-                        messageParsingLayer("Protocol sended and replied");
+                        //messageParsingLayer("Protocol sended and replied");
                     }
                     else
                     {
