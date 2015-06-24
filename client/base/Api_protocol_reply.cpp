@@ -220,10 +220,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return;
                 }
-                qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __LINE__;
                 CommonSettingsCommon::commonSettingsCommon.datapackHashBase=data.mid(in.device()->pos(),28);
                 in.device()->seek(in.device()->pos()+CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
-                qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                 {
                     //the mirror
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -247,7 +245,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     else
                         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.clear();
                 }
-                qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                 //characters
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -257,7 +254,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     }
                     quint8 charatersGroupSize;
                     in >> charatersGroupSize;
-                    qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                     quint8 charatersGroupIndex=0;
                     while(charatersGroupIndex<charatersGroupSize)
                     {
@@ -269,7 +265,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         QList<CharacterEntry> characterEntryList;
                         quint8 characterListSize;
                         in >> characterListSize;
-                        qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                         quint8 characterListIndex=0;
                         while(characterListIndex<characterListSize)
                         {
@@ -281,7 +276,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                 return;
                             }
                             in >> characterEntry.character_id;
-                            qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                             {
                                 //pseudo
                                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -303,7 +297,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                     in.device()->seek(in.device()->pos()+rawText.size());
                                 }
                             }
-                            qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                             //Skin id
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                             {
@@ -311,7 +304,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                 return;
                             }
                             in >> characterEntry.skinId;
-                            qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                             //Time left before delete
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
@@ -319,7 +311,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                 return;
                             }
                             in >> characterEntry.delete_time_left;
-                            qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                             //Played time
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
@@ -327,7 +318,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                 return;
                             }
                             in >> characterEntry.played_time;
-                            qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                             //Last connect
                             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
@@ -335,7 +325,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                                 return;
                             }
                             in >> characterEntry.last_connect;
-                            qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
 
                             characterEntryList << characterEntry;
                             characterListIndex++;
@@ -345,7 +334,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         charatersGroupIndex++;
                     }
                 }
-                qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                 //servers
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -358,7 +346,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                     quint8 serverListIndex=0;
                     while(serverListIndex<serverListSize)
                     {
-                        qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                         //Server index
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -367,7 +354,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         }
                         quint8 serverIndex;
                         in >> serverIndex;
-                        qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                         //Played time
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                         {
@@ -376,7 +362,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         }
                         quint32 playedTime;
                         in >> playedTime;
-                        qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                         //Last connect
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                         {
@@ -385,7 +370,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         }
                         quint32 lastConnect;
                         in >> lastConnect;
-                        qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
                         if(playedTime>0 && lastConnect==0)
                         {
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("playedTime>0 && lastConnect==0 with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -405,7 +389,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("out of range with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                             return;
                         }
-                        qDebug() << QString(data.mid(0,in.device()->pos()).toHex()) << QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()) << __FILE__ << __LINE__;
 
                         serverListIndex++;
                     }

@@ -74,6 +74,7 @@ EpollClientLoginMaster::~EpollClientLoginMaster()
         EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
         EpollClientLoginMaster::broadcastGameServerChange();
     }
+    std::cout << "Online: " << loginServers.size() << " login server and " << gameServers.size() << " game server" << std::endl;
 }
 
 void EpollClientLoginMaster::disconnectClient()

@@ -67,24 +67,27 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
             quint32 cursor=0;
-            if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
+            do
             {
-                qDebug() << "Bug at data-sending: " << QString(QByteArray(data,size).toHex());
-                abort();
-            }
-            if(!protocolParsingCheck->valid)
+                if(!protocolParsingCheck->parseIncommingDataRaw(data,size,cursor))
+                {
+                    qDebug() << "Bug at data-sending: " << QString(QByteArray(data,size).toHex());
+                    abort();
+                }
+                if(!protocolParsingCheck->valid)
+                {
+                    qDebug() << "Bug at data-sending not tigger the function";
+                    abort();
+                }
+                protocolParsingCheck->valid=false;
+            } while(cursor!=(quint32)size);
+            /*if(cursor!=(quint32)size)
             {
-                qDebug() << "Bug at data-sending not tigger the function";
-                abort();
-            }
-            if(cursor!=(quint32)size)
-            {
-                /* Muliple concatened packet */
+                // Muliple concatened packet
                 qDebug() << "Bug at data-sending cursor != size:" << cursor << "!=" << size;
                 qDebug() << "raw write control bug:" << QString(QByteArray(data,size).toHex());
                 //abort();
-            }
-            protocolParsingCheck->valid=false;
+            }*/
         }
         #endif
     }
