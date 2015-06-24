@@ -91,7 +91,7 @@ public:
     static unsigned int serverLogicalGroupListSize;
     static char loginPreviousToReplyCache[256*1024*3];
     static unsigned int loginPreviousToReplyCacheSize;
-    static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+1024];
+    static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+1024];//reply for 07
     static QHash<QString,int> logicalGroupHash;
 
     static QList<EpollClientLoginMaster *> gameServers;
