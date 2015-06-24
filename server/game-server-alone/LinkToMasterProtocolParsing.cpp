@@ -226,7 +226,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
-            unsigned int pos=0;
+            unsigned int pos=1;//skip the first bytes it's the reply code parsed above
             switch(data[0x00])
             {
                 case 0x02:
@@ -242,26 +242,26 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 }
                 case 0x01:
                 {
+                    if((size-pos)<4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
                     int index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                     {
-                        if((size-pos)<4)
-                        {
-                            std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
                         GlobalServerData::serverPrivateVariables.maxMonsterId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
                         pos+=4;
                         index++;
                     }
+                    if((size-pos)<4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                    {
+                        std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
                     index=0;
                     while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
                     {
-                        if((size-pos)<4)
-                        {
-                            std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                            abort();
-                        }
                         GlobalServerData::serverPrivateVariables.maxClanId.push_back(le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(data+pos))));
                         pos+=4;
                         index++;
