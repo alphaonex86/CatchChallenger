@@ -370,85 +370,87 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
                     index++;
                 }
             }
-            unsigned int pos;
-            if(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(uniqueKey)))
+            //compose the reply
             {
-                quint32 newUniqueKey;
-                do
+                unsigned int destinationPos=0;
+                if(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(uniqueKey)))
                 {
-                    newUniqueKey = rng();
-                } while(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(newUniqueKey)));
-                uniqueKey=newUniqueKey;
-                std::cerr << "Generate new unique key for a game server" << std::endl;
-                pos=1+4;
-                EpollClientLoginMaster::tempBuffer[0x00]=0x02;
-                *reinterpret_cast<quint32 *>(EpollClientLoginMaster::tempBuffer+1)=(quint32)htole32(newUniqueKey);
-            }
-            else
-            {
-                pos=1;
-                EpollClientLoginMaster::tempBuffer[0x00]=0x01;
-            }
-            //monster id list
-            {
-                if((pos+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                    quint32 newUniqueKey;
+                    do
+                    {
+                        newUniqueKey = rng();
+                    } while(Q_UNLIKELY(charactersGroupForGameServer->gameServers.contains(newUniqueKey)));
+                    uniqueKey=newUniqueKey;
+                    std::cerr << "Generate new unique key for a game server" << std::endl;
+                    destinationPos=1+4;
+                    EpollClientLoginMaster::replyToIdListBuffer[0x00]=0x02;
+                    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+1)=(quint32)htole32(newUniqueKey);
+                }
+                else
+                {
+                    destinationPos=1;
+                    EpollClientLoginMaster::replyToIdListBuffer[0x00]=0x01;
+                }
+                //monster id list
+                {
+                    if((destinationPos+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                    {
+                        std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
+                        index++;
+                    }
+                    destinationPos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                    charactersGroupForGameServer->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
+                }
+                //clan id list
+                {
+                    if((destinationPos+4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                    {
+                        std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
+                    int index=0;
+                    while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                    {
+                        *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxClanId+1+index);
+                        index++;
+                    }
+                    destinationPos+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+                    charactersGroupForGameServer->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
+                }
+                if((destinationPos+1+2+1+2)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
                 {
                     std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
                     abort();
                 }
-                int index=0;
-                while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+                //Max player monsters
                 {
-                    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+pos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
-                    index++;
+                    EpollClientLoginMaster::replyToIdListBuffer[destinationPos]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+                    destinationPos+=1;
                 }
-                pos+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
-                charactersGroupForGameServer->maxMonsterId+=CATCHCHALLENGER_SERVER_MAXIDBLOCK;
-            }
-            //clan id list
-            {
-                if((pos+4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
+                //Max warehouse player monsters
                 {
-                    std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+                    destinationPos+=2;
                 }
-                int index=0;
-                while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
+                //Max player items
                 {
-                    *reinterpret_cast<quint32 *>(EpollClientLoginMaster::replyToIdListBuffer+pos+index*4/*size of int*/)=(quint32)htole32(charactersGroupForGameServer->maxClanId+1+index);
-                    index++;
+                    EpollClientLoginMaster::replyToIdListBuffer[destinationPos]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+                    destinationPos+=1;
                 }
-                pos+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
-                charactersGroupForGameServer->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
-            }
-            if((pos+1+2+1+2)>=sizeof(EpollClientLoginMaster::replyToIdListBuffer))
-            {
-                std::cerr << "EpollClientLoginMaster::replyToIdListBuffer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
-                abort();
-            }
-            //Max player monsters
-            {
-                EpollClientLoginMaster::replyToIdListBuffer[pos]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-                pos+=1;
-            }
-            //Max warehouse player monsters
-            {
-                *reinterpret_cast<quint16 *>(EpollClientLoginMaster::replyToIdListBuffer+pos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
-                pos+=2;
-            }
-            //Max player items
-            {
-                EpollClientLoginMaster::replyToIdListBuffer[pos]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-                pos+=1;
-            }
-            //Max warehouse player monsters
-            {
-                *reinterpret_cast<quint16 *>(EpollClientLoginMaster::replyToIdListBuffer+pos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
-                pos+=2;
-            }
+                //Max warehouse player monsters
+                {
+                    *reinterpret_cast<quint16 *>(EpollClientLoginMaster::replyToIdListBuffer+destinationPos)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
+                    destinationPos+=2;
+                }
 
-
-            postReplyData(queryNumber,EpollClientLoginMaster::tempBuffer,pos);
+                postReplyData(queryNumber,reinterpret_cast<char *>(EpollClientLoginMaster::replyToIdListBuffer),destinationPos);
+            }
 
             //only game server will receive query
             {
