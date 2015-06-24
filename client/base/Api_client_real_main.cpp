@@ -348,12 +348,12 @@ void Api_client_real::httpFinishedForDatapackListMain()
     {
         const QNetworkProxy &proxy=qnam.proxy();
         if(proxy==QNetworkProxy::NoProxy)
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 (try next)")
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   );
         else
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   .arg(proxy.hostName())
@@ -371,7 +371,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
             qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarXzMain=true;
             xzDecodeThreadMain.setData(reply->readAll(),100*1024*1024);
-            xzDecodeThreadSub.start(QThread::LowestPriority);
+            xzDecodeThreadMain.start(QThread::LowestPriority);
             return;
         }
         else
