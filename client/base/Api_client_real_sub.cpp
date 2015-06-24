@@ -59,6 +59,11 @@ void Api_client_real::writeNewFileSub(const QString &fileName,const QByteArray &
 
 void Api_client_real::getHttpFileSub(const QString &url, const QString &fileName)
 {
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+        abort();
+    }
     if(httpError)
         return;
     if(!httpModeSub)
@@ -140,6 +145,12 @@ void Api_client_real::httpFinishedSub()
 
 void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
 {
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+        abort();
+    }
+
     if(datapackFilesListSub.size()!=partialHashList.size())
     {
         qDebug() << "datapackFilesListSub.size()!=partialHash.size():" << datapackFilesListSub.size() << "!=" << partialHashList.size();
@@ -193,6 +204,11 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
         }
         else
         {
+            if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+            {
+                qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+                abort();
+            }
             qDebug() << "Datapack don't match with server hash, get from mirror";
             QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+QStringLiteral("pack/diff/datapack-sub-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
             QNetworkReply *reply = qnam4.get(networkRequest);
@@ -204,6 +220,11 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
 
 void Api_client_real::test_mirror_sub()
 {
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+        abort();
+    }
     QNetworkReply *reply;
     const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzSub)
@@ -239,6 +260,11 @@ void Api_client_real::test_mirror_sub()
 
 void Api_client_real::decodedIsFinishSub()
 {
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+        abort();
+    }
     if(xzDecodeThreadSub.errorFound())
         test_mirror_sub();
     else
@@ -288,6 +314,11 @@ void Api_client_real::decodedIsFinishSub()
 
 bool Api_client_real::mirrorTryNextSub()
 {
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+        abort();
+    }
     if(!datapackTarXzSub)
     {
         datapackTarXzSub=true;
@@ -310,6 +341,11 @@ bool Api_client_real::mirrorTryNextSub()
 
 void Api_client_real::httpFinishedForDatapackListSub()
 {
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+        abort();
+    }
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     if(reply==NULL)
     {
@@ -323,12 +359,12 @@ void Api_client_real::httpFinishedForDatapackListSub()
     {
         const QNetworkProxy &proxy=qnam.proxy();
         if(proxy==QNetworkProxy::NoProxy)
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 (try next)")
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Sub Problem with the datapack list reply:%1 %2 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   );
         else
-            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Sub Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   .arg(proxy.hostName())
@@ -505,6 +541,11 @@ void Api_client_real::httpErrorEventSub()
 
 void Api_client_real::sendDatapackContentSub()
 {
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty() to get from mirror";
+        abort();
+    }
     if(wait_datapack_content_sub)
     {
         DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
