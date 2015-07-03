@@ -223,7 +223,11 @@ void Client::disconnectClient()
     else if(character_loaded)
     {
         if(map!=NULL)
-            removeClientOnMap(map,true);
+            removeClientOnMap(map
+                              #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                              ,true
+                              #endif
+                              );
         if(GlobalServerData::serverSettings.sendPlayerNumber)
             GlobalServerData::serverPrivateVariables.player_updater.removeConnectedPlayer();
         extraStop();

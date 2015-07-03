@@ -67,6 +67,7 @@ void send_settings()
     CommonSettingsServer::commonSettingsServer.autoLearn                        = settings->value(QLatin1Literal("autoLearn")).toBool() && !CommonSettingsServer::commonSettingsServer.useSP;
     CommonSettingsServer::commonSettingsServer.forcedSpeed                      = settings->value(QLatin1Literal("forcedSpeed")).toUInt();
     CommonSettingsServer::commonSettingsServer.dontSendPseudo					= settings->value(QLatin1Literal("dontSendPseudo")).toBool();
+    CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer  		= settings->value(QLatin1Literal("plantOnlyVisibleByPlayer")).toBool();
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= settings->value(QLatin1Literal("forceClientToSendAtMapChange")).toBool();
     CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value(QLatin1Literal("exportedXml")).toString();
     formatedServerSettings.dontSendPlayerType                                   = settings->value(QLatin1Literal("dontSendPlayerType")).toBool();
@@ -499,6 +500,19 @@ int main(int argc, char *argv[])
             qDebug() << "Proxy not supported";
             return EXIT_FAILURE;
         }
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        if(!CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
+        {
+            qDebug() << "plantOnlyVisibleByPlayer at false but server compiled with plantOnlyVisibleByPlayer at true, recompil to change this options";
+            return EXIT_FAILURE;
+        }
+        #else
+        if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
+        {
+            qDebug() << "plantOnlyVisibleByPlayer at true but server compiled with plantOnlyVisibleByPlayer at false, recompil to change this options";
+            return EXIT_FAILURE;
+        }
+        #endif
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         if(formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::PostgreSQL)
         {

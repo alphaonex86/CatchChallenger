@@ -69,10 +69,16 @@ void Client::insertClientOnMap(CommonMap *map)
     #endif
     static_cast<MapServer *>(map)->clientsForBroadcast << this;
 
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     sendNearPlant();
+    #endif
 }
 
-void Client::removeClientOnMap(CommonMap *map, const bool &withDestroy)
+void Client::removeClientOnMap(CommonMap *map
+                               #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                               , const bool &withDestroy
+                               #endif
+                               )
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1)
@@ -80,7 +86,10 @@ void Client::removeClientOnMap(CommonMap *map, const bool &withDestroy)
     #endif
     static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
 
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     if(!withDestroy)
+        //leave the map
         removeNearPlant();
+    #endif
     map=NULL;
 }

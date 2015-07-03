@@ -129,8 +129,9 @@ public:
     static QString db_query_delete_city;
     static QString db_query_update_city_clan;
     static QString db_query_insert_city;
+    static QString db_query_select_plant;
     static QString db_query_delete_plant;
-    static QString db_query_delete_plant_by_id;
+    static QString db_query_delete_plant_by_index;
     static QString db_query_insert_plant;
     static QString db_query_delete_bot_already_beaten;
     static QString db_query_insert_monster_market_price;

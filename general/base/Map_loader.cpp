@@ -1035,7 +1035,16 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             if(Walkable.size()>0)
                 map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=(walkable || monsterCollision) && !collisions && !dirt;
             if(Dirt.size()>0)
+            {
+                if(dirt)
+                {
+                    Map_to_send::DirtOnMap_Semi dirtOnMap_Semi;
+                    dirtOnMap_Semi.point.x=x;
+                    dirtOnMap_Semi.point.y=y;
+                    map_to_send_temp.dirts << dirtOnMap_Semi;
+                }
                 map_to_send_temp.parsed_layer.dirt[x+y*map_to_send_temp.width]=dirt;
+            }
             if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
             {
                 map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(quint8)ParsedLayerLedges_NoLedges;

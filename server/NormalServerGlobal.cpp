@@ -87,7 +87,11 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
     if(!settings->contains(QLatin1Literal("datapackCache")))
         settings->setValue(QLatin1Literal("datapackCache"),-1);
     if(!settings->contains(QLatin1Literal("plantOnlyVisibleByPlayer")))
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         settings->setValue(QLatin1Literal("plantOnlyVisibleByPlayer"),true);
+    #else
+        settings->setValue(QLatin1Literal("plantOnlyVisibleByPlayer"),false);
+    #endif
     if(!settings->contains(QLatin1Literal("useSsl")))
     #ifdef Q_OS_LINUX
         settings->setValue(QLatin1Literal("useSsl"),false);
