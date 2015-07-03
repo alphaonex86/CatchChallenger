@@ -576,12 +576,13 @@ bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserTh
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(QHash<quint16,quint32> *items,QHash<quint16, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events,QList<quint8> *itemOnMap)
+void MapVisualiserPlayer::setInformations(QHash<quint16,quint32> *items,QHash<quint16, CatchChallenger::PlayerQuest> *quests,QList<quint8> *events, QSet<quint8> *itemOnMap, QHash<quint8/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap)
 {
     this->events=events;
     this->items=items;
     this->quests=quests;
     this->itemOnMap=itemOnMap;
+    this->plantOnMap=plantOnMap;
 }
 
 void MapVisualiserPlayer::unblock()

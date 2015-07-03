@@ -1364,14 +1364,18 @@ void Client::receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,cons
 void Client::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     normalOutput(QStringLiteral("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     bool mapChange=this->map!=map;
     if(mapChange)
         removeNearPlant();
+    #endif
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
     if(GlobalServerData::serverSettings.positionTeleportSync)
         savePosition();
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     if(mapChange)
         sendNearPlant();
+    #endif
 }
 
 Direction Client::lookToMove(const Direction &direction)

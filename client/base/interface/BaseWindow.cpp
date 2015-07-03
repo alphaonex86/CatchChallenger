@@ -5,6 +5,7 @@
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../../../general/base/CommonSettingsServer.h"
 #include "DatapackClientLoader.h"
 #include "MapController.h"
 #include "Chat.h"
@@ -296,7 +297,7 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityWin,                             this,&BaseWindow::captureCityWin,                           Qt::QueuedConnection);
 
     //connect the map controler
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&BaseWindow::have_current_player_info,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&BaseWindow::have_character_position,Qt::QueuedConnection);
 
     //inventory
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_inventory,     this,&BaseWindow::have_inventory);
@@ -306,7 +307,7 @@ void BaseWindow::connectAllSignals()
 
     //character
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newCharacterId,     this,&BaseWindow::newCharacterId);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveCharacter,     this,&BaseWindow::have_current_player_info);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveCharacter,     this,&BaseWindow::haveCharacter);
 
     //chat
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::new_chat_text,  Chat::chat,&Chat::new_chat_text);
@@ -990,6 +991,8 @@ void BaseWindow::objectSelection(const bool &ok, const quint16 &itemId, const qu
             load_inventory();
             qDebug() << QStringLiteral("send seed for: %1").arg(plantId);
             emit useSeed(plantId);
+            if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
+                seed_planted(true);
         }
         break;
         case ObjectType_UseInFight:
@@ -1479,14 +1482,32 @@ bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map,
 //return -1 if not found, else the index
 qint32 BaseWindow::havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 y) const
 {
-    int index=0;
-    while(index<map->plantList.size())
+    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
     {
-        if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
-            return index;
-        index++;
+        int index=0;
+        while(index<map->plantList.size())
+        {
+            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
+                return index;
+            index++;
+        }
+        return -1;
     }
-    return -1;
+    else
+    {
+        if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(map->map_file))
+            return -1;
+        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<quint8,quint8>(x,y)))
+            return -1;
+        int index=0;
+        while(index<map->plantList.size())
+        {
+            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
+                return index;
+            index++;
+        }
+        return -1;
+    }
 }
 
 void BaseWindow::actionOnNothing()
@@ -1508,15 +1529,29 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
             quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
             if(map->plantList.at(index)->mature_at<=current_time)
             {
-                ClientPlantInCollecting clientPlantInCollecting;
-                clientPlantInCollecting.map=map->map_file;
-                clientPlantInCollecting.plant_id=map->plantList.at(index)->plant_id;
-                clientPlantInCollecting.seconds_to_mature=0;
-                clientPlantInCollecting.x=map->plantList.at(index)->x;
-                clientPlantInCollecting.y=map->plantList.at(index)->y;
-                plant_collect_in_waiting << clientPlantInCollecting;
-                addQuery(QueryType_CollectPlant);
-                emit collectMaturePlant();
+                if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+                {
+                    ClientPlantInCollecting clientPlantInCollecting;
+                    clientPlantInCollecting.map=map->map_file;
+                    clientPlantInCollecting.plant_id=map->plantList.at(index)->plant_id;
+                    clientPlantInCollecting.seconds_to_mature=0;
+                    clientPlantInCollecting.x=map->plantList.at(index)->x;
+                    clientPlantInCollecting.y=map->plantList.at(index)->y;
+                    plant_collect_in_waiting << clientPlantInCollecting;
+                    addQuery(QueryType_CollectPlant);
+                    emit collectMaturePlant();
+                }
+                else
+                {
+                    //plant_collected();???
+                    if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(map->map_file))
+                        return;
+                    if(!DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).contains(QPair<quint8,quint8>(x,y)))
+                        return;
+                    const quint8 &plantIndexOnMap=DatapackClientLoader::datapackLoader.plantOnMap.value(map->map_file).value(QPair<quint8,quint8>(x,y));
+                    plantOnMap.remove(plantIndexOnMap);
+                    emit collectMaturePlant();
+                }
             }
             else
                 showTip(tr("This plant is growing and can't be collected"));

@@ -92,6 +92,10 @@ public:
     static QHash<QString,Client *> playerByPseudo;
     static QHash<quint32,Clan *> clanList;
     static QList<Client *> clientBroadCastList;
+    static quint8 indexOfItemOnMap;
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    static quint8 indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
+    #endif
 
     static unsigned char protocolReplyProtocolNotSupported[4];
     static unsigned char protocolReplyServerFull[4];
@@ -409,8 +413,16 @@ private:
     void sendLocalChatText(const QString &text);
     //seed
     void seedValidated();
-    void plantSeed(const quint8 &query_id,const quint8 &plant_id);
-    void collectPlant(const quint8 &query_id);
+    void plantSeed(
+        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        const quint8 &query_id,
+        #endif
+        const quint8 &plant_id);
+    void collectPlant(
+            #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+            const quint8 &query_id
+            #endif
+            );
 
     void createMemoryClan();
     Direction lookToMove(const Direction &direction);
@@ -643,21 +655,33 @@ private:
     void postReply(const quint8 &queryNumber);
 
     void insertClientOnMap(CommonMap *map);
-    void removeClientOnMap(CommonMap *map,const bool &withDestroy=false);
+    void removeClientOnMap(CommonMap *map
+                                   #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                                   , const bool &withDestroy=false
+                                   #endif
+                        );
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     void sendNearPlant();
     void removeNearPlant();
+    #endif
 
     void errorFightEngine(const QString &error);
     void messageFightEngine(const QString &message) const;
 
     struct PlantInWaiting
     {
+        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         quint8 query_id;
+        #endif
         quint8 plant_id;
         CommonMap *map;
         quint8 x,y;
     };
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    static QList<PlantInWaiting> plant_list_in_waiting;
+    #else
     QList<PlantInWaiting> plant_list_in_waiting;
+    #endif
 
     void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply
@@ -724,6 +748,11 @@ private:
     void loadItemOnMap();
     static void loadItemOnMap_static(void *object);
     void loadItemOnMap_return();
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    void loadPlantOnMap();
+    static void loadPlantOnMap_static(void *object);
+    void loadPlantOnMap_return();
+    #endif
 
     static void loadPlayerMonsterBuffs_static(void *object);
     void loadPlayerMonsterBuffs_object();

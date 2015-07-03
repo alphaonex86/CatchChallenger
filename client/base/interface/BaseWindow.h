@@ -158,7 +158,8 @@ private slots:
     //player
     void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList);
     void updatePlayerImage();
-    void have_current_player_info();
+    void have_character_position();
+    void haveCharacter();
     void have_main_and_sub_datapack_loaded();
     void have_inventory(const QHash<quint16,quint32> &items,const QHash<quint16,quint32> &warehouse_items);
     void add_to_inventory(const quint32 &item,const quint32 &quantity=1,const bool &showGain=true);
@@ -549,7 +550,7 @@ private:
     QString toSmilies(QString text);
     QStringList server_list;
     QAbstractSocket::SocketState socketState;
-    bool haveDatapack,haveDatapackMainSub,havePlayerInformations,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
+    bool haveDatapack,haveDatapackMainSub,haveCharacterPosition,haveCharacterInformation,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
     bool characterSelected;
     quint32 fightId;
 
@@ -569,7 +570,8 @@ private:
     QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
-    QList<quint8> itemOnMap;
+    QSet<quint8> itemOnMap;
+    QHash<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
     QHash<quint16,qint32> change_warehouse_items;//negative = deposite, positive = withdraw
     QHash<quint16,quint32> items,warehouse_items;
     QHash<QListWidgetItem *,quint32> items_graphical;
