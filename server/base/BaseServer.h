@@ -130,9 +130,9 @@ protected:
     void preload_market_monsters_return();
     static void preload_market_monsters_prices_static(void *object);
     void preload_market_monsters_prices_return();
-    void preload_itemOnMap_return();
-    static void preload_itemOnMap_static(void *object);
-    void preload_itemOnMap_sql();
+    void preload_pointOnMap_return();
+    static void preload_pointOnMap_static(void *object);
+    void preload_pointOnMap_sql();
     void preload_dictionary_map();
     static void preload_dictionary_map_static(void *object);
     void preload_dictionary_map_return();
@@ -176,7 +176,7 @@ protected:
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
     QSet<quint32> botIdLoaded;
     QTime timeDatapack;
-    unsigned int dictionary_item_maxId;
+    unsigned int dictionary_pointOnMap_maxId;
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
     QList<Monster_Semi_Market> monsterSemiMarketList;
 

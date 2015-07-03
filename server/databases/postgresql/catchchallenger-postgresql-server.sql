@@ -56,7 +56,7 @@ CREATE TABLE character_forserver (
 
 CREATE TABLE character_itemonmap (
     "character" integer,
-    "itemOnMap" smallint
+    "pointOnMap" smallint
 );
 
 
@@ -73,12 +73,12 @@ CREATE TABLE city (
 
 
 --
--- Name: dictionary_itemonmap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+-- Name: dictionary_pointonmap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE TABLE dictionary_itemonmap (
+CREATE TABLE dictionary_pointonmap (
     id integer NOT NULL,
-    map text,
+    map integer,
     x smallint,
     y smallint
 );
@@ -138,12 +138,9 @@ CREATE TABLE monster_market_price (
 --
 
 CREATE TABLE plant (
-    id integer NOT NULL,
-    map smallint,
-    x smallint,
-    y smallint,
-    plant smallint,
     "character" integer,
+    "pointOnMap" smallint,
+    plant smallint,
     plant_timestamps integer
 );
 
@@ -174,8 +171,8 @@ ALTER TABLE ONLY character_forserver
 -- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
-ALTER TABLE ONLY dictionary_itemonmap
-    ADD CONSTRAINT "dictionary_itemOnMap_pkey" PRIMARY KEY (id);
+ALTER TABLE ONLY dictionary_pointonmap
+    ADD CONSTRAINT "dictionary_pointOnMap_pkey" PRIMARY KEY (id);
 
 
 --
@@ -203,11 +200,17 @@ ALTER TABLE ONLY monster_market_price
 
 
 --
--- Name: plant_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+-- Name: plant_by_char; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
-ALTER TABLE ONLY plant
-    ADD CONSTRAINT plant_pkey PRIMARY KEY (id);
+CREATE INDEX plant_by_char ON plant USING btree ("character");
+
+
+--
+-- Name: plant_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE UNIQUE INDEX plant_unique ON plant USING btree ("character", "pointOnMap");
 
 
 --
@@ -242,7 +245,7 @@ CREATE INDEX "character_itemOnMap_index" ON character_itemonmap USING btree ("ch
 -- Name: item_market_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE UNIQUE INDEX item_market_uniqueindex ON item_market USING btree (item, "character");
+CREATE UNIQUE INDEX item_market_uniqueindex ON item_market USING btree ("character", item);
 
 
 --

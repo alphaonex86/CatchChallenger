@@ -521,7 +521,10 @@ void Api_protocol::useSeed(const quint8 &plant_id)
     }
     QByteArray outputData;
     outputData[0]=plant_id;
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x06,queryNumber(),outputData.constData(),outputData.size());
+    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+        is_logged=character_selected=packFullOutcommingQuery(0x10,0x06,queryNumber(),outputData.constData(),outputData.size());
+    else
+        is_logged=character_selected=packFullOutcommingData(0x50,0x08,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::monsterMoveUp(const quint8 &number)
@@ -1313,7 +1316,10 @@ void Api_protocol::collectMaturePlant()
         DebugClass::debugConsole(QStringLiteral("character not selected, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return;
     }
-    is_logged=character_selected=packFullOutcommingQuery(0x10,0x07,queryNumber(),NULL,0);
+    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+        is_logged=character_selected=packFullOutcommingQuery(0x10,0x07,queryNumber(),NULL,0);
+    else
+        is_logged=character_selected=packFullOutcommingData(0x50,0x09,NULL,0);
 }
 
 //crafting
@@ -1613,6 +1619,7 @@ void Api_protocol::resetAll()
     player_informations.reputation.clear();
     player_informations.quests.clear();
     player_informations.itemOnMap.clear();
+    player_informations.plantOnMap.clear();
     tokenForGameServer.clear();
     unloadSelection();
     isInTrade=false;
@@ -1620,10 +1627,10 @@ void Api_protocol::resetAll()
     isInBattle=false;
     battleRequestId.clear();
     mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath());
-    mDatapackMain=mDatapackBase+"map/main/main/";
-    mDatapackSub=mDatapackMain+"sub/sub/";
-    CommonSettingsServer::commonSettingsServer.mainDatapackCode="main";
-    CommonSettingsServer::commonSettingsServer.subDatapackCode="sub";
+    mDatapackMain=mDatapackBase+"map/main/[main]/";
+    mDatapackSub=mDatapackMain+"sub/[sub]/";
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+    CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
 
     ProtocolParsingInputOutput::reset();
 }
@@ -1677,10 +1684,10 @@ void Api_protocol::setDatapackPath(const QString &datapack_path)
         mDatapackBase=datapack_path;
     else
         mDatapackBase=datapack_path+QLatin1Literal("/");
-    mDatapackMain=mDatapackBase+"map/main/main/";
-    mDatapackSub=mDatapackMain+"sub/sub/";
-    CommonSettingsServer::commonSettingsServer.mainDatapackCode="main";
-    CommonSettingsServer::commonSettingsServer.subDatapackCode="sub";
+    mDatapackMain=mDatapackBase+"map/main/[main]/";
+    mDatapackSub=mDatapackMain+"sub/[sub]/";
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+    CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
 }
 
 bool Api_protocol::getIsLogged() const

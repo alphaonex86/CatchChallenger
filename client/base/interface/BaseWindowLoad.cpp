@@ -44,7 +44,8 @@ void BaseWindow::resetAll()
     haveDatapack=false;
     haveDatapackMainSub=false;
     characterSelected=false;
-    havePlayerInformations=false;
+    haveCharacterPosition=false;
+    haveCharacterInformation=false;
     DatapackClientLoader::datapackLoader.resetAll();
     haveInventory=false;
     isLogged=false;
@@ -216,18 +217,39 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
     }
 }
 
-void BaseWindow::have_current_player_info()
+void BaseWindow::haveCharacter()
 {
     #ifdef DEBUG_BASEWINDOWS
-    qDebug() << "BaseWindow::have_current_player_info()";
+    qDebug() << "BaseWindow::haveCharacter()";
     #endif
-    if(havePlayerInformations)
+    if(haveCharacterInformation)
         return;
 
     CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
     CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());
 
-    havePlayerInformations=true;
+    haveCharacterInformation=true;
+
+    if(haveInventory && haveCharacterPosition && haveCharacterInformation)
+        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+
+    updateConnectingStatus();
+}
+
+void BaseWindow::have_character_position()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::have_character_position()";
+    #endif
+    if(haveCharacterPosition)
+        return;
+
+    haveCharacterPosition=true;
+
+    if(haveInventory && haveCharacterPosition && haveCharacterInformation)
+        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+
+    updateConnectingStatus();
 }
 
 void BaseWindow::have_main_and_sub_datapack_loaded()
@@ -319,7 +341,8 @@ void BaseWindow::have_inventory(const QHash<quint16,quint32> &items, const QHash
     this->items=items;
     this->warehouse_items=warehouse_items;
     haveInventory=true;
-    CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+    if(haveInventory && haveCharacterPosition && haveCharacterInformation)
+        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
     updateConnectingStatus();
 }
 
@@ -481,7 +504,7 @@ void BaseWindow::setEvents(const QList<QPair<quint8,quint8> > &events)
 
 void BaseWindow::load_event()
 {
-    if(isLogged && datapackIsParsed && havePlayerInformations)
+    if(isLogged && datapackIsParsed && haveCharacterPosition)
     {
         while(events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
             events << 0;
@@ -509,7 +532,7 @@ void BaseWindow::updateConnectingStatus()
                 return;
             }
         }
-        else if(!havePlayerInformations)
+        else if(!haveCharacterPosition && !haveCharacterInformation)
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
@@ -548,11 +571,11 @@ void BaseWindow::updateConnectingStatus()
         }
     }
     QStringList waitedData;
-    if(havePlayerInformations && !mainSubDatapackIsParsed)
+    if((haveCharacterPosition && haveCharacterInformation) && !mainSubDatapackIsParsed)
         waitedData << tr("Loading of the specific datapack part");
-    if(haveDatapack && (!haveInventory || !havePlayerInformations))
+    if(haveDatapack && (!haveInventory || !haveCharacterPosition || !haveCharacterInformation))
     {
-        if(!havePlayerInformations)
+        if(!haveCharacterPosition || !haveCharacterInformation)
             waitedData << tr("Loading of the player informations");
         else
             waitedData << tr("Loading of the inventory");
@@ -574,9 +597,10 @@ void BaseWindow::updateConnectingStatus()
     {
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
         itemOnMap=player_private_and_public_informations.itemOnMap;
+        plantOnMap=player_private_and_public_informations.plantOnMap;
         warehouse_playerMonster=player_private_and_public_informations.warehouse_playerMonster;
         MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
-        MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap);
+        MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap,&plantOnMap);
         Api_client_real::client->unloadSelection();
         load_inventory();
         load_plant_inventory();
@@ -795,7 +819,7 @@ QString BaseWindow::getBackSkinPath(const quint32 &skinId) const
 
 void BaseWindow::updatePlayerImage()
 {
-    if(havePlayerInformations && haveDatapack)
+    if(haveCharacterPosition && haveDatapack)
     {
         Player_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations().public_informations;
         playerFrontImage=getFrontSkin(informations.skinId);

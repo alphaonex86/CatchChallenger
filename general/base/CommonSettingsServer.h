@@ -8,6 +8,7 @@ class CommonSettingsServer
 {
 public:
     QString httpDatapackMirrorServer;
+    bool plantOnlyVisibleByPlayer;
     quint8 forcedSpeed;
     bool tcpCork;
     bool useSP;

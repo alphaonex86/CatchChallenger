@@ -969,6 +969,27 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
                 case 0x07:
                     takeAnObjectOnMap();
                 break;
+                #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                //Use seed into dirt
+                case 0x08:
+                {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(size!=(int)sizeof(quint8))
+                    {
+                        parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(QByteArray(rawData,size).toHex())));
+                        return;
+                    }
+                    #endif
+                    const quint8 &plant_id=*rawData;
+                    plantSeed(plant_id);
+                    return;
+                }
+                break;
+                //Collect mature plant
+                case 0x09:
+                    collectPlant();
+                break;
+                #endif
                 default:
                     parseNetworkReadError(QStringLiteral("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
@@ -1514,6 +1535,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
         case 0x10:
         switch(subCodeType)
         {
+            #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
             //Use seed into dirt
             case 0x06:
             {
@@ -1533,6 +1555,7 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             case 0x07:
                 collectPlant(queryNumber);
             break;
+            #endif
             //Usage of recipe
             case 0x08:
             {

@@ -67,7 +67,13 @@ struct Map_to_send
         bool visible;
         bool infinite;
     };
-    QList<ItemOnMap_Semi> items;
+    QList<ItemOnMap_Semi> items;//list to keep to keep the order to do the indexOfItemOnMap to send to player, use less bandwith due to send quint8 not map,x,y
+    //used only on server
+    struct DirtOnMap_Semi
+    {
+        Map_Point point;
+    };
+    QList<DirtOnMap_Semi> dirts;//list to keep to keep the order to do the indexOfDirtsOnMap to send to player, use less bandwith due to send quint8 not map,x,y
 
     quint8 *monstersCollisionMap;
     QList<MonstersCollisionValue> monstersCollisionList;

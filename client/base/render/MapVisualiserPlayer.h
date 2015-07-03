@@ -2,6 +2,7 @@
 #define MAP_VISUALISER_PLAYER_H
 
 #include "MapVisualiser.h"
+#include "../../general/base/GeneralStructures.h"
 
 #include <QSet>
 #include <QString>
@@ -47,7 +48,7 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(QHash<quint16,quint32> *items, QHash<quint16, CatchChallenger::PlayerQuest> *quests, QList<quint8> *events, QList<quint8> *itemOnMap);
+    void setInformations(QHash<quint16,quint32> *items, QHash<quint16, CatchChallenger::PlayerQuest> *quests, QList<quint8> *events, QSet<quint8> *itemOnMap, QHash<quint8/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
 protected:
     //datapack
@@ -96,7 +97,8 @@ protected:
     QList<quint8> *events;
     QHash<quint16,quint32> *items;
     QHash<quint16, CatchChallenger::PlayerQuest> *quests;
-    QList<quint8> *itemOnMap;
+    QSet<quint8> *itemOnMap;
+    QHash<quint8/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
     static QString text_DATAPACK_BASE_PATH_SKIN;
     static QString text_DATAPACK_BASE_PATH_MAPBASE;

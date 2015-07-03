@@ -30,12 +30,13 @@ public:
     QList<Client *> clientsForBroadcast;//frequent remove/insert due to map change
     struct ItemOnMap
     {
+        quint8 indexOfOnMap;
         quint16 item;
-        quint8 itemIndexOnMap;
-        quint16 itemDbCode;
+        quint16 pointOnMapDbCode;
         bool infinite;
     };
     QHash<QPair<quint8,quint8>,ItemOnMap> itemsOnMap;//first is x,y, second is db code, item
+    QHash<QPair<quint8,quint8>,quint32> dictionary_pointOnMap_internal_to_database;
 };
 
 class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer

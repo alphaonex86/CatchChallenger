@@ -828,7 +828,11 @@ void Client::loadItemOnMap()
     if(callback==NULL)
     {
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        loadPlantOnMap();
+        #else
         characterIsRightFinalStep();
+        #endif
         return;
     }
     else
@@ -848,26 +852,135 @@ void Client::loadItemOnMap_return()
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const quint16 &itemDbCode=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        const quint16 &pointOnMapDatabaseId=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
         if(!ok)
         {
-            normalOutput(QStringLiteral("wrong value type for item on map, skip: %1").arg(itemDbCode));
+            normalOutput(QStringLiteral("wrong value type for item on map, skip: %1").arg(pointOnMapDatabaseId));
             continue;
         }
-        if(itemDbCode>=DictionaryServer::dictionary_itemOnMap_database_to_internal.size())
+        if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
         {
-            normalOutput(QStringLiteral("item on map is not into the map list (1), skip: %1").arg(itemDbCode));
+            normalOutput(QStringLiteral("item on map is not into the map list (1), skip: %1").arg(pointOnMapDatabaseId));
             continue;
         }
-        if(DictionaryServer::dictionary_itemOnMap_database_to_internal[itemDbCode]==255/*-1*/)
+        if(DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).map==NULL)
         {
-            normalOutput(QStringLiteral("item on map is not into the map list (2), skip: %1").arg(itemDbCode));
+            normalOutput(QStringLiteral("item on map is not into the map list (2), skip: %1").arg(pointOnMapDatabaseId));
             continue;
         }
-        public_and_private_informations.itemOnMap << DictionaryServer::dictionary_itemOnMap_database_to_internal[itemDbCode];
+        const quint8 &indexOfItemOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).indexOfItemOnMap;
+        if(indexOfItemOnMap==255)
+        {
+            normalOutput(QStringLiteral("item on map is not into the map list (3), skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        if(indexOfItemOnMap>=Client::indexOfItemOnMap)
+        {
+            normalOutput(QStringLiteral("item on map is not into the map list (4), skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        public_and_private_informations.itemOnMap << indexOfItemOnMap;
+    }
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    loadPlantOnMap();
+    #else
+    characterIsRightFinalStep();
+    #endif
+}
+
+
+#ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+void Client::loadPlantOnMap()
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(PreparedDBQueryServer::db_query_select_plant.isEmpty())
+    {
+        errorOutput(QStringLiteral("loadBotAlreadyBeaten() Query is empty, bug"));
+        return;
+    }
+    #endif
+    const QString &queryText=PreparedDBQueryServer::db_query_select_plant.arg(character_id);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&Client::loadPlantOnMap_static);
+    if(callback==NULL)
+    {
+        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        characterIsRightFinalStep();
+        return;
+    }
+    else
+        callbackRegistred << callback;
+}
+
+void Client::loadPlantOnMap_static(void *object)
+{
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadPlantOnMap_return();
+}
+
+void Client::loadPlantOnMap_return()
+{
+    callbackRegistred.removeFirst();
+    bool ok;
+    //parse the result
+    while(GlobalServerData::serverPrivateVariables.db_server->next())
+    {
+        const quint16 &pointOnMapDatabaseId=QString(GlobalServerData::serverPrivateVariables.db_server->value(0)).toUInt(&ok);
+        if(!ok)
+        {
+            normalOutput(QStringLiteral("wrong value type for dirt on map, skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
+        {
+            normalOutput(QStringLiteral("dirt on map is not into the map list (1), skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        if(DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).map==NULL)
+        {
+            normalOutput(QStringLiteral("dirt on map is not into the map list (2), skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        const quint8 &indexOfDirtOnMap=DictionaryServer::dictionary_pointOnMap_database_to_internal.value(pointOnMapDatabaseId).indexOfDirtOnMap;
+        if(indexOfDirtOnMap==255)
+        {
+            normalOutput(QStringLiteral("dirt on map is not into the map list (3), skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        if(indexOfDirtOnMap>=Client::indexOfDirtOnMap)
+        {
+            normalOutput(QStringLiteral("dirt on map is not into the map list (4), skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+
+        const quint32 &plant=QString(GlobalServerData::serverPrivateVariables.db_server->value(1)).toUInt(&ok);
+        if(!ok)
+        {
+            normalOutput(QStringLiteral("wrong value type for dirt plant id on map, skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        if(plant>=CommonDatapack::commonDatapack.plants.contains(plant))
+        {
+            normalOutput(QStringLiteral("wrong value type for plant dirt on map, skip: %1").arg(plant));
+            continue;
+        }
+        const quint32 &plant_timestamps=QString(GlobalServerData::serverPrivateVariables.db_server->value(2)).toUInt(&ok);
+        if(!ok)
+        {
+            normalOutput(QStringLiteral("wrong value type for plant timestamps on map, skip: %1").arg(pointOnMapDatabaseId));
+            continue;
+        }
+        {
+            PlayerPlant playerPlant;
+            playerPlant.plant=plant;
+            playerPlant.mature_at=plant_timestamps+CommonDatapack::commonDatapack.plants.value(plant).fruits_seconds;
+            public_and_private_informations.plantOnMap[indexOfDirtOnMap]=playerPlant;
+        }
     }
     characterIsRightFinalStep();
 }
+#endif
+
+
 
 void Client::characterIsRightFinalStep()
 {
@@ -913,6 +1026,7 @@ void Client::characterIsRightFinalStep()
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
 
     //common settings
+    out << (quint8)CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
     out << (quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
     out << (quint8)CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
     out << (quint8)CommonSettingsServer::commonSettingsServer.forcedSpeed;
@@ -1006,13 +1120,26 @@ void Client::characterIsRightFinalStep()
     out << (quint64)public_and_private_informations.warehouse_cash;
     out << (quint8)public_and_private_informations.itemOnMap.size();
     {
-        int index=0;
-        while(index<public_and_private_informations.itemOnMap.size())
-        {
-            out << (quint8)public_and_private_informations.itemOnMap.at(index);
-            index++;
-        }
+        QSetIterator<quint8> i(public_and_private_informations.itemOnMap);
+        while (i.hasNext())
+            out << i.next();
     }
+
+    //send plant on map
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
+    out << (quint8)public_and_private_informations.plantOnMap.size();
+    QHashIterator<quint8/*dirtOnMap*/,PlayerPlant> i(public_and_private_informations.plantOnMap);
+    while (i.hasNext()) {
+        i.next();
+        out << i.key();
+        out << i.value().plant;
+        if(time<i.value().mature_at)
+            out << (quint16)(i.value().mature_at-time);
+        else
+            out << (quint16)0;
+    }
+    #endif
 
     //temporary variable
     quint32 index;

@@ -11,6 +11,7 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/CommonSettingsServer.h"
 
 using namespace CatchChallenger;
 
@@ -172,6 +173,19 @@ QByteArray DatapackChecksum::doChecksumMain(const QString &datapackPath, bool on
 
 void DatapackChecksum::doDifferedChecksumMain(const QString &datapackPath)
 {
+    {
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            abort();
+        }
+        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+            abort();
+        }
+    }
+
     QRegularExpression excludePath("^sub[/\\\\]");
     QList<quint32> partialHashList;
     QStringList datapackFilesList;
