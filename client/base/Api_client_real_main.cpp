@@ -174,6 +174,23 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
         qDebug() << "datapackFilesList:" << datapackFilesListMain.join("\n");
         abort();
     }
+    {
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            abort();
+        }
+        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+            abort();
+        }
+        if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
+        {
+            qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+            abort();
+        }
+    }
 
     this->datapackFilesListMain=datapackFilesList;
     this->partialHashListMain=partialHashList;
@@ -213,6 +230,23 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
     {
         if(datapackFilesListMain.isEmpty())
         {
+            {
+                if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+                {
+                    qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+                    abort();
+                }
+                if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+                {
+                    qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+                    abort();
+                }
+                if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
+                {
+                    qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+                    abort();
+                }
+            }
             index_mirror_main=0;
             test_mirror_main();
             qDebug() << "Datapack is empty, get from mirror into" << mDatapackMain;
@@ -537,6 +571,23 @@ void Api_client_real::httpErrorEventMain()
 
 void Api_client_real::sendDatapackContentMain()
 {
+    {
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            abort();
+        }
+        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+            abort();
+        }
+        if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
+        {
+            qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+            abort();
+        }
+    }
     if(wait_datapack_content_main || wait_datapack_content_sub)
     {
         DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));

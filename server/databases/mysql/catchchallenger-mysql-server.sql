@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
   `date` int(11) unsigned NOT NULL,
   `market_cash` bigint(20) unsigned NOT NULL,
-  PRIMARY KEY (`character`),
-  KEY `account` (`character`)
+  PRIMARY KEY (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -52,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
 
 CREATE TABLE IF NOT EXISTS `character_itemonmap` (
   `character` int(11) NOT NULL,
-  `itemOnMap` smallint(6) NOT NULL,
+  `pointOnMap` smallint(6) NOT NULL,
   KEY `character` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -71,20 +70,6 @@ CREATE TABLE IF NOT EXISTS `city` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dictionary_itemonmap`
---
-
-CREATE TABLE IF NOT EXISTS `dictionary_itemonmap` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `map` text NOT NULL,
-  `x` smallint(6) NOT NULL,
-  `y` smallint(6) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `dictionary_map`
 --
 
@@ -92,7 +77,21 @@ CREATE TABLE IF NOT EXISTS `dictionary_map` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `map` text NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dictionary_pointonmap`
+--
+
+CREATE TABLE IF NOT EXISTS `dictionary_pointonmap` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `map` int(11) NOT NULL,
+  `x` smallint(6) NOT NULL,
+  `y` smallint(6) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -106,7 +105,7 @@ CREATE TABLE IF NOT EXISTS `factory` (
   `products` text NOT NULL,
   `last_update` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -132,7 +131,7 @@ CREATE TABLE IF NOT EXISTS `monster_market_price` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `market_price` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -141,14 +140,12 @@ CREATE TABLE IF NOT EXISTS `monster_market_price` (
 --
 
 CREATE TABLE IF NOT EXISTS `plant` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `map` smallint(6) NOT NULL,
-  `x` tinyint(3) unsigned NOT NULL,
-  `y` tinyint(3) unsigned NOT NULL,
-  `plant` tinyint(3) unsigned NOT NULL,
   `character` int(11) NOT NULL,
+  `pointOnMap` int(11) NOT NULL,
+  `plant` tinyint(3) unsigned NOT NULL,
   `plant_timestamps` int(11) unsigned NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`character`,`pointOnMap`),
+  KEY `character` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

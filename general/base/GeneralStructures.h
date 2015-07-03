@@ -12,6 +12,9 @@
 #include <QMultiHash>
 
 #include "GeneralType.h"
+#if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+#include "../../server/VariableServer.h"
+#endif
 
 #define COORD_TYPE quint8
 #define SIMPLIFIED_PLAYER_ID_TYPE quint16
@@ -334,6 +337,12 @@ struct PlayerReputation
     qint32 point;
 };
 
+struct PlayerPlant
+{
+    quint8 plant;//plant id
+    quint64 mature_at;//timestamp when is mature
+};
+
 struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
@@ -351,7 +360,15 @@ struct Player_private_and_public_informations
     bool clan_leader;
     QSet<ActionAllow> allow;
     quint32 repel_step;
-    QList<quint8> itemOnMap;
+    //here to send at character login
+    QSet<quint8> itemOnMap;
+    #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        QHash<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
+        #endif
+    #else
+        QHash<quint8/*dirtOnMap*/,PlayerPlant> plantOnMap;
+    #endif
 };
 
 struct CharacterEntry

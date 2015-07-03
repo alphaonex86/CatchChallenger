@@ -123,6 +123,7 @@ public:
     QHash<QString,quint32> mapToId;
     QHash<QString,quint32> fullMapPathToId;
     QHash<QString,QHash<QPair<quint8,quint8>,quint8> > itemOnMap;
+    QHash<QString,QHash<QPair<quint8,quint8>,quint8> > plantOnMap;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();
@@ -220,6 +221,8 @@ protected:
     static const QString text_object;
     static const QString text_objectgroup;
     static const QString text_Object;
+    static const QString text_layer;
+    static const QString text_Dirt;
     static const QString text_DATAPACK_BASE_PATH_MAPBASE;
     static QString text_DATAPACK_BASE_PATH_MAPMAIN;
     static QString text_DATAPACK_BASE_PATH_MAPSUB;

@@ -68,6 +68,13 @@ QList<int> Client::privateChatDrop;
 int Client::privateChatDropTotalCache=0;
 int Client::privateChatDropNewValue=0;
 QList<quint16> Client::marketObjectIdList;
+#ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+QList<Client::PlantInWaiting> Client::plant_list_in_waiting;
+#endif
+quint8 Client::indexOfItemOnMap;
+#ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+quint8 Client::indexOfDirtOnMap;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
+#endif
 
 QList<quint8> Client::selectCharacterQueryId;
 

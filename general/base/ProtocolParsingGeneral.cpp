@@ -245,6 +245,8 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeMultipleCodePacketClientToServer[0x50][0x04]=0;
             sizeMultipleCodePacketClientToServer[0x50][0x05]=0;
             sizeMultipleCodePacketClientToServer[0x50][0x07]=0;
+            sizeMultipleCodePacketClientToServer[0x50][0x08]=1;
+            sizeMultipleCodePacketClientToServer[0x50][0x09]=0;
             sizeMultipleCodePacketClientToServer[0x60][0x02]=0;
             sizeMultipleCodePacketClientToServer[0x60][0x03]=1;
             sizeMultipleCodePacketClientToServer[0x60][0x04]=4+2;

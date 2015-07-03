@@ -50,6 +50,12 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
     }
     cityCapture(captureRemainingTime,captureFrequencyType);
 
+    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+    {
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        return;
+    }
+    in >> CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
     {
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max_character, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -232,6 +238,9 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
         }
         else
             CommonSettingsServer::commonSettingsServer.mainDatapackCode.clear();
+
+        //here to be sure of the order
+        mDatapackMain=mDatapackBase+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
     }
     {
         //Sub type code
@@ -264,6 +273,12 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
         }
         else
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+
+        //here to be sure of the order
+        if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+            mDatapackSub=mDatapackMain+"sub/emptyRandomCoder23osaQ9mb5hYh2j/";
+        else
+            mDatapackSub=mDatapackMain+"sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
     }
 
     if(max_players<=255)
@@ -412,6 +427,51 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
             quint8 itemOnMap;
             in >> itemOnMap;
             player_informations.itemOnMap << itemOnMap;
+            index++;
+        }
+    }
+
+    //plant on map
+    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
+    {
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player cash ware house, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return;
+        }
+        quint8 plantOnMapSize;
+        in >> plantOnMapSize;
+        quint8 index=0;
+        while(index<plantOnMapSize)
+        {
+            PlayerPlant playerPlant;
+
+            //plant on map,x,y getted
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return;
+            }
+            quint8 plantOnMap;
+            in >> plantOnMap;
+
+            //plant
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return;
+            }
+            in >> playerPlant.plant;
+
+            //seconds to mature
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return;
+            }
+            in >> playerPlant.mature_at;
+
+            player_informations.plantOnMap[plantOnMap]=playerPlant;
             index++;
         }
     }
@@ -827,10 +887,5 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
         index++;
     }
     character_selected=true;
-    mDatapackMain=mDatapackBase+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
-    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
-        mDatapackSub=mDatapackMain+"sub/emptyRandomCoder23osaQ9mb5hYh2j/";
-    else
-        mDatapackSub=mDatapackMain+"sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
     haveCharacter();
 }

@@ -18,6 +18,7 @@
 
 using namespace CatchChallenger;
 
+#ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 void BaseServer::preload_plant_on_map_sql()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -149,7 +150,7 @@ void BaseServer::preload_plant_on_map_return()
 
         //plant_timestamps
         MapServerCrafting::PlantOnMap plantOnMap;
-        plantOnMap.id=id;
+        plantOnMap.pointOnMapDbCode=id;
         plantOnMap.x=x;
         plantOnMap.y=y;
         plantOnMap.plant=plant;
@@ -170,6 +171,12 @@ void BaseServer::preload_plant_on_map_return()
 
     preload_market_monsters_sql();
 }
+#else
+void BaseServer::preload_plant_on_map_sql()
+{
+    preload_market_monsters_sql();
+}
+#endif
 
 void BaseServer::unload_the_plant_on_map()
 {

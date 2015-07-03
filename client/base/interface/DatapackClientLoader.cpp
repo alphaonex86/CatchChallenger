@@ -84,6 +84,8 @@ const QString DatapackClientLoader::text_y=QLatin1Literal("y");
 const QString DatapackClientLoader::text_object=QLatin1Literal("object");
 const QString DatapackClientLoader::text_objectgroup=QLatin1Literal("objectgroup");
 const QString DatapackClientLoader::text_Object=QLatin1Literal("Object");
+const QString DatapackClientLoader::text_layer=QLatin1Literal("layer");
+const QString DatapackClientLoader::text_Dirt=QLatin1Literal("Dirt");
 const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=QLatin1Literal(DATAPACK_BASE_PATH_MAPBASE);
 QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=QLatin1Literal(DATAPACK_BASE_PATH_MAPMAIN);
 QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=QLatin1Literal(DATAPACK_BASE_PATH_MAPSUB);
@@ -886,6 +888,7 @@ void DatapackClientLoader::parseMaps()
     const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
 
     //load the map
+    unsigned int plantOnMapIndex=0;
     const int &size=returnList.size();
     int index=0;
     QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
@@ -960,6 +963,38 @@ void DatapackClientLoader::parseMaps()
                 {
                     qDebug() << QStringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(fileName);
                     tileheight=16;
+                }
+            }
+
+            bool haveDirtLayer=false;
+            {
+                QDomElement layergroup = root.firstChildElement(DatapackClientLoader::text_layer);
+                while(!layergroup.isNull())
+                {
+                    if(layergroup.isElement())
+                    {
+                        if(layergroup.hasAttribute(DatapackClientLoader::text_name) && layergroup.attribute(DatapackClientLoader::text_name)==DatapackClientLoader::text_Dirt)
+                        {
+                            haveDirtLayer=true;
+                            break;
+                        }
+                    }
+                    layergroup = layergroup.nextSiblingElement(DatapackClientLoader::text_layer);
+                }
+            }
+            if(haveDirtLayer)
+            {
+                CatchChallenger::Map_loader mapLoader;
+                if(mapLoader.tryLoadMap(basePath+fileName))
+                {
+                    int index=0;
+                    while(index<mapLoader.map_to_send.dirts.size())
+                    {
+                        const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
+                        plantOnMap[fileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMapIndex;
+                        plantOnMapIndex++;
+                        index++;
+                    }
                 }
             }
 
@@ -1051,6 +1086,7 @@ void DatapackClientLoader::resetAll()
         }
     }
     itemOnMap.clear();
+    plantOnMap.clear();
     plantExtra.clear();
     itemToPlants.clear();
     questsExtra.clear();

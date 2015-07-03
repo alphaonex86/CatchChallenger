@@ -159,14 +159,17 @@ void Client::takeAnObjectOnMap()
         return;
     }
     const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->itemsOnMap.value(QPair<quint8,quint8>(x,y));
-    if(public_and_private_informations.itemOnMap.contains(item.itemIndexOnMap))
-    {
-        errorOutput("Have already this item");
-        return;
-    }
-    public_and_private_informations.itemOnMap << item.itemIndexOnMap;
     //add get item from db
     if(!item.infinite)
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_itemonmap.arg(character_id).arg(item.itemDbCode));
+    {
+        if(public_and_private_informations.itemOnMap.contains(item.pointOnMapDbCode))
+        {
+            errorOutput("Have already this item");
+            return;
+        }
+        public_and_private_informations.itemOnMap << item.pointOnMapDbCode;
+
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_itemonmap.arg(character_id).arg(item.pointOnMapDbCode));
+    }
     addObject(item.item);
 }

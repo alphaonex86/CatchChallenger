@@ -10,7 +10,11 @@
 
 using namespace CatchChallenger;
 
-void Client::plantSeed(const quint8 &query_id,const quint8 &plant_id)
+void Client::plantSeed(
+        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        const quint8 &query_id,
+        #endif
+        const quint8 &plant_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
@@ -91,28 +95,35 @@ void Client::plantSeed(const quint8 &query_id,const quint8 &plant_id)
         return;
     }
     //check if is dirt
-    if(!MoveOnTheMap::isDirt(*map,x,y))
+    if(!static_cast<MapServer *>(map)->plants.contains(QPair<quint8,quint8>(x,y)))
     {
         errorOutput("Try put seed out of the dirt");
         return;
     }
     //check if is free
-    const quint16 &size=static_cast<MapServer *>(map)->plants.size();
-    quint16 index=0;
-    while(index<size)
     {
-        if(x==static_cast<MapServer *>(map)->plants.at(index).x && y==static_cast<MapServer *>(map)->plants.at(index).y)
+        const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(map)->plants.value(QPair<quint8,quint8>(x,y));
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        if(public_and_private_informations.plantOnMap.contains(plantOnMap.indexOfOnMap))
+        {
+            errorOutput("Have already a plant in plantOnlyVisibleByPlayer==true");
+            return;
+        }
+        #else
+        if(plantOnMap.character!=0)
         {
             QByteArray data;
             data[0]=0x02;
             postReply(query_id,data.constData(),data.size());
             return;
         }
-        index++;
+        #endif
     }
     //check if have into the inventory
     PlantInWaiting plantInWaiting;
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     plantInWaiting.query_id=query_id;
+    #endif
     plantInWaiting.plant_id=plant_id;
     plantInWaiting.map=map;
     plantInWaiting.x=x;
@@ -136,7 +147,7 @@ void Client::seedValidated()
         plant_list_in_waiting.removeFirst();
         return;
     }*/
-    //check if is free
+    /* check if is free already done into Client::plantSeed()
     {
         const quint16 &size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.size();
         quint16 index=0;
@@ -144,7 +155,7 @@ void Client::seedValidated()
         {
             if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
             {
-                addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
+                addObject(CommonDatapack::commonDatapack.plants.value(plant_list_in_waiting.first().plant_id).itemUsed);
                 QByteArray data;
                 data[0]=0x02;
                 postReply(plant_list_in_waiting.first().query_id,data.constData(),data.size());
@@ -153,40 +164,42 @@ void Client::seedValidated()
             }
             index++;
         }
-    }
-    //is ok
+    }*/
+    //post the reply
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     QByteArray data;
     data[0]=0x01;
     postReply(plant_list_in_waiting.first().query_id,data.constData(),data.size());
-    quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    MapServerCrafting::PlantOnMap plantOnMap;
-    if(GlobalServerData::serverPrivateVariables.plantUnusedId.isEmpty())
+    #endif
+
+    const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    const QPair<quint8,quint8> pos(plant_list_in_waiting.first().x,plant_list_in_waiting.first().y);
+    const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.value(pos);
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     {
-        GlobalServerData::serverPrivateVariables.maxPlantId++;
-        plantOnMap.id=GlobalServerData::serverPrivateVariables.maxPlantId;
+        PlayerPlant plantOnMapPlayer;
+        plantOnMapPlayer.plant=plant_list_in_waiting.first().plant_id;
+        plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMapPlayer.plant).fruits_seconds;
+        public_and_private_informations.plantOnMap[plantOnMap.indexOfOnMap]=plantOnMapPlayer;
     }
-    else
-        plantOnMap.id=GlobalServerData::serverPrivateVariables.plantUnusedId.takeFirst();
-    plantOnMap.x=plant_list_in_waiting.first().x;
-    plantOnMap.y=plant_list_in_waiting.first().y;
-    plantOnMap.plant=plant_list_in_waiting.first().plant_id;
-    plantOnMap.character=character_id;
-    plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds;
-    plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
-    static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
-    const quint32 &map_database_id=static_cast<MapServer *>(plant_list_in_waiting.first().map)->reverse_db_id;
+    #else
+    {
+        plantOnMap.plant=plant_list_in_waiting.first().plant_id;
+        plantOnMap.character=character_id;
+        plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds;
+        plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants.value(plantOnMap.plant).fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
+        static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants[pos]=plantOnMap;
+    }
+    #endif
     dbQueryWriteServer(PreparedDBQueryServer::db_query_insert_plant
-                 .arg(plantOnMap.id)
-                 .arg(map_database_id)
-                 .arg(plantOnMap.x)
-                 .arg(plantOnMap.y)
-                 .arg(plantOnMap.plant)
                  .arg(character_id)
+                 .arg(plantOnMap.pointOnMapDbCode)
+                 .arg(plant_list_in_waiting.first().plant_id)
                  .arg(current_time)
                  );
 
     //send to all player
-
+    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     {
         QByteArray finalData;
         {
@@ -229,10 +242,12 @@ void Client::seedValidated()
             index++;
         }
     }
+    #endif
 
     plant_list_in_waiting.removeFirst();
 }
 
+#ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 void Client::sendNearPlant()
 {
     //Insert plant on map
@@ -279,6 +294,7 @@ void Client::sendNearPlant()
     sendPacket(0xD1,outputData.constData(),outputData.size());
 }
 
+/// \todo if confirmed to useless remove
 void Client::removeNearPlant()
 {
     #if defined(DEBUG_MESSAGE_MAP_PLANTS)
@@ -311,8 +327,13 @@ void Client::removeNearPlant()
     }
     sendPacket(0xD2,outputData.constData(),outputData.size());
 }
+#endif
 
-void Client::collectPlant(const quint8 &query_id)
+void Client::collectPlant(
+        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        const quint8 &query_id
+        #endif
+        )
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QStringLiteral("collectPlant(%1)").arg(query_id));
@@ -395,89 +416,117 @@ void Client::collectPlant(const quint8 &query_id)
     }
     //check if is free
     const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    const quint16 &size=static_cast<MapServer *>(map)->plants.size();
-    quint16 index=0;
-    while(index<size)
+    const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.value(QPair<quint8,quint8>(x,y));
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    if(public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap))
     {
-        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
-        if(x==plant.x && y==plant.y)
+        const PlayerPlant &playerPlant=public_and_private_informations.plantOnMap.value(plant.indexOfOnMap);
+        if(current_time<playerPlant.mature_at)
         {
-            if(current_time<plant.mature_at)
-            {
-                QByteArray data;
-                data[0]=Plant_collect_impossible;
-                postReply(query_id,data.constData(),data.size());
-                return;
-            }
-            //check if owned
-            if(plant.character==character_id ||
-                    current_time>plant.player_owned_expire_at ||
-                    public_and_private_informations.public_informations.type==Player_type_gm ||
-                    public_and_private_informations.public_informations.type==Player_type_dev
-                    )
-            {
-                //remove plant from db
-                dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant_by_id.arg(plant.id));
+            errorOutput("current_time<plant.mature_at");
+            return;
+        }
+        //remove from db
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant_by_index.arg(character_id).arg(plant.pointOnMapDbCode));
 
-                QByteArray finalData;
-                {
-                    //Remove plant on map
-                    QByteArray outputData;
-                    QDataStream out(&outputData, QIODevice::WriteOnly);
-                    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-                    out << (quint16)1;
-                    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
-                        out << (quint8)map->id;
-                    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
-                        out << (quint16)map->id;
-                    else
-                        out << (quint32)map->id;
-                    out << plant.x;
-                    out << plant.y;
-                    finalData.resize(16+outputData.size());
-                    finalData.resize(ProtocolParsingBase::computeOutcommingData(
-            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            false,
-            #endif
-                    finalData.data(),0xD2,outputData.data(),outputData.size()));
-                }
+        //add into the inventory
+        float quantity=CommonDatapack::commonDatapack.plants.value(playerPlant.plant).fix_quantity;
+        if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants.value(playerPlant.plant).random_quantity)
+            quantity++;
 
-                {
-                    //remove plan from all player display
-                    int sub_index=0;
-                    const quint16 &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
-                    while(sub_index<size)
-                    {
-                        static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->sendRawSmallPacket(finalData.constData(),finalData.size());
-                        sub_index++;
-                    }
-                }
+        //send the object collected to the current character
+        addObjectAndSend(CommonDatapack::commonDatapack.plants.value(playerPlant.plant).itemUsed,quantity);
 
-                //add into the inventory
-                float quantity=CommonDatapack::commonDatapack.plants.value(plant.plant).fix_quantity;
-                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants.value(plant.plant).random_quantity)
-                    quantity++;
+        //clear the server dirt
+        public_and_private_informations.plantOnMap.remove(plant.indexOfOnMap);
+        return;
+    }
+    else
+    {
+        errorOutput("!public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap)");
+        return;
+    }
+    #else
+    if(current_time<plant.mature_at)
+    {
+        QByteArray data;
+        data[0]=Plant_collect_impossible;
+        postReply(query_id,data.constData(),data.size());
+        return;
+    }
+    if()
+    {
+        QByteArray data;
+        data[0]=Plant_collect_empty_dirt;
+        postReply(query_id,data.constData(),data.size());
+        return;
+    }
+    //check if owned
+    if(plant.character==character_id ||
+            current_time>plant.player_owned_expire_at ||
+            public_and_private_informations.public_informations.type==Player_type_gm ||
+            public_and_private_informations.public_informations.type==Player_type_dev
+            )
+    {
+        //remove plant from db
+        dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant_by_index.arg(character_id).arg(plant.pointOnMapDbCode));
 
-                QByteArray data;
-                data[0]=Plant_collect_correctly_collected;
-                postReply(query_id,data.constData(),data.size());
-                addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
-
-                GlobalServerData::serverPrivateVariables.plantUnusedId << plant.id;
-                static_cast<MapServer *>(map)->plants.removeAt(index);
-                return;
-            }
+        QByteArray finalData;
+        {
+            //Remove plant on map
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+            out << (quint16)1;
+            if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+                out << (quint8)map->id;
+            else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+                out << (quint16)map->id;
             else
+                out << (quint32)map->id;
+            out << plant.x;
+            out << plant.y;
+            finalData.resize(16+outputData.size());
+            finalData.resize(ProtocolParsingBase::computeOutcommingData(
+    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+    false,
+    #endif
+            finalData.data(),0xD2,outputData.data(),outputData.size()));
+        }
+
+        {
+            //remove plan from all player display
+            int sub_index=0;
+            const quint16 &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
+            while(sub_index<size)
             {
-                QByteArray data;
-                data[0]=Plant_collect_owned_by_another_player;
-                postReply(query_id,data.constData(),data.size());
-                return;
+                static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->sendRawSmallPacket(finalData.constData(),finalData.size());
+                sub_index++;
             }
         }
-        index++;
+
+        //add into the inventory
+        float quantity=CommonDatapack::commonDatapack.plants.value(plant.plant).fix_quantity;
+        if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants.value(plant.plant).random_quantity)
+            quantity++;
+
+        //send the object collected to the current character
+        QByteArray data;
+        data[0]=Plant_collect_correctly_collected;
+        postReply(query_id,data.constData(),data.size());
+        addObjectAndSend(CommonDatapack::commonDatapack.plants.value(plant.plant).itemUsed,quantity);
+
+        //clear the server dirt
+        GlobalServerData::serverPrivateVariables.plantUnusedId << plant.pointOnMapDbCode;
+        static_cast<MapServer *>(map)->plants.removeAt(index);
+        return;
     }
-    QByteArray data;
-    data[0]=Plant_collect_empty_dirt;
-    postReply(query_id,data.constData(),data.size());
+    else
+    {
+        QByteArray data;
+        data[0]=Plant_collect_owned_by_another_player;
+        postReply(query_id,data.constData(),data.size());
+        return;
+    }
+    #endif
 }
