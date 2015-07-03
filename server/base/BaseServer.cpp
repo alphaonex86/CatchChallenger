@@ -237,17 +237,18 @@ void BaseServer::preload_the_data()
     preload_the_skin();
     preload_the_players();
     preload_monsters_drops();
+    preload_the_map();
     baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
-    preload_pointOnMap_sql();
+    preload_dictionary_map();
 
     /*
      * Load order:
-    void preload_itemOnMap_sql();
-    void preload_zone_sql();
-    void preload_dictionary_map();
-    void preload_plant_on_map_sql();
-    void preload_market_monsters_sql();
-    void preload_market_items();
+    preload_pointOnMap_sql();
+    preload_map_semi_after_db_id();
+    preload_zone_sql();
+
+    preload_market_monsters_sql();
+    preload_market_items();
 
     if(GlobalServerData::serverSettings.automatic_account_creation)
         load_account_max_id();
@@ -256,9 +257,9 @@ void BaseServer::preload_the_data()
     else
         BaseServerMasterLoadDictionary::load(&GlobalServerData::serverPrivateVariables.db);
 
-    void load_sql_monsters_max_id();
-    void load_sql_monsters_warehouse_max_id();
-    void load_sql_monsters_market_max_id();
+    load_sql_monsters_max_id();
+    load_sql_monsters_warehouse_max_id();
+    load_sql_monsters_market_max_id();
     */
 }
 
@@ -476,13 +477,13 @@ void BaseServer::preload_zone_sql()
         {
             default:
             case DatabaseBase::Type::Mysql:
-                queryText=QStringLiteral("SELECT `clan` FROM `city` WHERE `city`='%1';").arg(zoneCodeName);
+                queryText=QStringLiteral("SELECT `clan` FROM `city` WHERE `city`='%1' ORDER BY `city`").arg(zoneCodeName);
             break;
             case DatabaseBase::Type::SQLite:
-                queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
+                queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1' ORDER BY city").arg(zoneCodeName);
             break;
             case DatabaseBase::Type::PostgreSQL:
-                queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
+                queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1' ORDER BY city").arg(zoneCodeName);
             break;
         }
         if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_zone_static)==NULL)
@@ -490,29 +491,39 @@ void BaseServer::preload_zone_sql()
             qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage());
             criticalDatabaseQueryFailed();return;//stop because can't do the first db access
             entryListIndex++;
-            preload_dictionary_map();
+            preload_market_monsters_sql();
             return;
         }
         else
             return;
     }
-    preload_dictionary_map();
+    preload_market_monsters_sql();
 }
 
 void BaseServer::preload_pointOnMap_sql()
 {
+    if(DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    {
+        qDebug() << "Need be called after preload_dictionary_map()";
+        abort();
+    }
+    if(!DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty())
+    {
+        qDebug() << "!DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty(), already called?";
+        abort();
+    }
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
         case DatabaseBase::Type::Mysql:
-            queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y` FROM `dictionary_pointonmap` ORDER BY `map`");
+            queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y` FROM `dictionary_pointonmap` ORDER BY `map`,`x`,`y`");
         break;
         case DatabaseBase::Type::SQLite:
-            queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map");
+            queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y");
         break;
         case DatabaseBase::Type::PostgreSQL:
-            queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map");
+            queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y");
         break;
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_pointOnMap_static)==NULL)
@@ -520,7 +531,6 @@ void BaseServer::preload_pointOnMap_sql()
         qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
 
-        preload_the_map();
         preload_the_visibility_algorithm();
         preload_the_city_capture();
         preload_zone();
@@ -528,7 +538,7 @@ void BaseServer::preload_pointOnMap_sql()
         timeDatapack.restart();
 
         //start SQL load
-        preload_zone_sql();
+        preload_map_semi_after_db_id();
     }
 }
 
@@ -539,6 +549,11 @@ void BaseServer::preload_pointOnMap_static(void *object)
 
 void BaseServer::preload_pointOnMap_return()
 {
+    if(DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    {
+        qDebug() << "Call preload_dictionary_map() before";
+        abort();
+    }
     bool ok;
     dictionary_pointOnMap_maxId=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -580,14 +595,31 @@ void BaseServer::preload_pointOnMap_return()
                                     else
                                     {
                                         const QString &map_file=DictionaryServer::dictionary_map_database_to_internal.value(map_id)->map_file;
-                                        if(DictionaryServer::dictionary_map_database_to_internal.value(map_id)->itemsOnMap.contains(QPair<quint8/*x*/,quint8/*y*/>(x,y)))
-                                            qDebug() << QStringLiteral("preload_itemOnMap_return(): duplicate entry: %1 %2 %3").arg(map_id).arg(x).arg(y);
-                                        else
+
+                                        ///used only at map loading, \see BaseServer::preload_the_map()
+                                        DictionaryServer::dictionary_pointOnMap_internal_to_database[map_file][QPair<quint8/*x*/,quint8/*y*/>(x,y)]=id;
+
+                                        while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=id)
                                         {
-                                            ///used only at map loading, \see BaseServer::preload_the_map()
-                                            DictionaryServer::dictionary_pointOnMap_internal_to_database[map_file][QPair<quint8/*x*/,quint8/*y*/>(x,y)]=id;
-                                            dictionary_pointOnMap_maxId=id;
+                                            DictionaryServer::MapAndPoint mapAndPoint;
+                                            mapAndPoint.map=NULL;
+                                            mapAndPoint.x=0;
+                                            mapAndPoint.y=0;
+                                            //less bandwith than send map,x,y
+                                            mapAndPoint.indexOfItemOnMap=255;
+                                            mapAndPoint.indexOfDirtOnMap=255;
+                                            DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
                                         }
+
+                                        DictionaryServer::MapAndPoint mapAndPoint;
+                                        mapAndPoint.indexOfDirtOnMap=255;
+                                        mapAndPoint.indexOfItemOnMap=255;
+                                        mapAndPoint.map=DictionaryServer::dictionary_map_database_to_internal.value(map_id);
+                                        mapAndPoint.x=x;
+                                        mapAndPoint.y=y;
+                                        DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;
+
+                                        dictionary_pointOnMap_maxId=id;
                                     }
                                 }
                             }
@@ -601,8 +633,6 @@ void BaseServer::preload_pointOnMap_return()
     {
         DebugClass::debugConsole(QStringLiteral("%1 SQL item on map dictionary").arg(DictionaryServer::dictionary_pointOnMap_internal_to_database.size()));
 
-        if(!preload_the_map())
-            return;
         preload_the_visibility_algorithm();
         if(!preload_the_city_capture())
             return;
@@ -612,12 +642,22 @@ void BaseServer::preload_pointOnMap_return()
         timeDatapack.restart();
 
         //start SQL load
-        preload_zone_sql();
+        preload_map_semi_after_db_id();
     }
 }
 
 void BaseServer::preload_dictionary_map()
 {
+    if(GlobalServerData::serverPrivateVariables.map_list.isEmpty())
+    {
+        qDebug() << "No map to list";
+        abort();
+    }
+    if(!DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    {
+        qDebug() << "preload_dictionary_map() already call";
+        abort();
+    }
     QString queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -646,6 +686,11 @@ void BaseServer::preload_dictionary_map_static(void *object)
 
 void BaseServer::preload_dictionary_map_return()
 {
+    if(!DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    {
+        qDebug() << "preload_dictionary_map_return() already call";
+        abort();
+    }
     QSet<QString> foundMap;
     int databaseMapId=0;
     int obsoleteMap=0;
@@ -673,6 +718,11 @@ void BaseServer::preload_dictionary_map_return()
             obsoleteMap++;
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    if(obsoleteMap>0 && GlobalServerData::serverPrivateVariables.map_list.isEmpty())
+    {
+        qDebug() << "Only obsolete map!";
+        abort();
+    }
     QStringList map_list_flat=GlobalServerData::serverPrivateVariables.map_list.keys();
     map_list_flat.sort();
     int index=0;
@@ -713,8 +763,227 @@ void BaseServer::preload_dictionary_map_return()
         DebugClass::debugConsole(QStringLiteral("%1 SQL obsolete map dictionary").arg(obsoleteMap));
     DebugClass::debugConsole(QStringLiteral("%1 SQL map dictionary").arg(DictionaryServer::dictionary_map_database_to_internal.size()));
 
+    preload_pointOnMap_sql();
+}
+
+void BaseServer::preload_map_semi_after_db_id()
+{
+    if(DictionaryServer::dictionary_map_database_to_internal.isEmpty())
+    {
+        qDebug() << "Need be called after preload_dictionary_map()";
+        abort();
+    }
+    if(DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty())
+    {
+        qDebug() << "Need be called after preload_pointOnMap_sql()";
+        abort();
+    }
+    Client::indexOfItemOnMap=0;//index of item on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
+    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    Client::indexOfDirtOnMap=0;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
+    #endif
+    int indexMapSemi=0;
+    while(indexMapSemi<semi_loaded_map.size())
+    {
+        const Map_semi &map_semi=semi_loaded_map.at(indexMapSemi);
+        MapServer * const mapServer=static_cast<MapServer *>(map_semi.map);
+        const QString &sortFileName=mapServer->map_file;
+        //item on map
+        {
+            int index=0;
+            while(index<map_semi.old_map.items.size())
+            {
+                const Map_to_send::ItemOnMap_Semi &item=map_semi.old_map.items.at(index);
+
+                quint16 pointOnMapDbCode;
+                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.contains(sortFileName)
+                        && DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(item.point.x,item.point.y)))
+                {
+                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(item.point.x,item.point.y));
+                    DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode].indexOfItemOnMap=Client::indexOfItemOnMap;
+                }
+                else
+                {
+                    dictionary_pointOnMap_maxId++;
+                    QString queryText;
+                    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+                    {
+                        default:
+                        case DatabaseBase::Type::Mysql:
+                            queryText=QStringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
+                                    .arg(dictionary_pointOnMap_maxId)
+                                    .arg(mapServer->reverse_db_id)
+                                    .arg(item.point.x)
+                                    .arg(item.point.y)
+                                    ;
+                        break;
+                        case DatabaseBase::Type::SQLite:
+                            queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                                    .arg(dictionary_pointOnMap_maxId)
+                                    .arg(mapServer->reverse_db_id)
+                                    .arg(item.point.x)
+                                    .arg(item.point.y)
+                                    ;
+                        break;
+                        case DatabaseBase::Type::PostgreSQL:
+                            queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                                    .arg(dictionary_pointOnMap_maxId)
+                                    .arg(mapServer->reverse_db_id)
+                                    .arg(item.point.x)
+                                    .arg(item.point.y)
+                                    ;
+                        break;
+                    }
+                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
+                    {
+                        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+                        criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
+                    }
+                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId;
+                    while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
+                    {
+                        DictionaryServer::MapAndPoint mapAndPoint;
+                        mapAndPoint.map=NULL;
+                        mapAndPoint.x=0;
+                        mapAndPoint.y=0;
+                        //less bandwith than send map,x,y
+                        mapAndPoint.indexOfItemOnMap=255;
+                        mapAndPoint.indexOfDirtOnMap=255;
+                        DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
+                    }
+                    {
+                        DictionaryServer::MapAndPoint mapAndPoint;
+                        mapAndPoint.map=mapServer;
+                        mapAndPoint.x=item.point.x;
+                        mapAndPoint.y=item.point.y;
+                        //less bandwith than send map,x,y
+                        mapAndPoint.indexOfItemOnMap=Client::indexOfItemOnMap;
+                        DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId]=mapAndPoint;
+                    }
+
+                    pointOnMapDbCode=dictionary_pointOnMap_maxId;
+                }
+
+                MapServer::ItemOnMap itemOnMap;
+                itemOnMap.infinite=item.infinite;
+                itemOnMap.item=item.item;
+                itemOnMap.pointOnMapDbCode=pointOnMapDbCode;
+                itemOnMap.indexOfOnMap=Client::indexOfItemOnMap;
+                mapServer->itemsOnMap[QPair<quint8,quint8>(item.point.x,item.point.y)]=itemOnMap;
+
+                if(Client::indexOfItemOnMap>=254)//255 reserved
+                {
+                    qDebug() << "indexOfItemOnMap will be more than 255, overflow, too many item on map";
+                    abort();
+                }
+                Client::indexOfItemOnMap++;
+                index++;
+            }
+        }
+        //dirt/plant
+        {
+            int index=0;
+            while(index<map_semi.old_map.dirts.size())
+            {
+                const Map_to_send::DirtOnMap_Semi &dirt=map_semi.old_map.dirts.at(index);
+
+                quint16 pointOnMapDbCode;
+                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.contains(sortFileName)
+                        && DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(dirt.point.x,dirt.point.y)))
+                {
+                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(dirt.point.x,dirt.point.y));
+                    DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode].indexOfDirtOnMap=Client::indexOfDirtOnMap;
+                }
+                else
+                {
+                    dictionary_pointOnMap_maxId++;
+                    QString queryText;
+                    switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+                    {
+                        default:
+                        case DatabaseBase::Type::Mysql:
+                            queryText=QStringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
+                                    .arg(dictionary_pointOnMap_maxId)
+                                    .arg(mapServer->reverse_db_id)
+                                    .arg(dirt.point.x)
+                                    .arg(dirt.point.y)
+                                    ;
+                        break;
+                        case DatabaseBase::Type::SQLite:
+                            queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                                    .arg(dictionary_pointOnMap_maxId)
+                                    .arg(mapServer->reverse_db_id)
+                                    .arg(dirt.point.x)
+                                    .arg(dirt.point.y)
+                                    ;
+                        break;
+                        case DatabaseBase::Type::PostgreSQL:
+                            queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
+                                    .arg(dictionary_pointOnMap_maxId)
+                                    .arg(mapServer->reverse_db_id)
+                                    .arg(dirt.point.x)
+                                    .arg(dirt.point.y)
+                                    ;
+                        break;
+                    }
+                    if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
+                    {
+                        qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+                        criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
+                    }
+                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId;
+                    while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
+                    {
+                        DictionaryServer::MapAndPoint mapAndPoint;
+                        mapAndPoint.map=NULL;
+                        mapAndPoint.x=0;
+                        mapAndPoint.y=0;
+                        //less bandwith than send map,x,y
+                        mapAndPoint.indexOfDirtOnMap=255;
+                        mapAndPoint.indexOfItemOnMap=255;
+                        DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
+                    }
+                    {
+                        DictionaryServer::MapAndPoint mapAndPoint;
+                        mapAndPoint.map=mapServer;
+                        mapAndPoint.x=dirt.point.x;
+                        mapAndPoint.y=dirt.point.y;
+                        //less bandwith than send map,x,y
+                        mapAndPoint.indexOfDirtOnMap=Client::indexOfDirtOnMap;
+                        DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId]=mapAndPoint;
+                    }
+
+                    pointOnMapDbCode=dictionary_pointOnMap_maxId;
+                }
+
+                MapServer::PlantOnMap plantOnMap;
+                #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                plantOnMap.plant=0;//plant id
+                plantOnMap.character=0;//player id
+                plantOnMap.mature_at=0;//timestamp when is mature
+                plantOnMap.player_owned_expire_at=0;//timestamp when is mature
+                #endif
+                plantOnMap.pointOnMapDbCode=pointOnMapDbCode;
+                plantOnMap.indexOfOnMap=Client::indexOfDirtOnMap;
+                mapServer->plants[QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMap;
+
+                #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                if(Client::indexOfDirtOnMap>=254)//255 reserved
+                {
+                    qDebug() << "indexOfDirtOnMap will be more than 255, overflow, too many dirt on map";
+                    abort();
+                }
+                Client::indexOfDirtOnMap++;
+                #endif
+                index++;
+            }
+        }
+        indexMapSemi++;
+    }
+
+    semi_loaded_map.clear();
     plant_on_the_map=0;
-    preload_plant_on_map_sql();
+    preload_zone_sql();
 }
 
 /**
@@ -862,7 +1131,7 @@ void BaseServer::preload_zone_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
-    preload_dictionary_map();
+    preload_market_monsters_sql();
 }
 
 void BaseServer::preload_industries()
@@ -1576,12 +1845,21 @@ bool BaseServer::preload_the_map()
     DebugClass::debugConsole(QStringLiteral("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
     Map_loader map_temp;
-    QList<Map_semi> semi_loaded_map;
     QStringList map_name;
     QStringList map_name_to_do_id;
     QStringList returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
     returnList.sort();
 
+    if(returnList.isEmpty())
+    {
+        qDebug() << "No file map to list";
+        abort();
+    }
+    if(!semi_loaded_map.isEmpty() || GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
+    {
+        qDebug() << "preload_the_map() already call";
+        abort();
+    }
     //load the map
     int size=returnList.size();
     int index=0;
@@ -1624,195 +1902,6 @@ bool BaseServer::preload_the_map()
                 mapServer->height			= map_temp.map_to_send.height;
                 mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
                 mapServer->map_file		= sortFileName;
-
-                //item on map
-                {
-                    Client::indexOfItemOnMap=0;//index of item on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-                    int index=0;
-                    while(index<map_temp.map_to_send.items.size())
-                    {
-                        const Map_to_send::ItemOnMap_Semi &item=map_temp.map_to_send.items.at(index);
-
-                        quint16 pointOnMapDbCode;
-                        if(DictionaryServer::dictionary_pointOnMap_internal_to_database.contains(sortFileName)
-                                && DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(item.point.x,item.point.y)))
-                            pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(item.point.x,item.point.y));
-                        else
-                        {
-                            dictionary_pointOnMap_maxId++;
-                            QString queryText;
-                            switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-                            {
-                                default:
-                                case DatabaseBase::Type::Mysql:
-                                    queryText=QStringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
-                                            .arg(dictionary_pointOnMap_maxId)
-                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
-                                            .arg(item.point.x)
-                                            .arg(item.point.y)
-                                            ;
-                                break;
-                                case DatabaseBase::Type::SQLite:
-                                    queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                            .arg(dictionary_pointOnMap_maxId)
-                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
-                                            .arg(item.point.x)
-                                            .arg(item.point.y)
-                                            ;
-                                break;
-                                case DatabaseBase::Type::PostgreSQL:
-                                    queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                            .arg(dictionary_pointOnMap_maxId)
-                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
-                                            .arg(item.point.x)
-                                            .arg(item.point.y)
-                                            ;
-                                break;
-                            }
-                            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
-                            {
-                                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
-                                criticalDatabaseQueryFailed();return false;//stop because can't resolv the name
-                            }
-                            DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId;
-                            while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
-                            {
-                                DictionaryServer::MapAndPoint mapAndPoint;
-                                mapAndPoint.map=NULL;
-                                mapAndPoint.x=0;
-                                mapAndPoint.y=0;
-                                //less bandwith than send map,x,y
-                                mapAndPoint.indexOfItemOnMap=255;
-                                mapAndPoint.indexOfDirtOnMap=255;
-                                DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
-                            }
-                            {
-                                DictionaryServer::MapAndPoint mapAndPoint;
-                                mapAndPoint.map=mapServer;
-                                mapAndPoint.x=item.point.x;
-                                mapAndPoint.y=item.point.y;
-                                //less bandwith than send map,x,y
-                                mapAndPoint.indexOfItemOnMap=Client::indexOfItemOnMap;
-                                DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId]=mapAndPoint;
-                            }
-
-                            pointOnMapDbCode=dictionary_pointOnMap_maxId;
-                        }
-
-                        MapServer::ItemOnMap itemOnMap;
-                        itemOnMap.infinite=item.infinite;
-                        itemOnMap.item=item.item;
-                        itemOnMap.pointOnMapDbCode=pointOnMapDbCode;
-                        itemOnMap.indexOfOnMap=Client::indexOfItemOnMap;
-                        mapServer->itemsOnMap[QPair<quint8,quint8>(item.point.x,item.point.y)]=itemOnMap;
-
-                        if(Client::indexOfItemOnMap>=254)//255 reserved
-                        {
-                            qDebug() << "indexOfItemOnMap will be more than 255, overflow, too many item on map";
-                            abort();
-                        }
-                        Client::indexOfItemOnMap++;
-                        index++;
-                    }
-                }
-                //dirt/plant
-                {
-                    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                    Client::indexOfDirtOnMap=0;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
-                    #endif
-                    int index=0;
-                    while(index<map_temp.map_to_send.dirts.size())
-                    {
-                        const Map_to_send::DirtOnMap_Semi &dirt=map_temp.map_to_send.dirts.at(index);
-
-                        quint16 pointOnMapDbCode;
-                        if(DictionaryServer::dictionary_pointOnMap_internal_to_database.contains(sortFileName)
-                                && DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(dirt.point.x,dirt.point.y)))
-                            pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(dirt.point.x,dirt.point.y));
-                        else
-                        {
-                            dictionary_pointOnMap_maxId++;
-                            QString queryText;
-                            switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-                            {
-                                default:
-                                case DatabaseBase::Type::Mysql:
-                                    queryText=QStringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
-                                            .arg(dictionary_pointOnMap_maxId)
-                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
-                                            .arg(dirt.point.x)
-                                            .arg(dirt.point.y)
-                                            ;
-                                break;
-                                case DatabaseBase::Type::SQLite:
-                                    queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                            .arg(dictionary_pointOnMap_maxId)
-                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
-                                            .arg(dirt.point.x)
-                                            .arg(dirt.point.y)
-                                            ;
-                                break;
-                                case DatabaseBase::Type::PostgreSQL:
-                                    queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
-                                            .arg(dictionary_pointOnMap_maxId)
-                                            .arg(CatchChallenger::SqlFunction::quoteSqlVariable(sortFileName))
-                                            .arg(dirt.point.x)
-                                            .arg(dirt.point.y)
-                                            ;
-                                break;
-                            }
-                            if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText.toLatin1()))
-                            {
-                                qDebug() << QStringLiteral("Sql error for: %1, error: %2").arg(queryText).arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage());
-                                criticalDatabaseQueryFailed();return false;//stop because can't resolv the name
-                            }
-                            DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId;
-                            while((quint32)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=dictionary_pointOnMap_maxId)
-                            {
-                                DictionaryServer::MapAndPoint mapAndPoint;
-                                mapAndPoint.map=NULL;
-                                mapAndPoint.x=0;
-                                mapAndPoint.y=0;
-                                //less bandwith than send map,x,y
-                                mapAndPoint.indexOfDirtOnMap=255;
-                                mapAndPoint.indexOfItemOnMap=255;
-                                DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
-                            }
-                            {
-                                DictionaryServer::MapAndPoint mapAndPoint;
-                                mapAndPoint.map=mapServer;
-                                mapAndPoint.x=dirt.point.x;
-                                mapAndPoint.y=dirt.point.y;
-                                //less bandwith than send map,x,y
-                                mapAndPoint.indexOfDirtOnMap=Client::indexOfDirtOnMap;
-                                DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId]=mapAndPoint;
-                            }
-
-                            pointOnMapDbCode=dictionary_pointOnMap_maxId;
-                        }
-
-                        MapServer::PlantOnMap plantOnMap;
-                        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                        plantOnMap.plant=0;//plant id
-                        plantOnMap.character=0;//player id
-                        plantOnMap.mature_at=0;//timestamp when is mature
-                        plantOnMap.player_owned_expire_at=0;//timestamp when is mature
-                        #endif
-                        plantOnMap.pointOnMapDbCode=pointOnMapDbCode;
-                        plantOnMap.indexOfOnMap=Client::indexOfDirtOnMap;
-                        mapServer->plants[QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMap;
-
-                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                        if(Client::indexOfDirtOnMap>=254)//255 reserved
-                        {
-                            qDebug() << "indexOfDirtOnMap will be more than 255, overflow, too many dirt on map";
-                            abort();
-                        }
-                        Client::indexOfDirtOnMap++;
-                        #endif
-                        index++;
-                    }
-                }
 
                 map_name << sortFileName;
 
@@ -3022,6 +3111,7 @@ void BaseServer::unload_the_bots()
 
 void BaseServer::unload_the_map()
 {
+    semi_loaded_map.clear();
     QHash<QString,CommonMap *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
     QHash<QString,CommonMap *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     while (i != i_end)
