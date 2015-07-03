@@ -136,6 +136,7 @@ protected:
     void preload_dictionary_map();
     static void preload_dictionary_map_static(void *object);
     void preload_dictionary_map_return();
+    void preload_map_semi_after_db_id();
 
     void unload_randomBlock();
     void unload_industries();
@@ -183,6 +184,7 @@ protected:
     QFileInfoList entryListZone;
     int entryListIndex;
     int plant_on_the_map;
+    QList<Map_semi> semi_loaded_map;
 
     static QRegularExpression regexXmlFile;
     static const QString text_dotxml;

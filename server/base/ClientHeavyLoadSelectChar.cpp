@@ -876,7 +876,7 @@ void Client::loadItemOnMap_return()
         }
         if(indexOfItemOnMap>=Client::indexOfItemOnMap)
         {
-            normalOutput(QStringLiteral("item on map is not into the map list (4), skip: %1").arg(pointOnMapDatabaseId));
+            normalOutput(QStringLiteral("item on map is not into the map list (4), skip: %1 on %2").arg(indexOfItemOnMap).arg(Client::indexOfItemOnMap));
             continue;
         }
         public_and_private_informations.itemOnMap << indexOfItemOnMap;
