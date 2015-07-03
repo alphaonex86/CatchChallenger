@@ -46,7 +46,7 @@ public:
     void setOpenGl(const bool &OpenGL);
     virtual void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,quint8 x,quint8 y);
 
-    MapVisualiserThread::Map_full * getMap(QString map);
+    MapVisualiserThread::Map_full * getMap(const QString &map) const;
 
     QString current_map;
     QHash<QString,MapVisualiserThread::Map_full *> all_map,old_all_map;
