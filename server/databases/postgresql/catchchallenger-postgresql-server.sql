@@ -240,6 +240,11 @@ CREATE INDEX character_character_forserver_index ON character_forserver USING bt
 
 CREATE INDEX "character_itemOnMap_index" ON character_itemonmap USING btree ("character");
 
+--
+-- Name: character_itemOnMap_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE UNIQUE INDEX "character_itemOnMap_unique" ON character_itemonmap USING btree ("character", "pointOnMap");
 
 --
 -- Name: item_market_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 

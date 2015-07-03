@@ -124,10 +124,11 @@ void MapVisualiser::setOpenGl(const bool &OpenGL)
     }
 }
 
-MapVisualiserThread::Map_full * MapVisualiser::getMap(QString map)
+MapVisualiserThread::Map_full * MapVisualiser::getMap(const QString &map) const
 {
     if(all_map.contains(map))
         return all_map.value(map);
+    abort();
     return NULL;
 }
 

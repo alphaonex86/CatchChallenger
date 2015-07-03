@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
 CREATE TABLE IF NOT EXISTS `character_itemonmap` (
   `character` int(11) NOT NULL,
   `pointOnMap` smallint(6) NOT NULL,
+  UNIQUE KEY `character_2` (`character`,`pointOnMap`),
   KEY `character` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -77,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `dictionary_map` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `map` text NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -91,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `dictionary_pointonmap` (
   `x` smallint(6) NOT NULL,
   `y` smallint(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -105,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `factory` (
   `products` text NOT NULL,
   `last_update` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -131,7 +132,7 @@ CREATE TABLE IF NOT EXISTS `monster_market_price` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `market_price` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
