@@ -25,6 +25,7 @@ public:
     void remove_plant_full(const QString &map,const quint8 &x,const quint8 &y);
     void insert_plant_full(const QString &map,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
     void setColor(const QColor &color, const quint32 &timeInMS=0);
+    virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
 private:
     //the delayed action
     struct DelayedPlantInsert
