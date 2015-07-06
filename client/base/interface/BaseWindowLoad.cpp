@@ -3,6 +3,7 @@
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../../../general/base/CommonSettingsServer.h"
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 #include "Chat.h"

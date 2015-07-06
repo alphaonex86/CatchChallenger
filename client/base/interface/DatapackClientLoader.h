@@ -100,6 +100,11 @@ public:
     {
         QString name;
     };
+    struct PlantIndexContent
+    {
+        QString map;
+        quint8 x,y;
+    };
     QHash<quint32,TypeText> typeExtra;
     QHash<quint32,MonsterExtra> monsterExtra;
     QHash<quint32,MonsterExtra::Buff> monsterBuffsExtra;
@@ -124,6 +129,7 @@ public:
     QHash<QString,quint32> fullMapPathToId;
     QHash<QString,QHash<QPair<quint8,quint8>,quint8> > itemOnMap;
     QHash<QString,QHash<QPair<quint8,quint8>,quint8> > plantOnMap;
+    QHash<quint8,PlantIndexContent> plantIndexOfOnMap;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();

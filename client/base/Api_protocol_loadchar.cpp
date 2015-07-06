@@ -469,7 +469,9 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the player item on map, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return;
             }
-            in >> playerPlant.mature_at;
+            quint16 seconds_to_mature;
+            in >> seconds_to_mature;
+            playerPlant.mature_at=QDateTime::currentMSecsSinceEpoch()/1000+seconds_to_mature;
 
             player_informations.plantOnMap[plantOnMap]=playerPlant;
             index++;
