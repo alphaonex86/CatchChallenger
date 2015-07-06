@@ -3,6 +3,7 @@
 #include "../Api_client_real.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/GeneralStructures.h"
 
 MapController* MapController::mapController=NULL;
@@ -53,6 +54,41 @@ MapController::~MapController()
         delete botFlags;
         botFlags=NULL;
     }
+}
+
+bool MapController::asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject)
+{
+    if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
+    {
+        if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
+        {
+            if(DatapackClientLoader::datapackLoader.plantOnMap.contains(fileName))
+            {
+                const QHash<QPair<quint8,quint8>,quint8> &plantCoor=DatapackClientLoader::datapackLoader.plantOnMap.value(fileName);
+                QHashIterator<QPair<quint8,quint8>,quint8> i(plantCoor);
+                while (i.hasNext()) {
+                    i.next();
+                    const quint8 &indexOfMap=i.value();
+                    if(plantOnMap->contains(indexOfMap))
+                    {
+                        const quint8 &x=i.key().first;
+                        const quint8 &y=i.key().second;
+                        const CatchChallenger::PlayerPlant &playerPlant=plantOnMap->value(indexOfMap);
+                        quint32 seconds_to_mature=0;
+                        if(playerPlant.mature_at>(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
+                            seconds_to_mature=playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000;
+                        if(DatapackClientLoader::datapackLoader.mapToId.contains(fileName))
+                            insert_plant(DatapackClientLoader::datapackLoader.mapToId.value(fileName),x,y,playerPlant.plant,seconds_to_mature);
+                        else
+                            qDebug() << "!DatapackClientLoader::datapackLoader.mapToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    else
+        return false;
 }
 
 void MapController::loadPlayerFromCurrentMap()

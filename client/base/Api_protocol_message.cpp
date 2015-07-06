@@ -766,6 +766,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         //Insert plant on map
         case 0xD1:
         {
+            if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return;
+            }
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
             {
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -842,6 +847,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         //Remove plant on map
         case 0xD2:
         {
+            if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return;
+            }
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
             {
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));

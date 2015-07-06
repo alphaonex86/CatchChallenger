@@ -40,6 +40,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     items=NULL;
     quests=NULL;
     itemOnMap=NULL;
+    plantOnMap=NULL;
     animationDisplayed=false;
 
     keyAccepted << Qt::Key_Left << Qt::Key_Right << Qt::Key_Up << Qt::Key_Down << Qt::Key_Return;

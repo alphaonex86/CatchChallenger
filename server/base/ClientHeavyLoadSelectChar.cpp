@@ -958,7 +958,7 @@ void Client::loadPlantOnMap_return()
             normalOutput(QStringLiteral("wrong value type for dirt plant id on map, skip: %1").arg(pointOnMapDatabaseId));
             continue;
         }
-        if(plant>=CommonDatapack::commonDatapack.plants.contains(plant))
+        if(!CommonDatapack::commonDatapack.plants.contains(plant))
         {
             normalOutput(QStringLiteral("wrong value type for plant dirt on map, skip: %1").arg(plant));
             continue;

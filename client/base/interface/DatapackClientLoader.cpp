@@ -992,6 +992,11 @@ void DatapackClientLoader::parseMaps()
                     {
                         const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
                         plantOnMap[fileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMapIndex;
+                        PlantIndexContent plantIndexContent;
+                        plantIndexContent.map=fileName;
+                        plantIndexContent.x=dirt.point.x;
+                        plantIndexContent.y=dirt.point.y;
+                        plantIndexOfOnMap[plantOnMapIndex]=plantIndexContent;
                         plantOnMapIndex++;
                         index++;
                     }
