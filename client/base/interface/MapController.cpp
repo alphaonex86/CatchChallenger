@@ -77,10 +77,10 @@ bool MapController::asyncMapLoaded(const QString &fileName,MapVisualiserThread::
                         quint32 seconds_to_mature=0;
                         if(playerPlant.mature_at>(quint64)QDateTime::currentMSecsSinceEpoch()/1000)
                             seconds_to_mature=playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000;
-                        if(DatapackClientLoader::datapackLoader.mapToId.contains(fileName))
-                            insert_plant(DatapackClientLoader::datapackLoader.mapToId.value(fileName),x,y,playerPlant.plant,seconds_to_mature);
+                        if(DatapackClientLoader::datapackLoader.fullMapPathToId.contains(fileName))
+                            insert_plant(DatapackClientLoader::datapackLoader.fullMapPathToId.value(fileName),x,y,playerPlant.plant,seconds_to_mature);
                         else
-                            qDebug() << "!DatapackClientLoader::datapackLoader.mapToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
+                            qDebug() << "!DatapackClientLoader::datapackLoader.fullMapPathToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
                     }
                 }
             }
