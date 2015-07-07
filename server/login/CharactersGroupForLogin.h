@@ -16,9 +16,17 @@ public:
     ~CharactersGroupForLogin();
     BaseClassSwitch::Type getType() const;
 
+    struct InternalGameServer
+    {
+        QString host;
+        quint16 port;
+        quint8 indexOnFlatList;
+    };
+
     void clearServerPair();
     void setServerUniqueKey(const quint8 &indexOnFlatList,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port);
     bool containsServerUniqueKey(const quint32 &serverUniqueKey) const;
+    InternalGameServer getServerInformation(const quint32 &serverUniqueKey) const;
 
     QList<EpollClientLoginSlave *> clientQueryForReadReturn;
     std::vector<quint32> maxCharacterId;
@@ -79,16 +87,9 @@ private:
     void load_clan_max_id_return();
 
     void dbQueryWriteCommon(const char * const queryText);
-
-    struct InternalLoginServer
-    {
-        QString host;
-        quint16 port;
-        quint8 indexOnFlatList;
-    };
 private:
     EpollPostgresql *databaseBaseCommon;
-    QHash<quint32,InternalLoginServer> servers;
+    QHash<quint32,InternalGameServer> servers;
     QList<void * const> clientAddReturnList;
     QList<void * const> clientRemoveReturnList;
     QList<quint32> deleteCharacterNowCharacterIdList;

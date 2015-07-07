@@ -52,10 +52,30 @@ void Client::selectCharacter(const quint8 &query_id, const char * const token)
             index++;
         }
         else
+        {
+            LinkToMaster::linkToMaster->characterDisconnected(tokenAuth.characterId);
             tokenAuthList.erase(tokenAuthList.begin()+index);
+        }
     }
     //if never found
     errorOutput(QStringLiteral("selectCharacter() Token never found to login, bug"));
+}
+
+void Client::purgeTokenAuthList()
+{
+    const quint64 &time=QDateTime::currentDateTime().toMSecsSinceEpoch()/1000;
+    unsigned int index=0;
+    while(index<tokenAuthList.size())
+    {
+        const TokenAuth &tokenAuth=tokenAuthList.at(index);
+        if(tokenAuth.createTime>(time-CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVERMAXTIME))
+            index++;
+        else
+        {
+            LinkToMaster::linkToMaster->characterDisconnected(tokenAuth.characterId);
+            tokenAuthList.erase(tokenAuthList.begin()+index);
+        }
+    }
 }
 #endif
 

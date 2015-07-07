@@ -8,10 +8,12 @@ DEFINES -= CATCHCHALLENGERSERVERDROPIFCLENT
 
 HEADERS += \
     $$PWD/game-server-alone/LinkToMaster.h \
-    $$PWD/base/PlayerUpdaterToMaster.h
+    $$PWD/base/PlayerUpdaterToMaster.h \
+    $$PWD/epoll/timer/TimerPurgeTokenAuthList.h
 
 SOURCES += \
     $$PWD/game-server-alone/LinkToMaster.cpp \
     $$PWD/game-server-alone/LinkToMasterProtocolParsing.cpp \
     $$PWD/game-server-alone/LinkToMasterStaticVar.cpp \
-    $$PWD/base/PlayerUpdaterToMaster.cpp
+    $$PWD/base/PlayerUpdaterToMaster.cpp \
+    $$PWD/epoll/timer/TimerPurgeTokenAuthList.cpp

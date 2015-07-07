@@ -320,6 +320,7 @@ void EpollClientLoginSlave::server_list_return(const quint8 &serverCount,char * 
         paramToPassToCallBackType.clear();
         delete askLoginParam;
         askLoginParam=NULL;
+        stat=EpollClientLoginStat::Logged;
     }
 }
 
@@ -528,6 +529,9 @@ void EpollClientLoginSlave::selectCharacter(const quint8 &query_id,const quint32
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query for request the master server");
         return;
     }
+    stat=CharacterSelecting;
+    this->charactersGroupIndex=charactersGroupIndex;
+    this->serverUniqueKey=serverUniqueKey;
 }
 
 void EpollClientLoginSlave::selectCharacter_ReturnToken(const quint8 &query_id,const char * const token)

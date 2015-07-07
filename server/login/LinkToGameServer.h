@@ -1,5 +1,5 @@
-#ifndef LOGINLINKTOMASTER_H
-#define LOGINLINKTOMASTER_H
+#ifndef LOGINLINKTOGameServer_H
+#define LOGINLINKTOGameServer_H
 
 #include "../../general/base/ProtocolParsing.h"
 #include <vector>
@@ -8,17 +8,18 @@
 #include <netdb.h>
 
 namespace CatchChallenger {
-class LinkToMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
+class EpollClientLoginSlave;
+class LinkToGameServer : public BaseClassSwitch, public ProtocolParsingInputOutput
 {
 public:
-    explicit LinkToMaster(
+    explicit LinkToGameServer(
         #ifdef SERVERSSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
         #endif
             );
-    ~LinkToMaster();
+    ~LinkToGameServer();
     enum Stat
     {
         Unconnected,
@@ -29,32 +30,18 @@ public:
         Logged,
     };
     Stat stat;
-    struct DataForSelectedCharacterReturn
-    {
-        void * client;
-        quint8 client_query_id;
-        quint32 serverUniqueKey;
-        quint8 charactersGroupIndex;
-    };
 
-    QString httpDatapackMirror;
-    //to unordered reply
-    QHash<quint8/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
+    char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    EpollClientLoginSlave *client;
+    bool haveTheFirstSslHeader;
+    static const unsigned char protocolHeaderToMatchGameServer[5];
 
-    static LinkToMaster *linkToMaster;
-    static int linkToMasterSocketFd;
-    static bool haveTheFirstSslHeader;
-    static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
-
-    std::vector<quint8> queryNumberList;
+    void setConnexionSettings();
     BaseClassSwitch::Type getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     bool trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
     void sendProtocolHeader();
-    void tryReconnect();
-    void setConnexionSettings();
-    void connectInternal();
     void readTheFirstSslHeader();
 protected:
     void disconnectClient();
@@ -76,9 +63,8 @@ protected:
 
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
 private:
-    static char host[256];
-    static quint16 port;
+    int socketFd;
 };
 }
 
-#endif // LOGINLINKTOMASTER_H
+#endif // LOGINLINKTOGameServer_H

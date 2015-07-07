@@ -7,6 +7,7 @@
 #include "../VariableServer.h"
 #include "../epoll/db/EpollPostgresql.h"
 #include "LinkToMaster.h"
+#include "LinkToGameServer.h"
 
 #include <QString>
 
@@ -86,7 +87,9 @@ public:
         LoginInProgress,
         Logged,
         CharacterSelecting,
-        CharacterSelected
+        CharacterSelected,
+        GameServerConnecting,
+        GameServerConnected,
     };
     EpollClientLoginStat stat;
 
@@ -98,7 +101,11 @@ public:
     void addCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
     void removeCharacter_ReturnOk(const quint8 &query_id);
     void removeCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode,const QString &errorString=QString());
+    void parseNetworkReadError(const QString &errorString);
 
+    LinkToGameServer *linkToGameServer;
+    quint8 charactersGroupIndex;
+    quint32 serverUniqueKey;
     char *socketString;
     int socketStringSize;
     unsigned int account_id;
@@ -160,8 +167,6 @@ private:
     static const unsigned char protocolHeaderToMatch[5];
     BaseClassSwitch::Type getType() const;
 private:
-    void parseNetworkReadError(const QString &errorString);
-
     void errorParsingLayer(const QString &error);
     void messageParsingLayer(const QString &message) const;
     void errorParsingLayer(const char * const error);
