@@ -143,9 +143,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
         else
         {
-            std::cerr << "proxy mode in the settings but not supported from now (abort)" << std::endl;
-            abort();
-
             EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
             EpollClientLoginSlave::serverServerList[0x00]=0x02;//proxy mode
         }
@@ -157,6 +154,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     httpDatapackMirror=settings.value(QStringLiteral("httpDatapackMirror")).toString();
     if(httpDatapackMirror.isEmpty())
     {
+        std::cerr << "empty mirror in the settings but not supported from now (abort)" << std::endl;
+        abort();
+
         #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
         qDebug() << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input";
         return EXIT_FAILURE;
