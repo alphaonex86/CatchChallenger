@@ -151,13 +151,20 @@ void BaseServer::preload_plant_on_map_return()
         //plant_timestamps
         MapServerCrafting::PlantOnMap plantOnMap;
         plantOnMap.pointOnMapDbCode=id;
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         plantOnMap.x=x;
         plantOnMap.y=y;
+        #endif
         plantOnMap.plant=plant;
         plantOnMap.character=character;
         plantOnMap.mature_at=plant_timestamps+CommonDatapack::commonDatapack.plants.value(plant).fruits_seconds;
         plantOnMap.player_owned_expire_at=plant_timestamps+CommonDatapack::commonDatapack.plants.value(plant).fruits_seconds+60*60*24;
-        mapForPlantOnServer->plants << plantOnMap;
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+        //mapForPlantOnServer->plants << plantOnMap;
+        mapForPlantOnServer->plants.insert(QPair<quint8,quint8>(x,y),plantOnMap);
+        #else
+        mapForPlantOnServer->plants.insert(QPair<quint8,quint8>(x,y),plantOnMap);
+        #endif
         #ifdef DEBUG_MESSAGE_MAP_PLANTS
         DebugClass::debugConsole(QStringLiteral("put on the map: %1 (%2,%3) the plant: %4, owned by played id: %5, mature at: %6 (%7+%8)")
                                  .arg(map).arg(x).arg(y)

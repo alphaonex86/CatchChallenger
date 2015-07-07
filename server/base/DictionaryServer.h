@@ -20,7 +20,9 @@ public:
         quint8 x;
         quint8 y;
         //can't be common for plant and item on map, else plant + item will < 255
+        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         quint8 indexOfDirtOnMap;
+        #endif
         quint8 indexOfItemOnMap;
     };
     static QList<MapAndPoint> dictionary_pointOnMap_database_to_internal;

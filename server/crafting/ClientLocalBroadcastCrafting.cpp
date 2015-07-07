@@ -174,8 +174,8 @@ void Client::seedValidated()
 
     const quint64 &current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     const QPair<quint8,quint8> pos(plant_list_in_waiting.first().x,plant_list_in_waiting.first().y);
-    const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.value(pos);
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+    const MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.value(pos);
     {
         PlayerPlant plantOnMapPlayer;
         plantOnMapPlayer.plant=plant_list_in_waiting.first().plant_id;
@@ -183,6 +183,7 @@ void Client::seedValidated()
         public_and_private_informations.plantOnMap[plantOnMap.indexOfOnMap]=plantOnMapPlayer;
     }
     #else
+    MapServer::PlantOnMap &plantOnMap=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants[pos];
     {
         plantOnMap.plant=plant_list_in_waiting.first().plant_id;
         plantOnMap.character=character_id;
@@ -214,8 +215,8 @@ void Client::seedValidated()
                 out << (quint16)map->id;
             else
                 out << (quint32)map->id;
-            out << plantOnMap.x;
-            out << plantOnMap.y;
+            out << pos.first;
+            out << pos.second;
             out << plantOnMap.plant;
             if(current_time>=plantOnMap.mature_at)
                 out << (quint16)0;
@@ -251,25 +252,26 @@ void Client::seedValidated()
 void Client::sendNearPlant()
 {
     //Insert plant on map
-    const quint16 &plant_list_size=static_cast<MapServer *>(map)->plants.size();
-    if(plant_list_size==0)
+    if(static_cast<MapServer *>(map)->plants.isEmpty())
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << plant_list_size;
-    int index=0;
-    while(index<plant_list_size)
-    {
-        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+    out << static_cast<MapServer *>(map)->plants.size();
+
+    QHashIterator<QPair<quint8,quint8>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
+    while (i.hasNext()) {
+        i.next();
+
+        const MapServerCrafting::PlantOnMap &plant=i.value();
         if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
             out << (quint8)map->id;
         else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
             out << (quint16)map->id;
         else
             out << (quint32)map->id;
-        out << plant.x;
-        out << plant.y;
+        out << i.key().first;
+        out << i.key().second;
         out << plant.plant;
         quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
         if(current_time>=plant.mature_at)
@@ -289,7 +291,6 @@ void Client::sendNearPlant()
             remaining_seconds_to_mature=(plant.mature_at-current_time);
         normalOutput(QStringLiteral("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
         #endif
-        index++;
     }
     sendPacket(0xD1,outputData.constData(),outputData.size());
 }
@@ -308,22 +309,21 @@ void Client::removeNearPlant()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << plant_list_size;
-    int index=0;
-    while(index<plant_list_size)
-    {
-        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+    QHashIterator<QPair<quint8,quint8>,MapServerCrafting::PlantOnMap> i(static_cast<MapServer *>(map)->plants);
+    while (i.hasNext()) {
+        i.next();
+
         if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
             out << (quint8)map->id;
         else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
             out << (quint16)map->id;
         else
             out << (quint32)map->id;
-        out << plant.x;
-        out << plant.y;
+        out << i.key().first;
+        out << i.key().second;
         #if defined(DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE) && defined(DEBUG_MESSAGE_MAP_PLANTS)
         normalOutput(QStringLiteral("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
         #endif
-        index++;
     }
     sendPacket(0xD2,outputData.constData(),outputData.size());
 }
@@ -454,7 +454,7 @@ void Client::collectPlant(
         postReply(query_id,data.constData(),data.size());
         return;
     }
-    if()
+    if(plant.character==0)
     {
         QByteArray data;
         data[0]=Plant_collect_empty_dirt;
@@ -484,8 +484,8 @@ void Client::collectPlant(
                 out << (quint16)map->id;
             else
                 out << (quint32)map->id;
-            out << plant.x;
-            out << plant.y;
+            out << x;
+            out << y;
             finalData.resize(16+outputData.size());
             finalData.resize(ProtocolParsingBase::computeOutcommingData(
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -518,7 +518,8 @@ void Client::collectPlant(
 
         //clear the server dirt
         GlobalServerData::serverPrivateVariables.plantUnusedId << plant.pointOnMapDbCode;
-        static_cast<MapServer *>(map)->plants.removeAt(index);
+
+        static_cast<MapServer *>(map)->plants[QPair<quint8,quint8>(x,y)].character=0;
         return;
     }
     else
