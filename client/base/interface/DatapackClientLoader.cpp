@@ -885,6 +885,7 @@ void DatapackClientLoader::parseItemsExtra()
 
 void DatapackClientLoader::parseMaps()
 {
+    /// \todo do a sub overlay
     const QStringList &returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
 
     //load the map
@@ -991,9 +992,9 @@ void DatapackClientLoader::parseMaps()
                     while(index<mapLoader.map_to_send.dirts.size())
                     {
                         const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
-                        plantOnMap[fileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMapIndex;
+                        plantOnMap[basePath+fileName][QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMapIndex;
                         PlantIndexContent plantIndexContent;
-                        plantIndexContent.map=fileName;
+                        plantIndexContent.map=basePath+fileName;
                         plantIndexContent.x=dirt.point.x;
                         plantIndexContent.y=dirt.point.y;
                         plantIndexOfOnMap[plantOnMapIndex]=plantIndexContent;

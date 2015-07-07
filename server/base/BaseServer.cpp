@@ -607,13 +607,17 @@ void BaseServer::preload_pointOnMap_return()
                                             mapAndPoint.y=0;
                                             //less bandwith than send map,x,y
                                             mapAndPoint.indexOfItemOnMap=255;
+                                            #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                                             mapAndPoint.indexOfDirtOnMap=255;
+                                            #endif
                                             DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
                                         }
 
                                         DictionaryServer::MapAndPoint mapAndPoint;
-                                        mapAndPoint.indexOfDirtOnMap=255;
                                         mapAndPoint.indexOfItemOnMap=255;
+                                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
+                                        mapAndPoint.indexOfDirtOnMap=255;
+                                        #endif
                                         mapAndPoint.map=DictionaryServer::dictionary_map_database_to_internal.value(map_id);
                                         mapAndPoint.x=x;
                                         mapAndPoint.y=y;
@@ -848,7 +852,9 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.y=0;
                         //less bandwith than send map,x,y
                         mapAndPoint.indexOfItemOnMap=255;
+                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                         mapAndPoint.indexOfDirtOnMap=255;
+                        #endif
                         DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
                     }
                     {
@@ -892,7 +898,9 @@ void BaseServer::preload_map_semi_after_db_id()
                         && DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).contains(QPair<quint8/*x*/,quint8/*y*/>(dirt.point.x,dirt.point.y)))
                 {
                     pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.value(sortFileName).value(QPair<quint8,quint8>(dirt.point.x,dirt.point.y));
+                    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                     DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode].indexOfDirtOnMap=Client::indexOfDirtOnMap;
+                    #endif
                 }
                 else
                 {
@@ -939,7 +947,9 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.x=0;
                         mapAndPoint.y=0;
                         //less bandwith than send map,x,y
+                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                         mapAndPoint.indexOfDirtOnMap=255;
+                        #endif
                         mapAndPoint.indexOfItemOnMap=255;
                         DictionaryServer::dictionary_pointOnMap_database_to_internal << mapAndPoint;
                     }
@@ -949,7 +959,9 @@ void BaseServer::preload_map_semi_after_db_id()
                         mapAndPoint.x=dirt.point.x;
                         mapAndPoint.y=dirt.point.y;
                         //less bandwith than send map,x,y
+                        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
                         mapAndPoint.indexOfDirtOnMap=Client::indexOfDirtOnMap;
+                        #endif
                         DictionaryServer::dictionary_pointOnMap_database_to_internal[dictionary_pointOnMap_maxId]=mapAndPoint;
                     }
 
@@ -962,9 +974,10 @@ void BaseServer::preload_map_semi_after_db_id()
                 plantOnMap.character=0;//player id
                 plantOnMap.mature_at=0;//timestamp when is mature
                 plantOnMap.player_owned_expire_at=0;//timestamp when is mature
+                #else
+                plantOnMap.indexOfOnMap=Client::indexOfDirtOnMap;
                 #endif
                 plantOnMap.pointOnMapDbCode=pointOnMapDbCode;
-                plantOnMap.indexOfOnMap=Client::indexOfDirtOnMap;
                 mapServer->plants[QPair<quint8,quint8>(dirt.point.x,dirt.point.y)]=plantOnMap;
 
                 #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
