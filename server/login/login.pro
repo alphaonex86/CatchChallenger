@@ -52,7 +52,10 @@ SOURCES += \
     ../../general/base/FacilityLibGeneral.cpp \
     ../base/SqlFunction.cpp \
     ../base/DictionaryLogin.cpp \
-    ../../general/base/CommonSettingsCommon.cpp
+    ../../general/base/CommonSettingsCommon.cpp \
+    LinkToGameServerStaticVar.cpp \
+    LinkToGameServerProtocolParsing.cpp \
+    LinkToGameServer.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -79,4 +82,5 @@ HEADERS += \
     ../base/DictionaryLogin.h \
     ../VariableServer.h \
     ../../general/base/GeneralVariable.h \
-    ../../general/base/CommonSettingsCommon.h
+    ../../general/base/CommonSettingsCommon.h \
+    LinkToGameServer.h

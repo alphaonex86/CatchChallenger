@@ -2,6 +2,7 @@
 #include "EpollClientLoginSlave.h"
 #include <iostream>
 #include "EpollServerLoginSlave.h"
+#include "EpollClientLoginSlave.h"
 #include "CharactersGroupForLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 
@@ -177,9 +178,9 @@ void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                                     abort();
                                 }
                                 charactersGroupIndex=rawData[pos];
-                                pos+=1;
                                 EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=charactersGroupIndex;
                                 EpollClientLoginSlave::serverServerListSize+=1;
+                                pos+=1;
                             }
 
                             //copy the key
@@ -195,9 +196,9 @@ void LinkToMaster::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                                     std::cerr << "C210 CharactersGroupForLogin not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                     abort();
                                 }
+                                serverUniqueKey=le32toh(*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos)));
                                 pos+=4;
                                 EpollClientLoginSlave::serverServerListSize+=4;
-                                serverUniqueKey=*reinterpret_cast<quint32 *>(const_cast<char *>(rawData+pos));
                             }
 
                             //skip the host + port
@@ -1037,14 +1038,72 @@ void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                             if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                             {
                                 if(dataForSelectedCharacterReturn.client!=NULL)
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                    ->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
+                                {
+                                    if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                                    {
+                                        if(static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->stat!=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting)
+                                        {
+                                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                            ->parseNetworkReadError("client in wrong state main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                                            return;
+                                        }
+                                        //check again if the game server is not disconnected, don't check charactersGroupIndex because previously checked at EpollClientLoginSlave::selectCharacter()
+                                        const quint8 &charactersGroupIndex=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->charactersGroupIndex;
+                                        const quint32 &serverUniqueKey=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->serverUniqueKey;
+                                        if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
+                                        {
+                                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                            ->parseNetworkReadError("client server not found to proxy it main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");
+                                            return;
+                                        }
+                                        const CharactersGroupForLogin::InternalGameServer &server=CharactersGroupForLogin::list.at(charactersGroupIndex)->getServerInformation(serverUniqueKey);
+
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
+                                        /// \todo do the async connect
+                                        /// linkToGameServer->stat=Stat::Connecting;
+                                        const int &socketFd=LinkToGameServer::tryConnect(server.host.toLatin1(),server.port,5,1);
+                                        if(Q_LIKELY(socketFd>=0))
+                                        {
+                                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                            ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                                            LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
+                                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                            ->linkToGameServer=linkToGameServer;
+                                            linkToGameServer->stat=LinkToGameServer::Stat::Connected;
+                                            linkToGameServer->client=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client);
+                                            memcpy(linkToGameServer->tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                                            //send the protocol
+                                            //wait readTheFirstSslHeader() to sendProtocolHeader();
+                                            linkToGameServer->setConnexionSettings();
+                                        }
+                                        else
+                                        {
+                                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                            ->parseNetworkReadError(QStringLiteral("not able to connect on the game server as proxy, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+                                            return;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->stat=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelected;
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
+                                        static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                        ->closeSocket();
+                                    }
+                                }
                             }
                             else if(size==1)
                             {
                                 if(dataForSelectedCharacterReturn.client!=NULL)
+                                {
                                     static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
                                     ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
+                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    ->closeSocket();
+                                }
                             }
                             else
                                 parseNetworkReadError("main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", reply size for 0207 wrong");

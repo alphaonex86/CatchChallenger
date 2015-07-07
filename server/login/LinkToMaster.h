@@ -76,7 +76,8 @@ protected:
 
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
 private:
-    static sockaddr_in serv_addr;
+    static char host[256];
+    static quint16 port;
 };
 }
 

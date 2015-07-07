@@ -36,7 +36,7 @@ void CharactersGroupForLogin::clearServerPair()
 
 void CharactersGroupForLogin::setServerUniqueKey(const quint8 &indexOnFlatList,const quint32 &serverUniqueKey,const char * const hostData,const quint8 &hostDataSize,const quint16 &port)
 {
-    InternalLoginServer tempServer;
+    InternalGameServer tempServer;
     tempServer.host=QString::fromUtf8(hostData,hostDataSize);
     tempServer.port=port;
     tempServer.indexOnFlatList=indexOnFlatList,
@@ -46,6 +46,11 @@ void CharactersGroupForLogin::setServerUniqueKey(const quint8 &indexOnFlatList,c
 bool CharactersGroupForLogin::containsServerUniqueKey(const quint32 &serverUniqueKey) const
 {
     return servers.contains(serverUniqueKey);
+}
+
+CharactersGroupForLogin::InternalGameServer CharactersGroupForLogin::getServerInformation(const quint32 &serverUniqueKey) const
+{
+    return servers.value(serverUniqueKey);
 }
 
 BaseClassSwitch::Type CharactersGroupForLogin::getType() const
