@@ -66,6 +66,7 @@ public:
     static void setEvent(const quint8 &event, const quint8 &new_value);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     static char * addAuthGetToken(const quint32 &characterId,const quint32 &accountIdRequester);
+    static void purgeTokenAuthList();
     #endif
     quint32 getPlayerId() const;
     quint32 getClanId() const;

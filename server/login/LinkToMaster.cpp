@@ -16,7 +16,8 @@ using namespace CatchChallenger;
 LinkToMaster *LinkToMaster::linkToMaster=NULL;
 int LinkToMaster::linkToMasterSocketFd=-1;
 bool LinkToMaster::haveTheFirstSslHeader=false;
-sockaddr_in LinkToMaster::serv_addr;
+char LinkToMaster::host[];
+quint16 LinkToMaster::port=0;
 
 LinkToMaster::LinkToMaster(
         #ifdef SERVERSSL
@@ -59,7 +60,16 @@ int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const 
         abort();
     }
 
-    struct hostent *server;
+    //don't cache this
+    sockaddr_in serv_addr;
+    {
+        const size_t &size=strlen(host)+1;
+        if(size>255)
+            memcpy(LinkToMaster::host,host,256);
+        else
+            memcpy(LinkToMaster::host,host,size);
+        LinkToMaster::port=port;
+    }
 
     LinkToMaster::linkToMasterSocketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(LinkToMaster::linkToMasterSocketFd<0)
@@ -67,12 +77,13 @@ int LinkToMaster::tryConnect(const char * const host, const quint16 &port,const 
         std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
         abort();
     }
-    server=gethostbyname(host);
+    struct hostent *server=gethostbyname(host);
     if(server==NULL)
     {
         std::cerr << "ERROR, no such host to master server (abort)" << std::endl;
         abort();
     }
+    //resolv the dns if needed
     bzero((char *)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr,
@@ -172,6 +183,21 @@ void LinkToMaster::connectInternal()
     }
     epollSocket.reopen(LinkToMaster::linkToMasterSocketFd);
 
+    struct hostent *server=gethostbyname(host);
+    if(server==NULL)
+    {
+        std::cerr << "ERROR, no such host to master server (abort)" << std::endl;
+        abort();
+    }
+
+    //resolv the dns if needed
+    sockaddr_in serv_addr;
+    bzero((char *)&serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char *)server->h_addr,
+         (char *)&serv_addr.sin_addr.s_addr,
+         server->h_length);
+    serv_addr.sin_port = htons(port);
     int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(connStatusType<0)
     {

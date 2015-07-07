@@ -33,6 +33,7 @@
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "game-server-alone/LinkToMaster.h"
+#include "epoll/timer/TimerPurgeTokenAuthList.h"
 #endif
 
 #define MAXEVENTS 512
@@ -643,6 +644,9 @@ int main(int argc, char *argv[])
     #endif
     TimerPositionSync timerPositionSync;
     TimerSendInsertMoveRemove timerSendInsertMoveRemove;
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    TimerPurgeTokenAuthList timerPurgeTokenAuthList;
+    #endif
     {
         GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
         const qint64 &time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
@@ -701,6 +705,15 @@ int main(int argc, char *argv[])
             #endif
         }
     }
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    {
+        if(!timerPurgeTokenAuthList.start(15*60*1000))
+        {
+            std::cerr << "timerPurgeTokenAuthList fail to set" << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+    #endif
 
     #ifndef SERVERNOBUFFER
     #ifdef SERVERSSL

@@ -777,11 +777,6 @@ void BaseServer::preload_map_semi_after_db_id()
         qDebug() << "Need be called after preload_dictionary_map()";
         abort();
     }
-    if(DictionaryServer::dictionary_pointOnMap_internal_to_database.isEmpty())
-    {
-        qDebug() << "Need be called after preload_pointOnMap_sql()";
-        abort();
-    }
     Client::indexOfItemOnMap=0;//index of item on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     Client::indexOfDirtOnMap=0;//index of plant on map, ordened by map and x,y ordened into the xml file, less bandwith than send map,x,y

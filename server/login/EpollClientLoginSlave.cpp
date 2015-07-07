@@ -24,6 +24,9 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             #endif
             ),
         stat(EpollClientLoginStat::None),
+        linkToGameServer(NULL),
+        charactersGroupIndex(0),
+        serverUniqueKey(0),
         socketString(NULL),
         socketStringSize(0),
         account_id(0),
@@ -89,10 +92,24 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
             }
         }
     }
+    if(linkToGameServer!=NULL)
+    {
+        linkToGameServer->closeSocket();
+        //break the link
+        linkToGameServer->client=NULL;
+        linkToGameServer=NULL;
+    }
 }
 
 void EpollClientLoginSlave::disconnectClient()
 {
+    if(linkToGameServer!=NULL)
+    {
+        linkToGameServer->closeSocket();
+        //break the link
+        linkToGameServer->client=NULL;
+        linkToGameServer=NULL;
+    }
     epollSocket.close();
     messageParsingLayer("Disconnected client");
 }

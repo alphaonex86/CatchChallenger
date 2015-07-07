@@ -1372,7 +1372,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint8 &sub
                             serverListIndex++;
                         }
                     }
-                    else
+                    else//proxy mode
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                         {
