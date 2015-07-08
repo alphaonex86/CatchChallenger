@@ -107,12 +107,12 @@ void ProtocolParsingInputOutput::closeSocket()
 void ProtocolParsingInputOutput::parseIncommingData()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(ProtocolParsingInputOutput::parseIncommingDataCount>0)
+    if(parseIncommingDataCount>0)
     {
-        qDebug() << "Multiple client ont same section";
+        qDebug() << "Multiple client on same section";
         abort();
     }
-    ProtocolParsingInputOutput::parseIncommingDataCount++;
+    parseIncommingDataCount++;
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
     #ifdef PROTOCOLPARSINGDEBUG
@@ -157,7 +157,7 @@ QString::number(isClient)+
 #endif
 QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            ProtocolParsingInputOutput::parseIncommingDataCount--;
+            parseIncommingDataCount--;
             #endif
             return;
         }
@@ -171,7 +171,7 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
         if(size<CATCHCHALLENGER_COMMONBUFFERSIZE)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            ProtocolParsingInputOutput::parseIncommingDataCount--;
+            parseIncommingDataCount--;
             #endif
             return;
         }
@@ -184,7 +184,7 @@ QStringLiteral(" parseIncommingData(): size returned is 0!"));*/
     QStringLiteral(" parseIncommingData(): finish parse the input"));
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    ProtocolParsingInputOutput::parseIncommingDataCount--;
+    parseIncommingDataCount--;
     #endif
 }
 
