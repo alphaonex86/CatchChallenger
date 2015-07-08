@@ -1070,12 +1070,14 @@ void LinkToMaster::parseFullReplyData(const quint8 &mainCodeType,const quint8 &s
                                             LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
                                             static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
                                             ->linkToGameServer=linkToGameServer;
+                                            linkToGameServer->queryIdToLog=dataForSelectedCharacterReturn.client_query_id;
                                             linkToGameServer->stat=LinkToGameServer::Stat::Connected;
                                             linkToGameServer->client=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client);
                                             memcpy(linkToGameServer->tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                                             //send the protocol
                                             //wait readTheFirstSslHeader() to sendProtocolHeader();
                                             linkToGameServer->setConnexionSettings();
+                                            linkToGameServer->parseIncommingData();
                                         }
                                         else
                                         {
