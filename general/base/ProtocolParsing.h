@@ -310,7 +310,7 @@ protected:
     char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    static int parseIncommingDataCount;
+    int parseIncommingDataCount;//by object
     #endif
 };
 

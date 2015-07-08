@@ -46,7 +46,7 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                     return;
                 }
                 //send token to game server
-                packFullOutcommingQuery(0x02,0x06,0x02/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
+                packFullOutcommingQuery(0x02,0x06,queryIdToLog/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
                 stat=ProtocolGood;
                 return;
             }
@@ -129,8 +129,16 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
 {
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
-        return;
+        if(mainCodeType==0x03 && queryNumber==0x01 && stat==Stat::Connected)
+        {
+            parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
+            return;
+        }
+        else
+        {
+            parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+            return;
+        }
     }
     Q_UNUSED(data);
     Q_UNUSED(size);
@@ -138,9 +146,6 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
 
     if(client!=NULL)
         client->postReply(queryNumber,data,size);
-
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
-    return;
 }
 
 void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
@@ -195,9 +200,8 @@ void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType,const quint
         default:
             if(client!=NULL)
                 client->postReply(queryNumber,data,size);
-        break;
+        return;
     }
-    parseNetworkReadError(QStringLiteral("The server for now not ask anything: %1 %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 }
 
 void LinkToGameServer::parseNetworkReadError(const QString &errorString)

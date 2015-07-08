@@ -325,6 +325,7 @@ void CharactersGroup::lockTheCharacter(const quint32 &characterId)
     }
     #endif
     lockedAccount[characterId]=0;
+    qDebug() << QStringLiteral("lock the char %1 total locked: %2").arg(characterId).arg(lockedAccount.size());
 }
 
 //don't apply on InternalGameServer
@@ -332,11 +333,12 @@ void CharactersGroup::unlockTheCharacter(const quint32 &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!lockedAccount.contains(characterId))
-        qDebug() << QStringLiteral("lockedAccount not contains: %1").arg(characterId);
+        qDebug() << QStringLiteral("try unlonk %1 but already unlocked, relock for 5s").arg(characterId);
     else if(lockedAccount.value(characterId)!=0)
-        qDebug() << QStringLiteral("lockedAccount contains set timeout: %1").arg(characterId);
+        qDebug() << QStringLiteral("unlock %1 already planned into: %2 (reset for 5s)").arg(characterId).arg(lockedAccount.value(characterId));
     #endif
     lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
+    qDebug() << QStringLiteral("unlock the char %1 total locked: %2").arg(characterId).arg(lockedAccount.size());
 }
 
 void CharactersGroup::waitBeforeReconnect(const quint32 &characterId)
@@ -348,6 +350,7 @@ void CharactersGroup::waitBeforeReconnect(const quint32 &characterId)
         qDebug() << QStringLiteral("lockedAccount contains set timeout: %1").arg(characterId);
     #endif
     lockedAccount[characterId]=QDateTime::currentMSecsSinceEpoch()/1000+5;
+    qDebug() << QStringLiteral("waitBeforeReconnect the char %1 total locked: %2").arg(characterId).arg(lockedAccount.size());
 }
 
 void CharactersGroup::purgeTheLockedAccount()
@@ -376,4 +379,6 @@ void CharactersGroup::purgeTheLockedAccount()
     }
     if(clockDriftDetected)
         qDebug() << QStringLiteral("Some locked account for more than 1h, clock drift?");
+    if(charactedToUnlock.isEmpty())
+        qDebug() << QStringLiteral("purged char number %1 total locked: %2").arg(charactedToUnlock.size()).arg(lockedAccount.size());
 }

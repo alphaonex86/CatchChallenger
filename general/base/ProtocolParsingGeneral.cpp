@@ -17,9 +17,6 @@ const quint16 ProtocolParsingBase::sizeHeaderNullquint16=0;
 #ifdef CATCHCHALLENGER_BIGBUFFERSIZE
 char ProtocolParsingBase::tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
 #endif
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
-int ProtocolParsingInputOutput::parseIncommingDataCount=0;
-#endif
 
 QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
 //if is a query
@@ -461,6 +458,9 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
     #else
     socket(socket)
     #endif
+      #ifdef CATCHCHALLENGER_EXTRA_CHECK
+      ,parseIncommingDataCount(0)
+      #endif
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT

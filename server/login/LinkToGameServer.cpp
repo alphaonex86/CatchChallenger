@@ -1,6 +1,8 @@
 #include "LinkToGameServer.h"
 #include "EpollClientLoginSlave.h"
 #include "../epoll/Epoll.h"
+#include "../epoll/EpollSocket.h"
+#include "EpollServerLoginSlave.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -33,7 +35,8 @@ LinkToGameServer::LinkToGameServer(
         stat(Stat::Connected),
         client(NULL),
         haveTheFirstSslHeader(false),
-        socketFd(-1)
+        socketFd(-1),
+        queryIdToLog(0)
 {
     this->socketFd=infd;
 }
@@ -44,8 +47,8 @@ LinkToGameServer::~LinkToGameServer()
     {
         client->closeSocket();
         //break the link
-        client=NULL;
         client->linkToGameServer=NULL;
+        client=NULL;
     }
 }
 
@@ -129,36 +132,33 @@ void LinkToGameServer::setConnexionSettings()
         }
     }
     {
-        /*const int s = EpollSocket::make_non_blocking(linkToMaster::linkToMasterSocketFd);
-        if(s == -1)
+        if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
         {
-            std::cerr << "unable to make to socket non blocking" << std::endl;
-            abort();
-        }
-        else*/
-        {
-            //if(tcpCork)
+            //set cork for CatchChallener because don't have real time part
+            int state = 1;
+            if(setsockopt(socketFd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
             {
-                //set cork for CatchChallener because don't have real time part
-                int state = 1;
-                if(setsockopt(socketFd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                {
-                    std::cerr << "Unable to apply tcp cork" << std::endl;
-                    abort();
-                }
+                std::cerr << "Unable to apply tcp cork" << std::endl;
+                abort();
             }
-            /*else if(tcpNodelay)
+        }
+        else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
+        {
+            //set no delay to don't try group the packet and improve the performance
+            int state = 1;
+            if(setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
             {
-                //set no delay to don't try group the packet and improve the performance
-                int state = 1;
-                if(setsockopt(linkToMaster::linkToMasterSocketFd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                {
-                    std::cerr << "Unable to apply tcp no delay" << std::endl;
-                    abort();
-                }
-            }*/
+                std::cerr << "Unable to apply tcp no delay" << std::endl;
+                abort();
+            }
         }
     }
+    /*const int s = EpollSocket::make_non_blocking(socketFd);
+    if(s == -1)
+    {
+        std::cerr << "unable to make to socket non blocking" << std::endl;
+        abort();
+    }*/
 }
 
 void LinkToGameServer::readTheFirstSslHeader()
@@ -167,10 +167,17 @@ void LinkToGameServer::readTheFirstSslHeader()
         return;
     std::cout << "linkToMaster::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
-    if(::read(socketFd,buffer,1)<0)
+    const ssize_t &size=::read(socketFd,buffer,1);
+    if(size<0)
     {
-        std::cerr << "ERROR reading from socket to game server server (abort)" << std::endl;
-        abort();
+        std::cerr << "ERROR reading from socket to game server server, errno " << errno << std::endl;
+        if(errno!=EAGAIN)
+            closeSocket();
+        return;
+    }
+    if(size<1)
+    {
+        std::cerr << "ERROR reading from socket to game server server, wait more data" << std::endl;
         return;
     }
     #ifdef SERVERSSL
@@ -197,8 +204,8 @@ void LinkToGameServer::disconnectClient()
     {
         client->closeSocket();
         //break the link
-        client=NULL;
         client->linkToGameServer=NULL;
+        client=NULL;
     }
     epollSocket.close();
     messageParsingLayer("Disconnected client");
@@ -242,5 +249,5 @@ void LinkToGameServer::parseIncommingData()
 
 void LinkToGameServer::sendProtocolHeader()
 {
-    packFullOutcommingQuery(0x02,0x06,0x01/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+    packOutcommingQuery(0x03,0x01/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
 }
