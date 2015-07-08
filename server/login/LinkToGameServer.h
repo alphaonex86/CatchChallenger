@@ -35,6 +35,7 @@ public:
     EpollClientLoginSlave *client;
     bool haveTheFirstSslHeader;
     static const unsigned char protocolHeaderToMatchGameServer[5];
+    quint8 queryIdToLog;
 
     void setConnexionSettings();
     BaseClassSwitch::Type getType() const;
