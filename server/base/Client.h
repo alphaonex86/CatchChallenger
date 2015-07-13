@@ -88,7 +88,7 @@ public:
     static int privateChatDropTotalCache;
     static int privateChatDropNewValue;
     static QList<quint16> marketObjectIdList;
-    static quint64 datapack_list_cache_timestamp;
+    static quint64 datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     static QList<quint16> simplifiedIdList;
     static QHash<QString,Client *> playerByPseudo;
     static QHash<quint32,Clan *> clanList;
@@ -185,6 +185,15 @@ private:
         QList<OldEventEntry> oldEventList;
     };
     OldEvents oldEvents;
+
+    enum DatapackStatus
+    {
+        Base=0x01,
+        Main=0x02,
+        Sub=0x03,
+        Finished=0x04
+    };
+    DatapackStatus datapackStatus;
 
     qint32 connected_players;//it's th last number of connected player send
     QList<void *> paramToPassToCallBack;
@@ -284,11 +293,11 @@ private:
     static int tempDatapackListReplyTestCount;
     struct DatapackCacheFile
     {
-        quint32 mtime;
+        //quint32 mtime;
         quint32 partialHash;
     };
-    static QHash<QString,quint32> datapack_file_list_cache;
-    static QHash<QString,DatapackCacheFile> datapack_file_hash_cache;
+    //static QHash<QString,quint32> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
+    static QHash<QString,DatapackCacheFile> datapack_file_hash_cache_base,datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
     static QRegularExpression fileNameStartStringRegex;
     static QString single_quote;
     static QString antislash_single_quote;
@@ -364,8 +373,10 @@ private:
     #endif
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint32> &partialHashList);
-    static QHash<QString,quint32> datapack_file_list(const bool withHash=true);
-    QHash<QString,quint32> datapack_file_list_cached();
+    static QHash<QString,DatapackCacheFile> datapack_file_list(const QString &path,const bool withHash=true);
+    QHash<QString,Client::DatapackCacheFile> datapack_file_list_cached_base();
+    QHash<QString,Client::DatapackCacheFile> datapack_file_list_cached_main();
+    QHash<QString,Client::DatapackCacheFile> datapack_file_list_cached_sub();
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const quint8 &query_id);
     void sendFileContent();

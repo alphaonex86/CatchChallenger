@@ -1417,19 +1417,90 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
             //Send datapack file list
             case 0x0C:
             {
-                if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+                switch(datapackStatus)
                 {
-                    errorOutput("Can't use because mirror is defined");
+                    case DatapackStatus::Base:
+                        if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
+                        {
+                            if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+                            {
+                                errorOutput("Can't use because mirror is defined");
+                                return;
+                            }
+                            else
+                                datapackStatus=DatapackStatus::Main;
+                        }
+                    break;
+                    case DatapackStatus::Main:
+                    case DatapackStatus::Sub:
+                        if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+                        {
+                            errorOutput("Can't use because mirror is defined");
+                            return;
+                        }
+                    break;
+                    default:
+                        errorOutput("Double datapack send list");
                     return;
                 }
+
                 QByteArray data(rawData,size);
                 QDataStream in(data);
                 in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
+
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint8 stepToSkip;
+                in >> stepToSkip;
+                switch(stepToSkip)
+                {
+                    case 0x01:
+                        if(datapackStatus==DatapackStatus::Base)
+                        {}
+                        else
+                        {
+                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                            return;
+                        }
+                    break;
+                    case 0x02:
+                        if(datapackStatus==DatapackStatus::Base)
+                            datapackStatus=DatapackStatus::Main;
+                        else if(datapackStatus==DatapackStatus::Main)
+                        {}
+                        else
+                        {
+                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                            return;
+                        }
+                    break;
+                    case 0x03:
+                        if(datapackStatus==DatapackStatus::Base)
+                            datapackStatus=DatapackStatus::Sub;
+                        else if(datapackStatus==DatapackStatus::Main)
+                            datapackStatus=DatapackStatus::Sub;
+                        else if(datapackStatus==DatapackStatus::Sub)
+                        {}
+                        else
+                        {
+                            parseNetworkReadError(QStringLiteral("step out of range to get datapack base but already in highter level"));
+                            return;
+                        }
+                    break;
+                    default:
+                        parseNetworkReadError(QStringLiteral("step out of range to get datapack: %1").arg(stepToSkip));
+                    return;
+                }
+
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
                     parseNetworkReadError(QStringLiteral("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                     return;
                 }
+                quint8 textSize;
                 quint32 number_of_file;
                 in >> number_of_file;
                 QStringList files;
@@ -1439,12 +1510,37 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
                 quint32 index=0;
                 while(index<number_of_file)
                 {
-                    if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                     {
-                        parseNetworkReadError(QStringLiteral("error at datapack file list query"));
+                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseNetworkReadError("wrong utf8 to QString size in PM for text size");
+                            return;
+                        }
+                        in >> textSize;
+                        //control the regex file into Client::datapackList()
+                        if(textSize>0)
+                        {
+                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
+                            {
+                                parseNetworkReadError(QStringLiteral("wrong utf8 to QString size for file name: parseQuery(%1,%2,%3): %4 %5")
+                                           .arg(mainCodeType)
+                                           .arg(subCodeType)
+                                           .arg(queryNumber)
+                                           .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                                           .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                                           );
+                                return;
+                            }
+                            const QByteArray &rawText=data.mid(in.device()->pos(),textSize);
+                            tempFileName=QString::fromUtf8(rawText.data(),rawText.size());
+                            in.device()->seek(in.device()->pos()+rawText.size());
+                        }
+                    }
+                    if((in.device()->size()-in.device()->pos())<1)
+                    {
+                        parseNetworkReadError(QStringLiteral("missing header utf8 datapack file list query"));
                         return;
                     }
-                    in >> tempFileName;
                     files << tempFileName;
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                     {

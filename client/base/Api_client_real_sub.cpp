@@ -14,6 +14,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
@@ -80,6 +81,12 @@ void Api_client_real::getHttpFileSub(const QString &url, const QString &fileName
     connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedSub);
 }
 
+void Api_client_real::datapackDownloadFinishedSub()
+{
+    haveTheDatapackMainSub();
+    datapackStatus=DatapackStatus::Finished;
+}
+
 void Api_client_real::httpFinishedSub()
 {
     if(httpError)
@@ -140,7 +147,7 @@ void Api_client_real::httpFinishedSub()
         DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListSub.size()));
     reply->deleteLater();
     if(urlInWaitingListSub.isEmpty() && !wait_datapack_content_main)
-        haveTheDatapackMainSub();
+        datapackDownloadFinishedSub();
 }
 
 void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
@@ -166,7 +173,7 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
         wait_datapack_content_sub=false;
         if(!wait_datapack_content_main && !wait_datapack_content_sub)
-            haveTheDatapackMainSub();
+            datapackDownloadFinishedSub();
         return;
     }
 
@@ -182,17 +189,26 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+        out << (quint8)DatapackStatus::Sub;
         out << (quint32)datapackFilesListSub.size();
         int index=0;
         while(index<datapackFilesListSub.size())
         {
-            out << datapackFilesListSub.at(index);
-            struct stat info;
-            stat(QString(mDatapackSub+datapackFilesListSub.at(index)).toLatin1().data(),&info);
+            const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListSub.at(index));
+            if(rawFileName.size()>255 || rawFileName.isEmpty())
+            {
+                DebugClass::debugConsole(QStringLiteral("rawFileName too big or not compatible with utf8"));
+                return;
+            }
+            outputData+=rawFileName;
+            out.device()->seek(out.device()->size());
+
+            /*struct stat info;
+            stat(QString(mDatapackBase+datapackFilesListSub.at(index)).toLatin1().data(),&info);*/
             out << (quint32)partialHashList.at(index);
             index++;
         }
-        packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData.constData(),outputData.size());
+        packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
     {
@@ -305,7 +321,7 @@ void Api_client_real::decodedIsFinishSub()
             }
             wait_datapack_content_sub=false;
             if(!wait_datapack_content_main && !wait_datapack_content_sub)
-                haveTheDatapackMainSub();
+                datapackDownloadFinishedSub();
         }
         else
             test_mirror_sub();
@@ -459,7 +475,7 @@ void Api_client_real::httpFinishedForDatapackListSub()
             if(correctContent==0)
                 qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n") << "\nFor:" << reply->url().toString();
             if(fileToGet==0)
-                haveTheDatapackMainSub();
+                datapackDownloadFinishedSub();
             else
                 datapackSizeSub(fileToGet,sizeToGet*1000);
         }
