@@ -53,6 +53,11 @@ Client::Client(
     randomIndex(0),
     randomSize(0),
     number_of_character(0),
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    datapackStatus(DatapackStatus::Main),
+    #else
+    datapackStatus(DatapackStatus::Base),
+    #endif
     connected_players(0),
     have_send_protocol(false),
     is_logging_in_progess(false),

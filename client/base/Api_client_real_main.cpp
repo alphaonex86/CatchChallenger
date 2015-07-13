@@ -14,6 +14,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
@@ -214,17 +215,26 @@ void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesL
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+        out << (quint8)DatapackStatus::Main;
         out << (quint32)datapackFilesListMain.size();
         int index=0;
         while(index<datapackFilesListMain.size())
         {
-            out << datapackFilesListMain.at(index);
-            struct stat info;
-            stat(QString(mDatapackMain+datapackFilesListMain.at(index)).toLatin1().data(),&info);
+            const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListMain.at(index));
+            if(rawFileName.size()>255 || rawFileName.isEmpty())
+            {
+                DebugClass::debugConsole(QStringLiteral("rawFileName too big or not compatible with utf8"));
+                return;
+            }
+            outputData+=rawFileName;
+            out.device()->seek(out.device()->size());
+
+            /*struct stat info;
+            stat(QString(mDatapackBase+datapackFilesListMain.at(index)).toLatin1().data(),&info);*/
             out << (quint32)partialHashList.at(index);
             index++;
         }
-        packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData.constData(),outputData.size());
+        packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
     {
@@ -544,6 +554,11 @@ void Api_client_real::cleanDatapackMain(QString suffix)
         finalDatapackFolder.rmpath(mDatapackMain+suffix);
 }
 
+void Api_client_real::datapackDownloadFinishedMain()
+{
+
+}
+
 void Api_client_real::downloadProgressDatapackMain(qint64 bytesReceived, qint64 bytesTotal)
 {
     if(!datapackTarXzMain && !datapackTarXzSub)
@@ -621,7 +636,13 @@ void Api_client_real::checkIfContinueOrFinished()
 {
     wait_datapack_content_main=false;
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        datapackStatus=DatapackStatus::Finished;
         haveTheDatapackMainSub();
+    }
     else
+    {
+        datapackStatus=DatapackStatus::Sub;
         sendDatapackContentSub();
+    }
 }

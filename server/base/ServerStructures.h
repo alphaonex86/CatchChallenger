@@ -62,6 +62,7 @@ struct Map_player_info
 
 struct FileToSend
 {
+    //not QFile * to prevent too many file open
     QString file;
 };
 
@@ -289,6 +290,8 @@ struct ServerPrivateVariables
 
     //datapack
     QString datapack_mapPath;
+    QString mainDatapackFolder;
+    QString subDatapackFolder;
     QRegularExpression datapack_rightFileName;
     QRegularExpression datapack_rightFolderName;
 

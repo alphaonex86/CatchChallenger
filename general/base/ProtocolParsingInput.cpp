@@ -193,7 +193,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
     if(!parseHeader(commonBuffer,size,cursor))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        //qDebug() << "Break due to need more in header";
+        qDebug() << "Break due to need more in header";
         #endif
         return false;
     }
@@ -221,7 +221,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
     if(!parseDataSize(commonBuffer,size,cursor))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        //qDebug() << "Break due to need more in parse data size";
+        qDebug() << "Break due to need more in parse data size";
         #endif
         return false;
     }
@@ -235,7 +235,7 @@ bool ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer,
     if(!parseData(commonBuffer,size,cursor))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        //qDebug() << "Break due to need more in parse data";
+        qDebug() << "Break due to need more in parse data";
         #endif
         return false;
     }

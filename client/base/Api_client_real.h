@@ -94,6 +94,14 @@ private:
     QNetworkProxy proxy;
     static QRegularExpression excludePathBase;
     static QRegularExpression excludePathMain;
+    enum DatapackStatus
+    {
+        Base=0x01,
+        Main=0x02,
+        Sub=0x03,
+        Finished=0x04
+    };
+    DatapackStatus datapackStatus;
 
     //file list
     struct query_files
@@ -141,6 +149,9 @@ private slots:
     void httpFinishedBase();
     void httpFinishedMain();
     void httpFinishedSub();
+    void datapackDownloadFinishedBase();
+    void datapackDownloadFinishedMain();
+    void datapackDownloadFinishedSub();
     void datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
     void datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);
     void datapackChecksumDoneSub(const QStringList &datapackFilesList,const QByteArray &hash, const QList<quint32> &partialHash);

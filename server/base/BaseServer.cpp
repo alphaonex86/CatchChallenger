@@ -2246,8 +2246,11 @@ void BaseServer::preload_the_datapack()
     BaseServerMasterSendDatapack::extensionAllowed=extensionAllowedTemp.toSet();
     QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(BaseServer::text_dotcomma);
     BaseServerMasterSendDatapack::compressedExtension=compressedExtensionAllowedTemp.toSet();
-    Client::datapack_list_cache_timestamp=0;
+    Client::datapack_list_cache_timestamp_base=0;
+    Client::datapack_list_cache_timestamp_main=0;
+    Client::datapack_list_cache_timestamp_sub=0;
 
+    GlobalServerData::serverPrivateVariables.mainDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/");
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())
@@ -2260,89 +2263,214 @@ void BaseServer::preload_the_datapack()
             DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE"));
             abort();
         }
-        const QString &mainDir=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/");
-        if(!QDir(mainDir).exists())
+        if(!QDir(GlobalServerData::serverPrivateVariables.mainDatapackFolder).exists())
         {
-            DebugClass::debugConsole(mainDir+QStringLiteral(" don't exists"));
+            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.mainDatapackFolder+QStringLiteral(" don't exists"));
             abort();
         }
     }
     #endif
-    QString subDatapackFolder;
     if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
     {
-        subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/")+
+        GlobalServerData::serverPrivateVariables.subDatapackFolder=GlobalServerData::serverSettings.datapack_basePath+QStringLiteral("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("/")+
                 QStringLiteral("sub/")+CommonSettingsServer::commonSettingsServer.subDatapackCode+QStringLiteral("/");
-        if(!QDir(subDatapackFolder).exists())
+        if(!QDir(GlobalServerData::serverPrivateVariables.subDatapackFolder).exists())
         {
-            DebugClass::debugConsole(subDatapackFolder+QStringLiteral(" don't exists, drop spec"));
-            subDatapackFolder.clear();
+            DebugClass::debugConsole(GlobalServerData::serverPrivateVariables.subDatapackFolder+QStringLiteral(" don't exists, drop spec"));
+            GlobalServerData::serverPrivateVariables.subDatapackFolder.clear();
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
         }
     }
 
-    if(GlobalServerData::serverSettings.datapackCache==0)
-        Client::datapack_file_list_cache=Client::datapack_file_list();
-
     QCryptographicHash hashBase(QCryptographicHash::Sha224);
     QCryptographicHash hashMain(QCryptographicHash::Sha224);
     QCryptographicHash hashSub(QCryptographicHash::Sha224);
-    QStringList datapack_file_temp=Client::datapack_file_list(false).keys();
-    datapack_file_temp.sort();
-    const QRegularExpression mainDatapackBase("^map[/\\\\]main[/\\\\]");
-    const QRegularExpression mainDatapackFolder("^map[/\\\\]main[/\\\\]"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"[/\\\\]");
-    const QRegularExpression subDatapackBase("^map[/\\\\]main[/\\\\]"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"[/\\\\]sub[/\\\\]");
-    int index=0;
-    while(index<datapack_file_temp.size()) {
-        QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
-        if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
-        {
-            if(file.open(QIODevice::ReadOnly))
+
+    //do the base
+    {
+        const QHash<QString,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
+        QStringList datapack_file_temp=pair.keys();
+        datapack_file_temp.sort();
+        const QRegularExpression mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
+        int index=0;
+        while(index<datapack_file_temp.size()) {
+            QFile file(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index));
+            if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                //read and load the file
-                const QByteArray &data=file.readAll();
+                if(file.open(QIODevice::ReadOnly))
                 {
+                    //read and load the file
+                    const QByteArray &data=file.readAll();
+
+                    if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                    {
+                        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()))
+                        {
+                            if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                            {
+                                DebugClass::debugConsole(QStringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+                                abort();
+                            }
+                        }
+                        else
+                        {
+                            DebugClass::debugConsole(QStringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)));
+                            abort();
+                        }
+                    }
+
+                    //switch the data to correct hash or drop it
+                    if(datapack_file_temp.at(index).contains(mainDatapackBaseFilter))
+                    {}
+                    else
+                    {
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(data);
+                        Client::DatapackCacheFile cacheFile;
+                        cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
+
+                        hashBase.addData(data);
+                    }
+
+                    file.close();
+                }
+                else
+                {
+                    DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    abort();
+                }
+            }
+            else
+                DebugClass::debugConsole(QStringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
+            index++;
+        }
+        CommonSettingsCommon::commonSettingsCommon.datapackHashBase=hashBase.result();
+    }
+    //do the main
+    {
+        const QHash<QString,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
+        QStringList datapack_file_temp=pair.keys();
+        datapack_file_temp.sort();
+        const QRegularExpression mainDatapackFolderFilter("^sub[/\\\\]");
+        int index=0;
+        while(index<datapack_file_temp.size()) {
+            QFile file(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index));
+            if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            {
+                if(file.open(QIODevice::ReadOnly))
+                {
+                    //read and load the file
+                    const QByteArray &data=file.readAll();
+
+                    if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                    {
+                        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()))
+                        {
+                            if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                            {
+                                DebugClass::debugConsole(QStringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+                                abort();
+                            }
+                        }
+                        else
+                        {
+                            DebugClass::debugConsole(QStringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)));
+                            abort();
+                        }
+                    }
+
+                    //switch the data to correct hash or drop it
+                    if(datapack_file_temp.at(index).contains(mainDatapackFolderFilter))
+                    {
+                    }
+                    else
+                    {
+                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
+                        hashFile.addData(data);
+                        Client::DatapackCacheFile cacheFile;
+                        cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
+                        Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
+
+                        hashBase.addData(data);
+                    }
+
+                    file.close();
+                }
+                else
+                {
+                    DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    abort();
+                }
+            }
+            else
+                DebugClass::debugConsole(QStringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
+            index++;
+        }
+        CommonSettingsServer::commonSettingsServer.datapackHashServerMain=hashMain.result();
+    }
+    //do the sub
+    if(!GlobalServerData::serverPrivateVariables.subDatapackFolder.isEmpty())
+    {
+        const QHash<QString,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
+        QStringList datapack_file_temp=pair.keys();
+        datapack_file_temp.sort();
+        int index=0;
+        while(index<datapack_file_temp.size()) {
+            QFile file(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index));
+            if(datapack_file_temp.at(index).contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            {
+                if(file.open(QIODevice::ReadOnly))
+                {
+                    //read and load the file
+                    const QByteArray &data=file.readAll();
+
+                    if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                    {
+                        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()))
+                        {
+                            if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                            {
+                                DebugClass::debugConsole(QStringLiteral("The file %1 is over the maximum packet size, but can be compressed, try enable the compression").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+                                abort();
+                            }
+                        }
+                        else
+                        {
+                            DebugClass::debugConsole(QStringLiteral("The file %1 is over the maximum packet size").arg(GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)));
+                            abort();
+                        }
+                    }
+
+                    //switch the data to correct hash or drop it
                     QCryptographicHash hashFile(QCryptographicHash::Sha224);
                     hashFile.addData(data);
                     Client::DatapackCacheFile cacheFile;
-                    cacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
                     cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                    Client::datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
-                }
+                    Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
 
-                //switch the data to correct hash or drop it
-                if(datapack_file_temp.at(index).contains(mainDatapackBase))
-                {
-                    if(datapack_file_temp.at(index).contains(mainDatapackFolder))
-                    {
-                        if(datapack_file_temp.at(index).contains(subDatapackBase))
-                        {
-                            if(!subDatapackFolder.isEmpty() && datapack_file_temp.at(index).contains(subDatapackBase))
-                                hashSub.addData(data);
-                        }
-                        else
-                            hashMain.addData(data);
-                    }
-                }
-                else
                     hashBase.addData(data);
 
-                file.close();
+                    file.close();
+                }
+                else
+                {
+                    DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
+                    abort();
+                }
             }
             else
-            {
-                DebugClass::debugConsole(QStringLiteral("Stop now! Unable to open the file %1 to do the datapack checksum for the mirror").arg(file.fileName()));
-                abort();
-            }
+                DebugClass::debugConsole(QStringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
+            index++;
         }
-        else
-            DebugClass::debugConsole(QStringLiteral("File excluded because don't match the regex: %1").arg(file.fileName()));
-        index++;
+        CommonSettingsServer::commonSettingsServer.datapackHashServerSub=hashSub.result();
     }
-    CommonSettingsCommon::commonSettingsCommon.datapackHashBase=hashBase.result();
-    CommonSettingsServer::commonSettingsServer.datapackHashServerMain=hashMain.result();
-    CommonSettingsServer::commonSettingsServer.datapackHashServerSub=hashSub.result();
-    DebugClass::debugConsole(QStringLiteral("%1 file for datapack loaded").arg(datapack_file_temp.size()));
+
+    DebugClass::debugConsole(QStringLiteral("%1 file for datapack loaded").arg(
+                                 Client::datapack_file_hash_cache_base.size()+
+                                 Client::datapack_file_hash_cache_main.size()+
+                                 Client::datapack_file_hash_cache_sub.size()
+                                 ));
 }
 
 void BaseServer::preload_the_players()
@@ -3181,8 +3309,9 @@ void BaseServer::unload_the_events()
 void BaseServer::unload_the_datapack()
 {
     baseServerMasterSendDatapack.compressedExtension.clear();
-    Client::datapack_file_hash_cache.clear();
-    Client::datapack_file_list_cache.clear();
+    Client::datapack_file_hash_cache_base.clear();
+    Client::datapack_file_hash_cache_main.clear();
+    Client::datapack_file_hash_cache_sub.clear();
 }
 
 void BaseServer::unload_the_players()
