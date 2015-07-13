@@ -1323,36 +1323,86 @@ bool Client::loadTheRawUTF8String()
     return true;
 }
 
-QHash<QString, quint32> Client::datapack_file_list_cached()
+QHash<QString, Client::DatapackCacheFile> Client::datapack_file_list_cached_base()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
-        return datapack_file_list();
+        return datapack_file_list(GlobalServerData::serverSettings.datapack_basePath);
     else if(GlobalServerData::serverSettings.datapackCache==0)
     {
-        if(Client::datapack_list_cache_timestamp==0)
+        if(Client::datapack_list_cache_timestamp_base==0)
         {
-            Client::datapack_list_cache_timestamp=QDateTime::currentDateTime().toTime_t();
-            Client::datapack_file_list_cache=datapack_file_list();
+            Client::datapack_list_cache_timestamp_base=QDateTime::currentDateTime().toTime_t();
+            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath);
         }
-        return Client::datapack_file_list_cache;
+        return Client::datapack_file_hash_cache_base;
     }
     else
     {
         const quint64 &currentTime=QDateTime::currentDateTime().toTime_t();
-        if(Client::datapack_list_cache_timestamp<(currentTime-GlobalServerData::serverSettings.datapackCache))
+        if(Client::datapack_list_cache_timestamp_base<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
-            Client::datapack_list_cache_timestamp=currentTime;
-            Client::datapack_file_list_cache=datapack_file_list();
+            Client::datapack_list_cache_timestamp_base=currentTime;
+            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath);
         }
-        return Client::datapack_file_list_cache;
+        return Client::datapack_file_hash_cache_base;
     }
 }
 
-QHash<QString,quint32> Client::datapack_file_list(const bool withHash)
+QHash<QString, Client::DatapackCacheFile> Client::datapack_file_list_cached_main()
 {
-    QHash<QString,quint32> filesList;
+    if(GlobalServerData::serverSettings.datapackCache==-1)
+        return datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder);
+    else if(GlobalServerData::serverSettings.datapackCache==0)
+    {
+        if(Client::datapack_list_cache_timestamp_main==0)
+        {
+            Client::datapack_list_cache_timestamp_main=QDateTime::currentDateTime().toTime_t();
+            Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder);
+        }
+        return Client::datapack_file_hash_cache_main;
+    }
+    else
+    {
+        const quint64 &currentTime=QDateTime::currentDateTime().toTime_t();
+        if(Client::datapack_list_cache_timestamp_main<(currentTime-GlobalServerData::serverSettings.datapackCache))
+        {
+            Client::datapack_list_cache_timestamp_main=currentTime;
+            Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder);
+        }
+        return Client::datapack_file_hash_cache_main;
+    }
+}
 
-    const QStringList &returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverSettings.datapack_basePath);
+QHash<QString, Client::DatapackCacheFile> Client::datapack_file_list_cached_sub()
+{
+    if(GlobalServerData::serverSettings.datapackCache==-1)
+        return datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder);
+    else if(GlobalServerData::serverSettings.datapackCache==0)
+    {
+        if(Client::datapack_list_cache_timestamp_sub==0)
+        {
+            Client::datapack_list_cache_timestamp_sub=QDateTime::currentDateTime().toTime_t();
+            Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder);
+        }
+        return Client::datapack_file_hash_cache_sub;
+    }
+    else
+    {
+        const quint64 &currentTime=QDateTime::currentDateTime().toTime_t();
+        if(Client::datapack_list_cache_timestamp_sub<(currentTime-GlobalServerData::serverSettings.datapackCache))
+        {
+            Client::datapack_list_cache_timestamp_sub=currentTime;
+            Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder);
+        }
+        return Client::datapack_file_hash_cache_sub;
+    }
+}
+
+QHash<QString,Client::DatapackCacheFile> Client::datapack_file_list(const QString &path,const bool withHash)
+{
+    QHash<QString,DatapackCacheFile> filesList;
+
+    const QStringList &returnList=FacilityLibGeneral::listFolder(path);
     int index=0;
     const int &size=returnList.size();
     while(index<size)
@@ -1364,13 +1414,15 @@ QHash<QString,quint32> Client::datapack_file_list(const bool withHash)
         #endif
         if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            if(!QFileInfo(fileName).suffix().isEmpty() && BaseServerMasterSendDatapack::extensionAllowed.contains(QFileInfo(fileName).suffix()))
+            QFileInfo fileInfo(fileName);
+            if(!fileInfo.suffix().isEmpty() && BaseServerMasterSendDatapack::extensionAllowed.contains(QFileInfo(fileName).suffix()))
             {
-                QFile file(GlobalServerData::serverSettings.datapack_basePath+returnList.at(index));
+                QFile file(path+returnList.at(index));
                 if(file.size()<=8*1024*1024)
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {
+                        DatapackCacheFile datapackCacheFile;
                         #ifdef Q_OS_WIN32
                         fileName.replace(Client::text_antislash,Client::text_slash);//remplace if is under windows server
                         #endif
@@ -1378,10 +1430,11 @@ QHash<QString,quint32> Client::datapack_file_list(const bool withHash)
                         {
                             QCryptographicHash hashFile(QCryptographicHash::Sha224);
                             hashFile.addData(file.readAll());
-                            filesList[fileName]=*reinterpret_cast<const int *>(hashFile.result().constData());
+                            datapackCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                         }
                         else
-                            filesList[fileName]=0;
+                            datapackCacheFile.partialHash=0;
+                        filesList[fileName]=datapackCacheFile;
                         file.close();
                     }
                 }
@@ -1396,17 +1449,7 @@ QHash<QString,quint32> Client::datapack_file_list(const bool withHash)
 void Client::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &partialHashList)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    //do in network read to prevent DDOS
-    if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.isEmpty())
-    {
-        errorOutput("Can't use because base mirror is already defined");
-        return;
-    }
-    if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
-    {
-        errorOutput("Can't use because server mirror is already defined");
-        return;
-    }
+    /// \see Client::parseFullQuery() already checked here
     #endif
     tempDatapackListReplyArray.clear();
     tempDatapackListReplyTestCount=0;
@@ -1416,20 +1459,39 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
     BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
-    const QHash<QString,quint32> &filesList=datapack_file_list_cached();
+    QString datapackPath;
+    QHash<QString,DatapackCacheFile> filesList;
+    switch(datapackStatus)
+    {
+        case DatapackStatus::Base:
+            filesList=datapack_file_list_cached_base();
+            datapackPath=GlobalServerData::serverSettings.datapack_basePath;
+        break;
+        case DatapackStatus::Main:
+            filesList=datapack_file_list_cached_main();
+            datapackPath=GlobalServerData::serverPrivateVariables.mainDatapackFolder;
+        break;
+        case DatapackStatus::Sub:
+            filesList=datapack_file_list_cached_sub();
+            datapackPath=GlobalServerData::serverPrivateVariables.subDatapackFolder;
+        break;
+        default:
+        return;
+    }
     QList<FileToSend> fileToSendList;
 
     const int &loop_size=files.size();
     //send the size to download on the client
     {
-        QHash<QString,quint32> filesListForSize(filesList);
+        //clone to drop the ask file and remain the missing client files
+        QHash<QString,DatapackCacheFile> filesListForSize(filesList);
         int index=0;
         quint32 datapckFileNumber=0;
         quint32 datapckFileSize=0;
         while(index<loop_size)
         {
             const QString &fileName=files.at(index);
-            const quint32 &remote_partialHash=partialHashList.at(index);
+            const quint32 &clientPartialHash=partialHashList.at(index);
             if(fileName.contains(Client::text_dotslash) || fileName.contains(Client::text_antislash) || fileName.contains(Client::text_double_slash))
             {
                 errorOutput(QStringLiteral("file name contains illegale char: %1").arg(fileName));
@@ -1440,67 +1502,36 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
                 errorOutput(QStringLiteral("start with wrong string: %1").arg(fileName));
                 return;
             }
+            if(!fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            {
+                errorOutput(QStringLiteral("file name sended wrong: %1").arg(fileName));
+                return;
+            }
             if(filesListForSize.contains(fileName))
             {
-                quint32 partialHash;
-                quint32 server_file_mtime;
-                server_file_mtime=filesListForSize.value(fileName);
-                if(!Client::datapack_file_hash_cache.contains(fileName))
+                const quint32 &serverPartialHash=filesListForSize.value(fileName).partialHash;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(serverPartialHash==0)
                 {
-                    QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
+                    errorOutput(QStringLiteral("serverPartialHash==0 at %1").arg(__FILE__).arg(__LINE__));
+                    abort();
+                }
+                #endif
+                if(clientPartialHash==serverPartialHash)
+                    addDatapackListReply(false);//file found don't need be updated
+                else
+                {
+                    QFile file(datapackPath+fileName);
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                        hashFile.addData(file.readAll());
-                        Client::DatapackCacheFile newCacheFile;
-                        newCacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
-                        newCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                        partialHash=newCacheFile.partialHash;
-                        Client::datapack_file_hash_cache[fileName]=newCacheFile;
+                        addDatapackListReply(false);//found but need an update
+                        datapckFileNumber++;
+                        datapckFileSize+=file.size();
+                        FileToSend fileToSend;
+                        fileToSend.file=fileName;
+                        fileToSendList << fileToSend;
                         file.close();
                     }
-                    else
-                    {
-                        errorOutput(QStringLiteral("unable to read: %1").arg(fileName));
-                        return;
-                    }
-                }
-                else
-                {
-                    const Client::DatapackCacheFile &cacheFile=Client::datapack_file_hash_cache.value(fileName);
-                    if(cacheFile.mtime==server_file_mtime)
-                        partialHash=cacheFile.partialHash;
-                    else
-                    {
-                        QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
-                        if(file.open(QIODevice::ReadOnly))
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(file.readAll());
-                            Client::DatapackCacheFile newCacheFile;
-                            newCacheFile.mtime=QFileInfo(file).lastModified().toTime_t();
-                            newCacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
-                            partialHash=newCacheFile.partialHash;
-                            Client::datapack_file_hash_cache[fileName]=newCacheFile;
-                            file.close();
-                        }
-                        else
-                        {
-                            errorOutput(QStringLiteral("unable to read: %1").arg(fileName));
-                            return;
-                        }
-                    }
-                }
-                if(partialHash==remote_partialHash)
-                    addDatapackListReply(false);//found
-                else
-                {
-                    addDatapackListReply(false);//found but updated
-                    datapckFileNumber++;
-                    datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
-                    FileToSend fileToSend;
-                    fileToSend.file=fileName;
-                    fileToSendList << fileToSend;
                 }
                 filesListForSize.remove(fileName);
             }
@@ -1508,21 +1539,26 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
                 addDatapackListReply(true);//to delete
             index++;
         }
-        QHashIterator<QString,quint32> i(filesListForSize);
+        QHashIterator<QString,DatapackCacheFile> i(filesListForSize);
         while (i.hasNext()) {
             i.next();
-            datapckFileNumber++;
-            datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+i.key()).size();
-            FileToSend fileToSend;
-            fileToSend.file=i.key();
-            fileToSendList << fileToSend;
+            QFile file(datapackPath+i.key());
+            if(file.open(QIODevice::ReadOnly))
+            {
+                datapckFileNumber++;
+                datapckFileSize+=file.size();
+                FileToSend fileToSend;
+                fileToSend.file=i.key();
+                fileToSendList << fileToSend;
+                file.close();
+            }
         }
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (quint32)datapckFileNumber;
         out << (quint32)datapckFileSize;
-        sendFullPacket(0xC2,0x000C,outputData.constData(),outputData.size());
+        sendFullPacket(0xC2,0x0C,outputData.constData(),outputData.size());
     }
     if(fileToSendList.isEmpty())
     {
@@ -1530,64 +1566,38 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         return;
     }
     qSort(fileToSendList);
-    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    //validate, remove or update the file actualy on the client
+    if(tempDatapackListReplyTestCount!=files.size())
     {
-        //validate, remove or update the file actualy on the client
-        if(tempDatapackListReplyTestCount!=files.size())
-        {
-            errorOutput("Bit count return not match");
-            return;
-        }
-        //send not in the list
-        {
-            int index=0;
-            while(index<fileToSendList.size())
-            {
-                sendFile(fileToSendList.at(index).file);
-                index++;
-            }
-        }
-        sendFileContent();
-        sendCompressedFileContent();
-        purgeDatapackListReply(query_id);
+        errorOutput("Bit count return not match");
+        return;
     }
-    else
+    //send not in the list
     {
-        QByteArray outputData(FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer));
-        if(outputData.size()>255 || outputData.isEmpty())
+        int index=0;
+        while(index<fileToSendList.size())
         {
-            errorOutput(QLatin1Literal("httpDatapackMirror too big or not compatible with utf8"));
-            return;
+            sendFile(fileToSendList.at(index).file);
+            index++;
         }
-        //validate, remove or update the file actualy on the client
-        if(tempDatapackListReplyTestCount!=files.size())
-        {
-            errorOutput("Bit count return not match");
-            return;
-        }
-        if(!fileToSendList.isEmpty())
-        {
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-            out.device()->seek(out.device()->size());
-            out << (quint32)fileToSendList.size();
-            quint32 index=0;
-            const quint32 &fileHttpListNameSize=fileToSendList.size();
-            while(index<fileHttpListNameSize)
-            {
-                const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(fileToSendList.at(index).file);
-                if(rawFileName.size()>255 || rawFileName.isEmpty())
-                {
-                    errorOutput(QLatin1Literal("file path too big or not compatible with utf8"));
-                    return;
-                }
-                outputData+=rawFileName;
-                out.device()->seek(out.device()->size());
-                index++;
-            }
-            sendFullPacket(0xC2,0x000D,outputData.constData(),outputData.size());
-        }
-        purgeDatapackListReply(query_id);
+    }
+    sendFileContent();
+    sendCompressedFileContent();
+    purgeDatapackListReply(query_id);
+
+    switch(datapackStatus)
+    {
+        case DatapackStatus::Base:
+            datapackStatus=DatapackStatus::Main;
+        break;
+        case DatapackStatus::Main:
+            datapackStatus=DatapackStatus::Sub;
+        break;
+        case DatapackStatus::Sub:
+            datapackStatus=DatapackStatus::Finished;
+        break;
+        default:
+        return;
     }
 }
 
@@ -1749,13 +1759,20 @@ bool Client::sendFile(const QString &fileName)
     if(file.open(QIODevice::ReadOnly))
     {
         const QByteArray &content=file.readAll();
+        const int &contentsize=content.size();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-        out << (quint32)content.size();
-        if(BaseServerMasterSendDatapack::compressedExtension.contains(QFileInfo(file).suffix()) &&
+        out << (quint32)contentsize;
+        const QString &suffix=QFileInfo(file).suffix();
+        if(BaseServerMasterSendDatapack::compressedExtension.contains(suffix) &&
                 ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
-                content.size()<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024)
+                (
+                    contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
+                    ||
+                    contentsize>CATCHCHALLENGER_MAX_PACKET_SIZE
+                )
+            )
         {
             BaseServerMasterSendDatapack::compressedFilesBuffer+=fileNameRaw+outputData+content;
             BaseServerMasterSendDatapack::compressedFilesBufferCount++;
@@ -1774,8 +1791,20 @@ bool Client::sendFile(const QString &fileName)
         }
         else
         {
-            if(content.size()>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
+            if(contentsize>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
             {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if((1+fileNameRaw.size()+outputData.size()+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                {
+                    normalOutput(QString("Error: outputData2(%1)+fileNameRaw(%2)+outputData(%3)+content(%4)>CATCHCHALLENGER_MAX_PACKET_SIZE for file %5")
+                                 .arg(1)
+                                 .arg(fileNameRaw.size())
+                                 .arg(outputData.size())
+                                 .arg(contentsize)
+                                 .arg(fileName)
+                                 );
+                }
+                #endif
                 QByteArray outputData2;
                 outputData2[0x00]=0x01;
                 const QByteArray newData(outputData2+fileNameRaw+outputData+content);

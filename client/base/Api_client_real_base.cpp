@@ -14,6 +14,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/FacilityLibGeneral.h"
 #include "qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
@@ -98,6 +99,12 @@ void Api_client_real::getHttpFileBase(const QString &url, const QString &fileNam
     connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedBase);
 }
 
+void Api_client_real::datapackDownloadFinishedBase()
+{
+    haveTheDatapack();
+    datapackStatus=DatapackStatus::Main;
+}
+
 void Api_client_real::httpFinishedBase()
 {
     if(httpError)
@@ -170,7 +177,7 @@ void Api_client_real::httpFinishedBase()
         DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListBase.size()));
     reply->deleteLater();
     if(urlInWaitingListBase.isEmpty())
-        haveTheDatapack();
+        datapackDownloadFinishedBase();
 }
 
 void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
@@ -188,7 +195,7 @@ void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesL
     if(!datapackFilesListBase.isEmpty() && hash==CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
     {
         qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
-        haveTheDatapack();
+        datapackDownloadFinishedBase();
         return;
     }
 
@@ -204,17 +211,26 @@ void Api_client_real::datapackChecksumDoneBase(const QStringList &datapackFilesL
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+        out << (quint8)DatapackStatus::Base;
         out << (quint32)datapackFilesListBase.size();
         int index=0;
         while(index<datapackFilesListBase.size())
         {
-            out << datapackFilesListBase.at(index);
-            struct stat info;
-            stat(QString(mDatapackBase+datapackFilesListBase.at(index)).toLatin1().data(),&info);
+            const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListBase.at(index));
+            if(rawFileName.size()>255 || rawFileName.isEmpty())
+            {
+                DebugClass::debugConsole(QStringLiteral("rawFileName too big or not compatible with utf8"));
+                return;
+            }
+            outputData+=rawFileName;
+            out.device()->seek(out.device()->size());
+
+            /*struct stat info;
+            stat(QString(mDatapackBase+datapackFilesListBase.at(index)).toLatin1().data(),&info);*/
             out << (quint32)partialHashList.at(index);
             index++;
         }
-        packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData.constData(),outputData.size());
+        packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
     {
@@ -321,7 +337,7 @@ void Api_client_real::decodedIsFinishBase()
                 index++;
             }
             wait_datapack_content_base=false;
-            haveTheDatapack();
+            datapackDownloadFinishedBase();
         }
         else
             test_mirror_base();
@@ -469,7 +485,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
                 return;
             }
             if(fileToGet==0)
-                haveTheDatapack();
+                datapackDownloadFinishedBase();
             else
                 datapackSizeBase(fileToGet,sizeToGet*1000);
         }

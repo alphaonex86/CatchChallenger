@@ -114,7 +114,10 @@ void BaseWindow::updateCharacterList()
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(text);
-        item->setIcon(QIcon(Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
+        if(characterEntry.skinId<DatapackClientLoader::datapackLoader.skins.size())
+            item->setIcon(QIcon(Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
+        else
+            item->setIcon(QIcon(QStringLiteral(":/images/player_default/front.png")));
         ui->characterEntryList->addItem(item);
         index++;
     }
