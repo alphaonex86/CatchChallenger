@@ -184,8 +184,8 @@ void Api_client_real::datapackChecksumDoneSub(const QStringList &datapackFilesLi
             qDebug() << "Datapack checksum done but not send by the server";
             return;//need CommonSettings::commonSettings.datapackHash send by the server
         }
-        qDebug() << "Datapack is empty or hash don't match, get from server";
-        quint8 datapack_content_query_number=queryNumber();
+        qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString(hash.toHex()) << ", hash on server: " << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
+        const quint8 datapack_content_query_number=queryNumber();
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
