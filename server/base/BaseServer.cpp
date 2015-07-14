@@ -2282,12 +2282,9 @@ void BaseServer::preload_the_datapack()
         }
     }
 
-    QCryptographicHash hashBase(QCryptographicHash::Sha224);
-    QCryptographicHash hashMain(QCryptographicHash::Sha224);
-    QCryptographicHash hashSub(QCryptographicHash::Sha224);
-
     //do the base
     {
+        QCryptographicHash hashBase(QCryptographicHash::Sha224);
         const QHash<QString,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,false);
         QStringList datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
@@ -2349,6 +2346,7 @@ void BaseServer::preload_the_datapack()
     }
     //do the main
     {
+        QCryptographicHash hashMain(QCryptographicHash::Sha224);
         const QHash<QString,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,false);
         QStringList datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
@@ -2392,7 +2390,7 @@ void BaseServer::preload_the_datapack()
                         cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                         Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
 
-                        hashBase.addData(data);
+                        hashMain.addData(data);
                     }
 
                     file.close();
@@ -2412,6 +2410,7 @@ void BaseServer::preload_the_datapack()
     //do the sub
     if(!GlobalServerData::serverPrivateVariables.subDatapackFolder.isEmpty())
     {
+        QCryptographicHash hashSub(QCryptographicHash::Sha224);
         const QHash<QString,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,false);
         QStringList datapack_file_temp=pair.keys();
         datapack_file_temp.sort();
@@ -2449,7 +2448,7 @@ void BaseServer::preload_the_datapack()
                     cacheFile.partialHash=*reinterpret_cast<const int *>(hashFile.result().constData());
                     Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
 
-                    hashBase.addData(data);
+                    hashSub.addData(data);
 
                     file.close();
                 }
@@ -2466,11 +2465,15 @@ void BaseServer::preload_the_datapack()
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub=hashSub.result();
     }
 
-    DebugClass::debugConsole(QStringLiteral("%1 file for datapack loaded").arg(
+    DebugClass::debugConsole(QStringLiteral("%1 file for datapack loaded, base hash: %2, main hash: %3, sub hash: %4").arg(
                                  Client::datapack_file_hash_cache_base.size()+
                                  Client::datapack_file_hash_cache_main.size()+
                                  Client::datapack_file_hash_cache_sub.size()
-                                 ));
+                                 )
+                             .arg(QString(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.toHex()))
+                             .arg(QString(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.toHex()))
+                             .arg(QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex()))
+                             );
 }
 
 void BaseServer::preload_the_players()

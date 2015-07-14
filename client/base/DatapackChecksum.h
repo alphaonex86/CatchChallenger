@@ -11,9 +11,9 @@ public:
     static QThread thread;
     explicit DatapackChecksum();
     ~DatapackChecksum();
-    static QByteArray doChecksumBase(const QString &datapackPath, bool onlyFull=false);
-    static QByteArray doChecksumMain(const QString &datapackPath, bool onlyFull=false);
-    static QByteArray doChecksumSub(const QString &datapackPath, bool onlyFull=false);
+    static QByteArray doChecksumBase(const QString &datapackPath);
+    static QByteArray doChecksumMain(const QString &datapackPath);
+    static QByteArray doChecksumSub(const QString &datapackPath);
 public slots:
     void doDifferedChecksumBase(const QString &datapackPath);
     void doDifferedChecksumMain(const QString &datapackPath);
