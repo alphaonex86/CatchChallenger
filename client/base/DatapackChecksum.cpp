@@ -28,7 +28,7 @@ DatapackChecksum::~DatapackChecksum()
 {
 }
 
-QByteArray DatapackChecksum::doChecksumBase(const QString &datapackPath, bool onlyFull)
+QByteArray DatapackChecksum::doChecksumBase(const QString &datapackPath)
 {
     QCryptographicHash hash(QCryptographicHash::Sha224);
     QRegularExpression excludePath("^map[/\\\\]main[/\\\\]");
@@ -52,11 +52,6 @@ QByteArray DatapackChecksum::doChecksumBase(const QString &datapackPath, bool on
                     if(file.open(QIODevice::ReadOnly))
                     {
                         const QByteArray &data=file.readAll();
-                        if(!onlyFull)
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
-                        }
                         hash.addData(data);
                         file.close();
                     }
@@ -101,14 +96,12 @@ void DatapackChecksum::doDifferedChecksumBase(const QString &datapackPath)
                         {
                             datapackFilesList << returnList.at(index);
 
-                            QCryptographicHash hash(QCryptographicHash::Sha224);
                             const QByteArray &data=file.readAll();
                             {
                                 QCryptographicHash hashFile(QCryptographicHash::Sha224);
                                 hashFile.addData(data);
+                                partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
                             }
-                            hash.addData(data);
-                            partialHashList << *reinterpret_cast<const int *>(hash.result().constData());
                             file.close();
                         }
                         else
@@ -126,7 +119,7 @@ void DatapackChecksum::doDifferedChecksumBase(const QString &datapackPath)
     emit datapackChecksumDoneBase(datapackFilesList,doChecksumBase(datapackPath),partialHashList);
 }
 
-QByteArray DatapackChecksum::doChecksumMain(const QString &datapackPath, bool onlyFull)
+QByteArray DatapackChecksum::doChecksumMain(const QString &datapackPath)
 {
     QCryptographicHash hash(QCryptographicHash::Sha224);
     QRegularExpression excludePath("^sub[/\\\\]");
@@ -150,11 +143,6 @@ QByteArray DatapackChecksum::doChecksumMain(const QString &datapackPath, bool on
                     if(file.open(QIODevice::ReadOnly))
                     {
                         const QByteArray &data=file.readAll();
-                        if(!onlyFull)
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
-                        }
                         hash.addData(data);
                         file.close();
                     }
@@ -212,14 +200,12 @@ void DatapackChecksum::doDifferedChecksumMain(const QString &datapackPath)
                         {
                             datapackFilesList << returnList.at(index);
 
-                            QCryptographicHash hash(QCryptographicHash::Sha224);
                             const QByteArray &data=file.readAll();
                             {
                                 QCryptographicHash hashFile(QCryptographicHash::Sha224);
                                 hashFile.addData(data);
+                                partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
                             }
-                            hash.addData(data);
-                            partialHashList << *reinterpret_cast<const int *>(hash.result().constData());
                             file.close();
                         }
                         else
@@ -237,7 +223,7 @@ void DatapackChecksum::doDifferedChecksumMain(const QString &datapackPath)
     emit datapackChecksumDoneMain(datapackFilesList,doChecksumMain(datapackPath),partialHashList);
 }
 
-QByteArray DatapackChecksum::doChecksumSub(const QString &datapackPath, bool onlyFull)
+QByteArray DatapackChecksum::doChecksumSub(const QString &datapackPath)
 {
     QCryptographicHash hash(QCryptographicHash::Sha224);
 
@@ -260,11 +246,6 @@ QByteArray DatapackChecksum::doChecksumSub(const QString &datapackPath, bool onl
                     if(file.open(QIODevice::ReadOnly))
                     {
                         const QByteArray &data=file.readAll();
-                        if(!onlyFull)
-                        {
-                            QCryptographicHash hashFile(QCryptographicHash::Sha224);
-                            hashFile.addData(data);
-                        }
                         hash.addData(data);
                         file.close();
                     }
@@ -278,6 +259,7 @@ QByteArray DatapackChecksum::doChecksumSub(const QString &datapackPath, bool onl
         }
         index++;
     }
+    qDebug() << QStringLiteral("sub hash 1: %1").arg(QString(hash.result().toHex()));
     return hash.result();
 }
 
@@ -308,14 +290,12 @@ void DatapackChecksum::doDifferedChecksumSub(const QString &datapackPath)
                         {
                             datapackFilesList << returnList.at(index);
 
-                            QCryptographicHash hash(QCryptographicHash::Sha224);
                             const QByteArray &data=file.readAll();
                             {
                                 QCryptographicHash hashFile(QCryptographicHash::Sha224);
                                 hashFile.addData(data);
+                                partialHashList << *reinterpret_cast<const int *>(hashFile.result().constData());
                             }
-                            hash.addData(data);
-                            partialHashList << *reinterpret_cast<const int *>(hash.result().constData());
                             file.close();
                         }
                         else
