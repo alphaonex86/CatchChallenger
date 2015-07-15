@@ -1577,7 +1577,8 @@ void Client::datapackList(const quint8 &query_id,const QStringList &files,const 
         int index=0;
         while(index<fileToSendList.size())
         {
-            sendFile(fileToSendList.at(index).file);
+            if(!sendFile(fileToSendList.at(index).file))
+                return;
             index++;
         }
     }
@@ -1750,12 +1751,33 @@ void Client::sendCompressedFileContent()
 
 bool Client::sendFile(const QString &fileName)
 {
-    if(fileName.size()>255 || fileName.isEmpty())
+    QString datapackPath;
+    switch(datapackStatus)
+    {
+        case DatapackStatus::Base:
+            datapackPath=GlobalServerData::serverSettings.datapack_basePath;
+        break;
+        case DatapackStatus::Main:
+            datapackPath=GlobalServerData::serverPrivateVariables.mainDatapackFolder;
+        break;
+        case DatapackStatus::Sub:
+            datapackPath=GlobalServerData::serverPrivateVariables.subDatapackFolder;
+        break;
+        default:
         return false;
+    }
+    if(fileName.size()>255 || fileName.isEmpty())
+    {
+        errorOutput("Unable to open into CatchChallenger::sendFile(): fileName.size()>255 || fileName.isEmpty()");
+        return false;
+    }
     const QByteArray &fileNameRaw=FacilityLibGeneral::toUTF8WithHeader(fileName);
     if(fileNameRaw.size()>255 || fileNameRaw.isEmpty())
+    {
+        errorOutput("Unable to open into CatchChallenger::sendFile(): fileNameRaw.size()>255 || fileNameRaw.isEmpty()");
         return false;
-    QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
+    }
+    QFile file(datapackPath+fileName);
     if(file.open(QIODevice::ReadOnly))
     {
         const QByteArray &content=file.readAll();
@@ -1822,7 +1844,10 @@ bool Client::sendFile(const QString &fileName)
         return true;
     }
     else
+    {
+        errorOutput("Unable to open into CatchChallenger::sendFile(): "+file.errorString());
         return false;
+    }
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
