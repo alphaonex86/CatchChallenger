@@ -12,7 +12,7 @@ MapServer::MapServer() :
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
 }
 
-void MapServer::doDDOSCompute()
+void MapServer::doDDOSLocalChat()
 {
     localChatDropTotalCache=0;
     int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;

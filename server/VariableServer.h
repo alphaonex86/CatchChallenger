@@ -68,4 +68,11 @@
 //to have static code, this greatly improve the memory and performance (no branch prediction needed, ...)
 #define CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+//disable this if in cluster mode with all login server with DDOS
+//#define CATCHCHALLENGER_DDOS_FILTER
+#else
+#define CATCHCHALLENGER_DDOS_FILTER
+#endif
+
 #endif // VARIABLESERVER_H

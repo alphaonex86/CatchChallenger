@@ -55,7 +55,9 @@ SOURCES += \
     ../../general/base/CommonSettingsCommon.cpp \
     LinkToGameServerStaticVar.cpp \
     LinkToGameServerProtocolParsing.cpp \
-    LinkToGameServer.cpp
+    LinkToGameServer.cpp \
+    TimerDdos.cpp \
+    ../epoll/EpollTimer.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -83,4 +85,6 @@ HEADERS += \
     ../VariableServer.h \
     ../../general/base/GeneralVariable.h \
     ../../general/base/CommonSettingsCommon.h \
-    LinkToGameServer.h
+    LinkToGameServer.h \
+    TimerDdos.h \
+    ../epoll/EpollTimer.h

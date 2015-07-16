@@ -64,7 +64,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const qint16 &connect
     }
 }
 
-void BroadCastWithoutSender::doDDOSAction()
+void BroadCastWithoutSender::doDDOSChat()
 {
     if(Client::generalChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
@@ -109,4 +109,3 @@ void BroadCastWithoutSender::doDDOSAction()
         Client::privateChatDropNewValue=0;
     }
 }
-
