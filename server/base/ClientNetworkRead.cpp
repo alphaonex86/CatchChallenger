@@ -9,6 +9,7 @@
 
 using namespace CatchChallenger;
 
+#ifdef CATCHCHALLENGER_DDOS_FILTER
 void Client::doDDOSCompute()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -106,6 +107,7 @@ void Client::doDDOSCompute()
         otherPacketKickNewValue=0;
     }
 }
+#endif
 
 void Client::sendNewEvent(const QByteArray &data)
 {
@@ -177,12 +179,14 @@ void Client::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &que
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
     {
         errorOutput("Too many packet in sort time, check DDOS limit");
         return;
     }
     otherPacketKickNewValue++;
+    #endif
     switch(mainCodeType)
     {
         case 0x03:
@@ -403,6 +407,35 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
         //parseError(QStringLiteral("is not logged, parsenormalOutput(%1)").arg(mainCodeType));
         return;
     }
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
+    switch(mainCodeType)
+    {
+        case 0x40:
+            if((movePacketKickTotalCache+movePacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitMove)
+            {
+                errorOutput("Too many move in sort time, check DDOS limit");
+                return;
+            }
+            movePacketKickNewValue++;
+        break;
+        case 0x43:
+            if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
+            {
+                errorOutput("Too many chat in sort time, check DDOS limit");
+                return;
+            }
+            chatPacketKickNewValue++;
+        break;
+        default:
+            if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
+            {
+                errorOutput("Too many packet in sort time, check DDOS limit");
+                return;
+            }
+            otherPacketKickNewValue++;
+        break;
+    }
+    #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("parsenormalOutput(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
@@ -411,13 +444,6 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
     {
         case 0x40:
         {
-            quint8 direction;
-            if((movePacketKickTotalCache+movePacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitMove)
-            {
-                errorOutput("Too many move in sort time, check DDOS limit");
-                return;
-            }
-            movePacketKickNewValue++;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(quint8)*2)
             {
@@ -425,7 +451,7 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
                 return;
             }
             #endif
-            direction=*(data+sizeof(quint8));
+            const quint8 &direction=*(data+sizeof(quint8));
             if(direction<1 || direction>8)
             {
                 parseNetworkReadError(QStringLiteral("Bad direction number: %1").arg(direction));
@@ -441,12 +467,6 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
             QByteArray newData(data,size);
             QDataStream in(newData);
             in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-            if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
-            {
-                errorOutput("Too many chat in sort time, check DDOS limit");
-                return;
-            }
-            chatPacketKickNewValue++;
             if(size<((int)sizeof(quint8)))
             {
                 parseNetworkReadError("wrong remaining size for chat");
@@ -670,12 +690,6 @@ void Client::parseMessage(const quint8 &mainCodeType,const char * const data,con
         break;
         case 0x61:
         {
-            if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
-            {
-                errorOutput("Too many packet in sort time, check DDOS limit");
-                return;
-            }
-            otherPacketKickNewValue++;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=(int)sizeof(quint16))
             {
@@ -715,15 +729,14 @@ void Client::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeTy
         //parseError(QStringLiteral("is not logged, parsenormalOutput(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
     }
-    if(mainCodeType!=0x42 && subCodeType!=0x03)
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
     {
-        if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
-        {
-            errorOutput("Too many packet in sort time, check DDOS limit");
-            return;
-        }
-        otherPacketKickNewValue++;
+        errorOutput("Too many packet in sort time, check DDOS limit");
+        return;
     }
+    otherPacketKickNewValue++;
+    #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("parsenormalOutput(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
@@ -1264,12 +1277,14 @@ void Client::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType
         parseNetworkReadError(QStringLiteral("charaters is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
     {
         errorOutput("Too many packet in sort time, check DDOS limit");
         return;
     }
     otherPacketKickNewValue++;
+    #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput(QStringLiteral("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
@@ -2058,6 +2073,14 @@ void Client::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCode
     }
     if(stopIt)
         return;
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
+    {
+        errorOutput("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
+    #endif
     /*bugif(!character_loaded)
     {
         parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);

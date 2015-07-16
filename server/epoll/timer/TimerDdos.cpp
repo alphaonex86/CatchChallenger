@@ -24,7 +24,10 @@ void TimerDdos::exec()
         return;
     }
     #endif
-    CatchChallenger::LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.doDDOSAction();
-    CatchChallenger::BroadCastWithoutSender::broadCastWithoutSender.doDDOSAction();
+    CatchChallenger::LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.doDDOSChat();
+    CatchChallenger::BroadCastWithoutSender::broadCastWithoutSender.doDDOSChat();
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     CatchChallenger::ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.doDDOSAction();
+    #endif
 }
+

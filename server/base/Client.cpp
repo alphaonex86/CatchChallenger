@@ -62,12 +62,14 @@ Client::Client(
     have_send_protocol(false),
     is_logging_in_progess(false),
     stopIt(false),
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     movePacketKickTotalCache(0),
     movePacketKickNewValue(0),
     chatPacketKickTotalCache(0),
     chatPacketKickNewValue(0),
     otherPacketKickTotalCache(0),
     otherPacketKickNewValue(0),
+    #endif
     profileIndex(0),
     otherPlayerBattle(NULL),
     battleIsValidated(false),
@@ -90,6 +92,7 @@ Client::Client(
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
     public_and_private_informations.repel_step=0;
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     {
         memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
                0x00,
@@ -101,6 +104,7 @@ Client::Client(
                0x00,
                GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(quint8));
     }
+    #endif
     queryNumberList.reserve(256);
     {
         int index=0;

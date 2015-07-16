@@ -10,6 +10,7 @@
 #include "LinkToGameServer.h"
 
 #include <QString>
+#include <vector>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 
@@ -30,6 +31,12 @@
     #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB
     #endif
 #endif
+
+#define CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE 8
+#define CATCHCHALLENGER_DDOS_COMPUTERINTERVAL 5
+#define CATCHCHALLENGER_DDOS_KICKLIMITMOVE 60
+#define CATCHCHALLENGER_DDOS_KICKLIMITCHAT 5
+#define CATCHCHALLENGER_DDOS_KICKLIMITOTHER 30
 
 namespace CatchChallenger {
 class EpollClientLoginSlave : public BaseClassSwitch, public ProtocolParsingInputOutput
@@ -94,6 +101,8 @@ public:
     EpollClientLoginStat stat;
 
     void parseIncommingData();
+    void doDDOSCompute();
+    static void doDDOSComputeAll();
 
     void selectCharacter_ReturnToken(const quint8 &query_id,const char * const token);
     void selectCharacter_ReturnFailed(const quint8 &query_id,const quint8 &errorCode);
@@ -183,7 +192,6 @@ private:
 
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
     void disconnectClient();
-
 public:
     void askLogin_cancel();
     void askLogin(const quint8 &query_id,const char *rawdata);
@@ -229,6 +237,20 @@ private:
     unsigned int serverListForReplyRawDataSize;
 
     quint8 serverListForReplyInSuspend;
+    static std::vector<EpollClientLoginSlave *> client_list;
+
+    quint8 movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    quint8 movePacketKickSize;
+    quint8 movePacketKickTotalCache;
+    quint8 movePacketKickNewValue;
+    quint8 chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    quint8 chatPacketKickSize;
+    quint8 chatPacketKickTotalCache;
+    quint8 chatPacketKickNewValue;
+    quint8 otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
+    quint8 otherPacketKickSize;
+    quint8 otherPacketKickTotalCache;
+    quint8 otherPacketKickNewValue;
 public:
     static EpollPostgresql databaseBaseLogin;
     static EpollPostgresql databaseBaseCommon;

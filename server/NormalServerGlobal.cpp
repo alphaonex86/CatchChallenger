@@ -167,12 +167,14 @@ void NormalServerGlobal::checkSettingsFile(QSettings * const settings,const QStr
         settings->setValue(QLatin1Literal("computeAverageValueNumberOfValue"),3);
     if(!settings->contains(QLatin1Literal("computeAverageValueTimeInterval")))
         settings->setValue(QLatin1Literal("computeAverageValueTimeInterval"),5);
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     if(!settings->contains(QLatin1Literal("kickLimitMove")))
         settings->setValue(QLatin1Literal("kickLimitMove"),60);
     if(!settings->contains(QLatin1Literal("kickLimitChat")))
         settings->setValue(QLatin1Literal("kickLimitChat"),5);
     if(!settings->contains(QLatin1Literal("kickLimitOther")))
         settings->setValue(QLatin1Literal("kickLimitOther"),30);
+    #endif
     if(!settings->contains(QLatin1Literal("dropGlobalChatMessageGeneral")))
         settings->setValue(QLatin1Literal("dropGlobalChatMessageGeneral"),20);
     if(!settings->contains(QLatin1Literal("dropGlobalChatMessageLocalClan")))

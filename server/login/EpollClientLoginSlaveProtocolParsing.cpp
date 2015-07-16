@@ -6,8 +6,122 @@
 
 using namespace CatchChallenger;
 
+void EpollClientLoginSlave::doDDOSComputeAll()
+{
+    unsigned int index=0;
+    while(index<client_list.size())
+    {
+        client_list.at(index)->doDDOSCompute();
+        index++;
+    }
+}
+
+void EpollClientLoginSlave::doDDOSCompute()
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE<0 || CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE>CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    {
+        qDebug() << "CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE out of range:" << CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
+        return;
+    }
+    #endif
+    {
+        movePacketKickTotalCache=0;
+        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
+        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(index<0)
+            {
+                parseNetworkReadError("index out of range <0, movePacketKick");
+                return;
+            }
+            if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+            {
+                parseNetworkReadError("index out of range >, movePacketKick");
+                return;
+            }
+            if(movePacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITMOVE*2)
+            {
+                parseNetworkReadError(QString("index out of range in array for index %1, movePacketKick").arg(movePacketKick[index]));
+                return;
+            }
+            #endif
+            movePacketKick[index]=movePacketKick[index+1];
+            movePacketKickTotalCache+=movePacketKick[index];
+            index++;
+        }
+        movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=movePacketKickNewValue;
+        movePacketKickTotalCache+=movePacketKickNewValue;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(movePacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITMOVE*2)
+        {
+            parseNetworkReadError("bug in DDOS calculation count");
+            return;
+        }
+        #endif
+        movePacketKickNewValue=0;
+    }
+    {
+        chatPacketKickTotalCache=0;
+        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
+        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(index<0)
+                qDebug() << "index out of range <0, chatPacketKick";
+            if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+                qDebug() << "index out of range >, chatPacketKick";
+            if(chatPacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
+                qDebug() << "index out of range in array for index " << chatPacketKick[index] << ", chatPacketKick";
+            #endif
+            chatPacketKick[index]=chatPacketKick[index+1];
+            chatPacketKickTotalCache+=chatPacketKick[index];
+            index++;
+        }
+        chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=chatPacketKickNewValue;
+        chatPacketKickTotalCache+=chatPacketKickNewValue;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(chatPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
+            qDebug() << "bug in DDOS calculation count";
+        #endif
+        chatPacketKickNewValue=0;
+    }
+    {
+        otherPacketKickTotalCache=0;
+        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
+        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(index<0)
+                qDebug() << "index out of range <0, otherPacketKick";
+            if((index+1)>=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+                qDebug() << "index out of range >, otherPacketKick";
+            if(otherPacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITOTHER*2)
+                qDebug() << "index out of range in array for index " << otherPacketKick[index] << ", chatPacketKick";
+            #endif
+            otherPacketKick[index]=otherPacketKick[index+1];
+            otherPacketKickTotalCache+=otherPacketKick[index];
+            index++;
+        }
+        otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=otherPacketKickNewValue;
+        otherPacketKickTotalCache+=otherPacketKickNewValue;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(otherPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITOTHER*2)
+            qDebug() << "bug in DDOS calculation count";
+        #endif
+        otherPacketKickNewValue=0;
+    }
+}
+
 void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    {
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     Q_UNUSED(size);
     switch(mainCodeType)
     {
@@ -185,6 +299,33 @@ void EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType,const char *
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
         return;
     }
+    switch(mainCodeType)
+    {
+        case 0x40:
+            if((movePacketKickTotalCache+movePacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
+            {
+                parseNetworkReadError("Too many move in sort time, check DDOS limit");
+                return;
+            }
+            movePacketKickNewValue++;
+        break;
+        case 0x43:
+            if((chatPacketKickTotalCache+chatPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
+            {
+                parseNetworkReadError("Too many chat in sort time, check DDOS limit");
+                return;
+            }
+            chatPacketKickNewValue++;
+        break;
+        default:
+            if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+            {
+                parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+                return;
+            }
+            otherPacketKickNewValue++;
+        break;
+    }
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
@@ -216,6 +357,12 @@ void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const qu
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
         return;
     }
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    {
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
@@ -244,6 +391,12 @@ void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const qu
 //have query with reply
 void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    {
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     Q_UNUSED(data);
     if(stat!=EpollClientLoginStat::Logged)
     {
@@ -283,6 +436,12 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
         return;
     }
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    {
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
@@ -423,6 +582,12 @@ void EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quin
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
         return;
     }
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    {
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
@@ -450,6 +615,12 @@ void EpollClientLoginSlave::parseFullReplyData(const quint8 &mainCodeType,const 
         parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
         return;
     }
+    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    {
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        return;
+    }
+    otherPacketKickNewValue++;
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))

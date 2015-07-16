@@ -33,12 +33,44 @@ EpollClientLoginSlave::EpollClientLoginSlave(
         characterListForReplyInSuspend(0),
         serverListForReplyRawData(NULL),
         serverListForReplyRawDataSize(0),
-        serverListForReplyInSuspend(0)
+        serverListForReplyInSuspend(0),
+        movePacketKickTotalCache(0),
+        movePacketKickNewValue(0),
+        chatPacketKickTotalCache(0),
+        chatPacketKickNewValue(0),
+        otherPacketKickTotalCache(0),
+        otherPacketKickNewValue(0)
 {
+    {
+        memset(movePacketKick,
+               0x00,
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+        memset(chatPacketKick,
+               0x00,
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+        memset(otherPacketKick,
+               0x00,
+               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(quint8));
+    }
+    client_list.push_back(this);
 }
 
 EpollClientLoginSlave::~EpollClientLoginSlave()
 {
+    {
+        unsigned int index=0;
+        while(index<client_list.size())
+        {
+            const EpollClientLoginSlave * const client=client_list.at(index);
+            if(this==client)
+            {
+                client_list.erase(client_list.begin()+index);
+                break;
+            }
+            index++;
+        }
+    }
+
     if(socketString!=NULL)
         delete socketString;
     {

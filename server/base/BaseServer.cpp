@@ -156,11 +156,13 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder  = 10;
     GlobalServerData::serverSettings.mapVisibility.withBorder.max               = 30;
     GlobalServerData::serverSettings.mapVisibility.withBorder.reshow            = 20;
-    GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue      = 3;
-    GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval       = 5;
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     GlobalServerData::serverSettings.ddos.kickLimitMove                         = 60;
     GlobalServerData::serverSettings.ddos.kickLimitChat                         = 5;
     GlobalServerData::serverSettings.ddos.kickLimitOther                        = 30;
+    #endif
+    GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue      = 3;
+    GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval       = 5;
     GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral          = 20;
     GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan        = 20;
     GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate          = 20;

@@ -35,10 +35,9 @@ LinkToGameServer::LinkToGameServer(
         stat(Stat::Connected),
         client(NULL),
         haveTheFirstSslHeader(false),
-        socketFd(-1),
-        queryIdToLog(0)
+        queryIdToLog(0),
+        socketFd(infd)
 {
-    this->socketFd=infd;
 }
 
 LinkToGameServer::~LinkToGameServer()

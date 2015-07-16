@@ -4,6 +4,7 @@
 
 using namespace CatchChallenger;
 
+std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::client_list;
 QList<unsigned int> EpollClientLoginSlave::maxAccountIdList;
 QList<unsigned int> EpollClientLoginSlave::maxCharacterIdList;
 QList<unsigned int> EpollClientLoginSlave::maxClanIdList;
