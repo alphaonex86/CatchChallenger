@@ -19,7 +19,7 @@ class MapServer : public CommonMap, public MapServerCrafting
 {
 public:
     MapServer();
-    void doDDOSCompute();
+    void doDDOSLocalChat();
     QHash<QPair<quint8,quint8>,Orientation> rescue;
     int localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     int localChatDropTotalCache;

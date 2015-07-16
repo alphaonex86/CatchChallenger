@@ -34,7 +34,7 @@ public:
     void emit_new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
 #endif
     void receive_instant_player_number(const qint16 &connected_players);
-    void doDDOSAction();
+    void doDDOSChat();
 };
 }
 

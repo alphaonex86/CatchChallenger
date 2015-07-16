@@ -1,8 +1,7 @@
 #ifndef CATCHCHALLENGER_CLIENTNETWORKREADWITHOUTSENDER_H
 #define CATCHCHALLENGER_CLIENTNETWORKREADWITHOUTSENDER_H
 
-#include <QList>
-#include <QObject>
+#include "../VariableServer.h"
 
 namespace CatchChallenger {
 class ClientNetworkRead;
@@ -11,8 +10,10 @@ class ClientNetworkReadWithoutSender
 {
 public:
     static ClientNetworkReadWithoutSender clientNetworkReadWithoutSender;
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
 public:
     void doDDOSAction();
+    #endif
 };
 }
 
