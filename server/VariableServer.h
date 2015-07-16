@@ -70,7 +70,7 @@
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 //disable this if in cluster mode with all login server with DDOS
-//#define CATCHCHALLENGER_DDOS_FILTER
+#define CATCHCHALLENGER_DDOS_FILTER
 #else
 #define CATCHCHALLENGER_DDOS_FILTER
 #endif
