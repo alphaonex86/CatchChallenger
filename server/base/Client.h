@@ -58,7 +58,9 @@ public:
     void disconnectClient();
     static void disconnectClientById(const quint32 &characterId);
     Client *getClientFight();
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
+    #endif
     void receive_instant_player_number(const quint16 &connected_players, const char * const data, const quint8 &size);
     QByteArray getRawPseudo() const;
     void parseIncommingData();
@@ -206,6 +208,7 @@ private:
     bool have_send_protocol;
     bool is_logging_in_progess;
     bool stopIt;
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
     quint8 movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     quint8 movePacketKickSize;
     quint8 movePacketKickTotalCache;
@@ -218,6 +221,7 @@ private:
     quint8 otherPacketKickSize;
     quint8 otherPacketKickTotalCache;
     quint8 otherPacketKickNewValue;
+    #endif
     quint8 profileIndex;
     QList<PlayerOnMap> lastTeleportation;
     QList<quint8> queryNumberList;

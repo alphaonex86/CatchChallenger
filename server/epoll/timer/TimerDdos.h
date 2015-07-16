@@ -2,6 +2,7 @@
 #define TIMERDDOS_H
 
 #include "../EpollTimer.h"
+#include "../../VariableServer.h"
 
 class TimerDdos : public EpollTimer
 {

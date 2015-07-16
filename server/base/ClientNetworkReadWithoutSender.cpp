@@ -6,6 +6,7 @@ using namespace CatchChallenger;
 
 ClientNetworkReadWithoutSender ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender;
 
+#ifdef CATCHCHALLENGER_DDOS_FILTER
 void ClientNetworkReadWithoutSender::doDDOSAction()
 {
     if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>0)
@@ -19,3 +20,4 @@ void ClientNetworkReadWithoutSender::doDDOSAction()
         }
     }
 }
+#endif

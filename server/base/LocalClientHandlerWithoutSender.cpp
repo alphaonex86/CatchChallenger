@@ -29,13 +29,13 @@ void LocalClientHandlerWithoutSender::doAllAction()
     }
 }
 
-void LocalClientHandlerWithoutSender::doDDOSAction()
+void LocalClientHandlerWithoutSender::doDDOSChat()
 {
     int index=0;
     const int &map_list_size=GlobalServerData::serverPrivateVariables.map_list.size();
     while(index<map_list_size)
     {
-        static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[index])->doDDOSCompute();
+        static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[index])->doDDOSLocalChat();
         index++;
     }
 }

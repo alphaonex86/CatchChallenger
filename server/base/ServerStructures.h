@@ -186,14 +186,16 @@ struct GameServerSettings
     };
     MapVisibility mapVisibility;
 
-    //visibility algorithm
+    //DDOS algorithm
     struct DDOS
     {
-        int computeAverageValueNumberOfValue;
-        quint8 computeAverageValueTimeInterval;
+        #ifdef CATCHCHALLENGER_DDOS_FILTER
         quint8 kickLimitMove;
         quint8 kickLimitChat;
         quint8 kickLimitOther;
+        #endif
+        int computeAverageValueNumberOfValue;
+        quint8 computeAverageValueTimeInterval;
         int dropGlobalChatMessageGeneral;
         int dropGlobalChatMessageLocalClan;
         int dropGlobalChatMessagePrivate;
