@@ -1045,6 +1045,7 @@ void Client::characterIsRightFinalStep()
     #endif
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
 
+    qDebug() << outputData.toHex() << __FILE__ << __LINE__;
     //common settings
     out << (quint8)CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
     out << (quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
@@ -1064,18 +1065,6 @@ void Client::characterIsRightFinalStep()
     out << (quint8)CommonSettingsServer::commonSettingsServer.chat_allow_clan;
     out << (quint8)CommonSettingsServer::commonSettingsServer.factoryPriceChange;
 
-    //main hash
-    outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
-    out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
-    //sub hash
-    outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
-    out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
-    //mirror
-    {
-        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer);
-        outputData+=httpDatapackMirrorRaw;
-        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
-    }
     //Main type code
     {
         const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
@@ -1088,6 +1077,32 @@ void Client::characterIsRightFinalStep()
         outputData+=httpDatapackMirrorRaw;
         out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
     }
+    if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28)
+    {
+        qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28";
+        abort();
+    }
+    //main hash
+    outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
+    out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
+    //sub hash
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28)
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28";
+            abort();
+        }
+        outputData+=CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
+        out.device()->seek(out.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
+    }
+    //mirror
+    {
+        const QByteArray &httpDatapackMirrorRaw=FacilityLibGeneral::toUTF8WithHeader(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer);
+        outputData+=httpDatapackMirrorRaw;
+        out.device()->seek(out.device()->pos()+httpDatapackMirrorRaw.size());
+    }
+
 
     //temporary character id
     if(GlobalServerData::serverSettings.max_players<=255)

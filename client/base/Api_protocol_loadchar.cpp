@@ -168,43 +168,6 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
     }
     in >> CommonSettingsServer::commonSettingsServer.factoryPriceChange;
 
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
-    {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-        return;
-    }
-    CommonSettingsServer::commonSettingsServer.datapackHashServerMain=data.mid(in.device()->pos(),28);
-    in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
-    {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-        return;
-    }
-    CommonSettingsServer::commonSettingsServer.datapackHashServerSub=data.mid(in.device()->pos(),28);
-    in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
-    {
-        //the mirror
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-        {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-            return;
-        }
-        quint8 mirrorSize;
-        in >> mirrorSize;
-        if(mirrorSize>0)
-        {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)mirrorSize)
-            {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
-                return;
-            }
-            QByteArray rawText=data.mid(in.device()->pos(),mirrorSize);
-            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=QString::fromUtf8(rawText.data(),rawText.size());
-            in.device()->seek(in.device()->pos()+rawText.size());
-        }
-        else
-            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
-    }
     {
         //Main type code
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -232,7 +195,11 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
             }
             if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE"));
+                parseError(QStringLiteral("Procotol wrong or corrupted"),
+                           QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
+                           .arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
+                           .arg(QStringLiteral(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE))
+                           );
                 return;
             }
         }
@@ -279,6 +246,53 @@ void Api_protocol::parseCharacterBlock(const quint8 &mainCodeType,const quint8 &
             mDatapackSub=mDatapackMain+"sub/emptyRandomCoder23osaQ9mb5hYh2j/";
         else
             mDatapackSub=mDatapackMain+"sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
+    }
+    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
+    {
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        return;
+    }
+    CommonSettingsServer::commonSettingsServer.datapackHashServerMain=data.mid(in.device()->pos(),28);
+    in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
+
+    if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the datapack checksum, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return;
+        }
+        CommonSettingsServer::commonSettingsServer.datapackHashServerSub=data.mid(in.device()->pos(),28);
+        in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
+    }
+
+    {
+        //the mirror
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return;
+        }
+        quint8 mirrorSize;
+        in >> mirrorSize;
+        if(mirrorSize>0)
+        {
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)mirrorSize)
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return;
+            }
+            QByteArray rawText=data.mid(in.device()->pos(),mirrorSize);
+            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=QString::fromUtf8(rawText.data(),rawText.size());
+            in.device()->seek(in.device()->pos()+rawText.size());
+            if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.contains(QRegularExpression("^https?://")))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("mirror with not http(s) protocol with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return;
+            }
+        }
+        else
+            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
     }
 
     if(max_players<=255)
