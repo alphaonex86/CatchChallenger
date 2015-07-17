@@ -85,8 +85,8 @@ void QtServer::positionSync()
 
 void QtServer::ddosTimer()
 {
-    LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.doDDOSAction();
-    BroadCastWithoutSender::broadCastWithoutSender.doDDOSAction();
+    LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.doAllAction();
+    BroadCastWithoutSender::broadCastWithoutSender.doDDOSChat();
     ClientNetworkReadWithoutSender::clientNetworkReadWithoutSender.doDDOSAction();
 }
 
