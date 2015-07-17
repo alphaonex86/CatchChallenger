@@ -241,6 +241,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         QByteArray rawText=data.mid(in.device()->pos(),mirrorSize);
                         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=QString::fromUtf8(rawText.data(),rawText.size());
                         in.device()->seek(in.device()->pos()+rawText.size());
+                        if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.contains(QRegularExpression("^https?://")))
+                        {
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("mirror with not http(s) protocol with main ident: %1, line: %2").arg(mainCodeType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                            return;
+                        }
                     }
                     else
                         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.clear();

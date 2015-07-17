@@ -2262,7 +2262,11 @@ void BaseServer::preload_the_datapack()
         }
         if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
         {
-            DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE"));
+            DebugClass::debugConsole(
+                        QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
+                         .arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
+                         .arg(QStringLiteral(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE))
+                         );
             abort();
         }
         if(!QDir(GlobalServerData::serverPrivateVariables.mainDatapackFolder).exists())
@@ -3445,7 +3449,11 @@ void BaseServer::loadAndFixSettings()
     }
     if(!CommonSettingsServer::commonSettingsServer.mainDatapackCode.contains(QRegularExpression(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
     {
-        DebugClass::debugConsole(QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE"));
+        DebugClass::debugConsole(
+                    QStringLiteral("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE %1 not contain %2")
+                    .arg(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
+                    .arg(QStringLiteral(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE))
+                    );
         abort();
     }
     if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
