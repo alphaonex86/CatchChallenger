@@ -11,5 +11,9 @@ TimerPurgeTokenAuthList::TimerPurgeTokenAuthList()
 
 void TimerPurgeTokenAuthList::exec()
 {
-    CatchChallenger::Client::purgeTokenAuthList();
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        CatchChallenger::Client::purgeTokenAuthList();
+    #else
+        #error CATCHCHALLENGER_CLASS_ONLYGAMESERVER not defined
+    #endif
 }
