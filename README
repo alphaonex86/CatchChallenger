@@ -15,8 +15,8 @@ Programming:
 
 Asynchronous protocol with no influence of internet and server latency. Thread isolation for the important or heavy server task. It can be hosted on ADSL connection.
 Qt programming to have multi-platform and assembly access. Internal implementation with event.
-SGBD: Mysql, SQLite, PostgreSQL.
-Is into 3 part: server, client, datapack.
+SGBD for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. SGBD for epoll version (async to high performance): Mysql 5.5+, PostgreSQL 9+.
+The code source is into 3 part: server, client, datapack.
 
 ====================================================
 Compiling
