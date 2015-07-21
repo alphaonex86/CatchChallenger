@@ -34,7 +34,17 @@
 #include "epoll/timer/TimerPositionSync.h"
 #include "epoll/timer/TimerSendInsertMoveRemove.h"
 #include "epoll/timer/TimerEvents.h"
-#include "epoll/db/EpollPostgresql.h"
+#include "../base/DatabaseBase.h"
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+    #include "epoll/db/EpollPostgresql.h"
+    #define EpollDatabaseAsync EpollPostgresql
+    typedef EpollPostgresql EpollDatabaseAsync;
+    #elif defined(CATCHCHALLENGER_DB_MYSQL)
+    #include "epoll/db/EpollMySQL.h"
+    typedef EpollMySQL EpollDatabaseAsync;
+    #else
+    #error Unknow database type
+    #endif
 #else
 #include "QtTimerEvents.h"
 #include "QtDatabase.h"
@@ -274,11 +284,11 @@ struct ServerPrivateVariables
     //bd
     #ifdef EPOLLCATCHCHALLENGERSERVER
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    EpollPostgresql *db_login;
+    EpollDatabaseAsync *db_login;
     #endif
-    EpollPostgresql *db_base;
-    EpollPostgresql *db_common;
-    EpollPostgresql *db_server;//pointer to don't change the code for below preprocessor code
+    EpollDatabaseAsync *db_base;
+    EpollDatabaseAsync *db_common;
+    EpollDatabaseAsync *db_server;//pointer to don't change the code for below preprocessor code
     QList<TimerEvents *> timerEvents;
     #else
     QtDatabase *db_login;

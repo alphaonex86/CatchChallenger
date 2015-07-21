@@ -1,3 +1,4 @@
+#ifdef CATCHCHALLENGER_DB_POSTGRESQL
 #ifndef CATCHCHALLENGER_EPOLLPOSTGRESQL_H
 #define CATCHCHALLENGER_EPOLLPOSTGRESQL_H
 
@@ -18,7 +19,7 @@ public:
     ~EpollPostgresql();
     BaseClassSwitch::Type getType() const;
     bool syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password);
-    bool syncConnect(const char * const fullConenctString);
+    bool syncConnectInternal();
     void syncDisconnect();
     void syncReconnect();
     CallBack * asyncRead(const char * const query,void * returnObject,CallBackDatabase method);
@@ -46,4 +47,5 @@ private:
     char strCoPG[255];
 };
 
+#endif
 #endif
