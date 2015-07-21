@@ -1045,7 +1045,6 @@ void Client::characterIsRightFinalStep()
     #endif
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
 
-    qDebug() << outputData.toHex() << __FILE__ << __LINE__;
     //common settings
     out << (quint8)CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
     out << (quint32)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;

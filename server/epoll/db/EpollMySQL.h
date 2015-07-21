@@ -1,8 +1,8 @@
-#ifdef CATCHCHALLENGER_DB_POSTGRESQL
-#ifndef CATCHCHALLENGER_EPOLLPOSTGRESQL_H
-#define CATCHCHALLENGER_EPOLLPOSTGRESQL_H
+#ifdef CATCHCHALLENGER_DB_MYSQL
+#ifndef CATCHCHALLENGER_EPOLLMYSQL_H
+#define CATCHCHALLENGER_EPOLLMYSQL_H
 
-#include <postgresql/libpq-fe.h>
+#include <mysql/mysql.h>
 #include <QList>
 #include <QString>
 #include <QStringList>
@@ -12,11 +12,11 @@
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollPostgresql : public BaseClassSwitch, public CatchChallenger::DatabaseBase
+class EpollMySQL : public BaseClassSwitch, public CatchChallenger::DatabaseBase
 {
 public:
-    EpollPostgresql();
-    ~EpollPostgresql();
+    EpollMySQL();
+    ~EpollMySQL();
     BaseClassSwitch::Type getType() const;
     bool syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password);
     bool syncConnectInternal();
@@ -24,8 +24,6 @@ public:
     void syncReconnect();
     CallBack * asyncRead(const char * const query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const char * const query);
-    static void noticeReceiver(void *arg, const PGresult *res);
-    static void noticeProcessor(void *arg, const char *message);
     bool epollEvent(const uint32_t &events);
     void clear();
     const char * errorMessage() const;
@@ -34,17 +32,23 @@ public:
     bool isConnected() const;
     DatabaseBase::Type databaseType() const;
 private:
-    PGconn *conn;
+    MYSQL *conn;
+    MYSQL_ROW row;
     int tuleIndex;
     int ntuples;
-    PGresult *result;
+    int nfields;
+    MYSQL_RES *result;
     QList<CallBack> queue;
     QStringList queriesList;
     bool started;
     static char emptyString[1];
     static CallBack emptyCallback;
     static CallBack tempCallback;
-    char strCoPG[255];
+
+    char strCohost[255];
+    char strCouser[255];
+    char strCodatabase[255];
+    char strCopass[255];
 };
 
 #endif
