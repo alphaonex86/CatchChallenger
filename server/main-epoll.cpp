@@ -1052,7 +1052,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
-                    EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
+                    EpollDatabaseAsync * const db=static_cast<EpollDatabaseAsync *>(events[i].data.ptr);
                     db->epollEvent(events[i].events);
                     if(!datapack_loaded)
                     {

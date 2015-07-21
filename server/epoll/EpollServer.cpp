@@ -20,11 +20,11 @@ EpollServer::EpollServer()
     CommonSettingsServer::commonSettingsServer.tcpCork                      = true;
     #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    GlobalServerData::serverPrivateVariables.db_login=new EpollPostgresql();
+    GlobalServerData::serverPrivateVariables.db_login=new EpollDatabaseAsync();
     #endif
-    GlobalServerData::serverPrivateVariables.db_base=new EpollPostgresql();
-    GlobalServerData::serverPrivateVariables.db_common=new EpollPostgresql();
-    GlobalServerData::serverPrivateVariables.db_server=new EpollPostgresql();
+    GlobalServerData::serverPrivateVariables.db_base=new EpollDatabaseAsync();
+    GlobalServerData::serverPrivateVariables.db_common=new EpollDatabaseAsync();
+    GlobalServerData::serverPrivateVariables.db_server=new EpollDatabaseAsync();
 }
 
 EpollServer::~EpollServer()

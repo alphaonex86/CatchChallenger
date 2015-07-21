@@ -1,3 +1,4 @@
+#ifdef CATCHCHALLENGER_DB_POSTGRESQL
 #include "EpollPostgresql.h"
 
 #include <iostream>
@@ -97,12 +98,12 @@ bool EpollPostgresql::syncConnect(const char * const host, const char * const db
         strcat(strCoPG,password);
     }
     std::cerr << "Connecting to postgresql: " << host << "..." << std::endl;
-    return syncConnect(strCoPG);
+    return syncConnectInternal();
 }
 
-bool EpollPostgresql::syncConnect(const char * const fullConenctString)
+bool EpollPostgresql::syncConnectInternal()
 {
-    conn=PQconnectdb(fullConenctString);
+    conn=PQconnectdb(strCoPG);
     ConnStatusType connStatusType=PQstatus(conn);
     if(connStatusType==CONNECTION_BAD)
     {
@@ -146,7 +147,7 @@ bool EpollPostgresql::syncConnect(const char * const fullConenctString)
     // add the socket to the epoll file descriptors
     if(Epoll::epoll.ctl(EPOLL_CTL_ADD,sock,&event) != 0)
     {
-        std::cerr << "epoll_ctl, adding socket" << std::endl;
+        std::cerr << "epoll_ctl, adding socket error" << std::endl;
         return false;
     }
 
@@ -165,7 +166,7 @@ void EpollPostgresql::syncReconnect()
         std::cerr << "pg already connected" << std::endl;
         return;
     }
-    syncConnect(strCoPG);
+    syncConnectInternal();
 }
 
 void EpollPostgresql::syncDisconnect()
@@ -404,3 +405,4 @@ const char * EpollPostgresql::value(const int &value) const
         return emptyString;
     return PQgetvalue(result,tuleIndex,value);
 }
+#endif

@@ -16,7 +16,12 @@ DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 #DEFINES += CATCHCHALLENGERSERVERDROPIFCLENT
 
 #LIBS += -lssl -lcrypto
-LIBS    += -lpq
+# postgresql 9+
+#DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
+#LIBS    += -lpq
+# mysql 5.5+
+LIBS    += -lmysqlclient
+DEFINES += CATCHCHALLENGER_DB_MYSQL
 
 CONFIG += c++11
 
@@ -37,6 +42,7 @@ SOURCES += main-epoll.cpp \
     epoll/Epoll.cpp \
     epoll/EpollTimer.cpp \
     epoll/db/EpollPostgresql.cpp \
+    epoll/db/EpollMySQL.cpp \
     epoll/timer/TimerDisplayEventBySeconds.cpp \
     epoll/timer/TimerCityCapture.cpp \
     epoll/timer/TimerSendInsertMoveRemove.cpp \
@@ -59,6 +65,7 @@ HEADERS += epoll/EpollSocket.h \
     epoll/BaseClassSwitch.h \
     epoll/EpollTimer.h \
     epoll/db/EpollPostgresql.h \
+    epoll/db/EpollMySQL.h \
     epoll/timer/TimerDisplayEventBySeconds.h \
     epoll/timer/TimerCityCapture.h \
     epoll/timer/TimerPositionSync.h \
