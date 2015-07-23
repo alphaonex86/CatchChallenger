@@ -17,7 +17,6 @@ class EpollMySQL : public BaseClassSwitch, public CatchChallenger::DatabaseBase
 public:
     EpollMySQL();
     ~EpollMySQL();
-    BaseClassSwitch::Type getType() const;
     bool syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password);
     bool syncConnectInternal();
     void syncDisconnect();

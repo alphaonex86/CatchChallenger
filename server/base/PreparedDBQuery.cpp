@@ -123,40 +123,40 @@ QString PreparedDBQueryCommon::db_query_update_server_time_last_connect=NULL;
 QString PreparedDBQueryServer::db_query_update_character_forserver_map_part1=NULL;
 QString PreparedDBQueryServer::db_query_update_character_forserver_map_part2=NULL;
 
-void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::Type &type)
+void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
     {
         default:
         return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryLogin::db_query_login=QStringLiteral("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')");
         PreparedDBQueryLogin::db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)");
         break;
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryLogin::db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         PreparedDBQueryLogin::db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryLogin::db_query_login=QStringLiteral("SELECT id,password FROM account WHERE login='%1'");
         PreparedDBQueryLogin::db_query_insert_login=QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)");
         break;
     }
 }
 
-void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase::Type &type)
+void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
     {
         default:
         return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryCommon::db_query_select_allow=QStringLiteral("SELECT `allow` FROM `character_allow` WHERE `character`=%1");
         PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1 ORDER BY `played_time` LIMIT 0,%2");
         PreparedDBQueryCommon::db_query_played_time=QStringLiteral("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1");
@@ -239,7 +239,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryCommon::db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 ORDER BY played_time LIMIT 0,%2");
         PreparedDBQueryCommon::db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
@@ -321,7 +321,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         break;
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryCommon::db_query_select_allow=QStringLiteral("SELECT allow FROM character_allow WHERE character=%1");
         PreparedDBQueryCommon::db_query_characters=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1 ORDER BY played_time LIMIT %2");
         PreparedDBQueryCommon::db_query_played_time=QStringLiteral("UPDATE character SET played_time=played_time+%2 WHERE id=%1");
@@ -404,14 +404,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
     }
 }
 
-void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Type &type,const bool &useSP)
+void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP)
 {
     switch(type)
     {
         default:
         return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         if(useSP)
         {
             PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1");
@@ -432,7 +432,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Ty
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         if(useSP)
         {
             PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
@@ -452,7 +452,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Ty
         break;
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         if(useSP)
         {
             PreparedDBQueryCommon::db_query_monster=QStringLiteral("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1");
@@ -473,14 +473,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Ty
     }
 }
 
-void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &type)
+void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::DatabaseType &type)
 {
     switch(type)
     {
         default:
         return;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash` FROM `character_forserver` WHERE `character`=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM `item_market` WHERE `character`=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO `item_market`(`item`,`character`,`quantity`,`market_price`) VALUES(%1,%2,%3,%4)");
@@ -517,7 +517,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         #endif
 
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
@@ -553,7 +553,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Type &ty
         break;
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryServer::db_query_character_server_by_id=QStringLiteral("SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash FROM character_forserver WHERE character=%1");
         PreparedDBQueryServer::db_query_delete_all_item_market=QStringLiteral("DELETE FROM item_market WHERE character=%1");
         PreparedDBQueryServer::db_query_insert_item_market=QStringLiteral("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)");
