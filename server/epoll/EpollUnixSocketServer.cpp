@@ -91,7 +91,7 @@ int EpollUnixSocketServer::getSfd()
     return sfd;
 }
 
-BaseClassSwitch::Type EpollUnixSocketServer::getType() const
+BaseClassSwitch::EpollObjectType EpollUnixSocketServer::getType() const
 {
-    return BaseClassSwitch::Type::UnixServer;
+    return BaseClassSwitch::EpollObjectType::UnixServer;
 }

@@ -15,7 +15,7 @@ public:
     void close();
     int accept(sockaddr *in_addr,socklen_t *in_len);
     int getSfd();
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
 private:
     int sfd;
 };

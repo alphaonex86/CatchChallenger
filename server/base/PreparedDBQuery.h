@@ -9,7 +9,7 @@ namespace CatchChallenger {
 class PreparedDBQueryLogin
 {
 public:
-    static void initDatabaseQueryLogin(const DatabaseBase::Type &type);
+    static void initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type);
 public:
     //query
     static QString db_query_login;
@@ -19,8 +19,8 @@ public:
 class PreparedDBQueryCommon
 {
 public:
-    static void initDatabaseQueryCommonWithoutSP(const DatabaseBase::Type &type);
-    static void initDatabaseQueryCommonWithSP(const DatabaseBase::Type &type,const bool &useSP);
+    static void initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type);
+    static void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP);
 public:
     //query
     static QString db_query_select_allow;
@@ -110,7 +110,7 @@ public:
 class PreparedDBQueryServer
 {
 public:
-    static void initDatabaseQueryServer(const DatabaseBase::Type &type);
+    static void initDatabaseQueryServer(const DatabaseBase::DatabaseType &type);
 public:
     static QString db_query_insert_bot_already_beaten;
     static QString db_query_character_server_by_id;

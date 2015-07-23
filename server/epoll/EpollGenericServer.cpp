@@ -153,7 +153,7 @@ int EpollGenericServer::getSfd()
     return sfd;
 }
 
-BaseClassSwitch::Type EpollGenericServer::getType() const
+BaseClassSwitch::EpollObjectType EpollGenericServer::getType() const
 {
-    return BaseClassSwitch::Type::Server;
+    return BaseClassSwitch::EpollObjectType::Server;
 }

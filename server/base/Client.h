@@ -49,7 +49,7 @@ public:
         );
     virtual ~Client();
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
     #endif
     //to get some info
     QString getPseudo();

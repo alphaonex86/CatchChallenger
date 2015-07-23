@@ -156,7 +156,7 @@ struct GameServerSettings
         QString login;
         QString pass;
 
-        DatabaseBase::Type tryOpenType;
+        DatabaseBase::DatabaseType tryOpenType;
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
     };

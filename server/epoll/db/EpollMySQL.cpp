@@ -46,11 +46,6 @@ EpollMySQL::~EpollMySQL()
     }
 }
 
-BaseClassSwitch::Type EpollMySQL::getType() const
-{
-    return BaseClassSwitch::Type::Database;
-}
-
 bool EpollMySQL::isConnected() const
 {
     return conn!=NULL && started;
