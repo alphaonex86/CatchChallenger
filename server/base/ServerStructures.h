@@ -38,10 +38,8 @@
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
     #include "epoll/db/EpollPostgresql.h"
     #define EpollDatabaseAsync EpollPostgresql
-    typedef EpollPostgresql EpollDatabaseAsync;
     #elif defined(CATCHCHALLENGER_DB_MYSQL)
     #include "epoll/db/EpollMySQL.h"
-    typedef EpollMySQL EpollDatabaseAsync;
     #else
     #error Unknow database type
     #endif
@@ -284,11 +282,11 @@ struct ServerPrivateVariables
     //bd
     #ifdef EPOLLCATCHCHALLENGERSERVER
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    EpollDatabaseAsync *db_login;
+    CatchChallenger::DatabaseBase *db_login;
     #endif
-    EpollDatabaseAsync *db_base;
-    EpollDatabaseAsync *db_common;
-    EpollDatabaseAsync *db_server;//pointer to don't change the code for below preprocessor code
+    CatchChallenger::DatabaseBase *db_base;
+    CatchChallenger::DatabaseBase *db_common;
+    CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
     QList<TimerEvents *> timerEvents;
     #else
     QtDatabase *db_login;

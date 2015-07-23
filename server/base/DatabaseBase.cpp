@@ -1,10 +1,12 @@
 #include "DatabaseBase.h"
+#include <iostream>
 
 using namespace CatchChallenger;
 
 DatabaseBase::DatabaseBase() :
     tryInterval(1),
-    considerDownAfterNumberOfTry(30)
+    considerDownAfterNumberOfTry(30),
+    databaseTypeVar(DatabaseBase::Type::Unknown)
 {
 }
 
@@ -29,4 +31,12 @@ const char * DatabaseBase::databaseTypeToString(const DatabaseBase::Type &type)
             return "PostgreSQL";
         break;
     }
+}
+
+DatabaseBase::Type DatabaseBase::databaseType() const
+{
+    std::cout << "databaseTypeVar " << databaseTypeVar << std::endl;
+    if(databaseTypeVar==Mysql)
+        abort();
+    return databaseTypeVar;
 }
