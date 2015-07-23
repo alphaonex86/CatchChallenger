@@ -654,6 +654,11 @@ void BaseServer::preload_pointOnMap_return()
 
 void BaseServer::preload_dictionary_map()
 {
+    if(GlobalServerData::serverPrivateVariables.db_server==NULL)
+    {
+        qDebug() << "GlobalServerData::serverPrivateVariables.db_server==NULL";
+        abort();
+    }
     if(GlobalServerData::serverPrivateVariables.map_list.isEmpty())
     {
         qDebug() << "No map to list";
@@ -3373,73 +3378,73 @@ void BaseServer::loadAndFixSettings()
     } while(removeTheLastList);
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    if(GlobalServerData::serverPrivateVariables.db_login->tryInterval<1)
+    if(GlobalServerData::serverSettings.database_login.tryInterval<1)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->tryInterval<1");
-        GlobalServerData::serverPrivateVariables.db_login->tryInterval=5;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_login.tryInterval<1");
+        GlobalServerData::serverSettings.database_login.tryInterval=5;
     }
-    if(GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry<1)
+    if(GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry<1)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry<1");
-        GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry=3;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry<1");
+        GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
     }
-    if(GlobalServerData::serverPrivateVariables.db_login->tryInterval*GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    if(GlobalServerData::serverSettings.database_login.tryInterval*GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_login->tryInterval*GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry>(60*10)");
-        GlobalServerData::serverPrivateVariables.db_login->tryInterval=5;
-        GlobalServerData::serverPrivateVariables.db_login->considerDownAfterNumberOfTry=3;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_login.tryInterval*GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry>(60*10)");
+        GlobalServerData::serverSettings.database_login.tryInterval=5;
+        GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
     }
     #endif
 
-    if(GlobalServerData::serverPrivateVariables.db_base->tryInterval<1)
+    if(GlobalServerData::serverSettings.database_base.tryInterval<1)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_base->tryInterval<1");
-        GlobalServerData::serverPrivateVariables.db_base->tryInterval=5;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_base.tryInterval<1");
+        GlobalServerData::serverSettings.database_base.tryInterval=5;
     }
-    if(GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry<1)
+    if(GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry<1)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry<1");
-        GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry=3;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry<1");
+        GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
     }
-    if(GlobalServerData::serverPrivateVariables.db_base->tryInterval*GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    if(GlobalServerData::serverSettings.database_base.tryInterval*GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_base->tryInterval*GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry>(60*10)");
-        GlobalServerData::serverPrivateVariables.db_base->tryInterval=5;
-        GlobalServerData::serverPrivateVariables.db_base->considerDownAfterNumberOfTry=3;
-    }
-
-    if(GlobalServerData::serverPrivateVariables.db_common->tryInterval<1)
-    {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_common->tryInterval<1");
-        GlobalServerData::serverPrivateVariables.db_common->tryInterval=5;
-    }
-    if(GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry<1)
-    {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry<1");
-        GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry=3;
-    }
-    if(GlobalServerData::serverPrivateVariables.db_common->tryInterval*GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
-    {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_common->tryInterval*GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry>(60*10)");
-        GlobalServerData::serverPrivateVariables.db_common->tryInterval=5;
-        GlobalServerData::serverPrivateVariables.db_common->considerDownAfterNumberOfTry=3;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_base.tryInterval*GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry>(60*10)");
+        GlobalServerData::serverSettings.database_base.tryInterval=5;
+        GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
     }
 
-    if(GlobalServerData::serverPrivateVariables.db_server->tryInterval<1)
+    if(GlobalServerData::serverSettings.database_common.tryInterval<1)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_server->tryInterval<1");
-        GlobalServerData::serverPrivateVariables.db_server->tryInterval=5;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_common.tryInterval<1");
+        GlobalServerData::serverSettings.database_common.tryInterval=5;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry<1)
+    if(GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry<1)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry<1");
-        GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry<1");
+        GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry=3;
     }
-    if(GlobalServerData::serverPrivateVariables.db_server->tryInterval*GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    if(GlobalServerData::serverSettings.database_common.tryInterval*GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
     {
-        qDebug() << QStringLiteral("GlobalServerData::serverPrivateVariables.db_server->tryInterval*GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry>(60*10)");
-        GlobalServerData::serverPrivateVariables.db_server->tryInterval=5;
-        GlobalServerData::serverPrivateVariables.db_server->considerDownAfterNumberOfTry=3;
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_common.tryInterval*GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry>(60*10)");
+        GlobalServerData::serverSettings.database_common.tryInterval=5;
+        GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry=3;
+    }
+
+    if(GlobalServerData::serverSettings.database_server.tryInterval<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_server.tryInterval<1");
+        GlobalServerData::serverSettings.database_server.tryInterval=5;
+    }
+    if(GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry<1)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry<1");
+        GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
+    }
+    if(GlobalServerData::serverSettings.database_server.tryInterval*GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry>(60*10)/*10mins*/)
+    {
+        qDebug() << QStringLiteral("GlobalServerData::serverSettings.database_server.tryInterval*GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry>(60*10)");
+        GlobalServerData::serverSettings.database_server.tryInterval=5;
+        GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
     }
 
     if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty())

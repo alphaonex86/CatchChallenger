@@ -32,7 +32,6 @@ public:
     bool next();
     const char * value(const int &value) const;
     bool isConnected() const;
-    DatabaseBase::Type databaseType() const;
 private:
     PGconn *conn;
     int tuleIndex;
