@@ -28,6 +28,7 @@ EpollMySQL::EpollMySQL() :
 {
     emptyCallback.object=NULL;
     emptyCallback.method=NULL;
+    databaseTypeVar=DatabaseBase::Type::Mysql;
 }
 
 EpollMySQL::~EpollMySQL()
@@ -53,11 +54,6 @@ BaseClassSwitch::Type EpollMySQL::getType() const
 bool EpollMySQL::isConnected() const
 {
     return conn!=NULL && started;
-}
-
-EpollMySQL::DatabaseBase::Type EpollMySQL::databaseType() const
-{
-    return DatabaseBase::Type::PostgreSQL;
 }
 
 bool EpollMySQL::syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password)
@@ -113,11 +109,11 @@ bool EpollMySQL::syncConnectInternal()
         }
     }
     std::cerr << "Connected to mysql" << std::endl;
-    if(CatchChallenger::EpollSocket::make_non_blocking(conn->net.fd)!=0)
+    /*if(CatchChallenger::EpollSocket::make_non_blocking(conn->net.fd)!=0)
     {
        std::cerr << "mysql no blocking error" << std::endl;
        return false;
-    }
+    }*/
     epoll_event event;
     event.events = EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET;
     event.data.ptr = this;
@@ -139,7 +135,7 @@ void EpollMySQL::syncReconnect()
 {
     if(conn!=NULL)
     {
-        std::cerr << "pg already connected" << std::endl;
+        std::cerr << "mysql already connected" << std::endl;
         return;
     }
     syncConnectInternal();
@@ -149,12 +145,12 @@ void EpollMySQL::syncDisconnect()
 {
     if(conn==NULL)
     {
-        std::cerr << "pg not connected" << std::endl;
+        std::cerr << "mysql not connected" << std::endl;
         return;
     }
     if(CatchChallenger::EpollSocket::make_blocking(conn->net.fd)!=0)
     {
-       std::cerr << "pg blocking error" << std::endl;
+       std::cerr << "mysql blocking error" << std::endl;
        return;
     }
     mysql_close(conn);
@@ -165,7 +161,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
 {
     if(conn==NULL)
     {
-        std::cerr << "pg not connected" << std::endl;
+        std::cerr << "mysql not connected" << std::endl;
         return NULL;
     }
     tempCallback.object=returnObject;
@@ -174,7 +170,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
     {
         if(queue.size()>=CATCHCHALLENGER_MAXBDQUERIES)
         {
-            std::cerr << "pg queue full" << std::endl;
+            std::cerr << "mysql queue full" << std::endl;
             return NULL;
         }
         queue << tempCallback;
@@ -184,12 +180,20 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     queriesList << QString::fromUtf8(query);
     #endif
-    const int &query_id=mysql_send_query(conn,query,strlen(query));
-    if(query_id==0)
+    const int &stringlen=strlen(query);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(stringlen==0)
     {
-        std::cerr << "query send failed: " << errorMessage() << std::endl;
-        return NULL;
+        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        abort();
     }
+    #endif
+    const int &query_id=mysql_send_query(conn,query,stringlen);
+    /*to debug if(query_id==0)
+    {
+        std::cerr << "query " << query << "send failed: " << errorMessage() << std::endl;
+        return NULL;
+    }*/
     queue << tempCallback;
     return &queue.last();
 }
@@ -198,7 +202,7 @@ bool EpollMySQL::asyncWrite(const char * const query)
 {
     if(conn==NULL)
     {
-        std::cerr << "pg not connected" << std::endl;
+        std::cerr << "mysql not connected" << std::endl;
         return false;
     }
     if(queue.size()>0 || result!=NULL)

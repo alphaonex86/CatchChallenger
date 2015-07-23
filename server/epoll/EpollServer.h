@@ -13,6 +13,7 @@ class EpollServer : public CatchChallenger::EpollGenericServer, public CatchChal
 public:
     EpollServer();
     ~EpollServer();
+    void initTheDatabase();
     bool tryListen();
     void preload_the_data();
     void unload_the_data();
