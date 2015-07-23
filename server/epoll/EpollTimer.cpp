@@ -25,9 +25,9 @@ EpollTimer::~EpollTimer()
     abort();
 }
 
-BaseClassSwitch::Type EpollTimer::getType() const
+BaseClassSwitch::EpollObjectType EpollTimer::getType() const
 {
-    return BaseClassSwitch::Type::Timer;
+    return BaseClassSwitch::EpollObjectType::Timer;
 }
 
 bool EpollTimer::start(const unsigned int &msec, unsigned int offset)

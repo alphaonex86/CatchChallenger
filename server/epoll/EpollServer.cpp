@@ -33,12 +33,12 @@ void EpollServer::initTheDatabase()
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             GlobalServerData::serverPrivateVariables.db_login=new EpollPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             GlobalServerData::serverPrivateVariables.db_login=new EpollMySQL();
         break;
         #endif
@@ -50,12 +50,12 @@ void EpollServer::initTheDatabase()
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             GlobalServerData::serverPrivateVariables.db_base=new EpollPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             GlobalServerData::serverPrivateVariables.db_base=new EpollMySQL();
         break;
         #endif
@@ -66,12 +66,12 @@ void EpollServer::initTheDatabase()
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             GlobalServerData::serverPrivateVariables.db_common=new EpollPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             GlobalServerData::serverPrivateVariables.db_common=new EpollMySQL();
         break;
         #endif
@@ -82,12 +82,12 @@ void EpollServer::initTheDatabase()
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             GlobalServerData::serverPrivateVariables.db_server=new EpollPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             GlobalServerData::serverPrivateVariables.db_server=new EpollMySQL();
         break;
         #endif
@@ -103,12 +103,12 @@ EpollServer::~EpollServer()
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_server);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_server);
         break;
         #endif
@@ -118,12 +118,12 @@ EpollServer::~EpollServer()
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_common);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_common);
         break;
         #endif
@@ -133,12 +133,12 @@ EpollServer::~EpollServer()
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_base);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_base);
         break;
         #endif
@@ -149,12 +149,12 @@ EpollServer::~EpollServer()
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_login);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_login);
         break;
         #endif

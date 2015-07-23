@@ -160,9 +160,9 @@ void EpollClient::flush()
 }
 #endif
 
-BaseClassSwitch::Type EpollClient::getType() const
+BaseClassSwitch::EpollObjectType EpollClient::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 bool EpollClient::isValid() const

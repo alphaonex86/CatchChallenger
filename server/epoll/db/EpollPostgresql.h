@@ -8,16 +8,14 @@
 #include <QStringList>
 
 #include "../../base/DatabaseBase.h"
-#include "../BaseClassSwitch.h"
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollPostgresql : public BaseClassSwitch, public CatchChallenger::DatabaseBase
+class EpollPostgresql : public CatchChallenger::DatabaseBase
 {
 public:
     EpollPostgresql();
     ~EpollPostgresql();
-    BaseClassSwitch::Type getType() const;
     bool syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password);
     bool syncConnectInternal();
     void syncDisconnect();

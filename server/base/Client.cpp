@@ -146,9 +146,9 @@ Client::~Client()
 }
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
-BaseClassSwitch::Type Client::getType() const
+BaseClassSwitch::EpollObjectType Client::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 #endif
 

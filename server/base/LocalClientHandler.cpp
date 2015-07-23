@@ -2790,7 +2790,7 @@ void Client::insertIntoAClan(const quint32 &clanId)
 {
     //add into db
     QString clan_leader;
-    if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::Type::PostgreSQL)
+    if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
             clan_leader=Client::text_1;
