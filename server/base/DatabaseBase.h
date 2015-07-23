@@ -1,6 +1,8 @@
 #ifndef DATABASEBASE_H
 #define DATABASEBASE_H
 
+#include <stdint.h>
+
 typedef void (*CallBackDatabase)(void *object);
 
 namespace CatchChallenger {
@@ -9,6 +11,7 @@ class DatabaseBase
     public:
         enum Type
         {
+            Unknown=0x00,
             Mysql=0x01,
             SQLite=0x02,
             PostgreSQL=0x03
@@ -27,12 +30,15 @@ class DatabaseBase
         virtual bool next() = 0;
         virtual const char * value(const int &value) const = 0;
         virtual bool isConnected() const = 0;
+        virtual bool epollEvent(const uint32_t &events) = 0;
         //sync mode then prefer tryInterval*considerDownAfterNumberOfTry < 20s
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
-        virtual DatabaseBase::Type databaseType() const = 0;
+        DatabaseBase::Type databaseType() const;
         virtual void clear();
         static const char * databaseTypeToString(const DatabaseBase::Type &type);
+    protected:
+        Type databaseTypeVar;
 };
 }
 

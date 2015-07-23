@@ -37,6 +37,7 @@ EpollPostgresql::EpollPostgresql() :
 {
     emptyCallback.object=NULL;
     emptyCallback.method=NULL;
+    databaseTypeVar=DatabaseBase::Type::PostgreSQL;
 }
 
 EpollPostgresql::~EpollPostgresql()
@@ -61,11 +62,6 @@ BaseClassSwitch::Type EpollPostgresql::getType() const
 bool EpollPostgresql::isConnected() const
 {
     return conn!=NULL && started;
-}
-
-EpollPostgresql::DatabaseBase::Type EpollPostgresql::databaseType() const
-{
-    return DatabaseBase::Type::PostgreSQL;
 }
 
 bool EpollPostgresql::syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password)

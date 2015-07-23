@@ -516,36 +516,73 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
         #endif
-        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        if(formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::PostgreSQL)
+
         {
-            settings->beginGroup(QLatin1Literal("db-login"));
-            qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
-            settings->endGroup();
-            return EXIT_FAILURE;
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            if(
+                    true
+                    #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                    && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    #endif
+                    #ifdef CATCHCHALLENGER_DB_MYSQL
+                    && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::Mysql
+                    #endif
+                    )
+            {
+                settings->beginGroup(QLatin1Literal("db-login"));
+                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                settings->endGroup();
+                return EXIT_FAILURE;
+            }
+            #endif
+            if(
+                    true
+                    #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                    && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    #endif
+                    #ifdef CATCHCHALLENGER_DB_MYSQL
+                    && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::Type::Mysql
+                    #endif
+                    )
+            {
+                settings->beginGroup(QLatin1Literal("db-base"));
+                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                settings->endGroup();
+                return EXIT_FAILURE;
+            }
+            if(
+                    true
+                    #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                    && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    #endif
+                    #ifdef CATCHCHALLENGER_DB_MYSQL
+                    && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::Type::Mysql
+                    #endif
+                    )
+            {
+                settings->beginGroup(QLatin1Literal("db-common"));
+                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                settings->endGroup();
+                return EXIT_FAILURE;
+            }
+            if(
+                    true
+                    #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                    && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    #endif
+                    #ifdef CATCHCHALLENGER_DB_MYSQL
+                    && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::Type::Mysql
+                    #endif
+                    )
+            {
+                settings->beginGroup(QLatin1Literal("db-server"));
+                qDebug() << "Database type not supported for now: " << settings->value(QLatin1Literal("type")).toString();
+                settings->endGroup();
+                return EXIT_FAILURE;
+            }
         }
-        #endif
-        if(formatedServerSettings.database_base.tryOpenType!=DatabaseBase::Type::PostgreSQL)
-        {
-            settings->beginGroup(QLatin1Literal("db-base"));
-            qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
-            settings->endGroup();
-            return EXIT_FAILURE;
-        }
-        if(formatedServerSettings.database_common.tryOpenType!=DatabaseBase::Type::PostgreSQL)
-        {
-            settings->beginGroup(QLatin1Literal("db-common"));
-            qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
-            settings->endGroup();
-            return EXIT_FAILURE;
-        }
-        if(formatedServerSettings.database_server.tryOpenType!=DatabaseBase::Type::PostgreSQL)
-        {
-            settings->beginGroup(QLatin1Literal("db-server"));
-            qDebug() << "Only postgresql is supported for now: " << settings->value(QLatin1Literal("type")).toString();
-            settings->endGroup();
-            return EXIT_FAILURE;
-        }
+
+
         #ifdef SERVERSSL
         if(!formatedServerNormalSettings.useSsl)
         {
@@ -590,6 +627,7 @@ int main(int argc, char *argv[])
             CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer;
         }
     }
+    server->initTheDatabase();
     server->loadAndFixSettings();
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -1052,27 +1090,69 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
-                    EpollDatabaseAsync * const db=static_cast<EpollDatabaseAsync *>(events[i].data.ptr);
-                    db->epollEvent(events[i].events);
-                    if(!datapack_loaded)
+                    CatchChallenger::DatabaseBase * const db=static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr);
+                    const DatabaseBase::Type &type=db->databaseType();
+                    switch(type)
                     {
-                        if(db->isConnected())
+                        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                        case DatabaseBase::Type::PostgreSQL:
                         {
-                            std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
-                            server->preload_the_data();
-                            datapack_loaded=true;
+                            EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
+                            db->epollEvent(events[i].events);
+                            if(!datapack_loaded)
+                            {
+                                if(db->isConnected())
+                                {
+                                    std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
+                                    server->preload_the_data();
+                                    datapack_loaded=true;
+                                }
+                                else
+                                    std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
+                            }
+                            #ifdef SERVERBENCHMARKFULL
+                            std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
+                            EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
+                            #endif
+                            if(!db->isConnected())
+                            {
+                                std::cerr << "database disconnect, quit now" << std::endl;
+                                return EXIT_FAILURE;
+                            }
                         }
-                        else
-                            std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
-                    }
-                    #ifdef SERVERBENCHMARKFULL
-                    std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
-                    EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
-                    #endif
-                    if(!db->isConnected())
-                    {
-                        std::cerr << "database disconnect, quit now" << std::endl;
-                        return EXIT_FAILURE;
+                        break;
+                        #endif
+                        #ifdef CATCHCHALLENGER_DB_MYSQL
+                        case DatabaseBase::Type::Mysql:
+                        {
+                            EpollMysql * const db=static_cast<EpollMysql *>(events[i].data.ptr);
+                            db->epollEvent(events[i].events);
+                            if(!datapack_loaded)
+                            {
+                                if(db->isConnected())
+                                {
+                                    std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
+                                    server->preload_the_data();
+                                    datapack_loaded=true;
+                                }
+                                else
+                                    std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
+                            }
+                            #ifdef SERVERBENCHMARKFULL
+                            std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
+                            EpollUnixSocketClientFinal::timeUsedForDatabase+=elapsed_seconds.count();
+                            #endif
+                            if(!db->isConnected())
+                            {
+                                std::cerr << "database disconnect, quit now" << std::endl;
+                                return EXIT_FAILURE;
+                            }
+                        }
+                        break;
+                        #endif
+                        default:
+                        std::cerr << "epoll database type return not supported" << std::endl;
+                        abort();
                     }
                 }
                 break;
