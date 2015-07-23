@@ -5,7 +5,7 @@ class BaseClassSwitch
 {
 public:
     virtual ~BaseClassSwitch() {}
-    enum Type
+    enum EpollObjectType
     {
         Server=0x00,
         UnixServer=0x01,
@@ -15,7 +15,7 @@ public:
         Database=0x05,
         MasterLink=0x06,
     };
-    virtual Type getType() const = 0;
+    virtual EpollObjectType getType() const = 0;
 };
 
 #endif // BASECLASSSWITCH_H

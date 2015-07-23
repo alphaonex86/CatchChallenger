@@ -79,9 +79,9 @@ ssize_t EpollUnixSocketClient::write(const char *buffer, const size_t &bufferSiz
         return size;
 }
 
-BaseClassSwitch::Type EpollUnixSocketClient::getType() const
+BaseClassSwitch::EpollObjectType EpollUnixSocketClient::getType() const
 {
-    return BaseClassSwitch::Type::UnixClient;
+    return BaseClassSwitch::EpollObjectType::UnixClient;
 }
 
 bool EpollUnixSocketClient::isValid() const

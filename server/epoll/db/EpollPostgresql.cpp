@@ -37,7 +37,7 @@ EpollPostgresql::EpollPostgresql() :
 {
     emptyCallback.object=NULL;
     emptyCallback.method=NULL;
-    databaseTypeVar=DatabaseBase::Type::PostgreSQL;
+    databaseTypeVar=DatabaseBase::DatabaseType::PostgreSQL;
 }
 
 EpollPostgresql::~EpollPostgresql()
@@ -54,11 +54,6 @@ EpollPostgresql::~EpollPostgresql()
     }
 }
 
-BaseClassSwitch::Type EpollPostgresql::getType() const
-{
-    return BaseClassSwitch::Type::Database;
-}
-
 bool EpollPostgresql::isConnected() const
 {
     return conn!=NULL && started;
@@ -66,6 +61,7 @@ bool EpollPostgresql::isConnected() const
 
 bool EpollPostgresql::syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password)
 {
+    std::cout << "syncConnect: " << this << std::endl;
     if(conn!=NULL)
     {
         std::cerr << "pg already connected" << std::endl;

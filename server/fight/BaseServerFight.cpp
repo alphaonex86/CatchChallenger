@@ -33,13 +33,13 @@ void BaseServer::load_sql_monsters_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }

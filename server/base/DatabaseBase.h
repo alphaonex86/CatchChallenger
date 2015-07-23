@@ -2,14 +2,15 @@
 #define DATABASEBASE_H
 
 #include <stdint.h>
+#include "../epoll/BaseClassSwitch.h"
 
 typedef void (*CallBackDatabase)(void *object);
 
 namespace CatchChallenger {
-class DatabaseBase
+class DatabaseBase : public BaseClassSwitch
 {
     public:
-        enum Type
+        enum DatabaseType
         {
             Unknown=0x00,
             Mysql=0x01,
@@ -22,6 +23,8 @@ class DatabaseBase
             CallBackDatabase method;
         };
         DatabaseBase();
+        virtual ~DatabaseBase();
+        BaseClassSwitch::EpollObjectType getType() const;
         virtual bool syncConnect(const char * host, const char * dbname, const char * user, const char * password) = 0;
         virtual void syncDisconnect() = 0;
         virtual CallBack * asyncRead(const char *query,void * returnObject,CallBackDatabase method) = 0;
@@ -34,11 +37,11 @@ class DatabaseBase
         //sync mode then prefer tryInterval*considerDownAfterNumberOfTry < 20s
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
-        DatabaseBase::Type databaseType() const;
+        DatabaseType databaseType() const;
         virtual void clear();
-        static const char * databaseTypeToString(const DatabaseBase::Type &type);
+        static const char * databaseTypeToString(const DatabaseType &type);
     protected:
-        Type databaseTypeVar;
+        DatabaseType databaseTypeVar;
 };
 }
 

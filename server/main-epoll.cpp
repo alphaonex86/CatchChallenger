@@ -151,24 +151,24 @@ void send_settings()
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup(QLatin1Literal("db-login"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
-        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
-        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::SQLite;
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
-        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::PostgreSQL;
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
     else
-        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
     switch(formatedServerSettings.database_login.tryOpenType)
     {
         default:
-        case DatabaseBase::Type::PostgreSQL:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        case DatabaseBase::DatabaseType::Mysql:
             formatedServerSettings.database_login.host				= settings->value(QLatin1Literal("host")).toString();
             formatedServerSettings.database_login.db				= settings->value(QLatin1Literal("db")).toString();
             formatedServerSettings.database_login.login				= settings->value(QLatin1Literal("login")).toString();
             formatedServerSettings.database_login.pass				= settings->value(QLatin1Literal("pass")).toString();
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             formatedServerSettings.database_login.file				= settings->value(QLatin1Literal("file")).toString();
         break;
     }
@@ -179,24 +179,24 @@ void send_settings()
 
     settings->beginGroup(QLatin1Literal("db-base"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
-        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
-        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::SQLite;
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::SQLite;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
-        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::PostgreSQL;
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::PostgreSQL;
     else
-        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Mysql;
     switch(formatedServerSettings.database_base.tryOpenType)
     {
         default:
-        case DatabaseBase::Type::PostgreSQL:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        case DatabaseBase::DatabaseType::Mysql:
             formatedServerSettings.database_base.host              = settings->value(QLatin1Literal("host")).toString();
             formatedServerSettings.database_base.db                = settings->value(QLatin1Literal("db")).toString();
             formatedServerSettings.database_base.login             = settings->value(QLatin1Literal("login")).toString();
             formatedServerSettings.database_base.pass              = settings->value(QLatin1Literal("pass")).toString();
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             formatedServerSettings.database_base.file              = settings->value(QLatin1Literal("file")).toString();
         break;
     }
@@ -206,24 +206,24 @@ void send_settings()
 
     settings->beginGroup(QLatin1Literal("db-common"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
-        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
-        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::Type::SQLite;
+        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
-        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::Type::PostgreSQL;
+        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
     else
-        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
     switch(formatedServerSettings.database_common.tryOpenType)
     {
         default:
-        case DatabaseBase::Type::PostgreSQL:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        case DatabaseBase::DatabaseType::Mysql:
             formatedServerSettings.database_common.host				= settings->value(QLatin1Literal("host")).toString();
             formatedServerSettings.database_common.db				= settings->value(QLatin1Literal("db")).toString();
             formatedServerSettings.database_common.login				= settings->value(QLatin1Literal("login")).toString();
             formatedServerSettings.database_common.pass				= settings->value(QLatin1Literal("pass")).toString();
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             formatedServerSettings.database_common.file				= settings->value(QLatin1Literal("file")).toString();
         break;
     }
@@ -233,24 +233,24 @@ void send_settings()
 
     settings->beginGroup(QLatin1Literal("db-server"));
     if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("mysql"))
-        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("sqlite"))
-        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::Type::SQLite;
+        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
     else if(settings->value(QLatin1Literal("type")).toString()==QLatin1Literal("postgresql"))
-        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::Type::PostgreSQL;
+        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
     else
-        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::Type::Mysql;
+        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
     switch(formatedServerSettings.database_server.tryOpenType)
     {
         default:
-        case DatabaseBase::Type::PostgreSQL:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        case DatabaseBase::DatabaseType::Mysql:
             formatedServerSettings.database_server.host				= settings->value(QLatin1Literal("host")).toString();
             formatedServerSettings.database_server.db				= settings->value(QLatin1Literal("db")).toString();
             formatedServerSettings.database_server.login				= settings->value(QLatin1Literal("login")).toString();
             formatedServerSettings.database_server.pass				= settings->value(QLatin1Literal("pass")).toString();
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             formatedServerSettings.database_server.file				= settings->value(QLatin1Literal("file")).toString();
         break;
     }
@@ -522,10 +522,10 @@ int main(int argc, char *argv[])
             if(
                     true
                     #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-                    && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::DatabaseType::PostgreSQL
                     #endif
                     #ifdef CATCHCHALLENGER_DB_MYSQL
-                    && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::Type::Mysql
+                    && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::DatabaseType::Mysql
                     #endif
                     )
             {
@@ -538,10 +538,10 @@ int main(int argc, char *argv[])
             if(
                     true
                     #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-                    && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::DatabaseType::PostgreSQL
                     #endif
                     #ifdef CATCHCHALLENGER_DB_MYSQL
-                    && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::Type::Mysql
+                    && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::DatabaseType::Mysql
                     #endif
                     )
             {
@@ -553,10 +553,10 @@ int main(int argc, char *argv[])
             if(
                     true
                     #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-                    && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::DatabaseType::PostgreSQL
                     #endif
                     #ifdef CATCHCHALLENGER_DB_MYSQL
-                    && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::Type::Mysql
+                    && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::DatabaseType::Mysql
                     #endif
                     )
             {
@@ -568,10 +568,10 @@ int main(int argc, char *argv[])
             if(
                     true
                     #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-                    && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::Type::PostgreSQL
+                    && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::DatabaseType::PostgreSQL
                     #endif
                     #ifdef CATCHCHALLENGER_DB_MYSQL
-                    && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::Type::Mysql
+                    && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::DatabaseType::Mysql
                     #endif
                     )
             {
@@ -788,7 +788,7 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::Type::Server:
+                case BaseClassSwitch::EpollObjectType::Server:
                 {
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addServerCount();
@@ -922,7 +922,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::Type::UnixServer:
+                case BaseClassSwitch::EpollObjectType::UnixServer:
                 {
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addServerCount();
@@ -994,7 +994,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::Type::Client:
+                case BaseClassSwitch::EpollObjectType::Client:
                 {
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
@@ -1037,7 +1037,7 @@ int main(int argc, char *argv[])
                     #endif
                 }
                 break;
-                case BaseClassSwitch::Type::UnixClient:
+                case BaseClassSwitch::EpollObjectType::UnixClient:
                 {
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addClientCount();
@@ -1066,7 +1066,7 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::Type::Timer:
+                case BaseClassSwitch::EpollObjectType::Timer:
                 {
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
@@ -1082,7 +1082,7 @@ int main(int argc, char *argv[])
                     #endif
                 }
                 break;
-                case BaseClassSwitch::Type::Database:
+                case BaseClassSwitch::EpollObjectType::Database:
                 {
                     #ifdef SERVERBENCHMARKFULL
                     start_inter = std::chrono::high_resolution_clock::now();
@@ -1090,12 +1090,13 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
+                    GlobalServerData::serverPrivateVariables.db_login->databaseType();
                     CatchChallenger::DatabaseBase * const db=static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr);
-                    const DatabaseBase::Type &type=db->databaseType();
+                    const DatabaseBase::DatabaseType &type=db->databaseType();
                     switch(type)
                     {
                         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-                        case DatabaseBase::Type::PostgreSQL:
+                        case DatabaseBase::DatabaseType::PostgreSQL:
                         {
                             EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                             db->epollEvent(events[i].events);
@@ -1123,7 +1124,7 @@ int main(int argc, char *argv[])
                         break;
                         #endif
                         #ifdef CATCHCHALLENGER_DB_MYSQL
-                        case DatabaseBase::Type::Mysql:
+                        case DatabaseBase::DatabaseType::Mysql:
                         {
                             EpollMysql * const db=static_cast<EpollMysql *>(events[i].data.ptr);
                             db->epollEvent(events[i].events);

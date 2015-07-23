@@ -33,13 +33,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow()
     switch(databaseBaseBase->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `id`,`allow` FROM `dictionary_allow` ORDER BY `allow`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT id,allow FROM dictionary_allow ORDER BY allow");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT id,allow FROM dictionary_allow ORDER BY allow");
         break;
     }
@@ -93,13 +93,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_allow_return()
         switch(databaseBaseBase->databaseType())
         {
             default:
-            case DatabaseBase::Type::Mysql:
+            case DatabaseBase::DatabaseType::Mysql:
                 queryText=QStringLiteral("INSERT INTO `dictionary_allow`(`id`,`allow`) VALUES(%1,'clan');").arg(lastId);
             break;
-            case DatabaseBase::Type::SQLite:
+            case DatabaseBase::DatabaseType::SQLite:
                 queryText=QStringLiteral("INSERT INTO dictionary_allow(id,allow) VALUES(%1,'clan');").arg(lastId);
             break;
-            case DatabaseBase::Type::PostgreSQL:
+            case DatabaseBase::DatabaseType::PostgreSQL:
                 queryText=QStringLiteral("INSERT INTO dictionary_allow(id,allow) VALUES(%1,'clan');").arg(lastId);
             break;
         }
@@ -126,13 +126,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
     switch(databaseBaseBase->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `id`,`reputation` FROM `dictionary_reputation` ORDER BY `reputation`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT id,reputation FROM dictionary_reputation ORDER BY reputation");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT id,reputation FROM dictionary_reputation ORDER BY reputation");
         break;
     }
@@ -195,13 +195,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             switch(databaseBaseBase->databaseType())
             {
                 default:
-                case DatabaseBase::Type::Mysql:
+                case DatabaseBase::DatabaseType::Mysql:
                     queryText=QStringLiteral("INSERT INTO `dictionary_reputation`(`id`,`reputation`) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
-                case DatabaseBase::Type::SQLite:
+                case DatabaseBase::DatabaseType::SQLite:
                     queryText=QStringLiteral("INSERT INTO dictionary_reputation(id,reputation) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
-                case DatabaseBase::Type::PostgreSQL:
+                case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText=QStringLiteral("INSERT INTO dictionary_reputation(id,reputation) VALUES(%1,'%2');").arg(lastId).arg(reputation);
                 break;
             }
@@ -230,13 +230,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin()
     switch(databaseBaseBase->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `id`,`skin` FROM `dictionary_skin` ORDER BY `skin`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT id,skin FROM dictionary_skin ORDER BY skin");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT id,skin FROM dictionary_skin ORDER BY skin");
         break;
     }
@@ -299,13 +299,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             switch(databaseBaseBase->databaseType())
             {
                 default:
-                case DatabaseBase::Type::Mysql:
+                case DatabaseBase::DatabaseType::Mysql:
                     queryText=QStringLiteral("INSERT INTO `dictionary_skin`(`id`,`skin`) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
-                case DatabaseBase::Type::SQLite:
+                case DatabaseBase::DatabaseType::SQLite:
                     queryText=QStringLiteral("INSERT INTO dictionary_skin(id,skin) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
-                case DatabaseBase::Type::PostgreSQL:
+                case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText=QStringLiteral("INSERT INTO dictionary_skin(id,skin) VALUES(%1,'%2');").arg(lastId).arg(skin);
                 break;
             }
@@ -333,13 +333,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter()
     switch(databaseBaseBase->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `id`,`starter` FROM `dictionary_starter` ORDER BY `starter`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT id,starter FROM dictionary_starter ORDER BY starter");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT id,starter FROM dictionary_starter ORDER BY starter");
         break;
     }
@@ -412,13 +412,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             switch(databaseBaseBase->databaseType())
             {
                 default:
-                case DatabaseBase::Type::Mysql:
+                case DatabaseBase::DatabaseType::Mysql:
                     queryText=QStringLiteral("INSERT INTO `dictionary_starter`(`id`,`starter`) VALUES(%1,'%2');").arg(lastId).arg(profile.id);
                 break;
-                case DatabaseBase::Type::SQLite:
+                case DatabaseBase::DatabaseType::SQLite:
                     queryText=QStringLiteral("INSERT INTO dictionary_starter(id,starter) VALUES(%1,'%2');").arg(lastId).arg(profile.id);
                 break;
-                case DatabaseBase::Type::PostgreSQL:
+                case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText=QStringLiteral("INSERT INTO dictionary_starter(id,starter) VALUES(%1,'%2');").arg(lastId).arg(profile.id);
                 break;
             }

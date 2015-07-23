@@ -21,7 +21,7 @@ public:
     #ifndef SERVERNOBUFFER
     void flush();
     #endif
-    Type getType() const;
+    EpollObjectType getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
 private:

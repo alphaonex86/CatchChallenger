@@ -478,13 +478,13 @@ void BaseServer::preload_zone_sql()
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
-            case DatabaseBase::Type::Mysql:
+            case DatabaseBase::DatabaseType::Mysql:
                 queryText=QStringLiteral("SELECT `clan` FROM `city` WHERE `city`='%1' ORDER BY `city`").arg(zoneCodeName);
             break;
-            case DatabaseBase::Type::SQLite:
+            case DatabaseBase::DatabaseType::SQLite:
                 queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1' ORDER BY city").arg(zoneCodeName);
             break;
-            case DatabaseBase::Type::PostgreSQL:
+            case DatabaseBase::DatabaseType::PostgreSQL:
                 queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1' ORDER BY city").arg(zoneCodeName);
             break;
         }
@@ -518,13 +518,13 @@ void BaseServer::preload_pointOnMap_sql()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `id`,`map`,`x`,`y` FROM `dictionary_pointonmap` ORDER BY `map`,`x`,`y`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y");
         break;
     }
@@ -673,13 +673,13 @@ void BaseServer::preload_dictionary_map()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `id`,`map` FROM `dictionary_map` ORDER BY `map`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT id,map FROM dictionary_map ORDER BY map");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT id,map FROM dictionary_map ORDER BY map");
         break;
     }
@@ -747,13 +747,13 @@ void BaseServer::preload_dictionary_map_return()
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
                 default:
-                case DatabaseBase::Type::Mysql:
+                case DatabaseBase::DatabaseType::Mysql:
                     queryText=QStringLiteral("INSERT INTO `dictionary_map`(`id`,`map`) VALUES(%1,'%2');").arg(databaseMapId).arg(map);
                 break;
-                case DatabaseBase::Type::SQLite:
+                case DatabaseBase::DatabaseType::SQLite:
                     queryText=QStringLiteral("INSERT INTO dictionary_map(id,map) VALUES(%1,'%2');").arg(databaseMapId).arg(map);
                 break;
-                case DatabaseBase::Type::PostgreSQL:
+                case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText=QStringLiteral("INSERT INTO dictionary_map(id,map) VALUES(%1,'%2');").arg(databaseMapId).arg(map);
                 break;
             }
@@ -815,7 +815,7 @@ void BaseServer::preload_map_semi_after_db_id()
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
                         default:
-                        case DatabaseBase::Type::Mysql:
+                        case DatabaseBase::DatabaseType::Mysql:
                             queryText=QStringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
@@ -823,7 +823,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     .arg(item.point.y)
                                     ;
                         break;
-                        case DatabaseBase::Type::SQLite:
+                        case DatabaseBase::DatabaseType::SQLite:
                             queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
@@ -831,7 +831,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     .arg(item.point.y)
                                     ;
                         break;
-                        case DatabaseBase::Type::PostgreSQL:
+                        case DatabaseBase::DatabaseType::PostgreSQL:
                             queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
@@ -911,7 +911,7 @@ void BaseServer::preload_map_semi_after_db_id()
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
                         default:
-                        case DatabaseBase::Type::Mysql:
+                        case DatabaseBase::DatabaseType::Mysql:
                             queryText=QStringLiteral("INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
@@ -919,7 +919,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     .arg(dirt.point.y)
                                     ;
                         break;
-                        case DatabaseBase::Type::SQLite:
+                        case DatabaseBase::DatabaseType::SQLite:
                             queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
@@ -927,7 +927,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     .arg(dirt.point.y)
                                     ;
                         break;
-                        case DatabaseBase::Type::PostgreSQL:
+                        case DatabaseBase::DatabaseType::PostgreSQL:
                             queryText=QStringLiteral("INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES(%1,'%2',%3,%4);")
                                     .arg(dictionary_pointOnMap_maxId)
                                     .arg(mapServer->reverse_db_id)
@@ -1055,7 +1055,7 @@ void BaseServer::preload_profile()
             switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
             {
                 default:
-                case DatabaseBase::Type::Mysql:
+                case DatabaseBase::DatabaseType::Mysql:
                     serverProfileInternal.preparedQueryAdd << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
@@ -1065,7 +1065,7 @@ void BaseServer::preload_profile()
                     serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
                             QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
-                case DatabaseBase::Type::SQLite:
+                case DatabaseBase::DatabaseType::SQLite:
                     serverProfileInternal.preparedQueryAdd << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
@@ -1075,7 +1075,7 @@ void BaseServer::preload_profile()
                     serverProfileInternal.preparedQueryAdd << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0,0,0,0,0,")+
                             QString::number(DictionaryLogin::dictionary_starter_internal_to_database.at(index))+QLatin1String(");");
                 break;
-                case DatabaseBase::Type::PostgreSQL:
+                case DatabaseBase::DatabaseType::PostgreSQL:
                     serverProfileInternal.preparedQueryAdd << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                     serverProfileInternal.preparedQueryAdd << /*id*/ QLatin1String(",");
                     serverProfileInternal.preparedQueryAdd << /*account*/ QLatin1String(",'");
@@ -1089,17 +1089,17 @@ void BaseServer::preload_profile()
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
                 default:
-                case DatabaseBase::Type::Mysql:
+                case DatabaseBase::DatabaseType::Mysql:
                     serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;
-                case DatabaseBase::Type::SQLite:
+                case DatabaseBase::DatabaseType::SQLite:
                     serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
                 break;
-                case DatabaseBase::Type::PostgreSQL:
+                case DatabaseBase::DatabaseType::PostgreSQL:
                     serverProfileInternal.preparedQuerySelect << QStringLiteral("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash) VALUES(");
                     serverProfileInternal.preparedQuerySelect << /*id*/ QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",")+mapQuery+QLatin1String(",");
                     serverProfileInternal.preparedQuerySelect << /*QDateTime::currentDateTime().toTime_t()*/ QLatin1String(",0);");
@@ -1159,13 +1159,13 @@ void BaseServer::preload_industries()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id,resources,products,last_update FROM factory");
         break;
     }
@@ -1327,13 +1327,13 @@ void BaseServer::preload_market_monsters_prices_sql()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id`,`market_price` FROM `monster_market_price` ORDER BY `id`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id,market_price FROM monster_market_price ORDER BY id");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id,market_price FROM monster_market_price ORDER BY id");
         break;
     }
@@ -1389,13 +1389,13 @@ void BaseServer::preload_market_monsters_sql()
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
-            case DatabaseBase::Type::Mysql:
+            case DatabaseBase::DatabaseType::Mysql:
                 queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`=%1").arg(monsterSemiMarketList.first().id);
             break;
-            case DatabaseBase::Type::SQLite:
+            case DatabaseBase::DatabaseType::SQLite:
                 queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
-            case DatabaseBase::Type::PostgreSQL:
+            case DatabaseBase::DatabaseType::PostgreSQL:
                 queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
         }
@@ -1403,13 +1403,13 @@ void BaseServer::preload_market_monsters_sql()
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
-            case DatabaseBase::Type::Mysql:
+            case DatabaseBase::DatabaseType::Mysql:
                 queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`=%1").arg(monsterSemiMarketList.first().id);
             break;
-            case DatabaseBase::Type::SQLite:
+            case DatabaseBase::DatabaseType::SQLite:
                 queryText=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
-            case DatabaseBase::Type::PostgreSQL:
+            case DatabaseBase::DatabaseType::PostgreSQL:
                 queryText=QStringLiteral("SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id=%1").arg(monsterSemiMarketList.first().id);
             break;
         }
@@ -1593,13 +1593,13 @@ void BaseServer::preload_market_items()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `item`,`quantity`,`character`,`market_price` FROM `item_market` ORDER BY `item`");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT item,quantity,character,market_price FROM item_market ORDER BY item");
         break;
     }
@@ -1684,13 +1684,13 @@ void BaseServer::loadMonsterBuffs(const quint32 &index)
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1 ORDER BY `buff`").arg(index);
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff").arg(index);
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1 ORDER BY buff").arg(index);
         break;
     }
@@ -1766,13 +1766,13 @@ void BaseServer::loadMonsterSkills(const quint32 &index)
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1 ORDER BY `skill`").arg(index);
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill").arg(index);
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1 ORDER BY skill").arg(index);
         break;
     }
@@ -2845,7 +2845,7 @@ bool BaseServer::initialize_the_database()
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectMysql(
                     GlobalServerData::serverSettings.database_login.host.toLatin1(),
                     GlobalServerData::serverSettings.database_login.db.toLatin1(),
@@ -2862,7 +2862,7 @@ bool BaseServer::initialize_the_database()
                                      .arg(GlobalServerData::serverSettings.database_login.host));
         break;
 
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectSqlite(GlobalServerData::serverSettings.database_login.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_login->errorMessage()));
@@ -2873,7 +2873,7 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectPostgresql(
                     GlobalServerData::serverSettings.database_login.host.toLatin1(),
@@ -2906,7 +2906,7 @@ bool BaseServer::initialize_the_database()
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectMysql(
                     GlobalServerData::serverSettings.database_base.host.toLatin1(),
                     GlobalServerData::serverSettings.database_base.db.toLatin1(),
@@ -2923,7 +2923,7 @@ bool BaseServer::initialize_the_database()
                                      .arg(GlobalServerData::serverSettings.database_base.host));
         break;
 
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectSqlite(GlobalServerData::serverSettings.database_base.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_base->errorMessage()));
@@ -2934,7 +2934,7 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectPostgresql(
                     GlobalServerData::serverSettings.database_base.host.toLatin1(),
@@ -2966,7 +2966,7 @@ bool BaseServer::initialize_the_database()
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectMysql(
                     GlobalServerData::serverSettings.database_common.host.toLatin1(),
                     GlobalServerData::serverSettings.database_common.db.toLatin1(),
@@ -2983,7 +2983,7 @@ bool BaseServer::initialize_the_database()
                                      .arg(GlobalServerData::serverSettings.database_common.host));
         break;
 
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectSqlite(GlobalServerData::serverSettings.database_common.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_common->errorMessage()));
@@ -2994,7 +2994,7 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectPostgresql(
                     GlobalServerData::serverSettings.database_common.host.toLatin1(),
@@ -3026,7 +3026,7 @@ bool BaseServer::initialize_the_database()
         DebugClass::debugConsole(QStringLiteral("database type unknown"));
         return false;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectMysql(
                     GlobalServerData::serverSettings.database_server.host.toLatin1(),
                     GlobalServerData::serverSettings.database_server.db.toLatin1(),
@@ -3043,7 +3043,7 @@ bool BaseServer::initialize_the_database()
                                      .arg(GlobalServerData::serverSettings.database_server.host));
         break;
 
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectSqlite(GlobalServerData::serverSettings.database_server.file.toLatin1()))
         {
             DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1").arg(GlobalServerData::serverPrivateVariables.db_server->errorMessage()));
@@ -3054,7 +3054,7 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
 
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectPostgresql(
                     GlobalServerData::serverSettings.database_server.host.toLatin1(),
@@ -3694,47 +3694,47 @@ void BaseServer::loadAndFixSettings()
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
-        case CatchChallenger::DatabaseBase::Type::SQLite:
-        case CatchChallenger::DatabaseBase::Type::Mysql:
-        case CatchChallenger::DatabaseBase::Type::PostgreSQL:
+        case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
             qDebug() << "Wrong db type";
-            GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
+            GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
     #endif
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
-        case CatchChallenger::DatabaseBase::Type::SQLite:
-        case CatchChallenger::DatabaseBase::Type::Mysql:
-        case CatchChallenger::DatabaseBase::Type::PostgreSQL:
+        case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
             qDebug() << "Wrong db type";
-            GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
+            GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
-        case CatchChallenger::DatabaseBase::Type::SQLite:
-        case CatchChallenger::DatabaseBase::Type::Mysql:
-        case CatchChallenger::DatabaseBase::Type::PostgreSQL:
+        case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
             qDebug() << "Wrong db type";
-            GlobalServerData::serverSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
+            GlobalServerData::serverSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
-        case CatchChallenger::DatabaseBase::Type::SQLite:
-        case CatchChallenger::DatabaseBase::Type::Mysql:
-        case CatchChallenger::DatabaseBase::Type::PostgreSQL:
+        case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
         break;
         default:
             qDebug() << "Wrong db type";
-            GlobalServerData::serverSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::Type::Mysql;
+            GlobalServerData::serverSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
         break;
     }
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
@@ -3812,13 +3812,13 @@ void BaseServer::load_clan_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -3860,13 +3860,13 @@ void BaseServer::load_account_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_login->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -3914,13 +3914,13 @@ void BaseServer::load_character_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
         break;
     }
