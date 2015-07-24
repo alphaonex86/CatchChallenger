@@ -106,9 +106,9 @@ void EpollClientLoginMaster::messageParsingLayer(const char * const message) con
     std::cout << socketString << ": " << message << std::endl;
 }
 
-BaseClassSwitch::Type EpollClientLoginMaster::getType() const
+BaseClassSwitch::EpollObjectType EpollClientLoginMaster::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 void EpollClientLoginMaster::parseIncommingData()
