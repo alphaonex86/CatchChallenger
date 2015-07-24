@@ -579,7 +579,7 @@ void EpollServerLoginSlave::preload_profile()
         std::cerr << "EpollServerLoginSlave::preload_profile() CharactersGroupForLogin::list.isEmpty() (abort)" << std::endl;
         abort();
     }
-    const DatabaseBase::Type &type=CharactersGroupForLogin::list.at(0)->databaseType();
+    const DatabaseBase::DatabaseType &type=CharactersGroupForLogin::list.at(0)->databaseType();
     QStringList tempStringList;
 
     unsigned int index=0;
@@ -590,7 +590,7 @@ void EpollServerLoginSlave::preload_profile()
         switch(type)
         {
             default:
-            case DatabaseBase::Type::Mysql:
+            case DatabaseBase::DatabaseType::Mysql:
                 tempStringList << QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
@@ -600,7 +600,7 @@ void EpollServerLoginSlave::preload_profile()
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
                         QString::number(profile.databaseId)+QLatin1String(");");
             break;
-            case DatabaseBase::Type::SQLite:
+            case DatabaseBase::DatabaseType::SQLite:
                 tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");
@@ -610,7 +610,7 @@ void EpollServerLoginSlave::preload_profile()
                 tempStringList << QLatin1String(",0,0,0,0,0,")+
                         QString::number(index)+QLatin1String(");");
             break;
-            case DatabaseBase::Type::PostgreSQL:
+            case DatabaseBase::DatabaseType::PostgreSQL:
                 tempStringList << QStringLiteral("INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter) VALUES(");
                 tempStringList << QLatin1String(",");
                 tempStringList << QLatin1String(",'");

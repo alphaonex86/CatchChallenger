@@ -816,13 +816,13 @@ void EpollServerLoginMaster::load_account_max_id()
     switch(databaseBaseLogin->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM account ORDER BY id DESC LIMIT 1;");
         break;
     }

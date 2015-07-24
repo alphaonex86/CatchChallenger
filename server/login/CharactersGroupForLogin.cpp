@@ -53,12 +53,12 @@ CharactersGroupForLogin::InternalGameServer CharactersGroupForLogin::getServerIn
     return servers.value(serverUniqueKey);
 }
 
-BaseClassSwitch::Type CharactersGroupForLogin::getType() const
+BaseClassSwitch::EpollObjectType CharactersGroupForLogin::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
-DatabaseBase::Type CharactersGroupForLogin::databaseType() const
+DatabaseBase::DatabaseType CharactersGroupForLogin::databaseType() const
 {
     return databaseBaseCommon->databaseType();
 }

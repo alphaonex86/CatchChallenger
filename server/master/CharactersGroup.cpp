@@ -42,13 +42,13 @@ void CharactersGroup::load_clan_max_id()
     switch(databaseBaseCommon->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM clan ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -87,13 +87,13 @@ void CharactersGroup::load_character_max_id()
     switch(databaseBaseCommon->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM character ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -133,13 +133,13 @@ void CharactersGroup::load_monsters_max_id()
     switch(databaseBaseCommon->databaseType())
     {
         default:
-        case DatabaseBase::Type::Mysql:
+        case DatabaseBase::DatabaseType::Mysql:
             queryText=QLatin1String("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::SQLite:
+        case DatabaseBase::DatabaseType::SQLite:
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
-        case DatabaseBase::Type::PostgreSQL:
+        case DatabaseBase::DatabaseType::PostgreSQL:
             queryText=QLatin1String("SELECT id FROM monster ORDER BY id DESC LIMIT 1;");
         break;
     }
@@ -175,9 +175,9 @@ void CharactersGroup::load_monsters_max_id_return()
     CharactersGroup::serverWaitedToBeReady--;
 }
 
-BaseClassSwitch::Type CharactersGroup::getType() const
+BaseClassSwitch::EpollObjectType CharactersGroup::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host,

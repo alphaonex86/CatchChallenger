@@ -1090,10 +1090,7 @@ int main(int argc, char *argv[])
                     #ifdef SERVERBENCHMARKFULL
                     timerDisplayEventBySeconds.addDbCount();
                     #endif
-                    GlobalServerData::serverPrivateVariables.db_login->databaseType();
-                    CatchChallenger::DatabaseBase * const db=static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr);
-                    const DatabaseBase::DatabaseType &type=db->databaseType();
-                    switch(type)
+                    switch(static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr)->databaseType())
                     {
                         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
                         case DatabaseBase::DatabaseType::PostgreSQL:
@@ -1158,7 +1155,7 @@ int main(int argc, char *argv[])
                 }
                 break;
                 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                case BaseClassSwitch::Type::MasterLink:
+                case BaseClassSwitch::EpollObjectType::MasterLink:
                 {
                     LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||

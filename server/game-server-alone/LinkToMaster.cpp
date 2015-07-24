@@ -262,9 +262,9 @@ void LinkToMaster::messageParsingLayer(const char * const message) const
     std::cout << message << std::endl;
 }
 
-BaseClassSwitch::Type LinkToMaster::getType() const
+BaseClassSwitch::EpollObjectType LinkToMaster::getType() const
 {
-    return BaseClassSwitch::Type::MasterLink;
+    return BaseClassSwitch::EpollObjectType::MasterLink;
 }
 
 void LinkToMaster::parseIncommingData()

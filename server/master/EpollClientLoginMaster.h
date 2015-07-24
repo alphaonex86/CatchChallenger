@@ -97,7 +97,7 @@ public:
     static QList<EpollClientLoginMaster *> gameServers;
     static QList<EpollClientLoginMaster *> loginServers;
 
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
     static void sendCurrentPlayer();
     static quint32 maxAccountId;
 private:

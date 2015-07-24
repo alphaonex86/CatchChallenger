@@ -93,10 +93,9 @@ int main(int argc, char *argv[])
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
         for(i = 0; i < number_of_events; i++)
         {
-            const BaseClassSwitch::Type &baseClassSwitchType=static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType();
-            switch(baseClassSwitchType)
+            switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::Type::Server:
+                case BaseClassSwitch::EpollObjectType::Server:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -199,7 +198,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::Type::Client:
+                case BaseClassSwitch::EpollObjectType::Client:
                 {
                     EpollClientLoginMaster * const client=static_cast<EpollClientLoginMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
@@ -230,13 +229,13 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::Type::Timer:
+                case BaseClassSwitch::EpollObjectType::Timer:
                 {
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
                 break;
-                case BaseClassSwitch::Type::Database:
+                case BaseClassSwitch::EpollObjectType::Database:
                 {
                     EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                     db->epollEvent(events[i].events);

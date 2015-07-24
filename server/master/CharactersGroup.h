@@ -32,7 +32,7 @@ public:
         QSet<quint32> lockedAccount;
     };
 
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
     InternalGameServer * addGameServerUniqueKey(void * const link, const quint32 &uniqueKey, const QString &host, const quint16 &port,
                                 const QString &metaData, const quint32 &logicalGroupIndex,
                                 const quint16 &currentPlayer, const quint16 &maxPlayer, const QSet<quint32> &lockedAccount);

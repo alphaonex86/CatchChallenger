@@ -174,7 +174,7 @@ private:
     static unsigned char removeCharacterReply[3+1];
 
     static const unsigned char protocolHeaderToMatch[5];
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
 private:
     void errorParsingLayer(const QString &error);
     void messageParsingLayer(const QString &message) const;

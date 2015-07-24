@@ -14,7 +14,7 @@ class CharactersGroupForLogin : public BaseClassSwitch
 public:
     explicit CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const quint8 &considerDownAfterNumberOfTry,const quint8 &tryInterval);
     ~CharactersGroupForLogin();
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
 
     struct InternalGameServer
     {
@@ -74,7 +74,7 @@ public:
     void server_list(EpollClientLoginSlave * const client,const quint32 &account_id);
     static void server_list_static(void *object);
     void server_list_object();
-    DatabaseBase::Type databaseType() const;
+    DatabaseBase::DatabaseType databaseType() const;
 private:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);

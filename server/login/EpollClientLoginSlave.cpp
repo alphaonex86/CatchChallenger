@@ -169,9 +169,9 @@ void EpollClientLoginSlave::messageParsingLayer(const char * const message) cons
     std::cout << socketString << ": " << message << std::endl;
 }
 
-BaseClassSwitch::Type EpollClientLoginSlave::getType() const
+BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 void EpollClientLoginSlave::parseIncommingData()
