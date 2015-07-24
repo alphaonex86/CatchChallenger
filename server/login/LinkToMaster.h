@@ -47,7 +47,7 @@ public:
     static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
 
     std::vector<quint8> queryNumberList;
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     bool trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);

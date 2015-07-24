@@ -84,9 +84,9 @@ void EpollClientToServer::flush()
 {
 }
 
-BaseClassSwitch::Type EpollClientToServer::getType() const
+BaseClassSwitch::EpollObjectType EpollClientToServer::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 bool EpollClientToServer::isValid() const

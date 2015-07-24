@@ -54,7 +54,7 @@ public:
     static int linkToMasterSocketFd;
     static bool haveTheFirstSslHeader;
     std::vector<quint8> queryNumberList;
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     void connectInternal();

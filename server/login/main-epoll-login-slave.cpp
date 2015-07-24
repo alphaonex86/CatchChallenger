@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::Type::Server:
+                case BaseClassSwitch::EpollObjectType::Server:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::Type::Client:
+                case BaseClassSwitch::EpollObjectType::Client:
                 {
                     EpollClientLoginSlave * const client=static_cast<EpollClientLoginSlave *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
                 break;*/
-                case BaseClassSwitch::Type::Database:
+                case BaseClassSwitch::EpollObjectType::Database:
                 {
                     EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
                     db->epollEvent(events[i].events);
@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::Type::MasterLink:
+                case BaseClassSwitch::EpollObjectType::MasterLink:
                 {
                     LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
