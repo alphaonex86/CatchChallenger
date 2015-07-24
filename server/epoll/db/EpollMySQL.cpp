@@ -184,11 +184,11 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const char * con
     }
     #endif
     const int &query_id=mysql_send_query(conn,query,stringlen);
-    /*to debug if(query_id==0)
+    if(query_id<0)
     {
         std::cerr << "query " << query << "send failed: " << errorMessage() << std::endl;
         return NULL;
-    }*/
+    }
     queue << tempCallback;
     return &queue.last();
 }
