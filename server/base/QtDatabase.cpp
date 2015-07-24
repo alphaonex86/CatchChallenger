@@ -17,7 +17,7 @@ QtDatabase::QtDatabase() :
 {
     connect(this,&QtDatabase::sendQuery,&dbThread,&QtDatabaseThread::receiveQuery,Qt::QueuedConnection);
     connect(&dbThread,&QtDatabaseThread::sendReply,this,&QtDatabase::receiveReply,Qt::QueuedConnection);
-    databaseConnected=DatabaseBase::Type::Mysql;
+    databaseConnected=DatabaseBase::DatabaseType::Mysql;
 }
 
 QtDatabase::~QtDatabase()
@@ -54,7 +54,7 @@ bool QtDatabase::syncConnect(const char * host, const char * dbname, const char 
         conn=NULL;
         return false;
     }
-    databaseConnected=DatabaseBase::Type::Mysql;
+    databaseConnected=DatabaseBase::DatabaseType::Mysql;
     return true;
 }
 
@@ -77,7 +77,7 @@ bool QtDatabase::syncConnectSqlite(const char * file)
         conn=NULL;
         return false;
     }
-    databaseConnected=DatabaseBase::Type::SQLite;
+    databaseConnected=DatabaseBase::DatabaseType::SQLite;
     return true;
 }
 
@@ -100,7 +100,7 @@ bool QtDatabase::syncConnectPostgresql(const char * host, const char * dbname, c
         conn=NULL;
         return false;
     }
-    databaseConnected=DatabaseBase::Type::PostgreSQL;
+    databaseConnected=DatabaseBase::DatabaseType::PostgreSQL;
     return true;
 }
 
@@ -114,7 +114,7 @@ void QtDatabase::syncDisconnect()
     conn->close();
     delete conn;
     conn=NULL;
-    databaseConnected=DatabaseBase::Type::Mysql;
+    databaseConnected=DatabaseBase::DatabaseType::Mysql;
 }
 
 DatabaseBase::CallBack *QtDatabase::asyncRead(const char *query,void * returnObject, CallBackDatabase method)
@@ -227,7 +227,7 @@ const char * QtDatabase::value(const int &value) const
     return valueReturnedData.constData();
 }
 
-DatabaseBase::Type QtDatabase::databaseType() const
+DatabaseBase::DatabaseType QtDatabase::databaseType() const
 {
     return databaseConnected;
 }
@@ -248,4 +248,10 @@ void QtDatabaseThread::receiveQuery(const QString &query,const QSqlDatabase &db)
         qDebug() << QString(queryReturn.lastQuery()+": "+queryReturn.lastError().text());
     }
     emit sendReply(queryReturn);
+}
+
+bool QtDatabase::epollEvent(const uint32_t &events)
+{
+    Q_UNUSED(events);
+    return false;
 }
