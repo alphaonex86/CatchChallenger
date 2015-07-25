@@ -53,10 +53,6 @@ public:
     {
         None,
         ProtocolGood,
-        LoginInProgress,
-        Logged,
-        CharacterSelecting,
-        CharacterSelected,
         GameServerConnecting,
         GameServerConnected,
     };

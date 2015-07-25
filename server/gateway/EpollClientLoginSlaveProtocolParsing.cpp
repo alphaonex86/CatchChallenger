@@ -129,10 +129,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
         case 0x03:
             if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                removeFromQueryReceived(queryNumber);
-                #endif
-                replyOutputSize.remove(queryNumber);
+                stat=EpollClientLoginStat::ProtocolGood;
 
                 stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
                 /// \todo do the async connect
@@ -142,7 +139,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 {
                     stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
-                    linkToGameServer=linkToGameServer;
+                    this->linkToGameServer=linkToGameServer;
                     linkToGameServer->stat=LinkToGameServer::Stat::Connected;
                     linkToGameServer->client=this;
                     linkToGameServer->protocolQueryNumber=queryNumber;
@@ -157,7 +154,6 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                     return;
                 }
 
-                stat=EpollClientLoginStat::ProtocolGood;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                 normalOutput(QStringLiteral("Protocol sended and replied"));
                 #endif
@@ -169,7 +165,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
             }
         break;
         default:
-            parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
+            parseNetworkReadError("wrong data before login with mainIdent: "+QString::number(mainCodeType)+QString(", stat: %1").arg(stat));
         break;
     }
 }
@@ -280,31 +276,22 @@ void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
     }
     otherPacketKickNewValue++;
     Q_UNUSED(data);
-    if(stat!=EpollClientLoginStat::Logged)
+    if(stat==EpollClientLoginStat::GameServerConnecting)
     {
-        if(stat==EpollClientLoginStat::GameServerConnecting)
-        {
-            parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
-            return;
-        }
-        if(stat==EpollClientLoginStat::GameServerConnected)
-        {
-            if(Q_LIKELY(linkToGameServer))
-                linkToGameServer->packOutcommingQuery(mainCodeType,queryNumber,data,size);
-            else
-                parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
-            return;
-        }
-        parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
+        parseNetworkReadError("main ident while game server connecting: "+QString::number(mainCodeType));
         return;
     }
-    switch(mainCodeType)
+    if(stat==EpollClientLoginStat::GameServerConnected)
     {
-        default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
-            return;
-        break;
+        if(Q_LIKELY(linkToGameServer))
+            linkToGameServer->packOutcommingQuery(mainCodeType,queryNumber,data,size);
+        else
+            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
+        return;
     }
+
+    parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
+    return;
 }
 
 void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
@@ -326,29 +313,13 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
     otherPacketKickNewValue++;
     if(stat==EpollClientLoginStat::GameServerConnected)
     {
-        if(Q_LIKELY(linkToGameServer))
-        {
-            linkToGameServer->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
-            return;
-        }
-        else
-        {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
-            return;
-        }
+        linkToGameServer->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
+        return;
     }
-    if(stat!=Logged)
+    else
     {
         parseNetworkReadError("client in wrong state main ident: "+QString::number(mainCodeType)+", with sub ident:"+QString::number(subCodeType)+", for parseFullQuery");
         return;
-    }
-    //do the work here
-    switch(mainCodeType)
-    {
-        default:
-            parseNetworkReadError("unknown main ident: "+QString::number(mainCodeType));
-            return;
-        break;
     }
 }
 
