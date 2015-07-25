@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.h"
+#include "EpollServerLoginSlave.h"
 #include "../base/BaseServerLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 
@@ -132,85 +133,30 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
                 removeFromQueryReceived(queryNumber);
                 #endif
                 replyOutputSize.remove(queryNumber);
-                //if lot of un logged connection, remove the first
-                if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
+
+                stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
+                /// \todo do the async connect
+                /// linkToGameServer->stat=Stat::Connecting;
+                const int &socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port,5,1);
+                if(Q_LIKELY(socketFd>=0))
                 {
-                    EpollClientLoginSlave *client=static_cast<EpollClientLoginSlave *>(BaseServerLogin::tokenForAuth[0].client);
-                    client->disconnectClient();
-                    delete client;
-                    BaseServerLogin::tokenForAuthSize--;
-                    if(BaseServerLogin::tokenForAuthSize>0)
-                    {
-                        quint32 index=0;
-                        while(index<BaseServerLogin::tokenForAuthSize)
-                        {
-                            BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
-                            index++;
-                        }
-                        //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        if(BaseServerLogin::tokenForAuth[0].client==NULL)
-                            abort();
-                        #endif
-                    }
+                    stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                    LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
+                    linkToGameServer=linkToGameServer;
+                    linkToGameServer->stat=LinkToGameServer::Stat::Connected;
+                    linkToGameServer->client=this;
+                    linkToGameServer->protocolQueryNumber=queryNumber;
+                    //send the protocol
+                    //wait readTheFirstSslHeader() to sendProtocolHeader();
+                    linkToGameServer->setConnexionSettings();
+                    linkToGameServer->parseIncommingData();
+                }
+                else
+                {
+                    parseNetworkReadError(QStringLiteral("not able to connect on the game server as gateway, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
-                BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
-                {
-                    token->client=this;
-                    if(BaseServerLogin::fpRandomFile==NULL)
-                    {
-                        //insercure implementation
-                        abort();
-                        int index=0;
-                        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
-                        {
-                            token->value[index]=rand()%256;
-                            index++;
-                        }
-                    }
-                    else
-                    {
-                        const int &size=fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile);
-                        if(size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
-                        {
-                            parseNetworkReadError(
-                                        QStringLiteral("Not correct number of byte to generate the token: size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: %1!=%2")
-                                        .arg(size)
-                                        .arg(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
-                                                  );
-                            return;
-                        }
-                    }
-                }
-                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                switch(ProtocolParsing::compressionTypeServer)
-                {
-                    case ProtocolParsing::CompressionType::None:
-                        *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
-                    break;
-                    case ProtocolParsing::CompressionType::Zlib:
-                        *(EpollClientLoginSlave::protocolReplyCompresssionZlib+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZlib+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompresssionZlib),sizeof(EpollClientLoginSlave::protocolReplyCompresssionZlib));
-                    break;
-                    case ProtocolParsing::CompressionType::Xz:
-                        *(EpollClientLoginSlave::protocolReplyCompressionXz+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionXz+4,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionXz),sizeof(EpollClientLoginSlave::protocolReplyCompressionXz));
-                    break;
-                    default:
-                        parseNetworkReadError("Compression selected wrong");
-                    return;
-                }
-                #else
-                *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
-                memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
-                #endif
-                BaseServerLogin::tokenForAuthSize++;
+
                 stat=EpollClientLoginStat::ProtocolGood;
                 #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
                 normalOutput(QStringLiteral("Protocol sended and replied"));
@@ -218,9 +164,6 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
             }
             else
             {
-                /*don't send packet to prevent DDOS
-                *(EpollClientLoginSlave::protocolReplyProtocolNotSupported+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginSlave::protocolReplyProtocolNotSupported));*/
                 parseNetworkReadError("Wrong protocol");
                 return;
             }
@@ -393,11 +336,6 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
             parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+QString::number(mainCodeType));
             return;
         }
-    }
-    if(account_id==0)
-    {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
-        return;
     }
     if(stat!=Logged)
     {

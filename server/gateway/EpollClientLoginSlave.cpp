@@ -1,5 +1,4 @@
 #include "EpollClientLoginSlave.h"
-#include "CharactersGroupForLogin.h"
 
 #include <iostream>
 #include <QString>
@@ -25,15 +24,8 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             ),
         stat(EpollClientLoginStat::None),
         linkToGameServer(NULL),
-        charactersGroupIndex(0),
-        serverUniqueKey(0),
         socketString(NULL),
         socketStringSize(0),
-        account_id(0),
-        characterListForReplyInSuspend(0),
-        serverListForReplyRawData(NULL),
-        serverListForReplyRawDataSize(0),
-        serverListForReplyInSuspend(0),
         movePacketKickTotalCache(0),
         movePacketKickNewValue(0),
         chatPacketKickTotalCache(0),
@@ -118,9 +110,9 @@ void EpollClientLoginSlave::messageParsingLayer(const char * const message) cons
     std::cout << socketString << ": " << message << std::endl;
 }
 
-BaseClassSwitch::Type EpollClientLoginSlave::getType() const
+BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 void EpollClientLoginSlave::parseIncommingData()

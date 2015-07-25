@@ -31,14 +31,12 @@ public:
     };
     Stat stat;
 
-    char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     EpollClientLoginSlave *client;
     bool haveTheFirstSslHeader;
-    static const unsigned char protocolHeaderToMatchGameServer[5];
-    quint8 queryIdToLog;
+    quint8 protocolQueryNumber;
 
     void setConnexionSettings();
-    BaseClassSwitch::Type getType() const;
+    BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     bool trySelectCharacter(void * const client,const quint8 &client_query_id,const quint32 &serverUniqueKey,const quint8 &charactersGroupIndex,const quint32 &characterId);
