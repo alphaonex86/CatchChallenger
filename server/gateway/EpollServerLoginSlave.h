@@ -22,9 +22,13 @@ public:
     static QString httpMirrorFix(QString mirrors);
 public:
     static EpollServerLoginSlave *epollServerLoginSlave;
+
+    char * destination_server_ip;
+    quint16 destination_server_port;
 public:
     bool tcpNodelay,tcpCork;
     bool serverReady;
+    QString httpDatapackMirrorRewriteBase,httpDatapackMirrorRewriteMainAndSub;
 private:
     char * server_ip;
     char * server_port;

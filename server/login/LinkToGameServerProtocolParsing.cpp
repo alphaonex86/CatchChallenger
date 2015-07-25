@@ -116,7 +116,7 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
     (void)size;
     if(stat!=Stat::Logged)
     {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseNetworkReadError(QStringLiteral("is not logged, parseFullQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     //do the work here
@@ -156,7 +156,7 @@ void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType,const quint
         {}
         else
         {
-            parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+            parseNetworkReadError(QStringLiteral("is not logged, parseFullReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
             return;
         }
     }
