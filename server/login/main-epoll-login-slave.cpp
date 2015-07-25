@@ -201,12 +201,12 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                /*case BaseClassSwitch::Type::Timer:
+                case BaseClassSwitch::Type::Timer:
                 {
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
-                break;*/
+                break;
                 case BaseClassSwitch::EpollObjectType::Database:
                 {
                     EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
