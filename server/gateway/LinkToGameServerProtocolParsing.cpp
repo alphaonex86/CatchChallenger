@@ -45,7 +45,8 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                     return;
                 }
                 //send token to game server
-                packFullOutcommingQuery(0x02,0x06,queryIdToLog/*query number*/,tokenForGameServer,sizeof(tokenForGameServer));
+                if(client!=NULL)
+                    client->postReply(queryNumber,data,size);
                 stat=ProtocolGood;
                 return;
             }
@@ -113,11 +114,6 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
     (void)queryNumber;
     (void)rawData;
     (void)size;
-    if(stat!=Stat::Logged)
-    {
-        parseNetworkReadError(QStringLiteral("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
-        return;
-    }
     //do the work here
     if(client!=NULL)
         client->packFullOutcommingQuery(mainCodeType,subCodeType,queryNumber,rawData,size);
@@ -126,18 +122,10 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
 //send reply
 void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
-    if(stat!=Stat::Logged)
+    if(mainCodeType==0x03 && queryNumber==0x01 && stat==Stat::Connected)
     {
-        if(mainCodeType==0x03 && queryNumber==0x01 && stat==Stat::Connected)
-        {
-            parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
-            return;
-        }
-        else
-        {
-            parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
-            return;
-        }
+        parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
+        return;
     }
     Q_UNUSED(data);
     Q_UNUSED(size);
@@ -149,21 +137,13 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
 
 void LinkToGameServer::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
-    if(stat!=Stat::Logged)
-    {
-        if(stat==Stat::ProtocolGood && mainCodeType==0x02 && subCodeType==0x06)
-        {}
-        else
-        {
-            parseNetworkReadError(QStringLiteral("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
-            return;
-        }
-    }
+    (void)mainCodeType;
+    (void)subCodeType;
     (void)data;
     (void)size;
     //do the work here
-        if(client!=NULL)
-            client->postReply(queryNumber,data,size);
+    if(client!=NULL)
+        client->postReply(queryNumber,data,size);
 }
 
 void LinkToGameServer::parseNetworkReadError(const QString &errorString)

@@ -30,60 +30,56 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     srand(time(NULL));
 
-    if(!settings.contains(QStringLiteral("ip")))
-        settings.setValue(QStringLiteral("ip"),QString());
-    const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
-    const QByteArray &server_ip_data=server_ip_string.toLocal8Bit();
-    if(!server_ip_string.isEmpty())
     {
-        server_ip=new char[server_ip_data.size()+1];
-        strcpy(server_ip,server_ip_data.constData());
+        if(!settings.contains(QStringLiteral("ip")))
+            settings.setValue(QStringLiteral("ip"),QString());
+        const QString &server_ip_string=settings.value(QStringLiteral("ip")).toString();
+        const QByteArray &server_ip_data=server_ip_string.toLocal8Bit();
+        if(!server_ip_string.isEmpty())
+        {
+            server_ip=new char[server_ip_data.size()+1];
+            strcpy(server_ip,server_ip_data.constData());
+        }
+        if(!settings.contains(QStringLiteral("port")))
+            settings.setValue(QStringLiteral("port"),rand()%40000+10000);
+        const QByteArray &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
+        server_port=new char[server_port_data.size()+1];
+        strcpy(server_port,server_port_data.constData());
     }
-    if(!settings.contains(QStringLiteral("port")))
-        settings.setValue(QStringLiteral("port"),rand()%40000+10000);
-    const QByteArray &server_port_data=settings.value(QStringLiteral("port")).toString().toLocal8Bit();
-    server_port=new char[server_port_data.size()+1];
-    strcpy(server_port,server_port_data.constData());
 
-    //token
-    settings.beginGroup(QStringLiteral("master"));
-    if(!settings.contains(QStringLiteral("token")))
-        generateToken(settings);
-    QString token=settings.value(QStringLiteral("token")).toString();
-    if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
-        generateToken(settings);
-    token=settings.value(QStringLiteral("token")).toString();
-    memcpy(LinkToMaster::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
-    settings.endGroup();
-
-    //mode
     {
-        if(!settings.contains(QStringLiteral("mode")))
-            settings.setValue(QStringLiteral("mode"),QStringLiteral("direct"));//or proxy
-        QString mode=settings.value(QStringLiteral("mode")).toString();
-        if(mode!=QStringLiteral("direct") && mode!=QStringLiteral("proxy"))
+        if(!settings.contains(QStringLiteral("destination_ip")))
+            settings.setValue(QStringLiteral("destination_ip"),QString());
+        const QString &destination_server_ip_string=settings.value(QStringLiteral("destination_ip")).toString();
+        const QByteArray &destination_server_ip_data=destination_server_ip_string.toLocal8Bit();
+        if(!destination_server_ip_string.isEmpty())
         {
-            mode=QStringLiteral("direct");
-            settings.setValue(QStringLiteral("mode"),mode);
+            destination_server_ip=new char[destination_server_ip_data.size()+1];
+            strcpy(destination_server_ip,destination_server_ip_data.constData());
         }
-        if(mode==QStringLiteral("direct"))
+        if(!settings.contains(QStringLiteral("destination_port")))
+            settings.setValue(QStringLiteral("destination_port"),rand()%40000+10000);
+        bool ok;
+        unsigned int tempPort=settings.value(QStringLiteral("destination_port")).toUInt(&ok);
+        if(!ok)
         {
-            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
-            EpollClientLoginSlave::serverServerList[0x00]=0x01;//Reconnect mode
+            std::cerr << "destination_port not number: " << settings.value(QStringLiteral("destination_port")).toString().toStdString() << std::endl;
+            abort();
         }
-        else
+        if(tempPort==0 || tempPort>65535)
         {
-            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
-            EpollClientLoginSlave::serverServerList[0x00]=0x02;//proxy mode
+            std::cerr << "destination_port ==0 || >65535: " << tempPort << std::endl;
+            abort();
         }
+        destination_server_port=tempPort;
     }
 
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteBase")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteBase"),QString());
-    QString httpDatapackMirrorRewriteBase=httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString());
+    httpDatapackMirrorRewriteBase=httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteBase")).toString());
     if(!settings.contains(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")))
         settings.setValue(QStringLiteral("httpDatapackMirrorRewriteMainAndSub"),QString());
-    QString httpDatapackMirrorRewriteMainAndSub=httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString());
+    httpDatapackMirrorRewriteMainAndSub=httpMirrorFix(settings.value(QStringLiteral("httpDatapackMirrorRewriteMainAndSub")).toString());
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -106,6 +102,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     tcpNodelay=settings.value(QStringLiteral("tcpNodelay")).toBool();
     settings.endGroup();
     settings.sync();
+
+    tryListen();
 }
 
 EpollServerLoginSlave::~EpollServerLoginSlave()
@@ -124,6 +122,8 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
 
 QString EpollServerLoginSlave::httpMirrorFix(QString mirrors)
 {
+    if(mirrors.isEmpty())
+        return QString();
     QStringList newMirrorList;
     QRegularExpression httpMatch("^https?://.+$");
     const QStringList &mirrorList=mirrors.split(";");

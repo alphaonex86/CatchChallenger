@@ -15,6 +15,8 @@
 
 using namespace CatchChallenger;
 
+const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
+
 LinkToGameServer::LinkToGameServer(
         #ifdef SERVERSSL
             const int &infd, SSL_CTX *ctx
@@ -35,7 +37,7 @@ LinkToGameServer::LinkToGameServer(
         stat(Stat::Connected),
         client(NULL),
         haveTheFirstSslHeader(false),
-        queryIdToLog(0),
+        protocolQueryNumber(0),
         socketFd(infd)
 {
 }
@@ -233,9 +235,9 @@ void LinkToGameServer::messageParsingLayer(const char * const message) const
     std::cout << message << std::endl;
 }
 
-BaseClassSwitch::Type LinkToGameServer::getType() const
+BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 void LinkToGameServer::parseIncommingData()
@@ -248,5 +250,5 @@ void LinkToGameServer::parseIncommingData()
 
 void LinkToGameServer::sendProtocolHeader()
 {
-    packOutcommingQuery(0x03,0x01/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
+    packOutcommingQuery(0x03,protocolQueryNumber/*queryNumber()*/,reinterpret_cast<const char *>(protocolHeaderToMatchLogin),sizeof(protocolHeaderToMatchLogin));
 }

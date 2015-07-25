@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::Type::Server:
+                case BaseClassSwitch::EpollObjectType::Server:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::Type::Client:
+                case BaseClassSwitch::EpollObjectType::Client:
                 {
                     EpollClientLoginSlave * const client=static_cast<EpollClientLoginSlave *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
@@ -201,42 +201,10 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                /*case BaseClassSwitch::Type::Timer:
+                case BaseClassSwitch::EpollObjectType::Timer:
                 {
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
-                }
-                break;*/
-                case BaseClassSwitch::Type::Database:
-                {
-                    EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
-                    db->epollEvent(events[i].events);
-                    if(!db->isConnected())
-                    {
-                        std::cerr << "database disconnect, quit now" << std::endl;
-                        return EXIT_FAILURE;
-                    }
-                }
-                break;
-                case BaseClassSwitch::Type::MasterLink:
-                {
-                    LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
-                    if((events[i].events & EPOLLERR) ||
-                    (events[i].events & EPOLLHUP) ||
-                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
-                    {
-                        /* An error has occured on this fd, or the socket is not
-                        ready for reading (why were we notified then?) */
-                        if(!(events[i].events & EPOLLHUP))
-                            std::cerr << "client epoll error: " << events[i].events << std::endl;
-                        client->tryReconnect();
-                        continue;
-                    }
-                    //ready to read
-                    if(events[i].events & EPOLLIN)
-                        client->parseIncommingData();
-                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
-                        client->tryReconnect();
                 }
                 break;
                 default:
