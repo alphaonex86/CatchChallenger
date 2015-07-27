@@ -39,7 +39,7 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
                         parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
-                if(size!=(sizeof(quint8)))
+                if(size!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
                 {
                     parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
@@ -71,7 +71,7 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
 
 void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
 {
-    if(stat!=Stat::Logged)
+    if(stat!=Stat::ProtocolGood)
     {
         parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType));
         return;
@@ -84,10 +84,17 @@ void LinkToGameServer::parseMessage(const quint8 &mainCodeType,const char *data,
 
 void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
 {
-    if(stat!=Stat::Logged)
+    if(stat!=Stat::ProtocolGood)
     {
-        parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
-        return;
+        if(mainCodeType==0xC2 && subCodeType==0x0F)//send Logical group
+        {}
+        else if(mainCodeType==0xC2 && subCodeType==0x0E)//send Send server list to real player
+        {}
+        else
+        {
+            parseNetworkReadError("parseFullMessage() not logged to send: "+QString::number(mainCodeType)+" "+QString::number(subCodeType));
+            return;
+        }
     }
     (void)rawData;
     (void)size;
@@ -99,7 +106,7 @@ void LinkToGameServer::parseFullMessage(const quint8 &mainCodeType,const quint8 
 void LinkToGameServer::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
     Q_UNUSED(data);
-    if(stat!=Stat::Logged)
+    if(stat!=Stat::ProtocolGood)
     {
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
         return;
@@ -122,7 +129,7 @@ void LinkToGameServer::parseFullQuery(const quint8 &mainCodeType,const quint8 &s
 //send reply
 void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
 {
-    if(mainCodeType==0x03 && queryNumber==0x01 && stat==Stat::Connected)
+    if(mainCodeType==0x03 && stat==Stat::Connected)
     {
         parseInputBeforeLogin(mainCodeType,queryNumber,data,size);
         return;
