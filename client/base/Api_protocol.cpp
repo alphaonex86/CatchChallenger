@@ -251,15 +251,25 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
         return false;
     }
     QByteArray outputData;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    QByteArray tempDoubleHash;
+    #endif
     {
         QCryptographicHash hashLogin(QCryptographicHash::Sha224);
-        hashLogin.addData((login+/*salt*/"RtR3bm9Z1DFMfAC3").toLatin1());
+        hashLogin.addData((login+/*salt*/"RtR3bm9Z1DFMfAC3").toUtf8());
         loginHash=hashLogin.result();
         outputData+=loginHash;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            QCryptographicHash hashLogin2(QCryptographicHash::Sha224);
+            hashLogin2.addData(loginHash);
+            tempDoubleHash=hashLogin2.result();
+        }
+        #endif
     }
     {
         QCryptographicHash hashPass(QCryptographicHash::Sha224);
-        hashPass.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toLatin1());
+        hashPass.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs").toUtf8());
         passHash=hashPass.result();
 
         QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
@@ -267,6 +277,13 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
         hashAndToken.addData(token);
         outputData+=hashAndToken.result();
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    qDebug() << QStringLiteral("Try auth: password %1 with token %3 for the login: %2")
+                 .arg(QString(passHash.toHex()))
+                 .arg(QString(tempDoubleHash.toHex()))
+                 .arg(QString(token.toHex()))
+                 ;
+    #endif
     packOutcommingQuery(0x04,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
@@ -283,10 +300,22 @@ bool Api_protocol::tryCreate()
         newError(QStringLiteral("Internal problem"),QStringLiteral("Is already logged"));
         return false;
     }
+    /*double hashing on client part
+     * '''Prevent login leak in case of MiM attack re-ask the password''' (Trafic modification, replace the server return code OK by ACCOUNT CREATION)
+     * Do some DDOS protection because it offload the hashing */
     QByteArray outputData;
-    outputData+=loginHash;
+    {
+        QCryptographicHash hashLogin(QCryptographicHash::Sha224);
+        hashLogin.addData(loginHash);
+        outputData+=hashLogin.result();
+    }
+    //pass
     outputData+=passHash;
     packOutcommingQuery(0x05,queryNumber(),outputData.constData(),outputData.size());
+    qDebug() << QStringLiteral("Try create account: login: %1 and pass: %2")
+             .arg(QString(loginHash.toHex()))
+             .arg(QString(passHash.toHex()))
+             ;
     return true;
 }
 
