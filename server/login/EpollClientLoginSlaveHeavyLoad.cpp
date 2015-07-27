@@ -125,12 +125,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         else
         {
             QByteArray hashedToken;
+            qint32 tokenForAuthIndex=0;
             {
-                bool found=false;
-                quint32 index=0;
-                while(index<BaseServerLogin::tokenForAuthSize)
+                while((quint32)tokenForAuthIndex<BaseServerLogin::tokenForAuthSize)
                 {
-                    const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
+                    const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
                     if(tokenLink.client==this)
                     {
                         const QString &secretToken(databaseBaseLogin.value(1));
@@ -140,12 +139,13 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                         hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         hashedToken=hash.result();
                         BaseServerLogin::tokenForAuthSize--;
+                        //see to do with SIMD
                         if(BaseServerLogin::tokenForAuthSize>0)
                         {
-                            while(index<BaseServerLogin::tokenForAuthSize)
+                            while((quint32)tokenForAuthIndex<BaseServerLogin::tokenForAuthSize)
                             {
-                                BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
-                                index++;
+                                BaseServerLogin::tokenForAuth[tokenForAuthIndex]=BaseServerLogin::tokenForAuth[tokenForAuthIndex+1];
+                                tokenForAuthIndex++;
                             }
                             //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -153,12 +153,12 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                                 abort();
                             #endif
                         }
-                        found=true;
+                        tokenForAuthIndex--;
                         break;
                     }
-                    index++;
+                    tokenForAuthIndex++;
                 }
-                if(!found)
+                if(tokenForAuthIndex>=(qint32)BaseServerLogin::tokenForAuthSize)
                 {
                     loginIsWrong(askLoginParam->query_id,0x02,QStringLiteral("No temp auth token found"));
                     return;
@@ -166,7 +166,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             }
             if(hashedToken!=askLoginParam->pass)
             {
-                loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Password wrong: %1 for the login: %2").arg(QString(askLoginParam->pass.toHex())).arg(QString(askLoginParam->login.toHex())));
+                loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Password wrong: %1 with token %3 for the login: %2")
+                             .arg(QString(askLoginParam->pass.toHex()))
+                             .arg(QString(askLoginParam->login.toHex()))
+                             .arg(QString(QByteArray(BaseServerLogin::tokenForAuth[tokenForAuthIndex].value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()))
+                             );
                 paramToPassToCallBack.clear();
                 paramToPassToCallBackType.clear();
                 delete askLoginParam;
