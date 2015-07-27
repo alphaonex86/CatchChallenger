@@ -26,8 +26,6 @@ public:
         Connecting,
         Connected,
         ProtocolGood,
-        LoginInProgress,
-        Logged,
     };
     Stat stat;
 

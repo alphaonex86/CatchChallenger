@@ -125,8 +125,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         else
         {
             QByteArray hashedToken;
-            qint32 tokenForAuthIndex=0;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            QByteArray tempAddedToken;
+            #endif
             {
+                qint32 tokenForAuthIndex=0;
                 while((quint32)tokenForAuthIndex<BaseServerLogin::tokenForAuthSize)
                 {
                     const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
@@ -136,6 +139,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                         const QByteArray &secretTokenBinary=QByteArray::fromHex(secretToken.toLatin1());
                         QCryptographicHash hash(QCryptographicHash::Sha224);
                         hash.addData(secretTokenBinary);
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        tempAddedToken=QByteArray(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        #endif
                         hash.addData(tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         hashedToken=hash.result();
                         BaseServerLogin::tokenForAuthSize--;
@@ -166,11 +172,18 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             }
             if(hashedToken!=askLoginParam->pass)
             {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Password wrong: %1 with token %3 for the login: %2")
                              .arg(QString(askLoginParam->pass.toHex()))
                              .arg(QString(askLoginParam->login.toHex()))
-                             .arg(QString(QByteArray(BaseServerLogin::tokenForAuth[tokenForAuthIndex].value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).toHex()))
+                             .arg(QString(tempAddedToken.toHex()))
                              );
+                #else
+                loginIsWrong(askLoginParam->query_id,0x03,QStringLiteral("Password wrong: %1 for the login: %2")
+                             .arg(QString(askLoginParam->pass.toHex()))
+                             .arg(QString(askLoginParam->login.toHex()))
+                             );
+                #endif
                 paramToPassToCallBack.clear();
                 paramToPassToCallBackType.clear();
                 delete askLoginParam;
