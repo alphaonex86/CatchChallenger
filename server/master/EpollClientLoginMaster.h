@@ -59,14 +59,15 @@ public:
     //to ordered reply
     QList<DataForSelectedCharacterReturn> loginServerReturnForCharaterSelect;
     std::vector<quint8> queryNumberList;
+    QByteArray tokenForAuth;
 
     static char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
     static const unsigned char protocolHeaderToMatch[BASE_PROTOCOL_MAGIC_SIZE];
-    static unsigned char protocolReplyProtocolNotSupported[3];
-    static unsigned char protocolReplyWrongAuth[3];
-    static unsigned char protocolReplyCompressionNone[3];
-    static unsigned char protocolReplyCompresssionZlib[3];
-    static unsigned char protocolReplyCompressionXz[3];
+    static unsigned char protocolReplyProtocolNotSupported[4];
+    static unsigned char protocolReplyWrongAuth[4];
+    static unsigned char protocolReplyCompressionNone[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompresssionZlib[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionXz[4+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     static char characterSelectionIsWrongBufferCharacterNotFound[64];
     static char characterSelectionIsWrongBufferCharacterAlreadyConnectedOnline[64];
     static char characterSelectionIsWrongBufferServerInternalProblem[64];
@@ -75,7 +76,7 @@ public:
     static char selectCharaterRequestOnGameServer[3/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static unsigned char duplicateConnexionDetected[2/*header*/+4];
     static unsigned char getTokenForCharacterSelect[3/*header*/+4+4];
-    static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
+    static unsigned char replyToRegisterLoginServer[sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint16)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)
     +sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK+sizeof(quint32)*CATCHCHALLENGER_SERVER_MAXIDBLOCK
     +16*1024];
     static char tempBuffer[16*4096];
@@ -94,6 +95,7 @@ public:
     static unsigned char replyToIdListBuffer[sizeof(quint8)+sizeof(quint8)+1024];//reply for 07
     static QHash<QString,int> logicalGroupHash;
 
+    static FILE *fpRandomFile;
     static QList<EpollClientLoginMaster *> gameServers;
     static QList<EpollClientLoginMaster *> loginServers;
 

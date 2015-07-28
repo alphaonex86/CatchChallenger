@@ -208,7 +208,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
                 sizeOnlyMainCodePacketServerToClient[0xC3]=2;
             }
             sizeOnlyMainCodePacketServerToClient[0xC4]=0;
-            sizeOnlyMainCodePacketClientToServer[0x01]=9+TOKEN_SIZE_FOR_MASTERAUTH;
+            sizeOnlyMainCodePacketClientToServer[0x01]=9;
             sizeOnlyMainCodePacketClientToServer[0x40]=2;
             sizeOnlyMainCodePacketClientToServer[0x03]=5;
             sizeOnlyMainCodePacketClientToServer[0x08]=0;
@@ -267,7 +267,6 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             sizeMultipleCodePacketServerToClient[0x81][0x01]=4+4;
             sizeMultipleCodePacketServerToClient[0x79][0x02]=2;
             //define the size of the reply
-            replySizeOnlyMainCodePacketServerToClient[0x01]=1;
             /** \note previously send by: sizeMultipleCodePacketServerToClient */
             replySizeMultipleCodePacketClientToServer[0x79][0x01]=0;
             replySizeMultipleCodePacketClientToServer[0x79][0x02]=0;

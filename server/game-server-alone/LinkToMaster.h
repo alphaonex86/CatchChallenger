@@ -48,7 +48,8 @@ public:
     static char protocolReplyGetToken[3+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static char sendDisconnectedPlayer[2+4];
     static char sendCurrentPlayer[2+2];
-    static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
+    static unsigned char header_magic_number[9];
+    static unsigned char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
 
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
@@ -59,7 +60,7 @@ public:
     static int tryConnect(const char * const host,const quint16 &port,const quint8 &tryInterval=1,const quint8 &considerDownAfterNumberOfTry=30);
     void connectInternal();
     void setConnexionSettings();
-    bool registerGameServer(const QString &exportedXml);
+    bool registerGameServer(const QString &exportedXml,const char * const dynamicToken);
     void generateToken();
     void sendProtocolHeader();
     bool setSettings(QSettings * const settings);

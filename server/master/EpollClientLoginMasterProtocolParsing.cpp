@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <QDateTime>
+#include <QCryptographicHash>
 
 using namespace CatchChallenger;
 
@@ -16,45 +17,53 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             removeFromQueryReceived(queryNumber);
             #endif
-            if(size==sizeof(EpollClientLoginMaster::protocolHeaderToMatch)+sizeof(EpollClientLoginMaster::private_token))
+            if(size==sizeof(EpollClientLoginMaster::protocolHeaderToMatch))
             {
                 if(memcmp(data,EpollClientLoginMaster::protocolHeaderToMatch,sizeof(EpollClientLoginMaster::protocolHeaderToMatch))==0)
                 {
-                    if(memcmp(data+sizeof(EpollClientLoginMaster::protocolHeaderToMatch),EpollClientLoginMaster::private_token,sizeof(EpollClientLoginMaster::private_token))==0)
                     {
-                        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                        switch(ProtocolParsing::compressionType)
+                        if(!tokenForAuth.isEmpty())
                         {
-                            case CompressionType_None:
-                                *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
-                            break;
-                            case CompressionType_Zlib:
-                                *(EpollClientLoginMaster::protocolReplyCompresssionZlib+1)=queryNumber;
-                                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompresssionZlib),sizeof(EpollClientLoginMaster::protocolReplyCompresssionZlib));
-                            break;
-                            case CompressionType_Xz:
-                                *(EpollClientLoginMaster::protocolReplyCompressionXz+1)=queryNumber;
-                                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionXz),sizeof(EpollClientLoginMaster::protocolReplyCompressionXz));
-                            break;
-                            default:
-                                errorParsingLayer("Compression selected wrong");
+                            errorParsingLayer("!tokenForAuth.isEmpty()");
                             return;
                         }
-                        #else
-                        *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
-                        #endif
-                        stat=EpollClientLoginMasterStat::Logged;
-                        //messageParsingLayer("Protocol sended and replied");
+                        tokenForAuth.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        const int &returnedSize=fread(tokenForAuth.data(),1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,EpollClientLoginMaster::fpRandomFile);
+                        if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
+                        {
+                            std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
+                            abort();
+                        }
                     }
-                    else
+                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                    switch(ProtocolParsing::compressionType)
                     {
-                        *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
-                        errorParsingLayer("Wrong protocol token");
+                        case CompressionType_None:
+                            *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
+                        break;
+                        case CompressionType_Zlib:
+                            *(EpollClientLoginMaster::protocolReplyCompresssionZlib+1)=queryNumber;
+                            memcpy(EpollClientLoginMaster::protocolReplyCompresssionZlib+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompresssionZlib),sizeof(EpollClientLoginMaster::protocolReplyCompresssionZlib));
+                        break;
+                        case CompressionType_Xz:
+                            *(EpollClientLoginMaster::protocolReplyCompressionXz+1)=queryNumber;
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionXz+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionXz),sizeof(EpollClientLoginMaster::protocolReplyCompressionXz));
+                        break;
+                        default:
+                            errorParsingLayer("Compression selected wrong");
                         return;
                     }
+                    #else
+                    *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
+                    memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
+                    #endif
+                    stat=EpollClientLoginMasterStat::Logged;
+                    //messageParsingLayer("Protocol sended and replied");
                 }
                 else
                 {
@@ -197,6 +206,30 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
         case 0x07:
         {
             unsigned int pos=0;
+
+            //token auth
+            {
+                if((size-pos)<(int)CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)
+                {
+                    parseNetworkReadError("wrong size for master auth hash");
+                    return;
+                }
+                if(tokenForAuth.isEmpty())
+                {
+                    parseNetworkReadError("tokenForAuth.isEmpty()");
+                    return;
+                }
+                QCryptographicHash hash(QCryptographicHash::Sha224);
+                hash.addData(EpollClientLoginMaster::private_token);
+                hash.addData(tokenForAuth);
+                if(memcmp(hash.result().constData(),data+pos,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)!=0)
+                {
+                    *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
+                    errorParsingLayer("Wrong protocol token");
+                    return;
+                }
+            }
 
             QString charactersGroup;
             QString host;
@@ -476,6 +509,30 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
         break;
         case 0x08:
         {
+            //token auth
+            {
+                if(size<(int)CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)
+                {
+                    parseNetworkReadError("wrong size for master auth hash");
+                    return;
+                }
+                if(tokenForAuth.isEmpty())
+                {
+                    parseNetworkReadError("tokenForAuth.isEmpty()");
+                    return;
+                }
+                QCryptographicHash hash(QCryptographicHash::Sha224);
+                hash.addData(EpollClientLoginMaster::private_token);
+                hash.addData(tokenForAuth);
+                if(memcmp(hash.result().constData(),data,CATCHCHALLENGER_FIRSTLOGINPASSHASHSIZE)!=0)
+                {
+                    *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
+                    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyWrongAuth),sizeof(EpollClientLoginMaster::protocolReplyWrongAuth));
+                    errorParsingLayer("Wrong protocol token");
+                    return;
+                }
+            }
+
             if(stat!=EpollClientLoginMasterStat::Logged)
             {
                 parseNetworkReadError("stat!=EpollClientLoginMasterStat::Logged: "+QString::number(stat)+" to register as login server");
@@ -492,6 +549,10 @@ void EpollClientLoginMaster::parseQuery(const quint8 &mainCodeType,const quint8 
             }
             //send the id list
             unsigned int pos=EpollClientLoginMaster::replyToRegisterLoginServerBaseOffset;
+            {
+                EpollClientLoginMaster::replyToRegisterLoginServer[pos]=0x01;
+                pos++;
+            }
             if((pos+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(EpollClientLoginMaster::replyToRegisterLoginServer))
             {
                 std::cerr << "EpollClientLoginMaster::replyToRegisterLoginServer out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;

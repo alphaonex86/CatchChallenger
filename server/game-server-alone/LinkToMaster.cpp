@@ -14,6 +14,7 @@
 #include <chrono>         // std::chrono::seconds
 #include <unistd.h>
 #include <time.h>
+#include <QCryptographicHash>
 
 using namespace CatchChallenger;
 
@@ -313,7 +314,7 @@ void LinkToMaster::generateToken()
     settings->sync();
 }
 
-bool LinkToMaster::registerGameServer(const QString &exportedXml)
+bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * const dynamicToken)
 {
     if(queryNumberList.empty())
         return false;
@@ -321,6 +322,16 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml)
     int pos=0;
     int newSizeCharactersGroup;
     char tempBuffer[65536*4+1024];
+
+    {
+        QCryptographicHash hash(QCryptographicHash::Sha224);
+        hash.addData(LinkToMaster::private_token);
+        hash.addData(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        const QByteArray &hashedToken=hash.result();
+        memcpy(tempBuffer,hashedToken.constData(),hashedToken.size());
+        pos+=hashedToken.size();
+        memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
+    }
 
     QString server_ip=settings->value(QLatin1Literal("server-ip")).toString();
     QString server_port=settings->value(QLatin1Literal("server-port")).toString();
