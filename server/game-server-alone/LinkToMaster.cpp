@@ -285,7 +285,7 @@ bool LinkToMaster::setSettings(QSettings * const settings)
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken();
     token=settings->value(QStringLiteral("token")).toString();
-    memcpy(LinkToMaster::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LinkToMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings->endGroup();
 
     return true;
@@ -299,7 +299,7 @@ void LinkToMaster::generateToken()
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LinkToMaster::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(LinkToMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
@@ -307,8 +307,8 @@ void LinkToMaster::generateToken()
     }
     settings->setValue(QStringLiteral("token"),QString(
                           QByteArray(
-                              reinterpret_cast<char *>(LinkToMaster::header_magic_number_and_private_token)
-                              +9,TOKEN_SIZE_FOR_MASTERAUTH)
+                              reinterpret_cast<char *>(LinkToMaster::private_token)
+                              ,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
     fclose(fpRandomFile);
     settings->sync();
@@ -325,7 +325,7 @@ bool LinkToMaster::registerGameServer(const QString &exportedXml, const char * c
 
     {
         QCryptographicHash hash(QCryptographicHash::Sha224);
-        hash.addData(LinkToMaster::private_token);
+        hash.addData(reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
         hash.addData(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
         const QByteArray &hashedToken=hash.result();
         memcpy(tempBuffer,hashedToken.constData(),hashedToken.size());
@@ -535,8 +535,8 @@ void LinkToMaster::sendProtocolHeader()
 {
     packOutcommingQuery(0x01,
                         queryNumberList.back(),
-                        reinterpret_cast<char *>(LinkToMaster::header_magic_number_and_private_token),
-                        sizeof(LinkToMaster::header_magic_number_and_private_token)
+                        reinterpret_cast<char *>(LinkToMaster::header_magic_number),
+                        sizeof(LinkToMaster::header_magic_number)
                         );
     queryNumberList.pop_back();
 }
