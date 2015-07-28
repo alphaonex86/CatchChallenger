@@ -44,7 +44,11 @@ SOURCES += \
     LinkToGameServerProtocolParsing.cpp \
     LinkToGameServer.cpp \
     TimerDdos.cpp \
-    ../epoll/EpollTimer.cpp
+    ../epoll/EpollTimer.cpp \
+    Api_client_real.cpp \
+    Api_client_real_base.cpp \
+    Api_client_real_main.cpp \
+    Api_client_real_sub.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -65,4 +69,5 @@ HEADERS += \
     ../../general/base/GeneralVariable.h \
     LinkToGameServer.h \
     TimerDdos.h \
-    ../epoll/EpollTimer.h
+    ../epoll/EpollTimer.h \
+    Api_client_real.h

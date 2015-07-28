@@ -1,0 +1,648 @@
+#include "Api_client_real.h"
+
+using namespace CatchChallenger;
+
+#ifdef Q_CC_GNU
+//this next header is needed to change file time/date under gcc
+#include <utime.h>
+#include <sys/stat.h>
+#endif
+
+#include <cmath>
+#include <QRegularExpression>
+#include <QNetworkReply>
+
+#include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/FacilityLibGeneral.h"
+#include "qt-tar-xz/QTarDecode.h"
+#include "../../general/base/GeneralVariable.h"
+
+void Api_client_real::writeNewFileMain(const QString &fileName,const QByteArray &data)
+{
+    const QString &fullPath=mDatapackMain+text_slash+fileName;
+    //to be sure the QFile is destroyed
+    {
+        QFile file(fullPath);
+        QFileInfo fileInfo(file);
+
+        QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
+
+        if(file.exists())
+            if(!file.remove())
+            {
+                DebugClass::debugConsole(QStringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+                return;
+            }
+        if(!file.open(QIODevice::WriteOnly))
+        {
+            DebugClass::debugConsole(QStringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
+            return;
+        }
+        if(file.write(data)!=data.size())
+        {
+            file.close();
+            DebugClass::debugConsole(QStringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
+            return;
+        }
+        file.flush();
+        file.close();
+    }
+
+    //send size
+    {
+        if(httpModeMain)
+            newDatapackFileMain(ceil((float)data.size()/1000)*1000);
+        else
+            newDatapackFileMain(data.size());
+    }
+}
+
+void Api_client_real::getHttpFileMain(const QString &url, const QString &fileName)
+{
+    if(httpError)
+        return;
+    if(!httpModeMain)
+        httpModeMain=true;
+    QNetworkRequest networkRequest(url);
+    QNetworkReply *reply;
+    //choice the right queue
+    {
+        if(qnamQueueCount3 < qnamQueueCount2 && qnamQueueCount3 < qnamQueueCount)
+            reply = qnam3.get(networkRequest);
+        else if(qnamQueueCount2 < qnamQueueCount)
+            reply = qnam2.get(networkRequest);
+        else
+            reply = qnam.get(networkRequest);
+    }
+    //add to queue count
+    {
+        QNetworkAccessManager * manager=reply->manager();
+        if(manager==&qnam)
+            qnamQueueCount++;
+        else if(manager==&qnam2)
+            qnamQueueCount2++;
+        else if(manager==&qnam3)
+            qnamQueueCount3++;
+        else
+            qDebug() << "queue detection bug to add";
+    }
+    UrlInWaiting urlInWaiting;
+    urlInWaiting.fileName=fileName;
+    urlInWaitingListMain[reply]=urlInWaiting;
+    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedMain);
+}
+
+void Api_client_real::httpFinishedMain()
+{
+    if(httpError)
+        return;
+    if(urlInWaitingListMain.isEmpty())
+    {
+        httpError=true;
+        newError(tr("Datapack downloading error"),QStringLiteral("no more reply in waiting"));
+        socket->disconnectFromHost();
+        return;
+    }
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if(reply==NULL)
+    {
+        httpError=true;
+        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        socket->disconnectFromHost();
+        return;
+    }
+    //remove to queue count
+    {
+        QNetworkAccessManager * manager=reply->manager();
+        if(manager==&qnam)
+            qnamQueueCount--;
+        else if(manager==&qnam2)
+            qnamQueueCount2--;
+        else if(manager==&qnam3)
+            qnamQueueCount3--;
+        else
+            qDebug() << "queue detection bug to remove";
+    }
+    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if(!reply->isFinished())
+    {
+        httpError=true;
+        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: not finished"));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    }
+    else if(reply->error())
+    {
+        httpError=true;
+        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    } else if(!redirectionTarget.isNull()) {
+        httpError=true;
+        newError(tr("Unable to download the datapack"),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    }
+    if(!urlInWaitingListMain.contains(reply))
+    {
+        httpError=true;
+        newError(tr("Datapack downloading error"),QStringLiteral("reply of unknown query"));
+        socket->disconnectFromHost();
+        reply->deleteLater();
+        return;
+    }
+
+    const UrlInWaiting &urlInWaiting=urlInWaitingListMain.value(reply);
+    writeNewFileMain(urlInWaiting.fileName,reply->readAll());
+
+    if(urlInWaitingListMain.remove(reply)!=1)
+        DebugClass::debugConsole(QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListMain.size()));
+    reply->deleteLater();
+    if(urlInWaitingListMain.isEmpty())
+        checkIfContinueOrFinished();
+}
+
+void Api_client_real::datapackChecksumDoneMain(const QStringList &datapackFilesList,const QByteArray &hash,const QList<quint32> &partialHashList)
+{
+    if(datapackFilesListMain.size()!=partialHashList.size())
+    {
+        qDebug() << "datapackFilesListMain.size()!=partialHash.size():" << datapackFilesListMain.size() << "!=" << partialHashList.size();
+        qDebug() << "this->datapackFilesList:" << this->datapackFilesListMain.join("\n");
+        qDebug() << "datapackFilesList:" << datapackFilesListMain.join("\n");
+        abort();
+    }
+    {
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            abort();
+        }
+        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+            abort();
+        }
+        if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
+        {
+            qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+            abort();
+        }
+    }
+
+    this->datapackFilesListMain=datapackFilesList;
+    this->partialHashListMain=partialHashList;
+    if(!datapackFilesListMain.isEmpty() && hash==CommonSettingsServer::commonSettingsServer.datapackHashServerMain)
+    {
+        qDebug() << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote";
+        wait_datapack_content_main=false;
+        checkIfContinueOrFinished();
+        return;
+    }
+
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.isEmpty())
+    {
+        if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.isEmpty())
+        {
+            qDebug() << "Datapack checksum done but not send by the server";
+            return;//need CommonSettings::commonSettings.datapackHash send by the server
+        }
+        qDebug() << "Datapack is empty or hash don't match, get from server, hash local: " << QString(hash.toHex()) << ", hash on server: " << QString(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.toHex());
+        quint8 datapack_content_query_number=queryNumber();
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+        out << (quint8)DatapackStatus::Main;
+        out << (quint32)datapackFilesListMain.size();
+        int index=0;
+        while(index<datapackFilesListMain.size())
+        {
+            const QByteArray &rawFileName=FacilityLibGeneral::toUTF8WithHeader(datapackFilesListMain.at(index));
+            if(rawFileName.size()>255 || rawFileName.isEmpty())
+            {
+                DebugClass::debugConsole(QStringLiteral("rawFileName too big or not compatible with utf8"));
+                return;
+            }
+            outputData+=rawFileName;
+            out.device()->seek(out.device()->size());
+
+            /*struct stat info;
+            stat(QString(mDatapackBase+datapackFilesListMain.at(index)).toLatin1().data(),&info);*/
+            out << (quint32)partialHashList.at(index);
+            index++;
+        }
+        packFullOutcommingQuery(0x02,0x0C,datapack_content_query_number,outputData.constData(),outputData.size());
+    }
+    else
+    {
+        if(datapackFilesListMain.isEmpty())
+        {
+            {
+                if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+                {
+                    qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+                    abort();
+                }
+                if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+                {
+                    qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+                    abort();
+                }
+                if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
+                {
+                    qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+                    abort();
+                }
+            }
+            index_mirror_main=0;
+            test_mirror_main();
+            qDebug() << "Datapack is empty, get from mirror into" << mDatapackMain;
+        }
+        else
+        {
+            qDebug() << "Datapack don't match with server hash, get from mirror";
+            QNetworkRequest networkRequest(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+QStringLiteral("pack/diff/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral("-%1.tar.xz").arg(QString(hash.toHex())));
+            QNetworkReply *reply = qnam.get(networkRequest);
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
+            connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackMain);
+        }
+    }
+}
+
+void Api_client_real::test_mirror_main()
+{
+    QNetworkReply *reply;
+    const QStringList &httpDatapackMirrorList=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+    if(!datapackTarXzMain)
+    {
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".tar.xz"));
+        reply = qnam.get(networkRequest);
+        if(reply->error()==QNetworkReply::NoError)
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);//fix it, put httpFinished* broke it
+    }
+    else
+    {
+        if(index_mirror_main>=httpDatapackMirrorList.size())
+            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main-XXXX.txt, and only after that's quit */
+            return;
+
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+QStringLiteral(".txt"));
+        reply = qnam.get(networkRequest);
+        if(reply->error()==QNetworkReply::NoError)
+            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
+    }
+    if(reply->error()==QNetworkReply::NoError)
+    {
+        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventMain);
+        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackMain);
+    }
+    else
+    {
+        qDebug() << reply->url().toString() << reply->errorString();
+        mirrorTryNextMain();
+        return;
+    }
+}
+
+void Api_client_real::decodedIsFinishMain()
+{
+    if(xzDecodeThreadMain.errorFound())
+        test_mirror_main();
+    else
+    {
+        const QByteArray &decodedData=xzDecodeThreadMain.decodedData();
+        QTarDecode tarDecode;
+        if(tarDecode.decodeData(decodedData))
+        {
+            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
+            QDir dir;
+            const QStringList &fileList=tarDecode.getFileList();
+            const QList<QByteArray> &dataList=tarDecode.getDataList();
+            int index=0;
+            while(index<fileList.size())
+            {
+                QFile file(mDatapackMain+fileList.at(index));
+                QFileInfo fileInfo(file);
+                dir.mkpath(fileInfo.absolutePath());
+                if(extensionAllowed.contains(fileInfo.suffix()))
+                {
+                    if(file.open(QIODevice::Truncate|QIODevice::WriteOnly))
+                    {
+                        file.write(dataList.at(index));
+                        file.close();
+                    }
+                    else
+                    {
+                        newError(tr("Disk error"),QStringLiteral("unable to write file of datapack %1: %2").arg(file.fileName()).arg(file.errorString()));
+                        return;
+                    }
+                }
+                else
+                {
+                    newError(tr("Security error, file not allowed: %1").arg(file.fileName()),QStringLiteral("file not allowed: %1").arg(file.fileName()));
+                    return;
+                }
+                index++;
+            }
+            wait_datapack_content_main=false;
+            checkIfContinueOrFinished();
+        }
+        else
+            test_mirror_main();
+    }
+}
+
+bool Api_client_real::mirrorTryNextMain()
+{
+    if(!datapackTarXzMain)
+    {
+        datapackTarXzMain=true;
+        test_mirror_main();
+    }
+    else
+    {
+        datapackTarXzMain=false;
+        index_mirror_main++;
+        if(index_mirror_main>=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+        {
+            newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
+            return false;
+        }
+        else
+            test_mirror_main();
+    }
+    return true;
+}
+
+void Api_client_real::httpFinishedForDatapackListMain()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if(reply==NULL)
+    {
+        httpError=true;
+        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        socket->disconnectFromHost();
+        return;
+    }
+    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if(!reply->isFinished() || reply->error() || !redirectionTarget.isNull())
+    {
+        const QNetworkProxy &proxy=qnam.proxy();
+        if(proxy==QNetworkProxy::NoProxy)
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 (try next)")
+                                                  .arg(reply->url().toString())
+                                                  .arg(reply->errorString())
+                                                  );
+        else
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Main Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
+                                                  .arg(reply->url().toString())
+                                                  .arg(reply->errorString())
+                                                  .arg(proxy.hostName())
+                                                  .arg(proxy.port())
+                                                  .arg(proxy.type())
+                                                  );
+        reply->deleteLater();
+        mirrorTryNextMain();
+        return;
+    }
+    else
+    {
+        if(!datapackTarXzMain)
+        {
+            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
+            datapackTarXzMain=true;
+            xzDecodeThreadMain.setData(reply->readAll(),100*1024*1024);
+            xzDecodeThreadMain.start(QThread::LowestPriority);
+            return;
+        }
+        else
+        {
+            int sizeToGet=0;
+            int fileToGet=0;
+            httpError=false;
+            const QStringList &content=QString::fromUtf8(reply->readAll()).split(QRegularExpression("[\n\r]+"));
+            int index=0;
+            QRegularExpression splitReg("^(.*) (([0-9a-f][0-9a-f])+) ([0-9]+)$");
+            QRegularExpression fileMatchReg(DATAPACK_FILE_REGEX);
+            if(datapackFilesListMain.size()!=partialHashListMain.size())
+            {
+                qDebug() << "datapackFilesListMain.size()!=partialHashListMain.size(), CRITICAL";
+                abort();
+                return;
+            }
+            /*ref crash here*/const QString selectedMirror=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
+            int correctContent=0;
+            while(index<content.size())
+            {
+                if(content.at(index).contains(splitReg))
+                {
+                    correctContent++;
+                    QString fileString=content.at(index);
+                    QString partialHashString=content.at(index);
+                    QString sizeString=content.at(index);
+                    fileString.replace(splitReg,"\\1");
+                    partialHashString.replace(splitReg,"\\2");
+                    sizeString.replace(splitReg,"\\4");
+                    if(fileString.contains(fileMatchReg))
+                    {
+                        int indexInDatapackList=datapackFilesListMain.indexOf(fileString);
+                        if(indexInDatapackList!=-1)
+                        {
+                            const quint32 &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
+                            QFileInfo file(mDatapackMain+fileString);
+                            if(!file.exists())
+                            {
+                                getHttpFileMain(selectedMirror+fileString,fileString);
+                                fileToGet++;
+                                sizeToGet+=sizeString.toUInt();
+                            }
+                            else if(hashFileOnDisk!=*reinterpret_cast<const quint32 *>(QByteArray::fromHex(partialHashString.toLatin1()).constData()))
+                            {
+                                getHttpFileMain(selectedMirror+fileString,fileString);
+                                fileToGet++;
+                                sizeToGet+=sizeString.toUInt();
+                            }
+                        }
+                        else
+                        {
+                            getHttpFileMain(selectedMirror+fileString,fileString);
+                            fileToGet++;
+                            sizeToGet+=sizeString.toUInt();
+                        }
+                        partialHashListMain.removeAt(indexInDatapackList);
+                        datapackFilesListMain.removeAt(indexInDatapackList);
+                    }
+                }
+                index++;
+            }
+            index=0;
+            while(index<datapackFilesListMain.size())
+            {
+                if(!QFile(mDatapackMain+datapackFilesListMain.at(index)).remove())
+                {
+                    qDebug() << "Unable to remove" << datapackFilesListMain.at(index);
+                    abort();
+                }
+                index++;
+            }
+            datapackFilesListMain.clear();
+            if(correctContent==0)
+            {
+                qDebug() << "Error, no valid content: correctContent==0\n" << content.join("\n") << "\nFor:" << reply->url().toString();
+                abort();
+                return;
+            }
+            if(fileToGet==0)
+                checkIfContinueOrFinished();
+            else
+                datapackSizeMain(fileToGet,sizeToGet*1000);
+        }
+    }
+}
+
+const QStringList Api_client_real::listDatapackMain(QString suffix)
+{
+    if(suffix.contains(excludePathMain))
+        return QStringList();
+
+    QStringList returnFile;
+    QDir finalDatapackFolder(mDatapackMain+suffix);
+    QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    int sizeEntryList=entryList.size();
+    for(int index=0;index<sizeEntryList;++index)
+    {
+        QFileInfo fileInfo=entryList.at(index);
+        if(fileInfo.isDir())
+            returnFile << listDatapackMain(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+        else
+        {
+            //if match with correct file name, considere as valid
+            if((suffix+fileInfo.fileName()).contains(Api_client_real::regex_DATAPACK_FILE_REGEX) && extensionAllowed.contains(fileInfo.suffix()))
+                returnFile << suffix+fileInfo.fileName();
+            //is invalid
+            else
+            {
+                DebugClass::debugConsole(QStringLiteral("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
+                QFile file(mDatapackMain+suffix+fileInfo.fileName());
+                if(!file.remove())
+                    DebugClass::debugConsole(QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
+            }
+        }
+    }
+    returnFile.sort();
+    return returnFile;
+}
+
+void Api_client_real::cleanDatapackMain(QString suffix)
+{
+    QDir finalDatapackFolder(mDatapackMain+suffix);
+    QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    int sizeEntryList=entryList.size();
+    for (int index=0;index<sizeEntryList;++index)
+    {
+        QFileInfo fileInfo=entryList.at(index);
+        if(fileInfo.isDir())
+            cleanDatapackMain(suffix+fileInfo.fileName()+text_slash);//put unix separator because it's transformed into that's under windows too
+        else
+            return;
+    }
+    entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    if(entryList.size()==0)
+        finalDatapackFolder.rmpath(mDatapackMain+suffix);
+}
+
+void Api_client_real::datapackDownloadFinishedMain()
+{
+
+}
+
+void Api_client_real::downloadProgressDatapackMain(qint64 bytesReceived, qint64 bytesTotal)
+{
+    if(!datapackTarXzMain && !datapackTarXzSub)
+    {
+        if(bytesReceived>0)
+            datapackSizeMain(1,bytesTotal);
+    }
+    emit progressingDatapackFileMain(bytesReceived);
+}
+
+void Api_client_real::httpErrorEventMain()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if(reply==NULL)
+    {
+        httpError=true;
+        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        socket->disconnectFromHost();
+        return;
+    }
+    qDebug() << reply->url().toString() << reply->errorString();
+    //mirrorTryNextMain();//mirrorTryNextBase();-> double mirrorTryNext*() call due to httpFinishedForDatapackList*()
+    return;
+}
+
+void Api_client_real::sendDatapackContentMain()
+{
+    {
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            abort();
+        }
+        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
+        {
+            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+            abort();
+        }
+        if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
+        {
+            qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+            abort();
+        }
+    }
+    if(wait_datapack_content_main || wait_datapack_content_sub)
+    {
+        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
+        return;
+    }
+
+    //compute the mirror
+    {
+        QStringList values=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+        {
+            QString slash(QStringLiteral("/"));
+            int index=0;
+            while(index<values.size())
+            {
+                if(!values.at(index).endsWith(slash))
+                    values[index]+=slash;
+                index++;
+            }
+        }
+        CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(Api_client_real::text_dotcoma);
+    }
+
+    datapackTarXzMain=false;
+    wait_datapack_content_main=true;
+    datapackFilesListMain=listDatapackMain(QString());
+    datapackFilesListMain.sort();
+    emit doDifferedChecksumMain(mDatapackMain);
+}
+
+void Api_client_real::checkIfContinueOrFinished()
+{
+    wait_datapack_content_main=false;
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty())
+    {
+        datapackStatus=DatapackStatus::Finished;
+        haveTheDatapackMainSub();
+    }
+    else
+    {
+        datapackStatus=DatapackStatus::Sub;
+        sendDatapackContentSub();
+    }
+}
