@@ -40,17 +40,17 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
                     {
                         case CompressionType_None:
                             *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
                         break;
                         case CompressionType_Zlib:
                             *(EpollClientLoginMaster::protocolReplyCompresssionZlib+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompresssionZlib+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompresssionZlib+4,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompresssionZlib),sizeof(EpollClientLoginMaster::protocolReplyCompresssionZlib));
                         break;
                         case CompressionType_Xz:
                             *(EpollClientLoginMaster::protocolReplyCompressionXz+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompressionXz+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionXz+4,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionXz),sizeof(EpollClientLoginMaster::protocolReplyCompressionXz));
                         break;
                         default:
@@ -59,7 +59,7 @@ void EpollClientLoginMaster::parseInputBeforeLogin(const quint8 &mainCodeType,co
                     }
                     #else
                     *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                    memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth->constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+4,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
                     #endif
                     stat=EpollClientLoginMasterStat::Logged;

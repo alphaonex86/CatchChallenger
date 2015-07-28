@@ -340,8 +340,8 @@ void LinkToMaster::sendProtocolHeader()
 {
     packOutcommingQuery(0x01,
                         queryNumberList.back(),
-                        reinterpret_cast<char *>(LinkToMaster::header_magic_number_and_private_token),
-                        sizeof(LinkToMaster::header_magic_number_and_private_token)
+                        reinterpret_cast<char *>(LinkToMaster::header_magic_number),
+                        sizeof(LinkToMaster::header_magic_number)
                         );
     queryNumberList.pop_back();
 }

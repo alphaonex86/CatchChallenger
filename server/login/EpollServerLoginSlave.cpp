@@ -123,7 +123,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(token.size()!=TOKEN_SIZE_FOR_MASTERAUTH*2/*String Hexa, not binary*/)
         generateToken(settings);
     token=settings.value(QStringLiteral("token")).toString();
-    memcpy(LinkToMaster::header_magic_number_and_private_token+9,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(LinkToMaster::private_token,QByteArray::fromHex(token.toLatin1()).constData(),TOKEN_SIZE_FOR_MASTERAUTH);
     settings.endGroup();
 
     //mode
@@ -422,7 +422,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
 EpollServerLoginSlave::~EpollServerLoginSlave()
 {
-    memset(LinkToMaster::header_magic_number_and_private_token,0x00,sizeof(LinkToMaster::header_magic_number_and_private_token));
+    memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
     if(server_ip!=NULL)
     {
         delete server_ip;
@@ -503,7 +503,7 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
         std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LinkToMaster::header_magic_number_and_private_token+9,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(LinkToMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from /dev/urandom" << std::endl;
@@ -511,8 +511,8 @@ void EpollServerLoginSlave::generateToken(QSettings &settings)
     }
     settings.setValue(QStringLiteral("token"),QString(
                           QByteArray(
-                              reinterpret_cast<char *>(LinkToMaster::header_magic_number_and_private_token)
-                              +9,TOKEN_SIZE_FOR_MASTERAUTH)
+                              reinterpret_cast<char *>(LinkToMaster::private_token)
+                              ,TOKEN_SIZE_FOR_MASTERAUTH)
                           .toHex()));
     fclose(fpRandomFile);
     settings.sync();
