@@ -2293,6 +2293,7 @@ void BaseServer::preload_the_datapack()
         }
     }
 
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     //do the base
     {
         QCryptographicHash hashBase(QCryptographicHash::Sha224);
@@ -2355,6 +2356,7 @@ void BaseServer::preload_the_datapack()
         }
         CommonSettingsCommon::commonSettingsCommon.datapackHashBase=hashBase.result();
     }
+    #endif
     //do the main
     {
         QCryptographicHash hashMain(QCryptographicHash::Sha224);
