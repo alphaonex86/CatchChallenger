@@ -138,6 +138,11 @@ void LinkToGameServer::parseReplyData(const quint8 &mainCodeType,const quint8 &q
     Q_UNUSED(size);
     //do the work here
 
+    /* intercept part here */
+    if(mainCodeType==0x04)
+    {
+    }
+
     if(client!=NULL)
         client->postReply(queryNumber,data,size);
 }

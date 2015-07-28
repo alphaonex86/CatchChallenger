@@ -177,10 +177,20 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     {
         case 0x01:
         {
+            if(size<1)
+            {
+                std::cerr << "Need more size for protocol header " << returnCode << std::endl;
+                abort();
+            }
             //Protocol initialization
             const quint8 &returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
+                if(size!=(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                {
+                    std::cerr << "wrong size for protocol header " << returnCode << std::endl;
+                    abort();
+                }
                 switch(returnCode)
                 {
                     case 0x04:
@@ -197,21 +207,14 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                         abort();
                     return;
                 }
-                if(size!=1)
-                {
-                    std::cerr << "reply to 07 size remaining != 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                    abort();
-                }
                 stat=Stat::ProtocolGood;
-                registerGameServer(CommonSettingsServer::commonSettingsServer.exportedXml);
+                registerGameServer(CommonSettingsServer::commonSettingsServer.exportedXml,data+1);
                 return;
             }
             else
             {
                 if(returnCode==0x02)
                     std::cerr << "Protocol not supported" << std::endl;
-                else if(returnCode==0x07)
-                    std::cerr << "Token auth wrong" << std::endl;
                 else
                     std::cerr << "Unknown error " << returnCode << std::endl;
                 abort();
@@ -289,6 +292,10 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 return;
                 case 0x03:
                     std::cerr << "charactersGroup not found" << settings->value(QLatin1Literal("charactersGroup")).toString().toStdString() << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                break;
+                case 0x04:
+                    std::cerr << "token wrong (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     abort();
                 break;
                 default:

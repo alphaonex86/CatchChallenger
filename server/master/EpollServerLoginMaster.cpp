@@ -118,10 +118,19 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
             ))
             abort();
     }
+
+    EpollClientLoginMaster::fpRandomFile = fopen("/dev/urandom","rb");
+    if(EpollClientLoginMaster::fpRandomFile==NULL)
+    {
+        std::cerr << "Unable to open /dev/urandom to generate random token" << std::endl;
+        abort();
+    }
 }
 
 EpollServerLoginMaster::~EpollServerLoginMaster()
 {
+    fclose(EpollClientLoginMaster::fpRandomFile);
+
     if(EpollClientLoginMaster::private_token!=NULL)
         memset(EpollClientLoginMaster::private_token,0x00,sizeof(EpollClientLoginMaster::private_token));
     if(server_ip!=NULL)

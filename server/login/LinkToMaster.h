@@ -44,7 +44,8 @@ public:
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
     static bool haveTheFirstSslHeader;
-    static unsigned char header_magic_number_and_private_token[9+TOKEN_SIZE_FOR_MASTERAUTH];
+    static unsigned char header_magic_number[9];
+    static unsigned char private_token[TOKEN_SIZE_FOR_MASTERAUTH];
 
     std::vector<quint8> queryNumberList;
     BaseClassSwitch::EpollObjectType getType() const;

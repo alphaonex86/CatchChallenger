@@ -6,6 +6,8 @@
 #include "CharactersGroupForLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 
+#include <QCryptographicHash>
+
 using namespace CatchChallenger;
 
 void LinkToMaster::parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char *data, const unsigned int &size)
@@ -903,10 +905,20 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     {
         case 0x01:
         {
+            if(size<1)
+            {
+                std::cerr << "Need more size for protocol header " << returnCode << std::endl;
+                abort();
+            }
             //Protocol initialization
             const quint8 &returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
+                if(size!=(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                {
+                    std::cerr << "wrong size for protocol header " << returnCode << std::endl;
+                    abort();
+                }
                 switch(returnCode)
                 {
                     case 0x04:
@@ -926,7 +938,13 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 stat=Stat::ProtocolGood;
                 //send the query 0x08
                 {
-                    packOutcommingQuery(0x08,queryNumberList.back(),NULL,0);
+                    QCryptographicHash hash(QCryptographicHash::Sha224);
+                    hash.addData(LinkToMaster::private_token);
+                    hash.addData(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    const QByteArray &hashedToken=hash.result();
+                    memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
+
+                    packOutcommingQuery(0x08,queryNumberList.back(),hashedToken.constData(),hashedToken.size());
                     queryNumberList.pop_back();
                 }
                 return;
@@ -935,8 +953,6 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
             {
                 if(returnCode==0x02)
                     std::cerr << "Protocol not supported" << std::endl;
-                else if(returnCode==0x07)
-                    std::cerr << "Token auth wrong" << std::endl;
                 else
                     std::cerr << "Unknown error " << returnCode << std::endl;
                 abort();
@@ -952,6 +968,19 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 abort();
             }
             unsigned int pos=0;
+            {
+                if((size-pos)<1)
+                {
+                    std::cerr << "reply to 08 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
+                if(data[pos]!=1)
+                {
+                    std::cerr << "reply to 08 return code wrong too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
+                pos++;
+            }
             {
                 int index=0;
                 while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
