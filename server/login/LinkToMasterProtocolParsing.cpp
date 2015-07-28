@@ -907,7 +907,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
         {
             if(size<1)
             {
-                std::cerr << "Need more size for protocol header " << returnCode << std::endl;
+                std::cerr << "Need more size for protocol header " << std::endl;
                 abort();
             }
             //Protocol initialization
@@ -939,7 +939,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
                 //send the query 0x08
                 {
                     QCryptographicHash hash(QCryptographicHash::Sha224);
-                    hash.addData(LinkToMaster::private_token);
+                    hash.addData(reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
                     hash.addData(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                     const QByteArray &hashedToken=hash.result();
                     memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
