@@ -179,7 +179,7 @@ void LinkToMaster::parseReplyData(const quint8 &mainCodeType,const quint8 &query
         {
             if(size<1)
             {
-                std::cerr << "Need more size for protocol header " << returnCode << std::endl;
+                std::cerr << "Need more size for protocol header " << std::endl;
                 abort();
             }
             //Protocol initialization
