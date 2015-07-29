@@ -16,6 +16,8 @@
 using namespace CatchChallenger;
 
 const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
+QByteArray LinkToGameServer::httpDatapackMirrorRewriteBase;
+QByteArray LinkToGameServer::httpDatapackMirrorRewriteMainAndSub;
 
 LinkToGameServer::LinkToGameServer(
         #ifdef SERVERSSL
@@ -38,7 +40,9 @@ LinkToGameServer::LinkToGameServer(
         client(NULL),
         haveTheFirstSslHeader(false),
         protocolQueryNumber(0),
-        socketFd(infd)
+        socketFd(infd),
+        reply04inWait(NULL),
+        reply0205inWait(NULL)
 {
 }
 
@@ -50,6 +54,16 @@ LinkToGameServer::~LinkToGameServer()
         //break the link
         client->linkToGameServer=NULL;
         client=NULL;
+    }
+    if(reply04inWait!=NULL)
+    {
+        delete reply04inWait;
+        reply04inWait=NULL;
+    }
+    if(reply0205inWait!=NULL)
+    {
+        delete reply0205inWait;
+        reply0205inWait=NULL;
     }
 }
 

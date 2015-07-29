@@ -114,7 +114,7 @@ void EpollClientLoginSlave::doDDOSCompute()
     }
 }
 
-void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -292,7 +292,7 @@ void EpollClientLoginSlave::parseInputBeforeLogin(const quint8 &mainCodeType,con
     }
 }
 
-void EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size)
+void EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType, const char * const data, const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
@@ -350,7 +350,7 @@ void EpollClientLoginSlave::parseMessage(const quint8 &mainCodeType,const char *
     }
 }
 
-void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *rawData,const unsigned int &size)
+void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const rawData,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
@@ -389,7 +389,7 @@ void EpollClientLoginSlave::parseFullMessage(const quint8 &mainCodeType,const qu
 }
 
 //have query with reply
-void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -425,7 +425,7 @@ void EpollClientLoginSlave::parseQuery(const quint8 &mainCodeType,const quint8 &
     }
 }
 
-void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *rawData,const unsigned int &size)
+void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const rawData,const unsigned int &size)
 {
     (void)subCodeType;
     (void)queryNumber;
@@ -575,7 +575,7 @@ void EpollClientLoginSlave::parseFullQuery(const quint8 &mainCodeType,const quin
 }
 
 //send reply
-void EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
@@ -608,7 +608,7 @@ void EpollClientLoginSlave::parseReplyData(const quint8 &mainCodeType,const quin
     return;
 }
 
-void EpollClientLoginSlave::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size)
+void EpollClientLoginSlave::parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size)
 {
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {

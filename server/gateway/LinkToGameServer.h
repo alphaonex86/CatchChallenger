@@ -32,6 +32,8 @@ public:
     EpollClientLoginSlave *client;
     bool haveTheFirstSslHeader;
     quint8 protocolQueryNumber;
+    static QByteArray httpDatapackMirrorRewriteBase;
+    static QByteArray httpDatapackMirrorRewriteMainAndSub;
 
     void setConnexionSettings();
     BaseClassSwitch::EpollObjectType getType() const;
@@ -49,18 +51,20 @@ protected:
     void parseNetworkReadError(const QString &errorString);
 
     //have message without reply
-    void parseMessage(const quint8 &mainCodeType,const char *data,const unsigned int &size);
-    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char *data,const unsigned int &size);
+    void parseMessage(const quint8 &mainCodeType,const char * const data,const unsigned int &size);
+    void parseFullMessage(const quint8 &mainCodeType,const quint8 &subCodeType,const char * const data,const unsigned int &size);
     //have query with reply
-    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
-    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullQuery(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
-    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint8 &subCodeType,const quint8 &queryNumber,const char * const data,const unsigned int &size);
 
-    void parseInputBeforeLogin(const quint8 &mainCodeType,const quint8 &queryNumber,const char *data,const unsigned int &size);
+    void parseInputBeforeLogin(const quint8 &mainCodeType, const quint8 &queryNumber, const char * const data, const unsigned int &size);
 private:
     int socketFd;
+    char *reply04inWait;
+    char *reply0205inWait;
 };
 }
 

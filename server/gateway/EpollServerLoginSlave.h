@@ -28,7 +28,6 @@ public:
 public:
     bool tcpNodelay,tcpCork;
     bool serverReady;
-    QString httpDatapackMirrorRewriteBase,httpDatapackMirrorRewriteMainAndSub;
 private:
     char * server_ip;
     char * server_port;
