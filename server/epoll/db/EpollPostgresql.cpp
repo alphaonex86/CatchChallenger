@@ -61,7 +61,6 @@ bool EpollPostgresql::isConnected() const
 
 bool EpollPostgresql::syncConnect(const char * const host, const char * const dbname, const char * const user, const char * const password)
 {
-    std::cout << "syncConnect: " << this << std::endl;
     if(conn!=NULL)
     {
         std::cerr << "pg already connected" << std::endl;
