@@ -72,6 +72,9 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         linkToGameServer->client=NULL;
         linkToGameServer=NULL;
     }
+
+    if(client_list.size()==0)
+        LinkToGameServer::compressionSet=false;
 }
 
 void EpollClientLoginSlave::disconnectClient()

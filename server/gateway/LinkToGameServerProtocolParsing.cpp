@@ -16,38 +16,75 @@ void LinkToGameServer::parseInputBeforeLogin(const quint8 &mainCodeType, const q
         case 0x03:
         {
             //Protocol initialization
-            if(size<1)
+            if(size!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
             {
-                parseNetworkReadError(QStringLiteral("wrong size with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                 return;
             }
             quint8 returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
-                rewrite to send the ouput compression
-                switch(returnCode)
+                if(LinkToGameServer::compressionSet)
+                    switch(returnCode)
+                    {
+                        case 0x04:
+                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                        break;
+                        case 0x05:
+                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
+                        break;
+                        case 0x06:
+                            ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
+                        break;
+                        default:
+                            parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                else
                 {
-                    case 0x04:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                    ProtocolParsing::CompressionType tempCompression;
+                    switch(returnCode)
+                    {
+                        case 0x04:
+                            tempCompression=ProtocolParsing::CompressionType::None;
+                        break;
+                        case 0x05:
+                            tempCompression=ProtocolParsing::CompressionType::Zlib;
+                        break;
+                        case 0x06:
+                            tempCompression=ProtocolParsing::CompressionType::Xz;
+                        break;
+                        default:
+                            parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                    if(tempCompression!=ProtocolParsing::compressionTypeClient)
+                    {
+                        parseNetworkReadError(QStringLiteral("compression change main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                }
+                char newData[size];
+                //the gateway can different compression than server connected
+                switch(ProtocolParsing::compressionTypeServer)
+                {
+                    case ProtocolParsing::CompressionType::None:
+                        newData[0x00]=0x04;
                     break;
-                    case 0x05:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
+                    case ProtocolParsing::CompressionType::Zlib:
+                        newData[0x00]=0x05;
                     break;
-                    case 0x06:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
+                    case ProtocolParsing::CompressionType::Xz:
+                        newData[0x00]=0x06;
                     break;
                     default:
                         parseNetworkReadError(QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
                     return;
                 }
-                if(size!=(sizeof(quint8)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
-                {
-                    parseNetworkReadError(QStringLiteral("compression type wrong size (stage 3) with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
-                    return;
-                }
+                memcpy(newData+1,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 //send token to game server
                 if(client!=NULL)
-                    client->postReply(queryNumber,data,size);
+                    client->postReply(queryNumber,newData,size);
                 stat=ProtocolGood;
                 return;
             }
