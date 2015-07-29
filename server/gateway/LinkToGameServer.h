@@ -34,6 +34,7 @@ public:
     quint8 protocolQueryNumber;
     static QByteArray httpDatapackMirrorRewriteBase;
     static QByteArray httpDatapackMirrorRewriteMainAndSub;
+    static bool compressionSet;
 
     void setConnexionSettings();
     BaseClassSwitch::EpollObjectType getType() const;
